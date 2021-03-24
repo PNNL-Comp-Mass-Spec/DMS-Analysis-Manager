@@ -154,7 +154,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private Dictionary<int, PXFileInfo> mPxResultFiles;
 
         [Obsolete("No longer used")]
-        private udtFilterThresholdsType mFilterThresholdsUsed;
+        private FilterThresholds mFilterThresholdsUsed;
 
         /// <summary>
         /// Instrument group names
@@ -195,7 +195,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Keys are Unimod accession names(e.g.UNIMOD:35)
         /// Values are CvParam data for the modification
         /// </remarks>
-        private Dictionary<string, SampleMetadata.udtCvParamInfoType> mModificationsUsed;
+        private Dictionary<string, SampleMetadata.CvParamInfo> mModificationsUsed;
 
         /// <summary>
         /// Sample info for each mzid.gz file
@@ -231,7 +231,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         #region "Structures and Enums"
 
         [Obsolete("No longer used")]
-        private struct udtFilterThresholdsType
+        private struct FilterThresholds
         {
             public float PValueThreshold;
             public float FDRThreshold;
@@ -253,7 +253,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private struct udtPseudoMSGFDataType
+        private struct PseudoMSGFData
         {
             public int ResultID;
             public string Peptide;
@@ -1217,8 +1217,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         [Obsolete("No longer used")]
-        private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
-            IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
+        private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, FilterThresholds udtFilterThresholds,
+            IDictionary<string, List<PseudoMSGFData>> pseudoMSGFData)
         {
             const int MSGF_SPEC_EVALUE_NOT_DEFINED = 10;
             const int PVALUE_NOT_DEFINED = 10;
@@ -1250,7 +1250,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // The keys in each of bestMatchByScan and bestMatchByScanScoreValues are scan numbers
                 // The value for bestMatchByScan is a KeyValue pair where the key is the score for this match
                 var bestMatchByScan = new Dictionary<int, KeyValuePair<double, string>>();
-                var bestMatchByScanScoreValues = new Dictionary<int, udtPseudoMSGFDataType>();
+                var bestMatchByScanScoreValues = new Dictionary<int, PseudoMSGFData>();
 
                 var mzXMLFilename = dataset + ".mzXML";
 
@@ -1611,7 +1611,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             suffix = string.Empty;
                         }
 
-                        var udtPseudoMSGFData = new udtPseudoMSGFDataType
+                        var udtPseudoMSGFData = new PseudoMSGFData
                         {
                             ResultID = reader.CurrentPSM.ResultID,
                             Peptide = string.Copy(reader.CurrentPSM.Peptide),
@@ -1675,7 +1675,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     else
                     {
-                        matchesForProtein = new List<udtPseudoMSGFDataType> {
+                        matchesForProtein = new List<PseudoMSGFData> {
                             item.Value
                         };
                         pseudoMSGFData.Add(item.Value.Protein, matchesForProtein);
@@ -1700,12 +1700,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="prideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("No longer used")]
-        private bool CreateMSGFReportFile(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
+        private bool CreateMSGFReportFile(int job, string dataset, FilterThresholds udtFilterThresholds,
             out string prideReportXMLFilePath)
         {
             var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
-            var pseudoMSGFData = new Dictionary<string, List<udtPseudoMSGFDataType>>();
+            var pseudoMSGFData = new Dictionary<string, List<PseudoMSGFData>>();
 
             prideReportXMLFilePath = string.Empty;
 
@@ -1838,8 +1838,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         [Obsolete("No longer used")]
         private string CreateMSGFReportXMLFile(string templateFileName, DataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
-            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated,
-            string proteinCollectionListOrFasta, udtFilterThresholdsType udtFilterThresholds)
+            IReadOnlyDictionary<string, List<PseudoMSGFData>> pseudoMSGFData, string orgDBNameGenerated,
+            string proteinCollectionListOrFasta, FilterThresholds udtFilterThresholds)
         {
             string prideReportXMLFilePath;
 
@@ -2219,7 +2219,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         [Obsolete("No longer used")]
         private bool CreateMSGFReportXMLFileWriteIDs(XmlWriter writer,
-            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated)
+            IReadOnlyDictionary<string, List<PseudoMSGFData>> pseudoMSGFData, string orgDBNameGenerated)
         {
             try
             {
@@ -3077,7 +3077,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return File.Exists(Path.Combine(remoteTransferFolder, fileName + optionalSuffix));
         }
 
-        private string GetCVString(SampleMetadata.udtCvParamInfoType cvParamInfo)
+        private string GetCVString(SampleMetadata.CvParamInfo cvParamInfo)
         {
             return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value);
         }
@@ -3361,7 +3361,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mExperimentNEWTInfo = new Dictionary<int, string>();
             mExperimentTissue = new Dictionary<string, string>();
 
-            mModificationsUsed = new Dictionary<string, SampleMetadata.udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
+            mModificationsUsed = new Dictionary<string, SampleMetadata.CvParamInfo>(StringComparer.OrdinalIgnoreCase);
 
             mMzIdSampleInfo = new Dictionary<string, SampleMetadata>(StringComparer.OrdinalIgnoreCase);
 
@@ -3856,10 +3856,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return parameters;
         }
 
-        private SampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
+        private SampleMetadata.CvParamInfo ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
             Stack<int> elementCloseDepths)
         {
-            var udtCvParam = new SampleMetadata.udtCvParamInfoType();
+            var udtCvParam = new SampleMetadata.CvParamInfo();
             udtCvParam.Clear();
 
             writer.WriteStartElement(xmlReader.Name);

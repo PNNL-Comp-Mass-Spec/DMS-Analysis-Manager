@@ -50,7 +50,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// </summary>
         public const string ALIGNMENT_PARAMETERS_FILENAME = "AlignmentParameters.xml";
 
-        protected struct udtGlyQIQParams
+        protected struct GlyQIQParams
         {
             public Dictionary<int, DirectoryInfo> WorkingParameterFolders;
             public string FactorsName;
@@ -60,7 +60,7 @@ namespace AnalysisManagerGlyQIQPlugin
             public string IQParamFileName;
         }
 
-        private udtGlyQIQParams mGlyQIQParams;
+        private GlyQIQParams mGlyQIQParams;
 
         /// <summary>
         /// Retrieve required files
@@ -75,7 +75,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 return result;
             }
 
-            mGlyQIQParams = new udtGlyQIQParams();
+            mGlyQIQParams = new GlyQIQParams();
 
             var coreCountText = mJobParams.GetJobParameter("GlyQ-IQ", "Cores", "All");
 

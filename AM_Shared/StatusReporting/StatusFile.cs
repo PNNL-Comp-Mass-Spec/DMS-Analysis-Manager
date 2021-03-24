@@ -705,7 +705,7 @@ namespace AnalysisManagerBase.StatusReporting
 
             Global.CheckStopTrace("LogStatusToBrokerDatabase");
 
-            var statusInfo = new DBStatusLogger.udtStatusInfoType
+            var statusInfo = new DBStatusLogger.StatusInfo
             {
                 MgrName = MgrName,
                 MgrStatus = MgrStatus,
@@ -739,7 +739,7 @@ namespace AnalysisManagerBase.StatusReporting
 
             Global.CheckStopTrace("CreateTaskInfoType");
 
-            var task = new DBStatusLogger.udtTaskInfoType
+            var task = new DBStatusLogger.TaskInfo
             {
                 Tool = Tool,
                 Status = TaskStatus,
@@ -750,7 +750,7 @@ namespace AnalysisManagerBase.StatusReporting
 
             Global.CheckStopTrace("CreateTaskDetailsType");
 
-            var taskDetails = new DBStatusLogger.udtTaskDetailsType
+            task.Details = new DBStatusLogger.TaskDetails
             {
                 Status = TaskStatusDetail,
                 Job = JobNumber,
@@ -761,7 +761,6 @@ namespace AnalysisManagerBase.StatusReporting
                 SpectrumCount = SpectrumCount
             };
 
-            task.TaskDetails = taskDetails;
             statusInfo.Task = task;
 
             Global.CheckStopTrace("LogStatusToBroker");

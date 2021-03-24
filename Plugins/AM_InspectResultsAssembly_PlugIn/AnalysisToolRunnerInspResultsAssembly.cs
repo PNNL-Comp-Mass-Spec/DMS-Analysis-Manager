@@ -54,7 +54,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         #region "Structures"
 
-        protected struct udtModInfoType
+        protected struct ModInfo
         {
             public string ModName;
             public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
@@ -642,13 +642,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// </summary>
         /// <param name="inspectParameterFilePath"></param>
         /// <param name="modList"></param>
-        private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, ref udtModInfoType[] modList)
+        private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, ref ModInfo[] modList)
         {
             try
             {
                 // Initialize modList
                 var modCount = 0;
-                modList = new udtModInfoType[-1 + 1];
+                modList = new ModInfo[-1 + 1];
 
                 if (mDebugLevel > 4)
                 {
@@ -687,7 +687,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         {
                             if (modList.Length == 0)
                             {
-                                modList = new udtModInfoType[1];
+                                modList = new ModInfo[1];
                             }
                             else if (modCount >= modList.Length)
                             {
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <param name="inspectParameterFilePath"></param>
         private bool UpdatePTModsFile(string inspectDirectoryPath, string inspectParameterFilePath)
         {
-            var modList = new udtModInfoType[0];
+            var modList = new ModInfo[0];
 
             var prevLineWasBlank = false;
 

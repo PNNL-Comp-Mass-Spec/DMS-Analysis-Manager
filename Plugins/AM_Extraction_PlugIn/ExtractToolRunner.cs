@@ -771,7 +771,7 @@ namespace AnalysisManagerExtractionPlugin
                                 continue;
                             }
 
-                            var udtPSM = new MSGFPlusPSMs.udtPSMType
+                            var udtPSM = new MSGFPlusPSMs.PSMInfo
                             {
                                 Peptide = peptide,
                                 SpecEValue = specEValue,

@@ -44,7 +44,7 @@ namespace AnalysisManagerICR2LSPlugIn
             SerFileTIC = 7
         }
 
-        private struct udtICR2LSStatusType
+        private struct ICR2LSStatus
         {
             public int ScansProcessed;
             public float PercentComplete;
@@ -75,7 +75,7 @@ namespace AnalysisManagerICR2LSPlugIn
         private FileInfo mPEKResultsFile;
         private DateTime mLastCheckpointTime = DateTime.UtcNow;
 
-        private udtICR2LSStatusType mICR2LSStatus;
+        private ICR2LSStatus mICR2LSStatus;
 
         private RunDosProgram mCmdRunner;
         private FileSystemWatcher mStatusFileWatcher;

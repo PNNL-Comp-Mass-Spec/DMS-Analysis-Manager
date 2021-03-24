@@ -6,7 +6,7 @@ namespace AnalysisManagerExtractionPlugin
 {
     public class MSGFPlusPSMs
     {
-        public struct udtPSMType
+        public struct PSMInfo
         {
             public string Peptide;
             public double SpecEValue;
@@ -15,7 +15,7 @@ namespace AnalysisManagerExtractionPlugin
 
         // Keys are the protein and peptide (separated by an underscore)
         // Values are the PSM details, including the original data line from the .TSV file
-        private readonly Dictionary<string, udtPSMType> mPSMs;
+        private readonly Dictionary<string, PSMInfo> mPSMs;
 
         // List of SpecEValues associated with this scan/charge
         private readonly SortedSet<double> mSpecEValues;
@@ -27,7 +27,7 @@ namespace AnalysisManagerExtractionPlugin
 
         public int MaximumPSMsToKeep { get; }
 
-        public List<udtPSMType> PSMs => mPSMs.Values.ToList();
+        public List<PSMInfo> PSMs => mPSMs.Values.ToList();
 
         public int Scan { get; }
 
@@ -37,7 +37,7 @@ namespace AnalysisManagerExtractionPlugin
             if (MaximumPSMsToKeep < 1)
                 MaximumPSMsToKeep = 1;
 
-            mPSMs = new Dictionary<string, udtPSMType>();
+            mPSMs = new Dictionary<string, PSMInfo>();
             mSpecEValues = new SortedSet<double>();
 
             mBestSpecEValue = 0;
@@ -53,7 +53,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="udtPSM"></param>
         /// <param name="protein"></param>
         /// <returns>True if the PSM was stored, otherwise false</returns>
-        public bool AddPSM(udtPSMType udtPSM, string protein)
+        public bool AddPSM(PSMInfo udtPSM, string protein)
         {
             udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide);
 

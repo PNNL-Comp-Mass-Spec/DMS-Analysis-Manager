@@ -44,7 +44,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private bool mMSFileInfoScannerReportsEmptyIsosFile;
 
-        private udtDeconToolsStatusType mDeconToolsStatus;
+        private DeconToolsStatus mDeconToolsStatus;
 
         private RunDosProgram mCmdRunner;
 
@@ -78,7 +78,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             SUN_EXTREL = 12
         }
 
-        private struct udtDeconToolsStatusType
+        private struct DeconToolsStatus
         {
             public int CurrentLCScan;       // LC Scan number or IMS Frame Number
             public float PercentComplete;

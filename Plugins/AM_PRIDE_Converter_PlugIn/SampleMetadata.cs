@@ -13,7 +13,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// CV Param Info
         /// </summary>
-        public struct udtCvParamInfoType
+        public struct CvParamInfo
         {
             /// <summary>
             /// Accession
@@ -93,7 +93,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Modifications
         /// </summary>
         /// <remarks>Recommended to use PSI-MOD, though UniMod is acceptable</remarks>
-        public Dictionary<string, udtCvParamInfoType> Modifications { get; set; }
+        public Dictionary<string, CvParamInfo> Modifications { get; set; }
 
         /// <summary>
         /// Instrument Group
@@ -122,7 +122,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         public SampleMetadata()
         {
-            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
+            Modifications = new Dictionary<string, CvParamInfo>(StringComparer.OrdinalIgnoreCase);
             Clear();
         }
 

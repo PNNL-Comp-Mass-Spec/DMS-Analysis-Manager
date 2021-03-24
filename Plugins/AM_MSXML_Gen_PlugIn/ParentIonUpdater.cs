@@ -34,7 +34,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             ChargeState = 2
         }
 
-        private struct udtSoftwareInfoType
+        private struct SoftwareInfo
         {
             public string ID;
             public string Name;
@@ -43,7 +43,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             public string AccessionName;
         }
 
-        private struct udtChargeInfoType
+        private struct ChargeInfo
         {
             public double ParentIonMH;
             public double ParentIonMZ;
@@ -55,9 +55,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// </summary>
         /// <param name="mgfFilePath"></param>
         /// <returns>Dictionary where keys are scan number and values are the ParentIon MH and Charge for each scan</returns>
-        private Dictionary<int, List<udtChargeInfoType>> CacheMGFParentIonInfo(string mgfFilePath)
+        private Dictionary<int, List<ChargeInfo>> CacheMGFParentIonInfo(string mgfFilePath)
         {
-            var cachedParentIonInfo = new Dictionary<int, List<udtChargeInfoType>>();
+            var cachedParentIonInfo = new Dictionary<int, List<ChargeInfo>>();
 
             try
             {
@@ -73,7 +73,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 while (mgfFileReader.ReadNextSpectrum(out var mgfSpectrum))
                 {
                     var currentSpectrum = mgfFileReader.CurrentSpectrum;
-                    var chargeInfo = new udtChargeInfoType
+                    var chargeInfo = new ChargeInfo
                     {
                         ParentIonMH = currentSpectrum.ParentIonMH,
                         ParentIonMZ = currentSpectrum.ParentIonMZ,
@@ -82,7 +82,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (!cachedParentIonInfo.TryGetValue(mgfSpectrum.ScanNumber, out var chargeInfoList))
                     {
-                        chargeInfoList = new List<udtChargeInfoType>();
+                        chargeInfoList = new List<ChargeInfo>();
                         cachedParentIonInfo.Add(mgfSpectrum.ScanNumber, chargeInfoList);
                     }
                     chargeInfoList.Add(chargeInfo);
@@ -282,7 +282,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             try
             {
-                var softwareInfo = new udtSoftwareInfoType
+                var softwareInfo = new SoftwareInfo
                 {
                     ID = "RawConverter",
                     // Used to relate a <software> entry with a <dataProcessing> entry
@@ -552,7 +552,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedScan(XmlReader reader, XmlWriter writer, IReadOnlyCollection<udtChargeInfoType> chargeInfoList)
+        private void WriteUpdatedScan(XmlReader reader, XmlWriter writer, IReadOnlyCollection<ChargeInfo> chargeInfoList)
         {
             // Write the start element and any attributes
             WriteShallowNode(reader, writer);
@@ -612,7 +612,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedSelectedIon(XmlReader reader, XmlWriter writer, IReadOnlyCollection<udtChargeInfoType> chargeInfoList)
+        private void WriteUpdatedSelectedIon(XmlReader reader, XmlWriter writer, IReadOnlyCollection<ChargeInfo> chargeInfoList)
         {
             // Write the start element and any attributes
             WriteShallowNode(reader, writer);
@@ -688,7 +688,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedDataProcessingList(XmlReader reader, XmlWriter writer, udtSoftwareInfoType softwareInfo)
+        private void WriteUpdatedDataProcessingList(XmlReader reader, XmlWriter writer, SoftwareInfo softwareInfo)
         {
             if (reader.IsEmptyElement)
             {
@@ -747,7 +747,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedSoftwareList(XmlReader reader, XmlWriter writer, udtSoftwareInfoType softwareInfo)
+        private void WriteUpdatedSoftwareList(XmlReader reader, XmlWriter writer, SoftwareInfo softwareInfo)
         {
             if (reader.IsEmptyElement)
             {

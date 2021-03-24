@@ -45,7 +45,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         #region "Structures"
 
-        protected struct udtJobMetadataForAScore
+        protected struct JobMetadataForAScore
         {
             public int Job;
             public string Dataset;
@@ -429,7 +429,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected void CreateJobToDatasetMapFile(List<udtJobMetadataForAScore> jobsProcessed)
+        protected void CreateJobToDatasetMapFile(List<JobMetadataForAScore> jobsProcessed)
         {
             var outputFilePath = Path.Combine(mWorkDir, "Job_to_Dataset_Map.txt");
 
@@ -506,7 +506,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return Path.Combine(mWorkDir, bestAScoreParamFileName);
         }
 
-        protected bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref udtJobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
+        protected bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref JobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
         {
             var fhtFile = string.Empty;
             var synFile = string.Empty;
@@ -794,7 +794,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var jobToDatasetMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP);
                 var jobToSettingsFileMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP);
                 var jobToToolMap = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP);
-                var jobsProcessed = new List<udtJobMetadataForAScore>();
+                var jobsProcessed = new List<JobMetadataForAScore>();
 
                 var jobCountSkippedUnknownJob = 0;
                 var jobCountSkippedNoSpectrumFile = 0;
@@ -822,7 +822,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         continue;
                     }
 
-                    var udtJobMetadata = new udtJobMetadataForAScore {
+                    var udtJobMetadata = new JobMetadataForAScore {
                         Job = jobFolder.Key
                     };
 
@@ -962,7 +962,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <returns>True if success, false if an error</returns>
         protected bool RunAscore(
             string progLoc,
-            udtJobMetadataForAScore udtJobMetadata,
+            JobMetadataForAScore udtJobMetadata,
             string inputFilePath,
             string ascoreParamFilePath,
             string fileTypeTag,

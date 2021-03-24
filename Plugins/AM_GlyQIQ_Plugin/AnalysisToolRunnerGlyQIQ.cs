@@ -37,7 +37,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Structures"
 
-        protected struct udtPSMStatsType
+        protected struct PSMStats
         {
             public int TotalPSMs;
             public int UniquePeptideCount;
@@ -374,7 +374,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var udtPSMStats = new udtPSMStatsType();
+                var udtPSMStats = new PSMStats();
                 udtPSMStats.Clear();
                 udtPSMStats.TotalPSMs = totalPSMs;
                 udtPSMStats.UniquePeptideCount = uniqueCodeFormulaCombos.Count;
@@ -488,7 +488,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        protected bool PostJobResults(int jobNumber, udtPSMStatsType udtPSMStats, string dmsConnectionStringOverride)
+        protected bool PostJobResults(int jobNumber, PSMStats udtPSMStats, string dmsConnectionStringOverride)
         {
             const int MAX_RETRY_COUNT = 3;
 

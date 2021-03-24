@@ -12,7 +12,7 @@ namespace DTASpectraFileGen
     {
         #region "Structures"
 
-        private struct udtScanInfoType
+        private struct ScanInfo
         {
             public int ScanStart;
             public int ScanEnd;
@@ -165,7 +165,7 @@ namespace DTASpectraFileGen
             return cvParams;
         }
 
-        private bool ParseMzMLFile(string mzMLFilePath, out bool autoNumberScans, Dictionary<string, udtScanInfoType> spectrumIDToScanNumber)
+        private bool ParseMzMLFile(string mzMLFilePath, out bool autoNumberScans, Dictionary<string, ScanInfo> spectrumIDToScanNumber)
         {
             var spectrumID = string.Empty;
 
@@ -175,7 +175,7 @@ namespace DTASpectraFileGen
 
             if (spectrumIDToScanNumber == null)
             {
-                spectrumIDToScanNumber = new Dictionary<string, udtScanInfoType>();
+                spectrumIDToScanNumber = new Dictionary<string, ScanInfo>();
             }
 
             using var reader = new XmlTextReader(mzMLFilePath);
@@ -186,7 +186,7 @@ namespace DTASpectraFileGen
                 if (reader.ReadState != ReadState.Interactive)
                     break;
 
-                var scanInfo = new udtScanInfoType();
+                var scanInfo = new ScanInfo();
                 if (reader.NodeType == XmlNodeType.Element)
                 {
                     switch (reader.Name)
@@ -299,7 +299,7 @@ namespace DTASpectraFileGen
 
         private bool UpdateMGFFileTitleLinesUsingMzML(string mzMLFilePath, string mgfFilePath, string datasetName)
         {
-            var spectrumIDtoScanNumber = new Dictionary<string, udtScanInfoType>();
+            var spectrumIDtoScanNumber = new Dictionary<string, ScanInfo>();
 
             try
             {

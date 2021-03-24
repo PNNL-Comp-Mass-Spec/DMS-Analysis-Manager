@@ -24,14 +24,14 @@ namespace AnalysisManagerInSpecTPlugIn
     {
         #region "Structures"
 
-        protected struct udtModInfoType
+        protected struct ModInfo
         {
             public string ModName;
             public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
             public string Residues;
         }
 
-        protected struct udtCachedSpectraCountInfoType
+        protected struct CachedSpectraCountInfo
         {
             public string MostRecentSpectrumInfo;
             public int MostRecentLineNumber;
@@ -74,7 +74,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            var objIndexedDBCreator = new CreateInspectIndexedDB();
+            var indexedDBCreator = new CreateInspectIndexedDB();
 
             try
             {
@@ -106,7 +106,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 // Index the fasta file to create the .trie file
-                var result = objIndexedDBCreator.CreateIndexedDbFiles(ref mMgrParams, ref mJobParams, mDebugLevel, mJob, inspectDir, orgDbDir);
+                var result = indexedDBCreator.CreateIndexedDbFiles(ref mMgrParams, ref mJobParams, mDebugLevel, mJob, inspectDir, orgDbDir);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;

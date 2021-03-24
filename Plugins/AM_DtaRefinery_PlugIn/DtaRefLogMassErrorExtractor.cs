@@ -23,7 +23,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         private readonly short mDebugLevel;
         private readonly bool mPostResultsToDB;
 
-        private struct udtMassErrorInfoType
+        private struct MassErrorInfo
         {
             public string DatasetName;
             public int PSMJob;
@@ -46,7 +46,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             mPostResultsToDB = postResultsToDB;
         }
 
-        private string ConstructXML(udtMassErrorInfoType massErrorInfo)
+        private string ConstructXML(MassErrorInfo massErrorInfo)
         {
             var xml = new StringBuilder();
 
@@ -101,7 +101,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                var massErrorInfo = new udtMassErrorInfoType
+                var massErrorInfo = new MassErrorInfo
                 {
                     DatasetName = datasetName,
                     PSMJob = psmJob,

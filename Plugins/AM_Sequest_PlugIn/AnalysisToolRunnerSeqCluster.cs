@@ -38,7 +38,7 @@ namespace AnalysisManagerSequestPlugin
 
         #region "Structures"
 
-        private struct udtSequestNodeProcessingStats
+        private struct SequestNodeProcessingStats
         {
             public int NumNodeMachines;
             public int NumSlaveProcesses;
@@ -107,7 +107,7 @@ namespace AnalysisManagerSequestPlugin
         private int mSequestNodesSpawned;
         private bool mIgnoreNodeCountActiveErrors;
 
-        private udtSequestNodeProcessingStats mSequestNodeProcessingStats;
+        private SequestNodeProcessingStats mSequestNodeProcessingStats;
 
         private DateTime mSequestSearchStartTime;
         private DateTime mSequestSearchEndTime;

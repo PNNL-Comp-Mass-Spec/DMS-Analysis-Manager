@@ -23,7 +23,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Status info
         /// </summary>
-        public struct udtStatusInfoType
+        public struct StatusInfo
         {
             /// <summary>
             /// Manager name
@@ -79,13 +79,13 @@ namespace AnalysisManagerBase.StatusReporting
             /// <summary>
             /// Current task
             /// </summary>
-            public udtTaskInfoType Task;
+            public TaskInfo Task;
         }
 
         /// <summary>
         /// Task info
         /// </summary>
-        public struct udtTaskInfoType
+        public struct TaskInfo
         {
             /// <summary>
             /// Analysis tool name
@@ -115,13 +115,13 @@ namespace AnalysisManagerBase.StatusReporting
             /// <summary>
             /// Task details
             /// </summary>
-            public udtTaskDetailsType TaskDetails;
+            public TaskDetails Details;
         }
 
         /// <summary>
         /// Task details
         /// </summary>
-        public struct udtTaskDetailsType
+        public struct TaskDetails
         {
             /// <summary>
             /// Task status detail
@@ -233,7 +233,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="statusInfo"></param>
         /// <param name="forceLogToDB"></param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-        public void LogStatus(udtStatusInfoType statusInfo, bool forceLogToDB)
+        public void LogStatus(StatusInfo statusInfo, bool forceLogToDB)
         {
             try
             {
@@ -277,13 +277,13 @@ namespace AnalysisManagerBase.StatusReporting
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@CurrentOperation", SqlType.VarChar, 256, statusInfo.Task.CurrentOperation);
 
                 // Task detail items
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskDetailStatusCode", SqlType.Int, 0, (int)statusInfo.Task.TaskDetails.Status);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Job", SqlType.Int, 0, statusInfo.Task.TaskDetails.Job);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@JobStep", SqlType.Int, 0, statusInfo.Task.TaskDetails.JobStep);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Dataset", SqlType.VarChar, 256, statusInfo.Task.TaskDetails.Dataset);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentLogMessage", SqlType.VarChar, 1024, statusInfo.Task.TaskDetails.MostRecentLogMessage);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentJobInfo", SqlType.VarChar, 256, statusInfo.Task.TaskDetails.MostRecentJobInfo);
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@SpectrumCount", SqlType.Int, 0, statusInfo.Task.TaskDetails.SpectrumCount);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskDetailStatusCode", SqlType.Int, 0, (int)statusInfo.Task.Details.Status);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Job", SqlType.Int, 0, statusInfo.Task.Details.Job);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@JobStep", SqlType.Int, 0, statusInfo.Task.Details.JobStep);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@Dataset", SqlType.VarChar, 256, statusInfo.Task.Details.Dataset);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentLogMessage", SqlType.VarChar, 1024, statusInfo.Task.Details.MostRecentLogMessage);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MostRecentJobInfo", SqlType.VarChar, 256, statusInfo.Task.Details.MostRecentJobInfo);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@SpectrumCount", SqlType.Int, 0, statusInfo.Task.Details.SpectrumCount);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.Output);
 

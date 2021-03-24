@@ -50,7 +50,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
         #region "Structures"
 
-        protected struct udtInputPropertyValuesType
+        protected struct InputPropertyValues
         {
             public string FastaFileName;
             public string SpectrumFileName;
@@ -77,7 +77,7 @@ namespace AnalysisManagerMSAlignPlugIn
         protected string mConsoleOutputErrorMsg;
 
         protected string mMSAlignWorkFolderPath;
-        protected udtInputPropertyValuesType mInputPropertyValues;
+        protected InputPropertyValues mInputPropertyValues;
 
         protected RunDosProgram mCmdRunner;
 

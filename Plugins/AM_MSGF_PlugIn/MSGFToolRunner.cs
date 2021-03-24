@@ -67,7 +67,7 @@ namespace AnalysisManagerMSGFPlugin
         [Obsolete("Old, unsupported tool")]
         private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
 
-        private struct udtSegmentFileInfoType
+        private struct SegmentFileInfo
         {
             /// <summary>
             /// Segment number
@@ -1687,7 +1687,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in RunMSGFonMSGFDB", ex);
+                LogError("Exception in RunMSGF on MSGFDB", ex);
                 return false;
             }
         }
@@ -1747,7 +1747,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in RunMSGFonMSGFDBCachedData", ex);
+                LogError("Exception in RunMSGF on MSGFDBCachedData", ex);
                 return false;
             }
 
@@ -1799,7 +1799,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                var segmentFileInfo = new List<udtSegmentFileInfoType>();
+                var segmentFileInfo = new List<SegmentFileInfo>();
                 var resultFiles = new List<string>();
 
                 // Split msgfInputFilePath into chunks with msgfEntriesPerSegment each
@@ -2226,7 +2226,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         private bool SplitMSGFInputFile(int msgfInputFileLineCount, string msgfInputFilePath, int msgfEntriesPerSegment,
-            ICollection<udtSegmentFileInfoType> segmentFileInfo)
+            ICollection<SegmentFileInfo> segmentFileInfo)
         {
             var linesRead = 0;
             var headerLine = string.Empty;
@@ -2243,7 +2243,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 StreamWriter writer = null;
 
-                udtSegmentFileInfoType udtThisSegment;
+                SegmentFileInfo udtThisSegment;
                 udtThisSegment.FilePath = string.Empty;
                 udtThisSegment.Entries = 0;
                 udtThisSegment.Segment = 0;

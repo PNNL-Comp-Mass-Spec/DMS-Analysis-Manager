@@ -59,7 +59,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         #region "Structures"
 
-        protected struct udtInputPropertyValuesType
+        protected struct InputPropertyValues
         {
             public string FastaFileName;
             public string SpectrumFileName;
@@ -82,7 +82,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         protected string mConsoleOutputErrorMsg;
 
         protected string mMSAlignWorkFolderPath;
-        protected udtInputPropertyValuesType mInputPropertyValues;
+        protected InputPropertyValues mInputPropertyValues;
 
         #endregion
 
