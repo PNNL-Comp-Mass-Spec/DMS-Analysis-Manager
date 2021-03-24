@@ -775,7 +775,7 @@ namespace AnalysisManagerExtractionPlugin
                 else
                 {
                     // File not found; look for DatasetName_msgfdb.mzid.gz or DatasetName_msgfdb_Part1.mzid.gz
-                    var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, DatasetName + "_msgfdb.txt");
+                    var fileToGetAlternative = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, DatasetName + "_msgfdb.txt");
                     var mzidSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, true, false);
 
                     if (!string.IsNullOrEmpty(mzidSourceDirAlt))
@@ -853,7 +853,7 @@ namespace AnalysisManagerExtractionPlugin
                         var tsvSourceDir = FileSearch.FindDataFile(tsvFile, false, false);
                         if (string.IsNullOrEmpty(tsvSourceDir))
                         {
-                            var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, DatasetName + "_msgfdb.txt");
+                            var fileToGetAlternative = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, DatasetName + "_msgfdb.txt");
                             var tsvSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, false, false);
                             if (!string.IsNullOrEmpty(tsvSourceDirAlt))
                             {
@@ -1353,13 +1353,13 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 // Make sure the ResultType is valid
-                var resultType = clsPHRPReader.GetPeptideHitResultType(resultTypeName);
+                var resultType = PHRPReader.PHRPReader.GetPeptideHitResultType(resultTypeName);
 
-                var toolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(resultType);
+                var toolVersionFile = PHRPReader.PHRPReader.GetToolVersionInfoFilename(resultType);
                 var toolVersionFileNewName = string.Empty;
 
                 var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
-                if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
+                if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

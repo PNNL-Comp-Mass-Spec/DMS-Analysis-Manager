@@ -9,6 +9,8 @@
 //*********************************************************************************************************
 
 using PHRPReader;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -20,7 +22,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorXTandem(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.XTandem)
+            : base(datasetName, workDir, PHRPReader.Enums.PeptideHitResultTypes.XTandem)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -30,20 +32,20 @@ namespace AnalysisManagerMSGFPlugin
         protected override void InitializeFilePaths()
         {
             // Customize mPHRPResultFilePath for X!Tandem _xt.txt files
-            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName));
-            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName));
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, XTandemSynFileReader.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, XTandemSynFileReader.GetPHRPSynopsisFileName(mDatasetName));
 
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM currentPSM)
+        protected override bool PassesFilters(PSM currentPSM)
         {
             var passesFilters = false;
 
             // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
             // This will typically keep all data in the _xt.txt file
 
-            var logEValue = currentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
+            var logEValue = currentPSM.GetScoreDbl(XTandemSynFileReader.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
             if (logEValue <= -0.3)
             {
                 passesFilters = true;

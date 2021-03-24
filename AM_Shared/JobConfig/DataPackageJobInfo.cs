@@ -82,7 +82,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// PeptideHit result type
         /// </summary>
-        public clsPHRPReader.PeptideHitResultTypes PeptideHitResultType { get; set; }
+        public PHRPReader.Enums.PeptideHitResultTypes PeptideHitResultType { get; set; }
 
         /// <summary>
         /// Settings file name
@@ -170,7 +170,7 @@ namespace AnalysisManagerBase.JobConfig
             Tool = string.Empty;
             NumberOfClonedSteps = 0;
             ResultType = string.Empty;
-            PeptideHitResultType = clsPHRPReader.PeptideHitResultTypes.Unknown;
+            PeptideHitResultType = PHRPReader.Enums.PeptideHitResultTypes.Unknown;
             SettingsFileName = string.Empty;
             ParameterFileName = string.Empty;
             GeneratedFASTAFileName = string.Empty;

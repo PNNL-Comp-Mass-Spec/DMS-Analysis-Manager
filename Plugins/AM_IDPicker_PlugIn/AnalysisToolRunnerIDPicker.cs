@@ -128,18 +128,18 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Determine the result type
                 var resultType = mJobParams.GetParam("ResultType");
 
-                var ePHRPResultType = clsPHRPReader.GetPeptideHitResultType(resultType);
-                if (ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
+                var ePHRPResultType = PHRPReader.PHRPReader.GetPeptideHitResultType(resultType);
+                if (ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.Unknown)
                 {
                     mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Define the path to the synopsis file
-                var synFilePath = Path.Combine(mWorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, mDatasetName));
+                var synFilePath = Path.Combine(mWorkDir, PHRPReader.PHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, mDatasetName));
                 if (!File.Exists(synFilePath))
                 {
-                    var alternateFilePath = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");
+                    var alternateFilePath = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");
                     if (File.Exists(alternateFilePath))
                     {
                         synFilePath = alternateFilePath;
@@ -293,7 +293,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool RunIDPickerWrapper(clsPHRPReader.PeptideHitResultTypes ePHRPResultType, string synFilePath, string fastaFilePath,
+        private bool RunIDPickerWrapper(PHRPReader.Enums.PeptideHitResultTypes ePHRPResultType, string synFilePath, string fastaFilePath,
             out bool processingError, out bool criticalError)
         {
             bool success;
@@ -303,7 +303,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // Determine the prefix used by decoy proteins
             var decoyPrefix = string.Empty;
 
-            if (ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
+            if (ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
             {
                 // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
@@ -502,7 +502,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, clsPHRPReader.PeptideHitResultTypes ePHRPResultType)
+        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PHRPReader.Enums.PeptideHitResultTypes ePHRPResultType)
         {
             // PepXML file creation should generally be done in less than 10 minutes
             // However, for huge fasta files, conversion could take several hours
@@ -523,7 +523,7 @@ namespace AnalysisManagerIDPickerPlugIn
                                 " /F:" + PossiblyQuotePath(fastaFilePath) +
                                 " /H:" + iHitsPerSpectrum;
 
-                if (ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                if (ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa || ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus)
                 {
                     // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
@@ -751,7 +751,7 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        private bool LookForDecoyProteinsInMSGFPlusResults(string synFilePath, clsPHRPReader.PeptideHitResultTypes resultType, ref string decoyPrefix)
+        private bool LookForDecoyProteinsInMSGFPlusResults(string synFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType, ref string decoyPrefix)
         {
             try
             {
@@ -766,7 +766,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     LogDebug("Looking for decoy proteins in the MSGF+ synopsis file");
                 }
 
-                using var reader = new clsPHRPReader(synFilePath, resultType, false, false, false);
+                using var reader = new PHRPReader.PHRPReader(synFilePath, resultType, false, false, false);
                 RegisterEvents(reader);
 
                 while (reader.MoveNext())
@@ -1004,7 +1004,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
         /// <param name="ePHRPResultType"></param>
-        private bool RunQonvert(string fastaFilePath, string decoyPrefix, clsPHRPReader.PeptideHitResultTypes ePHRPResultType)
+        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PHRPReader.Enums.PeptideHitResultTypes ePHRPResultType)
         {
             const int maxRuntimeMinutes = 90;
 
@@ -1017,7 +1017,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
 
             // Possibly override some options
-            if (ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ePHRPResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+            if (ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa || ePHRPResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus)
             {
                 // Higher MODa probability scores are better
                 mIDPickerOptions["SearchScoreWeights"] = "Probability 1";

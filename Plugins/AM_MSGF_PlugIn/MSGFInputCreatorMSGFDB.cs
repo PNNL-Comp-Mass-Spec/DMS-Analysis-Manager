@@ -11,6 +11,8 @@
 using PHRPReader;
 using System;
 using System.IO;
+using PHRPReader.Reader;
+using PHRPReader.Data;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -24,7 +26,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorMSGFDB(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
+            : base(datasetName, workDir, PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -34,8 +36,8 @@ namespace AnalysisManagerMSGFPlugin
         protected override void InitializeFilePaths()
         {
             // Customize mPHRPResultFilePath for MSGFDB synopsis files
-            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFPlus.GetPHRPFirstHitsFileName(mDatasetName));
-            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFPlus.GetPHRPSynopsisFileName(mDatasetName));
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, MSGFPlusSynFileReader.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, MSGFPlusSynFileReader.GetPHRPSynopsisFileName(mDatasetName));
 
             UpdateMSGFInputOutputFilePaths();
         }
@@ -51,7 +53,7 @@ namespace AnalysisManagerMSGFPlugin
         /// Also, note that Probability is actually just a score between 0 and 1; not a true probability
         /// </remarks>
         [Obsolete("This function does not appear to be used anywhere")]
-        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, clsPHRPReader.PeptideHitResultTypes resultType)
+        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType)
         {
             try
             {
@@ -65,15 +67,15 @@ namespace AnalysisManagerMSGFPlugin
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                var probabilityColumnName = clsPHRPParserMODPlus.DATA_COLUMN_Probability;
+                var probabilityColumnName = MODPlusSynFileReader.DATA_COLUMN_Probability;
 
-                if (resultType == clsPHRPReader.PeptideHitResultTypes.MODa)
+                if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MODa)
                 {
-                    probabilityColumnName = clsPHRPParserMODa.DATA_COLUMN_Probability;
+                    probabilityColumnName = MODaSynFileReader.DATA_COLUMN_Probability;
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using var reader = new clsPHRPReader(sourceFilePath, resultType, startupOptions);
+                using var reader = new PHRPReader.PHRPReader(sourceFilePath, resultType, startupOptions);
                 RegisterEvents(reader);
 
                 reader.SkipDuplicatePSMs = false;
@@ -129,7 +131,7 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.PeptideHitResultTypes.MSGFPlus, startupOptions);
+                using var reader = new PHRPReader.PHRPReader(sourceFilePath, PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus, startupOptions);
                 RegisterEvents(reader);
 
                 reader.SkipDuplicatePSMs = false;
@@ -162,7 +164,7 @@ namespace AnalysisManagerMSGFPlugin
             return true;
         }
 
-        protected override bool PassesFilters(clsPSM currentPSM)
+        protected override bool PassesFilters(PSM currentPSM)
         {
             // All MSGFDB data is considered to be "filter-passing"
             return true;

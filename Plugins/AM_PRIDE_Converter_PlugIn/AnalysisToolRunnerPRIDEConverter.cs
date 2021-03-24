@@ -12,6 +12,7 @@ using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
+using PHRPReader.Reader;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
@@ -1264,13 +1265,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // else
                 // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
 
-                var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
+                var synopsisFileName = PHRPReader.PHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
 
                 var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileName);
 
                 if (!File.Exists(synopsisFilePath))
                 {
-                    var synopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePath, "Dataset_msgfdb.txt");
+                    var synopsisFilePathAlt = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePath, "Dataset_msgfdb.txt");
                     if (File.Exists(synopsisFilePathAlt))
                     {
                         synopsisFilePath = synopsisFilePathAlt;
@@ -1287,14 +1288,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else if (!File.Exists(synopsisFilePath))
                 {
-                    var synopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePathWithJob, "Dataset_msgfdb.txt");
+                    var synopsisFilePathAlt = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePathWithJob, "Dataset_msgfdb.txt");
                     if (File.Exists(synopsisFilePathAlt))
                     {
                         synopsisFilePath = synopsisFilePathAlt;
                     }
                 }
 
-                using (var reader = new clsPHRPReader(synopsisFilePath, dataPkgJob.PeptideHitResultType, true, true))
+                using (var reader = new PHRPReader.PHRPReader(synopsisFilePath, dataPkgJob.PeptideHitResultType, true, true))
                 {
                     RegisterEvents(reader);
 
@@ -1320,7 +1321,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case clsPHRPReader.PeptideHitResultTypes.Sequest:
+                            case PHRPReader.Enums.PeptideHitResultTypes.Sequest:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1339,12 +1340,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     {
                                         pValue = 0.025;
                                         // Note: storing 1000-XCorr so that lower values will be considered higher confidence
-                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1));
+                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_XCorr, 1));
                                     }
                                 }
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.XTandem:
+                            case PHRPReader.Enums.PeptideHitResultTypes.XTandem:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1362,13 +1363,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     else
                                     {
                                         pValue = 0.025;
-                                        scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
+                                        scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(XTandemSynFileReader.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
                                     }
                                 }
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.Inspect:
-                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
+                            case PHRPReader.Enums.PeptideHitResultTypes.Inspect:
+                                pValue = reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
 
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
@@ -1385,25 +1386,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     else
                                     {
                                         // Note: storing 1000-TotalPRMScore so that lower values will be considered higher confidence
-                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1));
+                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_TotalPRMScore, 1));
                                     }
                                 }
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
-                                fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, -1);
+                            case PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus:
+                                fdr = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
                                 {
                                     fdrValuesArePresent = true;
                                 }
 
-                                pepFDR = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_PepFDR, -1);
+                                pepFDR = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_PepFDR, -1);
                                 if (pepFDR > -1)
                                 {
                                     pepFDRValuesArePresent = true;
                                 }
 
-                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
                                 scoreForCurrentMatch = msgfSpecEValue;
                                 break;
                         }
@@ -1494,7 +1495,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
 
-                                if (dataPkgJob.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
+                                if (dataPkgJob.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
                                 {
                                     if (proteinUCase.StartsWith("REV_") || proteinUCase.StartsWith("XXX_"))
                                     {
@@ -1530,29 +1531,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case clsPHRPReader.PeptideHitResultTypes.Sequest:
-                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp);
+                            case PHRPReader.Enums.PeptideHitResultTypes.Sequest:
+                                totalPRMScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_Sp);
                                 pValueFormatted = pValue.ToString("0.00");
-                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-                                deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2);
+                                deltaScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn);
+                                deltaScoreOther = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn2);
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.XTandem:
-                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore);
+                            case PHRPReader.Enums.PeptideHitResultTypes.XTandem:
+                                totalPRMScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_Peptide_Hyperscore);
                                 pValueFormatted = pValue.ToString("0.00");
-                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2);
+                                deltaScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_DeltaCn2);
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.Inspect:
-                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
-                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue);
-                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore);
-                                deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
+                            case PHRPReader.Enums.PeptideHitResultTypes.Inspect:
+                                totalPRMScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_TotalPRMScore);
+                                pValueFormatted = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_PValue);
+                                deltaScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScore);
+                                deltaScoreOther = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScoreOther);
                                 break;
 
-                            case clsPHRPReader.PeptideHitResultTypes.MSGFPlus:
-                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_DeNovoScore);
-                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFPlus.DATA_COLUMN_PValue);
+                            case PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus:
+                                totalPRMScore = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_DeNovoScore);
+                                pValueFormatted = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_PValue);
                                 break;
                         }
 
@@ -1603,7 +1604,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (!validPSM)
                             continue;
 
-                        if (!clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(
+                        if (!PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(
                             reader.CurrentPSM.Peptide, out _, out var prefix, out var suffix))
                         {
                             prefix = string.Empty;
@@ -2391,7 +2392,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         [Obsolete("No longer used")]
         private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader xmlReader, XmlWriter writer,
-            clsPHRPReader.PeptideHitResultTypes PeptideHitResultType)
+            PHRPReader.Enums.PeptideHitResultTypes PeptideHitResultType)
         {
             var toolName = string.Empty;
             var toolVersion = string.Empty;
@@ -2441,15 +2442,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
+                if (PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
+                else if (PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
@@ -3672,7 +3673,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Update the .mzid.gz file(s) for this job
 
-            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus)
+            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
             {
                 mMessage = string.Empty;
 
@@ -3697,8 +3698,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Deprecated
-            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.PeptideHitResultTypes.Unknown ||
-            //     jobInfo.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Sequest)
+            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != PHRPReader.Enums.PeptideHitResultTypes.Unknown ||
+            //     jobInfo.Value.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.Sequest)
             // {
             //     var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
             //     var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));

@@ -373,7 +373,7 @@ namespace AnalysisManagerBase.JobConfig
                 ResultType = curRow["ResultType"].CastDBVal<string>()
             };
 
-            jobInfo.PeptideHitResultType = clsPHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
+            jobInfo.PeptideHitResultType = PHRPReader.PHRPReader.GetPeptideHitResultType(jobInfo.ResultType);
             jobInfo.SettingsFileName = curRow["SettingsFileName"].CastDBVal<string>();
             jobInfo.ParameterFileName = curRow["ParameterFileName"].CastDBVal<string>();
             jobInfo.LegacyFastaFileName = curRow["OrganismDBName"].CastDBVal<string>();
@@ -484,7 +484,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 foreach (var kvItem in dataPackageJobs)
                 {
-                    if (kvItem.Value.PeptideHitResultType == clsPHRPReader.PeptideHitResultTypes.Unknown)
+                    if (kvItem.Value.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.Unknown)
                     {
                         additionalJobs.Add(kvItem.Value);
                     }

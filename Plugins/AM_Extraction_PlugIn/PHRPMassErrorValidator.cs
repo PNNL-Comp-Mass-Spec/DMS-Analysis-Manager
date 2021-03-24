@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -36,16 +38,16 @@ namespace AnalysisManagerExtractionPlugin
             OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
         }
 
-        private clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader phrpReader, string searchEngineParamFilePath, clsPHRPReader.PeptideHitResultTypes resultType)
+        private SearchEngineParameters LoadSearchEngineParameters(PHRPReader.PHRPReader phrpReader, string searchEngineParamFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType)
         {
-            clsSearchEngineParameters searchEngineParams = null;
+            SearchEngineParameters searchEngineParams = null;
 
             try
             {
                 if (string.IsNullOrEmpty(searchEngineParamFilePath))
                 {
                     OnWarningEvent("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da");
-                    searchEngineParams = new clsSearchEngineParameters(resultType.ToString());
+                    searchEngineParams = new SearchEngineParameters(resultType.ToString());
                     searchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
                 }
                 else
@@ -56,7 +58,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         OnWarningEvent("Error loading search engine parameter file " + Path.GetFileName(searchEngineParamFilePath) +
                                            "; will assume a maximum tolerance of 10 Da");
-                        searchEngineParams = new clsSearchEngineParameters(resultType.ToString());
+                        searchEngineParams = new SearchEngineParameters(resultType.ToString());
                         searchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
                     }
                 }
@@ -78,15 +80,15 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
         /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-        public bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
+        public bool ValidatePHRPResultMassErrors(string inputFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try
             {
                 ErrorMessage = string.Empty;
 
-                var peptideMassCalculator = new clsPeptideMassCalculator();
+                var peptideMassCalculator = new PeptideMassCalculator();
 
-                var startupOptions = new clsPHRPStartupOptions
+                var startupOptions = new PHRPStartupOptions
                 {
                     LoadModsAndSeqInfo = true,
                     LoadMSGFResults = false,
@@ -101,7 +103,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
 
-                using (var reader = new clsPHRPReader(inputFilePath, resultType, startupOptions))
+                using (var reader = new PHRPReader.PHRPReader(inputFilePath, resultType, startupOptions))
                 {
                     RegisterEvents(reader);
 
@@ -143,7 +145,7 @@ namespace AnalysisManagerExtractionPlugin
                     var searchEngineParams = LoadSearchEngineParameters(reader, searchEngineParamFilePath, resultType);
 
                     // Check for a custom charge carrier mass
-                    if (clsPHRPParserMSGFPlus.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
+                    if (MSGFPlusSynFileReader.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
                     {
                         if (mDebugLevel >= 2)
                         {
@@ -199,7 +201,7 @@ namespace AnalysisManagerExtractionPlugin
                         var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
                         double toleranceCurrent;
 
-                        if (resultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus &&
+                        if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus &&
                             highResMS1 &&
                             currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
                         {

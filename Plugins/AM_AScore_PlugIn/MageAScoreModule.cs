@@ -204,7 +204,7 @@ namespace AnalysisManager_AScore_PlugIn
                 var ascoreParameters = new ParameterFileManager(paramFileToUse);
                 RegisterEvents(ascoreParameters);
 
-                var peptideMassCalculator = new PHRPReader.clsPeptideMassCalculator();
+                var peptideMassCalculator = new PHRPReader.PeptideMassCalculator();
 
                 var spectraCache = new SpectraManagerCache(peptideMassCalculator);
                 RegisterEvents(spectraCache);

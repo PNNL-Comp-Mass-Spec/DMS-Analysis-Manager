@@ -9,6 +9,8 @@
 //*********************************************************************************************************
 
 using PHRPReader;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -20,7 +22,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorInspect(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.Inspect)
+            : base(datasetName, workDir, PHRPReader.Enums.PeptideHitResultTypes.Inspect)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -30,22 +32,22 @@ namespace AnalysisManagerMSGFPlugin
         protected override void InitializeFilePaths()
         {
             // Customize mPHRPResultFilePath for Inspect synopsis files
-            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPFirstHitsFileName(mDatasetName));
-            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPSynopsisFileName(mDatasetName));
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, InspectSynFileReader.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, InspectSynFileReader.GetPHRPSynopsisFileName(mDatasetName));
 
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM currentPSM)
+        protected override bool PassesFilters(PSM currentPSM)
         {
             var passesFilters = false;
 
             // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
             // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
-            var pValue = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
-            var totalPRMScore = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
-            var fScore = currentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
+            var pValue = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_PValue);
+            var totalPRMScore = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_TotalPRMScore);
+            var fScore = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_FScore);
 
             if (pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0)
             {

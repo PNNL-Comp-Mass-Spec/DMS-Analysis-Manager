@@ -9,6 +9,8 @@
 //*********************************************************************************************************
 
 using PHRPReader;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -20,7 +22,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorSequest(string datasetName, string workDir)
-            : base(datasetName, workDir, clsPHRPReader.PeptideHitResultTypes.Sequest)
+            : base(datasetName, workDir, PHRPReader.Enums.PeptideHitResultTypes.Sequest)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -30,13 +32,13 @@ namespace AnalysisManagerMSGFPlugin
         protected override void InitializeFilePaths()
         {
             // Customize mPHRPResultFilePath for SEQUEST synopsis files
-            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPFirstHitsFileName(mDatasetName));
-            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserSequest.GetPHRPSynopsisFileName(mDatasetName));
+            mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, SequestSynFileReader.GetPHRPFirstHitsFileName(mDatasetName));
+            mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, SequestSynFileReader.GetPHRPSynopsisFileName(mDatasetName));
 
             UpdateMSGFInputOutputFilePaths();
         }
 
-        protected override bool PassesFilters(clsPSM currentPSM)
+        protected override bool PassesFilters(PSM currentPSM)
         {
             bool isProteinTerminus;
             var passesFilters = false;
@@ -55,11 +57,11 @@ namespace AnalysisManagerMSGFPlugin
 
             isProteinTerminus = currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-");
 
-            var deltaCN = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-            var xCorr = currentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
+            var deltaCN = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_DelCn);
+            var xCorr = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_XCorr);
 
-            int cleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(currentPSM.CleavageState);
-            var cleavageStateAlt = (short)currentPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
+            int cleavageState = PeptideCleavageStateCalculator.CleavageStateToShort(currentPSM.CleavageState);
+            var cleavageStateAlt = (short)currentPSM.GetScoreInt(SequestSynFileReader.DATA_COLUMN_NumTrypticEnds, 0);
 
             if (cleavageStateAlt > cleavageState)
             {

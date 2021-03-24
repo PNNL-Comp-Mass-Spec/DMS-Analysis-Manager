@@ -18,6 +18,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PeptideHitResultsProcessor.Processor;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -311,7 +312,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         if (!string.IsNullOrWhiteSpace(fastaFilePath))
                         {
-                            if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
+                            if (PHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
                             {
                                 filesToCheck.Add("_ProteinMods.txt");
                             }

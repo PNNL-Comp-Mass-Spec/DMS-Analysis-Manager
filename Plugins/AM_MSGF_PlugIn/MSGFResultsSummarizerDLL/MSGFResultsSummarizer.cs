@@ -20,6 +20,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 using PRISMDatabaseUtils;
 
 // ReSharper disable UnusedMember.Global
@@ -156,7 +158,7 @@ namespace MSGFResultsSummarizer
 
         public bool PostJobPSMResultsToDB { get; set; }
 
-        public clsPHRPReader.PeptideHitResultTypes ResultType { get; }
+        public PHRPReader.Enums.PeptideHitResultTypes ResultType { get; }
 
         public string ResultTypeName => ResultType.ToString();
 
@@ -222,7 +224,7 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
-        public MSGFResultsSummarizer(clsPHRPReader.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
+        public MSGFResultsSummarizer(PHRPReader.Enums.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
         }
@@ -238,7 +240,7 @@ namespace MSGFResultsSummarizer
         /// <param name="debugLevel">Debug Level</param>
         /// <param name="traceMode">When true, show database queries</param>
         public MSGFResultsSummarizer(
-            clsPHRPReader.PeptideHitResultTypes resultType,
+            PHRPReader.Enums.PeptideHitResultTypes resultType,
             string datasetName,
             int job,
             string sourceDirectoryPath,
@@ -282,7 +284,7 @@ namespace MSGFResultsSummarizer
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                using var reader = new clsPHRPReader(firstHitsFilePath, startupOptions);
+                using var reader = new PHRPReader.PHRPReader(firstHitsFilePath, startupOptions);
                 RegisterEvents(reader);
 
                 while (reader.MoveNext())
@@ -502,8 +504,8 @@ namespace MSGFResultsSummarizer
         private bool FilterAndComputeStats(
             bool usingMSGFOrEValueFilter,
             IDictionary<int, PSMInfo> normalizedPSMs,
-            IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
-            IDictionary<int, clsSeqInfo> sequenceInfo)
+            IDictionary<int, List<ProteinInfo>> seqToProteinMap,
+            IDictionary<int, SequenceInfo> sequenceInfo)
         {
             var filteredPSMs = new Dictionary<int, PSMInfo>();
 
@@ -521,7 +523,7 @@ namespace MSGFResultsSummarizer
 
             if (usingMSGFOrEValueFilter)
             {
-                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSAlign)
                 {
                     // Filter on EValue
                     success = FilterPSMsByEValue(EValueThreshold, normalizedPSMs, filteredPSMs);
@@ -832,9 +834,9 @@ namespace MSGFResultsSummarizer
             return PSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
-        private clsPHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
+        private PHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
         {
-            var startupOptions = new clsPHRPStartupOptions
+            var startupOptions = new PHRPStartupOptions
             {
                 LoadModsAndSeqInfo = false,
                 LoadMSGFResults = false,
@@ -905,7 +907,7 @@ namespace MSGFResultsSummarizer
                 var dbTools = mStoredProcedureExecutor;
                 var reportThreshold = MSGFThreshold;
                 var thresholdIsEValue = 0;
-                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSAlign)
                 {
                     reportThreshold = EValueThreshold;
                     thresholdIsEValue = 1;
@@ -995,14 +997,14 @@ namespace MSGFResultsSummarizer
                 // Define the file paths
                 //
                 // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                var phrpFirstHitsFileName = clsPHRPReader.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                var phrpFirstHitsFileName = PHRPReader.PHRPReader.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
 
                 // We use the Synopsis file to count the number of peptides and proteins observed
-                var phrpSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ResultType, mDatasetName);
+                var phrpSynopsisFileName = PHRPReader.PHRPReader.GetPHRPSynopsisFileName(ResultType, mDatasetName);
 
-                if (ResultType == clsPHRPReader.PeptideHitResultTypes.XTandem || ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign ||
-                    ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
-                    ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.XTandem || ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSAlign ||
+                    ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa || ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus ||
+                    ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
@@ -1011,7 +1013,7 @@ namespace MSGFResultsSummarizer
                 if (phrpSynopsisFileName == null)
                     throw new NullReferenceException(nameof(phrpSynopsisFileName) + " is null");
 
-                var modSummaryFileName = clsPHRPReader.GetPHRPModSummaryFileName(ResultType, DatasetName);
+                var modSummaryFileName = PHRPReader.PHRPReader.GetPHRPModSummaryFileName(ResultType, DatasetName);
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(phrpSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
@@ -1127,8 +1129,8 @@ namespace MSGFResultsSummarizer
             string phrpSynopsisFilePath,
             IDictionary<int, PSMInfo> normalizedPSMs,
             out SortedList<int, int> resultToSeqMap,
-            out SortedList<int, List<clsProteinInfo>> seqToProteinMap,
-            out SortedList<int, clsSeqInfo> sequenceInfo)
+            out SortedList<int, List<ProteinInfo>> seqToProteinMap,
+            out SortedList<int, SequenceInfo> sequenceInfo)
         {
             var specEValue = PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
             var eValue = PSMInfo.UNKNOWN_EVALUE;
@@ -1145,13 +1147,13 @@ namespace MSGFResultsSummarizer
             var trypsinProteinMatcher = GetTrypsinRegEx();
 
             resultToSeqMap = new SortedList<int, int>();
-            seqToProteinMap = new SortedList<int, List<clsProteinInfo>>();
-            sequenceInfo = new SortedList<int, clsSeqInfo>();
+            seqToProteinMap = new SortedList<int, List<ProteinInfo>>();
+            sequenceInfo = new SortedList<int, SequenceInfo>();
 
             try
             {
-                if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus ||
-                    ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa || ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus ||
+                    ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
                 {
                     loadMSGFResults = false;
                 }
@@ -1165,13 +1167,13 @@ namespace MSGFResultsSummarizer
 
                 // Load the result to sequence mapping, sequence IDs, and protein information
                 // This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
-                var seqMapReader = new clsPHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
+                var seqMapReader = new PHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
 
                 var sequenceInfoAvailable = false;
 
                 if (!string.IsNullOrEmpty(seqMapReader.ResultToSeqMapFilename))
                 {
-                    var resultToSeqMapFilePath = clsPHRPReader.FindResultToSeqMapFile(seqMapReader.InputDirectoryPath,
+                    var resultToSeqMapFilePath = PHRPReader.PHRPReader.FindResultToSeqMapFile(seqMapReader.InputDirectoryPath,
                                                                                       phrpSynopsisFilePath,
                                                                                       seqMapReader.ResultToSeqMapFilename,
                                                                                       out _);
@@ -1218,7 +1220,7 @@ namespace MSGFResultsSummarizer
                 //
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
-                using var reader = new clsPHRPReader(phrpSynopsisFilePath, startupOptions);
+                using var reader = new PHRPReader.PHRPReader(phrpSynopsisFilePath, startupOptions);
                 RegisterEvents(reader);
 
                 while (reader.MoveNext())
@@ -1233,7 +1235,7 @@ namespace MSGFResultsSummarizer
 
                     var valid = false;
 
-                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                    if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSAlign)
                     {
                         // Use the EValue reported by MSAlign
 
@@ -1242,17 +1244,17 @@ namespace MSGFResultsSummarizer
                             valid = double.TryParse(eValueText, out eValue);
                         }
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa || ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                    else if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa || ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus)
                     {
                         // MODa / MODPlus results don't have spectral probability, but they do have FDR
                         valid = true;
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                    else if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
                     {
                         // Use SpecEValue in place of SpecProb
                         valid = true;
 
-                        if (currentPSM.TryGetScore(clsPHRPParserMSPathFinder.DATA_COLUMN_SpecEValue, out var specEValueText))
+                        if (currentPSM.TryGetScore(MSPathFinderSynFileReader.DATA_COLUMN_SpecEValue, out var specEValueText))
                         {
                             if (!string.IsNullOrWhiteSpace(specEValueText))
                             {
@@ -1284,25 +1286,25 @@ namespace MSGFResultsSummarizer
                     var psmEValue = eValue;
                     double psmFDR;
 
-                    if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSGFPlus || ResultType == clsPHRPReader.PeptideHitResultTypes.MSAlign)
+                    if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus || ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSAlign)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_FDR, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, PSMInfo.UNKNOWN_FDR);
                         if (psmFDR < 0)
                         {
-                            psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSGFPlus.DATA_COLUMN_EFDR, PSMInfo.UNKNOWN_FDR);
+                            psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_EFDR, PSMInfo.UNKNOWN_FDR);
                         }
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODa)
+                    else if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODa)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MODPlus)
+                    else if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
-                    else if (ResultType == clsPHRPReader.PeptideHitResultTypes.MSPathFinder)
+                    else if (ResultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
                     else
                     {
@@ -1473,8 +1475,8 @@ namespace MSGFResultsSummarizer
                         }
 
                         // Check whether this peptide is partially or fully tryptic
-                        if (currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Full ||
-                            currentPSM.CleavageState == clsPeptideCleavageStateCalculator.PeptideCleavageStateConstants.Partial)
+                        if (currentPSM.CleavageState == PeptideCleavageStateCalculator.PeptideCleavageState.Full ||
+                            currentPSM.CleavageState == PeptideCleavageStateCalculator.PeptideCleavageState.Partial)
                         {
                             psmInfo.Tryptic = true;
                         }
@@ -1543,11 +1545,11 @@ namespace MSGFResultsSummarizer
             var aminoAcidList = new StringBuilder(sequenceWithMods.Length);
             var modList = new List<KeyValuePair<string, int>>();
 
-            clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, out var primarySequence, out _, out _);
+            PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, out var primarySequence, out _, out _);
 
             for (var index = 0; index <= primarySequence.Length - 1; index++)
             {
-                if (clsPHRPReader.IsLetterAtoZ(primarySequence[index]))
+                if (PHRPReader.PHRPReader.IsLetterAtoZ(primarySequence[index]))
                 {
                     aminoAcidList.Append(primarySequence[index]);
                 }
@@ -1560,7 +1562,7 @@ namespace MSGFResultsSummarizer
             return GetNormalizedPeptideInfo(aminoAcidList.ToString(), modList, seqID);
         }
 
-        private NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, clsSeqInfo seqInfo, int seqID)
+        private NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, SequenceInfo seqInfo, int seqID)
         {
             var modList = new List<KeyValuePair<string, int>>();
 
@@ -1788,8 +1790,8 @@ namespace MSGFResultsSummarizer
         private bool SummarizeResults(
             bool usingMSGFOrEValueFilter,
             IDictionary<int, PSMInfo> filteredPSMs,
-            IDictionary<int, List<clsProteinInfo>> seqToProteinMap,
-            IDictionary<int, clsSeqInfo> sequenceInfo)
+            IDictionary<int, List<ProteinInfo>> seqToProteinMap,
+            IDictionary<int, SequenceInfo> sequenceInfo)
         {
             try
             {
