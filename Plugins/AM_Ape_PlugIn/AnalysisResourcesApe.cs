@@ -1,5 +1,4 @@
 using System;
-using AnalysisManagerBase;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;

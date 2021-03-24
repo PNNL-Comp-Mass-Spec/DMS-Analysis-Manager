@@ -6,7 +6,6 @@
 // Uses ReAdW to create a .mzXML or .mzML file
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using System;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;

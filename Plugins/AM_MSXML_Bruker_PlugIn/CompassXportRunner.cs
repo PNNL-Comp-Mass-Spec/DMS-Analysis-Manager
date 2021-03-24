@@ -6,7 +6,6 @@
 // Uses CompassXport to create a .mzXML or .mzML file
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using PRISM;
 using System;
 using System.IO;

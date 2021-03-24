@@ -1,6 +1,4 @@
 using AnalysisManagerBase;
-using PRISM.Logging;
-using System;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
 

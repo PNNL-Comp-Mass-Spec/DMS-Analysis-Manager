@@ -7,7 +7,6 @@
 // Copyright 2009, Battelle Memorial Institute
 // Started January 20, 2009
 
-using AnalysisManagerBase;
 using MSMSSpectrumFilter;
 using MyEMSLReader;
 using System;

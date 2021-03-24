@@ -8,7 +8,6 @@
 
 using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
-using MSGFResultsSummarizer;
 using PHRPReader;
 using System;
 using System.Collections.Generic;

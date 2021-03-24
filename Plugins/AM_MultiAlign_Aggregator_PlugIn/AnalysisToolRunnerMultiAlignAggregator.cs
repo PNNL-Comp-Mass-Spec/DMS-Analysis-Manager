@@ -1,4 +1,3 @@
-using AnalysisManagerBase;
 using PRISM.Logging;
 using System;
 using System.Collections.Generic;

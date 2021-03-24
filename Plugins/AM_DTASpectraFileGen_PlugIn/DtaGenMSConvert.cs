@@ -7,7 +7,6 @@
 // Next, converts the .MGF file to a _DTA.txt file
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;

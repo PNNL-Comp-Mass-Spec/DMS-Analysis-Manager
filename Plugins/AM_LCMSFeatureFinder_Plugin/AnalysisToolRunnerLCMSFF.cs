@@ -5,7 +5,6 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using PRISM;
 using System;
 using System.Collections.Generic;

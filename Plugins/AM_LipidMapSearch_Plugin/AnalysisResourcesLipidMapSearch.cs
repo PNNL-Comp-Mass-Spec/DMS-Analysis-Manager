@@ -1,4 +1,3 @@
-using AnalysisManagerBase;
 using MyEMSLReader;
 using PRISM.Logging;
 using System.IO;

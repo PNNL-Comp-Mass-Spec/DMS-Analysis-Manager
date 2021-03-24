@@ -1,4 +1,3 @@
-using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using MyEMSLReader;

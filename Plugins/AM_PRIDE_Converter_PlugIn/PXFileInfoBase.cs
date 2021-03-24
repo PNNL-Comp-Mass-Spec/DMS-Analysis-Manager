@@ -1,5 +1,4 @@
-﻿using AnalysisManagerBase;
-using AnalysisManagerBase.JobConfig;
+﻿using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {

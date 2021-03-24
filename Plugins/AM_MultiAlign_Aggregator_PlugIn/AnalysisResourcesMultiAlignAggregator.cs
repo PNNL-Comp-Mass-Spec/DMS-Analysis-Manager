@@ -1,5 +1,4 @@
-﻿using AnalysisManagerBase;
-using AnalysisManagerBase.AnalysisTool;
+﻿using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn

@@ -1,5 +1,4 @@
-﻿using AnalysisManagerBase;
-using PRISM.Logging;
+﻿using PRISM.Logging;
 using System;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;

@@ -1,5 +1,4 @@
-﻿using AnalysisManagerBase;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerPRIDEConverterPlugIn

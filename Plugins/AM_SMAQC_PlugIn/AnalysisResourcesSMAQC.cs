@@ -1,4 +1,3 @@
-using AnalysisManagerBase;
 using PHRPReader;
 using System;
 using System.Collections.Generic;

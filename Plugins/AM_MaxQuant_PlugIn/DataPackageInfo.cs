@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 
 namespace AnalysisManagerMaxQuantPlugIn
