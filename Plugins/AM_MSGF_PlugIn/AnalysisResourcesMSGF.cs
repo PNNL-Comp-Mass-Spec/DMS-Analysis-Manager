@@ -88,16 +88,16 @@ namespace AnalysisManagerMSGFPlugin
             bool onlyCopyFirstHitsAndSynopsisFiles;
 
             // Make sure the ResultType is valid
-            var resultType = PHRPReader.PHRPReader.GetPeptideHitResultType(resultTypeName);
+            var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
             bool validToolType;
-            if (resultType == PHRPReader.Enums.PeptideHitResultTypes.Sequest ||
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.XTandem ||
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.Inspect ||
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus || // MS-GF+
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.MODa ||
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus ||
-                resultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
+            if (resultType == Enums.PeptideHitResultTypes.Sequest ||
+                resultType == Enums.PeptideHitResultTypes.XTandem ||
+                resultType == Enums.PeptideHitResultTypes.Inspect ||
+                resultType == Enums.PeptideHitResultTypes.MSGFPlus || // MS-GF+
+                resultType == Enums.PeptideHitResultTypes.MODa ||
+                resultType == Enums.PeptideHitResultTypes.MODPlus ||
+                resultType == Enums.PeptideHitResultTypes.MSPathFinder)
             {
                 validToolType = true;
             }
@@ -117,7 +117,7 @@ namespace AnalysisManagerMSGFPlugin
             var rawDataType = GetRawDataType(rawDataTypeName);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
-            if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
+            if (resultType == Enums.PeptideHitResultTypes.MSGFPlus)
             {
                 // We do not need the mzML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
@@ -136,9 +136,9 @@ namespace AnalysisManagerMSGFPlugin
                     onlyCopyFirstHitsAndSynopsisFiles = !MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion);
                 }
             }
-            else if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MODa ||
-                     resultType == PHRPReader.Enums.PeptideHitResultTypes.MODPlus ||
-                     resultType == PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder)
+            else if (resultType == Enums.PeptideHitResultTypes.MODa ||
+                     resultType == Enums.PeptideHitResultTypes.MODPlus ||
+                     resultType == Enums.PeptideHitResultTypes.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
                 onlyCopyFirstHitsAndSynopsisFiles = true;
@@ -179,7 +179,7 @@ namespace AnalysisManagerMSGFPlugin
                 mJobParams.AddResultFileToSkip(paramFile);
 
                 // Also copy the _ProteinMods.txt file
-                var proteinModsFile = PHRPReader.PHRPReader.GetPHRPProteinModsFileName(resultType, DatasetName);
+                var proteinModsFile = ReaderFactory.GetPHRPProteinModsFileName(resultType, DatasetName);
                 if (!FileSearch.FindAndRetrieveMiscFiles(proteinModsFile, false))
                 {
                     // Ignore this error; we don't really need this file
@@ -191,7 +191,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _syn.txt file
-            var synopsisFile = PHRPReader.PHRPReader.GetPHRPSynopsisFileName(resultType, DatasetName);
+            var synopsisFile = ReaderFactory.GetPHRPSynopsisFileName(resultType, DatasetName);
             string synFilePath;
 
             if (!string.IsNullOrEmpty(synopsisFile))
@@ -210,7 +210,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _fht.txt file
-            var firstHitsFile = PHRPReader.PHRPReader.GetPHRPFirstHitsFileName(resultType, DatasetName);
+            var firstHitsFile = ReaderFactory.GetPHRPFirstHitsFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(firstHitsFile))
             {
                 var firstHitsFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref firstHitsFile, synFilePath);
@@ -222,7 +222,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _ResultToSeqMap.txt file
-            var resultToSeqMapFile = PHRPReader.PHRPReader.GetPHRPResultToSeqMapFileName(resultType, DatasetName);
+            var resultToSeqMapFile = ReaderFactory.GetPHRPResultToSeqMapFileName(resultType, DatasetName);
             bool resultToSeqMapFileFound;
 
             if (!string.IsNullOrEmpty(resultToSeqMapFile))
@@ -240,7 +240,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _SeqToProteinMap.txt file
-            var seqToProteinMapFile = PHRPReader.PHRPReader.GetPHRPSeqToProteinMapFileName(resultType, DatasetName);
+            var seqToProteinMapFile = ReaderFactory.GetPHRPSeqToProteinMapFileName(resultType, DatasetName);
             bool seqToProteinMapFileFound;
             if (!string.IsNullOrEmpty(seqToProteinMapFile))
             {
@@ -257,7 +257,7 @@ namespace AnalysisManagerMSGFPlugin
             }
 
             // Get the PHRP _PepToProtMapMTS.txt file
-            var pepToProteinMapFile = PHRPReader.PHRPReader.GetPHRPPepToProteinMapFileName(resultType, DatasetName);
+            var pepToProteinMapFile = ReaderFactory.GetPHRPPepToProteinMapFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(pepToProteinMapFile))
             {
                 // We're passing a dummy syn file name to FileSearch.FindAndRetrievePHRPDataFile
@@ -294,7 +294,7 @@ namespace AnalysisManagerMSGFPlugin
             // Get the ModSummary.txt file
             // Note that MSGFResultsSummarizer will use this file to determine if a dynamic reporter ion search was performed (e.g. dynamic TMT)
 
-            var modSummaryFile = PHRPReader.PHRPReader.GetPHRPModSummaryFileName(resultType, DatasetName);
+            var modSummaryFile = ReaderFactory.GetPHRPModSummaryFileName(resultType, DatasetName);
             var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
             if (!modSummaryFileFound)
             {
@@ -371,7 +371,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            var seqInfoFile = PHRPReader.PHRPReader.GetPHRPSeqInfoFileName(resultType, DatasetName);
+            var seqInfoFile = ReaderFactory.GetPHRPSeqInfoFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(seqInfoFile))
             {
                 var seqInfoFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath);

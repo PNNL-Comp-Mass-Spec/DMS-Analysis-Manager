@@ -196,7 +196,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool RetrievePHRPFiles()
         {
             var lstFileNamesToGet = new List<string>();
-            PHRPReader.Enums.PeptideHitResultTypes PeptideHitResultTypes;
+            Enums.PeptideHitResultTypes PeptideHitResultTypes;
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
@@ -214,15 +214,15 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (strInputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PHRPReader.Enums.PeptideHitResultTypes.XTandem;
+                PeptideHitResultTypes = Enums.PeptideHitResultTypes.XTandem;
             }
             else if (strInputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PHRPReader.Enums.PeptideHitResultTypes.Sequest;
+                PeptideHitResultTypes = Enums.PeptideHitResultTypes.Sequest;
             }
             else if (strInputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus;
+                PeptideHitResultTypes = Enums.PeptideHitResultTypes.MSGFPlus;
             }
             else
             {
@@ -237,7 +237,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Retrieving the PHRP files");
             }
 
-            var msgfplusSynopsisFile = PHRPReader.PHRPReader.GetPHRPSynopsisFileName(PeptideHitResultTypes, DatasetName);
+            var msgfplusSynopsisFile = ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, DatasetName);
             var synFileToFind = string.Copy(msgfplusSynopsisFile);
 
             var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
@@ -254,18 +254,18 @@ namespace AnalysisManagerSMAQCPlugIn
                 msgfplusSynopsisFile = synFileToFind;
             }
 
-            lstFileNamesToGet.Add(PHRPReader.PHRPReader.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(PHRPReader.PHRPReader.GetPHRPSeqInfoFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(PHRPReader.PHRPReader.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(PHRPReader.PHRPReader.GetPHRPModSummaryFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(PHRPReader.PHRPReader.GetMSGFFileName(msgfplusSynopsisFile));
+            lstFileNamesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, DatasetName));
+            lstFileNamesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, DatasetName));
+            lstFileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, DatasetName));
+            lstFileNamesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, DatasetName));
+            lstFileNamesToGet.Add(ReaderFactory.GetMSGFFileName(msgfplusSynopsisFile));
 
             foreach (var phrpFile in lstFileNamesToGet)
             {
                 string fileToGet;
                 if (autoSwitchFilename)
                 {
-                    fileToGet = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(phrpFile, msgfplusSynopsisFile);
+                    fileToGet = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(phrpFile, msgfplusSynopsisFile);
                 }
                 else
                 {

@@ -342,7 +342,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 if (string.IsNullOrEmpty(synopsisFileName))
                     synopsisFileName = "Dataset_msgfdb.txt";
-                var alternativeName = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, synopsisFileName);
+                var alternativeName = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, synopsisFileName);
 
                 if (!string.Equals(alternativeName, fileToGet))
                 {

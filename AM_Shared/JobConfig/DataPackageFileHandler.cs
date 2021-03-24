@@ -556,17 +556,17 @@ namespace AnalysisManagerBase.JobConfig
 
                 bool prefixRequired;
 
-                var synopsisFileName = PHRPReader.PHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
-                var synopsisMSGFFileName = PHRPReader.PHRPReader.GetMSGFFileName(synopsisFileName);
+                var synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
+                var synopsisMSGFFileName = ReaderFactory.GetMSGFFileName(synopsisFileName);
 
                 if (retrievalOptions.RetrievePHRPFiles)
                 {
                     filesToGet.Add(synopsisFileName, true);
 
-                    filesToGet.Add(PHRPReader.PHRPReader.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                    filesToGet.Add(PHRPReader.PHRPReader.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                    filesToGet.Add(PHRPReader.PHRPReader.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                    filesToGet.Add(PHRPReader.PHRPReader.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    filesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    filesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    filesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    filesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
 
                     filesToGet.Add(synopsisMSGFFileName, false);
                 }
@@ -580,7 +580,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 var datasetName = dataPkgJob.Dataset;
 
-                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus)
+                if (retrievalOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == Enums.PeptideHitResultTypes.MSGFPlus)
                 {
                     // Retrieve MS-GF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
@@ -611,8 +611,8 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
 
-                if (retrievalOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != PHRPReader.Enums.PeptideHitResultTypes.Unknown ||
-                    dataPkgJob.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.Sequest)
+                if (retrievalOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != Enums.PeptideHitResultTypes.Unknown ||
+                    dataPkgJob.PeptideHitResultType == Enums.PeptideHitResultTypes.Sequest)
                 {
                     // Retrieve .pepXML files, which are stored as _pepXML.zip files
                     zippedPepXmlFile = datasetName + "_pepXML.zip";
@@ -814,7 +814,7 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (string.IsNullOrEmpty(sourceDirectoryPath))
                         {
-                            var alternateFileName = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
+                            var alternateFileName = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
                             sourceDirectoryPath = mAnalysisResources.FileSearch.FindDataFile(alternateFileName);
                         }
                     }
@@ -835,7 +835,7 @@ namespace AnalysisManagerBase.JobConfig
                     if (retrievalOptions.CreateJobPathFiles && !sourceDirectoryPath.StartsWith(AnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         var sourceFilePath = Path.Combine(sourceDirectoryPath, sourceFilename);
-                        var alternateFileName = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
+                        var alternateFileName = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
 
                         if (File.Exists(sourceFilePath))
                         {
@@ -877,7 +877,7 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (!fileCopied)
                         {
-                            var alternateFileName = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
+                            var alternateFileName = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
                             fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceDirectoryPath, localDirectoryPath, logMsgTypeIfNotFound);
                             if (fileCopied)
                             {
@@ -1425,7 +1425,7 @@ namespace AnalysisManagerBase.JobConfig
                             "Dataset name mismatch: {0} vs. {1}", dataPkgJob.Dataset, mAnalysisResources.DatasetName));
                     }
 
-                    if (dataPkgJob.PeptideHitResultType == PHRPReader.Enums.PeptideHitResultTypes.Unknown)
+                    if (dataPkgJob.PeptideHitResultType == Enums.PeptideHitResultTypes.Unknown)
                     {
                         var msg = "PeptideHit ResultType not recognized for job " + dataPkgJob.Job + ": " + dataPkgJob.ResultType;
                         LogTools.LogWarning(msg);

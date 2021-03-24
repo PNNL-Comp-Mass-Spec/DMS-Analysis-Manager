@@ -35,7 +35,7 @@ namespace AnalysisManagerMSGFPlugin
         protected readonly string mDatasetName;
         protected readonly string mWorkDir;
 
-        private readonly PHRPReader.Enums.PeptideHitResultTypes mPeptideHitResultType;
+        private readonly Enums.PeptideHitResultTypes mPeptideHitResultType;
 
         private readonly SortedDictionary<int, List<string>> mSkippedLineInfo;
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset Name</param>
         /// <param name="workDir">Working directory</param>
         /// <param name="resultType">PeptideHit result type</param>
-        protected MSGFInputCreator(string datasetName, string workDir, PHRPReader.Enums.PeptideHitResultTypes resultType)
+        protected MSGFInputCreator(string datasetName, string workDir, Enums.PeptideHitResultTypes resultType)
         {
             mDatasetName = datasetName;
             mWorkDir = workDir;
@@ -259,7 +259,7 @@ namespace AnalysisManagerMSGFPlugin
                 startupOptions.LoadModsAndSeqInfo = true;
 
                 // Open the first-hits file
-                using var reader = new PHRPReader.PHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                using var reader = new ReaderFactory(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
                 RegisterEvents(reader);
 
                 reader.EchoMessagesToConsole = true;
@@ -426,7 +426,7 @@ namespace AnalysisManagerMSGFPlugin
                         startupOptions.LoadModsAndSeqInfo = true;
 
                         // Read the synopsis file data
-                        var reader = new PHRPReader.PHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
+                        var reader = new ReaderFactory(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
                         RegisterEvents(reader);
 
                         reader.EchoMessagesToConsole = true;
@@ -466,7 +466,7 @@ namespace AnalysisManagerMSGFPlugin
                         var startupOptions = GetMinimalMemoryPHRPStartupOptions();
                         startupOptions.LoadModsAndSeqInfo = true;
 
-                        var reader = new PHRPReader.PHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
+                        var reader = new ReaderFactory(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
                         RegisterEvents(reader);
 
                         reader.EchoMessagesToConsole = true;
@@ -498,9 +498,9 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        public static PHRPStartupOptions GetMinimalMemoryPHRPStartupOptions()
+        public static StartupOptions GetMinimalMemoryPHRPStartupOptions()
         {
-            var startupOptions = new PHRPStartupOptions
+            var startupOptions = new StartupOptions
             {
                 LoadModsAndSeqInfo = false,
                 LoadMSGFResults = false,
@@ -580,7 +580,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="spectrumFileName"></param>
         /// <param name="parsingSynopsisFile"></param>
         private void ReadAndStorePHRPData(
-            PHRPReader.PHRPReader reader,
+            ReaderFactory reader,
             TextWriter msgfInputFileWriter,
             string spectrumFileName,
             bool parsingSynopsisFile)

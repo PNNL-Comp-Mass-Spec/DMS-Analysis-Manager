@@ -38,7 +38,7 @@ namespace AnalysisManagerExtractionPlugin
             OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
         }
 
-        private SearchEngineParameters LoadSearchEngineParameters(PHRPReader.PHRPReader phrpReader, string searchEngineParamFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType)
+        private SearchEngineParameters LoadSearchEngineParameters(ReaderFactory phrpReader, string searchEngineParamFilePath, Enums.PeptideHitResultTypes resultType)
         {
             SearchEngineParameters searchEngineParams = null;
 
@@ -80,7 +80,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
         /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-        public bool ValidatePHRPResultMassErrors(string inputFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
+        public bool ValidatePHRPResultMassErrors(string inputFilePath, Enums.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try
             {
@@ -88,7 +88,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var peptideMassCalculator = new PeptideMassCalculator();
 
-                var startupOptions = new PHRPStartupOptions
+                var startupOptions = new StartupOptions
                 {
                     LoadModsAndSeqInfo = true,
                     LoadMSGFResults = false,
@@ -103,7 +103,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
 
-                using (var reader = new PHRPReader.PHRPReader(inputFilePath, resultType, startupOptions))
+                using (var reader = new ReaderFactory(inputFilePath, resultType, startupOptions))
                 {
                     RegisterEvents(reader);
 
@@ -201,7 +201,7 @@ namespace AnalysisManagerExtractionPlugin
                         var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
                         double toleranceCurrent;
 
-                        if (resultType == PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus &&
+                        if (resultType == Enums.PeptideHitResultTypes.MSGFPlus &&
                             highResMS1 &&
                             currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
                         {

@@ -547,7 +547,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (!File.Exists(udtJobMetadata.FirstHitsFilePath))
             {
-                var fhtFileAlternate = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt");
+                var fhtFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt");
                 if (File.Exists(fhtFileAlternate))
                 {
                     udtJobMetadata.FirstHitsFilePath = fhtFileAlternate;
@@ -557,7 +557,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (!File.Exists(udtJobMetadata.SynopsisFilePath))
             {
-                var synFileAlternate = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt");
+                var synFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt");
                 if (File.Exists(synFileAlternate))
                 {
                     udtJobMetadata.SynopsisFilePath = synFileAlternate;

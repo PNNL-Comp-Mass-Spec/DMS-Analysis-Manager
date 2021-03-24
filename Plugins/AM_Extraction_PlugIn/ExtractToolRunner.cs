@@ -541,7 +541,7 @@ namespace AnalysisManagerExtractionPlugin
                 var mzidFileName = mDatasetName + "_msgfplus" + suffixToAdd + ".mzid";
                 if (!File.Exists(Path.Combine(mWorkDir, mzidFileName)))
                 {
-                    var mzidFileNameAlternate = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(mzidFileName, "Dataset_msgfdb.txt");
+                    var mzidFileNameAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(mzidFileName, "Dataset_msgfdb.txt");
                     if (File.Exists(Path.Combine(mWorkDir, mzidFileNameAlternate)))
                     {
                         mzidFileName = mzidFileNameAlternate;
@@ -1285,7 +1285,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.Sequest, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.Sequest, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1336,7 +1336,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             // Use input.xml for the X!Tandem parameter file
-            if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.XTandem, "input.xml"))
+            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.XTandem, "input.xml"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1388,7 +1388,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Summarize the number of PSMs in _msalign_syn.txt
             // ReSharper disable once UseImplicitlyTypedVariableEvident
-            const PHRPReader.Enums.PeptideHitResultTypes resultType = PHRPReader.Enums.PeptideHitResultTypes.MSAlign;
+            const Enums.PeptideHitResultTypes resultType = Enums.PeptideHitResultTypes.MSAlign;
 
             var summarizer = new MSGFResultsSummarizer.MSGFResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
@@ -1423,7 +1423,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.MSAlign, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSAlign, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1496,7 +1496,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.MODa, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MODa, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1571,7 +1571,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.MODPlus, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MODPlus, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1663,7 +1663,7 @@ namespace AnalysisManagerExtractionPlugin
 
                             if (!File.Exists(targetFilePath))
                             {
-                                var targetFilePathAlt = PHRPReader.PHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(targetFilePath, "Dataset_msgfdb.txt");
+                                var targetFilePathAlt = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(targetFilePath, "Dataset_msgfdb.txt");
                                 if (File.Exists(targetFilePathAlt))
                                 {
                                     targetFilePath = targetFilePathAlt;
@@ -1818,7 +1818,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.MSGFPlus, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1895,7 +1895,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.MSPathFinder, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSPathFinder, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1972,7 +1972,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.TopPIC, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.TopPIC, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -2148,7 +2148,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PHRPReader.Enums.PeptideHitResultTypes.Inspect, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.Inspect, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2763,7 +2763,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private bool ValidatePHRPResultMassErrors(string inputFilePath, PHRPReader.Enums.PeptideHitResultTypes resultType,
+        private bool ValidatePHRPResultMassErrors(string inputFilePath, Enums.PeptideHitResultTypes resultType,
             string searchEngineParamFileName)
         {
             bool success;
