@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
@@ -15,6 +16,13 @@ namespace AnalysisManagerICR2LSPlugIn
     /// </summary>
     public abstract class AnalysisToolRunnerICRBase : AnalysisToolRunnerBase
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: acqus, CmdRunner, deisotoping, PEKtoCSV
+        // Ignore Spelling: ticgeneration, lcqticgeneration, qtofpekgeneration, mmtofpekgeneration, ltqftpekgeneration
+
+        // ReSharper restore CommentTypo
+
         protected const string ICR2LS_STATE_UNKNOWN = "unknown";
         protected const string ICR2LS_STATE_IDLE = "idle";
         protected const string ICR2LS_STATE_PROCESSING = "processing";
@@ -66,8 +74,8 @@ namespace AnalysisManagerICR2LSPlugIn
         // Private mMinScanOffset As Integer = 0
 
         private DateTime mLastErrorPostingTime;
-        private DateTime mLastMissingStatusFiletime;
-        private DateTime mLastInvalidStatusFiletime;
+        private DateTime mLastMissingStatusFileTime;
+        private DateTime mLastInvalidStatusFileTime;
 
         private DateTime mLastStatusParseTime = DateTime.UtcNow;
         private DateTime mLastStatusLogTime = DateTime.UtcNow;
@@ -298,54 +306,51 @@ namespace AnalysisManagerICR2LSPlugIn
                             var key = dataLine.Substring(0, charIndex).Trim();
                             var value = dataLine.Substring(charIndex + 1).Trim();
 
-                            switch (key.ToLower())
+                            if (key.Equals("date", StringComparison.OrdinalIgnoreCase))
                             {
-                                case "date":
-                                    statusDate = string.Copy(value);
-                                    break;
-                                case "time":
-                                    statusTime = string.Copy(value);
-                                    break;
-                                case "scansprocessed":
-                                    if (int.TryParse(value, out var intResult))
-                                    {
-                                        // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
-                                        // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
-                                        // To correct for this, subtract out mMinScanOffset
-                                        // scansProcessed = intResult - mMinScanOffset
+                                statusDate = string.Copy(value);
+                            }
+                            else if (key.Equals("time", StringComparison.OrdinalIgnoreCase))
+                            {
+                                statusTime = string.Copy(value);
+                            }
+                            else if (key.Equals("ScansProcessed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (int.TryParse(value, out var intResult))
+                                {
+                                    // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
+                                    // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
+                                    // To correct for this, subtract out mMinScanOffset
+                                    // scansProcessed = intResult - mMinScanOffset
 
-                                        // New: ScansProcessed is truly the number of scans processed
+                                    // New: ScansProcessed is truly the number of scans processed
+                                    scansProcessed = intResult;
+                                    if (scansProcessed < 0)
+                                    {
                                         scansProcessed = intResult;
-                                        if (scansProcessed < 0)
-                                        {
-                                            scansProcessed = intResult;
-                                        }
                                     }
-
-                                    break;
-                                case "percentcomplete":
-                                    if (float.TryParse(value, out var sngResult))
-                                    {
-                                        mICR2LSStatus.PercentComplete = sngResult;
-                                    }
-
-                                    break;
-                                case "state":
-                                    // Example values: Processing, Finished
-                                    processingState = string.Copy(value);
-
-                                    break;
-                                case "status":
-                                    // Example value: LTQFTPEKGENERATION
-                                    processingStatus = string.Copy(value);
-
-                                    break;
-                                case "errormessage":
-
-                                    break;
-                                default:
-                                    break;
-                                // Ignore the line
+                                }
+                            }
+                            else if (key.Equals("PercentComplete", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (float.TryParse(value, out var sngResult))
+                                {
+                                    mICR2LSStatus.PercentComplete = sngResult;
+                                }
+                            }
+                            else if (key.Equals("state", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Example values: Processing, Finished
+                                processingState = string.Copy(value);
+                            }
+                            else if (key.Equals("status", StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Example value: LTQFTPEKGENERATION
+                                processingStatus = string.Copy(value);
+                            }
+                            else if (key.Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ConsoleMsgUtils.ShowWarning("Error message from the ICR2LS Status File: " + value);
                             }
                         }
                     }
@@ -371,9 +376,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
                         if (!ValidateICR2LSStatus(processingState))
                         {
-                            if (DateTime.UtcNow.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15)
+                            if (DateTime.UtcNow.Subtract(mLastInvalidStatusFileTime).TotalMinutes >= 15)
                             {
-                                mLastInvalidStatusFiletime = DateTime.UtcNow;
+                                mLastInvalidStatusFileTime = DateTime.UtcNow;
                                 LogWarning("Invalid processing state reported by ICR2LS: " + processingState);
                             }
                         }
@@ -393,11 +398,11 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
 
                 // Status.log file not found; if the job just started, this will be the case
-                // For this reason, ResetStatusLogTimes will set mLastMissingStatusFiletime to the time the job starts, meaning
+                // For this reason, ResetStatusLogTimes will set mLastMissingStatusFileTime to the time the job starts, meaning
                 //  we won't log an error about a missing Status.log file until 60 minutes into a job
-                if (DateTime.UtcNow.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60)
+                if (DateTime.UtcNow.Subtract(mLastMissingStatusFileTime).TotalMinutes >= 60)
                 {
-                    mLastMissingStatusFiletime = DateTime.UtcNow;
+                    mLastMissingStatusFileTime = DateTime.UtcNow;
                     LogWarning("ICR2LS Status.Log file not found: " + statusFilePath);
                 }
 
@@ -478,9 +483,9 @@ namespace AnalysisManagerICR2LSPlugIn
             mLastErrorPostingTime = DateTime.UtcNow.Subtract(new TimeSpan(2, 0, 0));
 
             // Initialize the last MissingStatusFileTime to the time the job starts
-            mLastMissingStatusFiletime = DateTime.UtcNow;
+            mLastMissingStatusFileTime = DateTime.UtcNow;
 
-            mLastInvalidStatusFiletime = DateTime.UtcNow.Subtract(new TimeSpan(2, 0, 0));
+            mLastInvalidStatusFileTime = DateTime.UtcNow.Subtract(new TimeSpan(2, 0, 0));
         }
 
         /// <summary>
@@ -522,11 +527,11 @@ namespace AnalysisManagerICR2LSPlugIn
             // This file is updated after each scan is processed
             InitializeStatusLogFileWatcher(Path.GetDirectoryName(mStatusFilePath), Path.GetFileName(mStatusFilePath));
 
-            var strExeFilePath = mMgrParams.GetParam("ICR2LSprogloc");
+            var strExeFilePath = mMgrParams.GetParam("ICR2LSProgLoc");
 
             if (string.IsNullOrEmpty(strExeFilePath))
             {
-                LogError("Job parameter ICR2LSprogloc is not defined; unable to run ICR-2LS");
+                LogError("Job parameter ICR2LSProgLoc is not defined; unable to run ICR-2LS");
                 return false;
             }
 
@@ -690,7 +695,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
             }
 
-            // Start ICR-2LS.  Note that .Runprogram will not return until after the ICR2LS.exe closes
+            // Start ICR-2LS.  Note that .RunProgram will not return until after the ICR2LS.exe closes
             // However, it will raise a Loop Waiting event every MONITOR_INTERVAL_SECONDS seconds (see CmdRunner_LoopWaiting)
             var success = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", true);
 
@@ -781,10 +786,10 @@ namespace AnalysisManagerICR2LSPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var progLoc = mMgrParams.GetParam("ICR2LSprogloc");
+            var progLoc = mMgrParams.GetParam("ICR2LSProgLoc");
             if (string.IsNullOrEmpty(progLoc))
             {
-                mMessage = "Manager parameter ICR2LSprogloc is not defined";
+                mMessage = "Manager parameter ICR2LSProgLoc is not defined";
                 LogError("Error in SetStepTaskToolVersion: " + mMessage);
                 return false;
             }

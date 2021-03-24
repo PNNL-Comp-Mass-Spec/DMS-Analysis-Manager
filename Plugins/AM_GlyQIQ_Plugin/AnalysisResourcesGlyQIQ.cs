@@ -20,6 +20,8 @@ namespace AnalysisManagerGlyQIQPlugin
     /// </summary>
     public class AnalysisResourcesGlyQIQ : AnalysisResources
     {
+        // Ignore Spelling: Gly, Iq, ParmFile
+
         /// <summary>
         /// Locks folder name
         /// </summary>
@@ -46,7 +48,7 @@ namespace AnalysisManagerGlyQIQPlugin
         public const string GLYQIQ_PARAMS_FILE_PREFIX = "GlyQIQ_Params_";
 
         /// <summary>
-        /// Alignment parameterse file
+        /// Alignment parameters file
         /// </summary>
         public const string ALIGNMENT_PARAMETERS_FILENAME = "AlignmentParameters.xml";
 
@@ -108,13 +110,13 @@ namespace AnalysisManagerGlyQIQPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool CopyFileToWorkingDirectories(string sourceFileName, string sourceFolderPath, string fileDesription)
+        private bool CopyFileToWorkingDirectories(string sourceFileName, string sourceFolderPath, string fileDescription)
         {
             foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
             {
                 if (!CopyFileToWorkDir(sourceFileName, sourceFolderPath, workingDirectory.Value.FullName))
                 {
-                    mMessage += " (" + fileDesription + ")";
+                    mMessage += " (" + fileDescription + ")";
                     return false;
                 }
             }
@@ -129,13 +131,12 @@ namespace AnalysisManagerGlyQIQPlugin
                 // numTargets is initialized to -1 because we don't want to count the header line
                 var numTargets = -1;
 
-                using (var reader = new StreamReader(new FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
-                    {
-                        reader.ReadLine();
-                        numTargets++;
-                    }
+                    reader.ReadLine();
+                    numTargets++;
                 }
 
                 return numTargets;
@@ -507,73 +508,72 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 var lstOutputFiles = new Dictionary<int, FileInfo>();
 
-                using (var srReader = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                // Read the header line
+                var headerLine = reader.ReadLine();
+
+                // Create the output files
+                var lstWriters = new List<StreamWriter>();
+                foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
                 {
-                    // Read the header line
-                    var headerLine = srReader.ReadLine();
+                    var core = workingDirectory.Key;
 
-                    // Create the output files
-                    var lstWriters = new List<StreamWriter>();
-                    foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
+                    var outputFilePath = Path.Combine(workingDirectory.Value.FullName,
+                        Path.GetFileNameWithoutExtension(fiTargetsFile.Name) + "_Part" + core + ".txt");
+                    lstWriters.Add(new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)));
+                    lstOutputFiles.Add(core, new FileInfo(outputFilePath));
+                }
+
+                // Write the header line to each writer
+                foreach (var targetFileWriter in lstWriters)
+                {
+                    targetFileWriter.WriteLine(headerLine);
+                }
+
+                // When targetsWritten reaches nextThreshold, we will switch to the next file
+                var nextThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count);
+                if (nextThreshold < 1)
+                    nextThreshold = 1;
+
+                var targetsWritten = 0;
+                var outputFileIndex = 0;
+                var outputFileIndexMax = mGlyQIQParams.WorkingParameterFolders.Count - 1;
+
+                // Read the targets
+                while (!reader.EndOfStream)
+                {
+                    var lineIn = reader.ReadLine();
+
+                    if (outputFileIndex > outputFileIndexMax)
                     {
-                        var core = workingDirectory.Key;
-
-                        var outputFilePath = Path.Combine(workingDirectory.Value.FullName,
-                            Path.GetFileNameWithoutExtension(fiTargetsFile.Name) + "_Part" + core + ".txt");
-                        lstWriters.Add(new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)));
-                        lstOutputFiles.Add(core, new FileInfo(outputFilePath));
+                        // This shouldn't happen, but double checking to be sure
+                        outputFileIndex = outputFileIndexMax;
                     }
 
-                    // Write the header line ot each writer
-                    foreach (var targetFileWriter in lstWriters)
+                    lstWriters[outputFileIndex].WriteLine(lineIn);
+
+                    targetsWritten++;
+                    if (targetsWritten >= nextThreshold)
                     {
-                        targetFileWriter.WriteLine(headerLine);
-                    }
+                        // Advance the output file index
+                        outputFileIndex++;
 
-                    // When targetsWritten reaches nextThreshold, we will switch to the next file
-                    var nextThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count);
-                    if (nextThreshold < 1)
-                        nextThreshold = 1;
-
-                    var targetsWritten = 0;
-                    var outputFileIndex = 0;
-                    var outputFileIndexMax = mGlyQIQParams.WorkingParameterFolders.Count - 1;
-
-                    // Read the targets
-                    while (!srReader.EndOfStream)
-                    {
-                        var lineIn = srReader.ReadLine();
-
-                        if (outputFileIndex > outputFileIndexMax)
+                        var newThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count * (outputFileIndex + 1));
+                        if (newThreshold > nextThreshold)
                         {
-                            // This shouldn't happen, but double checking to be sure
-                            outputFileIndex = outputFileIndexMax;
+                            nextThreshold = newThreshold;
                         }
-
-                        lstWriters[outputFileIndex].WriteLine(lineIn);
-
-                        targetsWritten++;
-                        if (targetsWritten >= nextThreshold)
+                        else
                         {
-                            // Advance the output file index
-                            outputFileIndex++;
-
-                            var newThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count * (outputFileIndex + 1));
-                            if (newThreshold > nextThreshold)
-                            {
-                                nextThreshold = newThreshold;
-                            }
-                            else
-                            {
-                                nextThreshold++;
-                            }
+                            nextThreshold++;
                         }
                     }
+                }
 
-                    foreach (var targetFileWriter in lstWriters)
-                    {
-                        targetFileWriter.Close();
-                    }
+                foreach (var targetFileWriter in lstWriters)
+                {
+                    targetFileWriter.Close();
                 }
 
                 return lstOutputFiles;

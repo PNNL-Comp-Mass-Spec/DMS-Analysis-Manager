@@ -22,6 +22,8 @@ namespace AnalysisManagerInSpecTPlugIn
     /// </summary>
     public class AnalysisToolRunnerIN : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Ctrl, parmFile
+
         #region "Structures"
 
         protected struct ModInfo
@@ -273,7 +275,7 @@ namespace AnalysisManagerInSpecTPlugIn
         // Unused function
         // private int ExtractScanCountValueFromMzXML(string strMZXMLFilename)
         // {
-        //    int intScanCount = 0;
+        //    int scanCount = 0;
         //
         //    try
         //    {
@@ -286,7 +288,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //        MSDataFileReader.SpectrumInfo objSpectrumInfo;
         //        if (objMZXmlFile.ReadNextSpectrum(out objSpectrumInfo))
         //        {
-        //            intScanCount = objMZXmlFile.ScanCount;
+        //            scanCount = objMZXmlFile.ScanCount;
         //        }
         //
         //        if (objMZXmlFile != null)
@@ -300,7 +302,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //        return 0;
         //    }
         //
-        //    return intScanCount;
+        //    return scanCount;
         // }
 
         private void InitializeInspectSearchLogFileWatcher(string strWorkDir)

@@ -83,6 +83,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks>Recommended to use CL CVs</remarks>
         public string CellType { get; set; }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Disease
         /// </summary>

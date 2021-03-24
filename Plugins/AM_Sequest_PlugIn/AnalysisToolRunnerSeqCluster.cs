@@ -26,6 +26,8 @@ namespace AnalysisManagerSequestPlugin
     /// </summary>
     public class AnalysisToolRunnerSeqCluster : AnalysisToolRunnerSeqBase
     {
+        // Ignore Spelling: CmdRunner, dta, ParmFile, ps, yyyyMMdd_HHmm
+
         #region "Constants"
 
         private const int TEMP_FILE_COPY_INTERVAL_SECONDS = 300;
@@ -310,7 +312,7 @@ namespace AnalysisManagerSequestPlugin
             if (mDebugLevel >= 1)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                    " ... Outfile count: " + (OutFiles.Length + mTotalOutFileCount).ToString("#,##0") + " files");
+                    " ... OutFile count: " + (OutFiles.Length + mTotalOutFileCount).ToString("#,##0") + " files");
             }
 
             if (!mSequestVersionInfoStored)
@@ -499,7 +501,7 @@ namespace AnalysisManagerSequestPlugin
 
                                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                                     "Sequest is stalled, and " + dtaCountRemaining + " .DTA files remain; aborting processing");
-                                mMessage = "Sequest is stalled and too many .DTA files are un-processed";
+                                mMessage = "Sequest is stalled and too many .DTA files are unprocessed";
                                 mAbortSinceSequestIsStalled = true;
                             }
 

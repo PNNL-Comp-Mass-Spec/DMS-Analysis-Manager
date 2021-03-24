@@ -16,6 +16,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// </summary>
     public class DtaRefLogMassErrorExtractor : EventNotifier
     {
+        // Ignore Spelling: dta
+
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
 
         private readonly IMgrParams mMgrParams;

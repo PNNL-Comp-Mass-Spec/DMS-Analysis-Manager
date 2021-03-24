@@ -10,6 +10,8 @@ namespace DTASpectraFileGen
 {
     public class MGFConverter : EventNotifier
     {
+        // Ignore Spelling: cvParam, IDtoScan, MGFtoDTA
+
         #region "Structures"
 
         private struct ScanInfo

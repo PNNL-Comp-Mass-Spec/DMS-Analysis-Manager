@@ -11,6 +11,8 @@ namespace AnalysisManagerExtractionPlugin
 {
     public class PHRPMassErrorValidator : EventNotifier
     {
+        // Ignore Spelling: Da, psm, tol
+
         #region "Module variables"
 
         private readonly int mDebugLevel;

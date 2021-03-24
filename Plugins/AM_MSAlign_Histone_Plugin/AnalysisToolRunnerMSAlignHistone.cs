@@ -21,7 +21,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     /// </summary>
     public class AnalysisToolRunnerMSAlignHistone : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Histone, parm, Xmx, classpath, html, xsl, ptm, Frag
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Histone, parm, Xmx, classpath, html, xsl, ptm, Frag, filteration, Cystein, cutofftype, Prsm
+
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 

@@ -16,6 +16,9 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 
+// ReSharper disable IdentifierTypo
+// ReSharper disable StringLiteralTypo
+
 namespace AnalysisManagerInspResultsAssemblyPlugIn
 {
     /// <summary>
@@ -23,6 +26,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// </summary>
     public class AnalysisToolRunnerInspResultsAssembly : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: InspResults, Pvalue, trie
+
         #region "Constants and Enums"
 
         private const string PVALUE_MINLENGTH5_SCRIPT = "PValue_MinLength5.py";
@@ -180,7 +185,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     {
                         filteredResultsAreEmpty = true;
                     }
-                    else if (pepToProteinMappingResult != CloseOutType.CLOSEOUT_SUCCESS && pepToProteinMappingResult != CloseOutType.CLOSEOUT_NO_DATA)
+                    else if (pepToProteinMappingResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         processingSuccess = false;
                     }

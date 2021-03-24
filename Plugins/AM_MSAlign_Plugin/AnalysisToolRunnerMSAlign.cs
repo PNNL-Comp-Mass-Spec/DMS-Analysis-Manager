@@ -21,7 +21,13 @@ namespace AnalysisManagerMSAlignPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSAlign : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Xmx, classpath, html, xsl, Prsm, Parm
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Carboxymethylation, classpath, html, msinput, msoutput, Prsm, Parm, xsl, Xmx
+        // Ignore Spelling: databasefilename, spectrumfilename, tableoutputfilename, detailoutputfilename,searchtype, cutofftype
+
+        // ReSharper restore CommentTypo
+
 
         #region "Constants and Enums"
 
