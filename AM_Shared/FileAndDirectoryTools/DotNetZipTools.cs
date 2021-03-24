@@ -118,7 +118,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
-            return GUnzipFile(gzipFilePath, targetDirectory, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
+            return GUnzipFile(gzipFilePath, targetDirectory, ExtractExistingFileAction.OverwriteSilently);
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success; false if an error</returns>
-        public bool GUnzipFile(string gzipFilePath, string targetDirectory, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
+        public bool GUnzipFile(string gzipFilePath, string targetDirectory, ExtractExistingFileAction overwriteBehavior)
         {
             MostRecentZipFilePath = string.Copy(gzipFilePath);
             MostRecentUnzippedFiles.Clear();
@@ -423,7 +423,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
-            return UnzipFile(zipFilePath, targetDirectory, string.Empty, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
+            return UnzipFile(zipFilePath, targetDirectory, string.Empty, ExtractExistingFileAction.OverwriteSilently);
         }
 
         /// <summary>
@@ -436,7 +436,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success; false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter)
         {
-            return UnzipFile(zipFilePath, targetDirectory, fileFilter, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
+            return UnzipFile(zipFilePath, targetDirectory, fileFilter, ExtractExistingFileAction.OverwriteSilently);
         }
 
         /// <summary>
@@ -447,7 +447,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="fileFilter">Filter to apply when unzipping</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success; false if an error</returns>
-        public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, Ionic.Zip.ExtractExistingFileAction overwriteBehavior)
+        public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, ExtractExistingFileAction overwriteBehavior)
         {
             Message = string.Empty;
             MostRecentZipFilePath = string.Copy(zipFilePath);

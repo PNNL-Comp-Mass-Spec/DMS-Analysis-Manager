@@ -1,11 +1,10 @@
 ﻿using System;
-using Microsoft.Win32;
 using PRISM;
 
 namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
-    /// Proteowizard tools
+    /// ProteoWizard tools
     /// </summary>
     public class ProteowizardTools : EventNotifier
     {
@@ -113,7 +112,7 @@ namespace AnalysisManagerBase.DataFileTools
                     if (regSoftware == null)
                         throw new Exception("Unable to open the Software node in the registry");
 
-                    RegistryKey regProteoWizard;
+                    Microsoft.Win32.RegistryKey regProteoWizard;
 
                     if (subKeyMissing)
                     {
