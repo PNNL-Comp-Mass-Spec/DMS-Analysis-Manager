@@ -28,9 +28,9 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         public double ErrorThresholdPercent => mErrorThresholdPercent;
 
-        public PHRPMassErrorValidator(int intDebugLevel)
+        public PHRPMassErrorValidator(int debugLevel)
         {
-            mDebugLevel = intDebugLevel;
+            mDebugLevel = debugLevel;
         }
 
         private void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
@@ -97,11 +97,11 @@ namespace AnalysisManagerExtractionPlugin
                     PeptideMassCalculator = peptideMassCalculator
                 };
 
-                var intPsmCount = 0;
-                var intErrorCount = 0;
+                var psmCount = 0;
+                var errorCount = 0;
                 double precursorMassTolerance;
 
-                var lstLargestMassErrors = new SortedDictionary<double, string>();
+                var largestMassErrors = new SortedDictionary<double, string>();
 
                 using (var reader = new ReaderFactory(inputFilePath, resultType, startupOptions))
                 {
@@ -176,15 +176,15 @@ namespace AnalysisManagerExtractionPlugin
 
                     // Count the number of PSMs with a mass error greater than precursorMassTolerance
 
-                    var dtLastProgress = DateTime.UtcNow;
+                    var lastProgressTime = DateTime.UtcNow;
 
                     while (reader.MoveNext())
                     {
-                        intPsmCount++;
+                        psmCount++;
 
-                        if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
+                        if (psmCount % 100 == 0 && DateTime.UtcNow.Subtract(lastProgressTime).TotalSeconds >= 15)
                         {
-                            dtLastProgress = DateTime.UtcNow;
+                            lastProgressTime = DateTime.UtcNow;
                             OnDebugEvent("Validating mass errors: " + reader.PercentComplete.ToString("0.0") + "% complete");
                         }
 
@@ -226,41 +226,41 @@ namespace AnalysisManagerExtractionPlugin
 
                         var peptideDescription = "Scan=" + currentPSM.ScanNumberStart + ", charge=" + currentPSM.Charge + ", peptide=" +
                                                  currentPSM.PeptideWithNumericMods;
-                        intErrorCount++;
+                        errorCount++;
 
                         // Keep track of the 100 largest mass errors
-                        if (lstLargestMassErrors.Count < 100)
+                        if (largestMassErrors.Count < 100)
                         {
-                            if (!lstLargestMassErrors.ContainsKey(massError))
+                            if (!largestMassErrors.ContainsKey(massError))
                             {
-                                lstLargestMassErrors.Add(massError, peptideDescription);
+                                largestMassErrors.Add(massError, peptideDescription);
                             }
                         }
                         else
                         {
-                            var minValue = lstLargestMassErrors.Keys.Min();
-                            if (massError > minValue && !lstLargestMassErrors.ContainsKey(massError))
+                            var minValue = largestMassErrors.Keys.Min();
+                            if (massError > minValue && !largestMassErrors.ContainsKey(massError))
                             {
-                                lstLargestMassErrors.Remove(minValue);
-                                lstLargestMassErrors.Add(massError, peptideDescription);
+                                largestMassErrors.Remove(minValue);
+                                largestMassErrors.Add(massError, peptideDescription);
                             }
                         }
                     }
                 }
 
-                if (intPsmCount == 0)
+                if (psmCount == 0)
                 {
                     OnWarningEvent("PHRPReader did not find any records in " + Path.GetFileName(inputFilePath));
                     return true;
                 }
 
-                var percentInvalid = intErrorCount / (float)intPsmCount * 100;
+                var percentInvalid = errorCount / (float)psmCount * 100;
 
-                if (intErrorCount <= 0)
+                if (errorCount <= 0)
                 {
                     if (mDebugLevel >= 2)
                     {
-                        OnStatusEvent("All " + intPsmCount + " peptides have a mass error below " + precursorMassTolerance.ToString("0.0") + " Da");
+                        OnStatusEvent("All " + psmCount + " peptides have a mass error below " + precursorMassTolerance.ToString("0.0") + " Da");
                     }
                     return true;
                 }
@@ -268,7 +268,7 @@ namespace AnalysisManagerExtractionPlugin
                 ErrorMessage = percentInvalid.ToString("0.0") + "% of the peptides have a mass error over " +
                                 precursorMassTolerance.ToString("0.0") + " Da";
 
-                var warningMessage = ErrorMessage + " (" + intErrorCount + " / " + intPsmCount + ")";
+                var warningMessage = ErrorMessage + " (" + errorCount + " / " + psmCount + ")";
 
                 if (percentInvalid <= mErrorThresholdPercent)
                 {
@@ -281,20 +281,20 @@ namespace AnalysisManagerExtractionPlugin
 
                 OnErrorEvent(warningMessage + "; this value is too large (over " + mErrorThresholdPercent.ToString("0.0") + "%)");
 
-                // Log the first, last, and middle entry in lstLargestMassErrors
-                InformLargeErrorExample(lstLargestMassErrors.First());
+                // Log the first, last, and middle entry in largestMassErrors
+                InformLargeErrorExample(largestMassErrors.First());
 
-                if (lstLargestMassErrors.Count > 1)
+                if (largestMassErrors.Count > 1)
                 {
-                    InformLargeErrorExample(lstLargestMassErrors.Last());
+                    InformLargeErrorExample(largestMassErrors.Last());
 
-                    if (lstLargestMassErrors.Count > 2)
+                    if (largestMassErrors.Count > 2)
                     {
                         var iterator = 0;
-                        foreach (var massError in lstLargestMassErrors)
+                        foreach (var massError in largestMassErrors)
                         {
                             iterator++;
-                            if (iterator >= lstLargestMassErrors.Count / 2.0)
+                            if (iterator >= largestMassErrors.Count / 2.0)
                             {
                                 InformLargeErrorExample(massError);
                                 break;
