@@ -12,17 +12,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using Summarizer = MSGFResultsSummarizer;
 using PHRPReader;
 using System.IO;
-using MSGFResultsSummarizer;
 using PRISM;
 
 namespace MSGFResultsSummarizerExe
 {
-    static class Program
+    internal static class Program
     {
-        private const string PROGRAM_DATE = "June 14, 2019";
+        private const string PROGRAM_DATE = "March 24, 2021";
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
 
@@ -56,7 +55,7 @@ namespace MSGFResultsSummarizerExe
                     return -1;
                 }
 
-                if ((commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0))
+                if (commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount == 0)
                 {
                     ShowProgramHelp();
                     return -1;
@@ -95,18 +94,17 @@ namespace MSGFResultsSummarizerExe
             try
             {
                 // Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-                var fileSuffixes = new Dictionary<string, PHRPReader.PeptideHitResultTypes>
+                var fileSuffixes = new Dictionary<string, Enums.PeptideHitResultTypes>
                 {
-                    {"_xt_MSGF.txt", PHRPReader.PeptideHitResultTypes.XTandem},
-                    {"_msgfdb_syn_MSGF.txt", PHRPReader.PeptideHitResultTypes.MSGFPlus},
-                    {"_inspect_syn_MSGF.txt", PHRPReader.PeptideHitResultTypes.Inspect},
-                    {"_syn_MSGF.txt", PHRPReader.PeptideHitResultTypes.Sequest},
-                    {"_msalign_syn.txt", PHRPReader.PeptideHitResultTypes.MSAlign},
-                    {"_mspath_syn.txt", PHRPReader.PeptideHitResultTypes.MSPathFinder}
+                    {"_xt_MSGF.txt", Enums.PeptideHitResultTypes.XTandem},
+                    {"_msgfdb_syn_MSGF.txt", Enums.PeptideHitResultTypes.MSGFPlus},
+                    {"_inspect_syn_MSGF.txt", Enums.PeptideHitResultTypes.Inspect},
+                    {"_syn_MSGF.txt", Enums.PeptideHitResultTypes.Sequest},
+                    {"_msalign_syn.txt", Enums.PeptideHitResultTypes.MSAlign},
+                    {"_mspath_syn.txt", Enums.PeptideHitResultTypes.MSPathFinder}
                 };
 
-
-                var resultType = PHRPReader.PeptideHitResultTypes.Unknown;
+                var resultType = Enums.PeptideHitResultTypes.Unknown;
 
                 if (string.IsNullOrWhiteSpace(mMSGFSynFilePath))
                 {
@@ -139,7 +137,7 @@ namespace MSGFResultsSummarizerExe
 
                     var suffixesSearched = string.Join(", ", fileSuffixes.Keys.ToList());
 
-                    if (resultType == PHRPReader.PeptideHitResultTypes.Unknown)
+                    if (resultType == Enums.PeptideHitResultTypes.Unknown)
                     {
                         var warningMessage = "Did not find any files in the source directory with the expected file name suffixes\n" +
                             "Looked for " + suffixesSearched + " in \n" + inputDirectory.FullName;
@@ -152,9 +150,9 @@ namespace MSGFResultsSummarizerExe
                 {
                     // Determine the result type of mMSGFSynFilePath
 
-                    resultType = PHRPReader.AutoDeterminresultType(mMSGFSynFilePath);
+                    resultType = ReaderFactory.AutoDetermineResultType(mMSGFSynFilePath);
 
-                    if (resultType == PHRPReader.PeptideHitResultTypes.Unknown)
+                    if (resultType == Enums.PeptideHitResultTypes.Unknown)
                     {
                         foreach (var suffixEntry in fileSuffixes)
                         {
@@ -167,7 +165,7 @@ namespace MSGFResultsSummarizerExe
                         }
                     }
 
-                    if (resultType == PHRPReader.PeptideHitResultTypes.Unknown)
+                    if (resultType == Enums.PeptideHitResultTypes.Unknown)
                     {
                         ShowErrorMessage("Unable to determine result type from input file name: " + mMSGFSynFilePath);
                         return false;
@@ -184,7 +182,7 @@ namespace MSGFResultsSummarizerExe
                 if (string.IsNullOrWhiteSpace(mDatasetName))
                 {
                     // Auto-determine the dataset name
-                    mDatasetName = PHRPReader.AutoDetermineDatasetName(sourceFile.Name, resultType);
+                    mDatasetName = ReaderFactory.AutoDetermineDatasetName(sourceFile.Name, resultType);
 
                     if (string.IsNullOrEmpty(mDatasetName))
                     {
@@ -217,11 +215,11 @@ namespace MSGFResultsSummarizerExe
                     }
                 }
 
-                var summarizer = new MSGFResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName)
+                var summarizer = new Summarizer.MSGFResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName, false)
                 {
-                    MSGFThreshold = MSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD,
-                    EValueThreshold = MSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
-                    FDRThreshold = MSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD,
+                    MSGFThreshold = Summarizer.MSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD,
+                    EValueThreshold = Summarizer.MSGFResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
+                    FDRThreshold = Summarizer.MSGFResultsSummarizer.DEFAULT_FDR_THRESHOLD,
                     OutputDirectoryPath = mOutputDirectoryPath,
                     PostJobPSMResultsToDB = mPostResultsToDb,
                     SaveResultsToTextFile = mSaveResultsAsText,
@@ -249,7 +247,7 @@ namespace MSGFResultsSummarizerExe
 
                 string filterText;
 
-                if (summarizer.ResultType == PHRPReader.PeptideHitResultTypes.MSAlign)
+                if (summarizer.ResultType == Enums.PeptideHitResultTypes.MSAlign)
                 {
                     Console.WriteLine("EValue Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
                     filterText = "EValue";
@@ -299,7 +297,6 @@ namespace MSGFResultsSummarizerExe
                 ConsoleMsgUtils.ShowError("Exception in SummarizeMSGFResults", ex);
                 return false;
             }
-
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
