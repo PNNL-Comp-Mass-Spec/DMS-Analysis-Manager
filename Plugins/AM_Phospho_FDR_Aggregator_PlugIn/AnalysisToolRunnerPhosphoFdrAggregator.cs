@@ -361,13 +361,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 {
                     var jobNumber = jobFolder.Key;
 
-                    var filesToCombine = jobFolder.Value.GetFiles("*" + fileSuffix).ToList();
-
-                    foreach (var fiResultFile in filesToCombine)
+                    foreach (var resultFile in jobFolder.Value.GetFiles("*" + fileSuffix))
                     {
-                        currentFile = Path.GetFileName(fiResultFile.FullName);
+                        currentFile = Path.GetFileName(resultFile.FullName);
 
-                        using var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                        using var reader = new StreamReader(new FileStream(resultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                         if (reader.EndOfStream)
                             continue;
@@ -418,8 +416,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                             writer.WriteLine(jobNumber + "\t" + dataLine);
                         }
-                    }    // foreach fiResultFile
-                }    // foreach jobFolder
+                    }    // for each resultFile
+                }    // for each jobFolder
 
                 return true;
             }

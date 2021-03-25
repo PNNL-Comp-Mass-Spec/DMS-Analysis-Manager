@@ -19,7 +19,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Job parameter to track that MS/MS processing has been auto-enabled
         /// </summary>
-        public const string JOB_PARAM_PROCESSMSMS_AUTO_ENABLED = "DeconTools_ProcessMsMs_Auto_Enabled";
+        public const string JOB_PARAM_PROCESS_MSMS_AUTO_ENABLED = "DeconTools_ProcessMsMs_Auto_Enabled";
 
         /// <summary>
         /// Job parameter to track the DeconTools parameter file name when DeconTools is not the primary tool for the pipeline script
@@ -396,7 +396,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     updatedXmlDoc.WriteContentTo(formattedXmlWriter);
 
-                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESS_MSMS_AUTO_ENABLED, true);
                     return true;
                 }
                 catch (Exception ex)

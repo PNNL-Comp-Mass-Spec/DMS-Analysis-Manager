@@ -76,13 +76,13 @@ namespace AnalysisManagerExtractionPlugin
 
             if (addPeptide)
             {
-                if (mPSMs.TryGetValue(proteinPeptide, out var udtExistingPSM))
+                if (mPSMs.TryGetValue(proteinPeptide, out var existingPSM))
                 {
-                    if (udtExistingPSM.SpecEValue > udtPSM.SpecEValue)
+                    if (existingPSM.SpecEValue > udtPSM.SpecEValue)
                     {
-                        udtExistingPSM.SpecEValue = udtPSM.SpecEValue;
-                        // Update the dictionary (necessary since udtExistingPSM is a structure and not an object)
-                        mPSMs[proteinPeptide] = udtExistingPSM;
+                        existingPSM.SpecEValue = udtPSM.SpecEValue;
+                        // Update the dictionary (necessary since existingPSM is a structure and not an object)
+                        mPSMs[proteinPeptide] = existingPSM;
                     }
                 }
                 else

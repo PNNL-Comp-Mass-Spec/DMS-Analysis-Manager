@@ -578,7 +578,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 eReturnCode = CreateQCPlots();
             }
 
-            if (mJobParams.GetJobParameter(AnalysisResourcesDecon2ls.JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, false))
+            if (mJobParams.GetJobParameter(AnalysisResourcesDecon2ls.JOB_PARAM_PROCESS_MSMS_AUTO_ENABLED, false))
             {
                 mEvalMessage = Global.AppendToComment(mEvalMessage, "Note: auto-enabled ProcessMSMS in the parameter file");
                 LogMessage(mEvalMessage);

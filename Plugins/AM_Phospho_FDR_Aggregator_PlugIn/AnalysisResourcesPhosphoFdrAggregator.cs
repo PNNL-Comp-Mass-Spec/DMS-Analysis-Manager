@@ -14,6 +14,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     public class AnalysisResourcesPhosphoFdrAggregator : AnalysisResources
     {
         // Ignore Spelling: nocopy, xxx_ascore
+
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -46,17 +47,17 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             var paramFilesCopied = 0;
 
-            if (!RetrieveAScoreParamfile("AScoreCIDParamFile", ref paramFilesCopied))
+            if (!RetrieveAScoreParamFile("AScoreCIDParamFile", ref paramFilesCopied))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!RetrieveAScoreParamfile("AScoreETDParamFile", ref paramFilesCopied))
+            if (!RetrieveAScoreParamFile("AScoreETDParamFile", ref paramFilesCopied))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!RetrieveAScoreParamfile("AScoreHCDParamFile", ref paramFilesCopied))
+            if (!RetrieveAScoreParamFile("AScoreHCDParamFile", ref paramFilesCopied))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -131,7 +132,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// </summary>
         /// <param name="parameterName">AScoreCIDParamFile or AScoreETDParamFile or AScoreHCDParamFile</param>
         /// <param name="paramFilesCopied">Incremented if the parameter file is found and copied</param>
-        private bool RetrieveAScoreParamfile(string parameterName, ref int paramFilesCopied)
+        private bool RetrieveAScoreParamFile(string parameterName, ref int paramFilesCopied)
         {
             var paramFileName = mJobParams.GetJobParameter(parameterName, string.Empty);
             if (string.IsNullOrWhiteSpace(paramFileName))

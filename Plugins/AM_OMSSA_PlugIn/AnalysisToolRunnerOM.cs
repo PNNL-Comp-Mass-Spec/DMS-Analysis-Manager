@@ -23,8 +23,8 @@ namespace AnalysisManagerOMSSAPlugIn
         #region "Module Variables"
 
         private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
-        private const float PROGRESS_PCT_PEPTIDEHIT_START = 95;
-        private const float PROGRESS_PCT_PEPTIDEHIT_COMPLETE = 99;
+        private const float PROGRESS_PCT_PEPTIDE_HIT_START = 95;
+        private const float PROGRESS_PCT_PEPTIDE_HIT_COMPLETE = 99;
 
         #endregion
 

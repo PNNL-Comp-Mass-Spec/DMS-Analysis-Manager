@@ -270,7 +270,7 @@ namespace AnalysisManagerXTandemPlugIn
         /// <param name="strConsoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
-            var reExtraceValue = new Regex(@"= *(\d+)", RegexOptions.Compiled);
+            var valueMatcher = new Regex(@"= *(\d+)", RegexOptions.Compiled);
 
             try
             {
@@ -354,10 +354,10 @@ namespace AnalysisManagerXTandemPlugIn
                         }
                         else if (dataLine.StartsWith("Valid models"))
                         {
-                            var reMatch = reExtraceValue.Match(dataLine);
-                            if (reMatch.Success)
+                            var match = valueMatcher.Match(dataLine);
+                            if (match.Success)
                             {
-                                int.TryParse(reMatch.Groups[1].Value, out mXTandemResultsCount);
+                                int.TryParse(match.Groups[1].Value, out mXTandemResultsCount);
                             }
                         }
                     }

@@ -19,7 +19,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     {
         #region "Module Variables"
 
-        private const float PROGRESS_PCT_PRIDEMZXML_RUNNING = 5;
+        private const float PROGRESS_PCT_PRIDE_MZXML_RUNNING = 5;
 
         private RunDosProgram mCmdRunner;
 
@@ -132,7 +132,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// </summary>
         private void CmdRunner_LoopWaiting()
         {
-            UpdateStatusFile(PROGRESS_PCT_PRIDEMZXML_RUNNING);
+            UpdateStatusFile(PROGRESS_PCT_PRIDE_MZXML_RUNNING);
 
             LogProgress("PrideMzXML");
         }

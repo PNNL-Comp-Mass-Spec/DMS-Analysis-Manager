@@ -118,7 +118,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                                 " -NoDBUpdate" +
                                 " -rp " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));   // Positive-mode .Raw file
 
-                var strFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
+                var strFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesLipidMapSearch.DECON_TOOLS_PEAKS_FILE_SUFFIX);
                 if (File.Exists(strFilePath))
                 {
                     arguments += " -pp " + PossiblyQuotePath(strFilePath);                  // Positive-mode peaks.txt file
@@ -129,7 +129,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     arguments += " -rn " + PossiblyQuotePath(Path.Combine(mWorkDir, strDataset2 + AnalysisResources.DOT_RAW_EXTENSION)); // Negative-mode .Raw file
 
-                    strFilePath = Path.Combine(mWorkDir, strDataset2 + AnalysisResourcesLipidMapSearch.DECONTOOLS_PEAKS_FILE_SUFFIX);
+                    strFilePath = Path.Combine(mWorkDir, strDataset2 + AnalysisResourcesLipidMapSearch.DECON_TOOLS_PEAKS_FILE_SUFFIX);
                     if (File.Exists(strFilePath))
                     {
                         arguments += " -pn " + PossiblyQuotePath(strFilePath);                  // Negative-mode peaks.txt file

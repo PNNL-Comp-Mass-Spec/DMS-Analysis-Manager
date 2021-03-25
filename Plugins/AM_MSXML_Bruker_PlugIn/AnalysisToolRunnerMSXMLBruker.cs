@@ -274,9 +274,9 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Copy the .mzXML.gz or .mzML.gz file to the MSXML cache
-            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
+            var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
 
-            if (string.IsNullOrEmpty(remoteCachefilePath))
+            if (string.IsNullOrEmpty(remoteCacheFilePath))
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
@@ -290,7 +290,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var cacheInfoFilePath = resultsFile.FullName + "_CacheInfo.txt";
             using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                writer.WriteLine(remoteCachefilePath);
+                writer.WriteLine(remoteCacheFilePath);
             }
 
             mJobParams.AddResultFileToSkip(resultsFile.Name);

@@ -237,8 +237,8 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 var pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName + AnalysisToolRunnerICRBase.PEK_TEMP_FILE);
 
-                var fiTempPekFile = new FileInfo(pekTempFilePath);
-                if (!fiTempPekFile.Exists)
+                var tempPekFile = new FileInfo(pekTempFilePath);
+                if (!tempPekFile.Exists)
                 {
                     if (mDebugLevel >= 4)
                     {
@@ -251,28 +251,28 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     LogDebug(
                         AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
-                        (fiTempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
+                        (tempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
                 }
 
-                // Copy fiTempPekFile locally
+                // Copy the pek file locally
                 try
                 {
-                    fiTempPekFile.CopyTo(Path.Combine(mWorkDir, fiTempPekFile.Name), true);
+                    tempPekFile.CopyTo(Path.Combine(mWorkDir, tempPekFile.Name), true);
 
                     if (mDebugLevel >= 1)
                     {
-                        LogDebug("Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
+                        LogDebug("Copied " + tempPekFile.Name + " locally; will resume ICR-2LS analysis");
                     }
 
                     // If the job succeeds, we should delete the .pek.tmp file from the transfer folder
                     // Add the full path to ServerFilesToDelete using AddServerFileToDelete
-                    mJobParams.AddServerFileToDelete(fiTempPekFile.FullName);
+                    mJobParams.AddServerFileToDelete(tempPekFile.FullName);
                 }
                 catch (Exception ex)
                 {
                     // Error copying the file; treat this as a failed job
                     mMessage = " Exception copying " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
-                    LogError("  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
+                    LogError("  ... Exception copying " + tempPekFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
