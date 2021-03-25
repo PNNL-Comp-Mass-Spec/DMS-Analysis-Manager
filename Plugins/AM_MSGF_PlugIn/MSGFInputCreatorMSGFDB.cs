@@ -149,8 +149,8 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     var currentPSM = reader.CurrentPSM;
 
-                    // currentPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
-                    //                    it comes from column MSGFDB_SpecEValue if MS-GF+
+                    // currentPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb if MS-GFDB
+                    //                      it comes from column MSGFDB_SpecEValue if MS-GF+
                     writer.WriteLine(currentPSM.ResultID + "\t" + currentPSM.ScanNumber + "\t" + currentPSM.Charge + "\t" + currentPSM.ProteinFirst + "\t" +
                                      currentPSM.Peptide + "\t" + currentPSM.MSGFSpecEValue + "\t" + string.Empty);
                 }

@@ -18,6 +18,8 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICAgilent : AnalysisToolRunnerMASICBase
     {
+        // Ignore Spelling: ParmFile
+
         protected override CloseOutType RunMASIC()
         {
             string parameterFilePath;

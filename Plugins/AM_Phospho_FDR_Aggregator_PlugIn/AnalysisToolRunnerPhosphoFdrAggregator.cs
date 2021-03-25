@@ -23,6 +23,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// </summary>
     public class AnalysisToolRunnerPhosphoFdrAggregator : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: cid, Da, etd, hcd, fht, xt
+
         #region "Constants and Enums"
 
         protected const string ASCORE_CONSOLE_OUTPUT_PREFIX = "AScore_ConsoleOutput";
@@ -90,7 +92,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     LogDebug("AnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
                 }
 
-                // Determine the path to the Ascore program
+                // Determine the path to the AScore program
                 // AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
                 var progLocAScore = mMgrParams.GetParam("AScoreProgLoc");
                 if (!File.Exists(progLocAScore))
@@ -307,7 +309,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                     foreach (var logFile in logFiles)
                     {
-                        // Logfile name should be of the form AScore_ConsoleOutput_syn.txt
+                        // Log file name should be of the form AScore_ConsoleOutput_syn.txt
                         // Parse out the tag from it -- in this case "syn"
                         var fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1);
 
@@ -951,7 +953,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Runs ascore on the specified file
+        /// Runs AScore on the specified file
         /// </summary>
         /// <param name="progLoc"></param>
         /// <param name="udtJobMetadata"></param>

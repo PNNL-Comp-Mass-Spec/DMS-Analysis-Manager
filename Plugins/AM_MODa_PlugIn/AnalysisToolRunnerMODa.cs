@@ -19,6 +19,8 @@ namespace AnalysisManagerMODaPlugIn
     /// </summary>
     public class AnalysisToolRunnerMODa : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Hanyang, moda, MODa, ParmFile, Xmx
+
         #region "Constants and Enums"
 
         private const string MODa_CONSOLE_OUTPUT = "MODa_ConsoleOutput.txt";

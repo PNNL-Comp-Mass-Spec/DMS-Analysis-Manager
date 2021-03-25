@@ -15,6 +15,12 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 {
     public class CompassXportRunner : EventNotifier
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Centroiding, CompassXport, csv, jcamp, mzdata
+
+        // ReSharper restore CommentTypo
+
         #region "Enums"
 
         public enum MSXMLOutputTypeConstants

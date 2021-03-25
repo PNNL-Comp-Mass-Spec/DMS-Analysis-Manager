@@ -16,6 +16,8 @@ namespace AnalysisManagerMSGFPlugin
 {
     public sealed class MSGFInputCreatorMODa : MSGFInputCreator
     {
+        // Ignore Spelling: MODa
+
         /// <summary>
         /// Constructor
         /// </summary>

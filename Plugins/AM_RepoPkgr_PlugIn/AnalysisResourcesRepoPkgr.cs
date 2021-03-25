@@ -98,7 +98,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             IEnumerable<DataPackageJobInfo> additionalJobs,
             bool includeMzXmlFiles)
         {
-            // The keys in this dictionary are udtJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
+            // The keys in this dictionary are DataPackageJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
             var dctInstrumentDataToRetrieve = new Dictionary<DataPackageJobInfo, KeyValuePair<string, string>>();
 

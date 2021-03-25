@@ -12,6 +12,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisResourcesLipidMapSearch : AnalysisResources
     {
+        // Ignore Spelling: dmsarch, Lipidomics, ParmFile, Pos
+
         /// <summary>
         /// DeconTools peaks file suffix
         /// </summary>

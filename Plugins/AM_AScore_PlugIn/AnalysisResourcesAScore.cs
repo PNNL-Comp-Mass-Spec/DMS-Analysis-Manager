@@ -26,10 +26,10 @@ namespace AnalysisManager_AScore_PlugIn
             //          (Mage supports retrieving files from Aurora or MyEmsl,
             //           but this has not be tested as of July 16, 2014)
             //
-            // bool blnSuccess = true;
-            //  blnSuccess = RunAScoreGetResources();
+            // var success = true;
+            // success = RunAScoreGetResources();
             //
-            // if (!blnSuccess) return CloseOutType.CLOSEOUT_FAILED;
+            // if (!success) return CloseOutType.CLOSEOUT_FAILED;
 
             if (mDebugLevel > 2)
             {
@@ -76,7 +76,7 @@ namespace AnalysisManager_AScore_PlugIn
         ///// </summary>
         //protected bool RunAScoreGetResources()
         //{
-        //    bool blnSuccess = false;
+        //    bool success = false;
 
         //    string ascoreOperations = mJobParams.GetParam("AScoreOperations");
 
@@ -88,15 +88,15 @@ namespace AnalysisManager_AScore_PlugIn
         //    foreach (string ascoreOperation in ascoreOperations.Split(','))
         //    {
         //        if (!string.IsNullOrWhiteSpace(ascoreOperation)) {
-        //            blnSuccess = RunAScoreOperation(ascoreOperation.Trim());
-        //            if (!blnSuccess) {
+        //            success = RunAScoreOperation(ascoreOperation.Trim());
+        //            if (!success) {
         //                mMessage = "Error running AScore resources operation " + ascoreOperation;
         //                break;
         //            }
         //        }
         //    }
 
-        //    return blnSuccess;
+        //    return success;
 
         //}
 
@@ -107,13 +107,13 @@ namespace AnalysisManager_AScore_PlugIn
         ///// <returns></returns>
         //private bool RunAScoreOperation(string ascoreOperation)
         //{
-        //    bool blnSuccess;
+        //    bool success;
 
         //    // Note: case statements must be lowercase
         //    switch (ascoreOperation.ToLower())
         //    {
         //        case "runascorephospho":
-        //            blnSuccess = GetAScoreFiles();
+        //            success = GetAScoreFiles();
         //            break;
         //        default:
         //            throw new ArgumentException("Unrecognized value for ascoreOperation: " + ascoreOperation);
@@ -122,14 +122,12 @@ namespace AnalysisManager_AScore_PlugIn
         //    if (!ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
         //        return false;
 
-        //    return blnSuccess;
+        //    return success;
         //}
-
-        //#region AScore Operations
 
         //private bool GetAScoreFiles()
         //{
-        //    const bool blnSuccess = true;
+        //    const bool success = true;
 
         //    //Add list the files to delete to global list
         //    var fileSpecList = mJobParams.GetParam("TargetJobFileList").Split(',').ToList();
@@ -184,7 +182,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        }
         //    }
 
-        //    return blnSuccess;
+        //    return success;
         //}
 
         //protected string GetDatasetID(string DatasetName)
@@ -196,8 +194,5 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    return string.Empty;
         //}
-
-        //#endregion
-
     }
 }

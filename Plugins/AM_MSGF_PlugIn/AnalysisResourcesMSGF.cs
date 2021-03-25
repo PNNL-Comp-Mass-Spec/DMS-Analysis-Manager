@@ -20,6 +20,8 @@ namespace AnalysisManagerMSGFPlugin
     /// </summary>
     public class AnalysisResourcesMSGF : AnalysisResources
     {
+        // Ignore Spelling: MODa, ModDefs, msgfdb, ParmFile
+
         #region "Constants"
 
         /// <summary>

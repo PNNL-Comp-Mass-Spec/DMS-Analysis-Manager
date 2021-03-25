@@ -18,6 +18,8 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// </summary>
     public class AnalysisToolRunnerMultiAlign : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: ParmFile
+
         #region "Module Variables"
 
         protected const float PROGRESS_PCT_MULTIALIGN_RUNNING = 5;

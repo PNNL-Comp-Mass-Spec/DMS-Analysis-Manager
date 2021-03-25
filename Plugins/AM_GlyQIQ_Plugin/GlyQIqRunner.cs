@@ -11,6 +11,8 @@ namespace AnalysisManagerGlyQIQPlugin
 {
     public class GlyQIqRunner
     {
+        // Ignore Spelling: GlyQ, Workflows
+
         public const string GLYQ_IQ_CONSOLE_OUTPUT_PREFIX = "GlyQ-IQ_ConsoleOutput_Core";
 
         #region "Enums"

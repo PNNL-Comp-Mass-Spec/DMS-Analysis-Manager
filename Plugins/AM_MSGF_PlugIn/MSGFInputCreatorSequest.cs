@@ -16,6 +16,8 @@ namespace AnalysisManagerMSGFPlugin
 {
     public sealed class MSGFInputCreatorSequest : MSGFInputCreator
     {
+        // Ignore Spelling: DelCn, Minima
+
         /// <summary>
         /// Constructor
         /// </summary>

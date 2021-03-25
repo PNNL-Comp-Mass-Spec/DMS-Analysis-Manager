@@ -16,6 +16,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
     /// </summary>
     public class AnalysisResourcesMetaboliteDetector : AnalysisResources
     {
+        // Ignore Spelling: ParmFile
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

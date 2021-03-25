@@ -232,7 +232,10 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <param name="statusInfo"></param>
         /// <param name="forceLogToDB"></param>
-        /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+        /// <remarks>
+        /// This method is only used if manager parameter LogStatusToBrokerDB is true
+        /// Typically LogStatusToBrokerDB is false, and the manager instead reports status via LogStatusToMessageQueue
+        /// </remarks>
         public void LogStatus(StatusInfo statusInfo, bool forceLogToDB)
         {
             try

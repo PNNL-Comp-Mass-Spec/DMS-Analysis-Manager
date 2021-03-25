@@ -16,6 +16,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisToolRunnerLipidMapSearch : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: ParmFile, yyyy-MM-dd
+
         #region "Module Variables"
 
         private const string LIPID_MAPS_DB_FILENAME_PREFIX = "LipidMapsDB_";
@@ -539,7 +541,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     return false;
                 }
 
-                // File is now up-to-date; copy locally (if not already in the work dir)
+                // File is now up-to-date; copy locally (if not already in the work directory)
                 mLipidMapsDBFilename = string.Copy(strNewestLipidMapsDBFileName);
                 var strSourceFilePath = Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
                 var strTargetFilePath = Path.Combine(mWorkDir, strNewestLipidMapsDBFileName);

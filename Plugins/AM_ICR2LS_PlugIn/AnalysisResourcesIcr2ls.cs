@@ -11,6 +11,8 @@ namespace AnalysisManagerICR2LSPlugIn
     /// </summary>
     public class AnalysisResourcesIcr2ls : AnalysisResources
     {
+        // Ignore Spelling: deisotoped, fid, ParmFile, SerFile
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

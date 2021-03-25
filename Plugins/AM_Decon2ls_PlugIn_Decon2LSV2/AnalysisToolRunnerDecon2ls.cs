@@ -21,6 +21,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class AnalysisToolRunnerDecon2ls : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: ascii, baf, CmdRunner, deconvolute, deisotope, fticr, HighAbu, Isos, ParmFile
+
         #region "Constants"
 
         private const string DECON2LS_SCANS_FILE_SUFFIX = "_scans.csv";
@@ -329,7 +331,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
-                // Make sure the key png files were created
+                // Make sure the key PNG files were created
                 var expectedFileExtensions = new List<string>
                 {
                     "_BPI_MS.png|_BPI_MSn.png",
@@ -394,7 +396,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         }
                     }
 
-                    LogError("QC png file not found, extension " + fileDescription);
+                    LogError("QC PNG file not found, extension " + fileDescription);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

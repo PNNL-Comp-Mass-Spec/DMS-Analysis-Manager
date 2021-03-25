@@ -23,6 +23,12 @@ namespace DTASpectraFileGen
     /// </summary>
     public class DtaGenThermoRaw : DtaGen
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: dta, lcqdtaloc, centroiding, MassTol, msn, XcalDLL
+
+        // ReSharper restore CommentTypo
+
         #region "Constants"
 
         protected const int DEFAULT_SCAN_STOP = 99999999;
@@ -148,6 +154,9 @@ namespace DTASpectraFileGen
         {
             var dtaGenProgram = mJobParams.GetJobParameter("DtaGenerator", "");
 
+            // ReSharper disable CommentTypo
+            // ReSharper disable StringLiteralTypo
+
             if (string.Equals(dtaGenProgram, EXTRACT_MSN_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 // Extract_MSn uses the lcqdtaloc folder path
@@ -156,6 +165,9 @@ namespace DTASpectraFileGen
 
             // DeconMSn uses the XcalDLLPath
             return Path.Combine(mMgrParams.GetParam("XcalDLLPath", ""), dtaGenProgram);
+
+            // ReSharper restore StringLiteralTypo
+            // ReSharper enable CommentTypo
         }
 
         /// <summary>
@@ -516,6 +528,8 @@ namespace DTASpectraFileGen
                             break;
                         }
 
+                        // ReSharper disable StringLiteralTypo
+
                         // Set up command
                         var arguments = " -I" + ionCount +
                                         " -G1";
@@ -546,6 +560,8 @@ namespace DTASpectraFileGen
                             arguments += " -XCDTA -Progress";
                         }
                         arguments += " " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(mWorkDir, mInstrumentFileName));
+
+                        // ReSharper restore StringLiteralTypo
 
                         if (mDebugLevel >= 1)
                         {

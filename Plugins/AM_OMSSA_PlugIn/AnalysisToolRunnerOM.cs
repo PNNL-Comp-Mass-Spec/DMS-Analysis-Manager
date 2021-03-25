@@ -18,6 +18,8 @@ namespace AnalysisManagerOMSSAPlugIn
     /// </summary>
     public class AnalysisToolRunnerOM : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: omx
+
         #region "Module Variables"
 
         private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
@@ -167,7 +169,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             try
             {
-                // set up formatdb.exe to reference the organsim DB file (fasta)
+                // set up formatdb.exe to reference the organism DB file (fasta)
 
                 LogMessage("Running OMSSA2PepXml");
 

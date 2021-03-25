@@ -15,6 +15,8 @@ namespace AnalysisManagerFormularityPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerFormularity : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: calibrant, cia, href, html, nomsi, png
+
         #region "Constants and Enums"
 
         private const float PROGRESS_PCT_STARTING_FORMULARITY = 5;
@@ -601,7 +603,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var reportFile = csvFiles.First();
 
-                // Rename the report file to be DatasetName_Report.csv (and move it to the work dir)
+                // Rename the report file to be DatasetName_Report.csv (and move it to the work directory)
                 reportFile.MoveTo(Path.Combine(mWorkDir, mDatasetName + "_Report.csv"));
 
                 // Ignore the Report*.log files

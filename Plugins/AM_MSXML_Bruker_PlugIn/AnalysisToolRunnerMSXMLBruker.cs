@@ -19,6 +19,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// </summary>
     public class AnalysisToolRunnerMSXMLBruker : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: CompassXport
+
         #region "Module Variables"
 
         protected const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;

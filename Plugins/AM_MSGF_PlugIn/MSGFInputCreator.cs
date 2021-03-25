@@ -23,6 +23,8 @@ namespace AnalysisManagerMSGFPlugin
 {
     public abstract class MSGFInputCreator : EventNotifier
     {
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss, tt
+
         #region "Constants"
 
         private const string MSGF_INPUT_FILENAME_SUFFIX = "_MSGF_input.txt";
@@ -391,7 +393,7 @@ namespace AnalysisManagerMSGFPlugin
                     // ReSharper disable CommentTypo
 
                     // mzXML filename is dataset plus .mzXML
-                    // Note that the jrap reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
+                    // Note that the JRAP reader used by MSGF may fail if the .mzXML filename is capitalized differently than this (i.e., it cannot be .mzxml)
 
                     // ReSharper restore CommentTypo
                     spectrumFileName = mDatasetName + ".mzXML";

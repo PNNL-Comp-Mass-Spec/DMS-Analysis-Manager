@@ -28,6 +28,8 @@ namespace AnalysisManagerBase.StatusReporting
     /// </remarks>
     public class StatusFile : EventNotifier, IStatusFile
     {
+        // Ignore Spelling: GlyQ, ModPlus, PerfLib, yyyy-MM-dd, hh:mm:ss, tt
+
         #region "Module variables"
 
         /// <summary>

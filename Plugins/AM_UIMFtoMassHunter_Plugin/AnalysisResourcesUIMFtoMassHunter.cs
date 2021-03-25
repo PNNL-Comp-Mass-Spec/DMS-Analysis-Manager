@@ -16,6 +16,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     /// </summary>
     public class AnalysisResourcesUIMFtoMassHunter : AnalysisResources
     {
+        // Ignore Spelling: ParmFile, UIMFtoMass
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

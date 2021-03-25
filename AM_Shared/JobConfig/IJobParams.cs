@@ -278,14 +278,14 @@ namespace AnalysisManagerBase.JobConfig
         string GetJobStepDescription();
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
         string GetParam(string name);
 
         /// <summary>
-        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section; names are not case sensitive
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
@@ -293,7 +293,7 @@ namespace AnalysisManagerBase.JobConfig
         string GetParam(string section, string name);
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found (bool)</param>
@@ -305,7 +305,7 @@ namespace AnalysisManagerBase.JobConfig
         bool GetJobParameter(string name, bool valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found (string)</param>
@@ -313,7 +313,7 @@ namespace AnalysisManagerBase.JobConfig
         string GetJobParameter(string name, string valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found (int)</param>
@@ -321,7 +321,7 @@ namespace AnalysisManagerBase.JobConfig
         int GetJobParameter(string name, int valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found (short)</param>
@@ -329,7 +329,7 @@ namespace AnalysisManagerBase.JobConfig
         short GetJobParameter(string name, short valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name (in any parameter section)
+        /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found (float)</param>
@@ -337,7 +337,7 @@ namespace AnalysisManagerBase.JobConfig
         float GetJobParameter(string name, float valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section; names are not case sensitive
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
@@ -346,7 +346,7 @@ namespace AnalysisManagerBase.JobConfig
         bool GetJobParameter(string section, string name, bool valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section; names are not case sensitive
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
@@ -355,7 +355,7 @@ namespace AnalysisManagerBase.JobConfig
         string GetJobParameter(string section, string name, string valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section; names are not case sensitive
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
@@ -364,7 +364,7 @@ namespace AnalysisManagerBase.JobConfig
         int GetJobParameter(string section, string name, int valueIfMissing);
 
         /// <summary>
-        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section; names are not case sensitive
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>

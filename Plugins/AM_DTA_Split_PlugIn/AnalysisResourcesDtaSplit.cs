@@ -9,6 +9,8 @@ namespace AnalysisManagerDtaSplitPlugIn
     /// </summary>
     public class AnalysisResourcesDtaSplit : AnalysisResources
     {
+        // Ignore Spelling: Dta
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

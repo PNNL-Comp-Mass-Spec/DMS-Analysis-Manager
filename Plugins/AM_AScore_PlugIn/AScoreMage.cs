@@ -15,6 +15,8 @@ namespace AnalysisManager_AScore_PlugIn
 {
     public class AScoreMagePipeline : EventNotifier
     {
+        // Ignore Spelling: const, msgfdb, ParmFile
+
         #region Member Variables
 
         protected string mResultsDBFileName = string.Empty;

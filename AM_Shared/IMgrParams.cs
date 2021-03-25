@@ -14,7 +14,11 @@ namespace AnalysisManagerBase
     /// </summary>
     public interface IMgrParams
     {
+        // ReSharper disable CommentTypo
+
         // Ignore Spelling: PostgreSQL, pgpass, Ack
+
+        // ReSharper restore CommentTypo
 
         #region "Properties"
 
@@ -53,7 +57,7 @@ namespace AnalysisManagerBase
         bool DisableManagerLocally();
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary
+        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <returns>String value associated with specified key</returns>
@@ -61,7 +65,7 @@ namespace AnalysisManagerBase
         string GetParam(string itemKey);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary
+        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -69,7 +73,7 @@ namespace AnalysisManagerBase
         string GetParam(string itemKey, string valueIfMissing);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary
+        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -77,7 +81,7 @@ namespace AnalysisManagerBase
         bool GetParam(string itemKey, bool valueIfMissing);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary
+        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -85,7 +89,7 @@ namespace AnalysisManagerBase
         int GetParam(string itemKey, int valueIfMissing);
 
         /// <summary>
-        /// Check for the existence of a job task parameter
+        /// Check for the existence of a job task parameter (case insensitive parameter names)
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <returns>True if the parameter is defined, false if not</returns>

@@ -21,6 +21,8 @@ namespace AnalysisManagerXTandemPlugIn
     /// </summary>
     public class AnalysisToolRunnerXT : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: xt
+
         #region "Module Variables"
 
         protected const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";

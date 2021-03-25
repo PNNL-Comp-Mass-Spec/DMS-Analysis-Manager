@@ -19,6 +19,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     /// </summary>
     public class AnalysisToolRunnerLCMSFF : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Ini
+
         #region "Module Variables"
 
         private const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;

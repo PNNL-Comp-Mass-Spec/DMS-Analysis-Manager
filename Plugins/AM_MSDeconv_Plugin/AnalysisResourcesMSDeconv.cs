@@ -15,6 +15,8 @@ namespace AnalysisManagerMSDeconvPlugIn
     /// </summary>
     public class AnalysisResourcesMSDeconv : AnalysisResources
     {
+        // Ignore Spelling: MSDeconv
+
         /// <summary>
         /// Retrieve required files
         /// </summary>
