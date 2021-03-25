@@ -108,7 +108,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the values to pass to LipidTools.exe at the command line
-                var strParameterFileName = mJobParams.GetParam("parmFileName");
+                var strParameterFileName = mJobParams.GetParam("ParmFileName");
                 var strParameterFilePath = Path.Combine(mWorkDir, strParameterFileName);
 
                 LogMessage("Running LipidTools");
@@ -767,7 +767,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     {
                         sbOptions.AppendFormat(" -adducts \"{0}\"", value);
                     }
-                    else if (string.Equals(key, "noscangroups", StringComparison.OrdinalIgnoreCase))
+                    else if (string.Equals(key, "NoScanGroups", StringComparison.OrdinalIgnoreCase))
                     {
                         if (bool.TryParse(value, out var blnValue))
                         {

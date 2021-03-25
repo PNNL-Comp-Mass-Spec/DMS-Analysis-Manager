@@ -68,11 +68,11 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // verify that program file exists
-            var progLoc = mMgrParams.GetParam("OMSSAprogloc");
+            var progLoc = mMgrParams.GetParam("OMSSAProgLoc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
-                    progLoc = "Parameter 'OMSSAprogloc' not defined for this manager";
+                    progLoc = "Parameter 'OMSSAProgLoc' not defined for this manager";
                 LogError("Cannot find OMSSA program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -243,8 +243,8 @@ namespace AnalysisManagerOMSSAPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new(mMgrParams.GetParam("OMSSAprogloc")),
-                new(mMgrParams.GetParam("omssa2pepprogloc"))
+                new(mMgrParams.GetParam("OMSSAProgLoc")),
+                new(mMgrParams.GetParam("omssa2pepProgLoc"))
             };
 
             try

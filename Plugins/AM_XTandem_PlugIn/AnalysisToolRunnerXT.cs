@@ -85,10 +85,10 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             // Define the path to the X!Tandem .Exe
-            var progLoc = mMgrParams.GetParam("xtprogloc");
+            var progLoc = mMgrParams.GetParam("xtProgLoc");
             if (progLoc.Length == 0)
             {
-                mMessage = "Parameter 'xtprogloc' not defined for this manager";
+                mMessage = "Parameter 'xtProgLoc' not defined for this manager";
                 LogError(mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -220,7 +220,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new(mMgrParams.GetParam("xtprogloc"))
+                new(mMgrParams.GetParam("xtProgLoc"))
             };
 
             try

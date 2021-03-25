@@ -352,21 +352,19 @@ namespace AnalysisManagerMODaPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var dataLineLcase = dataLine.ToLower();
-
-                        if (linesRead < 6 && string.IsNullOrEmpty(modaVersionAndDate) && dataLineLcase.StartsWith("moda"))
+                        if (linesRead < 6 && string.IsNullOrEmpty(modaVersionAndDate) && dataLine.StartsWith("moda", StringComparison.OrdinalIgnoreCase))
                         {
                             modaVersionAndDate = string.Copy(dataLine);
                             continue;
                         }
 
-                        if (linesRead < 6 && dataLineLcase.StartsWith("release date"))
+                        if (linesRead < 6 && dataLine.StartsWith("release date", StringComparison.OrdinalIgnoreCase))
                         {
                             modaVersionAndDate += ", " + dataLine;
                             continue;
                         }
 
-                        if (dataLineLcase.StartsWith("abnormal termination"))
+                        if (dataLine.StartsWith("abnormal termination", StringComparison.OrdinalIgnoreCase))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
@@ -376,7 +374,7 @@ namespace AnalysisManagerMODaPlugIn
                             continue;
                         }
 
-                        if (dataLineLcase.Contains("failed to read msms spectra file"))
+                        if (dataLine.IndexOf("failed to read msms spectra file", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
@@ -386,7 +384,7 @@ namespace AnalysisManagerMODaPlugIn
                             continue;
                         }
 
-                        if (dataLineLcase.Contains("exception") && dataLineLcase.StartsWith("java"))
+                        if (dataLine.IndexOf("exception", StringComparison.OrdinalIgnoreCase) >=0 && dataLine.StartsWith("java", StringComparison.OrdinalIgnoreCase))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {

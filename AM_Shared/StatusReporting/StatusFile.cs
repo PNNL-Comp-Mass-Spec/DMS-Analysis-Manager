@@ -1182,7 +1182,7 @@ namespace AnalysisManagerBase.StatusReporting
             var logWarning = true;
 
             // ReSharper disable once StringLiteralTypo
-            if (Tool.IndexOf("glyq", StringComparison.OrdinalIgnoreCase) >= 0 || Tool.IndexOf("modplus", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (Tool.IndexOf("GlyQ", StringComparison.OrdinalIgnoreCase) >= 0 || Tool.IndexOf("ModPlus", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 if (mDebugLevel < 3)
                     logWarning = false;

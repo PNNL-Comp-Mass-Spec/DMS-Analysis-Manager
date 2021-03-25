@@ -60,11 +60,11 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             // verify that program file exists
             // progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
-            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerProgLoc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
-                    progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager";
+                    progLoc = "Parameter 'MSDataFileTrimmerProgLoc' not defined for this manager";
                 LogError("Cannot find MSDataFileTrimmer program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -121,7 +121,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// </summary>
         protected bool StoreToolVersionInfo()
         {
-            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var progLoc = mMgrParams.GetParam("MSDataFileTrimmerProgLoc");
             var success = StoreDotNETToolVersionInfo(progLoc);
 
             return success;
