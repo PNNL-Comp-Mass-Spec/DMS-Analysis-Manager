@@ -350,38 +350,36 @@ namespace AnalysisManagerInSpecTPlugIn
                 // Initialize htMessages
                 var htMessages = new Hashtable();
 
-                // Read the contents of errorFilePath
-                using (var reader = new StreamReader(new FileStream(errorFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                // Read the contents of the error file
+                using var reader = new StreamReader(new FileStream(errorFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (dataLine == null)
+                        continue;
+
+                    var dataLineTrimmed = dataLine.Trim();
+
+                    if (dataLineTrimmed.Length > 0)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (dataLine == null)
-                            continue;
-
-                        var dataLineTrimmed = dataLine.Trim();
-
-                        if (dataLineTrimmed.Length > 0)
+                        if (!htMessages.Contains(dataLineTrimmed))
                         {
-                            if (!htMessages.Contains(dataLineTrimmed))
-                            {
-                                htMessages.Add(dataLineTrimmed, 1);
-                                LogWarning("Inspect warning/error: " + dataLineTrimmed);
-                            }
+                            htMessages.Add(dataLineTrimmed, 1);
+                            LogWarning("Inspect warning/error: " + dataLineTrimmed);
                         }
                     }
                 }
 
                 Console.WriteLine();
+                return true;
             }
             catch (Exception)
             {
                 LogError("AnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
                 return false;
             }
-
-            return true;
         }
 
         /// <summary>
@@ -548,53 +546,51 @@ namespace AnalysisManagerInSpecTPlugIn
             try
             {
                 var ioFile = new FileInfo(strSearchLogFilePath);
-                if (ioFile.Exists && ioFile.Length > 0)
+                if (!ioFile.Exists || ioFile.Length == 0) return;
+
+                // Search log file has been updated
+                // Open the file and read the contents
+                string lastEntry = null;
+
+                using (var reader = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
                 {
-                    // Search log file has been updated
-                    // Open the file and read the contents
-                    string strLastEntry = null;
-
-                    using (var reader = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
+                    // Read to the end of the file
+                    while (!reader.EndOfStream)
                     {
-                        // Read to the end of the file
-                        while (!reader.EndOfStream)
-                        {
-                            var dataLine = reader.ReadLine();
+                        var dataLine = reader.ReadLine();
 
-                            if (!string.IsNullOrEmpty(dataLine))
-                            {
-                                strLastEntry = string.Copy(dataLine);
-                            }
+                        if (!string.IsNullOrEmpty(dataLine))
+                        {
+                            lastEntry = string.Copy(dataLine);
                         }
                     }
+                }
 
-                    if (!string.IsNullOrEmpty(strLastEntry))
+                if (string.IsNullOrEmpty(lastEntry)) return;
+
+                if (mDebugLevel >= 4)
+                {
+                    // Store the new search log entry in the log
+                    if (mInspectSearchLogMostRecentEntry.Length == 0 || mInspectSearchLogMostRecentEntry != lastEntry)
                     {
-                        if (mDebugLevel >= 4)
-                        {
-                            // Store the new search log entry in the log
-                            if (mInspectSearchLogMostRecentEntry.Length == 0 || mInspectSearchLogMostRecentEntry != strLastEntry)
-                            {
-                                LogDebug("Inspect search log entry: " + strLastEntry);
-                            }
-                        }
-
-                        // Cache the log entry
-                        mInspectSearchLogMostRecentEntry = string.Copy(strLastEntry);
-
-                        var dataCols = strLastEntry.Split('\t');
-
-                        if (dataCols.Length >= 4)
-                        {
-                            // Parse out the number of spectra from the 3rd column
-                            int.TryParse(dataCols[2], out mDtaCount);
-
-                            // Parse out the % complete from the 4th column
-                            // Use .TrimEnd to remove the trailing % sign
-                            var strProgress = dataCols[3].TrimEnd('%');
-                            float.TryParse(strProgress, out mProgress);
-                        }
+                        LogDebug("Inspect search log entry: " + lastEntry);
                     }
+                }
+
+                // Cache the log entry
+                mInspectSearchLogMostRecentEntry = string.Copy(lastEntry);
+
+                var dataCols = lastEntry.Split('\t');
+
+                if (dataCols.Length >= 4)
+                {
+                    // Parse out the number of spectra from the 3rd column
+                    int.TryParse(dataCols[2], out mDtaCount);
+
+                    // Parse out the % complete from the 4th column
+                    // Use .TrimEnd to remove the trailing % sign
+                    var strProgress = dataCols[3].TrimEnd('%');
+                    float.TryParse(strProgress, out mProgress);
                 }
             }
             catch (Exception ex)

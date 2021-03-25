@@ -786,52 +786,51 @@ namespace AnalysisManagerTopFDPlugIn
                 mJobParams.AddResultFileToSkip(oldMzMLFilename);
                 mJobParams.AddResultFileToSkip(updatedMzMLFile.Name);
 
-                using (var reader = new StreamReader(new FileStream(sourceMzMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(sourceMzMLFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var writer = new StreamWriter(new FileStream(updatedMzMLFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (!dataLine.Trim().StartsWith("<cvParam"))
                     {
-                        var dataLine = reader.ReadLine();
+                        writer.WriteLine(dataLine);
+                        continue;
+                    }
 
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        if (!dataLine.Trim().StartsWith("<cvParam"))
+                    var matchFound = false;
+                    foreach (var item in cvParamsToUpdate)
+                    {
+                        if (dataLine.Contains(item.Key))
                         {
-                            writer.WriteLine(dataLine);
-                            continue;
-                        }
-
-                        var matchFound = false;
-                        foreach (var item in cvParamsToUpdate)
-                        {
-                            if (dataLine.Contains(item.Key))
-                            {
-                                var updatedLine = dataLine.Replace(item.Key, item.Value);
-                                writer.WriteLine(updatedLine);
-                                matchFound = true;
-                                break;
-                            }
-                        }
-
-                        if (matchFound)
-                        {
+                            var updatedLine = dataLine.Replace(item.Key, item.Value);
+                            writer.WriteLine(updatedLine);
+                            matchFound = true;
                             break;
                         }
-
-                        writer.WriteLine(dataLine);
                     }
 
-                    // Read/write the remaining lines
-                    while (!reader.EndOfStream)
+                    if (matchFound)
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrEmpty(dataLine))
-                            continue;
-
-                        writer.WriteLine(dataLine);
+                        break;
                     }
+
+                    writer.WriteLine(dataLine);
+                }
+
+                // Read/write the remaining lines
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    writer.WriteLine(dataLine);
                 }
 
                 return updatedMzMLFile.FullName;

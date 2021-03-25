@@ -218,31 +218,30 @@ namespace AnalysisManagerICR2LSPlugIn
 
             try
             {
-                using (var reader = new StreamReader(new FileStream(pekTempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(pekTempFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var reMatch = reScanNumber.Match(dataLine);
+                    if (!reMatch.Success)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        reMatch = reScanNumberFromFilename.Match(dataLine);
+                    }
 
-                        var reMatch = reScanNumber.Match(dataLine);
-                        if (!reMatch.Success)
-                        {
-                            reMatch = reScanNumberFromFilename.Match(dataLine);
-                        }
+                    if (reMatch.Success)
+                    {
+                        int.TryParse(reMatch.Groups[1].Value, out currentScan);
+                    }
 
-                        if (reMatch.Success)
+                    foreach (var closingMessage in lstClosingMessages)
+                    {
+                        if (dataLine.StartsWith(closingMessage))
                         {
-                            int.TryParse(reMatch.Groups[1].Value, out currentScan);
-                        }
-
-                        foreach (var closingMessage in lstClosingMessages)
-                        {
-                            if (dataLine.StartsWith(closingMessage))
-                            {
-                                lastValidScan = currentScan;
-                            }
+                            lastValidScan = currentScan;
                         }
                     }
                 }
@@ -287,124 +286,125 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 mLastStatusParseTime = DateTime.UtcNow;
 
-                if (File.Exists(statusFilePath))
+                if (!File.Exists(statusFilePath))
                 {
-                    // Read the file
-                    using (var reader = new StreamReader(new FileStream(statusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    // Status.log file not found; if the job just started, this will be the case
+                    // For this reason, ResetStatusLogTimes will set mLastMissingStatusFileTime to the time the job starts, meaning
+                    //  we won't log an error about a missing Status.log file until 60 minutes into a job
+                    if (DateTime.UtcNow.Subtract(mLastMissingStatusFileTime).TotalMinutes >= 60)
                     {
-                        while (!reader.EndOfStream)
-                        {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                                continue;
-
-                            var charIndex = dataLine.IndexOf('=');
-                            if (charIndex <= 0)
-                                continue;
-
-                            var key = dataLine.Substring(0, charIndex).Trim();
-                            var value = dataLine.Substring(charIndex + 1).Trim();
-
-                            if (key.Equals("date", StringComparison.OrdinalIgnoreCase))
-                            {
-                                statusDate = string.Copy(value);
-                            }
-                            else if (key.Equals("time", StringComparison.OrdinalIgnoreCase))
-                            {
-                                statusTime = string.Copy(value);
-                            }
-                            else if (key.Equals("ScansProcessed", StringComparison.OrdinalIgnoreCase))
-                            {
-                                if (int.TryParse(value, out var intResult))
-                                {
-                                    // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
-                                    // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
-                                    // To correct for this, subtract out mMinScanOffset
-                                    // scansProcessed = intResult - mMinScanOffset
-
-                                    // New: ScansProcessed is truly the number of scans processed
-                                    scansProcessed = intResult;
-                                    if (scansProcessed < 0)
-                                    {
-                                        scansProcessed = intResult;
-                                    }
-                                }
-                            }
-                            else if (key.Equals("PercentComplete", StringComparison.OrdinalIgnoreCase))
-                            {
-                                if (float.TryParse(value, out var sngResult))
-                                {
-                                    mICR2LSStatus.PercentComplete = sngResult;
-                                }
-                            }
-                            else if (key.Equals("state", StringComparison.OrdinalIgnoreCase))
-                            {
-                                // Example values: Processing, Finished
-                                processingState = string.Copy(value);
-                            }
-                            else if (key.Equals("status", StringComparison.OrdinalIgnoreCase))
-                            {
-                                // Example value: LTQFTPEKGENERATION
-                                processingStatus = string.Copy(value);
-                            }
-                            else if (key.Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
-                            {
-                                ConsoleMsgUtils.ShowWarning("Error message from the ICR2LS Status File: " + value);
-                            }
-                        }
+                        mLastMissingStatusFileTime = DateTime.UtcNow;
+                        LogWarning("ICR2LS Status.Log file not found: " + statusFilePath);
                     }
-
-                    if (statusDate.Length > 0 && statusTime.Length > 0)
-                    {
-                        statusDate += " " + statusTime;
-                        if (!DateTime.TryParse(statusDate, out _))
-                        {
-                        }
-                    }
-
-                    if (scansProcessed > mICR2LSStatus.ScansProcessed)
-                    {
-                        // Only update .ScansProcessed if the new value is larger than the previous one
-                        // This is necessary since ICR-2LS will set ScansProcessed to 0 when the state is Finished
-                        mICR2LSStatus.ScansProcessed = scansProcessed;
-                    }
-
-                    if (!string.IsNullOrEmpty(processingState))
-                    {
-                        mICR2LSStatus.ProcessingState = processingState;
-
-                        if (!ValidateICR2LSStatus(processingState))
-                        {
-                            if (DateTime.UtcNow.Subtract(mLastInvalidStatusFileTime).TotalMinutes >= 15)
-                            {
-                                mLastInvalidStatusFileTime = DateTime.UtcNow;
-                                LogWarning("Invalid processing state reported by ICR2LS: " + processingState);
-                            }
-                        }
-                    }
-
-                    if (processingStatus.Length > 0)
-                    {
-                        mICR2LSStatus.ProcessingStatus = processingStatus;
-                    }
-
-                    mProgress = mICR2LSStatus.PercentComplete;
-
-                    // Update the local status file (and post the status to the message queue)
-                    UpdateStatusRunning(mProgress, mICR2LSStatus.ScansProcessed);
 
                     return true;
+
                 }
 
-                // Status.log file not found; if the job just started, this will be the case
-                // For this reason, ResetStatusLogTimes will set mLastMissingStatusFileTime to the time the job starts, meaning
-                //  we won't log an error about a missing Status.log file until 60 minutes into a job
-                if (DateTime.UtcNow.Subtract(mLastMissingStatusFileTime).TotalMinutes >= 60)
+                // Read the file
+                using (var reader = new StreamReader(new FileStream(statusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    mLastMissingStatusFileTime = DateTime.UtcNow;
-                    LogWarning("ICR2LS Status.Log file not found: " + statusFilePath);
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        var charIndex = dataLine.IndexOf('=');
+                        if (charIndex <= 0)
+                            continue;
+
+                        var key = dataLine.Substring(0, charIndex).Trim();
+                        var value = dataLine.Substring(charIndex + 1).Trim();
+
+                        if (key.Equals("date", StringComparison.OrdinalIgnoreCase))
+                        {
+                            statusDate = string.Copy(value);
+                        }
+                        else if (key.Equals("time", StringComparison.OrdinalIgnoreCase))
+                        {
+                            statusTime = string.Copy(value);
+                        }
+                        else if (key.Equals("ScansProcessed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (int.TryParse(value, out var intResult))
+                            {
+                                // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
+                                // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
+                                // To correct for this, subtract out mMinScanOffset
+                                // scansProcessed = intResult - mMinScanOffset
+
+                                // New: ScansProcessed is truly the number of scans processed
+                                scansProcessed = intResult;
+                                if (scansProcessed < 0)
+                                {
+                                    scansProcessed = intResult;
+                                }
+                            }
+                        }
+                        else if (key.Equals("PercentComplete", StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (float.TryParse(value, out var sngResult))
+                            {
+                                mICR2LSStatus.PercentComplete = sngResult;
+                            }
+                        }
+                        else if (key.Equals("state", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Example values: Processing, Finished
+                            processingState = string.Copy(value);
+                        }
+                        else if (key.Equals("status", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Example value: LTQFTPEKGENERATION
+                            processingStatus = string.Copy(value);
+                        }
+                        else if (key.Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ConsoleMsgUtils.ShowWarning("Error message from the ICR2LS Status File: " + value);
+                        }
+                    }
                 }
+
+                if (statusDate.Length > 0 && statusTime.Length > 0)
+                {
+                    statusDate += " " + statusTime;
+                    if (!DateTime.TryParse(statusDate, out _))
+                    {
+                    }
+                }
+
+                if (scansProcessed > mICR2LSStatus.ScansProcessed)
+                {
+                    // Only update .ScansProcessed if the new value is larger than the previous one
+                    // This is necessary since ICR-2LS will set ScansProcessed to 0 when the state is Finished
+                    mICR2LSStatus.ScansProcessed = scansProcessed;
+                }
+
+                if (!string.IsNullOrEmpty(processingState))
+                {
+                    mICR2LSStatus.ProcessingState = processingState;
+
+                    if (!ValidateICR2LSStatus(processingState))
+                    {
+                        if (DateTime.UtcNow.Subtract(mLastInvalidStatusFileTime).TotalMinutes >= 15)
+                        {
+                            mLastInvalidStatusFileTime = DateTime.UtcNow;
+                            LogWarning("Invalid processing state reported by ICR2LS: " + processingState);
+                        }
+                    }
+                }
+
+                if (processingStatus.Length > 0)
+                {
+                    mICR2LSStatus.ProcessingStatus = processingStatus;
+                }
+
+                mProgress = mICR2LSStatus.PercentComplete;
+
+                // Update the local status file (and post the status to the message queue)
+                UpdateStatusRunning(mProgress, mICR2LSStatus.ScansProcessed);
 
                 return true;
             }

@@ -234,93 +234,92 @@ namespace AnalysisManagerFormularityPlugin
             {
                 var paramFilePath = Path.Combine(paramFileStoragePath, paramFileName);
 
-                using (var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var calibrationSection = doc.Elements("DefaultParameters").Elements("InputFilesTab").Elements("Calibration").ToList();
+
+                if (calibrationSection.Count == 0)
                 {
-                    // Note that XDocument supersedes XmlDocument and XPathDocument
-                    // XDocument can often be easier to use since XDocument is LINQ-based
-
-                    var doc = XDocument.Parse(reader.ReadToEnd());
-
-                    var calibrationSection = doc.Elements("DefaultParameters").Elements("InputFilesTab").Elements("Calibration").ToList();
-
-                    if (calibrationSection.Count == 0)
-                    {
-                        LogError("Formularity parameter file does not have a Calibration section");
-                        return false;
-                    }
-
-                    var regressionSetting = XMLUtils.GetXmlValue(calibrationSection, "Regression");
-                    if (string.IsNullOrWhiteSpace(regressionSetting))
-                    {
-                        LogError("Regression setting is missing from the Calibration section of the parameter file");
-                        return false;
-                    }
-
-                    // Validate that regressionSetting is a known value
-                    var allowedValues = new SortedSet<string>(StringComparer.Ordinal) {
-                        "none",
-                        "auto",
-                        "linear",
-                        "quadratic"
-                    };
-
-                    if (!allowedValues.Contains(regressionSetting))
-                    {
-                        // Check for the word being correct, but not lowercase
-                        foreach (var value in allowedValues)
-                        {
-                            if (string.Equals(value, regressionSetting, StringComparison.OrdinalIgnoreCase))
-                            {
-                                LogError(string.Format("The Regression value in the Calibration section is {0}; it needs to be lowercase {1}",
-                                                       regressionSetting, value));
-                                return false;
-                            }
-                        }
-
-                        LogError(string.Format("Invalid Regression value in the Calibration section: {0}; allowed values are {1}",
-                                               regressionSetting, string.Join(", ", allowedValues)));
-                        return false;
-                    }
-
-                    if (regressionSetting.Equals("none", StringComparison.Ordinal))
-                    {
-                        // Calibration is not enabled
-                        LogDebug("Calibration is not enabled in Formularity parameter file " + paramFileName);
-                        return true;
-                    }
-
-                    var calibrationPeaksFileName = XMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
-                    if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
-                    {
-                        LogError("Calibration is enabled in the Formularity parameter file, but RefPeakFileName is missing or empty");
-                        return false;
-                    }
-
-                    var calibrationFilesDirPath = Path.Combine(paramFileStoragePath, "CalibrationFiles");
-                    var calibrationFilesDirectory = new DirectoryInfo(calibrationFilesDirPath);
-                    if (!calibrationFilesDirectory.Exists)
-                    {
-                        LogError("Calibration files directory not found: " + calibrationFilesDirectory.FullName);
-                        return false;
-                    }
-
-                    var calibrationPeaksFilePath = Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName);
-                    var calibrationPeaksFile = new FileInfo(calibrationPeaksFilePath);
-                    if (!calibrationPeaksFile.Exists)
-                    {
-                        LogError("Calibration peaks file not found: " + calibrationPeaksFile.FullName);
-                        return false;
-                    }
-
-                    var localCalFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
-                    calibrationPeaksFile.CopyTo(localCalFilePath, true);
-
-                    mJobParams.AddResultFileToSkip(calibrationPeaksFileName);
-                    mJobParams.AddAdditionalParameter(
-                        AnalysisJob.STEP_PARAMETERS_SECTION,
-                        JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
-                        calibrationPeaksFileName);
+                    LogError("Formularity parameter file does not have a Calibration section");
+                    return false;
                 }
+
+                var regressionSetting = XMLUtils.GetXmlValue(calibrationSection, "Regression");
+                if (string.IsNullOrWhiteSpace(regressionSetting))
+                {
+                    LogError("Regression setting is missing from the Calibration section of the parameter file");
+                    return false;
+                }
+
+                // Validate that regressionSetting is a known value
+                var allowedValues = new SortedSet<string>(StringComparer.Ordinal) {
+                    "none",
+                    "auto",
+                    "linear",
+                    "quadratic"
+                };
+
+                if (!allowedValues.Contains(regressionSetting))
+                {
+                    // Check for the word being correct, but not lowercase
+                    foreach (var value in allowedValues)
+                    {
+                        if (string.Equals(value, regressionSetting, StringComparison.OrdinalIgnoreCase))
+                        {
+                            LogError(string.Format("The Regression value in the Calibration section is {0}; it needs to be lowercase {1}",
+                                regressionSetting, value));
+                            return false;
+                        }
+                    }
+
+                    LogError(string.Format("Invalid Regression value in the Calibration section: {0}; allowed values are {1}",
+                        regressionSetting, string.Join(", ", allowedValues)));
+                    return false;
+                }
+
+                if (regressionSetting.Equals("none", StringComparison.Ordinal))
+                {
+                    // Calibration is not enabled
+                    LogDebug("Calibration is not enabled in Formularity parameter file " + paramFileName);
+                    return true;
+                }
+
+                var calibrationPeaksFileName = XMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
+                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                {
+                    LogError("Calibration is enabled in the Formularity parameter file, but RefPeakFileName is missing or empty");
+                    return false;
+                }
+
+                var calibrationFilesDirPath = Path.Combine(paramFileStoragePath, "CalibrationFiles");
+                var calibrationFilesDirectory = new DirectoryInfo(calibrationFilesDirPath);
+                if (!calibrationFilesDirectory.Exists)
+                {
+                    LogError("Calibration files directory not found: " + calibrationFilesDirectory.FullName);
+                    return false;
+                }
+
+                var calibrationPeaksFilePath = Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName);
+                var calibrationPeaksFile = new FileInfo(calibrationPeaksFilePath);
+                if (!calibrationPeaksFile.Exists)
+                {
+                    LogError("Calibration peaks file not found: " + calibrationPeaksFile.FullName);
+                    return false;
+                }
+
+                var localCalFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
+                calibrationPeaksFile.CopyTo(localCalFilePath, true);
+
+                mJobParams.AddResultFileToSkip(calibrationPeaksFileName);
+                mJobParams.AddAdditionalParameter(
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
+                    calibrationPeaksFileName);
 
                 return true;
             }

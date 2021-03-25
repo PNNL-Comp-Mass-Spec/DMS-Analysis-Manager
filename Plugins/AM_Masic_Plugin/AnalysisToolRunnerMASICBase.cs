@@ -444,59 +444,58 @@ namespace AnalysisManagerMasicPlugin
             {
                 LogDebug("Reading " + intensityStatsFile.FullName);
 
-                using (var reader = new StreamReader(new FileStream(intensityStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(intensityStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                if (reader.EndOfStream)
                 {
-                    if (reader.EndOfStream)
+                    LogError("Reporter ion intensity stats file is empty: " + intensityStatsFile.FullName);
+                    return false;
+                }
+
+                // Validate the header line
+                var headerLine = reader.ReadLine();
+
+                var medianColumnIndex = GetColumnIndex(headerLine, "Median_Top80Pct", 2);
+
+                var channel = 0;
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // Columns:
+                    // Reporter_Ion    NonZeroCount_Top80Pct    Median_Top80Pct    InterQuartileRange_Top80Pct    LowerWhisker_Top80Pct    etc.
+                    var lineParts = dataLine.Split('\t');
+
+                    if (lineParts.Length > 0 && lineParts[0].StartsWith("Reporter_Ion", StringComparison.OrdinalIgnoreCase))
                     {
-                        LogError("Reporter ion intensity stats file is empty: " + intensityStatsFile.FullName);
+                        // The _RepIonStats.txt file has two tables of intensity stats
+                        // We have reached the second table
+                        break;
+                    }
+
+                    channel++;
+
+                    if (lineParts.Length < medianColumnIndex + 1)
+                    {
+                        LogError(string.Format(
+                            "Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}",
+                            channel, intensityStatsFile.FullName));
                         return false;
                     }
 
-                    // Validate the header line
-                    var headerLine = reader.ReadLine();
-
-                    var medianColumnIndex = GetColumnIndex(headerLine, "Median_Top80Pct", 2);
-
-                    var channel = 0;
-
-                    while (!reader.EndOfStream)
+                    if (!int.TryParse(lineParts[medianColumnIndex], out var medianTopNPct))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        // Columns:
-                        // Reporter_Ion    NonZeroCount_Top80Pct    Median_Top80Pct    InterQuartileRange_Top80Pct    LowerWhisker_Top80Pct    etc.
-                        var lineParts = dataLine.Split('\t');
-
-                        if (lineParts.Length > 0 && lineParts[0].StartsWith("Reporter_Ion", StringComparison.OrdinalIgnoreCase))
-                        {
-                            // The _RepIonStats.txt file has two tables of intensity stats
-                            // We have reached the second table
-                            break;
-                        }
-
-                        channel++;
-
-                        if (lineParts.Length < medianColumnIndex + 1)
-                        {
-                            LogError(string.Format(
-                                "Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}",
-                                channel, intensityStatsFile.FullName));
-                            return false;
-                        }
-
-                        if (!int.TryParse(lineParts[medianColumnIndex], out var medianTopNPct))
-                        {
-                            LogError(string.Format(
-                                "Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}",
-                                channel, lineParts[medianColumnIndex]));
-                            return false;
-                        }
-
-                        medianIntensitiesTopNPct.Add(medianTopNPct);
+                        LogError(string.Format(
+                            "Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}",
+                            channel, lineParts[medianColumnIndex]));
+                        return false;
                     }
+
+                    medianIntensitiesTopNPct.Add(medianTopNPct);
                 }
 
                 return true;
@@ -518,52 +517,51 @@ namespace AnalysisManagerMasicPlugin
             {
                 LogDebug("Reading " + observationRateFile.FullName);
 
-                using (var reader = new StreamReader(new FileStream(observationRateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(observationRateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                if (reader.EndOfStream)
                 {
-                    if (reader.EndOfStream)
+                    LogError("Reporter ion observation rate file is empty: " + observationRateFile.FullName);
+                    return false;
+                }
+
+                // Validate the header line
+                var headerLine = reader.ReadLine();
+
+                var obsRateColumnIndex = GetColumnIndex(headerLine, "Observation_Rate_Top80Pct", 2);
+
+                var channel = 0;
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // Columns:
+                    // Reporter_Ion     Observation_Rate     Observation_Rate_Top80Pct
+                    var lineParts = dataLine.Split('\t');
+
+                    channel++;
+
+                    if (lineParts.Length < obsRateColumnIndex + 1)
                     {
-                        LogError("Reporter ion observation rate file is empty: " + observationRateFile.FullName);
+                        LogError(string.Format(
+                            "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
+                            channel, observationRateFile.FullName));
                         return false;
                     }
 
-                    // Validate the header line
-                    var headerLine = reader.ReadLine();
-
-                    var obsRateColumnIndex = GetColumnIndex(headerLine, "Observation_Rate_Top80Pct", 2);
-
-                    var channel = 0;
-
-                    while (!reader.EndOfStream)
+                    if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                     {
-                        var dataLine = reader.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        // Columns:
-                        // Reporter_Ion     Observation_Rate     Observation_Rate_Top80Pct
-                        var lineParts = dataLine.Split('\t');
-
-                        channel++;
-
-                        if (lineParts.Length < obsRateColumnIndex + 1)
-                        {
-                            LogError(string.Format(
-                                "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
-                                channel, observationRateFile.FullName));
-                            return false;
-                        }
-
-                        if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
-                        {
-                            LogError(string.Format(
-                                "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
-                                channel, lineParts[obsRateColumnIndex]));
-                            return false;
-                        }
-
-                        observationStatsTopNPct.Add(observationRateTopNPct);
+                        LogError(string.Format(
+                            "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
+                            channel, lineParts[obsRateColumnIndex]));
+                        return false;
                     }
+
+                    observationStatsTopNPct.Add(observationRateTopNPct);
                 }
 
                 return true;

@@ -221,49 +221,48 @@ namespace AnalysisManagerFormularityPlugin
                     pngFileNames.Add(item.Name);
                 }
 
-                using (var writer = new StreamWriter(new FileStream(htmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
-                    writer.WriteLine("<html>");
-                    writer.WriteLine("<head>");
-                    writer.WriteLine("  <title>{0}</title>", mDatasetName);
-                    writer.WriteLine("</head>");
-                    writer.WriteLine();
-                    writer.WriteLine("<body>");
-                    writer.WriteLine("  <h2>{0}</h2>", mDatasetName);
-                    writer.WriteLine();
-                    writer.WriteLine("  <table>");
+                using var writer = new StreamWriter(new FileStream(htmlFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    foreach (var tableRow in pngFileTableLayout)
+                writer.WriteLine("<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 3.2//EN\">");
+                writer.WriteLine("<html>");
+                writer.WriteLine("<head>");
+                writer.WriteLine("  <title>{0}</title>", mDatasetName);
+                writer.WriteLine("</head>");
+                writer.WriteLine();
+                writer.WriteLine("<body>");
+                writer.WriteLine("  <h2>{0}</h2>", mDatasetName);
+                writer.WriteLine();
+                writer.WriteLine("  <table>");
+
+                foreach (var tableRow in pngFileTableLayout)
+                {
+                    writer.WriteLine("    <tr>");
+                    foreach (var tableCell in tableRow)
                     {
-                        writer.WriteLine("    <tr>");
-                        foreach (var tableCell in tableRow)
+                        if (tableCell.StartsWith(LITERAL_TEXT_FLAG))
                         {
-                            if (tableCell.StartsWith(LITERAL_TEXT_FLAG))
+                            writer.WriteLine("      <td>{0}</td>", tableCell.Substring(LITERAL_TEXT_FLAG.Length));
+                        }
+                        else
+                        {
+                            var pngFileName = tableCell;
+                            if (pngFileNames.Contains(pngFileName))
                             {
-                                writer.WriteLine("      <td>{0}</td>", tableCell.Substring(LITERAL_TEXT_FLAG.Length));
+                                writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", pngFileName);
                             }
                             else
                             {
-                                var pngFileName = tableCell;
-                                if (pngFileNames.Contains(pngFileName))
-                                {
-                                    writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", pngFileName);
-                                }
-                                else
-                                {
-                                    writer.WriteLine("      <td>File not found: {0}</td>", pngFileName);
-                                }
+                                writer.WriteLine("      <td>File not found: {0}</td>", pngFileName);
                             }
                         }
-                        writer.WriteLine("    </tr>");
                     }
-
-                    writer.WriteLine("  </table>");
-                    writer.WriteLine();
-                    writer.WriteLine("</body>");
-                    writer.WriteLine("</html>");
+                    writer.WriteLine("    </tr>");
                 }
+
+                writer.WriteLine("  </table>");
+                writer.WriteLine();
+                writer.WriteLine("</body>");
+                writer.WriteLine("</html>");
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -372,7 +371,7 @@ namespace AnalysisManagerFormularityPlugin
         }
 
         [Obsolete("Unused")]
-        private CloseOutType CreateZipFileWithPlotsAndHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
+        private CloseOutType CreateZipFileWithPlotsAndHTML(FileSystemInfo workDir, IReadOnlyCollection<FileInfo> pngFiles)
         {
             var currentTask = "Initializing";
 

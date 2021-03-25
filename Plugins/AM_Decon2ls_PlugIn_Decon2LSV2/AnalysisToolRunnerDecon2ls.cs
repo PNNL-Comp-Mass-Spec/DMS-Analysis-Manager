@@ -1172,15 +1172,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             LogDebug("Opening the DeconTools results file: " + filePath);
 
-            using (var srReader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream && dataLineCount < 2)
             {
-                while (!srReader.EndOfStream && dataLineCount < 2)
+                var lineIn = reader.ReadLine();
+                if (!string.IsNullOrWhiteSpace(lineIn))
                 {
-                    var lineIn = srReader.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(lineIn))
-                    {
-                        dataLineCount++;
-                    }
+                    dataLineCount++;
                 }
             }
 

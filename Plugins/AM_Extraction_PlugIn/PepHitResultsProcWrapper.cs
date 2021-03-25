@@ -376,51 +376,50 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!File.Exists(mPHRPConsoleOutputFilePath)) return;
 
-                using (var reader = new StreamReader(new FileStream(mPHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(mPHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var lineIn = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(lineIn))
                     {
-                        var lineIn = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(lineIn))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        if (lineIn.StartsWith("Creating the FHT file"))
-                        {
-                            currentTaskProgressAtStart = CREATING_FHT;
-                            currentTaskProgressAtEnd = CREATING_SYN;
-                            progressSubtask = 0;
-                        }
-                        else if (lineIn.StartsWith("Creating the SYN file"))
-                        {
-                            currentTaskProgressAtStart = CREATING_SYN;
-                            currentTaskProgressAtEnd = CREATING_PHRP_FILES;
-                            progressSubtask = 0;
-                        }
-                        else if (lineIn.StartsWith("Creating the PHRP files"))
-                        {
-                            currentTaskProgressAtStart = CREATING_PHRP_FILES;
-                            currentTaskProgressAtEnd = PHRP_COMPLETE;
-                            progressSubtask = 0;
-                        }
+                    if (lineIn.StartsWith("Creating the FHT file"))
+                    {
+                        currentTaskProgressAtStart = CREATING_FHT;
+                        currentTaskProgressAtEnd = CREATING_SYN;
+                        progressSubtask = 0;
+                    }
+                    else if (lineIn.StartsWith("Creating the SYN file"))
+                    {
+                        currentTaskProgressAtStart = CREATING_SYN;
+                        currentTaskProgressAtEnd = CREATING_PHRP_FILES;
+                        progressSubtask = 0;
+                    }
+                    else if (lineIn.StartsWith("Creating the PHRP files"))
+                    {
+                        currentTaskProgressAtStart = CREATING_PHRP_FILES;
+                        currentTaskProgressAtEnd = PHRP_COMPLETE;
+                        progressSubtask = 0;
+                    }
 
-                        Match reMatch;
-                        if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
+                    Match reMatch;
+                    if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
+                    {
+                        reMatch = reProcessing.Match(lineIn);
+                        if (reMatch.Success)
                         {
-                            reMatch = reProcessing.Match(lineIn);
-                            if (reMatch.Success)
-                            {
-                                float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
-                            }
+                            float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
                         }
-                        else
+                    }
+                    else
+                    {
+                        reMatch = reProcessingPHRP.Match(lineIn);
+                        if (reMatch.Success)
                         {
-                            reMatch = reProcessingPHRP.Match(lineIn);
-                            if (reMatch.Success)
-                            {
-                                float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
-                            }
+                            float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
                         }
                     }
                 }

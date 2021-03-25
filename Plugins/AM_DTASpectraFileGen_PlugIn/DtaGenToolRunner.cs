@@ -855,27 +855,26 @@ namespace DTASpectraFileGen
             var output = new StringBuilder(spectrumText.Length);
             var previousLineWasTitleLine = false;
 
-            using (var reader = new StringReader(spectrumText))
-            {
-                while (reader.Peek() > -1)
-                {
-                    var dataLine = reader.ReadLine();
+            using var reader = new StringReader(spectrumText);
 
-                    if (dataLine != null && dataLine.StartsWith("="))
-                    {
-                        // Skip this line
-                        previousLineWasTitleLine = true;
-                    }
-                    else if (previousLineWasTitleLine)
-                    {
-                        // Skip this line
-                        previousLineWasTitleLine = false;
-                    }
-                    else if (!string.IsNullOrEmpty(dataLine))
-                    {
-                        // Data line; keep it
-                        output.AppendLine(dataLine);
-                    }
+            while (reader.Peek() > -1)
+            {
+                var dataLine = reader.ReadLine();
+
+                if (dataLine != null && dataLine.StartsWith("="))
+                {
+                    // Skip this line
+                    previousLineWasTitleLine = true;
+                }
+                else if (previousLineWasTitleLine)
+                {
+                    // Skip this line
+                    previousLineWasTitleLine = false;
+                }
+                else if (!string.IsNullOrEmpty(dataLine))
+                {
+                    // Data line; keep it
+                    output.AppendLine(dataLine);
                 }
             }
 

@@ -450,38 +450,37 @@ namespace AnalysisManagerSMAQCPlugIn
             var measurementsFound = false;
             var headersFound = false;
 
-            using (var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
             {
-                while (!reader.EndOfStream)
+                var dataLine = reader.ReadLine();
+
+                if (string.IsNullOrWhiteSpace(dataLine))
+                    continue;
+
+                if (!measurementsFound)
                 {
-                    var dataLine = reader.ReadLine();
-
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                        continue;
-
-                    if (!measurementsFound)
+                    if (dataLine.StartsWith("[Data]"))
                     {
-                        if (dataLine.StartsWith("[Data]"))
-                        {
-                            measurementsFound = true;
-                        }
+                        measurementsFound = true;
                     }
-                    else if (!headersFound)
+                }
+                else if (!headersFound)
+                {
+                    if (dataLine.StartsWith("Dataset"))
                     {
-                        if (dataLine.StartsWith("Dataset"))
-                        {
-                            headersFound = true;
-                        }
+                        headersFound = true;
                     }
-                    else
-                    {
-                        // This is a measurement result line
-                        var dataCols = dataLine.Split(',');
+                }
+                else
+                {
+                    // This is a measurement result line
+                    var dataCols = dataLine.Split(',');
 
-                        if (dataCols.Length >= 3)
-                        {
-                            lstResults.Add(new KeyValuePair<string, string>(dataCols[1].Trim(), dataCols[2].Trim()));
-                        }
+                    if (dataCols.Length >= 3)
+                    {
+                        lstResults.Add(new KeyValuePair<string, string>(dataCols[1].Trim(), dataCols[2].Trim()));
                     }
                 }
             }

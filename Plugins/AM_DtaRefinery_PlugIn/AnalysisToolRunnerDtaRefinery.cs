@@ -273,17 +273,16 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 mJobParams.AddResultFileToSkip(tmpFilePath);
                 Global.IdleLoop(0.1);
 
-                using (var reader = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
+                using var reader = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                        if (dataLine != null && dataLine.Contains("finished x!tandem"))
-                        {
-                            LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + sourceFile.Name + ")");
-                            return true;
-                        }
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (dataLine != null && dataLine.Contains("finished x!tandem"))
+                    {
+                        LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + sourceFile.Name + ")");
+                        return true;
                     }
                 }
 

@@ -193,21 +193,20 @@ namespace AnalysisManagerQCARTPlugin
                     Indent = true
                 };
 
-                using (var writer = XmlWriter.Create(sb, settings))
-                {
-                    writer.WriteStartElement("QCART_Results");
-                    AppendXmlElementWithValue(writer, "Dataset", datasetName);
-                    AppendXmlElementWithValue(writer, "MASIC_Job", masicJob.ToString());
+                using var writer = XmlWriter.Create(sb, settings);
 
-                    writer.WriteStartElement("Measurements");
-                    writer.WriteStartElement("Measurement");
-                    writer.WriteAttributeString("Name", "QCART");
-                    writer.WriteValue(qcartValue.ToString("0.000000"));
-                    writer.WriteEndElement(); // Measurement
-                    writer.WriteEndElement(); // Measurements
+                writer.WriteStartElement("QCART_Results");
+                AppendXmlElementWithValue(writer, "Dataset", datasetName);
+                AppendXmlElementWithValue(writer, "MASIC_Job", masicJob.ToString());
 
-                    writer.WriteEndElement(); // QCART_Results
-                }
+                writer.WriteStartElement("Measurements");
+                writer.WriteStartElement("Measurement");
+                writer.WriteAttributeString("Name", "QCART");
+                writer.WriteValue(qcartValue.ToString("0.000000"));
+                writer.WriteEndElement(); // Measurement
+                writer.WriteEndElement(); // Measurements
+
+                writer.WriteEndElement(); // QCART_Results
 
                 return sb.ToString();
             }

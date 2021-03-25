@@ -136,78 +136,77 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Read the data from the MS-GF+ Param file
-                using (var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using var reader = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DYNAMIC_MOD_TAG))
+                        continue;
+
+                    // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
+                    // Alternatively, if the mod name is Phospho assume this is a phosphorylation search
+
+                    if (mDebugLevel >= 3)
                     {
-                        var dataLine = reader.ReadLine();
+                        LogDebug("MS-GF+ " + DYNAMIC_MOD_TAG + " line found: " + dataLine);
+                    }
 
-                        if (string.IsNullOrWhiteSpace(dataLine) || !dataLine.StartsWith(DYNAMIC_MOD_TAG))
-                            continue;
+                    // Look for the equals sign
+                    var charIndex = dataLine.IndexOf('=');
+                    if (charIndex > 0)
+                    {
+                        var modDef = dataLine.Substring(charIndex + 1).Trim();
 
-                        // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
-                        // Alternatively, if the mod name is Phospho assume this is a phosphorylation search
+                        var commentIndex = dataLine.IndexOf('#');
+                        List<string> modDefParts;
 
-                        if (mDebugLevel >= 3)
+                        if (commentIndex > 1)
                         {
-                            LogDebug("MS-GF+ " + DYNAMIC_MOD_TAG + " line found: " + dataLine);
-                        }
-
-                        // Look for the equals sign
-                        var charIndex = dataLine.IndexOf('=');
-                        if (charIndex > 0)
-                        {
-                            var modDef = dataLine.Substring(charIndex + 1).Trim();
-
-                            var commentIndex = dataLine.IndexOf('#');
-                            List<string> modDefParts;
-
-                            if (commentIndex > 1)
-                            {
-                                modDefParts= modDef.Substring(0, commentIndex).Trim().Split(',').ToList();
-                            }
-                            else
-                            {
-                                modDefParts = modDef.Split(',').ToList();
-                            }
-
-                            if (modDefParts.Count < 5)
-                            {
-                                if (!modDef.StartsWith("None", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    LogWarning("Incomplete mod def line in MS-GF+ parameter file: " + modDef);
-                                }
-                                continue;
-                            }
-
-                            var modMassOrFormula = modDefParts[0].Trim();
-                            var residues = modDefParts[1].Trim();
-                            var modName = modDefParts[4].Trim();
-
-                            if (!HasAnyResidue(residues, "STY"))
-                            {
-                                // Mod doesn't affect S, T, or Y
-                                continue;
-                            }
-
-                            if (string.Equals(modMassOrFormula, "HO3P") ||
-                                modMassOrFormula.StartsWith("79.96") ||
-                                modMassOrFormula.StartsWith("79.97"))
-                            {
-                                runAscore = true;
-                                break;
-                            }
-
-                            if (string.Equals(modName, "phospho", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                runAscore = true;
-                                break;
-                            }
+                            modDefParts= modDef.Substring(0, commentIndex).Trim().Split(',').ToList();
                         }
                         else
                         {
-                            LogWarning("MS-GF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
+                            modDefParts = modDef.Split(',').ToList();
                         }
+
+                        if (modDefParts.Count < 5)
+                        {
+                            if (!modDef.StartsWith("None", StringComparison.OrdinalIgnoreCase))
+                            {
+                                LogWarning("Incomplete mod def line in MS-GF+ parameter file: " + modDef);
+                            }
+                            continue;
+                        }
+
+                        var modMassOrFormula = modDefParts[0].Trim();
+                        var residues = modDefParts[1].Trim();
+                        var modName = modDefParts[4].Trim();
+
+                        if (!HasAnyResidue(residues, "STY"))
+                        {
+                            // Mod doesn't affect S, T, or Y
+                            continue;
+                        }
+
+                        if (string.Equals(modMassOrFormula, "HO3P") ||
+                            modMassOrFormula.StartsWith("79.96") ||
+                            modMassOrFormula.StartsWith("79.97"))
+                        {
+                            runAscore = true;
+                            break;
+                        }
+
+                        if (string.Equals(modName, "phospho", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            runAscore = true;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        LogWarning("MS-GF+ " + DYNAMIC_MOD_TAG + " line does not have an equals sign; ignoring " + dataLine);
                     }
                 }
 

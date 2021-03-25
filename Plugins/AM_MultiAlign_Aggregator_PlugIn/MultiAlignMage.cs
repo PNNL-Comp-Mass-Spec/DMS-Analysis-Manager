@@ -396,32 +396,32 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                using (var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine("[Files]");
-                    var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
-                    foreach (var TmpFile_loopVariable in Files)
-                    {
-                        var TmpFile = TmpFile_loopVariable;
-                        if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
-                            writer.WriteLine(TmpFile + "*");
-                        }
-                        else
-                        {
-                            writer.WriteLine(TmpFile);
-                        }
-                    }
+                using var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
-                    // Check to see if a mass tag database has been defined and NO alignment dataset has been defined
-                    var amtDb = mJobParams.GetJobParam("AMTDB");
-                    if (!string.IsNullOrEmpty(amtDb.Trim()))
+                writer.WriteLine("[Files]");
+
+                var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
+                foreach (var TmpFile_loopVariable in Files)
+                {
+                    var TmpFile = TmpFile_loopVariable;
+                    if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        writer.WriteLine("[Database]");
-                        writer.WriteLine("Database = " + mJobParams.GetJobParam("AMTDB"));			// For example, MT_Human_Sarcopenia_MixedLC_P692
-                        writer.WriteLine("Server = " + mJobParams.GetJobParam("AMTDBServer"));		// For example, Elmer
+                        // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
+                        writer.WriteLine(TmpFile + "*");
                     }
+                    else
+                    {
+                        writer.WriteLine(TmpFile);
+                    }
+                }
+
+                // Check to see if a mass tag database has been defined and NO alignment dataset has been defined
+                var amtDb = mJobParams.GetJobParam("AMTDB");
+                if (!string.IsNullOrEmpty(amtDb.Trim()))
+                {
+                    writer.WriteLine("[Database]");
+                    writer.WriteLine("Database = " + mJobParams.GetJobParam("AMTDB"));			// For example, MT_Human_Sarcopenia_MixedLC_P692
+                    writer.WriteLine("Server = " + mJobParams.GetJobParam("AMTDBServer"));		// For example, Elmer
                 }
 
                 return true;

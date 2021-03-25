@@ -887,47 +887,46 @@ namespace AnalysisManagerIDPickerPlugIn
 
             try
             {
-                if (File.Exists(consoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
+                    return;
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrEmpty(dataLine))
+                        continue;
+
+                    if (unhandledException)
                     {
-                        while (!reader.EndOfStream)
+                        if (string.IsNullOrEmpty(exceptionText))
                         {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrEmpty(dataLine))
-                                continue;
-
-                            if (unhandledException)
-                            {
-                                if (string.IsNullOrEmpty(exceptionText))
-                                {
-                                    exceptionText = string.Copy(dataLine);
-                                }
-                                else
-                                {
-                                    exceptionText = ";" + dataLine;
-                                }
-                            }
-                            else if (dataLine.StartsWith("Error:"))
-                            {
-                                if (!IgnoreError(dataLine))
-                                {
-                                    mCmdRunnerErrors.Add(dataLine);
-                                }
-                            }
-                            else if (dataLine.StartsWith("Unhandled Exception"))
-                            {
-                                mCmdRunnerErrors.Add(dataLine);
-                                unhandledException = true;
-                            }
+                            exceptionText = string.Copy(dataLine);
+                        }
+                        else
+                        {
+                            exceptionText = ";" + dataLine;
                         }
                     }
-
-                    if (!string.IsNullOrEmpty(exceptionText))
+                    else if (dataLine.StartsWith("Error:"))
                     {
-                        mCmdRunnerErrors.Add(exceptionText);
+                        if (!IgnoreError(dataLine))
+                        {
+                            mCmdRunnerErrors.Add(dataLine);
+                        }
                     }
+                    else if (dataLine.StartsWith("Unhandled Exception"))
+                    {
+                        mCmdRunnerErrors.Add(dataLine);
+                        unhandledException = true;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(exceptionText))
+                {
+                    mCmdRunnerErrors.Add(exceptionText);
                 }
             }
             catch (Exception ex)
