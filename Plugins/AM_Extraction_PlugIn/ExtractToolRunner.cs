@@ -2394,7 +2394,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Deletes each file in splitFileList
         /// </summary>
         /// <param name="splitFileList">Full paths to files to delete</param>
-        private void DeleteTemporaryFiles(IReadOnlyCollection<string> splitFileList)
+        private void DeleteTemporaryFiles(IEnumerable<string> splitFileList)
         {
             PRISM.ProgRunner.GarbageCollectNow();
 

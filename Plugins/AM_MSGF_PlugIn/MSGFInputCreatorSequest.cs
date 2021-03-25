@@ -42,7 +42,6 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(PSM currentPSM)
         {
-            bool isProteinTerminus;
             var passesFilters = false;
 
             // Examine the score values and possibly filter out this line
@@ -57,7 +56,7 @@ namespace AnalysisManagerMSGFPlugin
             //    XCorr >= 2.0 for 2+
             //    XCorr >= 2.5 for >=3+
 
-            isProteinTerminus = currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-");
+            var isProteinTerminus = currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-");
 
             var deltaCN = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_DelCn);
             var xCorr = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_XCorr);

@@ -201,7 +201,7 @@ namespace AnalysisManagerFormularityPlugin
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private CloseOutType CreatePlotViewHTML(FileSystemInfo workDir, List<FileInfo> pngFiles)
+        private CloseOutType CreatePlotViewHTML(FileSystemInfo workDir, IEnumerable<FileInfo> pngFiles)
         {
             const string LITERAL_TEXT_FLAG = "text: ";
 
