@@ -127,6 +127,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_ThermoPeakDataExporter",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMaxQuantPlugIn", "AM_MaxQuant_PlugIn\AnalysisManagerMaxQuantPlugIn.csproj", "{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizerExe", "AM_MSGF_PlugIn\MSGFResultsSummarizerExe\MSGFResultsSummarizerExe.csproj", "{6F9965FA-1606-42C1-AEE8-260E316CC39F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -381,6 +383,10 @@ Global
 		{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F9965FA-1606-42C1-AEE8-260E316CC39F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F9965FA-1606-42C1-AEE8-260E316CC39F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F9965FA-1606-42C1-AEE8-260E316CC39F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F9965FA-1606-42C1-AEE8-260E316CC39F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
