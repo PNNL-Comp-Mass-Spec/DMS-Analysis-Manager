@@ -28,9 +28,13 @@ using PRISMDatabaseUtils;
 
 namespace MSGFResultsSummarizer
 {
-    public class MSGFResultsSummarizer : EventNotifier
+    public class ResultsSummarizer : EventNotifier
     {
+        // ReSharper disable CommentTypo
+
         // Ignore Spelling: phosph, Acetyl, MODa, psm, xxx, structs, peptides, Cntm, sp, gi, Trypa, udt, uni, itrac, Tpro
+
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 
@@ -158,7 +162,7 @@ namespace MSGFResultsSummarizer
 
         public bool PostJobPSMResultsToDB { get; set; }
 
-        public Enums.PeptideHitResultTypes ResultType { get; }
+        public PeptideHitResultTypes ResultType { get; }
 
         public string ResultTypeName => ResultType.ToString();
 
@@ -224,7 +228,7 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
-        public MSGFResultsSummarizer(Enums.PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
+        public ResultsSummarizer(PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {
         }
@@ -239,8 +243,8 @@ namespace MSGFResultsSummarizer
         /// <param name="connectionString">DMS connection string</param>
         /// <param name="debugLevel">Debug Level</param>
         /// <param name="traceMode">When true, show database queries</param>
-        public MSGFResultsSummarizer(
-            Enums.PeptideHitResultTypes resultType,
+        public ResultsSummarizer(
+            PeptideHitResultTypes resultType,
             string datasetName,
             int job,
             string sourceDirectoryPath,
@@ -523,7 +527,7 @@ namespace MSGFResultsSummarizer
 
             if (usingMSGFOrEValueFilter)
             {
-                if (ResultType == Enums.PeptideHitResultTypes.MSAlign)
+                if (ResultType == PeptideHitResultTypes.MSAlign)
                 {
                     // Filter on EValue
                     success = FilterPSMsByEValue(EValueThreshold, normalizedPSMs, filteredPSMs);
@@ -907,7 +911,7 @@ namespace MSGFResultsSummarizer
                 var dbTools = mStoredProcedureExecutor;
                 var reportThreshold = MSGFThreshold;
                 var thresholdIsEValue = 0;
-                if (ResultType == Enums.PeptideHitResultTypes.MSAlign)
+                if (ResultType == PeptideHitResultTypes.MSAlign)
                 {
                     reportThreshold = EValueThreshold;
                     thresholdIsEValue = 1;
@@ -1002,9 +1006,9 @@ namespace MSGFResultsSummarizer
                 // We use the Synopsis file to count the number of peptides and proteins observed
                 var phrpSynopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
 
-                if (ResultType == Enums.PeptideHitResultTypes.XTandem || ResultType == Enums.PeptideHitResultTypes.MSAlign ||
-                    ResultType == Enums.PeptideHitResultTypes.MODa || ResultType == Enums.PeptideHitResultTypes.MODPlus ||
-                    ResultType == Enums.PeptideHitResultTypes.MSPathFinder)
+                if (ResultType == PeptideHitResultTypes.XTandem || ResultType == PeptideHitResultTypes.MSAlign ||
+                    ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus ||
+                    ResultType == PeptideHitResultTypes.MSPathFinder)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
@@ -1152,8 +1156,8 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (ResultType == Enums.PeptideHitResultTypes.MODa || ResultType == Enums.PeptideHitResultTypes.MODPlus ||
-                    ResultType == Enums.PeptideHitResultTypes.MSPathFinder)
+                if (ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus ||
+                    ResultType == PeptideHitResultTypes.MSPathFinder)
                 {
                     loadMSGFResults = false;
                 }
@@ -1235,7 +1239,7 @@ namespace MSGFResultsSummarizer
 
                     var valid = false;
 
-                    if (ResultType == Enums.PeptideHitResultTypes.MSAlign)
+                    if (ResultType == PeptideHitResultTypes.MSAlign)
                     {
                         // Use the EValue reported by MSAlign
 
@@ -1244,12 +1248,12 @@ namespace MSGFResultsSummarizer
                             valid = double.TryParse(eValueText, out eValue);
                         }
                     }
-                    else if (ResultType == Enums.PeptideHitResultTypes.MODa || ResultType == Enums.PeptideHitResultTypes.MODPlus)
+                    else if (ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus)
                     {
                         // MODa / MODPlus results don't have spectral probability, but they do have FDR
                         valid = true;
                     }
-                    else if (ResultType == Enums.PeptideHitResultTypes.MSPathFinder)
+                    else if (ResultType == PeptideHitResultTypes.MSPathFinder)
                     {
                         // Use SpecEValue in place of SpecProb
                         valid = true;
@@ -1286,7 +1290,7 @@ namespace MSGFResultsSummarizer
                     var psmEValue = eValue;
                     double psmFDR;
 
-                    if (ResultType == Enums.PeptideHitResultTypes.MSGFPlus || ResultType == Enums.PeptideHitResultTypes.MSAlign)
+                    if (ResultType == PeptideHitResultTypes.MSGFPlus || ResultType == PeptideHitResultTypes.MSAlign)
                     {
                         psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, PSMInfo.UNKNOWN_FDR);
                         if (psmFDR < 0)
@@ -1294,15 +1298,15 @@ namespace MSGFResultsSummarizer
                             psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_EFDR, PSMInfo.UNKNOWN_FDR);
                         }
                     }
-                    else if (ResultType == Enums.PeptideHitResultTypes.MODa)
+                    else if (ResultType == PeptideHitResultTypes.MODa)
                     {
                         psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
-                    else if (ResultType == Enums.PeptideHitResultTypes.MODPlus)
+                    else if (ResultType == PeptideHitResultTypes.MODPlus)
                     {
                         psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }
-                    else if (ResultType == Enums.PeptideHitResultTypes.MSPathFinder)
+                    else if (ResultType == PeptideHitResultTypes.MSPathFinder)
                     {
                         psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
                     }

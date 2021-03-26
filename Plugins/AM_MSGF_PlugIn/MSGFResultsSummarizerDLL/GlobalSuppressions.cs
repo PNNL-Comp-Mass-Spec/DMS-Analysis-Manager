@@ -5,7 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:MSGFResultsSummarizer.MSGFResultsSummarizer.CheckForScanGaps(System.Collections.Generic.List{System.Int32})")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.MSGFResultsSummarizer")]
-[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.MSGFResultsSummarizer.MSGFtoResultIDMapComparer")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:MSGFResultsSummarizer.ResultsSummarizer.CheckForScanGaps(System.Collections.Generic.List{System.Int32})")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.ResultsSummarizer")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.ResultsSummarizer.MSGFtoResultIDMapComparer")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:MSGFResultsSummarizer.PSMStats")]
