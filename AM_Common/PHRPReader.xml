@@ -656,100 +656,100 @@
             IsotopeError
             </summary>
         </member>
-        <member name="T:PHRPReader.Data.MSPathFinderSynFile">
+        <member name="T:PHRPReader.Data.MSPathFinderSynFileColumns">
             <summary>
             These columns correspond to the Synopsis file created by MSPathFinderResultsProcessor
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.ResultID">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.ResultID">
             <summary>
             Result ID
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Scan">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Scan">
             <summary>
             Scan
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Charge">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Charge">
             <summary>
             Charge
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.MostAbundantIsotopeMz">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.MostAbundantIsotopeMz">
             <summary>
             Most abundant isotope m/z
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Mass">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Mass">
             <summary>
             Mass
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Sequence">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Sequence">
             <summary>
             Sequence
             </summary>
             <remarks>PrefixLetter.Sequence.SuffixLetter</remarks>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Modifications">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Modifications">
             <summary>
             Modifications
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Composition">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Composition">
             <summary>
             Composition
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.Protein">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Protein">
             <summary>
             Protein
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.ProteinDesc">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.ProteinDesc">
             <summary>
             Protein description
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.ProteinLength">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.ProteinLength">
             <summary>
             Protein length
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.ResidueStart">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.ResidueStart">
             <summary>
             Protein residue number where the sequence starts
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.ResidueEnd">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.ResidueEnd">
             <summary>
             Protein residue number where the sequence ends
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.MatchedFragments">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.MatchedFragments">
             <summary>
             Count of matched fragments
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.SpecEValue">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.SpecEValue">
             <summary>
             Spec E-Value
             </summary>
             <remarks>Column added 2015-08-25</remarks>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.EValue">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.EValue">
             <summary>
             E-Value
             </summary>
             <remarks>Column added 2015-08-25</remarks>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.QValue">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.QValue">
             <summary>
             Q-Value
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSPathFinderSynFile.PepQValue">
+        <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.PepQValue">
             <summary>
             Peptide Q-Value
             </summary>
