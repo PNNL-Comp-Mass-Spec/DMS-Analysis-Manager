@@ -119,11 +119,11 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     // Look for the result files
 
-                    var diWorkDir = new DirectoryInfo(mWorkDir);
-                    var fiResultsFiles = diWorkDir.GetFiles("Distributions.zip").ToList();
+                    var workingDirectory = new DirectoryInfo(mWorkDir);
+                    var fiResultsFiles = workingDirectory.GetFiles("Distributions.zip").ToList();
                     if (fiResultsFiles.Count == 0)
                     {
-                        fiResultsFiles = diWorkDir.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
+                        fiResultsFiles = workingDirectory.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
                     }
 
                     if (fiResultsFiles.Count == 0)
@@ -180,8 +180,8 @@ namespace AnalysisManagerNOMSIPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+                var fiSpectraFiles = GetXMLSpectraFiles(workingDirectory);
 
                 foreach (var file in fiSpectraFiles)
                     file.Delete();
@@ -205,20 +205,19 @@ namespace AnalysisManagerNOMSIPlugin
             return userName;
         }
 
-        private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
+        private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo workingDirectory)
         {
-            var fiSpectraFiles = diWorkDir.GetFiles(mDatasetName + "_scan*.xml").ToList();
-            return fiSpectraFiles;
+            return workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
         }
 
         private int MoveWorkDirFiles(FileSystemInfo diZipWork, string fileMask)
         {
-            var diWorkDir = new DirectoryInfo(mWorkDir);
-            var filesToMove = diWorkDir.GetFiles(fileMask).ToList();
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            var filesToMove = workingDirectory.GetFiles(fileMask).ToList();
 
-            foreach (var fiFile in filesToMove)
+            foreach (var sourceFile in filesToMove)
             {
-                fiFile.MoveTo(Path.Combine(diZipWork.FullName, fiFile.Name));
+                sourceFile.MoveTo(Path.Combine(diZipWork.FullName, sourceFile.Name));
             }
 
             return filesToMove.Count;
@@ -480,8 +479,8 @@ namespace AnalysisManagerNOMSIPlugin
                 if (!success)
                     return false;
 
-                var diWorkDir = new DirectoryInfo(mWorkDir);
-                var spectraFiles = GetXMLSpectraFiles(diWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+                var spectraFiles = GetXMLSpectraFiles(workingDirectory);
 
                 mTotalSpectra = spectraFiles.Count;
 

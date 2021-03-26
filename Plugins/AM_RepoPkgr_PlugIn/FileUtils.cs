@@ -54,7 +54,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 return 0;
 
             // get file handler object to access the workDir
-            var diWorkDir = new DirectoryInfo(workDir);
+            var workingDirectory = new DirectoryInfo(workDir);
 
             var filesUpdated = 0;
 
@@ -64,14 +64,14 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 // get job prefix from zip file
                 var pfx = Regex.Match(tarFi.Name, @"Job_\d*_").Groups[0].Value;
 
-                // copy zip file to local work dir
+                // copy zip file to local working directory
                 tarFi.CopyTo(Path.Combine(workDir, tarFi.Name));
 
                 // unzip it and delete zip
                 dotNetZipTools.UnzipFile(Path.Combine(workDir, tarFi.Name));
 
                 // find the unzipped mzid file
-                var mzFiles = diWorkDir.GetFiles("*.mzid");
+                var mzFiles = workingDirectory.GetFiles("*.mzid");
                 if (mzFiles.Length != 1)
                 {
                     // oops??
@@ -81,7 +81,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 dotNetZipTools.GZipFile(mzFiles[0].FullName, true);
 
                 // get gzip file
-                var gzFiles = diWorkDir.GetFiles("*mzid.gz");
+                var gzFiles = workingDirectory.GetFiles("*mzid.gz");
                 if (gzFiles.Length != 1)
                 {
                     // oops??

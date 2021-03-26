@@ -151,13 +151,13 @@ namespace AnalysisManagerGlyQIQPlugin
                 var targetsFileName = parameterListFiltered[4];
                 var workingParametersFolderPath = parameterListFiltered[6];
 
-                var diWorkingParameters = new DirectoryInfo(workingParametersFolderPath);
-                if (!diWorkingParameters.Exists)
+                var workingParametersDirectory = new DirectoryInfo(workingParametersFolderPath);
+                if (!workingParametersDirectory.Exists)
                 {
-                    throw new DirectoryNotFoundException("Folder not found, " + diWorkingParameters.FullName);
+                    throw new DirectoryNotFoundException("Folder not found, " + workingParametersDirectory.FullName);
                 }
 
-                var fiTargetsFile = new FileInfo(Path.Combine(diWorkingParameters.FullName, targetsFileName));
+                var fiTargetsFile = new FileInfo(Path.Combine(workingParametersDirectory.FullName, targetsFileName));
                 if (!fiTargetsFile.Exists)
                 {
                     throw new FileNotFoundException("Targets file not found, " + fiTargetsFile.FullName);

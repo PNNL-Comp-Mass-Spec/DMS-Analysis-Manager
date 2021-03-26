@@ -284,61 +284,60 @@ namespace AnalysisManagerICR2LSPlugIn
         }
 
         /// <summary>
-        /// Look for the .PEK and .PAR files in the specified folder
+        /// Look for the .PEK and .PAR files in the specified directory
         /// Make sure they are named Dataset_m_dd_yyyy.PAR and Dataset_m_dd_yyyy.Pek
         /// </summary>
-        /// <param name="strFolderPath">Folder to examine</param>
-        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="directoryPath">Folder to examine</param>
+        /// <param name="datasetName">Dataset name</param>
         [Obsolete("Unused")]
-        private void FixICR2LSResultFileNames(string strFolderPath, string strDatasetName)
+        private void FixICR2LSResultFileNames(string directoryPath, string datasetName)
         {
-            var objExtensionsToCheck = new List<string>();
+            var extensionsToCheck = new List<string>();
 
             try
             {
-                objExtensionsToCheck.Add("PAR");
-                objExtensionsToCheck.Add("Pek");
+                extensionsToCheck.Add("PAR");
+                extensionsToCheck.Add("Pek");
 
-                var fiFolder = new DirectoryInfo(strFolderPath);
+                var directory = new DirectoryInfo(directoryPath);
 
-                if (fiFolder.Exists)
+                if (!directory.Exists)
                 {
-                    foreach (var strExtension in objExtensionsToCheck)
-                    {
-                        foreach (var fiFile in fiFolder.GetFiles("*." + strExtension))
-                        {
-                            if (!fiFile.Name.StartsWith(strDatasetName, StringComparison.InvariantCultureIgnoreCase))
-                                continue;
-
-                            // Name should be of the form: Dataset_1_24_2010.PAR
-                            // The datestamp in the name is month_day_year
-                            var strDesiredName = strDatasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
-
-                            if (!string.Equals(fiFile.Name, strDesiredName, StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                try
-                                {
-                                    if (mDebugLevel >= 1)
-                                    {
-                                        LogDebug("Renaming " + strExtension + " file from " + fiFile.Name + " to " + strDesiredName);
-                                    }
-
-                                    fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName));
-                                }
-                                catch (Exception ex)
-                                {
-                                    // Rename failed; that means the correct file already exists; this is OK
-                                    LogError("Rename failed: " + ex.Message);
-                                }
-                            }
-
-                            break;
-                        }
-                    }
+                    LogError("Error in FixICR2LSResultFileNames; directory not found: " + directoryPath);
+                    return;
                 }
-                else
+
+                foreach (var extension in extensionsToCheck)
                 {
-                    LogError("Error in FixICR2LSResultFileNames; folder not found: " + strFolderPath);
+                    foreach (var file in directory.GetFiles("*." + extension))
+                    {
+                        if (!file.Name.StartsWith(datasetName, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        // Name should be of the form: Dataset_1_24_2010.PAR
+                        // The date stamp in the name is month_day_year
+                        var newName = datasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + extension;
+
+                        if (!string.Equals(file.Name, newName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                if (mDebugLevel >= 1)
+                                {
+                                    LogDebug("Renaming " + extension + " file from " + file.Name + " to " + newName);
+                                }
+
+                                file.MoveTo(Path.Combine(directory.FullName, newName));
+                            }
+                            catch (Exception ex)
+                            {
+                                // Rename failed; that means the correct file already exists; this is OK
+                                LogError("Rename failed: " + ex.Message);
+                            }
+                        }
+
+                        break;
+                    }
                 }
             }
             catch (Exception ex)

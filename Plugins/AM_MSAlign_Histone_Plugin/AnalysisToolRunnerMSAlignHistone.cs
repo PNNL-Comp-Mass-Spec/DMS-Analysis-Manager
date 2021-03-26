@@ -130,8 +130,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
+
                 // Assume v0.9
                 const MSAlignVersionType msAlignVersion = MSAlignVersionType.v0pt9;
+
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
 
                 // We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
 
@@ -701,15 +705,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Move the _msdeconv.msalign file to the MSAlign work folder
-                var fiFiles = fiSourceFolder.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
-                if (fiFiles.Length == 0)
+                var matchingFiles = fiSourceFolder.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
+                if (matchingFiles.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
                     return false;
                 }
 
-                mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
-                fiFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
+                mInputPropertyValues.SpectrumFileName = string.Copy(matchingFiles[0].Name);
+                matchingFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
             }
             catch (Exception ex)
             {

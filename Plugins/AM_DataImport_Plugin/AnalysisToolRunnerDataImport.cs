@@ -158,7 +158,7 @@ namespace AnalysisManagerDataImportPlugIn
             {
                 mSourceFiles = new List<FileInfo>();
 
-                var strSharePath = mJobParams.GetJobParameter("DataImportSharePath", "");
+                var sourceSharePath = mJobParams.GetJobParameter("DataImportSharePath", "");
 
                 // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the directory name will be stored in section JobParameters
                 var dataImportFolder = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
@@ -179,7 +179,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (string.IsNullOrEmpty(sourceFileSpec))
                     sourceFileSpec = MATCH_ALL_FILES;
 
-                if (string.IsNullOrEmpty(strSharePath))
+                if (string.IsNullOrEmpty(sourceSharePath))
                 {
                     LogError(AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "DataImportSharePath"));
                     return false;
@@ -192,33 +192,33 @@ namespace AnalysisManagerDataImportPlugIn
                     dataImportFolder = string.Copy(mDatasetName);
                 }
 
-                var fiSourceShare = new DirectoryInfo(strSharePath);
-                if (!fiSourceShare.Exists)
+                var sourceShare = new DirectoryInfo(sourceSharePath);
+                if (!sourceShare.Exists)
                 {
-                    LogError("Data Import Share not found: " + fiSourceShare.FullName);
+                    LogError("Data Import Share not found: " + sourceShare.FullName);
                     return false;
                 }
 
-                var strSourceFolderPath = Path.Combine(fiSourceShare.FullName, dataImportFolder);
-                var fiSourceFolder = new DirectoryInfo(strSourceFolderPath);
-                if (!fiSourceFolder.Exists)
+                var sourceDirectoryPath = Path.Combine(sourceShare.FullName, dataImportFolder);
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                if (!sourceDirectory.Exists)
                 {
-                    LogError("Data Import Folder not found: " + fiSourceFolder.FullName);
+                    LogError("Data Import Folder not found: " + sourceDirectory.FullName);
                     return false;
                 }
 
                 // Copy files from the source folder to the working directory
                 mSourceFiles.Clear();
-                foreach (var fiFile in fiSourceFolder.GetFiles(sourceFileSpec))
+                foreach (var sourceFile in sourceDirectory.GetFiles(sourceFileSpec))
                 {
                     try
                     {
-                        fiFile.CopyTo(Path.Combine(mWorkDir, fiFile.Name));
-                        mSourceFiles.Add(fiFile);
+                        sourceFile.CopyTo(Path.Combine(mWorkDir, sourceFile.Name));
+                        mSourceFiles.Add(sourceFile);
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error copying file " + fiFile.Name + ": " + ex.Message, ex);
+                        LogError("Error copying file " + sourceFile.Name + ": " + ex.Message, ex);
                         return false;
                     }
                 }
@@ -228,27 +228,25 @@ namespace AnalysisManagerDataImportPlugIn
                     string msg;
                     if (sourceFileSpec == MATCH_ALL_FILES)
                     {
-                        msg = "Source folder was empty; nothing to copy: " + fiSourceFolder.FullName;
+                        msg = "Source folder was empty; nothing to copy: " + sourceDirectory.FullName;
                     }
                     else
                     {
-                        msg = "No files matching " + sourceFileSpec + " were found in the source folder: " + fiSourceFolder.FullName;
+                        msg = "No files matching " + sourceFileSpec + " were found in the source folder: " + sourceDirectory.FullName;
                     }
 
                     LogError(msg);
                     return false;
                 }
-                else
-                {
-                    var message = "Copied " + mSourceFiles.Count + " file";
-                    if (mSourceFiles.Count > 1)
-                        message += "s";
-                    message += " from " + fiSourceFolder.FullName;
 
-                    if (mDebugLevel >= 2)
-                    {
-                        LogMessage(message);
-                    }
+                var message = "Copied " + mSourceFiles.Count + " file";
+                if (mSourceFiles.Count > 1)
+                    message += "s";
+                message += " from " + sourceDirectory.FullName;
+
+                if (mDebugLevel >= 2)
+                {
+                    LogMessage(message);
                 }
             }
             catch (Exception ex)

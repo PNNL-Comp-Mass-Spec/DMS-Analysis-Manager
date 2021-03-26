@@ -211,8 +211,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
                                     if (!string.IsNullOrEmpty(strValue))
                                     {
-                                        var fiFileInfo = new FileInfo(strValue);
-                                        if (!fiFileInfo.Exists)
+                                        var file = new FileInfo(strValue);
+                                        if (!file.Exists)
                                         {
                                             mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + lcmsFFIniFileName +
                                                         " points to an invalid file: " + strValue;
@@ -222,8 +222,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                         }
 
                                         // Copy the file locally
-                                        var strTargetFilePath = Path.Combine(mWorkDir, fiFileInfo.Name);
-                                        fiFileInfo.CopyTo(strTargetFilePath);
+                                        var strTargetFilePath = Path.Combine(mWorkDir, file.Name);
+                                        file.CopyTo(strTargetFilePath);
                                     }
                                 }
 

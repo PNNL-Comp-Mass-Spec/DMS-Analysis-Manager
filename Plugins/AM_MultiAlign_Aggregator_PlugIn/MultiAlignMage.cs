@@ -6,6 +6,7 @@ using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
@@ -508,27 +509,27 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                var diWorkDirectory = new DirectoryInfo(mWorkingDir);
-                var fiFiles = diWorkDirectory.GetFiles("*-log*.txt");
+                var workingDirectory = new DirectoryInfo(mWorkingDir);
+                var matchingFiles = workingDirectory.GetFiles("*-log*.txt").ToList();
 
-                if (fiFiles.Length >= 1)
+                if (matchingFiles.Count >= 1)
                 {
-                    strLogFilePath = fiFiles[0].FullName;
+                    strLogFilePath = matchingFiles[0].FullName;
 
-                    if (fiFiles.Length > 1)
+                    if (matchingFiles.Count > 1)
                     {
-                        // Use the newest file in fiFiles
+                        // Use the newest file in matchingFiles
                         var intBestIndex = 0;
 
-                        for (var intIndex = 1; intIndex <= fiFiles.Length - 1; intIndex++)
+                        for (var intIndex = 1; intIndex <= matchingFiles.Count - 1; intIndex++)
                         {
-                            if (fiFiles[intIndex].LastWriteTimeUtc > fiFiles[intBestIndex].LastWriteTimeUtc)
+                            if (matchingFiles[intIndex].LastWriteTimeUtc > matchingFiles[intBestIndex].LastWriteTimeUtc)
                             {
                                 intBestIndex = intIndex;
                             }
                         }
 
-                        strLogFilePath = fiFiles[intBestIndex].FullName;
+                        strLogFilePath = matchingFiles[intBestIndex].FullName;
                     }
                 }
 

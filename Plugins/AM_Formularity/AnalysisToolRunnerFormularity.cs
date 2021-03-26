@@ -188,9 +188,9 @@ namespace AnalysisManagerFormularityPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
 
-                foreach (var spectrumFile in GetXmlSpectraFiles(diWorkDir, out _))
+                foreach (var spectrumFile in GetXmlSpectraFiles(workingDirectory, out _))
                     spectrumFile.Delete();
             }
             catch (Exception)
@@ -436,11 +436,10 @@ namespace AnalysisManagerFormularityPlugin
             }
         }
 
-        private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo diWorkDir, out string wildcardMatchSpec)
+        private List<FileInfo> GetXmlSpectraFiles(DirectoryInfo workingDirectory, out string wildcardMatchSpec)
         {
             wildcardMatchSpec = mDatasetName + "_scan*.xml";
-            var spectraFiles = diWorkDir.GetFiles(wildcardMatchSpec).ToList();
-            return spectraFiles;
+            return workingDirectory.GetFiles(wildcardMatchSpec).ToList();
         }
 
         /// <summary>
@@ -888,8 +887,8 @@ namespace AnalysisManagerFormularityPlugin
                 {
                     // Processing all of the .xml scans files in the working directory
 
-                    var diWorkDir = new DirectoryInfo(mWorkDir);
-                    var spectraFiles = GetXmlSpectraFiles(diWorkDir, out var wildcardMatchSpec);
+                    var workingDirectory = new DirectoryInfo(mWorkDir);
+                    var spectraFiles = GetXmlSpectraFiles(workingDirectory, out var wildcardMatchSpec);
                     scanCount = spectraFiles.Count;
 
                     if (scanCount == 0)

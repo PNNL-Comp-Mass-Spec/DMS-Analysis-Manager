@@ -214,22 +214,22 @@ namespace AnalysisManagerOMSSAPlugIn
             mJobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
             var MSCsvOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.csv");
 
-            XmlNode objMostRecentComment = null;
+            XmlNode mostRecentComment = null;
 
             try
             {
-                var fiTemplateFile = new FileInfo(OmssaDefaultInput);
-                var fiFileToMerge = new FileInfo(ParamFilePath);
+                var templateFile = new FileInfo(OmssaDefaultInput);
+                var fileToMerge = new FileInfo(ParamFilePath);
 
-                if (!fiTemplateFile.Exists)
+                if (!templateFile.Exists)
                 {
-                    errorMessage = "File not found: " + fiTemplateFile.FullName;
+                    errorMessage = "File not found: " + templateFile.FullName;
                     return false;
                 }
 
-                if (!fiFileToMerge.Exists)
+                if (!fileToMerge.Exists)
                 {
-                    errorMessage = "File not found: " + fiFileToMerge.FullName;
+                    errorMessage = "File not found: " + fileToMerge.FullName;
                     return false;
                 }
 
@@ -237,93 +237,93 @@ namespace AnalysisManagerOMSSAPlugIn
                 var strOutputFilePath = OmssaInput;
 
                 // Open the template XML file
-                var objTemplate = new XmlDocument {
+                var xmlTemplate = new XmlDocument {
                     PreserveWhitespace = true
                 };
 
                 try
                 {
-                    objTemplate.Load(fiTemplateFile.FullName);
+                    xmlTemplate.Load(templateFile.FullName);
                 }
                 catch (Exception ex)
                 {
-                    errorMessage = "Error loading file " + fiTemplateFile.Name + ": " + ex.Message;
+                    errorMessage = "Error loading file " + templateFile.Name + ": " + ex.Message;
                     return false;
                 }
 
                 // Open the file to be merged
-                var objFileToMerge = new XmlDocument {
+                var xmlDoc = new XmlDocument {
                     PreserveWhitespace = true
                 };
 
                 try
                 {
-                    objFileToMerge.Load(fiFileToMerge.FullName);
+                    xmlDoc.Load(fileToMerge.FullName);
                 }
                 catch (Exception ex)
                 {
-                    errorMessage = "Error loading file " + fiFileToMerge.Name + ": " + ex.Message;
+                    errorMessage = "Error loading file " + fileToMerge.Name + ": " + ex.Message;
                     return false;
                 }
 
                 // Define the namespace manager
                 // Required because the template uses namespace "http://www.ncbi.nlm.nih.gov"
-                var objNamespaceMgr = new XmlNamespaceManager(objTemplate.NameTable);
+                var objNamespaceMgr = new XmlNamespaceManager(xmlTemplate.NameTable);
                 objNamespaceMgr.AddNamespace("ncbi", "http://www.ncbi.nlm.nih.gov");
 
-                // Read each node objFileToMerge
-                foreach (XmlNode objNodeToMerge in objFileToMerge.DocumentElement.ChildNodes)
+                // Read each node xmlDoc
+                foreach (XmlNode node in xmlDoc.DocumentElement.ChildNodes)
                 {
                     XmlNode objImportedNode;
-                    if (objNodeToMerge.NodeType == XmlNodeType.Comment)
+                    if (node.NodeType == XmlNodeType.Comment)
                     {
                         // Save the most recent comment to possibly be included later
 
                         // Note that we have to use .ImportNode, otherwise we'll get a namespace error when we try to add the new node
-                        objImportedNode = objTemplate.ImportNode(objNodeToMerge, true);
+                        objImportedNode = xmlTemplate.ImportNode(node, true);
 
-                        objMostRecentComment = objImportedNode.CloneNode(true);
+                        mostRecentComment = objImportedNode.CloneNode(true);
                     }
-                    else if (objNodeToMerge.NodeType == XmlNodeType.Element)
+                    else if (node.NodeType == XmlNodeType.Element)
                     {
                         // Note that we have to use .ImportNode, otherwise we'll get a namespace error when we try to add the new node
-                        objImportedNode = objTemplate.ImportNode(objNodeToMerge, true);
+                        objImportedNode = xmlTemplate.ImportNode(node, true);
 
-                        // Look for this node in objTemplate
+                        // Look for this node in xmlTemplate
                         // The Do loop is required because we have to call .SelectNodes() again after removing any extra nodes
-                        XmlNodeList objSelectedNodes;
-                        int intMatchCount;
+                        XmlNodeList selectedNodes;
+                        int matchCount;
                         do
                         {
                             // This XPath statement says to:
                             //  1) Go to the Document Element
                             //  2) Search its descendants
-                            //  3) Use the ncbi namespace when seraching
+                            //  3) Use the ncbi namespace when searching
                             //  4) Find the node named objImportedNode.name
-                            objSelectedNodes = objTemplate.DocumentElement.SelectNodes("descendant::ncbi:" + objImportedNode.Name, objNamespaceMgr);
+                            selectedNodes = xmlTemplate.DocumentElement.SelectNodes("descendant::ncbi:" + objImportedNode.Name, objNamespaceMgr);
 
-                            if (objSelectedNodes == null)
+                            if (selectedNodes == null)
                             {
-                                intMatchCount = 0;
+                                matchCount = 0;
                             }
                             else
                             {
-                                intMatchCount = objSelectedNodes.Count;
+                                matchCount = selectedNodes.Count;
                             }
 
-                            if (intMatchCount > 1)
+                            if (matchCount > 1)
                             {
                                 // More than one node was matched
                                 // Delete the extra nodes
-                                for (var i = intMatchCount - 1; i >= 1; i += -1)
+                                for (var i = matchCount - 1; i >= 1; i += -1)
                                 {
-                                    objSelectedNodes.Item(i).ParentNode.RemoveChild(objSelectedNodes.Item(i));
+                                    selectedNodes.Item(i).ParentNode.RemoveChild(selectedNodes.Item(i));
                                 }
                             }
-                        } while (intMatchCount > 1);
+                        } while (matchCount > 1);
 
                         XmlDocumentFragment objFrag;
-                        if (intMatchCount == 0)
+                        if (matchCount == 0)
                         {
                             // Match wasn't found; need to add a new node
                             // Append this temporary node to the end of the "to" document
@@ -331,18 +331,18 @@ namespace AnalysisManagerOMSSAPlugIn
 
                             try
                             {
-                                if (objMostRecentComment != null)
+                                if (mostRecentComment != null)
                                 {
                                     // First append the most recent comment
 
-                                    objFrag = objTemplate.CreateDocumentFragment();
-                                    objFrag.AppendChild(objTemplate.CreateSignificantWhitespace("  "));
-                                    objFrag.AppendChild(objMostRecentComment);
-                                    objFrag.AppendChild(objTemplate.CreateSignificantWhitespace(Environment.NewLine + "  "));
+                                    objFrag = xmlTemplate.CreateDocumentFragment();
+                                    objFrag.AppendChild(xmlTemplate.CreateSignificantWhitespace("  "));
+                                    objFrag.AppendChild(mostRecentComment);
+                                    objFrag.AppendChild(xmlTemplate.CreateSignificantWhitespace(Environment.NewLine + "  "));
 
-                                    objTemplate.DocumentElement.AppendChild(objFrag);
+                                    xmlTemplate.DocumentElement.AppendChild(objFrag);
 
-                                    objMostRecentComment = null;
+                                    mostRecentComment = null;
                                 }
                             }
                             catch (Exception ex)
@@ -354,8 +354,8 @@ namespace AnalysisManagerOMSSAPlugIn
                             try
                             {
                                 // Now append the node
-                                objTemplate.DocumentElement.AppendChild(objImportedNode);
-                                objTemplate.DocumentElement.AppendChild(objTemplate.CreateSignificantWhitespace(Environment.NewLine + Environment.NewLine));
+                                xmlTemplate.DocumentElement.AppendChild(objImportedNode);
+                                xmlTemplate.DocumentElement.AppendChild(xmlTemplate.CreateSignificantWhitespace(Environment.NewLine + Environment.NewLine));
                             }
                             catch (Exception ex)
                             {
@@ -367,38 +367,38 @@ namespace AnalysisManagerOMSSAPlugIn
                         {
                             // Match was found
 
-                            if (objMostRecentComment != null)
+                            if (mostRecentComment != null)
                             {
                                 try
                                 {
                                     // Possibly add this comment just before the current node
                                     // However, see if a duplicate comment already exists
-                                    var objPrevNode = objSelectedNodes.Item(0).PreviousSibling;
+                                    var previousNode = selectedNodes.Item(0).PreviousSibling;
 
-                                    while (objPrevNode?.NodeType == XmlNodeType.Whitespace)
+                                    while (previousNode?.NodeType == XmlNodeType.Whitespace)
                                     {
-                                        // objPrevNode is currently whitespace
+                                        // previousNode is currently whitespace
                                         // Move back one node
-                                        objPrevNode = objPrevNode.PreviousSibling;
+                                        previousNode = previousNode.PreviousSibling;
                                     }
 
-                                    var blnCopyThisComment = true;
-                                    if (objPrevNode?.NodeType == XmlNodeType.Comment)
+                                    var copyThisComment = true;
+                                    if (previousNode?.NodeType == XmlNodeType.Comment)
                                     {
-                                        if (objPrevNode.InnerText == objMostRecentComment.InnerText)
+                                        if (previousNode.InnerText == mostRecentComment.InnerText)
                                         {
                                             // The comments match; skip this comment
-                                            blnCopyThisComment = false;
+                                            copyThisComment = false;
                                         }
                                     }
 
-                                    if (blnCopyThisComment)
+                                    if (copyThisComment)
                                     {
-                                        objFrag = objTemplate.CreateDocumentFragment();
-                                        objFrag.AppendChild(objMostRecentComment);
-                                        objFrag.AppendChild(objTemplate.CreateSignificantWhitespace(Environment.NewLine + "  "));
+                                        objFrag = xmlTemplate.CreateDocumentFragment();
+                                        objFrag.AppendChild(mostRecentComment);
+                                        objFrag.AppendChild(xmlTemplate.CreateSignificantWhitespace(Environment.NewLine + "  "));
 
-                                        objSelectedNodes.Item(0).ParentNode.InsertBefore(objFrag, objSelectedNodes.Item(0));
+                                        selectedNodes.Item(0).ParentNode.InsertBefore(objFrag, selectedNodes.Item(0));
                                     }
                                 }
                                 catch (Exception ex)
@@ -407,17 +407,17 @@ namespace AnalysisManagerOMSSAPlugIn
                                     return false;
                                 }
 
-                                objMostRecentComment = null;
+                                mostRecentComment = null;
                             }
 
                             try
                             {
-                                // Replace objSelectedNodes.Item(0) with objNodeToMerge
-                                objSelectedNodes.Item(0).ParentNode.ReplaceChild(objImportedNode, objSelectedNodes.Item(0));
+                                // Replace selectedNodes.Item(0) with objNodeToMerge
+                                selectedNodes.Item(0).ParentNode.ReplaceChild(objImportedNode, selectedNodes.Item(0));
 
                                 // Alternative would be to update the XML using .InnerXML
                                 // However, this would miss any attributes foor this element
-                                // objSelectedNodes.Item(0).InnerXml = objImportedNode.InnerXml
+                                // selectedNodes.Item(0).InnerXml = objImportedNode.InnerXml
                             }
                             catch (Exception ex)
                             {
@@ -431,32 +431,33 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Now override the values for MSInFile_infile and MSSpectrumFileType
                 try
                 {
-                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
+                    var fileNameNodes = xmlTemplate.DocumentElement.SelectNodes(
                         "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile",
                         objNamespaceMgr);
 
-                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
+                    var fileTypeNodes = xmlTemplate.DocumentElement.SelectNodes(
                         "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infiletype/ncbi:MSSpectrumFileType",
                         objNamespaceMgr);
 
-                    if (objFileNameNodes.Count == 0)
+                    if (fileNameNodes == null || fileNameNodes.Count == 0)
                     {
                         errorMessage = "Did not find the MSInFile_infile node in the template file";
                         return false;
                     }
-                    else if (objFileTypeNodes.Count == 0)
+
+                    if (fileTypeNodes == null || fileTypeNodes.Count == 0)
                     {
                         errorMessage = "Did not find the MSSpectrumFileType node in the template file";
                         return false;
                     }
 
-                    if (objFileNameNodes.Count > 1)
+                    if (fileNameNodes.Count > 1)
                     {
                         errorMessage = "Found multiple instances of the MSInFile_infile node in the template file";
                         return false;
                     }
 
-                    if (objFileTypeNodes.Count > 1)
+                    if (fileTypeNodes.Count > 1)
                     {
                         errorMessage = "Found multiple instances of the MSSpectrumFileType node in the template file";
                         return false;
@@ -464,8 +465,8 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     // Everything is fine; update these nodes
                     // Note: File type 2 means a dtaxml file
-                    objFileNameNodes.Item(0).InnerXml = MSInfilename;
-                    objFileTypeNodes.Item(0).InnerXml = "2";
+                    fileNameNodes.Item(0).InnerXml = MSInfilename;
+                    fileTypeNodes.Item(0).InnerXml = "2";
                 }
                 catch (Exception ex)
                 {
@@ -476,22 +477,22 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Now override the values for MSSearchSettings_db
                 try
                 {
-                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_db", objNamespaceMgr);
+                    var fileNameNodes = xmlTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_db", objNamespaceMgr);
 
-                    if (objFileNameNodes.Count == 0)
+                    if (fileNameNodes.Count == 0)
                     {
                         errorMessage = "Did not find the MSSearchSettings_db node in the template file";
                         return false;
                     }
 
-                    if (objFileNameNodes.Count > 1)
+                    if (fileNameNodes.Count > 1)
                     {
                         errorMessage = "Found multiple instances of the MSSearchSettings_db node in the template file";
                         return false;
                     }
 
                     // Everything is fine; update node
-                    objFileNameNodes.Item(0).InnerXml = SearchSettings;
+                    fileNameNodes.Item(0).InnerXml = SearchSettings;
                 }
                 catch (Exception ex)
                 {
@@ -503,33 +504,32 @@ namespace AnalysisManagerOMSSAPlugIn
                 try
                 {
                     // If we ever have to change the value of the MSOutFile_includerequest value
-                    // Dim objFileIncludeRequestNodes As XmlNodeList
-                    // objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes(
+                    // var fileIncludeRequestNodes = xmlTemplate.DocumentElement.SelectNodes(
                     //   "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']",
                     //   objNamespaceMgr)
-                    // objFileIncludeRequestNodes.Item(1).InnerXml = "true"
+                    // fileIncludeRequestNodes.Item(1).InnerXml = "true"
 
-                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
+                    var fileNameNodes = xmlTemplate.DocumentElement.SelectNodes(
                         "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile",
                         objNamespaceMgr);
 
-                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
+                    var fileTypeNodes = xmlTemplate.DocumentElement.SelectNodes(
                         "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat",
                         objNamespaceMgr);
 
-                    if (objFileNameNodes.Count == 0)
+                    if (fileNameNodes== null || fileNameNodes.Count == 0)
                     {
                         errorMessage = "Did not find the MSOutFile_outfile node in the template file";
                         return false;
                     }
 
-                    if (objFileTypeNodes.Count == 0)
+                    if (fileTypeNodes == null || fileTypeNodes.Count == 0)
                     {
                         errorMessage = "Did not find the MSSerialDataFormat node in the template file";
                         return false;
                     }
 
-                    if (objFileNameNodes.Count != objFileTypeNodes.Count)
+                    if (fileNameNodes.Count != fileTypeNodes.Count)
                     {
                         errorMessage = "The number of MSOutFile_outfile nodes doesn't match the number of MSSerialDataFormat nodes";
                         return false;
@@ -537,14 +537,14 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     // Everything is fine; update these nodes
                     // Note: File type 3 means an XML file
-                    objFileNameNodes.Item(0).InnerXml = MSOmxOutFilename;
-                    objFileTypeNodes.Item(0).InnerXml = "3";
+                    fileNameNodes.Item(0).InnerXml = MSOmxOutFilename;
+                    fileTypeNodes.Item(0).InnerXml = "3";
 
-                    if (objFileNameNodes.Count > 1)
+                    if (fileNameNodes.Count > 1)
                     {
                         // Note: File type 3 means a xml file
-                        objFileNameNodes.Item(1).InnerXml = MSOmxLargeOutFilename;
-                        objFileTypeNodes.Item(1).InnerXml = "3";
+                        fileNameNodes.Item(1).InnerXml = MSOmxLargeOutFilename;
+                        fileTypeNodes.Item(1).InnerXml = "3";
                     }
                     else
                     {
@@ -552,11 +552,11 @@ namespace AnalysisManagerOMSSAPlugIn
                         // Nothing else to update
                     }
 
-                    if (objFileNameNodes.Count > 2)
+                    if (fileNameNodes.Count > 2)
                     {
                         // Note: File type 4 means a CSV file
-                        objFileNameNodes.Item(2).InnerXml = MSCsvOutFilename;
-                        objFileTypeNodes.Item(2).InnerXml = "4";
+                        fileNameNodes.Item(2).InnerXml = MSCsvOutFilename;
+                        fileTypeNodes.Item(2).InnerXml = "4";
                     }
                     else
                     {
@@ -582,7 +582,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     var objWriter = XmlWriter.Create(strOutputFilePath, objWriterSettings);
 
-                    objWriter.WriteRaw(objTemplate.DocumentElement.OuterXml);
+                    objWriter.WriteRaw(xmlTemplate.DocumentElement.OuterXml);
                     objWriter.Close();
                 }
                 catch (Exception ex)

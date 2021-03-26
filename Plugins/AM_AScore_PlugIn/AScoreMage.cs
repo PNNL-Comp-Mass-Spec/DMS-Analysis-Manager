@@ -165,20 +165,20 @@ namespace AnalysisManager_AScore_PlugIn
             // Define the file mask to search for
             var fileMask = Path.GetFileNameWithoutExtension(mParamFilename) + "*.xml";
 
-            var fiParamFiles = paramFileDirectory.GetFiles(fileMask).ToList();
+            var parameterFiles = paramFileDirectory.GetFiles(fileMask).ToList();
 
-            if (fiParamFiles.Count == 0)
+            if (parameterFiles.Count == 0)
             {
                 mErrorMessage = "No parameter files matching " + fileMask + " were found at " + paramFileDirectory.FullName;
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }
 
-            foreach (var fiFile in fiParamFiles)
+            foreach (var parameterFile in parameterFiles)
             {
                 try
                 {
-                    fiFile.CopyTo(Path.Combine(mWorkingDir, fiFile.Name));
+                    parameterFile.CopyTo(Path.Combine(mWorkingDir, parameterFile.Name));
                 }
                 catch (Exception ex)
                 {

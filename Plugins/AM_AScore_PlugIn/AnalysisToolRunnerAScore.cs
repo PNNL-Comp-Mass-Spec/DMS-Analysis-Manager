@@ -200,15 +200,15 @@ namespace AnalysisManager_AScore_PlugIn
             var success = ascoreMage.Run();
 
             // Delete any PeptideToProteinMapEngine_log files
-            var diWorkDir = new DirectoryInfo(mWorkDir);
-            var fiFiles = diWorkDir.GetFiles("PeptideToProteinMapEngine_log*");
-            if (fiFiles.Length > 0)
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            var matchingFiles = workingDirectory.GetFiles("PeptideToProteinMapEngine_log*");
+            if (matchingFiles.Length > 0)
             {
-                foreach (var fiFile in fiFiles)
+                foreach (var logFile in matchingFiles)
                 {
                     try
                     {
-                        DeleteFileWithRetries(fiFile.FullName, 1, 2);
+                        DeleteFileWithRetries(logFile.FullName, 1, 2);
                     }
                     // ReSharper disable once EmptyGeneralCatchClause
                     catch (Exception)

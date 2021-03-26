@@ -711,16 +711,16 @@ namespace AnalysisManagerExtractionPlugin
 
             // Delete the MSConvert_ConsoleOutput.txt and MODPlus_ConsoleOutput files that were in the zip file; we don't need them
 
-            var diWorkDir = new DirectoryInfo(mWorkDir);
+            var workingDirectory = new DirectoryInfo(mWorkDir);
             var filesToDelete = new List<FileInfo>();
 
-            filesToDelete.AddRange(diWorkDir.GetFiles("MODPlus_ConsoleOutput_Part*.txt"));
-            filesToDelete.AddRange(diWorkDir.GetFiles("MSConvert_ConsoleOutput.txt"));
-            filesToDelete.AddRange(diWorkDir.GetFiles("TDA_Plus_ConsoleOutput.txt"));
+            filesToDelete.AddRange(workingDirectory.GetFiles("MODPlus_ConsoleOutput_Part*.txt"));
+            filesToDelete.AddRange(workingDirectory.GetFiles("MSConvert_ConsoleOutput.txt"));
+            filesToDelete.AddRange(workingDirectory.GetFiles("TDA_Plus_ConsoleOutput.txt"));
 
-            foreach (var fiFile in filesToDelete)
+            foreach (var targetFile in filesToDelete)
             {
-                fiFile.Delete();
+                targetFile.Delete();
             }
 
             // Note that we'll obtain the MODPlus parameter file in RetrieveMiscFiles
@@ -1358,7 +1358,7 @@ namespace AnalysisManagerExtractionPlugin
                 var toolVersionFileNewName = string.Empty;
 
                 var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
-                if (resultType == Enums.PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
+                if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

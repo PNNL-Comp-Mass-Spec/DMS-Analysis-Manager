@@ -663,9 +663,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             var jobFolderList = new Dictionary<int, DirectoryInfo>();
 
-            var diWorkingFolder = new DirectoryInfo(mWorkDir);
+            var workingDirectory = new DirectoryInfo(mWorkDir);
 
-            foreach (var jobFolder in diWorkingFolder.GetDirectories("Job*"))
+            foreach (var jobFolder in workingDirectory.GetDirectories("Job*"))
             {
                 var jobNumberText = jobFolder.Name.Substring(3);
 

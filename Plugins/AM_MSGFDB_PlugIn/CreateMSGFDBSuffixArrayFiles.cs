@@ -88,16 +88,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Look for the .MSGFPlusIndexFileInfo file for this fasta file
-                var fiMSGFPlusIndexFileInfo = new FileInfo(
+                var indexFileInfo = new FileInfo(
                     Path.Combine(remoteIndexDirectory.FullName,
                                  fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
                 long fileSizeTotalKB = 0;
 
-                if (!fiMSGFPlusIndexFileInfo.Exists)
+                if (!indexFileInfo.Exists)
                 {
                     OnDebugEvent(string.Format("{0} not found at {1}; indexing is required",
-                        fiMSGFPlusIndexFileInfo.Name, remoteIndexDirectory.FullName));
+                        indexFileInfo.Name, remoteIndexDirectory.FullName));
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -108,7 +108,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var filesToCopy = new Dictionary<string, long>();
 
                 using (var reader = new StreamReader(
-                    new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    new FileStream(indexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -1074,11 +1074,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fileNameToFind = outputNameBase + suffix;
 
-                var fiFileToFind = new FileInfo(Path.Combine(directoryPathToSearch, fileNameToFind));
+                var file = new FileInfo(Path.Combine(directoryPathToSearch, fileNameToFind));
 
-                if (fiFileToFind.Exists)
+                if (file.Exists)
                 {
-                    existingFiles.Add(fiFileToFind);
+                    existingFiles.Add(file);
                     existingFileList = Global.AppendToComment(existingFileList, fileNameToFind);
                 }
                 else

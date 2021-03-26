@@ -26,6 +26,8 @@ namespace AnalysisManagerGlyQIQPlugin
     /// </summary>
     public class AnalysisToolRunnerGlyQIQ : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: ParmFile
+
         #region "Constants and Enums"
 
         protected const float PROGRESS_PCT_STARTING = 1;
@@ -395,78 +397,76 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private void PackageResults()
         {
-            var diTempZipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "FilesToZip"));
+            var tempZipDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "FilesToZip"));
 
             try
             {
-                if (!diTempZipFolder.Exists)
+                if (!tempZipDirectory.Exists)
                 {
-                    diTempZipFolder.Create();
+                    tempZipDirectory.Create();
                 }
 
                 // Move the batch files and console output files into the FilesToZip folder
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
                 var lstFilesToMove = new List<FileInfo>();
 
-                var lstFiles = diWorkDir.GetFiles("*.bat");
-                lstFilesToMove.AddRange(lstFiles);
+                var batchFiles = workingDirectory.GetFiles("*.bat");
+                lstFilesToMove.AddRange(batchFiles);
 
                 // We don't keep the entire ConsoleOutput file
                 // Instead, just keep a trimmed version of the original, removing extraneous log messages
-                foreach (var fiConsoleOutputFile in diWorkDir.GetFiles(GlyQIqRunner.GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + "*.txt"))
+                foreach (var consoleOutputFile in workingDirectory.GetFiles(GlyQIqRunner.GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + "*.txt"))
                 {
-                    PruneConsoleOutputFiles(fiConsoleOutputFile, diTempZipFolder);
+                    PruneConsoleOutputFiles(consoleOutputFile, tempZipDirectory);
                 }
-
-                lstFilesToMove.AddRange(lstFiles);
-
-                foreach (var fiFile in lstFilesToMove)
+                
+                foreach (var file in lstFilesToMove)
                 {
-                    fiFile.MoveTo(Path.Combine(diTempZipFolder.FullName, fiFile.Name));
+                    file.MoveTo(Path.Combine(tempZipDirectory.FullName, file.Name));
                 }
 
                 // Move selected files from the first WorkingParameters folder
 
                 // We just need to copy files from the first core's WorkingParameters folder
-                var diWorkingParamsSource = new DirectoryInfo(Path.Combine(mWorkDir, "WorkingParametersCore1"));
+                var sourceWorkingParametersDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "WorkingParametersCore1"));
 
-                var diWorkingParamsTarget = new DirectoryInfo(Path.Combine(diTempZipFolder.FullName, "WorkingParameters"));
-                if (!diWorkingParamsTarget.Exists)
+                var targetWorkingParametersDirectory = new DirectoryInfo(Path.Combine(tempZipDirectory.FullName, "WorkingParameters"));
+                if (!targetWorkingParametersDirectory.Exists)
                 {
-                    diWorkingParamsTarget.Create();
+                    targetWorkingParametersDirectory.Create();
                 }
 
                 var iqParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
-                foreach (var fiFile in diWorkingParamsSource.GetFiles())
+                foreach (var file in sourceWorkingParametersDirectory.GetFiles())
                 {
                     var moveFile = false;
 
-                    if (string.Equals(fiFile.Name, iqParamFileName, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(file.Name, iqParamFileName, StringComparison.OrdinalIgnoreCase))
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.GLYQIQ_PARAMS_FILE_PREFIX))
+                    else if (file.Name.StartsWith(AnalysisResourcesGlyQIQ.GLYQIQ_PARAMS_FILE_PREFIX))
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.ALIGNMENT_PARAMETERS_FILENAME))
+                    else if (file.Name.StartsWith(AnalysisResourcesGlyQIQ.ALIGNMENT_PARAMETERS_FILENAME))
                     {
                         moveFile = true;
                     }
-                    else if (fiFile.Name.StartsWith(AnalysisResourcesGlyQIQ.EXECUTOR_PARAMETERS_FILE))
+                    else if (file.Name.StartsWith(AnalysisResourcesGlyQIQ.EXECUTOR_PARAMETERS_FILE))
                     {
                         moveFile = true;
                     }
 
                     if (moveFile)
                     {
-                        fiFile.MoveTo(Path.Combine(diWorkingParamsTarget.FullName, fiFile.Name));
+                        file.MoveTo(Path.Combine(targetWorkingParametersDirectory.FullName, file.Name));
                     }
                 }
 
                 var strZipFilePath = Path.Combine(mWorkDir, "GlyQIq_Automation_Files.zip");
 
-                mDotNetZipTools.ZipDirectory(diTempZipFolder.FullName, strZipFilePath);
+                mDotNetZipTools.ZipDirectory(tempZipDirectory.FullName, strZipFilePath);
             }
             catch (Exception ex)
             {
@@ -479,8 +479,8 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Clear the TempZipFolder
                 Global.IdleLoop(0.25);
-                diTempZipFolder.Delete(true);
-                diTempZipFolder.Create();
+                tempZipDirectory.Delete(true);
+                tempZipDirectory.Create();
             }
             catch (Exception)
             {

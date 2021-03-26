@@ -367,28 +367,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 var diDataPackageFolder = new DirectoryInfo(dataPackagePath);
-                var fiFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
+                var matchingFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
 
-                if (fiFiles.Count == 0)
+                if (matchingFiles.Count == 0)
                 {
                     // File not found; see if any files ending in MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-                    fiFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX).ToList();
+                    matchingFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX).ToList();
 
-                    if (fiFiles.Count == 0)
+                    if (matchingFiles.Count == 0)
                     {
                         // File not found; see if any files containing MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-                        fiFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX + "*").ToList();
+                        matchingFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX + "*").ToList();
                     }
                 }
 
-                if (fiFiles.Count > 0)
+                if (matchingFiles.Count > 0)
                 {
                     // Template file found in the data package; copy it locally
-                    if (!FileSearch.RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
+                    if (!FileSearch.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
                     {
                         return false;
                     }
-                    templateFileName = fiFiles[0].Name;
+                    templateFileName = matchingFiles[0].Name;
                 }
                 else
                 {
@@ -458,22 +458,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         continue;
 
                     var diDataPackageFolder = new DirectoryInfo(sourceFolderPath);
-                    var fiFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
+                    var matchingFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
 
-                    if (fiFiles.Count == 0)
+                    if (matchingFiles.Count == 0)
                     {
                         // File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
-                        fiFiles = diDataPackageFolder.GetFiles("*" + PX_SUBMISSION_FILE_SUFFIX).ToList();
+                        matchingFiles = diDataPackageFolder.GetFiles("*" + PX_SUBMISSION_FILE_SUFFIX).ToList();
                     }
 
-                    if (fiFiles.Count > 0)
+                    if (matchingFiles.Count > 0)
                     {
                         // Template file found in the data package; copy it locally
-                        if (!FileSearch.RetrieveFile(fiFiles[0].Name, fiFiles[0].DirectoryName))
+                        if (!FileSearch.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
                         {
                             return false;
                         }
-                        templateFileName = fiFiles[0].Name;
+                        templateFileName = matchingFiles[0].Name;
                         matchFound = true;
                         break;
                     }

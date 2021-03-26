@@ -604,24 +604,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private int AddPxFileToMasterList(string filePath, DataPackageJobInfo dataPkgJob)
         {
-            var fiFile = new FileInfo(filePath);
+            var file = new FileInfo(filePath);
 
-            if (mPxMasterFileList.TryGetValue(fiFile.Name, out var pxFileInfo))
+            if (mPxMasterFileList.TryGetValue(file.Name, out var pxFileInfo))
             {
                 // File already exists
                 return pxFileInfo.FileID;
             }
 
-            var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
+            var filename = CheckFilenameCase(file, dataPkgJob.Dataset);
 
             pxFileInfo = new PXFileInfoBase(filename, dataPkgJob)
             {
                 FileID = mPxMasterFileList.Count + 1
             };
 
-            if (fiFile.Exists)
+            if (file.Exists)
             {
-                pxFileInfo.Length = fiFile.Length;
+                pxFileInfo.Length = file.Length;
                 pxFileInfo.MD5Hash = string.Empty;      // Don't compute the hash; it's not needed
             }
             else
@@ -630,14 +630,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 pxFileInfo.MD5Hash = string.Empty;
             }
 
-            mPxMasterFileList.Add(fiFile.Name, pxFileInfo);
+            mPxMasterFileList.Add(file.Name, pxFileInfo);
 
             return pxFileInfo.FileID;
         }
 
         private bool AddPxResultFile(int fileId, PXFileInfoBase.PXFileTypes eFileType, string filePath, DataPackageJobInfo dataPkgJob)
         {
-            var fiFile = new FileInfo(filePath);
+            var file = new FileInfo(filePath);
 
             if (mPxResultFiles.TryGetValue(fileId, out _))
             {
@@ -645,22 +645,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return true;
             }
 
-            if (!mPxMasterFileList.TryGetValue(fiFile.Name, out var masterPXFileInfo))
+            if (!mPxMasterFileList.TryGetValue(file.Name, out var masterPXFileInfo))
             {
                 // File not found in mPxMasterFileList, we cannot add the mapping
-                LogError("File " + fiFile.Name + " not found in mPxMasterFileList; unable to add to mPxResultFiles");
+                LogError("File " + file.Name + " not found in mPxMasterFileList; unable to add to mPxResultFiles");
                 return false;
             }
 
             if (masterPXFileInfo.FileID != fileId)
             {
-                var msg = "FileID mismatch for " + fiFile.Name;
+                var msg = "FileID mismatch for " + file.Name;
                 LogError(msg + ":  mPxMasterFileList.FileID = " + masterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
                 mMessage = msg;
                 return false;
             }
 
-            var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
+            var filename = CheckFilenameCase(file, dataPkgJob.Dataset);
 
             var pxFileInfo = new PXFileInfo(filename, dataPkgJob);
             pxFileInfo.Update(masterPXFileInfo);
@@ -817,13 +817,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private string CheckFilenameCase(FileSystemInfo fiFile, string dataset)
+        private string CheckFilenameCase(FileSystemInfo file, string dataset)
         {
-            var filename = fiFile.Name;
+            var filename = file.Name;
 
-            if (!string.IsNullOrEmpty(fiFile.Extension))
+            if (!string.IsNullOrEmpty(file.Extension))
             {
-                var fileBaseName = Path.GetFileNameWithoutExtension(fiFile.Name);
+                var fileBaseName = Path.GetFileNameWithoutExtension(file.Name);
 
                 if (fileBaseName.StartsWith(dataset, StringComparison.OrdinalIgnoreCase))
                 {
@@ -841,17 +841,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                if (fiFile.Extension.Equals(DOT_MZML, StringComparison.OrdinalIgnoreCase))
+                if (file.Extension.Equals(DOT_MZML, StringComparison.OrdinalIgnoreCase))
                 {
                     filename = fileBaseName + DOT_MZML;
                 }
-                else if (fiFile.Extension.Equals(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
+                else if (file.Extension.Equals(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                 {
                     filename = fileBaseName + DOT_MZML_GZ;
                 }
                 else
                 {
-                    filename = fileBaseName + fiFile.Extension.ToLower();
+                    filename = fileBaseName + file.Extension.ToLower();
                 }
             }
 
@@ -1256,11 +1256,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Determine the correct capitalization for the mzXML file
                 var workDir = new DirectoryInfo(mWorkDir);
-                var fiFiles = workDir.GetFiles(mzXMLFilename);
+                var matchingFiles = workDir.GetFiles(mzXMLFilename);
 
-                if (fiFiles.Length > 0)
+                if (matchingFiles.Length > 0)
                 {
-                    mzXMLFilename = fiFiles[0].Name;
+                    mzXMLFilename = matchingFiles[0].Name;
                 }
                 // else
                 // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
@@ -1321,7 +1321,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case Enums.PeptideHitResultTypes.Sequest:
+                            case PeptideHitResultTypes.Sequest:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1345,7 +1345,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case Enums.PeptideHitResultTypes.XTandem:
+                            case PeptideHitResultTypes.XTandem:
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
                                     pValue = ComputeApproximateEValue(msgfSpecEValue);
@@ -1368,7 +1368,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case Enums.PeptideHitResultTypes.Inspect:
+                            case PeptideHitResultTypes.Inspect:
                                 pValue = reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
 
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
@@ -1391,7 +1391,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
                                 break;
 
-                            case Enums.PeptideHitResultTypes.MSGFPlus:
+                            case PeptideHitResultTypes.MSGFPlus:
                                 fdr = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
                                 {
@@ -1495,7 +1495,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
 
-                                if (dataPkgJob.PeptideHitResultType == Enums.PeptideHitResultTypes.MSGFPlus)
+                                if (dataPkgJob.PeptideHitResultType == PeptideHitResultTypes.MSGFPlus)
                                 {
                                     if (proteinUCase.StartsWith("REV_") || proteinUCase.StartsWith("XXX_"))
                                     {
@@ -1531,27 +1531,27 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
-                            case Enums.PeptideHitResultTypes.Sequest:
+                            case PeptideHitResultTypes.Sequest:
                                 totalPRMScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_Sp);
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn2);
                                 break;
 
-                            case Enums.PeptideHitResultTypes.XTandem:
+                            case PeptideHitResultTypes.XTandem:
                                 totalPRMScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_Peptide_Hyperscore);
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_DeltaCn2);
                                 break;
 
-                            case Enums.PeptideHitResultTypes.Inspect:
+                            case PeptideHitResultTypes.Inspect:
                                 totalPRMScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_TotalPRMScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_PValue);
                                 deltaScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScore);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScoreOther);
                                 break;
 
-                            case Enums.PeptideHitResultTypes.MSGFPlus:
+                            case PeptideHitResultTypes.MSGFPlus:
                                 totalPRMScore = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_DeNovoScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_PValue);
                                 break;
@@ -2392,7 +2392,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         [Obsolete("No longer used")]
         private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader xmlReader, XmlWriter writer,
-            Enums.PeptideHitResultTypes PeptideHitResultType)
+            PeptideHitResultTypes PeptideHitResultType)
         {
             var toolName = string.Empty;
             var toolVersion = string.Empty;
@@ -2442,15 +2442,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                if (PeptideHitResultType == Enums.PeptideHitResultTypes.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
+                if (PeptideHitResultType == PeptideHitResultTypes.MSGFPlus && toolName.StartsWith("MSGF", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == Enums.PeptideHitResultTypes.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
+                else if (PeptideHitResultType == PeptideHitResultTypes.Sequest && toolName.StartsWith("SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == Enums.PeptideHitResultTypes.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
+                else if (PeptideHitResultType == PeptideHitResultTypes.XTandem && toolName.IndexOf("TANDEM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
@@ -3003,10 +3003,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mJobParams.AddResultFileToSkip("PRIDEConverter_ConsoleOutput.txt");
             mJobParams.AddResultFileToSkip("PRIDEConverter_Version.txt");
 
-            var diWorkDir = new DirectoryInfo(mWorkDir);
-            foreach (var fiFile in diWorkDir.GetFiles(DataPackageFileHandler.JOB_INFO_FILE_PREFIX + "*.txt"))
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            foreach (var fileToSkip in workingDirectory.GetFiles(DataPackageFileHandler.JOB_INFO_FILE_PREFIX + "*.txt"))
             {
-                mJobParams.AddResultFileToSkip(fiFile.Name);
+                mJobParams.AddResultFileToSkip(fileToSkip.Name);
             }
         }
 
@@ -3673,7 +3673,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Update the .mzid.gz file(s) for this job
 
-            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == Enums.PeptideHitResultTypes.MSGFPlus)
+            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == PeptideHitResultTypes.MSGFPlus)
             {
                 mMessage = string.Empty;
 
@@ -3698,8 +3698,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Deprecated
-            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != Enums.PeptideHitResultTypes.Unknown ||
-            //     jobInfo.Value.PeptideHitResultType == Enums.PeptideHitResultTypes.Sequest)
+            // if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != PeptideHitResultTypes.Unknown ||
+            //     jobInfo.Value.PeptideHitResultType == PeptideHitResultTypes.Sequest)
             // {
             //     var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
             //     var pepXMLFile = new FileInfo(Path.Combine(mWorkDir, pepXmlFilename));
@@ -4280,11 +4280,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private void StoreMzIdSampleInfo(string mzIdFilePath, SampleMetadata sampleMetadata)
         {
-            var fiFile = new FileInfo(mzIdFilePath);
+            var mzIdFile = new FileInfo(mzIdFilePath);
 
-            if (!mMzIdSampleInfo.ContainsKey(fiFile.Name))
+            if (!mMzIdSampleInfo.ContainsKey(mzIdFile.Name))
             {
-                mMzIdSampleInfo.Add(fiFile.Name, sampleMetadata);
+                mMzIdSampleInfo.Add(mzIdFile.Name, sampleMetadata);
             }
         }
 

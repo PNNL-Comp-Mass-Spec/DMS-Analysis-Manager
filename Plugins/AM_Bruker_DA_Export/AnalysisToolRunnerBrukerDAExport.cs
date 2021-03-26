@@ -388,14 +388,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     return string.Empty;
                 }
 
-                var fiFiles = brukerDaltonikDir.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
-                if (fiFiles.Count == 0)
+                var matchingFiles = brukerDaltonikDir.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
+                if (matchingFiles.Count == 0)
                 {
                     LogError("DataAnalysis.exe not found in the Bruker Daltonik folder at " + brukerDaltonikDir.FullName);
                     return string.Empty;
                 }
 
-                return fiFiles[0].FullName;
+                return matchingFiles[0].FullName;
             }
             catch (Exception ex)
             {
@@ -405,9 +405,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
         }
 
-        private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
+        private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo workingDirectory)
         {
-            var fiSpectraFiles = diWorkDir.GetFiles(mDatasetName + "_scan*.xml").ToList();
+            var fiSpectraFiles = workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
             return fiSpectraFiles;
         }
 
@@ -541,8 +541,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+                var fiSpectraFiles = GetXMLSpectraFiles(workingDirectory);
 
                 if (fiSpectraFiles.Count == 0)
                 {
@@ -550,7 +550,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     return false;
                 }
 
-                var diSubDir = diWorkDir.CreateSubdirectory("FilesToZip");
+                var diSubDir = workingDirectory.CreateSubdirectory("FilesToZip");
 
                 PRISM.ProgRunner.GarbageCollectNow();
 

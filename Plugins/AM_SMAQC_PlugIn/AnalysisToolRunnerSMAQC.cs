@@ -16,6 +16,8 @@ namespace AnalysisManagerSMAQCPlugIn
     /// </summary>
     public class AnalysisToolRunnerSMAQC : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: ParmFile, utf
+
         #region "Module Variables"
 
         private const string SMAQC_CONSOLE_OUTPUT = "SMAQC_ConsoleOutput.txt";
@@ -79,7 +81,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the name of the .XML file listing the Measurements to run
-                var strParameterFileName = mJobParams.GetParam("parmFileName");
+                var strParameterFileName = mJobParams.GetParam("ParmFileName");
                 var strParameterFilePath = Path.Combine(mWorkDir, strParameterFileName);
 
                 // Lookup the InstrumentID for this dataset
@@ -184,9 +186,9 @@ namespace AnalysisManagerSMAQCPlugIn
                 //
                 // if (processingSuccess)
                 // {
-                //    var blnSuccessLLRC = ComputeLLRC();
+                //    var successLLRC = ComputeLLRC();
 
-                //    if (!blnSuccessLLRC)
+                //    if (!successLLRC)
                 //    {
                 //        // Do not treat this as a fatal error
                 //        if (string.IsNullOrEmpty(mEvalMessage))
@@ -194,7 +196,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 //    }
                 // }
 
-                // Rename the SMAQC log file to remove the datestamp
+                // Rename the SMAQC log file to remove the date stamp
                 var logFilePath = RenameSMAQCLogFile();
 
                 // Don't move the AnalysisSummary.txt file to the results folder; it doesn't have any useful information
@@ -432,7 +434,7 @@ namespace AnalysisManagerSMAQCPlugIn
             // QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4B, 26.8
             // QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4C, 27.18
 
-            // The measurments are returned via this list
+            // The measurements are returned via this list
             var lstResults = new List<KeyValuePair<string, string>>();
 
             if (!File.Exists(ResultsFilePath))
@@ -742,13 +744,13 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             try
             {
-                var diWorkDir = new DirectoryInfo(mWorkDir);
+                var workingDirectory = new DirectoryInfo(mWorkDir);
 
-                var fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt");
+                var matchingFiles = workingDirectory.GetFiles("SMAQC-log*.txt");
 
-                if (fiFiles.Length > 0)
+                if (matchingFiles.Length > 0)
                 {
-                    // There should only be one file; just parse fiFiles[0]
+                    // There should only be one file; just parse matchingFiles[0]
                     var strLogFilePathNew = Path.Combine(mWorkDir, "SMAQC_log.txt");
 
                     if (File.Exists(strLogFilePathNew))
@@ -756,7 +758,7 @@ namespace AnalysisManagerSMAQCPlugIn
                         File.Delete(strLogFilePathNew);
                     }
 
-                    fiFiles[0].MoveTo(strLogFilePathNew);
+                    matchingFiles[0].MoveTo(strLogFilePathNew);
 
                     return strLogFilePathNew;
                 }

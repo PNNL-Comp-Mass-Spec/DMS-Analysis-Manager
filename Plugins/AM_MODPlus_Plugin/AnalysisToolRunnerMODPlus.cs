@@ -682,19 +682,19 @@ namespace AnalysisManagerMODPlusPlugin
                     fiCombinedResults
                 };
 
-                var diWorkDir = new DirectoryInfo(mWorkDir);
-                filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"));
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+                filesToMove.AddRange(workingDirectory.GetFiles("*ConsoleOutput*.txt"));
 
                 foreach (var paramFile in paramFileList)
                 {
                     filesToMove.Add(new FileInfo(paramFile.Value));
                 }
 
-                foreach (var fiFile in filesToMove)
+                foreach (var sourceFile in filesToMove)
                 {
-                    if (fiFile.Exists)
+                    if (sourceFile.Exists)
                     {
-                        fiFile.MoveTo(Path.Combine(diZipFolder.FullName, fiFile.Name));
+                        sourceFile.MoveTo(Path.Combine(diZipFolder.FullName, sourceFile.Name));
                     }
                 }
 

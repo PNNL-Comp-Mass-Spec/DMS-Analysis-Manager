@@ -266,13 +266,13 @@ namespace AnalysisManagerResultsCleanupPlugin
                     // Parse out the step number
                     var reMatch = stepNumberMatcher.Match(subdirectory.Name);
 
-                    if (reMatch.Success && int.TryParse(reMatch.Groups[1].Value, out var intStepNumber))
+                    if (reMatch.Success && int.TryParse(reMatch.Groups[1].Value, out var stepNumber))
                     {
-                        if (!resultsFiles.ContainsKey(intStepNumber))
+                        if (!resultsFiles.ContainsKey(stepNumber))
                         {
-                            foreach (var fiFile in subdirectory.GetFiles(RESULTS_DB3_FILE))
+                            foreach (var file in subdirectory.GetFiles(RESULTS_DB3_FILE))
                             {
-                                resultsFiles.Add(intStepNumber, fiFile);
+                                resultsFiles.Add(stepNumber, file);
                                 break;
                             }
                         }

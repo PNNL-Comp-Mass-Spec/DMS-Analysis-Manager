@@ -97,7 +97,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Run MS-GF+ (includes indexing the FASTA file)
 
-                var processingResult = RunMSGFPlus(javaProgLoc, out var fiMSGFPlusResults, out var processingError, out var tooManySkippedSpectra);
+                var processingResult = RunMSGFPlus(javaProgLoc, out var mzidResultsFile, out var processingError, out var tooManySkippedSpectra);
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -106,22 +106,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
 
                     // If the MSGFPlus_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
-                    fiMSGFPlusResults.Refresh();
+                    mzidResultsFile.Refresh();
 
-                    DirectoryInfo diWorkingDirectory;
+                    DirectoryInfo workingDirectory;
 
                     if (string.IsNullOrEmpty(mWorkingDirectoryInUse))
                     {
-                        diWorkingDirectory = new DirectoryInfo(mWorkDir);
+                        workingDirectory = new DirectoryInfo(mWorkDir);
                     }
                     else
                     {
-                        diWorkingDirectory = new DirectoryInfo(mWorkingDirectoryInUse);
+                        workingDirectory = new DirectoryInfo(mWorkingDirectoryInUse);
                     }
 
-                    var fiConsoleOutputFile = diWorkingDirectory.GetFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
+                    var consoleOutputFile = workingDirectory.GetFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
 
-                    if (!fiMSGFPlusResults.Exists && fiConsoleOutputFile.Length == 0)
+                    if (!mzidResultsFile.Exists && consoleOutputFile.Length == 0)
                     {
                         return processingResult;
                     }
@@ -130,21 +130,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Look for the .mzid file
                 // If it exists, call PostProcessMSGFPlusResults even if processingError is true
 
-                fiMSGFPlusResults.Refresh();
-                if (fiMSGFPlusResults.Exists)
+                mzidResultsFile.Refresh();
+                if (mzidResultsFile.Exists)
                 {
                     // Look for a "dirty" mzid file
-                    var dirtyResultsFilename = Path.GetFileNameWithoutExtension(fiMSGFPlusResults.Name) + "_dirty.gz";
+                    var dirtyResultsFilename = Path.GetFileNameWithoutExtension(mzidResultsFile.Name) + "_dirty.gz";
 
                     bool dirtyFileExists;
-                    if (fiMSGFPlusResults.Directory == null)
+                    if (mzidResultsFile.Directory == null)
                     {
                         dirtyFileExists = false;
                     }
                     else
                     {
-                        var fiMSGFPlusDirtyResults = new FileInfo(Path.Combine(fiMSGFPlusResults.Directory.FullName, dirtyResultsFilename));
-                        dirtyFileExists = fiMSGFPlusDirtyResults.Exists;
+                        var dirtyResultFile = new FileInfo(Path.Combine(mzidResultsFile.Directory.FullName, dirtyResultsFilename));
+                        dirtyFileExists = dirtyResultFile.Exists;
                     }
 
                     if (dirtyFileExists)
@@ -154,7 +154,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        var postProcessingResult = PostProcessMSGFPlusResults(fiMSGFPlusResults.Name);
+                        var postProcessingResult = PostProcessMSGFPlusResults(mzidResultsFile.Name);
                         if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -172,7 +172,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = "MS-GF+ results file not found: " + fiMSGFPlusResults.Name;
+                        mMessage = "MS-GF+ results file not found: " + mzidResultsFile.Name;
                         processingError = true;
                     }
                 }
@@ -244,16 +244,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Index the Fasta file (if needed) then run MS-GF+
         /// </summary>
         /// <param name="javaProgLoc"></param>
-        /// <param name="fiMSGFPlusResults"></param>
+        /// <param name="mzidResultsFile">MS-GF+ results file</param>
         /// <param name="processingError"></param>
         /// <param name="tooManySkippedSpectra"></param>
         private CloseOutType RunMSGFPlus(
             string javaProgLoc,
-            out FileInfo fiMSGFPlusResults,
+            out FileInfo mzidResultsFile,
             out bool processingError,
             out bool tooManySkippedSpectra)
         {
-            fiMSGFPlusResults = new FileInfo(Path.Combine(mWorkDir, Dataset + "_msgfplus.mzid"));
+            mzidResultsFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_msgfplus.mzid"));
 
             var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
             if (splitFastaEnabled)
@@ -262,13 +262,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     mMessage = errorMessage;
 
-                var fiMSGFPlusResultsSplitFasta = new FileInfo(
+                var splitFastaMzidFile = new FileInfo(
                     Path.Combine(mWorkDir, Dataset + "_msgfplus_Part" + iteration + ".mzid"));
 
-                if (!fiMSGFPlusResults.Exists && fiMSGFPlusResultsSplitFasta.Exists)
+                if (!mzidResultsFile.Exists && splitFastaMzidFile.Exists)
                 {
-                    fiMSGFPlusResultsSplitFasta.MoveTo(fiMSGFPlusResults.FullName);
-                    fiMSGFPlusResults.Refresh();
+                    splitFastaMzidFile.MoveTo(mzidResultsFile.FullName);
+                    mzidResultsFile.Refresh();
                 }
             }
 
@@ -460,7 +460,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Define the input file, output file, and fasta file
             // It is safe to simply use the input file name since the working directory will be mWorkDir
             arguments += " -s " + inputFile.Name;
-            arguments += " -o " + fiMSGFPlusResults.Name;
+            arguments += " -o " + mzidResultsFile.Name;
             arguments += " -d " + PossiblyQuotePath(fastaFilePath);
 
             // Append the MS-GF+ parameter file name
@@ -479,21 +479,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             mWorkingDirectoryInUse = string.Copy(mWorkDir);
 
             bool validExistingResults;
-            if (fiMSGFPlusResults.Exists)
+            if (mzidResultsFile.Exists)
             {
                 // Don't actually run MS-GF+ if the results file exists and ends in </MzIdentML>
-                validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(fiMSGFPlusResults);
+                validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(mzidResultsFile);
                 if (validExistingResults)
                 {
                     LogMessage(string.Format("Using existing MS-GF+ results: {0} created {1}",
-                        fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT)));
                 }
                 else
                 {
                     LogMessage(string.Format("Deleting incomplete existing MS-GF+ results: {0} created {1}",
-                                             fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
-                    fiMSGFPlusResults.Delete();
-                    fiMSGFPlusResults.Refresh();
+                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                    mzidResultsFile.Delete();
+                    mzidResultsFile.Refresh();
                 }
             }
             else
@@ -526,7 +526,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 LogMessage(mMSGFPlusUtils.ConsoleOutputErrorMsg, 1, true);
             }
 
-            fiMSGFPlusResults.Refresh();
+            mzidResultsFile.Refresh();
 
             if (success)
             {
@@ -663,7 +663,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (mMSGFPlusUtils.ContinuumSpectraSkipped > 0)
             {
                 // See if any spectra were processed
-                if (!fiMSGFPlusResults.Exists)
+                if (!mzidResultsFile.Exists)
                 {
                     // Note that DMS stored procedure AutoResetFailedJobs looks for jobs with these phrases in the job comment
                     //   "None of the spectra are centroided; unable to process"
@@ -1008,15 +1008,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                var fiFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
+                var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
 
                 var iteration = AnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     mMessage = errorMessage;
 
-                var fileNameNew = Path.GetFileNameWithoutExtension(fiFile.Name) + "_Part" + iteration + fiFile.Extension;
+                var fileNameNew = Path.GetFileNameWithoutExtension(resultsFile.Name) + "_Part" + iteration + resultsFile.Extension;
 
-                if (!fiFile.Exists)
+                if (!resultsFile.Exists)
                     return resultsFileName;
 
                 filePathNew = Path.Combine(mWorkDir, fileNameNew);
@@ -1024,7 +1024,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (File.Exists(filePathNew))
                     File.Delete(filePathNew);
 
-                fiFile.MoveTo(filePathNew);
+                resultsFile.MoveTo(filePathNew);
 
                 return fileNameNew;
             }

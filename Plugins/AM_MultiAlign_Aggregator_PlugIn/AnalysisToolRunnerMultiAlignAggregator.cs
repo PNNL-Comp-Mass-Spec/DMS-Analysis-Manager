@@ -309,17 +309,17 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     // Delete the PNG files in the Plots directory
                     var errorCount = 0;
-                    foreach (var fiFile in plotsDirectory.GetFiles("*.png"))
+                    foreach (var targetFile in plotsDirectory.GetFiles("*.png"))
                     {
                         try
                         {
-                            fiFile.Delete();
+                            targetFile.Delete();
                         }
                         catch (Exception ex)
                         {
                             errorCount++;
                             if (errorCount < 10)
-                                LogError("Exception deleting file " + fiFile.Name + ": " + ex.Message);
+                                LogError("Exception deleting file " + targetFile.Name + ": " + ex.Message);
                             else if (errorCount == 10)
                                 LogError("Over 10 exceptions deleting plot files; additional exceptions will not be logged");
                         }
