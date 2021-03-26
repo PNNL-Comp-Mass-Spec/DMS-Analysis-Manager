@@ -5,7 +5,7 @@
 // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 // Program started in February, 2012
 //
-// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
 // Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
 // -------------------------------------------------------------------------------
 
@@ -21,7 +21,10 @@ namespace MSGFResultsSummarizerExe
 {
     internal static class Program
     {
-        private const string PROGRAM_DATE = "March 24, 2021";
+        // Ignore spelling: mspath, msgfdb, xt
+
+        private const string PROGRAM_DATE = "March 25, 2021";
+
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
 
@@ -419,7 +422,7 @@ namespace MSGFResultsSummarizerExe
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
                 Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/");
                 Console.WriteLine();
 
