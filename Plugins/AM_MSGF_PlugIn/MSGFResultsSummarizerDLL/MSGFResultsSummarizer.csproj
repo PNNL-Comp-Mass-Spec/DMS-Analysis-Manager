@@ -70,7 +70,9 @@
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Common" /D /Y /F
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\AM_Common\" /D /Y /F
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Program\bin" /F /D /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\AM_Program\bin" /F /D /Y</PostBuildEvent>
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\..\AM_Program\bin" /F /D /Y
+
+if exist "$(ProjectDir)..\..\..\..\..\SMAQC\SMAQC\dll" xcopy "$(TargetDir)$(TargetName).dll" "$(ProjectDir)..\..\..\..\..\SMAQC\SMAQC\dll\" /F /D /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
