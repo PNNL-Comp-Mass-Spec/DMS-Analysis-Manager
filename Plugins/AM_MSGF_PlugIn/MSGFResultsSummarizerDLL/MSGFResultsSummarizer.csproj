@@ -49,7 +49,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MSGFResultsSummarizer.cs" />
+    <Compile Include="ResultsSummarizer.cs" />
     <Compile Include="NormalizedPeptideInfo.cs" />
     <Compile Include="PSMInfo.cs" />
     <Compile Include="PSMStats.cs" />
