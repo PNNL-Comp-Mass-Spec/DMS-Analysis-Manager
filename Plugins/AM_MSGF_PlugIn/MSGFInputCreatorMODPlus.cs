@@ -22,7 +22,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorMODPlus(string datasetName, string workDir)
-            : base(datasetName, workDir, Enums.PeptideHitResultTypes.MODPlus)
+            : base(datasetName, workDir, PeptideHitResultTypes.MODPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath

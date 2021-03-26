@@ -53,7 +53,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>True if successful, false if an error</returns>
         private bool ExaminePHRPResults(
             string inputFilePath,
-            Enums.PeptideHitResultTypes resultType,
+            PeptideHitResultTypes resultType,
             string searchEngineParamFilePath,
             out SortedDictionary<double, string> largestMassErrors,
             out double precursorMassTolerance,
@@ -177,7 +177,7 @@ namespace AnalysisManagerExtractionPlugin
                 var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
                 double toleranceCurrent;
 
-                if (resultType == Enums.PeptideHitResultTypes.MSGFPlus &&
+                if (resultType == PeptideHitResultTypes.MSGFPlus &&
                     highResMS1 &&
                     currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
                 {
@@ -231,7 +231,7 @@ namespace AnalysisManagerExtractionPlugin
             OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
         }
 
-        private SearchEngineParameters LoadSearchEngineParameters(ReaderFactory phrpReader, string searchEngineParamFilePath, Enums.PeptideHitResultTypes resultType)
+        private SearchEngineParameters LoadSearchEngineParameters(ReaderFactory phrpReader, string searchEngineParamFilePath, PeptideHitResultTypes resultType)
         {
             SearchEngineParameters searchEngineParams = null;
 
@@ -273,7 +273,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
         /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-        public bool ValidatePHRPResultMassErrors(string inputFilePath, Enums.PeptideHitResultTypes resultType, string searchEngineParamFilePath)
+        public bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try
             {

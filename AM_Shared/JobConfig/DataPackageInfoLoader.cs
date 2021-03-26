@@ -484,7 +484,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 foreach (var kvItem in dataPackageJobs)
                 {
-                    if (kvItem.Value.PeptideHitResultType == Enums.PeptideHitResultTypes.Unknown)
+                    if (kvItem.Value.PeptideHitResultType == PeptideHitResultTypes.Unknown)
                     {
                         additionalJobs.Add(kvItem.Value);
                     }

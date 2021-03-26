@@ -213,9 +213,9 @@ namespace AnalysisManagerIDPickerPlugIn
             // Make sure the ResultType is valid
             var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
-            if (!(resultType == Enums.PeptideHitResultTypes.Sequest || resultType == Enums.PeptideHitResultTypes.XTandem ||
-                  resultType == Enums.PeptideHitResultTypes.Inspect || resultType == Enums.PeptideHitResultTypes.MSGFPlus ||
-                  resultType == Enums.PeptideHitResultTypes.MODa || resultType == Enums.PeptideHitResultTypes.MODPlus))
+            if (!(resultType == PeptideHitResultTypes.Sequest || resultType == PeptideHitResultTypes.XTandem ||
+                  resultType == PeptideHitResultTypes.Inspect || resultType == PeptideHitResultTypes.MSGFPlus ||
+                  resultType == PeptideHitResultTypes.MODa || resultType == PeptideHitResultTypes.MODPlus))
             {
                 mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                 LogError(mMessage);
@@ -246,7 +246,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 var toolVersionInfoFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
 
-                if (!success && resultType == Enums.PeptideHitResultTypes.MSGFPlus &&
+                if (!success && resultType == PeptideHitResultTypes.MSGFPlus &&
                     toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
                 {
                     const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
@@ -288,7 +288,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
-            if (resultType == Enums.PeptideHitResultTypes.XTandem)
+            if (resultType == PeptideHitResultTypes.XTandem)
             {
                 // X!Tandem requires a few additional parameter files
                 var extraFilesToGet = XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, searchEngineParamFileName));
@@ -438,7 +438,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="resultType">PHRP result type (Sequest, X!Tandem, etc.)</param>
         /// <param name="datasetName">Dataset name</param>
         /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
-        private SortedList<string, bool> GetPHRPFileNames(Enums.PeptideHitResultTypes resultType, string datasetName)
+        private SortedList<string, bool> GetPHRPFileNames(PeptideHitResultTypes resultType, string datasetName)
         {
             var fileNamesToGet = new SortedList<string, bool>();
 
@@ -451,14 +451,14 @@ namespace AnalysisManagerIDPickerPlugIn
             fileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(resultType, datasetName), true);
             fileNamesToGet.Add(ReaderFactory.GetPHRPPepToProteinMapFileName(resultType, datasetName), false);
 
-            if (resultType != Enums.PeptideHitResultTypes.MODa && resultType != Enums.PeptideHitResultTypes.MODPlus)
+            if (resultType != PeptideHitResultTypes.MODa && resultType != PeptideHitResultTypes.MODPlus)
             {
                 fileNamesToGet.Add(ReaderFactory.GetMSGFFileName(synFileName), true);
             }
 
             var toolVersionFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
             var toolNameForScript = mJobParams.GetJobParameter("ToolName", "");
-            if (resultType == Enums.PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
+            if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
             {
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                 // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

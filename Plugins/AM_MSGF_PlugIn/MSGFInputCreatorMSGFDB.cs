@@ -26,7 +26,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset name</param>
         /// <param name="workDir">Working directory</param>
         public MSGFInputCreatorMSGFDB(string datasetName, string workDir)
-            : base(datasetName, workDir, Enums.PeptideHitResultTypes.MSGFPlus)
+            : base(datasetName, workDir, PeptideHitResultTypes.MSGFPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -53,7 +53,7 @@ namespace AnalysisManagerMSGFPlugin
         /// Also, note that Probability is actually just a score between 0 and 1; not a true probability
         /// </remarks>
         [Obsolete("This function does not appear to be used anywhere")]
-        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, Enums.PeptideHitResultTypes resultType)
+        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, PeptideHitResultTypes resultType)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 var probabilityColumnName = MODPlusSynFileReader.DATA_COLUMN_Probability;
 
-                if (resultType == Enums.PeptideHitResultTypes.MODa)
+                if (resultType == PeptideHitResultTypes.MODa)
                 {
                     probabilityColumnName = MODaSynFileReader.DATA_COLUMN_Probability;
                 }
@@ -131,7 +131,7 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using var reader = new ReaderFactory(sourceFilePath, Enums.PeptideHitResultTypes.MSGFPlus, startupOptions);
+                using var reader = new ReaderFactory(sourceFilePath, PeptideHitResultTypes.MSGFPlus, startupOptions);
                 RegisterEvents(reader);
 
                 reader.SkipDuplicatePSMs = false;

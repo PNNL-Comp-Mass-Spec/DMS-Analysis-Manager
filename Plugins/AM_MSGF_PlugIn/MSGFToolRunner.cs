@@ -17,6 +17,7 @@ using System.Linq;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using MSGFResultsSummarizer;
 using PRISM.Logging;
 
 namespace AnalysisManagerMSGFPlugin
@@ -151,7 +152,7 @@ namespace AnalysisManagerMSGFPlugin
             // Resolve resultType
             var resultType = ReaderFactory.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
 
-            if (resultType == Enums.PeptideHitResultTypes.Unknown)
+            if (resultType == PeptideHitResultTypes.Unknown)
             {
                 // Result type is not supported
                 LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + mJobParams.GetParam("ResultType"));
@@ -178,7 +179,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var processingError = false;
 
-                if (mUsingMSGFDB && resultType == Enums.PeptideHitResultTypes.MSGFPlus)
+                if (mUsingMSGFDB && resultType == PeptideHitResultTypes.MSGFPlus)
                 {
                     // Analysis tool is MS-GF+ so we don't actually need to run the MSGF re-scorer
                     // Simply copy the values from the MSGFDB result file
@@ -190,7 +191,7 @@ namespace AnalysisManagerMSGFPlugin
                         processingError = true;
                     }
                 }
-                else if (resultType == Enums.PeptideHitResultTypes.MODa)
+                else if (resultType == PeptideHitResultTypes.MODa)
                 {
                     // Analysis tool is MODa, which MSGF does not support
                     // Instead, summarize the MODa results using FDR alone
@@ -202,7 +203,7 @@ namespace AnalysisManagerMSGFPlugin
                         processingError = true;
                     }
                 }
-                else if (resultType == Enums.PeptideHitResultTypes.MODPlus)
+                else if (resultType == PeptideHitResultTypes.MODPlus)
                 {
                     // Analysis tool is MODPlus, which MSGF does not support
                     // Instead, summarize the MODPlus results using FDR alone
@@ -214,7 +215,7 @@ namespace AnalysisManagerMSGFPlugin
                         processingError = true;
                     }
                 }
-                else if (resultType == Enums.PeptideHitResultTypes.MSPathFinder)
+                else if (resultType == PeptideHitResultTypes.MSPathFinder)
                 {
                     // Analysis tool is MSPathFinder, which MSGF does not support
                     // Instead, summarize the MSPathFinder results using FDR alone
@@ -300,12 +301,12 @@ namespace AnalysisManagerMSGFPlugin
 
         private string AddFileNameSuffix(string filePath, string suffix)
         {
-            var fiFile = new FileInfo(filePath);
-            var newFileName = Path.GetFileNameWithoutExtension(fiFile.Name) + "_" + suffix + fiFile.Extension;
+            var file = new FileInfo(filePath);
+            var newFileName = Path.GetFileNameWithoutExtension(file.Name) + "_" + suffix + file.Extension;
 
-            return fiFile.DirectoryName == null
-                ? newFileName
-                : Path.Combine(fiFile.DirectoryName, newFileName);
+            return file.DirectoryName == null 
+                       ? newFileName
+                       : Path.Combine(file.DirectoryName, newFileName);
         }
 
         /// <summary>
@@ -314,7 +315,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="resultType"></param>
         /// <param name="searchToolParamFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        private bool CheckETDModeEnabled(Enums.PeptideHitResultTypes resultType, string searchToolParamFilePath)
+        private bool CheckETDModeEnabled(PeptideHitResultTypes resultType, string searchToolParamFilePath)
         {
             mETDMode = false;
             var success = false;
@@ -329,34 +330,34 @@ namespace AnalysisManagerMSGFPlugin
 
             switch (resultType)
             {
-                case Enums.PeptideHitResultTypes.Sequest:
+                case PeptideHitResultTypes.Sequest:
                     success = CheckETDModeEnabledSequest(searchToolParamFilePath);
                     break;
 
-                case Enums.PeptideHitResultTypes.XTandem:
+                case PeptideHitResultTypes.XTandem:
                     success = CheckETDModeEnabledXTandem(searchToolParamFilePath);
                     break;
 
-                case Enums.PeptideHitResultTypes.Inspect:
+                case PeptideHitResultTypes.Inspect:
                     LogDebug("Inspect does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case Enums.PeptideHitResultTypes.MSGFPlus:
+                case PeptideHitResultTypes.MSGFPlus:
                     success = CheckETDModeEnabledMSGFPlus(searchToolParamFilePath);
                     break;
 
-                case Enums.PeptideHitResultTypes.MODa:
+                case PeptideHitResultTypes.MODa:
                     LogDebug("MODa does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case Enums.PeptideHitResultTypes.MODPlus:
+                case PeptideHitResultTypes.MODPlus:
                     LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
 
-                case Enums.PeptideHitResultTypes.MSPathFinder:
+                case PeptideHitResultTypes.MSPathFinder:
                     LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
@@ -661,7 +662,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="doNotFilterPeptides"></param>
         /// <param name="mgfInstrumentData"></param>
         /// <param name="msgfInputFileLineCount"></param>
-        private bool CreateMSGFInputFile(Enums.PeptideHitResultTypes resultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
+        private bool CreateMSGFInputFile(PeptideHitResultTypes resultType, bool doNotFilterPeptides, bool mgfInstrumentData, out int msgfInputFileLineCount)
         {
             var success = true;
 
@@ -672,37 +673,37 @@ namespace AnalysisManagerMSGFPlugin
             // Convert the peptide-hit result file (from PHRP) to a tab-delimited input file to be read by MSGF
             switch (resultType)
             {
-                case Enums.PeptideHitResultTypes.Sequest:
+                case PeptideHitResultTypes.Sequest:
 
                     // Convert SEQUEST results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorSequest(mDatasetName, mWorkDir);
                     break;
 
-                case Enums.PeptideHitResultTypes.XTandem:
+                case PeptideHitResultTypes.XTandem:
 
                     // Convert X!Tandem results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorXTandem(mDatasetName, mWorkDir);
                     break;
 
-                case Enums.PeptideHitResultTypes.Inspect:
+                case PeptideHitResultTypes.Inspect:
 
                     // Convert Inspect results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
-                case Enums.PeptideHitResultTypes.MSGFPlus:
+                case PeptideHitResultTypes.MSGFPlus:
 
                     // Convert MS-GF+ results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
-                case Enums.PeptideHitResultTypes.MODa:
+                case PeptideHitResultTypes.MODa:
 
                     // Convert MODa results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMODa(mDatasetName, mWorkDir);
                     break;
 
-                case Enums.PeptideHitResultTypes.MODPlus:
+                case PeptideHitResultTypes.MODPlus:
 
                     // Convert MODPlus results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
@@ -761,7 +762,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
             // Post the results to the database
-            var success = SummarizeMSGFResults(Enums.PeptideHitResultTypes.MODa);
+            var success = SummarizeMSGFResults(PeptideHitResultTypes.MODa);
 
             if (success)
             {
@@ -778,7 +779,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
             // Post the results to the database
-            var success = SummarizeMSGFResults(Enums.PeptideHitResultTypes.MODPlus);
+            var success = SummarizeMSGFResults(PeptideHitResultTypes.MODPlus);
 
             if (success)
             {
@@ -795,7 +796,7 @@ namespace AnalysisManagerMSGFPlugin
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Will use SpecEValue in place of MSGF SpecProb
             // Post the results to the database
-            var success = SummarizeMSGFResults(Enums.PeptideHitResultTypes.MSPathFinder);
+            var success = SummarizeMSGFResults(PeptideHitResultTypes.MSPathFinder);
 
             if (success)
             {
@@ -823,7 +824,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Summarize the results in the _syn_MSGF.txt file
             // Post the results to the database
-            var success = SummarizeMSGFResults(Enums.PeptideHitResultTypes.MSGFPlus);
+            var success = SummarizeMSGFResults(PeptideHitResultTypes.MSGFPlus);
 
             return success;
         }
@@ -1044,7 +1045,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="msgfResultsFilePath">MSGF results file to examine</param>
         /// <param name="mgfInstrumentData">True when the instrument data file is a .mgf file</param>
         /// <returns>True if success; false if one or more errors</returns>
-        private bool PostProcessMSGFResults(Enums.PeptideHitResultTypes resultType, string msgfResultsFilePath, bool mgfInstrumentData)
+        private bool PostProcessMSGFResults(PeptideHitResultTypes resultType, string msgfResultsFilePath, bool mgfInstrumentData)
         {
             FileInfo inputFile;
 
@@ -1106,9 +1107,9 @@ namespace AnalysisManagerMSGFPlugin
                 Global.IdleLoop(0.5);
 
                 // Rename the _PostProcess.txt file
-                var fiMSGFSynFile = new FileInfo(msgfSynopsisResults);
+                var msgfSynFile = new FileInfo(msgfSynopsisResults);
 
-                fiMSGFSynFile.MoveTo(msgfResultsFilePath);
+                msgfSynFile.MoveTo(msgfResultsFilePath);
             }
             catch (Exception ex)
             {
@@ -1137,7 +1138,7 @@ namespace AnalysisManagerMSGFPlugin
                 LogDebug("CreateMSGFFirstHitsFile returned " + success, 3);
             }
 
-            if (success && resultType != Enums.PeptideHitResultTypes.MSGFPlus)
+            if (success && resultType != PeptideHitResultTypes.MSGFPlus)
             {
                 LogDebug("Call UpdateProteinModsFile for resultType " + resultType, 3);
 
@@ -1382,11 +1383,11 @@ namespace AnalysisManagerMSGFPlugin
             return true;
         }
 
-        private bool ProcessFileWithMSGF(Enums.PeptideHitResultTypes resultType, int msgfInputFileLineCount, string msgfInputFilePath, string msgfResultsFilePath)
+        private bool ProcessFileWithMSGF(PeptideHitResultTypes resultType, int msgfInputFileLineCount, string msgfInputFilePath, string msgfResultsFilePath)
         {
             bool success;
 
-            if (resultType == Enums.PeptideHitResultTypes.MSGFPlus)
+            if (resultType == PeptideHitResultTypes.MSGFPlus)
             {
                 // Input file may contain a mix of scan types (CID, ETD, and/or HCD)
                 // If this is the case, call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
@@ -1403,7 +1404,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool ProcessFilesWrapper(
             AnalysisResources.RawDataTypeConstants rawDataType,
-            Enums.PeptideHitResultTypes resultType,
+            PeptideHitResultTypes resultType,
             bool doNotFilterPeptides,
             bool mgfInstrumentData)
         {
@@ -2349,7 +2350,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Stores the tool version info in the database when using MODa or MS-GF+ probabilities to create the MSGF files
         /// </summary>
-        private bool StoreToolVersionInfoPrecomputedProbabilities(Enums.PeptideHitResultTypes resultType)
+        private bool StoreToolVersionInfoPrecomputedProbabilities(PeptideHitResultTypes resultType)
         {
             var toolVersionInfo = string.Empty;
 
@@ -2366,7 +2367,7 @@ namespace AnalysisManagerMSGFPlugin
 
             var toolFiles = new List<FileInfo>();
 
-            if (resultType == Enums.PeptideHitResultTypes.MSGFPlus)
+            if (resultType == PeptideHitResultTypes.MSGFPlus)
             {
                 // Store the path to MSGFDB.jar
                 toolFiles.Add(new FileInfo(mMSGFProgLoc));
@@ -2383,7 +2384,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool SummarizeMSGFResults(Enums.PeptideHitResultTypes resultType)
+        private bool SummarizeMSGFResults(PeptideHitResultTypes resultType)
         {
             bool success;
 
@@ -2392,7 +2393,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
 
-                var summarizer = new MSGFResultsSummarizer.MSGFResultsSummarizer(
+                var summarizer = new ResultsSummarizer(
                     resultType, mDatasetName, mJob,
                     mWorkDir,
                     connectionString,
@@ -2404,7 +2405,7 @@ namespace AnalysisManagerMSGFPlugin
                 UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
                 summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-                summarizer.MSGFThreshold = MSGFResultsSummarizer.MSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+                summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
                 summarizer.ContactDatabase = true;
                 summarizer.PostJobPSMResultsToDB = true;
@@ -2496,7 +2497,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool UpdateProteinModsFile(Enums.PeptideHitResultTypes resultType, string msgfResultsFilePath)
+        private bool UpdateProteinModsFile(PeptideHitResultTypes resultType, string msgfResultsFilePath)
         {
             bool success;
 

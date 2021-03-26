@@ -129,7 +129,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 var resultType = mJobParams.GetParam("ResultType");
 
                 var ePHRPResultType = ReaderFactory.GetPeptideHitResultType(resultType);
-                if (ePHRPResultType == Enums.PeptideHitResultTypes.Unknown)
+                if (ePHRPResultType == PeptideHitResultTypes.Unknown)
                 {
                     mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -293,7 +293,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool RunIDPickerWrapper(Enums.PeptideHitResultTypes ePHRPResultType, string synFilePath, string fastaFilePath,
+        private bool RunIDPickerWrapper(PeptideHitResultTypes ePHRPResultType, string synFilePath, string fastaFilePath,
             out bool processingError, out bool criticalError)
         {
             bool success;
@@ -303,7 +303,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // Determine the prefix used by decoy proteins
             var decoyPrefix = string.Empty;
 
-            if (ePHRPResultType == Enums.PeptideHitResultTypes.MSGFPlus)
+            if (ePHRPResultType == PeptideHitResultTypes.MSGFPlus)
             {
                 // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
@@ -502,7 +502,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, Enums.PeptideHitResultTypes ePHRPResultType)
+        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes ePHRPResultType)
         {
             // PepXML file creation should generally be done in less than 10 minutes
             // However, for huge fasta files, conversion could take several hours
@@ -523,7 +523,7 @@ namespace AnalysisManagerIDPickerPlugIn
                                 " /F:" + PossiblyQuotePath(fastaFilePath) +
                                 " /H:" + iHitsPerSpectrum;
 
-                if (ePHRPResultType == Enums.PeptideHitResultTypes.MODa || ePHRPResultType == Enums.PeptideHitResultTypes.MODPlus)
+                if (ePHRPResultType == PeptideHitResultTypes.MODa || ePHRPResultType == PeptideHitResultTypes.MODPlus)
                 {
                     // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
@@ -751,7 +751,7 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        private bool LookForDecoyProteinsInMSGFPlusResults(string synFilePath, Enums.PeptideHitResultTypes resultType, ref string decoyPrefix)
+        private bool LookForDecoyProteinsInMSGFPlusResults(string synFilePath, PeptideHitResultTypes resultType, ref string decoyPrefix)
         {
             try
             {
@@ -1003,7 +1003,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
         /// <param name="ePHRPResultType"></param>
-        private bool RunQonvert(string fastaFilePath, string decoyPrefix, Enums.PeptideHitResultTypes ePHRPResultType)
+        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PeptideHitResultTypes ePHRPResultType)
         {
             const int maxRuntimeMinutes = 90;
 
@@ -1016,7 +1016,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
 
             // Possibly override some options
-            if (ePHRPResultType == Enums.PeptideHitResultTypes.MODa || ePHRPResultType == Enums.PeptideHitResultTypes.MODPlus)
+            if (ePHRPResultType == PeptideHitResultTypes.MODa || ePHRPResultType == PeptideHitResultTypes.MODPlus)
             {
                 // Higher MODa probability scores are better
                 mIDPickerOptions["SearchScoreWeights"] = "Probability 1";

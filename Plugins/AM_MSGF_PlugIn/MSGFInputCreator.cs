@@ -37,7 +37,7 @@ namespace AnalysisManagerMSGFPlugin
         protected readonly string mDatasetName;
         protected readonly string mWorkDir;
 
-        private readonly Enums.PeptideHitResultTypes mPeptideHitResultType;
+        private readonly PeptideHitResultTypes mPeptideHitResultType;
 
         private readonly SortedDictionary<int, List<string>> mSkippedLineInfo;
 
@@ -108,7 +108,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="datasetName">Dataset Name</param>
         /// <param name="workDir">Working directory</param>
         /// <param name="resultType">PeptideHit result type</param>
-        protected MSGFInputCreator(string datasetName, string workDir, Enums.PeptideHitResultTypes resultType)
+        protected MSGFInputCreator(string datasetName, string workDir, PeptideHitResultTypes resultType)
         {
             mDatasetName = datasetName;
             mWorkDir = workDir;

@@ -2545,7 +2545,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 Tool = "Dataset info (no tool)",
                 NumberOfClonedSteps = 0,
                 ResultType = "Dataset info (no type)",
-                PeptideHitResultType = Enums.PeptideHitResultTypes.Unknown,
+                PeptideHitResultType = PeptideHitResultTypes.Unknown,
                 SettingsFileName = string.Empty,
                 ParameterFileName = string.Empty,
                 GeneratedFASTAFileName = string.Empty,

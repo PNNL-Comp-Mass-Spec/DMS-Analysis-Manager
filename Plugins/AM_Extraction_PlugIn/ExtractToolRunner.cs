@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using MSGFResultsSummarizer;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
 
@@ -1284,7 +1285,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.Sequest, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.Sequest, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1335,7 +1336,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             // Use input.xml for the X!Tandem parameter file
-            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.XTandem, "input.xml"))
+            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.XTandem, "input.xml"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1387,16 +1388,16 @@ namespace AnalysisManagerExtractionPlugin
 
             // Summarize the number of PSMs in _msalign_syn.txt
             // ReSharper disable once UseImplicitlyTypedVariableEvident
-            const Enums.PeptideHitResultTypes resultType = Enums.PeptideHitResultTypes.MSAlign;
+            const PeptideHitResultTypes resultType = PeptideHitResultTypes.MSAlign;
 
-            var summarizer = new MSGFResultsSummarizer.MSGFResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
+            var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
 
             // Monitor events for "permission was denied"
             UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
             summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-            summarizer.MSGFThreshold = MSGFResultsSummarizer.MSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+            summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
             summarizer.ContactDatabase = true;
             summarizer.PostJobPSMResultsToDB = false;
@@ -1422,7 +1423,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSAlign, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSAlign, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1495,7 +1496,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MODa, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MODa, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1570,7 +1571,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MODPlus, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MODPlus, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1817,7 +1818,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSGFPlus, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1894,7 +1895,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.MSPathFinder, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSPathFinder, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1971,7 +1972,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.TopPIC, paramFileName))
+                if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.TopPIC, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -2147,7 +2148,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, Enums.PeptideHitResultTypes.Inspect, paramFileName))
+            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.Inspect, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2762,7 +2763,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private bool ValidatePHRPResultMassErrors(string inputFilePath, Enums.PeptideHitResultTypes resultType,
+        private bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType,
             string searchEngineParamFileName)
         {
             bool success;

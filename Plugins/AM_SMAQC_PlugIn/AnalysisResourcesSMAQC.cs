@@ -195,7 +195,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool RetrievePHRPFiles()
         {
             var lstFileNamesToGet = new List<string>();
-            Enums.PeptideHitResultTypes PeptideHitResultTypes;
+            PeptideHitResultTypes PeptideHitResultTypes;
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
@@ -213,15 +213,15 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (strInputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = Enums.PeptideHitResultTypes.XTandem;
+                PeptideHitResultTypes = PeptideHitResultTypes.XTandem;
             }
             else if (strInputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = Enums.PeptideHitResultTypes.Sequest;
+                PeptideHitResultTypes = PeptideHitResultTypes.Sequest;
             }
             else if (strInputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = Enums.PeptideHitResultTypes.MSGFPlus;
+                PeptideHitResultTypes = PeptideHitResultTypes.MSGFPlus;
             }
             else
             {

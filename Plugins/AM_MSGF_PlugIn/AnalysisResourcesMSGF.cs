@@ -92,13 +92,13 @@ namespace AnalysisManagerMSGFPlugin
             var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
             bool validToolType;
-            if (resultType == Enums.PeptideHitResultTypes.Sequest ||
-                resultType == Enums.PeptideHitResultTypes.XTandem ||
-                resultType == Enums.PeptideHitResultTypes.Inspect ||
-                resultType == Enums.PeptideHitResultTypes.MSGFPlus || // MS-GF+
-                resultType == Enums.PeptideHitResultTypes.MODa ||
-                resultType == Enums.PeptideHitResultTypes.MODPlus ||
-                resultType == Enums.PeptideHitResultTypes.MSPathFinder)
+            if (resultType == PeptideHitResultTypes.Sequest ||
+                resultType == PeptideHitResultTypes.XTandem ||
+                resultType == PeptideHitResultTypes.Inspect ||
+                resultType == PeptideHitResultTypes.MSGFPlus || // MS-GF+
+                resultType == PeptideHitResultTypes.MODa ||
+                resultType == PeptideHitResultTypes.MODPlus ||
+                resultType == PeptideHitResultTypes.MSPathFinder)
             {
                 validToolType = true;
             }
@@ -118,7 +118,7 @@ namespace AnalysisManagerMSGFPlugin
             var rawDataType = GetRawDataType(rawDataTypeName);
             var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
 
-            if (resultType == Enums.PeptideHitResultTypes.MSGFPlus)
+            if (resultType == PeptideHitResultTypes.MSGFPlus)
             {
                 // We do not need the mzML file, the parameter file, or various other files if we are running MS-GF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
@@ -137,9 +137,9 @@ namespace AnalysisManagerMSGFPlugin
                     onlyCopyFirstHitsAndSynopsisFiles = !MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion);
                 }
             }
-            else if (resultType == Enums.PeptideHitResultTypes.MODa ||
-                     resultType == Enums.PeptideHitResultTypes.MODPlus ||
-                     resultType == Enums.PeptideHitResultTypes.MSPathFinder)
+            else if (resultType == PeptideHitResultTypes.MODa ||
+                     resultType == PeptideHitResultTypes.MODPlus ||
+                     resultType == PeptideHitResultTypes.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
                 onlyCopyFirstHitsAndSynopsisFiles = true;
