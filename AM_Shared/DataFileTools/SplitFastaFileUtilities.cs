@@ -307,12 +307,12 @@ namespace AnalysisManagerBase.DataFileTools
                     // Setup for execution of the stored procedure
                     var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE, CommandType.StoredProcedure);
 
-                    dbTools.AddParameter(cmd, "@FastaFileName", SqlType.VarChar, 128, splitFastaName);
-                    dbTools.AddParameter(cmd, "@OrganismName", SqlType.VarChar, 128, organismName);
-                    dbTools.AddTypedParameter(cmd, "@NumProteins", SqlType.Int, value: currentSplitFasta.NumProteins);
-                    dbTools.AddTypedParameter(cmd, "@NumResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
-                    dbTools.AddTypedParameter(cmd, "@FileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
-                    var messageParam = dbTools.AddParameter(cmd, "@Message", SqlType.VarChar, 512, string.Empty);
+                    dbTools.AddParameter(cmd, "@fastaFileName", SqlType.VarChar, 128, splitFastaName);
+                    dbTools.AddParameter(cmd, "@organismName", SqlType.VarChar, 128, organismName);
+                    dbTools.AddTypedParameter(cmd, "@numProteins", SqlType.Int, value: currentSplitFasta.NumProteins);
+                    dbTools.AddTypedParameter(cmd, "@numResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
+                    dbTools.AddTypedParameter(cmd, "@fileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
+                    var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty);
                     var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
                     const int retryCount = 3;
