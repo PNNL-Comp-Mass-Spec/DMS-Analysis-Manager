@@ -299,7 +299,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 mMSFileInfoScannerReportsEmptyIsosFile = false;
 
-                var qcPlotGenerator = new DeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
+                var qcPlotGenerator = new DeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel, mJobParams);
                 RegisterEvents(qcPlotGenerator);
                 qcPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent;
 

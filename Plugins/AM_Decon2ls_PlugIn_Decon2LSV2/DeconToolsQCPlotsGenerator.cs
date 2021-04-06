@@ -1,14 +1,18 @@
 ﻿using PRISM;
 using System;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
     public class DeconToolsQCPlotsGenerator : EventNotifier
     {
+        // Ignore Spelling: Deisotoped
+
         private const int MAX_RUNTIME_HOURS = 5;
 
         private readonly int mDebugLevel;
+        private readonly IJobParams mJobParams;
         private readonly string mMSFileInfoScannerDLLPath;
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
@@ -20,10 +24,17 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public int MSFileInfoScannerErrorCount { get; private set; }
 
-        public DeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="msFileInfoScannerDLLPath"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="jobParams"></param>
+        public DeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel, IJobParams jobParams)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
             mDebugLevel = debugLevel;
+            mJobParams = jobParams;
 
             ErrorMessage = string.Empty;
         }
@@ -45,6 +56,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScanner.Options.SaveTICAndBPIPlots = true;
                 mMSFileInfoScanner.Options.UpdateDatasetStatsTextFile = false;
                 mMSFileInfoScanner.Options.PlotWithPython = true;
+
+                var maxChargeToPlot = mJobParams.GetJobParameter("MaxChargeToPlot", mMSFileInfoScanner.LCMS2DPlotOptions.MaxChargeToPlot);
+                var maxMonoMassForDeisotopedPlot = mJobParams.GetJobParameter("MaxMonoMassForDeisotopedPlot", 0);
+
+                mMSFileInfoScanner.LCMS2DPlotOptions.MaxChargeToPlot = maxChargeToPlot;
+
+                if (maxMonoMassForDeisotopedPlot > 0)
+                {
+                    mMSFileInfoScanner.LCMS2DPlotOptions.MaxMonoMassForDeisotopedPlot = maxMonoMassForDeisotopedPlot;
+                }
 
                 mInputFilePath = inputFilePath;
                 mOutputFolderPath = outputFolderPath;
