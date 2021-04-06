@@ -1331,28 +1331,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return false;
             }
 
-            // Old: Lookup the version of DeconEngine (in the DeconTools folder)
-            // Disabled July 31, 2014 because support for Rapid was removed from DeconTools.Backend.dll and thus DeconEngine.dll is no longer required
-            // dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
-            // success = MyBase.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllPath)
-            // If Not success Then Return False
-
-            // ReSharper disable CommentTypo
-
-            // Old: Lookup the version of DeconEngineV2 (in the DeconTools folder)
-            // Disabled May 20, 2016 because the C++ code that was in DeconEngineV2.dll has been ported to C# and is now part of DeconTools.Backend
-            // See DeconTools.Backend\ProcessingTasks\Deconvoluters\HornDeconvolutor\ThrashV1\ThrashV1_Readme.txt
-
-            // ReSharper restore CommentTypo
-
-            // dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-            // success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath)
-            // If Not success Then Return False
-
             // Store paths to key DLLs in toolFiles
-            var toolFiles = new List<FileInfo> {
+            var toolFiles = new List<FileInfo>
+            {
                 new(deconToolsProgLoc),
-                new(deconToolsBackendPath)};
+                new(deconToolsBackendPath),
+                new(mMSFileInfoScannerDLLPath)
+            };
 
             try
             {
