@@ -44,6 +44,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private bool mDeconToolsExceptionThrown;
         private bool mDeconToolsFinishedDespiteProgRunnerError;
 
+        private string mMSFileInfoScannerDLLPath;
         private bool mMSFileInfoScannerReportsEmptyIsosFile;
 
         private DeconToolsStatus mDeconToolsStatus;
@@ -281,25 +282,21 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 var isosDataLineCount = -1;
 
-                var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
-                if (string.IsNullOrEmpty(msFileInfoScannerDir))
+                if (string.IsNullOrWhiteSpace(mMSFileInfoScannerDLLPath))
                 {
-                    const string msg = "Manager parameter 'MSFileInfoScannerDir' is not defined";
-                    LogError("Error in CreateQCPlots: " + msg);
+                    LogError("MSFileInfoScanner DLL location is unknown; cannot generate QC plots");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
-                if (!File.Exists(msFileInfoScannerDLLPath))
+                if (!File.Exists(mMSFileInfoScannerDLLPath))
                 {
-                    var msg = "File Not Found: " + msFileInfoScannerDLLPath;
-                    LogError("Error in CreateQCPlots: " + msg);
+                    LogError("File Not Found: " + mMSFileInfoScannerDLLPath + "; cannot generate QC plots");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 mMSFileInfoScannerReportsEmptyIsosFile = false;
 
-                var qcPlotGenerator = new DeconToolsQCPlotsGenerator(msFileInfoScannerDLLPath, mDebugLevel, mJobParams);
+                var qcPlotGenerator = new DeconToolsQCPlotsGenerator(mMSFileInfoScannerDLLPath, mDebugLevel, mJobParams);
                 RegisterEvents(qcPlotGenerator);
                 qcPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent;
 
@@ -412,6 +409,25 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 LogError("Error in CreateQCPlots", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private bool FindMSFileInfoScannerDLL()
+        {
+            var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
+            if (string.IsNullOrEmpty(msFileInfoScannerDir))
+            {
+                LogError("Manager parameter 'MSFileInfoScannerDir' is not defined");
+                return false;
+            }
+
+            var msFileInfoScannerDLL = new FileInfo(Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll"));
+
+            mMSFileInfoScannerDLLPath = msFileInfoScannerDLL.FullName;
+            if (msFileInfoScannerDLL.Exists)
+                return true;
+
+            LogError("Required DLL not found: " + mMSFileInfoScannerDLLPath);
+            return false;
         }
 
         /// <summary>
@@ -543,6 +559,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             mRawDataType = AnalysisResources.GetRawDataType(mRawDataTypeName);
 
+            if (!FindMSFileInfoScannerDLL())
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
             // Set this to success for now
             var returnCode = CloseOutType.CLOSEOUT_SUCCESS;
