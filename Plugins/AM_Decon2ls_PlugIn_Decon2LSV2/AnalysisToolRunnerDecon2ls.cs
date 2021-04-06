@@ -102,7 +102,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Validate the result files
         /// (legacy code would assemble result files from looping, but that code has been removed)
         /// </summary>
-        private CloseOutType AssembleResults(XMLParamFileReader oDeconToolsParamFileReader)
+        private CloseOutType AssembleResults(XMLParamFileReader deconToolsParamFileReader)
         {
             var dotDFolder = false;
 
@@ -140,29 +140,29 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         LogDebug("Copying Decon2LS result files from the .D folder to the working directory");
                     }
 
-                    var srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_SCANS_FILE_SUFFIX));
-                    if (srcFilePath.Exists)
+                    var sourceScansFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_SCANS_FILE_SUFFIX));
+                    if (sourceScansFile.Exists)
                     {
-                        srcFilePath.CopyTo(scansFilePath);
+                        sourceScansFile.CopyTo(scansFilePath);
                     }
 
-                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX));
-                    if (srcFilePath.Exists)
+                    var sourceIsosFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX));
+                    if (sourceIsosFile.Exists)
                     {
-                        srcFilePath.CopyTo(isosFilePath);
+                        sourceIsosFile.CopyTo(isosFilePath);
                     }
 
-                    srcFilePath = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX));
-                    if (srcFilePath.Exists)
+                    var sourcePeaksFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX));
+                    if (sourcePeaksFile.Exists)
                     {
-                        srcFilePath.CopyTo(peaksFilePath);
+                        sourcePeaksFile.CopyTo(peaksFilePath);
                     }
                 }
 
                 mJobParams.AddResultFileToKeep(scansFilePath);
                 mJobParams.AddResultFileToKeep(isosFilePath);
 
-                var writePeaksToTextFile = oDeconToolsParamFileReader.GetParameter("WritePeaksToTextFile", false);
+                var writePeaksToTextFile = deconToolsParamFileReader.GetParameter("WritePeaksToTextFile", false);
 
                 // Examine the Peaks File to check whether it only has a header line, or it has multiple data lines
                 if (!ResultsFileHasData(peaksFilePath, DECON2LS_PEAKS_FILE_SUFFIX))
@@ -190,7 +190,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
                 }
 
-                var deconvolutionType = oDeconToolsParamFileReader.GetParameter("DeconvolutionType", string.Empty);
+                var deconvolutionType = deconToolsParamFileReader.GetParameter("DeconvolutionType", string.Empty);
                 var emptyIsosFileExpected = deconvolutionType == "None";
 
                 if (emptyIsosFileExpected)
@@ -242,13 +242,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private XMLParamFileReader CacheDeconToolsParamFile(string paramFilePath)
         {
-            XMLParamFileReader oDeconToolsParamFileReader;
+            XMLParamFileReader deconToolsParamFileReader;
 
             try
             {
-                oDeconToolsParamFileReader = new XMLParamFileReader(paramFilePath);
+                deconToolsParamFileReader = new XMLParamFileReader(paramFilePath);
 
-                if (oDeconToolsParamFileReader.ParameterCount == 0)
+                if (deconToolsParamFileReader.ParameterCount == 0)
                 {
                     LogError("DeconTools parameter file is empty (or could not be parsed)");
                     return null;
@@ -260,7 +260,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return null;
             }
 
-            return oDeconToolsParamFileReader;
+            return deconToolsParamFileReader;
         }
 
         /// <summary>
@@ -543,8 +543,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             mRawDataType = AnalysisResources.GetRawDataType(mRawDataTypeName);
 
+
             // Set this to success for now
-            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+            var returnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             // Run Decon2LS
             var result = RunDecon2Ls();
@@ -560,7 +561,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    eReturnCode = result;
+                    returnCode = result;
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         mMessage = "No results in DeconTools Isos file";
@@ -568,14 +569,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
                 else
                 {
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    returnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
             if (result == CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Create the QC plots
-                eReturnCode = CreateQCPlots();
+                returnCode = CreateQCPlots();
             }
 
             if (mJobParams.GetJobParameter(AnalysisResourcesDecon2ls.JOB_PARAM_PROCESS_MSMS_AUTO_ENABLED, false))
@@ -627,7 +628,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             var success = CopyResultsToTransferDirectory();
 
-            return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
+            return success ? returnCode : CloseOutType.CLOSEOUT_FAILED;
         }
 
         private CloseOutType RunDecon2Ls()
@@ -653,9 +654,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Cache the parameters in the DeconTools parameter file
 
-            var oDeconToolsParamFileReader = CacheDeconToolsParamFile(paramFilePath);
+            var deconToolsParamFileReader = CacheDeconToolsParamFile(paramFilePath);
 
-            if (oDeconToolsParamFileReader == null)
+            if (deconToolsParamFileReader == null)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -709,7 +710,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mDeconToolsStatus.IsUIMF = fileType == DeconToolsFileTypeConstants.PNNL_UIMF;
 
             // Start Decon2LS and wait for it to finish
-            var eDeconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, fileType);
+            var deconToolsStatus = StartDeconTools(progLoc, mInputFilePath, paramFilePath, fileType);
 
             // Stop the job timer
             mStopTime = DateTime.UtcNow;
@@ -731,7 +732,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             else
             {
-                switch (eDeconToolsStatus)
+                switch (deconToolsStatus)
                 {
                     case DeconToolsStateType.Complete:
                         // This is normal, do nothing else
@@ -768,7 +769,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var result = AssembleResults(oDeconToolsParamFileReader);
+            var result = AssembleResults(deconToolsParamFileReader);
 
             if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -785,7 +786,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private DeconToolsStateType StartDeconTools(string progLoc, string inputFilePath, string paramFilePath, DeconToolsFileTypeConstants eFileType)
         {
-            DeconToolsStateType eDeconToolsStatus;
+            DeconToolsStateType deconToolsStatus;
 
             if (mDebugLevel > 3)
             {
@@ -831,7 +832,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mCmdRunner.WriteConsoleOutputToFile = false;
 
                 // ReSharper disable once RedundantAssignment
-                eDeconToolsStatus = DeconToolsStateType.Running;
+                deconToolsStatus = DeconToolsStateType.Running;
 
                 mProgress = 0;
                 ResetProgRunnerCpuUsage();
@@ -853,20 +854,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (mDeconToolsExceptionThrown)
                 {
-                    eDeconToolsStatus = DeconToolsStateType.ErrorCode;
+                    deconToolsStatus = DeconToolsStateType.ErrorCode;
                 }
                 else if (success)
                 {
-                    eDeconToolsStatus = DeconToolsStateType.Complete;
+                    deconToolsStatus = DeconToolsStateType.Complete;
                 }
                 else if (finishedProcessing)
                 {
                     mDeconToolsFinishedDespiteProgRunnerError = true;
-                    eDeconToolsStatus = DeconToolsStateType.Complete;
+                    deconToolsStatus = DeconToolsStateType.Complete;
                 }
                 else
                 {
-                    eDeconToolsStatus = DeconToolsStateType.ErrorCode;
+                    deconToolsStatus = DeconToolsStateType.ErrorCode;
                 }
 
                 // Look for file Dataset*BAD_ERROR_log.txt
@@ -877,17 +878,17 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     mMessage = "Error running DeconTools; Bad_Error_log file exists";
                     LogMessage(mMessage + ": " + logFile.Name, 0, true);
-                    eDeconToolsStatus = DeconToolsStateType.BadErrorLogFile;
+                    deconToolsStatus = DeconToolsStateType.BadErrorLogFile;
                     break;
                 }
             }
             catch (Exception ex)
             {
                 LogError("Exception calling DeconConsole", ex);
-                eDeconToolsStatus = DeconToolsStateType.ErrorCode;
+                deconToolsStatus = DeconToolsStateType.ErrorCode;
             }
 
-            return eDeconToolsStatus;
+            return deconToolsStatus;
         }
 
         private string GetDeconFileTypeText(DeconToolsFileTypeConstants deconFileType)
@@ -914,7 +915,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private DeconToolsFileTypeConstants GetInputFileType(AnalysisResources.RawDataTypeConstants rawDataType)
         {
-            var InstrumentClass = mJobParams.GetParam("instClass");
+            var instrumentClass = mJobParams.GetParam("instClass");
 
             // Gets the Decon2LS file type based on the input data type
             switch (rawDataType)
@@ -935,13 +936,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return DeconToolsFileTypeConstants.Micromass_RawData;
 
                 case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
-                    if (string.Equals(InstrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(instrumentClass, "BrukerFTMS", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from Bruker FTICR
                         return DeconToolsFileTypeConstants.Bruker;
                     }
 
-                    if (string.Equals(InstrumentClass, "finnigan_fticr", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(instrumentClass, "finnigan_fticr", StringComparison.OrdinalIgnoreCase))
                     {
                         // Data from old Finnigan FTICR
                         return DeconToolsFileTypeConstants.SUN_EXTREL;
@@ -1247,8 +1248,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var ioDeconToolsInfo = new FileInfo(deconToolsProgLoc);
-            if (!ioDeconToolsInfo.Exists)
+            var deconToolsExe = new FileInfo(deconToolsProgLoc);
+            if (!deconToolsExe.Exists)
             {
                 try
                 {
@@ -1263,7 +1264,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Lookup the version of the DeconConsole application
-            var success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, ioDeconToolsInfo.FullName);
+            var success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsExe.FullName);
             if (!success)
                 return false;
 
@@ -1271,11 +1272,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // toolVersionInfo should look like: DeconConsole, Version=1.0.4400.22961
 
             mDeconConsoleBuild = 0;
-            var reParseVersion = new Regex(@"Version=\d+\.\d+\.(\d+)");
-            var reMatch = reParseVersion.Match(toolVersionInfo);
-            if (reMatch.Success)
+            var versionMatcher = new Regex(@"Version=\d+\.\d+\.(?<DeconToolsBuild>\d+)");
+            var match = versionMatcher.Match(toolVersionInfo);
+            if (match.Success)
             {
-                if (!int.TryParse(reMatch.Groups[1].Value, out mDeconConsoleBuild))
+                if (!int.TryParse(match.Groups["DeconToolsBuild"].Value, out mDeconConsoleBuild))
                 {
                     // Error parsing out the version
                     mMessage = "Error determining DeconConsole version, cannot convert build to integer";
@@ -1291,20 +1292,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             string deconToolsBackendPath;
-            if (ioDeconToolsInfo.DirectoryName == null)
+            if (deconToolsExe.DirectoryName == null)
             {
                 deconToolsBackendPath = string.Empty;
             }
             else
             {
                 // Lookup the version of the DeconTools Backend (in the DeconTools folder)
-                deconToolsBackendPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll");
+                deconToolsBackendPath = Path.Combine(deconToolsExe.DirectoryName, "DeconTools.Backend.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsBackendPath);
                 if (!success)
                     return false;
 
-                // Lookup the version of the UIMFLibrary (in the DeconTools folder)
-                var dllPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll");
+                // Lookup the version of the UIMF Library (in the DeconTools folder)
+                var dllPath = Path.Combine(deconToolsExe.DirectoryName, "UIMFLibrary.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath);
                 if (!success)
                     return false;

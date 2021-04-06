@@ -637,17 +637,17 @@ namespace AnalysisManagerBase.JobConfig
                     return false;
                 }
 
-                var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
+                var fileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
 
-                var name = oFileVersionInfo.FileDescription;
+                var name = fileVersionInfo.FileDescription;
                 if (string.IsNullOrEmpty(name))
                 {
-                    name = oFileVersionInfo.InternalName;
+                    name = fileVersionInfo.InternalName;
                 }
 
                 if (string.IsNullOrEmpty(name))
                 {
-                    name = oFileVersionInfo.FileName;
+                    name = fileVersionInfo.FileName;
                 }
 
                 if (string.IsNullOrEmpty(name))
@@ -655,10 +655,10 @@ namespace AnalysisManagerBase.JobConfig
                     name = dllFileInfo.Name;
                 }
 
-                var version = oFileVersionInfo.FileVersion;
+                var version = fileVersionInfo.FileVersion;
                 if (string.IsNullOrEmpty(version))
                 {
-                    version = oFileVersionInfo.ProductVersion;
+                    version = fileVersionInfo.ProductVersion;
                 }
 
                 if (string.IsNullOrEmpty(version))

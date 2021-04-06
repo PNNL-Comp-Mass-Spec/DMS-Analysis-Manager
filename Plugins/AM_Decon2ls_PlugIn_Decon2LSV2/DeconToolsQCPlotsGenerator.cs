@@ -108,11 +108,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (!mSuccess)
                 {
                     ErrorMessage = "Error generating QC Plots using " + inputFilePath;
-                    var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
+                    var msgAdditional = mMSFileInfoScanner.GetErrorMessage();
 
-                    if (!string.IsNullOrEmpty(msgAddnl))
+                    if (!string.IsNullOrEmpty(msgAdditional))
                     {
-                        ErrorMessage = ErrorMessage + ": " + msgAddnl;
+                        ErrorMessage = ErrorMessage + ": " + msgAdditional;
                     }
                 }
             }
