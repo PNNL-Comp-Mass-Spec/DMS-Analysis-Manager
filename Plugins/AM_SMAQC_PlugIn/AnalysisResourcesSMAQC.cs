@@ -237,7 +237,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             var msgfplusSynopsisFile = ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, DatasetName);
-            var synFileToFind = string.Copy(msgfplusSynopsisFile);
+            var synFileToFind = msgfplusSynopsisFile;
 
             var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
             if (!success)

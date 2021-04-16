@@ -1413,7 +1413,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             string legacyFastaToUse;
-            var orgDBDescription = string.Copy(proteinCollectionInfo.OrgDBDescription);
+            var orgDBDescription = proteinCollectionInfo.OrgDBDescription;
 
             if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
             {
@@ -1499,7 +1499,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             else
             {
-                legacyFastaToUse = string.Copy(proteinCollectionInfo.LegacyFastaName);
+                legacyFastaToUse = proteinCollectionInfo.LegacyFastaName;
             }
 
             if (mDebugLevel >= 2)
@@ -3272,7 +3272,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             mJobParams.AddDatasetInfo(dataPkgDataset.Dataset, dataPkgDataset.DatasetID);
-            DatasetName = string.Copy(dataPkgDataset.Dataset);
+            DatasetName = dataPkgDataset.Dataset;
 
             const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
 
@@ -3344,7 +3344,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             mJobParams.AddDatasetInfo(dataPkgJob.Dataset, dataPkgJob.DatasetID);
-            DatasetName = string.Copy(dataPkgJob.Dataset);
+            DatasetName = dataPkgJob.Dataset;
 
             const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
 
@@ -5251,7 +5251,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 var expectedHash = match.Groups["CRC32"].Value;
-                var crc32Hash = string.Copy(expectedHash);
+                var crc32Hash = expectedHash;
 
                 var fastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS();
                 RegisterEvents(fastaTools);

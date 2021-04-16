@@ -903,7 +903,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     {
                         if (string.IsNullOrEmpty(exceptionText))
                         {
-                            exceptionText = string.Copy(dataLine);
+                            exceptionText = dataLine;
                         }
                         else
                         {
@@ -1189,7 +1189,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogMessage(exePath + " " + arguments.TrimStart(' '));
             }
 
-            mCmdRunnerDescription = string.Copy(programDescription);
+            mCmdRunnerDescription = programDescription;
             ClearConcurrentBag(ref mCmdRunnerErrors);
 
             var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
@@ -1204,8 +1204,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Capture the console output (including output to the error stream) via redirection symbols:
                 //    exePath arguments > ConsoleOutputFile.txt 2>&1
 
-                var exePathOriginal = string.Copy(exePath);
-                var argumentsOriginal = string.Copy(arguments);
+                var exePathOriginal = exePath;
+                var argumentsOriginal = arguments;
 
                 programDescription = programDescription.Replace(" ", "_");
 

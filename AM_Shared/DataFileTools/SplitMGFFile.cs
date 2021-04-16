@@ -229,7 +229,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             else
             {
-                dataLine = string.Copy(previousLine);
+                dataLine = previousLine;
                 previousLine = string.Empty;
             }
 

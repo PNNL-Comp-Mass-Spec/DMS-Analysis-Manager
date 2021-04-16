@@ -366,7 +366,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             try
             {
-                var deconParamFilePath = string.Copy(paramFile.FullName);
+                var deconParamFilePath = paramFile.FullName;
 
                 // Rename the existing parameter file
                 var newParamFilePath = Path.Combine(mWorkDir, paramFile.Name + ".old");

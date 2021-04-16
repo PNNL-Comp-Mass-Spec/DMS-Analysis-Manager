@@ -2089,7 +2089,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 OnStatusEvent("MS-GF+ version: " + dataLine);
                             }
 
-                            MSGFPlusVersion = string.Copy(dataLine);
+                            MSGFPlusVersion = dataLine;
                         }
                         else
                         {

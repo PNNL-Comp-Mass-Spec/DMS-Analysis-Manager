@@ -308,7 +308,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Retrieve the GlyQ-IQ parameter file
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ\ParameterFiles
                 var sourceFolderPath = Path.Combine(paramFileStoragePathBase, "ParameterFiles");
-                var sourceFileName = string.Copy(mGlyQIQParams.IQParamFileName);
+                var sourceFileName = mGlyQIQParams.IQParamFileName;
 
                 if (!CopyFileToWorkingDirectories(sourceFileName, sourceFolderPath, "IQ Parameter File"))
                 {

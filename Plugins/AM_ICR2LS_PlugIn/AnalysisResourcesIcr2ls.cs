@@ -82,7 +82,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 else
                 {
-                    strLocalDatasetFolderPath = string.Copy(mWorkDir);
+                    strLocalDatasetFolderPath = mWorkDir;
                 }
 
                 var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out var blnIsFolder);

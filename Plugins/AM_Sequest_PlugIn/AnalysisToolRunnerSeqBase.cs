@@ -1043,7 +1043,7 @@ namespace AnalysisManagerSequestPlugin
                             Console.WriteLine(processingMsg);
                         LogDebug(processingMsg);
                     }
-                    mEvalMessage = string.Copy(processingMsg);
+                    mEvalMessage = processingMsg;
 
                     if (nodeCountActive < nodeCountExpected || nodeCountExpected == 0)
                     {

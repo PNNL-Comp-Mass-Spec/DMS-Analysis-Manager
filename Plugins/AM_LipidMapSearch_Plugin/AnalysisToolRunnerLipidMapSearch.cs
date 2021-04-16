@@ -190,7 +190,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 // Update the evaluation message to include the lipid maps DB filename
                 // This message will appear in Evaluation_Message column of T_Job_Steps
-                mEvalMessage = string.Copy(mLipidMapsDBFilename);
+                mEvalMessage = mLipidMapsDBFilename;
 
                 if (!processingSuccess)
                 {
@@ -542,7 +542,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // File is now up-to-date; copy locally (if not already in the work directory)
-                mLipidMapsDBFilename = string.Copy(strNewestLipidMapsDBFileName);
+                mLipidMapsDBFilename = strNewestLipidMapsDBFileName;
                 var strSourceFilePath = Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
                 var strTargetFilePath = Path.Combine(mWorkDir, strNewestLipidMapsDBFileName);
 

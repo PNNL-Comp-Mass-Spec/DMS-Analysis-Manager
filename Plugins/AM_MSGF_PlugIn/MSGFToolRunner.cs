@@ -953,7 +953,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // Use MSGFDB
                     mUsingMSGFDB = true;
-                    mMSGFDBVersion = string.Copy(msgfStepToolVersion);
+                    mMSGFDBVersion = msgfStepToolVersion;
                 }
             }
             else
@@ -1269,7 +1269,7 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         if (originalPeptide != peptide)
                         {
-                            notes = string.Copy(peptide);
+                            notes = peptide;
                         }
 
                         // Update specProb to reduce the number of significant figures
@@ -1311,7 +1311,7 @@ namespace AnalysisManagerMSGFPlugin
                         }
                         else
                         {
-                            notes = string.Copy(specProb);
+                            notes = specProb;
                         }
 
                         // Change the spectrum probability to 1
@@ -1905,7 +1905,7 @@ namespace AnalysisManagerMSGFPlugin
                 LogMessage("Running MSGF on " + Path.GetFileName(inputFilePath));
             }
 
-            mCurrentMSGFResultsFilePath = string.Copy(resultsFilePath);
+            mCurrentMSGFResultsFilePath = resultsFilePath;
 
             mStatusTools.CurrentOperation = "Running MSGF";
             mStatusTools.UpdateAndWrite(mProgress);
@@ -2201,7 +2201,7 @@ namespace AnalysisManagerMSGFPlugin
                             LogDebug("MSGF version: " + dataLine);
                         }
 
-                        mMSGFVersion = string.Copy(dataLine);
+                        mMSGFVersion = dataLine;
                     }
                     else
                     {
@@ -2260,7 +2260,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (linesRead == 1)
                     {
                         // This is the header line; cache it so that we can write it out to the top of each input file
-                        headerLine = string.Copy(dataLine);
+                        headerLine = dataLine;
                     }
 
                     if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= msgfEntriesPerSegment)
@@ -2328,7 +2328,7 @@ namespace AnalysisManagerMSGFPlugin
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMSGFVersion);
+            var toolVersionInfo = mMSGFVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -2418,7 +2418,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     const string msg = "Error calling ProcessMSGFResults";
 
-                    var detailedMsg = string.Copy(msg);
+                    var detailedMsg = msg;
 
                     if (summarizer.ErrorMessage.Length > 0)
                     {

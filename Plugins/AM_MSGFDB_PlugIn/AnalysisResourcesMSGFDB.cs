@@ -274,7 +274,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                var msgfPlusJarFilePath = string.Copy(msgfPlusProgLoc);
+                var msgfPlusJarFilePath = msgfPlusProgLoc;
 
                 var result = msgfPlusUtils.InitializeFastaFile(
                     javaProgLoc, msgfPlusJarFilePath,

@@ -448,7 +448,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 mTopPICVersion = new Version(match.Value);
                             }
 
-                            mTopPICVersionText = string.Copy(dataLine);
+                            mTopPICVersionText = dataLine;
                         }
                     }
                     else
@@ -816,7 +816,7 @@ namespace AnalysisManagerTopPICPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mTopPICVersionText);
+            var toolVersionInfo = mTopPICVersionText;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {

@@ -89,7 +89,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (string.IsNullOrEmpty(ErrorMessage))
                 {
-                    ErrorMessage = string.Copy(message);
+                    ErrorMessage = message;
                 }
 
                 OnErrorEvent(message);

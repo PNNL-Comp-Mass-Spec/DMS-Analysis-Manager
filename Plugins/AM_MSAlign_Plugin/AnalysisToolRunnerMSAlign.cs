@@ -832,7 +832,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     return false;
                 }
 
-                mInputPropertyValues.FastaFileName = string.Copy(fastaFile.Name);
+                mInputPropertyValues.FastaFileName = fastaFile.Name;
 
                 if (!CopyFastaCheckResidues(fastaFile.FullName, Path.Combine(msInputFolderPath, mInputPropertyValues.FastaFileName)))
                 {
@@ -857,7 +857,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
                 else
                 {
-                    mInputPropertyValues.SpectrumFileName = string.Copy(msAlignFile[0].Name);
+                    mInputPropertyValues.SpectrumFileName = msAlignFile[0].Name;
                 }
                 msAlignFile[0].MoveTo(Path.Combine(msInputFolderPath, mInputPropertyValues.SpectrumFileName));
 
@@ -934,7 +934,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                         LogDebug("MSAlign version: " + dataLine);
                                     }
 
-                                    mMSAlignVersion = string.Copy(dataLine);
+                                    mMSAlignVersion = dataLine;
                                 }
                                 else
                                 {
@@ -997,7 +997,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMSAlignVersion);
+            var toolVersionInfo = mMSAlignVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -1073,10 +1073,10 @@ namespace AnalysisManagerMSAlignPlugIn
                                 {
                                     // Write out this line and bump up scanNumberOutputThreshold by 100
                                     scanNumberOutputThreshold += 100;
-                                    mostRecentProgressLineWritten = string.Copy(dataLine);
+                                    mostRecentProgressLineWritten = dataLine;
                                 }
                             }
-                            mostRecentProgressLine = string.Copy(dataLine);
+                            mostRecentProgressLine = dataLine;
                         }
                         else if (dataLine.StartsWith("Deconvolution finished"))
                         {
@@ -1150,7 +1150,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     else
                     {
                         // Copy the results file to the work directory
-                        var targetFileName = string.Copy(searchResultFile.Name);
+                        var targetFileName = searchResultFile.Name;
 
                         if (msAlignVersion == MSAlignVersionType.v0pt5)
                         {

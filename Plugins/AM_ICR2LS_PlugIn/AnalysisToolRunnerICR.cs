@@ -108,7 +108,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 else
                 {
-                    datasetFolderPathBase = string.Copy(mWorkDir);
+                    datasetFolderPathBase = mWorkDir;
                     blnBrukerFT = false;
                 }
 

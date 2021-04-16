@@ -173,7 +173,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (dataLine.IndexOf("error", StringComparison.InvariantCultureIgnoreCase) >= 0)
                         {
-                            consoleOutputErrorMessage = string.Copy(dataLine);
+                            consoleOutputErrorMessage = dataLine;
                         }
                     }
                 }

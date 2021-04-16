@@ -1284,7 +1284,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (File.Exists(synopsisFilePathWithJob))
                 {
-                    synopsisFilePath = string.Copy(synopsisFilePathWithJob);
+                    synopsisFilePath = synopsisFilePathWithJob;
                 }
                 else if (!File.Exists(synopsisFilePath))
                 {
@@ -1614,19 +1614,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var udtPseudoMSGFData = new PseudoMSGFData
                         {
                             ResultID = reader.CurrentPSM.ResultID,
-                            Peptide = string.Copy(reader.CurrentPSM.Peptide),
-                            CleanSequence = string.Copy(reader.CurrentPSM.PeptideCleanSequence),
-                            PrefixResidue = string.Copy(prefix),
-                            SuffixResidue = string.Copy(suffix),
+                            Peptide = reader.CurrentPSM.Peptide,
+                            CleanSequence = reader.CurrentPSM.PeptideCleanSequence,
+                            PrefixResidue = prefix,
+                            SuffixResidue = suffix,
                             ScanNumber = reader.CurrentPSM.ScanNumber,
                             ChargeState = reader.CurrentPSM.Charge,
-                            PValue = string.Copy(pValueFormatted),
-                            MQScore = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
-                            TotalPRMScore = string.Copy(totalPRMScore),
+                            PValue = pValueFormatted,
+                            MQScore = reader.CurrentPSM.MSGFSpecEValue,
+                            TotalPRMScore = totalPRMScore,
                             NTT = reader.CurrentPSM.NumTrypticTermini,
-                            MSGFSpecEValue = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
-                            DeltaScore = string.Copy(deltaScore),
-                            DeltaScoreOther = string.Copy(deltaScoreOther),
+                            MSGFSpecEValue = reader.CurrentPSM.MSGFSpecEValue,
+                            DeltaScore = deltaScore,
+                            DeltaScoreOther = deltaScoreOther,
                             Protein = reader.CurrentPSM.ProteinFirst
                         };
 
@@ -1785,7 +1785,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     fastaFileReader.CloseFile();
 
-                    mCachedOrgDBName = string.Copy(orgDBNameGenerated);
+                    mCachedOrgDBName = orgDBNameGenerated;
                 }
                 else
                 {
@@ -2201,7 +2201,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     if (string.IsNullOrEmpty(recentElementNames))
                     {
-                        recentElementNames = string.Copy(item);
+                        recentElementNames = item;
                     }
                     else
                     {
@@ -2357,7 +2357,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var entry in mCachedProteins)
                 {
-                    var proteinName = string.Copy(entry.Key);
+                    var proteinName = entry.Key;
                     var proteinIndex = entry.Value.Key;
 
                     // Only write out this protein if it had 1 or more PSMs
@@ -5033,7 +5033,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     if (string.IsNullOrEmpty(recentElementNames))
                     {
-                        recentElementNames = string.Copy(item);
+                        recentElementNames = item;
                     }
                     else
                     {

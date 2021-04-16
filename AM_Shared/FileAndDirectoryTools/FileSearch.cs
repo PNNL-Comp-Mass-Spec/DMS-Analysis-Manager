@@ -750,7 +750,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             AnalysisResources.MSXMLOutputTypeConstants msXmlType,
             out string hashCheckFilePath)
         {
-            var msXMLFilename = string.Copy(DatasetName);
+            var msXMLFilename = DatasetName;
             hashCheckFilePath = string.Empty;
 
             // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
@@ -2694,7 +2694,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     string zipFilePathToExtract;
                     if (unzipOverNetwork)
                     {
-                        zipFilePathToExtract = string.Copy(zipFilePathRemote);
+                        zipFilePathToExtract = zipFilePathRemote;
                     }
                     else
                     {

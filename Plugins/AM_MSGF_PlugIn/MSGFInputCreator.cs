@@ -659,7 +659,7 @@ namespace AnalysisManagerMSGFPlugin
                             resultIDPrevious = currentPSM.ResultID;
                             scanNumberPrevious = currentPSM.ScanNumber;
                             chargePrevious = currentPSM.Charge;
-                            peptidePrevious = string.Copy(currentPSM.Peptide);
+                            peptidePrevious = currentPSM.Peptide;
                         }
                     }
                 }

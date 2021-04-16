@@ -92,7 +92,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 {
                     mMessage = "Error running CompassXport";
                 }
-                processingErrorMessage = string.Copy(mMessage);
+                processingErrorMessage = mMessage;
             }
             else
             {

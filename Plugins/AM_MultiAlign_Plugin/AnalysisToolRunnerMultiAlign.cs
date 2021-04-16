@@ -71,7 +71,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Note that MultiAlign will append ".db3" to this filename
-            var MultiAlignDatabaseName = string.Copy(mDatasetName);
+            var MultiAlignDatabaseName = mDatasetName;
 
             // Set up and execute a program runner to run MultiAlign
             var arguments = " input.txt" +

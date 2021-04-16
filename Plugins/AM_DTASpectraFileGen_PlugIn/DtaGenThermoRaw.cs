@@ -393,7 +393,7 @@ namespace DTASpectraFileGen
             var explicitChargeEnd = (short)mJobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
 
             // Get the maximum number of scans in the file
-            var rawFilePath = string.Copy(instrumentDataFilePath);
+            var rawFilePath = instrumentDataFilePath;
             if (!string.Equals(Path.GetExtension(instrumentDataFilePath), AnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
             {
                 rawFilePath = Path.ChangeExtension(rawFilePath, AnalysisResources.DOT_RAW_EXTENSION);

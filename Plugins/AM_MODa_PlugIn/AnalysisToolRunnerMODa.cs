@@ -354,7 +354,7 @@ namespace AnalysisManagerMODaPlugIn
 
                         if (linesRead < 6 && string.IsNullOrEmpty(modaVersionAndDate) && dataLine.StartsWith("moda", StringComparison.OrdinalIgnoreCase))
                         {
-                            modaVersionAndDate = string.Copy(dataLine);
+                            modaVersionAndDate = dataLine;
                             continue;
                         }
 
@@ -459,7 +459,7 @@ namespace AnalysisManagerMODaPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMODaVersion);
+            var toolVersionInfo = mMODaVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {

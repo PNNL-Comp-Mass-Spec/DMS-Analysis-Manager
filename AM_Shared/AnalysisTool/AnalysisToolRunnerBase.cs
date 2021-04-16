@@ -481,7 +481,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 mDebugLevel = 2;
 
             // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            var directoryPathToArchive = string.Copy(mWorkDir);
+            var directoryPathToArchive = mWorkDir;
 
             // Make the results directory
             var success = MakeResultsDirectory();
@@ -1150,7 +1150,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (Global.IsMatch(Dataset, "Aggregation"))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
-                remoteTransferDirectoryPath = string.Copy(transferDirectoryPath);
+                remoteTransferDirectoryPath = transferDirectoryPath;
             }
             else
             {
@@ -2551,7 +2551,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
                 var resultsDirectoryPath = Path.Combine(workingDirectory.FullName, mResultsDirectoryName);
-                currentResultsDirectoryPath = string.Copy(resultsDirectoryPath);
+                currentResultsDirectoryPath = resultsDirectoryPath;
 
                 var acceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
                 var rejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);

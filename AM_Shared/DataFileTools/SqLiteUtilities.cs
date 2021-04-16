@@ -115,7 +115,7 @@ namespace AnalysisManagerBase.DataFileTools
                             }
                             else
                             {
-                                currentTable = string.Copy(kvp.Key);
+                                currentTable = kvp.Key;
                                 cmdTargetDB.CommandText = kvp.Value;
                                 cmdTargetDB.ExecuteNonQuery();
                             }
@@ -153,7 +153,7 @@ namespace AnalysisManagerBase.DataFileTools
                         // Populate each table
                         foreach (var kvp in tableInfo)
                         {
-                            currentTable = string.Copy(kvp.Key);
+                            currentTable = kvp.Key;
 
                             if (tablesToSkip.Contains(currentTable))
                                 continue;

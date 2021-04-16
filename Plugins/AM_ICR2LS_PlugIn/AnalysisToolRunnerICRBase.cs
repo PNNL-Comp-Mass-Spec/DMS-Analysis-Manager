@@ -320,11 +320,11 @@ namespace AnalysisManagerICR2LSPlugIn
 
                         if (key.Equals("date", StringComparison.OrdinalIgnoreCase))
                         {
-                            statusDate = string.Copy(value);
+                            statusDate = value;
                         }
                         else if (key.Equals("time", StringComparison.OrdinalIgnoreCase))
                         {
-                            statusTime = string.Copy(value);
+                            statusTime = value;
                         }
                         else if (key.Equals("ScansProcessed", StringComparison.OrdinalIgnoreCase))
                         {
@@ -353,12 +353,12 @@ namespace AnalysisManagerICR2LSPlugIn
                         else if (key.Equals("state", StringComparison.OrdinalIgnoreCase))
                         {
                             // Example values: Processing, Finished
-                            processingState = string.Copy(value);
+                            processingState = value;
                         }
                         else if (key.Equals("status", StringComparison.OrdinalIgnoreCase))
                         {
                             // Example value: LTQFTPEKGENERATION
-                            processingStatus = string.Copy(value);
+                            processingStatus = value;
                         }
                         else if (key.Equals("ErrorMessage", StringComparison.OrdinalIgnoreCase))
                         {

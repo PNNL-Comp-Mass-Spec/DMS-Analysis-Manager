@@ -431,7 +431,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 if (mMessage == null)
                     mMessage = string.Empty;
-                var messageAtStart = string.Copy(mMessage);
+                var messageAtStart = mMessage;
 
                 var converter = new RawConverterRunner(rawConverterDir, mDebugLevel);
                 RegisterEvents(converter);
@@ -474,7 +474,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                var messageAtStart = string.Copy(mMessage);
+                var messageAtStart = mMessage;
 
                 var updater = new ParentIonUpdater();
                 RegisterEvents(updater);
@@ -499,7 +499,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return false;
                 }
 
-                var finalMsXmlFilePath = string.Copy(sourceMsXmlFile.FullName);
+                var finalMsXmlFilePath = sourceMsXmlFile.FullName;
 
                 // Delete the original mzML file
                 sourceMsXmlFile.Delete();

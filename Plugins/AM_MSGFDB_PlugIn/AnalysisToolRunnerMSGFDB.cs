@@ -309,8 +309,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Get the FASTA file and index it if necessary
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
             var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
-            var javaExePath = string.Copy(javaProgLoc);
-            var msgfPlusJarFilePath = string.Copy(mMSGFPlusProgLoc);
+            var javaExePath = javaProgLoc;
+            var msgfPlusJarFilePath = mMSGFPlusProgLoc;
 
             result = mMSGFPlusUtils.InitializeFastaFile(
                 javaExePath, msgfPlusJarFilePath,
@@ -476,7 +476,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mWorkingDirectoryInUse = string.Copy(mWorkDir);
+            mWorkingDirectoryInUse = mWorkDir;
 
             bool validExistingResults;
             if (mzidResultsFile.Exists)
@@ -549,7 +549,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    mEvalMessage = string.Copy(mMessage);
+                    mEvalMessage = mMessage;
                     mMessage = string.Empty;
                 }
                 else
@@ -641,7 +641,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (mMSGFPlusUtils.TaskCountCompleted > 0)
                 {
-                    var msg = string.Copy(mMessage);
+                    var msg = mMessage;
                     if (string.IsNullOrWhiteSpace(msg))
                     {
                         msg = "MS-GF+ processing failed";
@@ -1109,7 +1109,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    msgfPlusResultsFileName = string.Copy(resultsFileName);
+                    msgfPlusResultsFileName = resultsFileName;
                 }
 
                 var skipPeptideToProteinMapping = mJobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
@@ -1320,7 +1320,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             LogMessage("Determining tool version info", 2);
 
-            var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
+            var toolVersionInfo = mMSGFPlusUtils.MSGFPlusVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {

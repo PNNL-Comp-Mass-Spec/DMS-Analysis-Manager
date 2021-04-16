@@ -756,7 +756,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
 
             // Cache the current state of mMessage
-            var cachedStatusMessage = string.Copy(mMessage);
+            var cachedStatusMessage = mMessage;
             mMessage = string.Empty;
 
             var splitter = new SplitMGFFile();
@@ -1097,7 +1097,7 @@ namespace AnalysisManagerMODPlusPlugin
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMODPlusVersion);
+            var strToolVersionInfo = mMODPlusVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();

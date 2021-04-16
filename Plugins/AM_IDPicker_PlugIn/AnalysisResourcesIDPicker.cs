@@ -238,7 +238,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             foreach (var kvEntry in fileNamesToGet)
             {
-                var fileToGet = string.Copy(kvEntry.Key);
+                var fileToGet = kvEntry.Key;
                 var fileRequired = kvEntry.Value;
 
                 // Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
@@ -465,7 +465,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // We'll copy the current file locally, then rename it to the expected name
                 const string originalName = "Tool_Version_Info_MSGFPlus_IMS.txt";
                 mInputFileRenames.Add(originalName, toolVersionFile);
-                toolVersionFile = string.Copy(originalName);
+                toolVersionFile = originalName;
             }
 
             fileNamesToGet.Add(toolVersionFile, true);

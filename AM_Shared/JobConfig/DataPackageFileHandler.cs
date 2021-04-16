@@ -634,7 +634,7 @@ namespace AnalysisManagerBase.JobConfig
                 else
                 {
                     prefixRequired = false;
-                    localDirectoryPath = string.Copy(workDirInfo.FullName);
+                    localDirectoryPath = workDirInfo.FullName;
                 }
 
                 // foundFiles tracks files that have been found

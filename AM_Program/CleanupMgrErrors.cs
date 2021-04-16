@@ -128,7 +128,7 @@ namespace AnalysisManagerProg
                 throw new Exception("Manager name is not defined");
 
             mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString ?? "");
-            mManagerName = string.Copy(managerName);
+            mManagerName = managerName;
             mDebugLevel = debugLevel;
 
             mMgrDirectoryPath = mgrDirectoryPath;

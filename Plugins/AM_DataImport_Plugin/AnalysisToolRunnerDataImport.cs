@@ -189,7 +189,7 @@ namespace AnalysisManagerDataImportPlugIn
                 {
                     mMessage = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
                     LogMessage(mMessage);
-                    dataImportFolder = string.Copy(mDatasetName);
+                    dataImportFolder = mDatasetName;
                 }
 
                 var sourceShare = new DirectoryInfo(sourceSharePath);

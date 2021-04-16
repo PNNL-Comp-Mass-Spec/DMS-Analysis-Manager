@@ -1363,7 +1363,7 @@ namespace AnalysisManagerExtractionPlugin
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
                     // We'll copy the current file locally, then rename it to the expected name
-                    toolVersionFileNewName = string.Copy(toolVersionFile);
+                    toolVersionFileNewName = toolVersionFile;
                     toolVersionFile = "Tool_Version_Info_MSGFPlus_IMS.txt";
                 }
 

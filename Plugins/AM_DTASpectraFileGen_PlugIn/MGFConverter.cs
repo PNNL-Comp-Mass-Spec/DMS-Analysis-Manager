@@ -262,7 +262,7 @@ namespace DTASpectraFileGen
                 return reader.Value;
             }
 
-            return string.Copy(valueIfMissing);
+            return valueIfMissing;
         }
 
         [Obsolete("Unused")]

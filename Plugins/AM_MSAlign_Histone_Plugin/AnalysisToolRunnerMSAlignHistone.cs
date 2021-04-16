@@ -675,7 +675,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             try
             {
-                var fiSourceFolder = new DirectoryInfo(mWorkDir);
+                var sourceDirectory = new DirectoryInfo(mWorkDir);
 
                 // Copy the .Fasta file into the MSInput folder
                 // MSAlign will crash if any non-standard residues are present (BJOUXZ)
@@ -683,20 +683,20 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Define the path to the fasta file
                 var orgDbDir = mMgrParams.GetParam("OrgDbDir");
-                var strFASTAFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-                var fiFastaFile = new FileInfo(strFASTAFilePath);
+                var fastaFile = new FileInfo(fastaFilePath);
 
-                if (!fiFastaFile.Exists)
+                if (!fastaFile.Exists)
                 {
                     // Fasta file not found
-                    LogError("Fasta file not found: " + fiFastaFile.FullName);
+                    LogError("Fasta file not found: " + fastaFile.FullName);
                     return false;
                 }
 
-                mInputPropertyValues.FastaFileName = string.Copy(fiFastaFile.Name);
+                mInputPropertyValues.FastaFileName = fastaFile.Name;
 
-                if (!CopyFastaCheckResidues(fiFastaFile.FullName, Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)))
+                if (!CopyFastaCheckResidues(fastaFile.FullName, Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = "CopyFastaCheckResidues returned false";
@@ -705,14 +705,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Move the _msdeconv.msalign file to the MSAlign work folder
-                var matchingFiles = fiSourceFolder.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
+                var matchingFiles = sourceDirectory.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
                 if (matchingFiles.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
                     return false;
                 }
 
-                mInputPropertyValues.SpectrumFileName = string.Copy(matchingFiles[0].Name);
+                mInputPropertyValues.SpectrumFileName = matchingFiles[0].Name;
                 matchingFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
             }
             catch (Exception ex)
@@ -839,7 +839,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                         LogDebug("MSAlign version: " + dataLine);
                                     }
 
-                                    mMSAlignVersion = string.Copy(dataLine);
+                                    mMSAlignVersion = dataLine;
                                 }
                                 else
                                 {
@@ -903,7 +903,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMSAlignVersion);
+            var strToolVersionInfo = mMSAlignVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {

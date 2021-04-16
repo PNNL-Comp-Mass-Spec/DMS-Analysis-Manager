@@ -502,7 +502,7 @@ namespace AnalysisManagerProMexPlugIn
             }
 
             // Temporarily override the result folder name
-            var resultFolderNameSaved = string.Copy(mResultsDirectoryName);
+            var resultFolderNameSaved = mResultsDirectoryName;
 
             mResultsDirectoryName = "PBF_Gen_1_193_000000";
 

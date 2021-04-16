@@ -130,7 +130,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory, ExtractExistingFileAction overwriteBehavior)
         {
-            MostRecentZipFilePath = string.Copy(gzipFilePath);
+            MostRecentZipFilePath = gzipFilePath;
             MostRecentUnzippedFiles.Clear();
 
             try
@@ -242,7 +242,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var gzipFilePath = Path.Combine(targetFolderPath, sourceFile.Name + ".gz");
 
             Message = string.Empty;
-            MostRecentZipFilePath = string.Copy(gzipFilePath);
+            MostRecentZipFilePath = gzipFilePath;
 
             try
             {
@@ -450,7 +450,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, ExtractExistingFileAction overwriteBehavior)
         {
             Message = string.Empty;
-            MostRecentZipFilePath = string.Copy(zipFilePath);
+            MostRecentZipFilePath = zipFilePath;
             MostRecentUnzippedFiles.Clear();
 
             try
@@ -651,7 +651,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var fileToZip = new FileInfo(sourceFilePath);
 
             Message = string.Empty;
-            MostRecentZipFilePath = string.Copy(zipFilePath);
+            MostRecentZipFilePath = zipFilePath;
 
             try
             {
@@ -749,7 +749,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var directoryToZip = new DirectoryInfo(sourceDirectoryPath);
 
             Message = string.Empty;
-            MostRecentZipFilePath = string.Copy(zipFilePath);
+            MostRecentZipFilePath = zipFilePath;
 
             try
             {

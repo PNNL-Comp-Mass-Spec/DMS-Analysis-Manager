@@ -561,7 +561,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                         if (!string.IsNullOrEmpty(dataLine))
                         {
-                            lastEntry = string.Copy(dataLine);
+                            lastEntry = dataLine;
                         }
                     }
                 }
@@ -578,7 +578,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 // Cache the log entry
-                mInspectSearchLogMostRecentEntry = string.Copy(lastEntry);
+                mInspectSearchLogMostRecentEntry = lastEntry;
 
                 var dataCols = lastEntry.Split('\t');
 

@@ -310,7 +310,7 @@ namespace AnalysisManagerTopFDPlugIn
                                 mTopFDVersion = new Version(match.Value);
                             }
 
-                            mTopFDVersionText = string.Copy(dataLine);
+                            mTopFDVersionText = dataLine;
                         }
 
                         continue;
@@ -633,7 +633,7 @@ namespace AnalysisManagerTopFDPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mTopFDVersionText);
+            var toolVersionInfo = mTopFDVersionText;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -710,10 +710,10 @@ namespace AnalysisManagerTopFDPlugIn
                             {
                                 // Write out this line and bump up scanNumberOutputThreshold by 100
                                 scanNumberOutputThreshold += 100;
-                                mostRecentProgressLineWritten = string.Copy(dataLine);
+                                mostRecentProgressLineWritten = dataLine;
                             }
 
-                            mostRecentProgressLine = string.Copy(dataLine);
+                            mostRecentProgressLine = dataLine;
                         }
                         else if (dataLine.StartsWith("Deconvolution finished", StringComparison.OrdinalIgnoreCase))
                         {

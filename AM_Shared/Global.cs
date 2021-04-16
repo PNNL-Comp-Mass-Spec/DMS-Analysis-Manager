@@ -691,7 +691,7 @@ namespace AnalysisManagerBase
                 {
                     try
                     {
-                        var baseNameCurrent = string.Copy(baseName);
+                        var baseNameCurrent = baseName;
                         if (revision > 0)
                         {
                             baseNameCurrent += "_" + revision;

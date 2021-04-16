@@ -90,7 +90,7 @@ namespace AnalysisManagerMODPlusPlugin
             string dataLine;
             if (!string.IsNullOrEmpty(mSavedLine))
             {
-                dataLine = string.Copy(mSavedLine);
+                dataLine = mSavedLine;
                 mSavedLine = string.Empty;
             }
             else

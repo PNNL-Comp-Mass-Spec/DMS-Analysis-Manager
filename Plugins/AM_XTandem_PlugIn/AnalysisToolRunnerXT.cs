@@ -216,7 +216,7 @@ namespace AnalysisManagerXTandemPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mXTandemVersion);
+            var strToolVersionInfo = mXTandemVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -249,9 +249,9 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (intInsertIndex > 0)
                 {
-                    var strNewProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
-                    strNewProgLoc = Path.Combine(strNewProgLoc, progLoc.Substring(intInsertIndex + 1));
-                    progLoc = string.Copy(strNewProgLoc);
+                    var newProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
+                    newProgLoc = Path.Combine(newProgLoc, progLoc.Substring(intInsertIndex + 1));
+                    progLoc = newProgLoc;
                 }
                 else
                 {
@@ -311,7 +311,7 @@ namespace AnalysisManagerXTandemPlugIn
                             LogDebug("X!Tandem version: " + dataLine);
                         }
 
-                        mXTandemVersion = string.Copy(dataLine);
+                        mXTandemVersion = dataLine;
                     }
                     else
                     {

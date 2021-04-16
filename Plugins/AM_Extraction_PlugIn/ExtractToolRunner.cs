@@ -926,7 +926,7 @@ namespace AnalysisManagerExtractionPlugin
                                         }
                                     }
 
-                                    lastPeptideFull = string.Copy(peptideFull);
+                                    lastPeptideFull = peptideFull;
                                     addCurrentPeptide = !pepProtMappingWritten.Contains(peptideFull);
                                 }
 
@@ -1258,7 +1258,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_syn.txt");
-                synFilePath = string.Copy(targetFilePath);
+                synFilePath = targetFilePath;
 
                 result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_SEQUEST);
             }

@@ -255,7 +255,7 @@ namespace AnalysisManagerBase.JobConfig
                         case "path":
                             break;
                         case "version":
-                            version = string.Copy(value);
+                            version = value;
                             if (string.IsNullOrWhiteSpace(version))
                             {
                                 OnErrorEvent("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath));
@@ -376,7 +376,7 @@ namespace AnalysisManagerBase.JobConfig
             // Append the .Exe info to toolVersionInfo
             if (string.IsNullOrEmpty(exeInfo))
             {
-                toolVersionInfoCombined = string.Copy(toolVersionInfo);
+                toolVersionInfoCombined = toolVersionInfo;
             }
             else
             {

@@ -702,14 +702,14 @@ namespace AnalysisManagerProg
                             try
                             {
                                 oneTaskStarted = true;
-                                var defaultManagerWorkDir = string.Copy(mWorkDirPath);
+                                var defaultManagerWorkDir = mWorkDirPath;
 
                                 var resultCode = DoAnalysisJob(out var runningRemote);
 
                                 if (!string.Equals(mWorkDirPath, defaultManagerWorkDir))
                                 {
                                     // Restore the work dir path
-                                    mWorkDirPath = string.Copy(defaultManagerWorkDir);
+                                    mWorkDirPath = defaultManagerWorkDir;
                                     mMgrParams.SetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR, mWorkDirPath);
                                 }
 

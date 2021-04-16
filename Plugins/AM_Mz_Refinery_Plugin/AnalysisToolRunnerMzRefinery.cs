@@ -413,8 +413,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetJobParameter("MzRefParamFile", string.Empty));
-            var javaExePath = string.Copy(javaProgLoc);
-            var msgfplusJarFilePath = string.Copy(mMSGFPlusProgLoc);
+            var javaExePath = javaProgLoc;
+            var msgfplusJarFilePath = mMSGFPlusProgLoc;
 
             const int maxFastaFileSizeMB = 50;
 
@@ -557,7 +557,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    mEvalMessage = string.Copy(mMessage);
+                    mEvalMessage = mMessage;
                     mMessage = string.Empty;
                 }
                 else
@@ -1589,7 +1589,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
+            var toolVersionInfo = mMSGFPlusUtils.MSGFPlusVersion;
 
             // MSConvert
             var success = mToolVersionUtilities.GetMSConvertToolVersion(mMSConvertProgLoc, out var msConvertVersion);

@@ -614,7 +614,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 LogDebug("AnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file");
             }
 
-            var messageSaved = string.Copy(mMessage);
+            var messageSaved = mMessage;
 
             var deleteSuccess = DeleteRawDataFiles(mRawDataType);
 

@@ -271,7 +271,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                         LogDebug("MSDeconv version: " + dataLine);
                                     }
 
-                                    mMSDeconvVersion = string.Copy(dataLine);
+                                    mMSDeconvVersion = dataLine;
                                 }
                                 else
                                 {
@@ -482,7 +482,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var toolVersionInfo = string.Copy(mMSDeconvVersion);
+            var toolVersionInfo = mMSDeconvVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -559,10 +559,10 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 {
                                     // Write out this line and bump up scanNumberOutputThreshold by 100
                                     scanNumberOutputThreshold += 100;
-                                    mostRecentProgressLineWritten = string.Copy(dataLine);
+                                    mostRecentProgressLineWritten = dataLine;
                                 }
                             }
-                            mostRecentProgressLine = string.Copy(dataLine);
+                            mostRecentProgressLine = dataLine;
                         }
                         else if (dataLine.StartsWith("Deconvolution finished"))
                         {
