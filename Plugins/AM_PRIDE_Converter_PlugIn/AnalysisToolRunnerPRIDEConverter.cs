@@ -16,8 +16,14 @@ using PHRPReader.Reader;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
-    // Ignore Spelling: ProteomeXchange, Px, Unimod, Cv, Pos, Frac, yyyy-MM-dd, pubmed, amaZon, SolariX, Bio, Deca, Unmarshaller, Xmx
-    // Ignore Spelling: Xpath, sourcefile, spectrafile, reportfile, roc, udt, const
+    // ReSharper disable CommentTypo
+
+    // Ignore Spelling: Bio, bool, const, Cv, electrospray, Frac, msgf, msgfplus, na
+    // Ignore Spelling: proteome, ProteomeXchange, proteomics, pubmed, Px, reportfile, roc, sourcefile, spectrafile
+    // Ignore Spelling: udt, Unimod, Unmarshaller, Xmx, Xpath, XpathPos, xtandem, yyyy-MM-dd
+    // Ignore Spelling: amaZon, Deca, Exactive, Lumos, Orbitrap, SolariX, Velos
+
+    // ReSharper restore CommentTypo
 
     /// <summary>
     /// Class for running PRIDEConverter
@@ -3214,8 +3220,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     else if (instrumentName.StartsWith("QExactP", StringComparison.OrdinalIgnoreCase))
                     {
-                        accession = "MS:1002877";
-                        description = "Q Exactive HF-X";
+                        accession = "MS:1002634";
+                        description = "Q Exactive Plus";
                     }
                     else
                     {
