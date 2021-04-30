@@ -272,14 +272,14 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string STORAGE_PATH_INFO_FILE_SUFFIX = FileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
 
         /// <summary>
-        /// Scan stats file suffix
+        /// Scan stats file suffix: _ScanStats.txt
         /// </summary>
-        public const string SCAN_STATS_FILE_SUFFIX = "_ScanStats.txt";
+        public const string SCAN_STATS_FILE_SUFFIX = ReaderFactory.SCAN_STATS_FILENAME_SUFFIX;
 
         /// <summary>
-        /// Scan stats ex file suffix
+        /// Extended scan stats file suffix: _ScanStatsEx.txt
         /// </summary>
-        public const string SCAN_STATS_EX_FILE_SUFFIX = "_ScanStatsEx.txt";
+        public const string SCAN_STATS_EX_FILE_SUFFIX = ReaderFactory.EXTENDED_SCAN_STATS_FILENAME_SUFFIX;
 
         /// <summary>
         /// SIC stats file suffix

@@ -375,7 +375,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Open the ScanStats file and read the header line to see if column ScanTypeName is present
                 // Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-                var scanStatsOrExFilePath = Path.Combine(mWorkDir, DatasetName + "_ScanStats.txt");
+                var scanStatsOrExFilePath = Path.Combine(mWorkDir, DatasetName + SCAN_STATS_FILE_SUFFIX);
 
                 var scanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(scanStatsOrExFilePath);
 
@@ -431,7 +431,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var scanStatsFilePath = Path.Combine(mWorkDir, DatasetName + "_ScanStats.txt");
+            var scanStatsFilePath = Path.Combine(mWorkDir, DatasetName + SCAN_STATS_FILE_SUFFIX);
             var detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
             if (!detailedScanTypesDefinedNewFile)

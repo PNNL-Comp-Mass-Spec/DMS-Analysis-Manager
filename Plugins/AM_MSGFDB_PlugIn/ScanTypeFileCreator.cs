@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
 using ThermoRawFileReader;
 
 namespace AnalysisManagerMSGFDBPlugIn
@@ -182,8 +183,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ValidScanTypeLineCount = 0;
 
-                var scanStatsFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStats.txt");
-                var scanStatsExFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStatsEx.txt");
+                var scanStatsFilePath = Path.Combine(WorkDir, DatasetName + AnalysisResources.SCAN_STATS_FILE_SUFFIX);
+                var scanStatsExFilePath = Path.Combine(WorkDir, DatasetName + AnalysisResources.SCAN_STATS_EX_FILE_SUFFIX);
 
                 if (!File.Exists(scanStatsFilePath))
                 {
