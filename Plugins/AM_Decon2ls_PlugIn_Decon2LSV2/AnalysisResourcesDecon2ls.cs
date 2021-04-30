@@ -157,18 +157,22 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Look for the XML: <ProcessMSMS></ProcessMSMS>
                 var node = paramFileXml.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
 
-                if (node != null && node.HasChildNodes)
+                // ReSharper disable once MergeIntoNegatedPattern
+                if (node == null || !node.HasChildNodes)
                 {
-                    // Match found; read the value
-                    if (!bool.TryParse(node.ChildNodes[0].Value, out processMSMS))
-                    {
-                        // Parameter file formatting error
-                        LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
-                        return false;
-                    }
+                    return true;
                 }
 
-                return true;
+                // Match found; read the value
+                if (bool.TryParse(node.ChildNodes[0].Value, out processMSMS))
+                {
+                    return true;
+                }
+
+                // Parameter file formatting error
+                LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
+                return false;
+
             }
             catch (Exception ex)
             {
