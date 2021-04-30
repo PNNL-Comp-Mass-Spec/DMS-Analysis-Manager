@@ -759,9 +759,64 @@
             These columns correspond to the Synopsis file created by MODPlusResultsProcessor
             </summary>
         </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.ResultID">
+            <summary>
+            Result ID
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.Scan">
+            <summary>
+            Scan number
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.DelM">
+            <summary>
+            Precursor error, in Da
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.DelM_PPM">
+            <summary>
+            Precursor error, in ppm; corrected for isotope selection errors
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.MH">
+            <summary>
+            Theoretical monoisotopic peptide MH (computed by PHRP); note that this is (M+H)+
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODPlusSynFileColumns.Peptide">
+            <summary>
+            This is the sequence with prefix and suffix residues and also with modification mass values, e.g. +42
+            </summary>
+        </member>
         <member name="T:PHRPReader.Data.MSAlignSynFileColumns">
             <summary>
             These columns correspond to the Synopsis file created by MSAlignResultsProcessor
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSAlignSynFileColumns.DelM">
+            <summary>
+            Precursor error, in Da
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSAlignSynFileColumns.DelMPPM">
+            <summary>
+            Precursor error, in ppm; corrected for isotope selection errors
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSAlignSynFileColumns.MH">
+            <summary>
+            Theoretical monoisotopic peptide MH (computed by PHRP); note that this is (M+H)+
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSAlignSynFileColumns.Peptide">
+            <summary>
+            This is the sequence with prefix and suffix residues and also with modification mass values, e.g. [42.01]
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSAlignSynFileColumns.Protein">
+            <summary>
+            Protein Name
             </summary>
         </member>
         <member name="T:PHRPReader.Data.MSGFFileColumns">
@@ -969,7 +1024,7 @@
         </member>
         <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Scan">
             <summary>
-            Scan
+            Scan number
             </summary>
         </member>
         <member name="F:PHRPReader.Data.MSPathFinderSynFileColumns.Charge">
@@ -1060,6 +1115,42 @@
             These columns correspond to the Synopsis file created by MODaResultsProcessor
             </summary>
         </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.ResultID">
+            <summary>
+            Result ID
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.Scan">
+            <summary>
+            Scan number
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.DelM">
+            <summary>
+            Mass error of the precursor ion equivalent monoisotopic mass value
+            vs. the predicted monoisotopic mass of the identified peptide sequence
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.DelM_PPM">
+            <summary>
+            Precursor error, in ppm; corrected for isotope selection errors
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.MH">
+            <summary>
+            Theoretical monoisotopic peptide MH (computed by PHRP); note that this is (M+H)+
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.Peptide">
+            <summary>
+            This is the sequence with prefix and suffix residues and also with modification mass values, e.g. +42
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MODaSynFileColumns.Protein">
+            <summary>
+            Protein Name
+            </summary>
+        </member>
         <member name="T:PHRPReader.Data.PrecursorInfoFileColumns">
             <summary>
             These columns correspond to the tab-delimited _PrecursorInfo.txt file created by the Analysis Manager
@@ -1083,6 +1174,52 @@
         <member name="T:PHRPReader.Data.XTandemSynFileColumns">
             <summary>
             These columns correspond to the Synopsis file created by XTandemResultsProcessor
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.ResultID">
+            <summary>
+            Result ID
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.Scan">
+            <summary>
+            Scan number
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.MH">
+            <summary>
+            Monoisotopic (M+H)+ value, computed from PrecursorMZ and Charge
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.Hyperscore">
+            <summary>
+            Hyperscore
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.EValue">
+            <summary>
+            Peptide_Expectation_Value_LogE
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.ProteinCount">
+            <summary>
+            Multiple_Protein_Count
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.DelM">
+            <summary>
+            Mass error of the precursor ion equivalent monoisotopic mass value
+            vs. the predicted monoisotopic mass of the identified peptide sequence
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.Intensity">
+            <summary>
+            Peptide_Intensity_LogI
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.XTandemSynFileColumns.DelMPPM">
+            <summary>
+            Precursor error, in ppm; corrected for isotope selection errors
             </summary>
         </member>
         <member name="P:PHRPReader.Data.PrecursorInfo.ScanNumber">
