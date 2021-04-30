@@ -215,7 +215,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves specified file from storage server, xfer directory, or archive and unzips if necessary
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
@@ -227,7 +227,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves specified file from storage server, xfer directory, or archive and unzips if necessary
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
@@ -240,7 +240,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves specified file from storage server, xfer directory, or archive and unzips if necessary
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
@@ -253,7 +253,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves specified file from storage server, xfer directory, or archive and unzips if necessary
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
@@ -267,7 +267,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves specified file from storage server, xfer directory, or archive and unzips if necessary
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
@@ -2333,7 +2333,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     break;
 
                 case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
-                    // Finnigan ion trap/LTQ-FT data
+                    // Thermo .raw file
                     success = RetrieveDatasetFile(AnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
                     break;
 
