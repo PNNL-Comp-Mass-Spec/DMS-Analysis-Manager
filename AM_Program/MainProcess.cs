@@ -1278,12 +1278,9 @@ namespace AnalysisManagerProg
         {
             try
             {
-                if (jobStartTimeStamp == null)
-                    jobStartTimeStamp = string.Empty;
-                if (toolName == null)
-                    toolName = "??";
-                if (dataset == null)
-                    dataset = "??";
+                jobStartTimeStamp ??= string.Empty;
+                toolName ??= "??";
+                dataset ??= "??";
 
                 return "Job " + job + "; " + toolName + "; " + dataset + "; " + jobStartTimeStamp;
             }
@@ -1404,8 +1401,7 @@ namespace AnalysisManagerProg
             // In this list, keys are error message strings and values are the corresponding time of the error
             var recentErrorMessages = new List<KeyValuePair<string, DateTime>>();
 
-            if (mostRecentJobInfo == null)
-                mostRecentJobInfo = string.Empty;
+            mostRecentJobInfo ??= string.Empty;
 
             try
             {
@@ -2073,6 +2069,7 @@ namespace AnalysisManagerProg
             if (mStatusTools == null)
                 return false;
 
+            // ReSharper disable once MergeIntoPattern
             if (!mStatusTools.AbortProcessingNow)
                 return false;
 

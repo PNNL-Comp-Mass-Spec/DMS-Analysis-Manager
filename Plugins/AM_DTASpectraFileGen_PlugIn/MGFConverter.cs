@@ -174,10 +174,7 @@ namespace DTASpectraFileGen
 
             autoNumberScans = false;
 
-            if (spectrumIDToScanNumber == null)
-            {
-                spectrumIDToScanNumber = new Dictionary<string, ScanInfo>();
-            }
+            spectrumIDToScanNumber ??= new Dictionary<string, ScanInfo>();
 
             using var reader = new XmlTextReader(mzMLFilePath);
 

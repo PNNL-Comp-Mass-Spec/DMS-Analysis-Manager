@@ -74,7 +74,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (cleavageState >= 1 || isProteinTerminus)
                 {
                     // Partially or fully tryptic, or protein terminal
-                    if (currentPSM.Charge == 1 || currentPSM.Charge == 2)
+                    if (currentPSM.Charge is 1 or 2)
                     {
                         if (xCorr >= 1.5)
                             passesFilters = true;

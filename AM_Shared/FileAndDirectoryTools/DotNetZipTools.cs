@@ -357,8 +357,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             long totalSizeBytes = 0;
             double unzipSpeedMBPerSec;
 
-            if (zipProgramName == null)
-                zipProgramName = "??";
+            zipProgramName ??= "??";
 
             var unzipTimeSeconds = endTime.Subtract(startTime).TotalSeconds;
 

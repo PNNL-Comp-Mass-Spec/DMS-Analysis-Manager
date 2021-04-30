@@ -423,7 +423,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Initialize the fasta file; truncating it if it is over 50 MB in size
             var result = mMSGFPlusUtils.InitializeFastaFile(
                 javaExePath, msgfplusJarFilePath,
-                out var fastaFileSizeKB, out var fastaFileIsDecoy, out var fastaFilePath,
+                out _, out var fastaFileIsDecoy, out var fastaFilePath,
                 paramFilePath, maxFastaFileSizeMB);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)

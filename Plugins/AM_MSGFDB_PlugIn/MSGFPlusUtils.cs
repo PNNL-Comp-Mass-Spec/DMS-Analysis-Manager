@@ -1014,7 +1014,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 // Validate that the input file has at least one entry; if not, no point in continuing
-                int linesRead;
 
                 var inputFile = new FileInfo(inputFilePath);
                 if (!inputFile.Exists)
@@ -1033,7 +1032,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
-                linesRead = 0;
+                var linesRead = 0;
                 while (!reader.EndOfStream && linesRead < 10)
                 {
                     var dataLine = reader.ReadLine();

@@ -1059,8 +1059,7 @@ namespace AnalysisManagerBase
                         break;
                     }
 
-                    if (dataLine1 == null)
-                        dataLine1 = string.Empty;
+                    dataLine1 ??= string.Empty;
 
                     if (!reader2.EndOfStream)
                     {
@@ -1068,8 +1067,7 @@ namespace AnalysisManagerBase
 
                         if (lineNumber >= comparisonStartLine)
                         {
-                            if (dataLine2 == null)
-                                dataLine2 = string.Empty;
+                            dataLine2 ??= string.Empty;
 
                             if (ignoreWhitespace)
                             {

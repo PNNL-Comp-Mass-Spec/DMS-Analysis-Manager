@@ -327,7 +327,8 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 var nodeList = doc.SelectNodes("/search/dataset");
-                if (nodeList != null && nodeList.Count > 0)
+
+                if (nodeList?.Count > 0)
                 {
                     var xmlAttributeCollection = nodeList[0].Attributes;
                     if (xmlAttributeCollection != null)
@@ -365,7 +366,8 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Define the path to the dataset file
             var datasetNodes = doc.SelectNodes("/search/dataset");
-            if (datasetNodes != null && datasetNodes.Count > 0)
+
+            if (datasetNodes?.Count > 0)
             {
                 // This value will get updated to the correct name later in this function
                 var xmlAttributeCollection = datasetNodes[0].Attributes;
@@ -394,7 +396,8 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Define the path to the fasta file
             var databaseNodes = doc.SelectNodes("/search/database");
-            if (databaseNodes != null && databaseNodes.Count > 0)
+
+            if (databaseNodes?.Count > 0)
             {
                 var xmlAttributeCollection = databaseNodes[0].Attributes;
                 if (xmlAttributeCollection?["local_path"] == null)
@@ -437,7 +440,8 @@ namespace AnalysisManagerMODPlusPlugin
             }
 
             var instrumentResolutionNodes = doc.SelectNodes("/search/instrument_resolution");
-            if (instrumentResolutionNodes != null && instrumentResolutionNodes.Count > 0)
+
+            if (instrumentResolutionNodes?.Count > 0)
             {
                 var xmlAttributeCollection = instrumentResolutionNodes[0].Attributes;
                 if (xmlAttributeCollection != null && (xmlAttributeCollection["msms"].Value == HIGH_RES_FLAG && instrumentResolutionMsMs == "low"))
@@ -467,7 +471,8 @@ namespace AnalysisManagerMODPlusPlugin
             }
 
             var fragIonTolNodes = doc.SelectNodes("/search/parameters/fragment_ion_tol");
-            if (fragIonTolNodes != null && fragIonTolNodes.Count > 0)
+
+            if (fragIonTolNodes?.Count > 0)
             {
                 if (instrumentResolutionMsMs != LOW_RES_FLAG)
                     return;
@@ -1135,7 +1140,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        private void CmdRunner_LoopWaiting(List<int> processIDs, float coreUsageOverall, int secondsBetweenUpdates)
+        private void CmdRunner_LoopWaiting(IEnumerable<int> processIDs, float coreUsageOverall, int secondsBetweenUpdates)
         {
             UpdateStatusFile(mProgress);
 

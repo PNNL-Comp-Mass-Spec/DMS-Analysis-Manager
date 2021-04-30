@@ -429,8 +429,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             try
             {
-                if (mMessage == null)
-                    mMessage = string.Empty;
+                mMessage ??= string.Empty;
                 var messageAtStart = mMessage;
 
                 var converter = new RawConverterRunner(rawConverterDir, mDebugLevel);

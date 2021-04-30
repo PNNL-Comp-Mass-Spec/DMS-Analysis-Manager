@@ -794,7 +794,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             // Convert array of objects to array of strings
-            private static string[] ConvertObjectArrayToStringArray(object[] row)
+            private static string[] ConvertObjectArrayToStringArray(IEnumerable<object> row)
             {
                 var obj = new List<string>();
                 foreach (var fld in row)
