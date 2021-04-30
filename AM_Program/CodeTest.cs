@@ -1508,11 +1508,11 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Generate a scan stats file
         /// </summary>
-        public void GenerateScanStatsFile()
+        public void GenerateScanStatsFiles()
         {
             if (Global.LinuxOS)
             {
-                LogError("Cannot use GenerateScanStatsFile on Linux");
+                LogError("Cannot use GenerateScanStatsFiles on Linux");
                 return;
             }
 
@@ -1522,18 +1522,18 @@ namespace AnalysisManagerProg
             var inputFile = new FileInfo(Path.Combine(workingDir, inputFileName));
             if (!inputFile.Exists)
             {
-                LogError("GenerateScanStatsFile; File not found: " + inputFile.FullName);
+                LogError("GenerateScanStatsFiles; File not found: " + inputFile.FullName);
                 return;
             }
 
-            var success = GenerateScanStatsFile(inputFile.FullName, workingDir);
+            var success = GenerateScanStatsFiles(inputFile.FullName, workingDir);
             Console.WriteLine("Success: " + success);
         }
 
         /// <summary>
         /// Generate a scan stats file
         /// </summary>
-        public bool GenerateScanStatsFile(string inputFilePath, string workingDir)
+        public bool GenerateScanStatsFiles(string inputFilePath, string workingDir)
         {
             const string msFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
 
@@ -1553,7 +1553,7 @@ namespace AnalysisManagerProg
             scanStatsGenerator.ScanEnd = 12000;
 
             // Create the _ScanStats.txt and _ScanStatsEx.txt files
-            var success = scanStatsGenerator.GenerateScanStatsFile(inputFilePath, workingDir, datasetID);
+            var success = scanStatsGenerator.GenerateScanStatsFiles(inputFilePath, workingDir, datasetID);
 
             return success;
         }

@@ -1715,23 +1715,23 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Creates the _ScanStats.txt file for this job's dataset
+        /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
         /// <returns>True if success, false if a problem</returns>
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
-        protected bool GenerateScanStatsFile()
+        protected bool GenerateScanStatsFiles()
         {
             const bool deleteRawDataFile = true;
-            return GenerateScanStatsFile(deleteRawDataFile);
+            return GenerateScanStatsFiles(deleteRawDataFile);
         }
 
         /// <summary>
-        /// Creates the _ScanStats.txt file for this job's dataset
+        /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
         /// <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
         /// <returns>True if success, false if a problem</returns>
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
-        protected bool GenerateScanStatsFile(bool deleteRawDataFile)
+        protected bool GenerateScanStatsFiles(bool deleteRawDataFile)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
@@ -1739,14 +1739,14 @@ namespace AnalysisManagerBase.AnalysisTool
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
             {
-                LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFile)");
+                LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFiles)");
                 return false;
             }
 
             var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
             if (!File.Exists(msFileInfoScannerDLLPath))
             {
-                LogError("File Not Found (GenerateScanStatsFile): " + msFileInfoScannerDLLPath);
+                LogError("File Not Found (GenerateScanStatsFiles): " + msFileInfoScannerDLLPath);
                 return false;
             }
 
@@ -1758,11 +1758,13 @@ namespace AnalysisManagerBase.AnalysisTool
                 case RawDataTypeConstants.ThermoRawFile:
                     inputFilePath = mDatasetName + DOT_RAW_EXTENSION;
                     break;
+
                 case RawDataTypeConstants.UIMF:
                     inputFilePath = mDatasetName + DOT_UIMF_EXTENSION;
                     break;
+
                 default:
-                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + rawDataTypeName);
+                    LogError("Invalid dataset type for auto-generating files _ScanStats.txt and _ScanStatsEx.txt: " + rawDataTypeName);
                     return false;
             }
 
@@ -1797,8 +1799,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
             LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFilePath));
 
-            // Create the _ScanStats.txt and _ScanStatsEx.txt files
-            var success = scanStatsGenerator.GenerateScanStatsFile(inputFilePath, mWorkDir, datasetID);
+            // Create files _ScanStats.txt and _ScanStatsEx.txt
+            var success = scanStatsGenerator.GenerateScanStatsFiles(inputFilePath, mWorkDir, datasetID);
 
             if (success)
             {

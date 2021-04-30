@@ -413,7 +413,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // _ScanStats.txt file not found
                 // If processing a .Raw file or .UIMF file, we can create the file using the MSFileInfoScanner
-                if (!GenerateScanStatsFile())
+                if (!GenerateScanStatsFiles())
                 {
                     // Error message should already have been logged and stored in mMessage
                     return false;

@@ -102,7 +102,7 @@ namespace AnalysisManagerProg
                     try
                     {
                         // testHarness.SystemMemoryUsage();
-                        // testHarness.GenerateScanStatsFile();
+                        // testHarness.GenerateScanStatsFiles();
                         // testHarness.TestGetToolVersionInfo();
                         // testHarness.TestConnectRSA();
                         // testHarness.TestGZip();

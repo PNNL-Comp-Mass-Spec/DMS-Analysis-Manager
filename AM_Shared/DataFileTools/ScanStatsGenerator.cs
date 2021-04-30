@@ -60,25 +60,25 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Create the ScanStats file for the given dataset file
+        /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <remarks>Will list DatasetID as 0 in the output file</remarks>
         // ReSharper disable once UnusedMember.Global
-        public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath)
+        public bool GenerateScanStatsFiles(string inputFilePath, string outputDirectoryPath)
         {
-            return GenerateScanStatsFile(inputFilePath, outputDirectoryPath, 0);
+            return GenerateScanStatsFiles(inputFilePath, outputDirectoryPath, 0);
         }
 
         /// <summary>
-        /// Create the ScanStats file for the given dataset file
+        /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
         /// <returns>True if successful, false if an error</returns>
-        public bool GenerateScanStatsFile(string inputFilePath, string outputDirectoryPath, int datasetID)
+        public bool GenerateScanStatsFiles(string inputFilePath, string outputDirectoryPath, int datasetID)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in GenerateScanStatsFile: " + ex.Message;
+                ErrorMessage = "Exception in GenerateScanStatsFiles: " + ex.Message;
                 return false;
             }
         }
