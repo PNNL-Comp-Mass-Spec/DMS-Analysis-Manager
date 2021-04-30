@@ -12,6 +12,7 @@ using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
+using PHRPReader.Data;
 using PHRPReader.Reader;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
@@ -1346,7 +1347,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     {
                                         pValue = 0.025;
                                         // Note: storing 1000-XCorr so that lower values will be considered higher confidence
-                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_XCorr, 1));
+                                        scoreForCurrentMatch = 1000 - reader.CurrentPSM.GetScoreDbl(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.XCorr), 1);
                                     }
                                 }
                                 break;
@@ -1369,13 +1370,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     else
                                     {
                                         pValue = 0.025;
-                                        scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(XTandemSynFileReader.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
+
+                                        // Peptide_Expectation_Value_LogE
+                                        scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(XTandemSynFileReader.GetColumnNameByID(XTandemSynFileColumns.EValue), 1);
                                     }
                                 }
                                 break;
 
                             case PeptideHitResultTypes.Inspect:
-                                pValue = reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.PValue), PVALUE_NOT_DEFINED);
 
                                 if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED)
                                 {
@@ -1392,25 +1395,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     else
                                     {
                                         // Note: storing 1000-TotalPRMScore so that lower values will be considered higher confidence
-                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_TotalPRMScore, 1));
+                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.TotalPRMScore), 1));
                                     }
                                 }
                                 break;
 
                             case PeptideHitResultTypes.MSGFPlus:
-                                fdr = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, -1);
+                                fdr = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.QValue), -1);
                                 if (fdr > -1)
                                 {
                                     fdrValuesArePresent = true;
                                 }
 
-                                pepFDR = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_PepFDR, -1);
+                                pepFDR = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.PepQValue), -1);
                                 if (pepFDR > -1)
                                 {
                                     pepFDRValuesArePresent = true;
                                 }
 
-                                pValue = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_PValue, PVALUE_NOT_DEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.EValue), PVALUE_NOT_DEFINED);
                                 scoreForCurrentMatch = msgfSpecEValue;
                                 break;
                         }
@@ -1538,28 +1541,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case PeptideHitResultTypes.Sequest:
-                                totalPRMScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_Sp);
+                                totalPRMScore = reader.CurrentPSM.GetScore(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.Sp));
                                 pValueFormatted = pValue.ToString("0.00");
-                                deltaScore = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn);
-                                deltaScoreOther = reader.CurrentPSM.GetScore(SequestSynFileReader.DATA_COLUMN_DelCn2);
+                                deltaScore = reader.CurrentPSM.GetScore(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.DeltaCn));
+                                deltaScoreOther = reader.CurrentPSM.GetScore(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.DeltaCn2));
                                 break;
 
                             case PeptideHitResultTypes.XTandem:
-                                totalPRMScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_Peptide_Hyperscore);
+                                totalPRMScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.GetColumnNameByID(XTandemSynFileColumns.Hyperscore));
                                 pValueFormatted = pValue.ToString("0.00");
-                                deltaScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.DATA_COLUMN_DeltaCn2);
+                                deltaScore = reader.CurrentPSM.GetScore(XTandemSynFileReader.GetColumnNameByID(XTandemSynFileColumns.DeltaCn2));
                                 break;
 
                             case PeptideHitResultTypes.Inspect:
-                                totalPRMScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_TotalPRMScore);
-                                pValueFormatted = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_PValue);
-                                deltaScore = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScore);
-                                deltaScoreOther = reader.CurrentPSM.GetScore(InspectSynFileReader.DATA_COLUMN_DeltaScoreOther);
+                                totalPRMScore = reader.CurrentPSM.GetScore(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.TotalPRMScore));
+                                pValueFormatted = reader.CurrentPSM.GetScore(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.PValue));
+                                deltaScore = reader.CurrentPSM.GetScore(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.DeltaScore));
+                                deltaScoreOther = reader.CurrentPSM.GetScore(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.DeltaScoreOther));
                                 break;
 
                             case PeptideHitResultTypes.MSGFPlus:
-                                totalPRMScore = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_DeNovoScore);
-                                pValueFormatted = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.DATA_COLUMN_PValue);
+                                totalPRMScore = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.DeNovoScore));
+                                pValueFormatted = reader.CurrentPSM.GetScore(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.EValue));
                                 break;
                         }
 

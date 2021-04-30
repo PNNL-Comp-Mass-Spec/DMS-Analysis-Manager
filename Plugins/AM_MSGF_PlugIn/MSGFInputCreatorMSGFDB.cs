@@ -67,11 +67,11 @@ namespace AnalysisManagerMSGFPlugin
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                var probabilityColumnName = MODPlusSynFileReader.DATA_COLUMN_Probability;
+                var probabilityColumnName = MODPlusSynFileReader.GetColumnNameByID(MODPlusSynFileColumns.Probability);
 
                 if (resultType == PeptideHitResultTypes.MODa)
                 {
-                    probabilityColumnName = MODaSynFileReader.DATA_COLUMN_Probability;
+                    probabilityColumnName = MODaSynFileReader.GetColumnNameByID(MODaSynFileColumns.Probability);
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)

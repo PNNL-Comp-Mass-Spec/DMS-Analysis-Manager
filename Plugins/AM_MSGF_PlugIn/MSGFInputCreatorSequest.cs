@@ -58,11 +58,11 @@ namespace AnalysisManagerMSGFPlugin
 
             var isProteinTerminus = currentPSM.Peptide.StartsWith("-") || currentPSM.Peptide.EndsWith("-");
 
-            var deltaCN = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_DelCn);
-            var xCorr = currentPSM.GetScoreDbl(SequestSynFileReader.DATA_COLUMN_XCorr);
+            var deltaCN = currentPSM.GetScoreDbl(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.DeltaCn));
+            var xCorr = currentPSM.GetScoreDbl(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.XCorr));
 
             int cleavageState = PeptideCleavageStateCalculator.CleavageStateToShort(currentPSM.CleavageState);
-            var cleavageStateAlt = (short)currentPSM.GetScoreInt(SequestSynFileReader.DATA_COLUMN_NumTrypticEnds, 0);
+            var cleavageStateAlt = (short)currentPSM.GetScoreInt(SequestSynFileReader.GetColumnNameByID(SequestSynopsisFileColumns.NTT), 0);
 
             if (cleavageStateAlt > cleavageState)
             {

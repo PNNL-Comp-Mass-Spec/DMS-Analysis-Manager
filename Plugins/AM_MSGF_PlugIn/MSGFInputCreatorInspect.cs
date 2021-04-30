@@ -45,9 +45,9 @@ namespace AnalysisManagerMSGFPlugin
             // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
             // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
-            var pValue = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_PValue);
-            var totalPRMScore = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_TotalPRMScore);
-            var fScore = currentPSM.GetScoreDbl(InspectSynFileReader.DATA_COLUMN_FScore);
+            var pValue = currentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.PValue));
+            var totalPRMScore = currentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.TotalPRMScore));
+            var fScore = currentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.FScore));
 
             if (pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0)
             {

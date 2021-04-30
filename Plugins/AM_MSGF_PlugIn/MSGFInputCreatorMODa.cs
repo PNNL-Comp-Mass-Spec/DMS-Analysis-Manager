@@ -47,7 +47,7 @@ namespace AnalysisManagerMSGFPlugin
             // Keep MODa results with Probability >= 0.2  (higher probability values are better)
             // This will typically keep all data in the _syn.txt file
 
-            var probability = currentPSM.GetScoreDbl(MODaSynFileReader.DATA_COLUMN_Probability, 0);
+            var probability = currentPSM.GetScoreDbl(MODaSynFileReader.GetColumnNameByID(MODaSynFileColumns.Probability), 0);
             if (probability >= 0.2)
             {
                 passesFilters = true;

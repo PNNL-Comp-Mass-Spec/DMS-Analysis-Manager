@@ -1259,7 +1259,7 @@ namespace MSGFResultsSummarizer
                         // Use SpecEValue in place of SpecProb
                         valid = true;
 
-                        if (currentPSM.TryGetScore(MSPathFinderSynFileReader.DATA_COLUMN_SpecEValue, out var specEValueText))
+                        if (currentPSM.TryGetScore(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.SpecEValue), out var specEValueText))
                         {
                             if (!string.IsNullOrWhiteSpace(specEValueText))
                             {
@@ -1291,25 +1291,25 @@ namespace MSGFResultsSummarizer
                     var psmEValue = eValue;
                     double psmFDR;
 
-                    if (ResultType == PeptideHitResultTypes.MSGFPlus || ResultType == PeptideHitResultTypes.MSAlign)
+                    if (ResultType is PeptideHitResultTypes.MSGFPlus or PeptideHitResultTypes.MSAlign)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_FDR, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                         if (psmFDR < 0)
                         {
-                            psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.DATA_COLUMN_EFDR, PSMInfo.UNKNOWN_FDR);
+                            psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.EFDR), PSMInfo.UNKNOWN_FDR);
                         }
                     }
                     else if (ResultType == PeptideHitResultTypes.MODa)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.GetColumnNameByID(MODaSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                     }
                     else if (ResultType == PeptideHitResultTypes.MODPlus)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.GetColumnNameByID(MODPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                     }
                     else if (ResultType == PeptideHitResultTypes.MSPathFinder)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.DATA_COLUMN_QValue, PSMInfo.UNKNOWN_FDR);
+                        psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                     }
                     else
                     {

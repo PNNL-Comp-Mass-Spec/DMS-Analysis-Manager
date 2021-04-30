@@ -45,7 +45,7 @@ namespace AnalysisManagerMSGFPlugin
             // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
             // This will typically keep all data in the _xt.txt file
 
-            var logEValue = currentPSM.GetScoreDbl(XTandemSynFileReader.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
+            var logEValue = currentPSM.GetScoreDbl(XTandemSynFileReader.GetColumnNameByID(XTandemSynFileColumns.EValue), 0);
             if (logEValue <= -0.3)
             {
                 passesFilters = true;
