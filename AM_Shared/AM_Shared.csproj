@@ -91,6 +91,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="ThermoRawFileReader">
+      <HintPath>..\AM_Common\ThermoRawFileReader.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalysisTool\AnalysisMgrBase.cs" />
@@ -103,6 +106,7 @@
     <Compile Include="DataFileTools\CDTAUtilities.cs" />
     <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
     <Compile Include="DataFileTools\ISpectraFilter.cs" />
+    <Compile Include="DataFileTools\PrecursorInfoFileCreator.cs" />
     <Compile Include="DataFileTools\ProteinCollectionInfo.cs" />
     <Compile Include="DataFileTools\ProteowizardTools.cs" />
     <Compile Include="DataFileTools\ScanStatsGenerator.cs" />
