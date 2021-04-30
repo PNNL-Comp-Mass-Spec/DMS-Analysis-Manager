@@ -936,7 +936,11 @@
             <param name="filterText"></param>
             <param name="parentIonMz">Parent ion m/z (output)</param>
             <returns>True if success</returns>
-            <remarks>If multiple parent ion m/z values are listed then parentIonMz will have the last one.  However, if the filter text contains "Full msx" then parentIonMz will have the first parent ion listed</remarks>
+            <remarks>
+            If multiple parent ion m/z values are listed, parentIonMz will have the last one.
+            However, if the filter text contains "Full msx", parentIonMz will have the first parent ion listed.
+            For MS3 spectra, the last m/z value listed is the m/z of the first ion that was isolated.
+            </remarks>
             <remarks>
             <para>
             This was created for use in other programs that only need the parent ion m/z, and no other functions from ThermoRawFileReader.
@@ -958,7 +962,11 @@
             <param name="msLevel">MSLevel (output)</param>
             <param name="collisionMode">Collision mode (output)</param>
             <returns>True if success</returns>
-            <remarks>If multiple parent ion m/z values are listed then parentIonMz will have the last one.  However, if the filter text contains "Full msx" then parentIonMz will have the first parent ion listed</remarks>
+            <remarks>
+            If multiple parent ion m/z values are listed, parentIonMz will have the last one.
+            However, if the filter text contains "Full msx", parentIonMz will have the first parent ion listed.
+            For MS3 spectra, the last m/z value listed is the m/z of the first ion that was isolated.
+            </remarks>
         </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.ExtractParentIonMZFromFilterText(System.String,System.Double@,System.Int32@,System.String@,System.Collections.Generic.List{ThermoRawFileReader.ParentIonInfoType}@)">
             <summary>
@@ -970,7 +978,11 @@
             <param name="collisionMode">Collision mode (output)</param>
             <param name="parentIons">Output: parent ion list</param>
             <returns>True if success</returns>
-            <remarks>If multiple parent ion m/z values are listed then parentIonMz will have the last one.  However, if the filter text contains "Full msx" then parentIonMz will have the first parent ion listed</remarks>
+            <remarks>
+            If multiple parent ion m/z values are listed, parentIonMz will have the last one.
+            However, if the filter text contains "Full msx", parentIonMz will have the first parent ion listed.
+            For MS3 spectra, the last m/z value listed is the m/z of the first ion that was isolated.
+            </remarks>
         </member>
         <member name="M:ThermoRawFileReader.XRawFileIO.ExtractMSLevel(System.String,System.Int32@,System.String@)">
             <summary>
@@ -1323,7 +1335,7 @@
         </member>
         <member name="P:ThermoRawFileReader.clsScanInfo.ParentIonMZ">
             <summary>
-            Parent ion m/z
+            Parent ion m/z (aka precursor m/z)
             </summary>
         </member>
         <member name="P:ThermoRawFileReader.clsScanInfo.ParentIonMonoisotopicMZ">
