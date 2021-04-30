@@ -827,6 +827,15 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             if (!processingSuccess)
             {
+                if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core 2.1"))
+                {
+                    LogError("Install 64-bit .NET Core SDK 2.1 (file dotnet-sdk-2.1.813-win-x64.exe) from https://dotnet.microsoft.com/download/dotnet/2.1");
+                }
+                else if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core"))
+                {
+                    LogError("Install the 64-bit .NET Core SDK for the required version of .NET Core");
+                }
+
                 LogError("Error running MaxQuant");
 
                 if (mCmdRunner.ExitCode != 0)
