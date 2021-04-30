@@ -367,15 +367,6 @@ namespace AnalysisManagerBase
             return version;
         }
 
-        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        // public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, [CallerMemberName] string callingFunction = "")
-
-        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        // public static bool GetDataTableByQuery(string sqlStr, string connectionString, short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
-
-        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", true)]
-        // public static bool GetDataTableByCmd(System.Data.SqlClient.SqlCommand cmd, string connectionString, short retryCount, out DataTable queryResults, int timeoutSeconds, [CallerMemberName] string callingFunction = "")
-
         /// <summary>
         /// Determine the version of .NET that is running
         /// </summary>
@@ -393,9 +384,6 @@ namespace AnalysisManagerBase
                 return msg;
             }
         }
-
-        // [Obsolete("Use GetQueryResultsTopRow that accepts a dbTools instance", true)]
-        // public static bool GetQueryResultsTopRow(string sqlQuery, string connectionString, out List<string> firstQueryResult, short retryCount = 3, int timeoutSeconds = 5, [CallerMemberName] string callingFunction = "")
 
         /// <summary>
         /// Run a query against a SQL Server database
@@ -429,9 +417,6 @@ namespace AnalysisManagerBase
             firstQueryResult = new List<string>();
             return false;
         }
-
-        // [Obsolete("Use PRISMDatabaseUtils.DbToolsFactory.GetDBTools(...).GetQueryResultsDataTable(...)", false)]
-        // public static bool GetQueryResults(string sqlQuery, string connectionString, out List<List<string>> queryResults, short retryCount = 3, int timeoutSeconds = 30, int maxRowsToReturn = 0, [CallerMemberName] string callingFunction = "")
 
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
