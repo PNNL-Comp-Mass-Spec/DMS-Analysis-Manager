@@ -3634,10 +3634,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     targetDirectory.Create();
                 }
 
-                if (fileNameFilterSpecs == null)
-                {
-                    fileNameFilterSpecs = new List<string>();
-                }
+                fileNameFilterSpecs ??= new List<string>();
 
                 if (fileNameFilterSpecs.Count == 0)
                     fileNameFilterSpecs.Add("*");
