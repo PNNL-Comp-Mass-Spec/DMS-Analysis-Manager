@@ -29,7 +29,11 @@ namespace AnalysisManagerProg
     /// </summary>
     public class MainProcess : LoggerBase
     {
-        // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, smeagol
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, remoting, smeagol, tcp, proteinseqs, svc, centroided, resourcer, Mage
+
+        // ReSharper restore CommentTypo
 
         #region "Constants"
 
@@ -304,7 +308,7 @@ namespace AnalysisManagerProg
             mMgrName = mMgrParams.ManagerName;
             ShowTrace("Manager name is " + mMgrName);
 
-            // Delete any temporary files that may be left in the app directory
+            // Delete any temporary files that may be left in the manager directory
             RemoveTempFiles();
 
             // Setup the loggers
@@ -1417,7 +1421,7 @@ namespace AnalysisManagerProg
                 // Initialize the queue that holds recent error messages
                 var msgQueue = new Queue<string>(errorMessageCountToReturn);
 
-                // Initialize the hashtable to hold the error messages, but without date stamps
+                // Initialize the dictionary to hold the error messages, but without date stamps
                 var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
                 // Examine the most recent error reported by the logger
@@ -1636,10 +1640,10 @@ namespace AnalysisManagerProg
 
                 var queuedError = qErrorMsgQueue.Peek();
 
-                // Get the timestamp associated with queuedError, as tracked by the hashtable
+                // Get the timestamp associated with queuedError, as tracked by the dictionary
                 if (!uniqueErrorMessages.TryGetValue(queuedError, out var queuedTimeStamp))
                 {
-                    // The error message is not in the hashtable; this is unexpected
+                    // The error message is not in the dictionary; this is unexpected
                 }
                 else
                 {
@@ -1801,9 +1805,9 @@ namespace AnalysisManagerProg
                 }
 
                 if (resultCode == CloseOutType.CLOSEOUT_NO_DTA_FILES &&
-                    string.Equals(mAnalysisTask.GetParam("StepTool"), "sequest", StringComparison.OrdinalIgnoreCase))
+                    string.Equals(mAnalysisTask.GetParam("StepTool"), "SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
-                    // This was a Sequest job, but no .DTA files were found
+                    // This was a SEQUEST job, but no .DTA files were found
                     // Return True; do not count this as a manager failure
                     return true;
                 }

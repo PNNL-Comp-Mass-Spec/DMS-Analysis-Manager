@@ -22,8 +22,14 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class MSGFPlusUtils : EventNotifier
     {
-        // Ignore Spelling: Tsv, nnet, utils, tims, ident, MZIDto, Conc, Xmx, cp, defs, Chymotrypsin, Lys, Glu, Arg, glutamyl, endopeptidase
-        // Ignore Spelling: ntt, ccm, iso, novo, tda, frag, hcd, msn, hmsn, cid, etd, Hydroxyproline, prot
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Arg, Bruker, ccm, centroided, Chymotrypsin, cid, Conc, cp, defs, endopeptidase, etd, Exactive, frag
+        // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxyproline, hyperthreading, ident, iso, Lys, msn, mzid, MZIDto
+        // Ignore Spelling: na, nnet, novo, ntt, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
+        // Ignore Spelling: tda, tims, Tryp, tryptic, Tsv, utils, Xmx
+
+        // ReSharper restore CommentTypo
 
         #region "Constants"
 

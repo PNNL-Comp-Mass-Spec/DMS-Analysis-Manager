@@ -21,7 +21,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSGFDB : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Utils
+        // Ignore Spelling: centroided, conf, Gzip, mzid, mzml, mzxml, Utils, Xmx
 
         #region "Constants and Enums"
 
@@ -925,7 +925,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Generate an MS-GF+ results file name using the dataset name, the given suffix, and optionally some addon text
+        /// Generate an MS-GF+ results file name using the dataset name, the given suffix, and optionally some additional text
         /// </summary>
         /// <param name="fileNamePrefix">Prefix text (may be an empty string)</param>
         /// <param name="fileName"></param>

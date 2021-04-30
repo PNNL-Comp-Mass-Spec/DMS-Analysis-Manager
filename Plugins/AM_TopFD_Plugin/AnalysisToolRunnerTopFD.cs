@@ -21,7 +21,7 @@ namespace AnalysisManagerTopFDPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerTopFD : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: html, sn, cv, Aragorn
+        // Ignore Spelling: Aragorn, centroided, cv, html, Orbitrap, sn
 
         #region "Constants"
 

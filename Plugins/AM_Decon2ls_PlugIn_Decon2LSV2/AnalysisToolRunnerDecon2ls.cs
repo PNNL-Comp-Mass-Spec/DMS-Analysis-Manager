@@ -21,7 +21,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class AnalysisToolRunnerDecon2ls : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ascii, baf, CmdRunner, deconvolute, deisotope, fticr, HighAbu, Isos, ParmFile
+        // Ignore Spelling: ascii, baf, Bruker, CmdRunner, deconvolute, deisotope, Finnigan, fticr, HighAbu, Isos, ParmFile
 
         #region "Constants"
 
@@ -1318,7 +1318,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             else
             {
-                // Lookup the version of the DeconTools Backend (in the DeconTools folder)
+                // Lookup the version of the DeconTools DLL (in the DeconTools folder)
                 deconToolsBackendPath = Path.Combine(deconToolsExe.DirectoryName, "DeconTools.Backend.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsBackendPath);
                 if (!success)

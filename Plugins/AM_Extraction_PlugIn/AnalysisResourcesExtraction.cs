@@ -25,7 +25,9 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class AnalysisResourcesExtraction : AnalysisResources
     {
-        // Ignore Spelling: Defs, diff, bioml, Parm, mgf, MODa, msgfdb, foreach, dta
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: bioml, Defs, diff, dta, foreach, gzipped
+        // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml, Parm, phospho, phosphorylation
 
         /// <summary>
         /// ModDefs file suffix

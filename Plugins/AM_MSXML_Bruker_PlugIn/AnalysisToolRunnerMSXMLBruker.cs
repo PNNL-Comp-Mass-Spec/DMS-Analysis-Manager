@@ -19,7 +19,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// </summary>
     public class AnalysisToolRunnerMSXMLBruker : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: CompassXport
+        // Ignore Spelling: Bruker, CompassXport, gzip
 
         #region "Module Variables"
 

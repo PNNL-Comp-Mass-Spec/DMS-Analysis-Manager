@@ -15,6 +15,7 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class AnalysisToolRunnerIDPicker : AnalysisToolRunnerBase
     {
+        // ReSharper disable once CommentTypo
         // Ignore Spelling: cmd, idp, Qonvert, prepend, parm, MODa, xxx, msgfspecprob
 
         #region "Module Variables"

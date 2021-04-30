@@ -15,6 +15,8 @@ namespace AnalysisManager_AScore_PlugIn
     /// </summary>
     public class AnalysisToolRunnerAScore : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Mage
+
         private const float PROGRESS_PCT_ASCORE_START = 1;
         private const float PROGRESS_PCT_ASCORE_DONE = 99;
 

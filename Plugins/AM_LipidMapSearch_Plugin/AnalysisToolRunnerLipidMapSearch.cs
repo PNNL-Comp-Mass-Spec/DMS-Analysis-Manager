@@ -16,7 +16,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisToolRunnerLipidMapSearch : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ParmFile, yyyy-MM-dd
+        // Ignore Spelling: hashcheck, ParmFile, pn, rn, rp, yyyy-MM-dd
 
         #region "Module Variables"
 

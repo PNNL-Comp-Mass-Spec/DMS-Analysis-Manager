@@ -19,6 +19,8 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     public class MemoryUsageLogger : EventNotifier
     {
+        // Ignore Spelling: yyyy
+
         #region "Constants and Enums"
 
         private const char COL_SEP = '\t';

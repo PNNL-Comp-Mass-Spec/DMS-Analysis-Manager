@@ -21,7 +21,8 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class DataPackageFileHandler : EventNotifier
     {
-        // Ignore Spelling: cryptum, kv
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: cryptum, gzip, kv, mzid, msgfplus
 
         #region "Constants"
 

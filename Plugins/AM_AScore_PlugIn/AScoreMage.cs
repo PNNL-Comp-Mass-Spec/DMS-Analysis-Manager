@@ -15,7 +15,7 @@ namespace AnalysisManager_AScore_PlugIn
 {
     public class AScoreMagePipeline : EventNotifier
     {
-        // Ignore Spelling: const, msgfdb, ParmFile
+        // Ignore Spelling: const, Mage, msgfdb, msgfplus, ParmFile
 
         #region Member Variables
 
@@ -377,7 +377,7 @@ namespace AnalysisManager_AScore_PlugIn
         {
             var extractionParams = new ExtractionType();
 
-            // extractionType should be 'Sequest First Hits' or 'MSGF+ First Hits'
+            // extractionType should be 'SEQUEST First Hits' or 'MSGF+ First Hits'
             // Legacy jobs may have 'MSGFDB First Hits'
             var extractionType = mJobParams.RequireJobParam("ExtractionType");
 

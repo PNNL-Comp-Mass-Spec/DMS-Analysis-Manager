@@ -26,7 +26,11 @@ namespace AnalysisManagerGlyQIQPlugin
     /// </summary>
     public class AnalysisToolRunnerGlyQIQ : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ParmFile
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: glycan, glycans, isotpe, Lc, ParmFile, Pre, Procssing
+
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 
@@ -419,7 +423,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     PruneConsoleOutputFiles(consoleOutputFile, tempZipDirectory);
                 }
-                
+
                 foreach (var file in lstFilesToMove)
                 {
                     file.MoveTo(Path.Combine(tempZipDirectory.FullName, file.Name));

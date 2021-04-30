@@ -22,11 +22,10 @@ namespace AnalysisManagerMSAlignPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Carboxymethylation, classpath, html, msinput, msoutput, Prsm, Parm, xsl, Xmx
+        // Ignore Spelling: Bruker, Bruker's, Carbamidomethylation, Carboxymethylation, classpath, html, msinput, msoutput, Prsm, Parm, xsl, Xmx
         // Ignore Spelling: databasefilename, spectrumfilename, tableoutputfilename, detailoutputfilename,searchtype, cutofftype
 
         // ReSharper restore CommentTypo
-
 
         #region "Constants and Enums"
 
@@ -623,7 +622,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                         if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY || keyName.ToLower() == INSTRUMENT_TYPE_KEY)
                         {
-                            // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
+                            // If this is a Bruker dataset, we need to make sure that the value for this entry is not FILE
                             // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
 
                             // The ToolName job parameter holds the name of the job script we are executing
@@ -702,7 +701,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                     // Auto-switch to CID and log a warning message
                                                     value = "CID";
                                                     LogWarning(
-                                                        "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the msalign file");
+                                                        "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the MSAlign file");
                                                 }
                                                 break;
 

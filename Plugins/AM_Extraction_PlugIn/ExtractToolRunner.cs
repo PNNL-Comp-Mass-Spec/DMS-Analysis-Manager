@@ -27,7 +27,9 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class ExtractToolRunner : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: modp, tda, MODa, tsv, moda, ascore, parm, xmx, nal, Txt, Utils, Prot, Phrp, msgfdb, mspath, toppic
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: ascore, fdr, moda, MODa, modp, msgfdb, mspath, nal
+        // Ignore Spelling: parm, Phrp, Prot, tda, toppic, tryptic, tsv, Txt, Utils, xmx
 
         #region "Constants"
 

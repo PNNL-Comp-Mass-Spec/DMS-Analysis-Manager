@@ -67,7 +67,7 @@ namespace AnalysisManagerNOMSIPlugin
                     LogDebug("AnalysisToolRunnerNOMSI.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
@@ -184,7 +184,9 @@ namespace AnalysisManagerNOMSIPlugin
                 var fiSpectraFiles = GetXMLSpectraFiles(workingDirectory);
 
                 foreach (var file in fiSpectraFiles)
+                {
                     file.Delete();
+                }
             }
             catch (Exception)
             {
@@ -327,7 +329,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (scanCount == 1)
             {
-                // Skip the console output file and nomsi summary file
+                // Skip the console output file and NOMSI summary file
                 mJobParams.AddResultFileToSkip(mCurrentConsoleOutputFile);
                 mJobParams.AddResultFileToSkip("nomsi_summary.txt");
 

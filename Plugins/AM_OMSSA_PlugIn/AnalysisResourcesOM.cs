@@ -13,6 +13,12 @@ namespace AnalysisManagerOMSSAPlugIn
     /// </summary>
     public class AnalysisResourcesOM : AnalysisResources
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: dtaxml, formatdbprogloc, namespace, ncbi
+
+        // ReSharper restore CommentTypo
+
         internal const string OMSSA_DEFAULT_INPUT_FILE = "OMSSA_default_input.xml";
         internal const string OMSSA_INPUT_FILE = "OMSSA_input.xml";
         protected RunDosProgram mCmdRunner;
@@ -43,9 +49,6 @@ namespace AnalysisManagerOMSSAPlugIn
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
-
-            // OMSSA just copies its parameter file from the central repository
-            //	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
             LogMessage("Getting param file");
 
@@ -81,7 +84,7 @@ namespace AnalysisManagerOMSSAPlugIn
             success = ConvertDtaToXml();
             if (!success)
             {
-                LogError("AnalysisResourcesOM.GetResources(), failed converting dta file to xml format");
+                LogError("AnalysisResourcesOM.GetResources(), failed converting DTA file to xml format");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -108,7 +111,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             try
             {
-                // set up formatdb.exe to reference the organsim DB file (fasta)
+                // set up formatdb.exe to reference the organism DB file (fasta)
                 var OrgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 var LocalOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
@@ -298,7 +301,7 @@ namespace AnalysisManagerOMSSAPlugIn
                             // This XPath statement says to:
                             //  1) Go to the Document Element
                             //  2) Search its descendants
-                            //  3) Use the ncbi namespace when searching
+                            //  3) Use the NCBI namespace when searching
                             //  4) Find the node named objImportedNode.name
                             selectedNodes = xmlTemplate.DocumentElement.SelectNodes("descendant::ncbi:" + objImportedNode.Name, objNamespaceMgr);
 
@@ -416,7 +419,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                 selectedNodes.Item(0).ParentNode.ReplaceChild(objImportedNode, selectedNodes.Item(0));
 
                                 // Alternative would be to update the XML using .InnerXML
-                                // However, this would miss any attributes foor this element
+                                // However, this would miss any attributes for this element
                                 // selectedNodes.Item(0).InnerXml = objImportedNode.InnerXml
                             }
                             catch (Exception ex)

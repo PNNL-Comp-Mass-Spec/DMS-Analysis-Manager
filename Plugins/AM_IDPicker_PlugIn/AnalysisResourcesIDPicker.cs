@@ -58,7 +58,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 return sharedResourceResult;
             }
 
-            // Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
+            // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MSGF+, etc.)
             var paramFileName = mJobParams.GetParam("ParmFileName");
 
             if (!FileSearch.FindAndRetrieveMiscFiles(paramFileName, false))
@@ -435,7 +435,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Determines the files that need to be copied to the work directory, based on the result type
         /// </summary>
-        /// <param name="resultType">PHRP result type (Sequest, X!Tandem, etc.)</param>
+        /// <param name="resultType">PHRP result type (SEQUEST, X!Tandem, etc.)</param>
         /// <param name="datasetName">Dataset name</param>
         /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
         private SortedList<string, bool> GetPHRPFileNames(PeptideHitResultTypes resultType, string datasetName)

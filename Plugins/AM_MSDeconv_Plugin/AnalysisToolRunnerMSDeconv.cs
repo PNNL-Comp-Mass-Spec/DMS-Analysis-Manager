@@ -22,6 +22,8 @@ namespace AnalysisManagerMSDeconvPlugIn
     /// </summary>
     public class AnalysisToolRunnerMSDeconv : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: centroided, Deconv, mgf, msalign, Xmx
+
         #region "Module Variables"
 
         protected const string MSDECONV_CONSOLE_OUTPUT = "MSDeconv_ConsoleOutput.txt";
@@ -107,14 +109,17 @@ namespace AnalysisManagerMSDeconvPlugIn
                         outputFormat = "mgf";
                         resultsFileName = mDatasetName + "_msdeconv.mgf";
                         break;
+
                     case "text":
                         outputFormat = "text";
                         resultsFileName = mDatasetName + "_msdeconv.txt";
                         break;
+
                     case "msalign":
                         outputFormat = "msalign";
                         resultsFileName = mDatasetName + "_msdeconv.msalign";
                         break;
+
                     default:
                         mMessage = "Invalid output format: " + outputFormat;
                         LogError(mMessage);

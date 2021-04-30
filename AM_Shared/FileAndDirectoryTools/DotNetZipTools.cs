@@ -11,6 +11,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class DotNetZipTools : EventNotifier
     {
+        // ReSharper disable once CommentTypo
         // Ignore Spelling: gzipping, crc
 
         /// <summary>

@@ -20,14 +20,20 @@ using AnalysisManagerBase.JobConfig;
 namespace AnalysisManagerSequestPlugin
 {
     /// <summary>
-    /// Base class for Sequest analysis
+    /// Base class for SEQUEST analysis
     /// </summary>
     /// <remarks>
     /// Note that MakeOUTFiles() in this class calls a standalone Sequest.Exe program for groups of DTA files
-    /// See AnalysisToolRunnerSeqCluster for the code used to interface with the Sequest cluster program
+    /// See AnalysisToolRunnerSeqCluster for the code used to interface with the SEQUEST cluster program
     /// </remarks>
     public class AnalysisToolRunnerSeqBase : AnalysisToolRunnerBase
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: de, dta, endscan, rootname, seqcluster, startscan
+
+        // ReSharper restore CommentTypo
+
         #region "Constants"
 
         public const string CONCATENATED_OUT_TEMP_FILE = "_out.txt.tmp";
@@ -88,7 +94,7 @@ namespace AnalysisManagerSequestPlugin
             // Count the number of .Dta files and cache in mDtaCount
             CalculateNewStatus(updateDTACount: true);
 
-            // Run Sequest
+            // Run SEQUEST
             UpdateStatusRunning(mProgress, mDtaCount);
 
             // Make the .out files
@@ -131,11 +137,11 @@ namespace AnalysisManagerSequestPlugin
             // Make sure objects are released
             ProgRunner.GarbageCollectNow();
 
-            // Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
+            // Parse the SEQUEST .Log file to make sure the expected number of nodes was used in the analysis
 
             if (mMgrParams.GetParam("cluster", true))
             {
-                // Running on a Sequest cluster
+                // Running on a SEQUEST cluster
                 var sequestLogFilePath = Path.Combine(mWorkDir, "sequest.log");
                 ValidateSequestNodeCount(sequestLogFilePath);
             }
@@ -413,13 +419,13 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Runs Sequest to make .out files
-        /// This function uses the standalone Sequest.exe program; it is not used by the Sequest clusters
+        /// Runs SEQUEST to make .out files
+        /// This function uses the standalone SEQUEST.exe program; it is not used by the SEQUEST clusters
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         protected virtual CloseOutType MakeOUTFiles()
         {
-            // Creates Sequest .out files from DTA files
+            // Creates SEQUEST .out files from DTA files
 
             // 12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
             // This code is left here so we can still debug to make sure everything still works
@@ -431,7 +437,7 @@ namespace AnalysisManagerSequestPlugin
             var dtaFileCount = dtaFiles.GetLength(0);
             if (dtaFileCount == 0)
             {
-                LogError("No dta files found for Sequest processing");
+                LogError("No dta files found for SEQUEST processing");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -545,7 +551,7 @@ namespace AnalysisManagerSequestPlugin
                     }
                 }
 
-                LogProgress("Sequest");
+                LogProgress("SEQUEST");
             } while (stillRunning);
 
             // Clean up our object references
@@ -603,7 +609,7 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Concatenates any .out files that still remain in the working directory
-        /// If running on the Sequest Cluster, the majority of the files should have already been appended to _out.txt.tmp
+        /// If running on the SEQUEST Cluster, the majority of the files should have already been appended to _out.txt.tmp
         /// </summary>
         /// <param name="WorkDir">Working directory</param>
         /// <param name="DSName">Dataset name</param>
@@ -724,9 +730,9 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Stores the Sequest tool version info in the database
-        /// If outFilePath is defined, looks up the specific Sequest version using the given .Out file
-        /// Also records the file date of the Sequest Program .exe
+        /// Stores the SEQUEST tool version info in the database
+        /// If outFilePath is defined, looks up the specific SEQUEST version using the given .Out file
+        /// Also records the file date of the SEQUEST Program .exe
         /// </summary>
         /// <param name="outFilePath"></param>
         protected bool StoreToolVersionInfo(string outFilePath)
@@ -745,7 +751,7 @@ namespace AnalysisManagerSequestPlugin
                 return false;
             }
 
-            // Lookup the version of Sequest using the .Out file
+            // Lookup the version of SEQUEST using the .Out file
             try
             {
                 if (!string.IsNullOrEmpty(outFilePath))
@@ -766,7 +772,7 @@ namespace AnalysisManagerSequestPlugin
 
                         if (mDebugLevel >= 2)
                         {
-                            LogDebug("Sequest Version: " + toolVersionInfo);
+                            LogDebug("SEQUEST Version: " + toolVersionInfo);
                         }
 
                         break;
@@ -778,14 +784,14 @@ namespace AnalysisManagerSequestPlugin
                 LogError("Exception parsing .Out file in StoreToolVersionInfo: " + ex.Message);
             }
 
-            // Store the path to the Sequest .Exe in toolFiles
+            // Store the path to the SEQUEST .Exe in toolFiles
             try
             {
                 toolFiles.Add(new FileInfo(mMgrParams.GetParam("SeqProgLoc")));
             }
             catch (Exception ex)
             {
-                LogError("Exception adding Sequest .Exe to toolFiles in StoreToolVersionInfo: " + ex.Message);
+                LogError("Exception adding SEQUEST .Exe to toolFiles in StoreToolVersionInfo: " + ex.Message);
             }
 
             try
@@ -903,7 +909,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (!File.Exists(logFilePath))
                 {
-                    processingMsg = "Sequest.log file not found; cannot verify the sequest node count";
+                    processingMsg = "Sequest.log file not found; cannot verify the SEQUEST node count";
                     if (logToConsole)
                         Console.WriteLine(processingMsg + ": " + logFilePath);
                     LogWarning(processingMsg);
@@ -959,7 +965,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out hostCount))
                             {
-                                processingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file";
+                                processingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the sequest.log file";
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -972,7 +978,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out nodeCountStarted))
                             {
-                                processingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file";
+                                processingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the sequest.log file";
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -1002,7 +1008,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out nodeCountActive))
                             {
-                                processingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file";
+                                processingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the sequest.log file";
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -1234,7 +1240,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Error occurred
 
-                processingMsg = "Error parsing Sequest.log file in ValidateSequestNodeCount" + ex.Message;
+                processingMsg = "Error parsing sequest.log file in ValidateSequestNodeCount" + ex.Message;
                 if (logToConsole)
                 {
                     Console.WriteLine("====================================================================");
@@ -1311,7 +1317,7 @@ namespace AnalysisManagerSequestPlugin
                 // Zip the file
                 if (!ZipFile(OutFilePath, false))
                 {
-                    mMessage = "Error zipping concat out file";
+                    mMessage = "Error zipping concatenated out file";
                     var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step");
                     LogError(Msg);
                     return false;
@@ -1319,7 +1325,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                mMessage = "Exception zipping concat out file";
+                mMessage = "Exception zipping concatenated out file";
                 var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
                              Global.GetExceptionStackTrace(ex);
                 LogError(Msg);

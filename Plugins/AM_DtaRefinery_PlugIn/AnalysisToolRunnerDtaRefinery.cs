@@ -20,6 +20,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// </summary>
     public class AnalysisToolRunnerDtaRefinery : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Orbitrap
+
         #region "Module Variables"
 
         private const float PROGRESS_PCT_DTA_REFINERY_RUNNING = 5;

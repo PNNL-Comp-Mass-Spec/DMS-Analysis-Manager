@@ -23,7 +23,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// </summary>
     public class AnalysisToolRunnerPhosphoFdrAggregator : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cid, Da, etd, hcd, fht, xt
+        // Ignore Spelling: cid, Da, etd, fht, hcd, Mage, msgfplus, sequest, xt, xtandem
 
         #region "Constants and Enums"
 

@@ -36,12 +36,13 @@ namespace AnalysisManagerSMAQCPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            // Retrieve the PHRP files (for the X!Tandem, Sequest, or MSGF+ source job)
+            // Retrieve the PHRP files (for the X!Tandem, SEQUEST, or MS-GF+ source job)
             if (!RetrievePHRPFiles())
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
+            // ReSharper disable once CommentTypo
             // Retrieve the MASIC ScanStats.txt, ScanStatsEx.txt, and _SICstats.txt files
             if (!RetrieveMASICFiles())
             {
@@ -225,7 +226,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             else
             {
-                mMessage = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder: " + strInputFolder +
+                mMessage = "InputFolder is not an X!Tandem, SEQUEST, or MS-GF+ folder: " + strInputFolder +
                     "; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
                 LogError(mMessage);
                 return false;

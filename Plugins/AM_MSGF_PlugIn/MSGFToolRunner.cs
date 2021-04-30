@@ -27,7 +27,8 @@ namespace AnalysisManagerMSGFPlugin
     /// </summary>
     public class MSGFRunner : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: MODa, Parm, Xmx, cp, modp, bioml, msgfdb, Chymotrypsin, Lys, Glu, Arg
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, Glu, Lys, MODa, modp, msgfdb, Parm, Pre, Xmx
 
         #region "Constants and enums"
 
@@ -304,7 +305,7 @@ namespace AnalysisManagerMSGFPlugin
             var file = new FileInfo(filePath);
             var newFileName = Path.GetFileNameWithoutExtension(file.Name) + "_" + suffix + file.Extension;
 
-            return file.DirectoryName == null 
+            return file.DirectoryName == null
                        ? newFileName
                        : Path.Combine(file.DirectoryName, newFileName);
         }

@@ -16,7 +16,7 @@ namespace AnalysisManagerSMAQCPlugIn
     /// </summary>
     public class AnalysisToolRunnerSMAQC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ParmFile, utf
+        // Ignore Spelling: mscorlib, ParmFile, utf
 
         #region "Module Variables"
 

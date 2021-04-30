@@ -12,6 +12,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// </summary>
     public class AnalysisToolRunnerMultiAlignAggregator : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Aggregator
+
         protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
         protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
 

@@ -23,7 +23,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Histone, parm, Xmx, classpath, html, xsl, ptm, Frag, filteration, Cystein, cutofftype, Prsm
+        // Ignore Spelling: Bruker, Bruker's, classpath, cutofftype, Cystein, filteration, Frag, Histone, html, parm, Prsm, ptm, Xmx, xsl
 
         // ReSharper restore CommentTypo
 
@@ -591,7 +591,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (keyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
                     {
-                        // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
+                        // If this is a Bruker dataset, we need to make sure that the value for this entry is not FILE
                         // The reason is that the mzXML file created by Bruker's compass program does not include the ScanType information (CID, ETD, etc.)
 
                         // The ToolName job parameter holds the name of the job script we are executing

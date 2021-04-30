@@ -27,7 +27,9 @@ namespace AnalysisManagerMzRefineryPlugIn
     public class AnalysisToolRunnerMzRefinery : AnalysisToolRunnerBase
     {
         // ReSharper disable CommentTypo
-        // Ignore Spelling: Dta, Utils, endian, modplus, Xmx, conf, Cyanothece, Cyano, Caulo, Prepend, cv, outfile, identfile, indexedmzML
+
+        // Ignore Spelling: Caulo, conf, cv, Cyano, Cyanothece, Dta, endian, identfile, indexedmzML, modplus, mzxml, outfile, Prepend, Utils, Xmx
+
         // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
@@ -461,7 +463,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    LogError("Problem parsing MzRef parameter file to extract MGSF+ options");
+                    LogError("Problem parsing MzRef parameter file to extract MS-GF+ options");
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }

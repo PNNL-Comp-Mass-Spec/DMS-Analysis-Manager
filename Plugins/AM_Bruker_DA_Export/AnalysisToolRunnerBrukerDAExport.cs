@@ -22,7 +22,11 @@ namespace AnalysisManagerBrukerDAExportPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerBrukerDAExport : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Daltonik
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Bruker, Bruker's, Daltonik
+
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 

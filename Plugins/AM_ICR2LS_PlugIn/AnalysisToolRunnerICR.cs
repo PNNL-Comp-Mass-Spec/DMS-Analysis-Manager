@@ -7,9 +7,12 @@ using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
+    /// <summary>
+    /// Performs deisotoping using ICR-2LS on Bruker S-folder MS data
+    /// </summary>
     public class AnalysisToolRunnerICR : AnalysisToolRunnerICRBase
     {
-        // Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
+        // Ignore Spelling: Bruker, deisotoping, fid, pek, ser
 
         // Example folder layout when processing S-folders
         //

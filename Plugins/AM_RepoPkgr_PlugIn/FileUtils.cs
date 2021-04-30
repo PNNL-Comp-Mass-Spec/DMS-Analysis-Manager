@@ -7,6 +7,8 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 {
     public static class FileUtils
     {
+        // Ignore Spelling: gzip, mzid
+
         public static void CopyFiles(string sourceDirectory, string searchPattern, string destinationDirectory)
         {
             if (!Directory.Exists(destinationDirectory))

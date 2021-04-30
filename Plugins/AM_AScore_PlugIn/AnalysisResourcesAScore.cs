@@ -9,6 +9,8 @@ namespace AnalysisManager_AScore_PlugIn
     /// </summary>
     public class AnalysisResourcesAScore : AnalysisResources
     {
+        // Ignore Spelling: bool, const, foreach, Mage
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

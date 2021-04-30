@@ -20,7 +20,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class AnalysisToolRunnerMSXMLGen : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Reindex, mgf
+        // Ignore Spelling: gzip, mgf, msconvert, readw, Reindex
 
         #region "Module Variables"
 

@@ -19,7 +19,7 @@ namespace AnalysisManagerMODaPlugIn
     /// </summary>
     public class AnalysisToolRunnerMODa : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Hanyang, moda, MODa, ParmFile, Xmx
+        // Ignore Spelling: Hanyang, moda, MODa, msms, ParmFile, Xmx
 
         #region "Constants and Enums"
 
@@ -384,7 +384,7 @@ namespace AnalysisManagerMODaPlugIn
                             continue;
                         }
 
-                        if (dataLine.IndexOf("exception", StringComparison.OrdinalIgnoreCase) >=0 && dataLine.StartsWith("java", StringComparison.OrdinalIgnoreCase))
+                        if (dataLine.IndexOf("exception", StringComparison.OrdinalIgnoreCase) >=0 && dataLine.StartsWith("Java", StringComparison.OrdinalIgnoreCase))
                         {
                             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {

@@ -24,6 +24,8 @@ namespace AnalysisManagerMODPlusPlugin
     /// </summary>
     public class AnalysisToolRunnerMODPlus : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Da, hmsn, mgf, mzml, mzxml, msms, outfile, xpath
+
         #region "Constants and Enums"
 
         protected const string MODPlus_CONSOLE_OUTPUT = "MODPlus_ConsoleOutput.txt";
@@ -747,7 +749,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="fiMgfFile"></param>
         /// <param name="threadCount"></param>
         /// <returns>List of newly created .mgf files</returns>
-        /// <remarks>Yses a round-robin splitting</remarks>
+        /// <remarks>Uses a round-robin splitting</remarks>
         private List<FileInfo> SplitMGFFiles(FileSystemInfo fiMgfFile, int threadCount)
         {
             if (mDebugLevel >= 1)

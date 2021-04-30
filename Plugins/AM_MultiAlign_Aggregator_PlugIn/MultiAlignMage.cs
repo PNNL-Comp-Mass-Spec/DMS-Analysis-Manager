@@ -18,6 +18,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// </summary>
     public class MultiAlignMage : EventNotifier
     {
+        // Ignore Spelling: Mage, Regex
+
         #region Member Variables
 
         private string mResultsDBFileName = "";
@@ -763,7 +765,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             #region MageMultiAlign Mage Pipelines
 
-            // Build and run Mage pipeline to to extract contents of job
+            // Build and run Mage pipeline to extract contents of job
             [Obsolete("Unused")]
             private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
             {

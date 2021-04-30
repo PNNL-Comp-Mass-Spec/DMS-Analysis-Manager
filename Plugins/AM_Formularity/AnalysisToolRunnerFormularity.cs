@@ -15,7 +15,7 @@ namespace AnalysisManagerFormularityPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerFormularity : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: calibrant, cia, href, html, nomsi, png
+        // Ignore Spelling: calibrant, cia, Formularity, href, html, nomsi, png, Pre
 
         #region "Constants and Enums"
 
@@ -191,7 +191,9 @@ namespace AnalysisManagerFormularityPlugin
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
                 foreach (var spectrumFile in GetXmlSpectraFiles(workingDirectory, out _))
+                {
                     spectrumFile.Delete();
+                }
             }
             catch (Exception)
             {

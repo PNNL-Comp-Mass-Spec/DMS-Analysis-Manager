@@ -27,7 +27,7 @@ namespace AnalysisManagerBase
     /// </summary>
     public static class Global
     {
-        // Ignore Spelling: cmd, Sql, Utc
+        // Ignore Spelling: cmd, hashcheck, hyperthreading, prepending, Sql, Utc
 
         #region "Constants"
 
