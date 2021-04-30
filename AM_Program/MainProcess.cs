@@ -1446,9 +1446,6 @@ namespace AnalysisManagerProg
                         {
                             using (var reader = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
-                                if (errorMessageCountToReturn < 1)
-                                    errorMessageCountToReturn = 1;
-
                                 while (!reader.EndOfStream)
                                 {
                                     var dataLine = reader.ReadLine();
