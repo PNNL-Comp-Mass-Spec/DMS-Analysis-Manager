@@ -298,7 +298,6 @@ namespace AnalysisManagerICR2LSPlugIn
                     }
 
                     return true;
-
                 }
 
                 // Read the file
@@ -657,7 +656,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Possibly enable preview mode (skips the actual deisotoping)
-            if (false && Environment.MachineName.IndexOf("monroe", StringComparison.InvariantCultureIgnoreCase) >= 0)
+            if (false && Environment.MachineName.IndexOf("WE31383", StringComparison.InvariantCultureIgnoreCase) >= 0)
             {
                 strArguments += " /preview";
             }
