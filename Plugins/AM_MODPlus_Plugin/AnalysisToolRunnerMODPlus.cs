@@ -279,7 +279,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var doc = new XmlDocument();
                 doc.Load(fiParamFile.FullName);
 
-                DefineParamfileDatasetAndFasta(doc, fastaFilePath);
+                DefineParamFileDatasetAndFasta(doc, fastaFilePath);
 
                 DefineParamMassResolutionSettings(doc);
 
@@ -357,7 +357,7 @@ namespace AnalysisManagerMODPlusPlugin
             return paramFileList;
         }
 
-        private void DefineParamfileDatasetAndFasta(XmlDocument doc, string fastaFilePath)
+        private void DefineParamFileDatasetAndFasta(XmlDocument doc, string fastaFilePath)
         {
             var defaultAttributes = new Dictionary<string, string> {
                 { "local_path", "Dataset_PartX.mgf"},
