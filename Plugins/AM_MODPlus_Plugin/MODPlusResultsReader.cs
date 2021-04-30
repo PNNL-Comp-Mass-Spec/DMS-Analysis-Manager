@@ -10,10 +10,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Data lines for the current scan
         /// </summary>
-        public List<string> CurrentScanData
-        {
-            get { return mCurrentScanData; }
-        }
+        public List<string> CurrentScanData => mCurrentScanData;
 
         /// <summary>
         /// Currently available scan number and charge
@@ -21,30 +18,24 @@ namespace AnalysisManagerMODPlusPlugin
         /// Or if scan 1000 and charge 4, will be 1000.04
         /// </summary>
         /// <remarks>-1 if no more scans remain</remarks>
-        public double CurrentScanChargeCombo
-        {
-            get { return mCurrentScanChargeCombo; }
-        }
+        public double CurrentScanChargeCombo => mCurrentScanChargeCombo;
 
-        public FileInfo ResultFile
-        {
-            get { return mResultFile; }
-        }
+        public FileInfo ResultFile => mResultFile;
 
-        public bool SpectrumAvailable
-        {
-            get { return mSpectrumAvailable; }
-        }
+        public bool SpectrumAvailable => mSpectrumAvailable;
 
         protected double mCurrentScanChargeCombo;
+
         protected List<string> mCurrentScanData;
 
         protected string mSavedLine;
+
         protected bool mSpectrumAvailable;
 
         protected readonly Regex mExtractChargeAndScan;
 
         protected readonly StreamReader mReader;
+
         protected readonly FileInfo mResultFile;
 
         /// <summary>
