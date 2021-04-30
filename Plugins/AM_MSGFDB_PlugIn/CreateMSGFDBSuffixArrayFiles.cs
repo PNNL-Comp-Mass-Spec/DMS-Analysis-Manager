@@ -22,7 +22,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class CreateMSGFDBSuffixArrayFiles : EventNotifier
     {
-        // Ignore Spelling: canno, Xmx, tda, cp, Utc
+        // Ignore Spelling: canno, cp, programmatically, tda, Utc, Xmx
 
         #region "Constants"
 

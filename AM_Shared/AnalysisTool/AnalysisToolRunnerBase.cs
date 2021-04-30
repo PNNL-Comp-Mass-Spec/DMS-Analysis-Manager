@@ -28,7 +28,9 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public class AnalysisToolRunnerBase : AnalysisMgrBase, IToolRunner
     {
-        // Ignore Spelling: acqu, fid, baf, tdf, yyyy-MM-dd, hh:mm:ss tt, Cnfg, str, Dta, cmd, Cpu, crc, usr, Quant
+        // Ignore Spelling: acqu, baf, cmd, Cnfg, Cpu, crc, Dta, fid, gzip, gzipped, hashcheck, java, msconvert, na
+        // Ignore Spelling: proteinseqs, protoapps, Quant, readw, sequest, str, subkey, subkeys, tdf, usr, wildcards, Xfer
+        // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
         #region "Constants"
 

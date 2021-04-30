@@ -27,7 +27,8 @@ namespace AnalysisManagerMaxQuantPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: \andromeda, andromeda, aplfiles, apar, Quant, deisotoping, apl, dryrun, proc, secpepFiles, txt
+        // Ignore Spelling: \andromeda, andromeda, apar, apl, aplfiles, deisotoping, dotnet, dryrun
+        // Ignore Spelling: proc, Quant, resourcer, sdk, secpepFiles, txt
 
         // ReSharper restore CommentTypo
 

@@ -16,7 +16,7 @@ namespace AnalysisManagerMaxQuantPlugIn
     /// </summary>
     public class AnalysisResourcesMaxQuant : AnalysisResources
     {
-        // Ignore Spelling: MaxQuant, Parm, Maxq
+        // Ignore Spelling: MaxQuant, Parm, Maxq, resourcer
 
         private const string MAXQUANT_PEAK_STEP_TOOL = "MaxqPeak";
 

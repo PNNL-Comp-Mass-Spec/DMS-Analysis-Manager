@@ -22,7 +22,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class AnalysisResourcesMSGFDB : AnalysisResources
     {
-        // Ignore Spelling: Dta, Fto, Mgf
+        // Ignore Spelling: centroided, Dta, Fto, Mgf
 
         public const string MSCONVERT_FILENAME = "msconvert.exe";
 

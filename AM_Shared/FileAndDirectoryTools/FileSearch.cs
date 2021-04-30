@@ -19,7 +19,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FileSearch : EventNotifier
     {
-        // Ignore Spelling: Finalizers, msgfdb, Deconcatenate, ser, gzipping, Workflows, dta, mgf, CompassXtract
+        // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
+        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, Workflows
 
         #region "Constants"
 
