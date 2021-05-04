@@ -23,11 +23,9 @@ namespace AnalysisManagerBase.DataFileTools
         {
             try
             {
-                var scanStatsFile = new FileInfo(Path.Combine(
-                    workingDirectory, datasetName + ReaderFactory.SCAN_STATS_FILENAME_SUFFIX));
+                var scanStatsFile = new FileInfo(Path.Combine(workingDirectory, datasetName + ReaderFactory.SCAN_STATS_FILENAME_SUFFIX));
 
-                var extendedScanStatsFile = new FileInfo(Path.Combine(
-                    workingDirectory, datasetName + ReaderFactory.EXTENDED_SCAN_STATS_FILENAME_SUFFIX));
+                var extendedScanStatsFile = new FileInfo(Path.Combine(workingDirectory, datasetName + ReaderFactory.EXTENDED_SCAN_STATS_FILENAME_SUFFIX));
 
                 return CreatePrecursorInfoFile(datasetName, scanStatsFile, extendedScanStatsFile);
             }
