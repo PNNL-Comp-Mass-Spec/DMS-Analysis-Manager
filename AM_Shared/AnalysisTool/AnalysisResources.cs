@@ -4696,18 +4696,20 @@ namespace AnalysisManagerBase.AnalysisTool
                 };
 
                 // Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
-                // Furthermore, the full path to the fasta file is only necessary when creating Sequest parameter files
-                var toolName = mJobParams.GetParam("ToolName", string.Empty);
-                if (string.IsNullOrWhiteSpace(toolName))
+                // Furthermore, the full path to the fasta file is only necessary when creating SEQUEST parameter files
+
+                // Job parameter ToolName tracks the pipeline script name (whose name is based on the primary analysis tool for the script)
+                var scriptName = mJobParams.GetParam("ToolName", string.Empty);
+                if (string.IsNullOrWhiteSpace(scriptName))
                 {
                     LogError("Job parameter ToolName is empty");
                     return false;
                 }
 
-                var paramFileType = SetParamFileType(toolName);
+                var paramFileType = SetParamFileType(scriptName);
                 if (paramFileType == IGenerateFile.ParamFileType.Invalid)
                 {
-                    LogError("Tool " + toolName + " is not supported by the ParamFileGenerator; update AnalysisResources and ParamFileGenerator.dll");
+                    LogError("Script " + scriptName + " is not supported by the ParamFileGenerator; update AnalysisResources and ParamFileGenerator.dll");
                     return false;
                 }
 
@@ -4842,36 +4844,40 @@ namespace AnalysisManagerBase.AnalysisTool
         // Ignore Spelling: Bioworks, moda, modplus, toppic
 
         /// <summary>
-        /// Specifies the Bioworks version for use by the Param File Generator DLL
+        /// Convert script name to param file type ID
         /// </summary>
-        /// <param name="toolName">Version specified in mgr config file</param>
+        /// <param name="scriptName">Pipeline script name</param>
         /// <returns>IGenerateFile.ParamFileType based on input version</returns>
-        protected IGenerateFile.ParamFileType SetParamFileType(string toolName)
+        protected IGenerateFile.ParamFileType SetParamFileType(string scriptName)
         {
             var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
             {
-                {"sequest", IGenerateFile.ParamFileType.BioWorks_Current},
-                {"xtandem", IGenerateFile.ParamFileType.X_Tandem},
-                {"inspect", IGenerateFile.ParamFileType.Inspect},
-                {"msgfplus", IGenerateFile.ParamFileType.MSGFPlus},
-                {"msalign_histone", IGenerateFile.ParamFileType.MSAlignHistone},
-                {"msalign", IGenerateFile.ParamFileType.MSAlign},
-                {"moda", IGenerateFile.ParamFileType.MODa},
-                {"mspathfinder", IGenerateFile.ParamFileType.MSPathFinder},
-                {"modplus", IGenerateFile.ParamFileType.MODPlus},
-                {"toppic", IGenerateFile.ParamFileType.TopPIC}
+                {"Sequest", IGenerateFile.ParamFileType.BioWorks_Current},
+                {"XTandem", IGenerateFile.ParamFileType.X_Tandem},
+                {"Inspect", IGenerateFile.ParamFileType.Inspect},
+                {"MSGFPlus", IGenerateFile.ParamFileType.MSGFPlus},
+                {"MSAlign_Histone", IGenerateFile.ParamFileType.MSAlignHistone},
+                {"MSAlign", IGenerateFile.ParamFileType.MSAlign},
+                {"MODa", IGenerateFile.ParamFileType.MODa},
+                {"MSPathFinder", IGenerateFile.ParamFileType.MSPathFinder},
+                {"MODPlus", IGenerateFile.ParamFileType.MODPlus},
+                {"TopPIC", IGenerateFile.ParamFileType.TopPIC},
+                {"MaxQuant", IGenerateFile.ParamFileType.MaxQuant}
             };
 
-            if (toolNameToTypeMapping.TryGetValue(toolName, out var paramFileType))
+            if (toolNameToTypeMapping.TryGetValue(scriptName, out var paramFileType))
             {
                 return paramFileType;
             }
 
-            var toolNameLCase = toolName.ToLower();
+            // Exact match not found; look for a partial match
+            // For example, script MSGFPlus_MzML contains "MSGFPlus", so we'll return ParamFileType.MSGFPlus
+
+            var scriptNameLCase = scriptName.ToLower();
 
             foreach (var entry in toolNameToTypeMapping)
             {
-                if (toolNameLCase.Contains(entry.Key.ToLower()))
+                if (scriptNameLCase.Contains(entry.Key.ToLower()))
                 {
                     return entry.Value;
                 }
