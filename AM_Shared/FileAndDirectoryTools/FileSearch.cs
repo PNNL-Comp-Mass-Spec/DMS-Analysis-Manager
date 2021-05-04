@@ -20,7 +20,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     public class FileSearch : EventNotifier
     {
         // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
-        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, Workflows
+        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, txt, Workflows
 
         #region "Constants"
 

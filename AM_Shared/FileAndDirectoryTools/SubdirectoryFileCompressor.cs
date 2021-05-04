@@ -21,6 +21,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </remarks>
     public class SubdirectoryFileCompressor : EventNotifier
     {
+        // Ignore Spelling: resourcer
+
         /// <summary>
         /// This file tracks information on all of the files in the working directory and its subdirectories
         /// It is a tab-delimited file with four columns:
