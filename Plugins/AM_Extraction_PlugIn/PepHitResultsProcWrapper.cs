@@ -291,7 +291,15 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    filesToCheck.Add("_syn.txt");
+                    if (resultType == PeptideHitResultTypes.XTandem)
+                    {
+                        filesToCheck.Add("_xt.txt");
+                    }
+                    else
+                    {
+                        filesToCheck.Add("_syn.txt");
+                    }
+
                     fileDescription = "synopsis";
                 }
 
