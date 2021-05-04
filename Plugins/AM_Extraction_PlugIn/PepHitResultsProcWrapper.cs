@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using PeptideHitResultsProcessor.Processor;
+using PHRPReader;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -77,7 +78,7 @@ namespace AnalysisManagerExtractionPlugin
         public CloseOutType ExtractDataFromResults(
             string peptideSearchResultsFileName,
             string fastaFilePath,
-            string resultType)
+            PeptideHitResultTypes resultType)
         {
             //  Let the DLL auto-determines the input filename, based on the dataset name
             return ExtractDataFromResults(peptideSearchResultsFileName, true, true, fastaFilePath, resultType);
@@ -97,7 +98,7 @@ namespace AnalysisManagerExtractionPlugin
             bool createFirstHitsFile,
             bool createSynopsisFile,
             string fastaFilePath,
-            string resultType)
+            PeptideHitResultTypes resultType)
         {
             var paramFileName = mJobParams.GetParam("ParmFileName");
 
@@ -317,7 +318,7 @@ namespace AnalysisManagerExtractionPlugin
                                 filesToCheck.Add("_ProteinMods.txt");
                             }
                         }
-                        else if (resultType == AnalysisResources.RESULT_TYPE_MSGFPLUS)
+                        else if (resultType == PeptideHitResultTypes.MSGFPlus)
                         {
                             filesToCheck.Add("_ProteinMods.txt");
                         }
