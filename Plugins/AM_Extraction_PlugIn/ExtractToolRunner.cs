@@ -183,7 +183,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     case AnalysisResources.RESULT_TYPE_MODA:
                         // Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        result = ConvertMODaResultsToTxt(out var filteredMODaResultsFilePath, true);
+                        result = ConvertMODaResultsToTxt(out var filteredMODaResultsFileName, true);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -192,14 +192,14 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MODa";
-                        result = RunPhrpForMODa(filteredMODaResultsFilePath);
+                        result = RunPhrpForMODa(filteredMODaResultsFileName);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
-                        result = ConvertMODaResultsToTxt(out filteredMODaResultsFilePath, false);
+                        result = ConvertMODaResultsToTxt(out _, false);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -208,7 +208,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     case AnalysisResources.RESULT_TYPE_MODPLUS:
                         // Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        result = ConvertMODPlusResultsToTxt(out var filteredMODPlusResultsFilePath, true);
+                        result = ConvertMODPlusResultsToTxt(out var filteredMODPlusResultsFileName, true);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -217,14 +217,14 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MODPlus";
-                        result = RunPhrpForMODPlus(filteredMODPlusResultsFilePath);
+                        result = RunPhrpForMODPlus(filteredMODPlusResultsFileName);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
 
                         // Convert the MODPlus results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
-                        result = ConvertMODPlusResultsToTxt(out filteredMODPlusResultsFilePath, false);
+                        result = ConvertMODPlusResultsToTxt(out _, false);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -319,33 +319,33 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Convert the MODa output file to a tab-delimited text file
         /// </summary>
-        /// <param name="filteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
+        /// <param name="filteredMODaResultsFileName">Output parameter: name of the filtered results file (in the working directory)</param>
         /// <param name="keepAllResults"></param>
         /// <returns>The path to the .txt file if successful; empty string if an error</returns>
-        private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFileName, bool keepAllResults)
         {
             var fdrThreshold = mJobParams.GetJobParameter("MODaFDRThreshold", 0.05f);
             var decoyPrefix = mJobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_");
 
             const bool isModPlus = false;
 
-            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODaResultsFilePath, keepAllResults);
+            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODaResultsFileName, keepAllResults);
         }
 
-        private CloseOutType ConvertMODPlusResultsToTxt(out string filteredMODPlusResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODPlusResultsToTxt(out string filteredMODPlusResultsFileName, bool keepAllResults)
         {
             var fdrThreshold = mJobParams.GetJobParameter("MODPlusDecoyFilterFDR", 0.05f);
             var decoyPrefix = mJobParams.GetJobParameter("MODPlusDecoyPrefix", "Reversed_");
 
             const bool isModPlus = true;
 
-            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODPlusResultsFilePath, keepAllResults);
+            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODPlusResultsFileName, keepAllResults);
         }
 
         private CloseOutType ConvertMODaOrMODPlusResultsToTxt(float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
-            out string filteredResultsFilePath, bool keepAllResults)
+            out string filteredResultsFileName, bool keepAllResults)
         {
-            filteredResultsFilePath = string.Empty;
+            filteredResultsFileName = string.Empty;
 
             try
             {
@@ -521,7 +521,7 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                filteredResultsFilePath = filteredResultsFile.FullName;
+                filteredResultsFileName = filteredResultsFile.Name;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
