@@ -17,6 +17,7 @@ using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PRISM.Logging;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -106,6 +107,7 @@ namespace AnalysisManagerExtractionPlugin
                 case RESULT_TYPE_MODPLUS:
                 case RESULT_TYPE_MSPATHFINDER:
                 case RESULT_TYPE_TOPPIC:
+                case RESULT_TYPE_MAXQUANT:
                     LogDebug(string.Format("{0} does not support running AScore as part of data extraction", resultType));
                     runAscore = false;
                     break;
@@ -550,6 +552,10 @@ namespace AnalysisManagerExtractionPlugin
                         result = GetTopPICFiles();
                         break;
 
+                    case RESULT_TYPE_MAXQUANT:
+                        result = GetMaxQuantFiles();
+                        break;
+
                     default:
                         LogError("Invalid tool result type: " + resultType);
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -675,6 +681,90 @@ namespace AnalysisManagerExtractionPlugin
             // Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Copy MaxQuant files to the working directory
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>Does not support retrieving PrecursorInfo.txt files from MyEMSL</remarks>
+        private CloseOutType GetMaxQuantFiles()
+        {
+            const string msmsFile = "msms.txt";
+
+            // Look for the file in the various directories
+            // A message will be logged if the file is not found
+            var sourceDirPath = FileSearch.FindDataFile(msmsFile, true, true);
+
+            if (string.IsNullOrWhiteSpace(sourceDirPath))
+            {
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            if (!FileSearch.FindAndRetrieveMiscFiles(msmsFile, false))
+            {
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            mJobParams.AddResultFileToSkip(msmsFile);
+
+            const string peptidesFile = "peptides.txt";
+            if (!FileSearch.FindAndRetrieveMiscFiles(peptidesFile, false))
+            {
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            mJobParams.AddResultFileToSkip(peptidesFile);
+
+            // Retrieve the precursor info file (or files if we used a data package to define multiple datasets)
+            // They should be in the parent directory above sourceDirPath
+
+            var sourceDirectory = new DirectoryInfo(sourceDirPath);
+            var fileCountCopied = GetMaxQuantPrecursorInfoFiles(sourceDirectory, out var fileCopyError);
+            if (fileCopyError)
+            {
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            if (fileCountCopied == 0 && sourceDirectory.Parent != null)
+            {
+                // Look for files in the parent directory
+                var fileCountCopiedParent = GetMaxQuantPrecursorInfoFiles(sourceDirectory.Parent, out var fileCopyErrorParent);
+
+                if (fileCopyErrorParent)
+                {
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                if (fileCountCopiedParent == 0)
+                {
+                    EvalMessage = "Could not find any _PrecursorInfo.txt files; will not be able to compute mass error values";
+                    LogWarning(EvalMessage);
+                }
+            }
+
+            mJobParams.AddResultFileExtensionToSkip("_PrecursorInfo.txt");
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private int GetMaxQuantPrecursorInfoFiles(DirectoryInfo sourceDirectory, out bool fileCopyError)
+        {
+            var fileCountCopied = 0;
+            fileCopyError = false;
+
+            foreach (var candidateFile in sourceDirectory.GetFiles("*_PrecursorInfo.txt"))
+            {
+                if (!mFileCopyUtilities.CopyFileToWorkDir(candidateFile.Name, sourceDirectory.FullName, mWorkDir, BaseLogger.LogLevels.ERROR, false))
+                {
+                    fileCopyError = true;
+                    return fileCountCopied;
+                }
+
+                fileCountCopied++;
+            }
+
+            return fileCountCopied;
         }
 
         private CloseOutType GetMODaFiles()

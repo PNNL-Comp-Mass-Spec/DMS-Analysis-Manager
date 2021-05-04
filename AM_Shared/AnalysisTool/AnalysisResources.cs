@@ -192,6 +192,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string RESULT_TYPE_TOPPIC = "TPC_Peptide_Hit";
 
         /// <summary>
+        /// Result type for MaxQuant
+        /// </summary>
+        public const string RESULT_TYPE_MAXQUANT = "MXQ_Peptide_Hit";
+
+        /// <summary>
         /// Concatenated dta file
         /// </summary>
         public const string CDTA_EXTENSION = "_dta.txt";

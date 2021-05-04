@@ -243,6 +243,12 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPHRPForTopPIC();
                         break;
 
+                    case AnalysisResources.RESULT_TYPE_MAXQUANT:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for MaxQuant";
+                        result = RunPHRPForMaxQuant();
+                        break;
+
                     default:
                         // Should never get here - invalid result type specified
                         LogError("Invalid ResultType specified: " + mJobParams.GetParam("ResultType"));
@@ -1272,11 +1278,27 @@ namespace AnalysisManagerExtractionPlugin
                 true);
         }
 
+        private CloseOutType RunPHRPForMaxQuant()
+        {
+            const string inputFileName = "msms.txt";
 
+            var synopsisFileName = mDatasetName + "_maxq_syn.txt";
 
+            var result = RunPHRPWork(
+                "MaxQuant",
+                inputFileName,
+                PeptideHitResultTypes.MaxQuant,
+                synopsisFileName,
+                false,
+                true);
 
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
 
+            // Summarize the number of PSMs in the synopsis file
+            // This is done by this class since the MaxQuant script does not have an MSGF job step
 
+            return SummarizePSMs(PeptideHitResultTypes.MaxQuant);
         }
 
         private CloseOutType RunPhrpForMSAlign()
