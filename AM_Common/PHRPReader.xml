@@ -5180,7 +5180,7 @@
             </summary>
             <returns>List of header names</returns>
         </member>
-        <member name="M:PHRPReader.Reader.MODPlusSynFileReader.GetColumnHeaderNamesAndIDs">
+        <member name="M:PHRPReader.Reader.MODPlusSynFileReader.GetColumnHeaderNamesAndIDs(System.Boolean)">
             <summary>
             Header names and enums for the PHRP synopsis file for this tool
             </summary>
