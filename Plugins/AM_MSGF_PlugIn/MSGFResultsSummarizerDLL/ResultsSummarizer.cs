@@ -1007,9 +1007,10 @@ namespace MSGFResultsSummarizer
                 // We use the Synopsis file to count the number of peptides and proteins observed
                 var phrpSynopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
 
-                if (ResultType == PeptideHitResultTypes.XTandem || ResultType == PeptideHitResultTypes.MSAlign ||
-                    ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus ||
-                    ResultType == PeptideHitResultTypes.MSPathFinder)
+                if (ResultType is
+                    PeptideHitResultTypes.XTandem or PeptideHitResultTypes.MSAlign or
+                    PeptideHitResultTypes.MODa or PeptideHitResultTypes.MODPlus or
+                    PeptideHitResultTypes.MSPathFinder or PeptideHitResultTypes.MaxQuant)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
