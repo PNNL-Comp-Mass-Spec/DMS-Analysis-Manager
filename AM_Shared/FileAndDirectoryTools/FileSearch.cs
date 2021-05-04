@@ -451,6 +451,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 //  c. Check the "inputDirectoryName" and then each of the Shared Results Directories in MyEMSL for this dataset
                 //  d. Check the "inputDirectoryName" and then each of the Shared Results Directories in the Archived dataset directory
 
+                // For MaxQuant results, also look in the txt directory below the input directory
+
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 var inputDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME);
 
@@ -473,26 +475,37 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 var directoriesToSearch = new List<string>();
+                var subdirectoriesToAppend = new List<string>();
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
+
+                if (scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase))
+                {
+                    subdirectoriesToAppend.Add("txt");
+                }
 
                 foreach (var parentDirPath in parentDirPaths)
                 {
-                    if (!string.IsNullOrEmpty(parentDirPath))
+                    if (string.IsNullOrEmpty(parentDirPath))
                     {
-                        if (!string.IsNullOrEmpty(inputDirectoryName))
-                        {
-                            // Parent directory \ Dataset directory \ Input directory
-                            directoriesToSearch.Add(FindDataFileAddFolder(parentDirPath, datasetDirectoryName, inputDirectoryName));
-                        }
-
-                        foreach (var sharedDirName in sharedResultDirNames)
-                        {
-                            // Parent directory \ Dataset directory \ Shared results directory
-                            directoriesToSearch.Add(FindDataFileAddFolder(parentDirPath, datasetDirectoryName, sharedDirName));
-                        }
-
-                        // Parent directory \ Dataset directory
-                        directoriesToSearch.Add(FindDataFileAddFolder(parentDirPath, datasetDirectoryName, string.Empty));
+                        continue;
                     }
+
+                    if (!string.IsNullOrEmpty(inputDirectoryName))
+                    {
+                        // Parent directory \ Dataset directory \ Input directory
+                        FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, inputDirectoryName, subdirectoriesToAppend);
+                    }
+
+                    foreach (var sharedDirName in sharedResultDirNames)
+                    {
+                        // Parent directory \ Dataset directory \ Shared results directory
+                        FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, sharedDirName, subdirectoriesToAppend);
+                    }
+
+                    // Parent directory \ Dataset directory
+                    FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, string.Empty, subdirectoriesToAppend);
                 }
 
                 var matchingDirectoryPath = string.Empty;
@@ -574,15 +587,37 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return string.Empty;
         }
 
-        private string FindDataFileAddFolder(string parentDirPath, string datasetDirName, string inputDirName)
+        private void FindDataFileAddDirectoryToCheck(
+            ICollection<string> directoriesToSearch,
+            string parentDirPath,
+            string datasetDirName,
+            string inputDirName,
+            IEnumerable<string> subdirectoriesToAppend)
         {
             var targetDirPath = Path.Combine(parentDirPath, datasetDirName);
-            if (!string.IsNullOrEmpty(inputDirName))
-            {
-                targetDirPath = Path.Combine(targetDirPath, inputDirName);
-            }
 
-            return targetDirPath;
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (string.IsNullOrEmpty(inputDirName))
+            {
+                FindDataFileAddDirectoryToCheck(directoriesToSearch, targetDirPath, subdirectoriesToAppend);
+            }
+            else
+            {
+                FindDataFileAddDirectoryToCheck(directoriesToSearch, Path.Combine(targetDirPath, inputDirName), subdirectoriesToAppend);
+            }
+        }
+
+        private void FindDataFileAddDirectoryToCheck(
+            ICollection<string> directoriesToSearch,
+            string directoryPath,
+            IEnumerable<string> subdirectoriesToAppend)
+        {
+            directoriesToSearch.Add(directoryPath);
+
+            foreach (var subdirectoryName in subdirectoriesToAppend)
+            {
+                directoriesToSearch.Add(Path.Combine(directoryPath, subdirectoryName));
+            }
         }
 
         /// <summary>
@@ -2504,7 +2539,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
 
-            var chameleonCachedDataDirPath= mMgrParams.GetParam("ChameleonCachedDataFolder");
+            var chameleonCachedDataDirPath = mMgrParams.GetParam("ChameleonCachedDataFolder");
             DirectoryInfo chameleonCachedDataDir;
 
             string unzipDirPathBase;
