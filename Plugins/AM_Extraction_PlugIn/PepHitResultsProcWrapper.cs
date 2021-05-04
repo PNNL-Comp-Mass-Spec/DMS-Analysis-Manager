@@ -87,14 +87,14 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Converts SEQUEST, X!Tandem, Inspect, MS-GF+, MSAlign, MODa, or MODPlus output file to a flat file
         /// </summary>
-        /// <param name="peptideSearchResultsFileName"></param>
+        /// <param name="peptideSearchResultsFilePath"></param>
         /// <param name="createFirstHitsFile"></param>
         /// <param name="createSynopsisFile"></param>
         /// <param name="fastaFilePath"></param>
         /// <param name="resultType"></param>
         /// <returns>Enum indicating success or failure</returns>
         public CloseOutType ExtractDataFromResults(
-            string peptideSearchResultsFileName,
+            string peptideSearchResultsFilePath,
             bool createFirstHitsFile,
             bool createSynopsisFile,
             string fastaFilePath,
@@ -113,7 +113,7 @@ namespace AnalysisManagerExtractionPlugin
                 mProgress = 0;
                 mErrMsg = string.Empty;
 
-                if (string.IsNullOrWhiteSpace(peptideSearchResultsFileName))
+                if (string.IsNullOrWhiteSpace(peptideSearchResultsFilePath))
                 {
                     ReportError("peptideSearchResultsFileName is empty; unable to run PHRP");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -122,13 +122,14 @@ namespace AnalysisManagerExtractionPlugin
                 // Define the modification definitions file name
                 var modDefsFileName = Path.GetFileNameWithoutExtension(paramFileName) + AnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
-                var psmResultsFile = new FileInfo(peptideSearchResultsFileName);
+                var psmResultsFile = new FileInfo(peptideSearchResultsFilePath);
                 if (psmResultsFile.Directory == null)
                 {
-                    ReportError("Unable to determine the parent directory of PeptideSearchResultsFileName: " + peptideSearchResultsFileName);
+                    ReportError("Unable to determine the parent directory of the PSM results file: " + peptideSearchResultsFilePath);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
+                // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
                 bool ignorePeptideToProteinMapErrors;
 
