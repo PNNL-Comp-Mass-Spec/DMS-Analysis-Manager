@@ -240,6 +240,12 @@ namespace AnalysisManagerMaxQuantPlugIn
                     directoriesToSkipZipping.Add(procDirectory);
                 }
 
+                var txtDirectory = new DirectoryInfo(Path.Combine(subdirectoryCompressor.WorkingDirectory.FullName, "txt"));
+                if (txtDirectory.Exists)
+                {
+                    directoriesToSkipZipping.Add(txtDirectory);
+                }
+
                 foreach (var subdirectory in subdirectoryCompressor.WorkingDirectory.GetDirectories("*", SearchOption.AllDirectories))
                 {
                     if (subdirectory.Parent == null)
