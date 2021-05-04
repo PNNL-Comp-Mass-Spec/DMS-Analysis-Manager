@@ -1246,346 +1246,81 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType RunPhrpForSEQUEST()
         {
-            CloseOutType result;
-            string synFilePath;
+            var inputFileName = mDatasetName + "_syn.txt";
 
-            var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-            RegisterPHRPEvents(phrp);
-
-            // Run the processor
-            if (mDebugLevel > 3)
-            {
-                LogDebug("ExtractToolRunner.RunPhrpForSEQUEST(); Starting PHRP");
-            }
-            try
-            {
-                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_syn.txt");
-                synFilePath = targetFilePath;
-
-                result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_SEQUEST);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception running PHRP", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            if (result == CloseOutType.CLOSEOUT_NO_DATA)
-            {
-                // Message has already been logged
-                return result;
-            }
-
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                var msg = "Error running PHRP";
-                if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                    msg += "; " + phrp.ErrMsg;
-                LogWarning(msg);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Validate that the mass errors are within tolerance
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.Sequest, paramFileName))
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            // Note that for SEQUEST, the synopsis file is the input file
+            return RunPHRPWork(
+                "SEQUEST",
+                inputFileName,
+                PeptideHitResultTypes.Sequest,
+                inputFileName,
+                true,
+                true);
         }
 
         private CloseOutType RunPhrpForXTandem()
         {
-            string synFilePath;
+            var inputFileName = mDatasetName + "_xt.xml";
+            var synopsisFileName = mDatasetName + "_xt.txt";
 
-            var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-            RegisterPHRPEvents(phrp);
+            return RunPHRPWork(
+                "X!Tandem",
+                inputFileName,
+                PeptideHitResultTypes.XTandem,
+                synopsisFileName,
+                true,
+                true);
+        }
 
-            // Run the processor
-            if (mDebugLevel > 2)
-            {
-                LogDebug("ExtractToolRunner.RunPhrpForXTandem(); Starting PHRP");
-            }
 
-            try
-            {
-                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_xt.xml");
-                synFilePath = Path.Combine(mWorkDir, mDatasetName + "_xt.txt");
 
-                var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_XTANDEM);
 
-                if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                    // Message has already been logged
-                    return result;
-                }
 
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    var msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                        msg += "; " + phrp.ErrMsg;
-                    LogWarning(msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception running PHRP", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
 
-            // Validate that the mass errors are within tolerance
-            // Use input.xml for the X!Tandem parameter file
-            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.XTandem, "input.xml"))
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private CloseOutType RunPhrpForMSAlign()
         {
-            string synFilePath;
+            var inputFileName = mDatasetName + "_MSAlign_ResultTable.txt";
+            var synopsisFileName = mDatasetName + "_msalign_syn.txt";
 
-            var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-            RegisterPHRPEvents(phrp);
+            var result = RunPHRPWork(
+                "MSAlign",
+                inputFileName,
+                PeptideHitResultTypes.MSAlign,
+                synopsisFileName,
+                false,
+                true);
 
-            // Run the processor
-            if (mDebugLevel > 3)
-            {
-                LogDebug("ExtractToolRunner.RunPhrpForMSAlign(); Starting PHRP");
-            }
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
 
-            try
-            {
-                // Create the Synopsis file using the _MSAlign_ResultTable.txt file
-                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_ResultTable.txt");
-                synFilePath = Path.Combine(mWorkDir, mDatasetName + "_msalign_syn.txt");
+            // Summarize the number of PSMs in the synopsis file
+            // This is done by this class since the MSAlign script does not have an MSGF job step
 
-                var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_MSALIGN);
-
-                if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                    // Message has already been logged
-                    return result;
-                }
-
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    var msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                        msg += "; " + phrp.ErrMsg;
-                    LogWarning(msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception running PHRP", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Summarize the number of PSMs in _msalign_syn.txt
-            // ReSharper disable once UseImplicitlyTypedVariableEvident
-            const PeptideHitResultTypes resultType = PeptideHitResultTypes.MSAlign;
-
-            var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
-            RegisterEvents(summarizer);
-
-            // Monitor events for "permission was denied"
-            UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
-            summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
-
-            summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
-
-            summarizer.ContactDatabase = true;
-            summarizer.PostJobPSMResultsToDB = false;
-            summarizer.SaveResultsToTextFile = false;
-            summarizer.DatasetName = mDatasetName;
-
-            var success = summarizer.ProcessMSGFResults();
-
-            if (!success)
-            {
-                if (string.IsNullOrWhiteSpace(summarizer.ErrorMessage))
-                {
-                    LogError("Error summarizing the PSMs using MSGFResultsSummarizer");
-                }
-                else
-                {
-                    LogError("Error summarizing the PSMs: " + summarizer.ErrorMessage);
-                }
-
-                LogError("RunPhrpForMSAlign: " + mMessage);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Validate that the mass errors are within tolerance
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSAlign, paramFileName))
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return SummarizePSMs(PeptideHitResultTypes.MSAlign);
         }
 
-        private CloseOutType RunPhrpForMODa(string filteredMODaResultsFilePath)
+        private CloseOutType RunPhrpForMODa(string filteredMODaResultsFileName)
         {
-            var currentStep = "Initializing";
-
-            try
-            {
-                var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-                RegisterPHRPEvents(phrp);
-
-                // Run the processor
-                if (mDebugLevel > 3)
-                {
-                    LogDebug("ExtractToolRunner.RunPhrpForMODa(); Starting PHRP");
-                }
-
-                try
-                {
-                    // The goal:
-                    //   Create the _syn.txt files from the _moda.id.txt file
-
-                    currentStep = "Looking for the results file";
-
-                    if (!File.Exists(filteredMODaResultsFilePath))
-                    {
-                        LogError("Filtered MODa results file not found: " + Path.GetFileName(filteredMODaResultsFilePath));
-                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                    }
-
-                    currentStep = "Running PHRP";
-
-                    // Create the Synopsis and First Hits files using the _moda.id.txt file
-                    const bool CreateFirstHitsFile = true;
-                    const bool CreateSynopsisFile = true;
-
-                    var result = phrp.ExtractDataFromResults(filteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
-                        mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_MODA);
-
-                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                    {
-                        // Message has already been logged
-                        return result;
-                    }
-
-                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                            msg += "; " + phrp.ErrMsg;
-                        LogWarning(msg);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    currentStep = "Verifying results exist";
-
-                    // Skip the _moda.id.txt file
-                    mJobParams.AddResultFileToSkip(filteredMODaResultsFilePath);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception running PHRP", ex);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Could validate that the mass errors are within tolerance
-                // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MODa, paramFileName))
-                //     return CloseOutType.CLOSEOUT_FAILED;
-                // else
-                //     return CloseOutType.CLOSEOUT_SUCCESS;
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in RunPhrpForMODa at step " + currentStep, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return RunPHRPWork(
+                "MODa",
+                filteredMODaResultsFileName,
+                PeptideHitResultTypes.MODa,
+                string.Empty,
+                true,
+                true);
         }
 
-        private CloseOutType RunPhrpForMODPlus(string filteredMODPlusResultsFilePath)
+        private CloseOutType RunPhrpForMODPlus(string filteredMODPlusResultsFileName)
         {
-            var currentStep = "Initializing";
-
-            try
-            {
-                var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-                RegisterPHRPEvents(phrp);
-
-                // Run the processor
-                if (mDebugLevel > 3)
-                {
-                    LogDebug("ExtractToolRunner.RunPhrpForMODPlus(); Starting PHRP");
-                }
-
-                try
-                {
-                    // The goal:
-                    //   Create the _syn.txt files from the _modp.id.txt file
-
-                    currentStep = "Looking for the results file";
-
-                    if (!File.Exists(filteredMODPlusResultsFilePath))
-                    {
-                        LogError("Filtered MODPlus results file not found: " + Path.GetFileName(filteredMODPlusResultsFilePath));
-                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                    }
-
-                    currentStep = "Running PHRP";
-
-                    // Create the Synopsis file using the _modp.id.txt file
-                    const bool CreateFirstHitsFile = false;
-                    const bool CreateSynopsisFile = true;
-
-                    var result = phrp.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
-                        mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_MODPLUS);
-
-                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                    {
-                        // Message has already been logged
-                        return result;
-                    }
-
-                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                            msg += "; " + phrp.ErrMsg;
-                        LogWarning(msg);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception running PHRP", ex);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Could validate that the mass errors are within tolerance
-                // var paramFileName = mJobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MODPlus, paramFileName))
-                //     return CloseOutType.CLOSEOUT_FAILED;
-                // else
-                //     return CloseOutType.CLOSEOUT_SUCCESS;
-
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in RunPhrpForMODPlus at step " + currentStep, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return RunPHRPWork(
+                "MODPlus",
+                filteredMODPlusResultsFileName,
+                PeptideHitResultTypes.MODPlus,
+                string.Empty,
+                false,
+                true);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -1777,7 +1512,7 @@ namespace AnalysisManagerExtractionPlugin
                     const bool createMSGFPlusSynopsisFile = true;
 
                     result = phrp.ExtractDataFromResults(targetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
-                        mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_MSGFPLUS);
+                        mGeneratedFastaFilePath, PeptideHitResultTypes.MSGFPlus);
 
                     if (result == CloseOutType.CLOSEOUT_NO_DATA)
                     {
@@ -1836,82 +1571,51 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPHRPForMSPathFinder()
         {
-            var currentStep = "Initializing";
+            var inputFileName = mDatasetName + "_IcTDA.tsv";
 
-            try
-            {
-                var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-                RegisterPHRPEvents(phrp);
+            // ReSharper disable once StringLiteralTypo
+            var synopsisFileName = mDatasetName + "_mspath_syn.txt";
 
-                // Run the processor
-                if (mDebugLevel > 3)
-                {
-                    LogDebug("ExtractToolRunner.RunPhrpForMSPathFinder(); Starting PHRP");
-                }
-
-                var synFilePath = Path.Combine(mWorkDir, mDatasetName + "_mspath_syn.txt");
-
-                try
-                {
-                    // The goal:
-                    //   Create the _syn.txt files from the _IcTda.tsv file
-
-                    currentStep = "Looking for the results file";
-
-                    var msPathFinderResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_IcTDA.tsv");
-                    if (!File.Exists(msPathFinderResultsFilePath))
-                    {
-                        LogError("MSPathFinder results file not found: " + Path.GetFileName(msPathFinderResultsFilePath));
-                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                    }
-
-                    currentStep = "Running PHRP";
-
-                    // Create the Synopsis file using the _IcTDA.tsv file
-                    const bool CreateFirstHitsFile = false;
-                    const bool CreateSynopsisFile = true;
-
-                    var result = phrp.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
-                        mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_MSPATHFINDER);
-
-                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                    {
-                        // Message has already been logged
-                        return result;
-                    }
-
-                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                            msg += "; " + phrp.ErrMsg;
-                        LogWarning(msg);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception running PHRP", ex);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Validate that the mass errors are within tolerance
-                var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSPathFinder, paramFileName))
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in RunPhrpForMSPathFinder at step " + currentStep, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            return RunPHRPWork(
+                "MSPathFinder",
+                inputFileName,
+                PeptideHitResultTypes.MSPathFinder,
+                synopsisFileName,
+                false,
+                true);
         }
 
         private CloseOutType RunPHRPForTopPIC()
+        {
+            var inputFileName = mDatasetName + "_TopPIC_PrSMs.txt";
+            var synFilePath = mDatasetName + "_toppic_syn.txt";
+
+            return RunPHRPWork(
+                "TopPIC",
+                inputFileName,
+                PeptideHitResultTypes.TopPIC,
+                synFilePath,
+                false,
+                true);
+        }
+
+        /// <summary>
+        /// Run the Peptide Hit Results Processor
+        /// </summary>
+        /// <param name="toolName"></param>
+        /// <param name="inputFileName"></param>
+        /// <param name="resultType"></param>
+        /// <param name="synopsisFileName">If defined, calls ValidatePHRPResultMassErrors() to validate mass errors in the synopsis file</param>
+        /// <param name="createFirstHitsFile"></param>
+        /// <param name="createSynopsisFile"></param>
+        /// <returns>CloseOutType representing success or failure</returns>
+        private CloseOutType RunPHRPWork(
+            string toolName,
+            string inputFileName,
+            PeptideHitResultTypes resultType,
+            string synopsisFileName,
+            bool createFirstHitsFile,
+            bool createSynopsisFile)
         {
             var currentStep = "Initializing";
 
@@ -1923,33 +1627,32 @@ namespace AnalysisManagerExtractionPlugin
                 // Run the processor
                 if (mDebugLevel > 3)
                 {
-                    LogDebug("ExtractToolRunner.RunPHRPForTopPIC(); Starting PHRP");
+                    LogDebug("ExtractToolRunner.RunPHRPWork(); Starting PHRP");
                 }
 
-                var synFilePath = Path.Combine(mWorkDir, mDatasetName + "_toppic_syn.txt");
+                var synFilePath = string.IsNullOrWhiteSpace(synopsisFileName) ? string.Empty : Path.Combine(mWorkDir, synopsisFileName);
 
                 try
                 {
                     // The goal:
-                    //   Create the _syn.txt files from the _TopPIC_PrSMs.txt file
+                    //   Create the _syn.txt file from the input file
 
                     currentStep = "Looking for the results file";
 
-                    var topPICResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_TopPIC_PrSMs.txt");
-                    if (!File.Exists(topPICResultsFilePath))
+                    var peptideSearchResultsFilePath = Path.Combine(mWorkDir, inputFileName);
+                    if (!File.Exists(peptideSearchResultsFilePath))
                     {
-                        LogError("TopPIC results file not found: " + Path.GetFileName(topPICResultsFilePath));
+                        LogError(string.Format("{0} results file not found: {1}", toolName, Path.GetFileName(peptideSearchResultsFilePath)));
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     currentStep = "Running PHRP";
 
-                    // Create the Synopsis file using the _TopPIC_PrSMs.txt file
-                    const bool CreateFirstHitsFile = false;
-                    const bool CreateSynopsisFile = true;
+                    // Create the Synopsis (and optionally the first hits file) using the input file
 
-                    var result = phrp.ExtractDataFromResults(topPICResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
-                        mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_TOPPIC);
+                    var result = phrp.ExtractDataFromResults(
+                        peptideSearchResultsFilePath, createFirstHitsFile, createSynopsisFile,
+                        mGeneratedFastaFilePath, resultType);
 
                     if (result == CloseOutType.CLOSEOUT_NO_DATA)
                     {
@@ -1972,9 +1675,18 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (string.IsNullOrWhiteSpace(synFilePath))
+                {
+                    // Skip validating mass errors
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
                 // Validate that the mass errors are within tolerance
-                var paramFileName = mJobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.TopPIC, paramFileName))
+                var parameterFileName = resultType == PeptideHitResultTypes.XTandem
+                    ? "input.xml"
+                    : mJobParams.GetParam("ParmFileName");
+
+                if (!ValidatePHRPResultMassErrors(synFilePath, resultType, parameterFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1983,7 +1695,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error in RunPHRPForTopPIC at step " + currentStep, ex);
+                LogError("Error in RunPHRPWork at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -2049,109 +1761,81 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForInSpecT()
         {
-            string synFilePath;
-
-            var phrp = new PepHitResultsProcWrapper(mMgrParams, mJobParams);
-            RegisterPHRPEvents(phrp);
-
-            // Run the processor
-            if (mDebugLevel > 3)
-            {
-                LogDebug("ExtractToolRunner.RunPhrpForInSpecT(); Starting PHRP");
-            }
-
             try
             {
-                // The goal:
-                //   Get the _fht.txt and _FScore_fht.txt files from the _inspect.txt file in the _inspect_fht.zip file
-                //   Get the other files from the _inspect.txt file in the_inspect.zip file
+                // Part 1
+                // Create the First Hits file
 
                 // Extract _inspect.txt from the _inspect_fht.zip file
-                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect_fht.zip");
-                var success = UnzipFile(targetFilePath);
+                var fhtZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect_fht.zip");
+                var successUnzipFht = UnzipFile(fhtZipFilePath);
 
-                if (!success)
+                if (!successUnzipFht)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Create the First Hits files using the _inspect.txt file
-                var createInspectFirstHitsFile = true;
-                var createInspectSynopsisFile = false;
-                targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.txt");
+                var inputFileName = mDatasetName + "_inspect.txt";
 
-                // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                var result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
-                    mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_INSPECT);
-                // ReSharper enable ConditionIsAlwaysTrueOrFalse
-
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    var msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                        msg += "; " + phrp.ErrMsg;
-                    LogWarning(msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Delete the _inspect.txt file
-                File.Delete(targetFilePath);
-
-                // Extract _inspect.txt from the _inspect.zip file
-                targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.zip");
-                success = UnzipFile(targetFilePath);
-
-                if (!success)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Create the Synopsis files using the _inspect.txt file
-                createInspectFirstHitsFile = false;
-                createInspectSynopsisFile = true;
-                targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.txt");
-                synFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect_syn.txt");
-
-                // ReSharper disable ConditionIsAlwaysTrueOrFalse
-                result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
-                    mGeneratedFastaFilePath, AnalysisResources.RESULT_TYPE_INSPECT);
-                // ReSharper restore ConditionIsAlwaysTrueOrFalse
-
-                if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                    // Message has already been logged
-                    return result;
-                }
-
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    var msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                        msg += "; " + phrp.ErrMsg;
-                    LogWarning(msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var resultFht = RunPHRPWork(
+                    "Inspect",
+                    inputFileName,
+                    PeptideHitResultTypes.Inspect,
+                    string.Empty,
+                    true,
+                    false);
 
                 try
                 {
                     // Delete the _inspect.txt file
-                    File.Delete(targetFilePath);
+                    File.Delete(Path.Combine(mWorkDir, inputFileName));
                 }
                 catch (Exception)
                 {
                     // Ignore errors here
                 }
+
+                // Part 2
+                // Create the Synopsis file
+
+                // Extract _inspect.txt from the _inspect.zip file
+                var synZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.zip");
+                var successUnzipSyn = UnzipFile(synZipFilePath);
+
+                if (!successUnzipSyn)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var synFileName = mDatasetName + "_inspect_syn.txt";
+
+                var resultSyn = RunPHRPWork(
+                    "Inspect",
+                    inputFileName,
+                    PeptideHitResultTypes.Inspect,
+                    synFileName,
+                    false,
+                    true);
+
+                try
+                {
+                    // Delete the _inspect.txt file
+                    File.Delete(Path.Combine(mWorkDir, inputFileName));
+                }
+                catch (Exception)
+                {
+                    // Ignore errors here
+                }
+
+                if (resultSyn == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Message has already been logged
+                    return resultSyn;
+                }
             }
             catch (Exception ex)
             {
-                LogError("Exception running PHRP", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            // Validate that the mass errors are within tolerance
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.Inspect, paramFileName))
-            {
+                LogError("Exception running PHRP for Inspect", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2763,6 +2447,42 @@ namespace AnalysisManagerExtractionPlugin
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
+        }
+
+        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType)
+        {
+            var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
+            RegisterEvents(summarizer);
+
+            // Monitor events for "permission was denied"
+            UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
+            summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+
+            summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+
+            summarizer.ContactDatabase = true;
+            summarizer.PostJobPSMResultsToDB = false;
+            summarizer.SaveResultsToTextFile = false;
+            summarizer.DatasetName = mDatasetName;
+
+            var success = summarizer.ProcessMSGFResults();
+
+            if (success)
+            {
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
+            if (string.IsNullOrWhiteSpace(summarizer.ErrorMessage))
+            {
+                LogError("Error summarizing the PSMs using MSGFResultsSummarizer");
+            }
+            else
+            {
+                LogError("Error summarizing the PSMs: " + summarizer.ErrorMessage);
+            }
+
+            LogError("SummarizePSMs: " + mMessage);
+            return CloseOutType.CLOSEOUT_FAILED;
         }
 
         private bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType,
