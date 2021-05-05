@@ -1348,11 +1348,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Creating decoy fasta file at " + decoyFastaFilePath);
                 }
 
-                var fastaFileReader = new ProteinFileReader.FastaFileReader
-                {
-                    ProteinLineStartChar = PROTEIN_LINE_START_CHAR,
-                    ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
-                };
+                var fastaFileReader = new ProteinFileReader.FastaFileReader();
 
                 if (!fastaFileReader.OpenFile(inputFilePath))
                 {
