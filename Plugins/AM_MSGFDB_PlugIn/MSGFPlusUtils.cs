@@ -1368,13 +1368,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (inputProteinFound)
                         {
                             // Write the forward protein
-                            writer.WriteLine(PROTEIN_LINE_START_CHAR + fastaFileReader.ProteinName + " " +
-                                                          fastaFileReader.ProteinDescription);
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + fastaFileReader.ProteinName +
+                                             PROTEIN_LINE_ACCESSION_END_CHAR + fastaFileReader.ProteinDescription);
                             WriteProteinSequence(writer, fastaFileReader.ProteinSequence);
 
                             // Write the decoy protein
-                            writer.WriteLine(PROTEIN_LINE_START_CHAR + NAME_PREFIX + fastaFileReader.ProteinName + " " +
-                                                          fastaFileReader.ProteinDescription);
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + NAME_PREFIX + fastaFileReader.ProteinName +
+                                             PROTEIN_LINE_ACCESSION_END_CHAR + fastaFileReader.ProteinDescription);
                             WriteProteinSequence(writer, ReverseString(fastaFileReader.ProteinSequence));
                         }
                     } while (inputProteinFound);
