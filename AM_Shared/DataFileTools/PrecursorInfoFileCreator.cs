@@ -67,6 +67,8 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var scanStatsReader = new ScanStatsReader();
+                RegisterEvents(scanStatsReader);
+
                 var scanStats = scanStatsReader.ReadScanStatsData(scanStatsFile.FullName);
 
                 if (scanStatsReader.ErrorMessage.Length > 0)
@@ -76,6 +78,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var extendedScanStatsReader = new ExtendedScanStatsReader();
+                RegisterEvents(extendedScanStatsReader);
 
                 var extendedScanStats = extendedScanStatsReader.ReadExtendedScanStatsData(extendedScanStatsFile.FullName);
 
