@@ -121,43 +121,47 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     // Parse out the values
 
-                    if (Global.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
+                    if (!Global.TryGetValueInt(dataCols, scanNumberColIndex, out var scanNumber))
                     {
-                        var storeData = false;
+                        continue;
+                    }
 
-                        if (Global.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
+                    var storeData = false;
+
+                    if (Global.TryGetValue(dataCols, collisionModeColIndex, out var collisionMode))
+                    {
+                        storeData = true;
+                    }
+                    else
+                    {
+                        if (Global.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
                         {
+                            filterText = dataCols[scanFilterColIndex];
+
+                            // Parse the filter text to determine scan type
+                            collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText);
+
                             storeData = true;
                         }
-                        else
-                        {
-                            if (Global.TryGetValue(dataCols, scanFilterColIndex, out var filterText))
-                            {
-                                filterText = dataCols[scanFilterColIndex];
+                    }
 
-                                // Parse the filter text to determine scan type
-                                collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText);
+                    if (!storeData)
+                    {
+                        continue;
+                    }
 
-                                storeData = true;
-                            }
-                        }
+                    if (string.IsNullOrEmpty(collisionMode))
+                    {
+                        collisionMode = "MS";
+                    }
+                    else if (collisionMode == "0")
+                    {
+                        collisionMode = "MS";
+                    }
 
-                        if (storeData)
-                        {
-                            if (string.IsNullOrEmpty(collisionMode))
-                            {
-                                collisionMode = "MS";
-                            }
-                            else if (collisionMode == "0")
-                            {
-                                collisionMode = "MS";
-                            }
-
-                            if (!mScanTypeMap.ContainsKey(scanNumber))
-                            {
-                                mScanTypeMap.Add(scanNumber, collisionMode);
-                            }
-                        }
+                    if (!mScanTypeMap.ContainsKey(scanNumber))
+                    {
+                        mScanTypeMap.Add(scanNumber, collisionMode);
                     }
                 }
             }
