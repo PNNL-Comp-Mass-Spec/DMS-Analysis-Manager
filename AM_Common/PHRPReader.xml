@@ -1156,6 +1156,14 @@
             These columns correspond to the tab-delimited _PrecursorInfo.txt file created by the Analysis Manager
             </summary>
         </member>
+        <member name="T:PHRPReader.Data.ReporterIonsFileColumns">
+            <summary>
+            These columns correspond to the tab-delimited _ReporterIons.txt file (created by MASIC)
+            </summary>
+            <remarks>
+            Note that the reporter ion intensity columns appear between the ReporterIonIntensityMax column and the WeightedAvgPctIntensityCorrection column
+            </remarks>
+        </member>
         <member name="T:PHRPReader.Data.ScanStatsFileColumns">
             <summary>
             These columns correspond to the tab-delimited _ScanStats.txt file created by MASIC or MSFileInfoScanner
@@ -1164,6 +1172,11 @@
         <member name="T:PHRPReader.Data.SequestSynopsisFileColumns">
             <summary>
             These columns correspond to the tab-delimited file created from SEQUEST .out files
+            </summary>
+        </member>
+        <member name="T:PHRPReader.Data.SICStatsFileColumns">
+            <summary>
+            These columns correspond to the tab-delimited SICStats.txt file created by MASIC
             </summary>
         </member>
         <member name="T:PHRPReader.Data.TopPICSynFileColumns">
@@ -1222,6 +1235,11 @@
             Precursor error, in ppm; corrected for isotope selection errors
             </summary>
         </member>
+        <member name="T:PHRPReader.Data.PrecursorInfo">
+            <summary>
+            This class tracks data read from a _PrecursorInfo.txt file
+            </summary>
+        </member>
         <member name="P:PHRPReader.Data.PrecursorInfo.ScanNumber">
             <summary>
             Scan number
@@ -1263,6 +1281,358 @@
             <param name="scanNumber"></param>
             <param name="scanTimeMinutes"></param>
             <param name="scanType"></param>
+        </member>
+        <member name="T:PHRPReader.Data.ReporterIonColumnInfo">
+            <summary>
+            Information about reporter ion related columns in a _ReporterIons.txt file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.IntensityColumnIndex">
+            <summary>
+            Index of the column with reporter ion intensity values
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.IntensityColumnName">
+            <summary>
+            Name of the column with reporter ion intensity values
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.MZ">
+            <summary>
+            Reporter ion m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.OriginalIntensityColumnIndex">
+            <summary>
+            Index of the column with reporter ion original intensity values
+            </summary>
+            <remarks>
+            These columns will only be present if the MASIC parameter file had ReporterIonSaveUncorrectedIntensities=True
+            </remarks>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.SignalToNoiseColumnIndex">
+            <summary>
+            Index of the column with reporter ion signal/noise values
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonColumnInfo.ResolutionColumnIndex">
+            <summary>
+            Index of the column with reporter ion resolution values
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Data.ReporterIonColumnInfo.#ctor(System.Int32,System.String,System.Double)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="intensityColumnIndex"></param>
+            <param name="intensityColumnName"></param>
+            <param name="reporterIonMz"></param>
+        </member>
+        <member name="M:PHRPReader.Data.ReporterIonColumnInfo.ToString">
+            <summary>
+            Show the intensity column name
+            </summary>
+        </member>
+        <member name="T:PHRPReader.Data.ReporterIonInfo">
+            <summary>
+            This class tracks data read from a _ReporterIons.txt file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ScanNumber">
+            <summary>
+            Scan number
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.CollisionMode">
+            <summary>
+            Collision mode
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ParentIonMZ">
+            <summary>
+            Parent ion m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ParentIonMzText">
+            <summary>
+            Parent ion m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.BasePeakIntensity">
+            <summary>
+            Base peak intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.BasePeakMZ">
+            <summary>
+            Base peak m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ReporterIonIntensityMax">
+            <summary>
+            Maximum reporter ion intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.WeightedAvgPctIntensityCorrection">
+            <summary>
+            Weighted average intensity correction percentage
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ReporterIons">
+            <summary>
+            Reporter ion data for this scan
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ReporterIonColumnData">
+            <summary>
+            Tab-delimited list of data in the reporter-ion related columns, starting with the ReporterIonIntensityMax column
+            </summary>
+            <remarks>
+            The MASICResultsMerger program uses this property
+            </remarks>
+        </member>
+        <member name="M:PHRPReader.Data.ReporterIonInfo.#ctor(System.Int32)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="scanNumber"></param>
+        </member>
+        <member name="M:PHRPReader.Data.ReporterIonInfo.ToString">
+            <summary>
+            Show the scan number
+            </summary>
+        </member>
+        <member name="T:PHRPReader.Data.ReporterIonStats">
+            <summary>
+            Details of an observed reporter ion
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonStats.MZ">
+            <summary>
+            Reporter ion m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonStats.Intensity">
+            <summary>
+            Reporter ion intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonStats.OriginalIntensity">
+            <summary>
+            Reporter ion intensity, before interference correction
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonStats.SignalToNoise">
+            <summary>
+            Signal to noise ratio
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ReporterIonStats.Resolution">
+            <summary>
+            Resolution
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Data.ReporterIonStats.#ctor(System.Double)">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="T:PHRPReader.Data.SICStatsInfo">
+            <summary>
+            Data loaded from a SICStats file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.Dataset">
+            <summary>
+            Dataset ID
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.ParentIonIndex">
+            <summary>
+            Parent Ion Index
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.MZ">
+            <summary>
+            Precursor m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.MzText">
+            <summary>
+            Precursor m/z
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.SurveyScanNumber">
+            <summary>
+            Survey Scan Number
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.FragScanNumber">
+            <summary>
+            Fragmentation Scan Number
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.OptimalPeakApexScanNumber">
+            <summary>
+            Optimal Peak Apex Scan Number
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakApexOverrideParentIonIndex">
+            <summary>
+            Peak Apex Override Parent Ion Index
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.CustomSICPeak">
+            <summary>
+            Custom SIC Peak
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakScanStart">
+            <summary>
+            Peak Scan Start
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakScanEnd">
+            <summary>
+            Peak Scan End
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakScanMaxIntensity">
+            <summary>
+            Peak Scan Max Intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakMaxIntensity">
+            <summary>
+            Peak Max Intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakMaxIntensityText">
+            <summary>
+            Peak Max Intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakSignalToNoiseRatio">
+            <summary>
+            Peak Signal To Noise Ratio
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakSignalToNoiseRatioText">
+            <summary>
+            Peak Signal To Noise Ratio
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.FWHMInScans">
+            <summary>
+            FWHM In Scans
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakArea">
+            <summary>
+            Peak Area
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakAreaText">
+            <summary>
+            Peak Area
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.ParentIonIntensity">
+            <summary>
+            Parent Ion Intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.ParentIonIntensityText">
+            <summary>
+            Parent Ion Intensity
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakBaselineNoiseLevel">
+            <summary>
+            Peak Baseline Noise Level
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakBaselineNoiseLevelText">
+            <summary>
+            Peak Baseline Noise Level
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakBaselineNoiseStDev">
+            <summary>
+            Peak Baseline Noise StDev
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakBaselineNoiseStDevText">
+            <summary>
+            Peak Baseline Noise StDev
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakBaselinePointsUsed">
+            <summary>
+            Peak Baseline Points Used
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.StatMomentsArea">
+            <summary>
+            Stat Moments Area
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.StatMomentsAreaText">
+            <summary>
+            Stat Moments Area
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.CenterOfMassScan">
+            <summary>
+            Center Of Mass Scan
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakStDev">
+            <summary>
+            Peak StDev
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakStDevText">
+            <summary>
+            Peak StDev
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakSkew">
+            <summary>
+            Peak Skew
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakSkewText">
+            <summary>
+            Peak Skew
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakKSStat">
+            <summary>
+            Peak KSStat
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.PeakKSStatText">
+            <summary>
+            Peak KSStat
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.SICStatsInfo.StatMomentsDataCountUsed">
+            <summary>
+            Stat Moments Data Count Used
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Data.SICStatsInfo.#ctor(System.Int32,System.Int32)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="parentIonIndex"></param>
+            <param name="fragScanNumber"></param>
+        </member>
+        <member name="M:PHRPReader.Data.SICStatsInfo.ToString">
+            <summary>
+            Show the fragmentation scan number and parent ion m/z
+            </summary>
         </member>
         <member name="T:PHRPReader.Data.AminoAcidModInfo">
             <summary>
@@ -2613,6 +2983,11 @@
             </summary>
             <param name="scanNumber"></param>
         </member>
+        <member name="M:PHRPReader.Data.ScanStatsExInfo.ToString">
+            <summary>
+            Show the scan number and scan filter
+            </summary>
+        </member>
         <member name="T:PHRPReader.Data.ScanStatsInfo">
             <summary>
             Data loaded from a ScanStats file
@@ -2628,6 +3003,11 @@
             Scan time, in minutes
             </summary>
         </member>
+        <member name="P:PHRPReader.Data.ScanStatsInfo.ScanTimeMinutesText">
+            <summary>
+            Scan time, in minutes
+            </summary>
+        </member>
         <member name="P:PHRPReader.Data.ScanStatsInfo.ScanType">
             <summary>
             Scan type (aka scan level)
@@ -2639,7 +3019,17 @@
             Total ion intensity (TIC)
             </summary>
         </member>
+        <member name="P:PHRPReader.Data.ScanStatsInfo.TotalIonIntensityText">
+            <summary>
+            Total ion intensity (TIC)
+            </summary>
+        </member>
         <member name="P:PHRPReader.Data.ScanStatsInfo.BasePeakIntensity">
+            <summary>
+            Base peak intensity (BPI)
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ScanStatsInfo.BasePeakIntensityText">
             <summary>
             Base peak intensity (BPI)
             </summary>
@@ -2649,7 +3039,17 @@
             Base peak m/z
             </summary>
         </member>
+        <member name="P:PHRPReader.Data.ScanStatsInfo.BasePeakMzText">
+            <summary>
+            Base peak m/z
+            </summary>
+        </member>
         <member name="P:PHRPReader.Data.ScanStatsInfo.BasePeakSignalToNoiseRatio">
+            <summary>
+            Base peak signal to noise ratio (S/N)
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ScanStatsInfo.BasePeakSignalToNoiseRatioText">
             <summary>
             Base peak signal to noise ratio (S/N)
             </summary>
@@ -4184,6 +4584,14 @@
             <param name="preferredName">Output: preferred PHRP result filename (based on whether a _syn.txt or _fht.txt file is present)</param>
             <returns>Mod summary file path if found; otherwise, an empty string</returns>
         </member>
+        <member name="M:PHRPReader.ReaderFactory.FlattenArray(System.Collections.Generic.IList{System.String},System.Int32)">
+            <summary>
+            Join a series of string values together, separating by a tab
+            </summary>
+            <param name="dataValues"></param>
+            <param name="indexStart">Index of the first item to include</param>
+            <returns>Tab-separated list of values</returns>
+        </member>
         <member name="M:PHRPReader.ReaderFactory.GetCollisionMode(System.String)">
             <summary>
             Determines the collision mode using the Scan Type name
@@ -4374,7 +4782,7 @@
             <param name="filterText"></param>
             <param name="parentIonMz"></param>
             <returns>True if parsing successful</returns>
-            <remarks>The original version of this code is in ThermoRawFileReader.XRawFileIO.ExtractParentIonMZFromFilterText(string, out double)</remarks>
+            <remarks>The original version of this code is in ThermoRawFileReader.FilterTextUtilities.ExtractParentIonMZFromFilterText(string, out double)</remarks>
         </member>
         <member name="M:PHRPReader.ReaderFactory.FinalizeCurrentPSM">
             <summary>
@@ -4421,6 +4829,14 @@
             <summary>
             MaxQuant first hits file suffix
             </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MaxQuant results
+            </para>
+            </remarks>
         </member>
         <member name="F:PHRPReader.Reader.MaxQuantSynFileReader.MAXQUANT_SEARCH_ENGINE_NAME">
             <summary>
@@ -4616,6 +5032,7 @@
             <summary>
             Column headers
             </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
         </member>
         <member name="F:PHRPReader.Reader.PrecursorInfoFileReader.mPrecursorInfoFileColumn">
             <summary>
@@ -4664,6 +5081,145 @@
             </summary>
             <param name="inputFilePath">Input file path</param>
             <returns>A Dictionary where keys are ScanNumber and values are instances of the PrecursorInfo class</returns>
+        </member>
+        <member name="T:PHRPReader.Reader.ReporterIonsFileReader">
+            <summary>
+            This class reads a tab-delimited _ReporterIons.txt file (created by MASIC)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.ReporterIonsFileReader.mColumnHeaders">
+            <summary>
+            Column headers
+            </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
+        </member>
+        <member name="F:PHRPReader.Reader.ReporterIonsFileReader.mReporterIonHeaders">
+            <summary>
+            Reporter ion specific header info read from the input file
+            </summary>
+            <remarks>Keys are 0-based column index, values are column name</remarks>
+        </member>
+        <member name="F:PHRPReader.Reader.ReporterIonsFileReader.mReporterIonsFileColumn">
+            <summary>
+            Mapping from enum to Reporter Ions file column name
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.ReporterIonsFileReader.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.ReporterIonsFileReader.ReporterIonHeaderNames">
+            <summary>
+            Reporter ion header names, starting with the ReporterIonIntensityMax column
+            </summary>
+            <remarks>
+            The MASICResultsMerger program uses this property
+            </remarks>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.CacheReporterIonColumnInfo(System.Collections.Generic.IReadOnlyList{System.String},System.Collections.Generic.IDictionary{System.String,System.Int32})">
+            <summary>
+            Examine the column headers to populate mReporterIonHeaders
+            </summary>
+            <param name="columnNames"></param>
+            <param name="reporterIonMapping"></param>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.DefineColumnHeaders">
+            <summary>
+            Define header names
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.GetColumnHeaderNamesAndIDs">
+            <summary>
+            Header names and enums for the _ReporterIons.txt file
+            </summary>
+            <returns>Dictionary of header names and enum values</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.GetColumnMapFromHeaderLine(System.Collections.Generic.List{System.String})">
+            <summary>
+            Compares the names in headerNames to the standard header names tracked by the dictionary returned by GetColumnHeaderNamesAndIDs
+            Populates a dictionary mapping enum ReporterIonsFileColumns to the 0-based index in columnNames
+            </summary>
+            <param name="headerNames"></param>
+            <returns>Dictionary mapping the enum value to the column index in headerNames (0-based column index)</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.GetColumnNameByID(PHRPReader.Data.ReporterIonsFileColumns)">
+            <summary>
+            Get the column name associated with the given enum
+            </summary>
+            <param name="column"></param>
+            <returns>Column name</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.ReporterIonsFileReader.ReadReporterIonData(System.String)">
+            <summary>
+            Open a tab-delimited _ReporterIons.txt file and read the data
+            </summary>
+            <param name="inputFilePath">Input file path</param>
+            <returns>A Dictionary where keys are ScanNumber and values are instances of the ReporterIonInfo class</returns>
+        </member>
+        <member name="T:PHRPReader.Reader.SICStatsReader">
+            <summary>
+            This class reads MASIC SIC stats data from a tab-delimited _SICStats.txt file
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.SICStatsReader.mColumnHeaders">
+            <summary>
+            Column headers
+            </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
+        </member>
+        <member name="F:PHRPReader.Reader.SICStatsReader.mSICStatsFileColumn">
+            <summary>
+            Mapping from enum to Scan Stats file column name
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.SICStatsReader.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.DefineColumnHeaders">
+            <summary>
+            Define header names
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.GetColumnHeaderNamesAndIDs">
+            <summary>
+            Header names and enums for the _SICStats.txt file
+            </summary>
+            <returns>Dictionary of header names and enum values</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.GetColumnMapFromHeaderLine(System.Collections.Generic.List{System.String})">
+            <summary>
+            Compares the names in headerNames to the standard header names tracked by the dictionary returned by GetColumnHeaderNamesAndIDs
+            Populates a dictionary mapping enum SICStatsFileColumns to the 0-based index in columnNames
+            </summary>
+            <param name="headerNames"></param>
+            <returns>Dictionary mapping the enum value to the column index in headerNames (0-based column index)</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.GetColumnNameByID(PHRPReader.Data.SICStatsFileColumns)">
+            <summary>
+            Get the column name associated with the given enum
+            </summary>
+            <param name="column"></param>
+            <returns>Column name</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.SICStatsReader.ReadSICStatsData(System.String)">
+            <summary>
+            Open a tab-delimited _SICStats.txt file and read the data
+            </summary>
+            <param name="inputFilePath">Input file path</param>
+            <returns>A Dictionary where keys are fragment scan number and values are instances of SICStatsInfo</returns>
         </member>
         <member name="T:PHRPReader.Reader.InspectSynFileReader">
             <summary>
@@ -4887,6 +5443,14 @@
             <summary>
             MODa first hits file suffix
             </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MaxQuant results
+            </para>
+            </remarks>
         </member>
         <member name="F:PHRPReader.Reader.MODaSynFileReader.MODa_SEARCH_ENGINE_NAME">
             <summary>
@@ -5095,6 +5659,14 @@
             <summary>
             MODPlus first hits file suffix
             </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MaxQuant results
+            </para>
+            </remarks>
         </member>
         <member name="F:PHRPReader.Reader.MODPlusSynFileReader.MODPlus_SEARCH_ENGINE_NAME">
             <summary>
@@ -5824,6 +6396,7 @@
             <summary>
             Column headers
             </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
         </member>
         <member name="F:PHRPReader.Reader.MSGFResultsReader.mMSGFFileColumn">
             <summary>
@@ -5887,6 +6460,14 @@
             <summary>
             MSPathFinder first hits file suffix
             </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MaxQuant results
+            </para>
+            </remarks>
         </member>
         <member name="F:PHRPReader.Reader.MSPathFinderSynFileReader.MSPathFinder_SEARCH_ENGINE_NAME">
             <summary>
@@ -6671,6 +7252,7 @@
             <summary>
             Column headers
             </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
         </member>
         <member name="F:PHRPReader.Reader.ExtendedScanStatsReader.mExtendedScanStatsFileColumn">
             <summary>
@@ -6724,6 +7306,12 @@
             <summary>
             This class reads MASIC ScanStats data from a tab-delimited _ScanStats.txt file
             </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.ScanStatsReader.mColumnHeaders">
+            <summary>
+            Column headers
+            </summary>
+            <remarks>Keys are column name, values are 0-based column index</remarks>
         </member>
         <member name="F:PHRPReader.Reader.ScanStatsReader.mScanStatsFileColumn">
             <summary>
@@ -7200,6 +7788,14 @@
             <summary>
             X!Tandem first hits file suffix
             </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MaxQuant results
+            </para>
+            </remarks>
         </member>
         <member name="F:PHRPReader.Reader.XTandemSynFileReader.XT_SEARCH_ENGINE_NAME">
             <summary>
