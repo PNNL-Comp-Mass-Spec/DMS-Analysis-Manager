@@ -76,7 +76,8 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var extendedScanStatsReader = new ExtendedScanStatsReader();
-                var scanStatsEx = extendedScanStatsReader.ReadExtendedScanStatsData(extendedScanStatsFile.FullName);
+
+                var extendedScanStats = extendedScanStatsReader.ReadExtendedScanStatsData(extendedScanStatsFile.FullName);
 
                 if (extendedScanStatsReader.ErrorMessage.Length > 0)
                 {
@@ -104,7 +105,7 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     var scanInfo = item.Value;
 
-                    if (!scanStatsEx.TryGetValue(scanInfo.ScanNumber, out var extendedScanStatsInfo))
+                    if (!extendedScanStats.TryGetValue(scanInfo.ScanNumber, out var extendedScanStatsInfo))
                     {
                         OnWarningEvent(string.Format(
                             "Did not find scan {0} in the extended scan stats file; this is unexpected", scanInfo.ScanNumber));
