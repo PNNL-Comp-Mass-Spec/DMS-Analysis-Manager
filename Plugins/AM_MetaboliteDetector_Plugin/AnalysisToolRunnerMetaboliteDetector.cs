@@ -322,7 +322,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -342,7 +342,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

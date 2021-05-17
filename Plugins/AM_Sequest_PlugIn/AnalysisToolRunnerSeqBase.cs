@@ -797,7 +797,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 // Note that IDPicker uses Tool_Version_Info_Sequest.txt when creating pepXML files
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

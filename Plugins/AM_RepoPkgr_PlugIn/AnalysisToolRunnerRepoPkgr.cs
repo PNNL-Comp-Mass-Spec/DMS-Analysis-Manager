@@ -694,7 +694,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
             }
             catch (Exception ex)
             {

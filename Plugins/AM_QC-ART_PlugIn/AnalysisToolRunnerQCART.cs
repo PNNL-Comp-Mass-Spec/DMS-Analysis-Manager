@@ -675,7 +675,7 @@ namespace AnalysisManagerQCARTPlugin
                 try
                 {
                     toolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -694,7 +694,7 @@ namespace AnalysisManagerQCARTPlugin
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

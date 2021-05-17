@@ -149,7 +149,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 try
                 {
                     toolVersionInfo = "Unknown";
-                    SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -190,7 +190,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

@@ -367,7 +367,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

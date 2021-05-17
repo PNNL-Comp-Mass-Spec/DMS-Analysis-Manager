@@ -1274,7 +1274,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 try
                 {
                     toolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -1341,7 +1341,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

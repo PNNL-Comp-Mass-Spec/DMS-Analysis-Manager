@@ -490,7 +490,7 @@ namespace AnalysisManagerTopFDPlugIn
                     AnalysisResourcesTopFD.JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION,
                     string.Empty);
 
-                SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -642,7 +642,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

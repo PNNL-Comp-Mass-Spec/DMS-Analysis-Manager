@@ -201,7 +201,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -248,7 +248,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

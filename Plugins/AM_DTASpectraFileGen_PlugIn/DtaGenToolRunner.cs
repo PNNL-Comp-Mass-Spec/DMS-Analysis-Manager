@@ -1024,7 +1024,7 @@ namespace DTASpectraFileGen
                 {
                     LogError("DtaGenerator not found: " + dtaGeneratorAppPath);
                     toolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -1096,7 +1096,7 @@ namespace DTASpectraFileGen
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {
@@ -1130,7 +1130,7 @@ namespace DTASpectraFileGen
 
             try
             {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

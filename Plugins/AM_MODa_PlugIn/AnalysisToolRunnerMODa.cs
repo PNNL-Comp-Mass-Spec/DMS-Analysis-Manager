@@ -469,7 +469,7 @@ namespace AnalysisManagerMODaPlugIn
             try
             {
                 // Tool_Version_Info_MODa.txt is required by IDPicker
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

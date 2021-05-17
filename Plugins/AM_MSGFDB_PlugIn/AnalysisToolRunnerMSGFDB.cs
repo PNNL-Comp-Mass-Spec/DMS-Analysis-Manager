@@ -1331,7 +1331,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Need to pass saveToolVersionTextFile to True so that the ToolVersionInfo file gets created
                 // The PeptideListToXML program uses that file when creating .pepXML files
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

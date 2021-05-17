@@ -225,7 +225,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
