@@ -997,7 +997,7 @@ namespace AnalysisManagerFormularityPlugin
                 "TestFSDBSearch.exe"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
 
             return success;
         }

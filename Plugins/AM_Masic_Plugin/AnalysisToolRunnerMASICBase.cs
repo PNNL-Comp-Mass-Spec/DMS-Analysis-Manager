@@ -655,7 +655,7 @@ namespace AnalysisManagerMasicPlugin
         private bool StoreToolVersionInfo()
         {
             var masicExecutablePath = mMgrParams.GetParam("MasicProgLoc");
-            var success = StoreDotNETToolVersionInfo(masicExecutablePath);
+            var success = StoreDotNETToolVersionInfo(masicExecutablePath, false);
 
             return success;
         }

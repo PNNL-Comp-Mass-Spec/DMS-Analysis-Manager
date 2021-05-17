@@ -586,7 +586,7 @@ namespace AnalysisManagerNOMSIPlugin
         /// </summary>
         protected bool StoreToolVersionInfo(string progLoc)
         {
-            var success = StoreDotNETToolVersionInfo(progLoc);
+            var success = StoreDotNETToolVersionInfo(progLoc, true);
 
             return success;
         }

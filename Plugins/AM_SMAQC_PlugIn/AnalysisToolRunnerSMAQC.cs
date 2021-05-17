@@ -784,7 +784,7 @@ namespace AnalysisManagerSMAQCPlugIn
 #pragma warning restore 162
             }
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, false);
 
             return success;
         }

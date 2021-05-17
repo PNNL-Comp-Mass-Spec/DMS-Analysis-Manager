@@ -399,11 +399,12 @@ namespace AnalysisManagerBase.JobConfig
         /// Stores the tool version info in the database
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        public bool StoreDotNETToolVersionInfo(string progLoc)
+        public bool StoreDotNETToolVersionInfo(string progLoc, bool saveToolVersionTextFile = true)
         {
-            return StoreDotNETToolVersionInfo(progLoc, new List<string>());
+            return StoreDotNETToolVersionInfo(progLoc, new List<string>(), saveToolVersionTextFile);
         }
 
         /// <summary>
@@ -411,9 +412,10 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        public bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
+        public bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs, bool saveToolVersionTextFile = true)
         {
             var toolVersionInfo = string.Empty;
 
@@ -427,7 +429,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 try
                 {
-                    return SetStepTaskToolVersion("Unknown", new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion("Unknown", new List<FileInfo>(), saveToolVersionTextFile);
                 }
                 catch (Exception ex)
                 {
@@ -473,7 +475,7 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var success = SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile: false);
+                var success = SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
                 return success;
             }
             catch (Exception ex)

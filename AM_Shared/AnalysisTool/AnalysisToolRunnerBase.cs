@@ -3468,11 +3468,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Stores the tool version info in the database
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        protected bool StoreDotNETToolVersionInfo(string progLoc)
+        protected bool StoreDotNETToolVersionInfo(string progLoc, bool saveToolVersionTextFile)
         {
-            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc);
+            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, saveToolVersionTextFile);
         }
 
         /// <summary>
@@ -3480,11 +3481,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
-        protected bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs)
+        protected bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs, bool saveToolVersionTextFile)
         {
-            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, additionalDLLs, saveToolVersionTextFile);
         }
 
         /// <summary>

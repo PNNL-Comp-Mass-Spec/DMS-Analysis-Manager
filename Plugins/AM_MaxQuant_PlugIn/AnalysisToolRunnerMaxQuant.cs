@@ -904,7 +904,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 "MaxQuantPLib.dll"
             };
 
-            return StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs);
+            return StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs, true);
         }
 
         /// <summary>

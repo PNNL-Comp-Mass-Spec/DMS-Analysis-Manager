@@ -290,7 +290,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 "UIMFLibrary.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
 
             return success;
         }

@@ -462,7 +462,7 @@ namespace AnalysisManagerPBFGenerator
                 "InformedProteomics.Backend.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
 
             return success;
         }

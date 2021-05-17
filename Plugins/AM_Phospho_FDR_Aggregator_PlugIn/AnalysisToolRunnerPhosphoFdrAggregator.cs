@@ -1079,7 +1079,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 "AScore_DLL.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
 
             return success;
         }

@@ -499,7 +499,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 "DeconTools.Workflows.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(targetedWorkflowsConsoleProgLoc, additionalDLLs);
+            var success = StoreDotNETToolVersionInfo(targetedWorkflowsConsoleProgLoc, additionalDLLs, true);
 
             return success;
         }

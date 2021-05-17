@@ -849,7 +849,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 "InformedProteomics.TopDown.dll"
             };
 
-            return StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+            return StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
         }
 
         #endregion

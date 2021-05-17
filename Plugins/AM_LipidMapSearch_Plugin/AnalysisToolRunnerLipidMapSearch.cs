@@ -860,7 +860,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// </summary>
         private bool StoreToolVersionInfo(string progLoc)
         {
-            var success = StoreDotNETToolVersionInfo(progLoc);
+            var success = StoreDotNETToolVersionInfo(progLoc, true);
 
             return success;
         }

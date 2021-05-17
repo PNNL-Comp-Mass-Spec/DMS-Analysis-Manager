@@ -166,7 +166,7 @@ namespace AnalysisManager_IDM_Plugin
         {
             var idmDLL = Path.Combine(Global.GetAppDirectoryPath(), "InterDetect.dll");
 
-            StoreDotNETToolVersionInfo(idmDLL);
+            StoreDotNETToolVersionInfo(idmDLL, true);
         }
 
         #endregion
