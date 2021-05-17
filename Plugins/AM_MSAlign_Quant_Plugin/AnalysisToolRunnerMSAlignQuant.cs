@@ -16,6 +16,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSAlignQuant : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Acetylation, Da, Phosphorylation, Pyroglutomate, quant, quantitation
+
         #region "Module Variables"
 
         protected const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";
@@ -264,7 +266,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return string.Empty;
                 }
 
-                // Optionally make a trimmed version of the PSM Results file file for testing purposes
+                // Optionally make a trimmed version of the PSM Results file for testing purposes
 
                 // var fullResultsPath = Path.Combine(mWorkDir, mSAlignResultTableName);
                 // var trimmedFilePath = Path.Combine(mWorkDir, Dataset + "_TrimmedResults.tmp");

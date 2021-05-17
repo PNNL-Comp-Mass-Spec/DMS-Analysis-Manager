@@ -20,6 +20,8 @@ namespace AnalysisManagerDtaSplitPlugIn
     /// </summary>
     public class AnalysisToolRunnerDtaSplit : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: pre
+
         #region "Module Variables"
 
         protected Regex r_FileSeparator;
@@ -120,7 +122,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         }
 
         /// <summary>
-        /// Split the dta txt file into multiple files
+        /// Split the dta.txt file into multiple files
         /// </summary>
         /// <param name="sourceFilePath">Input data file path</param>
         /// <param name="segmentCountToCreate">Number of segments to create</param>
@@ -360,9 +362,9 @@ namespace AnalysisManagerDtaSplitPlugIn
         }
 
         /// <summary>
-        /// This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
+        /// This function reads the input file one byte at a time, looking for the first occurrence of character code 10 or 13 (aka CR or LF)
         /// When found, the next byte is examined
-        /// If the next byte is also Chr(10) or Chr(13), the line terminator is assumed to be 2 bytes; if not found, it is assumed to be one byte
+        /// If the next byte is also character code 10 or 13, the line terminator is assumed to be 2 bytes; if not found, it is assumed to be one byte
         /// </summary>
         /// <param name="fi"></param>
         /// <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>

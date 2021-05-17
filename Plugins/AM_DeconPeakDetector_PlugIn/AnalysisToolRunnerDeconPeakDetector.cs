@@ -19,6 +19,8 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
     /// </summary>
     public class AnalysisToolRunnerDeconPeakDetector : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Decon
+
         #region "Constants and Enums"
 
         private const string DECON_PEAK_DETECTOR_EXE_NAME = "HammerOrDeconSimplePeakDetector.exe";

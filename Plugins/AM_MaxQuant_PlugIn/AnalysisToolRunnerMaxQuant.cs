@@ -28,7 +28,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: \andromeda, andromeda, apar, apl, aplfiles, deisotoping, dotnet, dryrun
-        // Ignore Spelling: proc, Quant, resourcer, sdk, secpepFiles, txt
+        // Ignore Spelling: proc, ptms, Quant, resourcer, sdk, secpepFiles, txt
 
         // ReSharper restore CommentTypo
 
@@ -1325,7 +1325,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     // Replace the experiment nodes
                     ReplaceChildNodes(doc, "experiments", experimentNodes);
 
-                    // Replace the fraction number
+                    // Replace the fraction nodes
                     ReplaceChildNodes(doc, "fractions", fractionNodes);
 
                     // Create the updated XML file
