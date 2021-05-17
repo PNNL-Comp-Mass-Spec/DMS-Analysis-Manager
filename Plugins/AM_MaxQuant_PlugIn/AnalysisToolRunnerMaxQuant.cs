@@ -1294,6 +1294,9 @@ namespace AnalysisManagerMaxQuantPlugIn
                     var filePathNodes = new List<XElement>();
                     var experimentNodes = new List<XElement>();
                     var fractionNodes = new List<XElement>();
+                    var ptmNodes = new List<XElement>();
+                    var paramGroupIndexNodes = new List<XElement>();
+                    var referenceChannelNodes = new List<XElement>();
 
                     // If the experiment ends in text similar to "_f22", assume this is a fractionated sample and this is fraction 22
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -1313,6 +1316,10 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                         var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
                         fractionNodes.Add(new XElement("short", fractionNumber));
+
+                        ptmNodes.Add(new XElement("boolean", "False"));
+                        paramGroupIndexNodes.Add(new XElement("int", "0"));
+                        referenceChannelNodes.Add(new XElement("string", string.Empty));
                     }
 
                     // Replace the first FastaFileInfo node
@@ -1327,6 +1334,16 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     // Replace the fraction nodes
                     ReplaceChildNodes(doc, "fractions", fractionNodes);
+
+                    // Replace the PTM nodes
+                    // ReSharper disable once StringLiteralTypo
+                    ReplaceChildNodes(doc, "ptms", ptmNodes);
+
+                    // Replace the param group index nodes
+                    ReplaceChildNodes(doc, "paramGroupIndices", paramGroupIndexNodes);
+
+                    // Replace the reference channel nodes
+                    ReplaceChildNodes(doc, "referenceChannel", referenceChannelNodes);
 
                     // Create the updated XML file
                     var settings = new XmlWriterSettings
