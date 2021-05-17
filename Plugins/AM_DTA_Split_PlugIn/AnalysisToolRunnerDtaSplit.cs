@@ -376,11 +376,11 @@ namespace AnalysisManagerDtaSplitPlugIn
             TextReader tr = fi.OpenText();
             for (var counter = 1; counter <= fi.Length; counter++)
             {
-                var testcode = tr.Read();
-                if (testcode == 10 || testcode == 13)
+                var testCode = tr.Read();
+                if (testCode == 10 || testCode == 13)
                 {
-                    var testcode2 = tr.Read();
-                    if (testcode2 == 10 || testcode2 == 13)
+                    var testCode2 = tr.Read();
+                    if (testCode2 == 10 || testCode2 == 13)
                     {
                         endCount = 2;
                         break;

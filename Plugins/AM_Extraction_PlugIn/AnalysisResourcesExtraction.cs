@@ -168,7 +168,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (commentIndex > 1)
                         {
-                            modDefParts= modDef.Substring(0, commentIndex).Trim().Split(',').ToList();
+                            modDefParts = modDef.Substring(0, commentIndex).Trim().Split(',').ToList();
                         }
                         else
                         {
@@ -439,15 +439,20 @@ namespace AnalysisManagerExtractionPlugin
             mPendingFileRenames = new Dictionary<string, string>();
 
             var resultType = mJobParams.GetParam("ResultType");
+            if (string.IsNullOrWhiteSpace(resultTypeName))
+            {
+                LogError("Job parameter ResultType is missing; cannot get resources for extraction");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
             // Get analysis results files
-            if (GetInputFiles(resultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
+            if (GetInputFiles(resultTypeName, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Get misc files
-            if (RetrieveMiscFiles(resultType) != CloseOutType.CLOSEOUT_SUCCESS)
+            if (RetrieveMiscFiles(resultTypeName) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -467,7 +472,9 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             if (!mRetrieveOrganismDB)
+            {
                 return CloseOutType.CLOSEOUT_SUCCESS;
+            }
 
             var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
             if (!skipProteinMods || createPepToProtMapFile)
@@ -496,10 +503,10 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Retrieves input files needed for extraction
         /// </summary>
-        /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
+        /// <param name="resultTypeName">String specifying type of analysis results input to extraction process</param>
         /// <param name="createPepToProtMapFile"></param>
         /// <returns>CloseOutType specifying results</returns>
-        private CloseOutType GetInputFiles(string resultType, out bool createPepToProtMapFile)
+        private CloseOutType GetInputFiles(string resultTypeName, out bool createPepToProtMapFile)
         {
             createPepToProtMapFile = false;
 
@@ -513,7 +520,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 CloseOutType result;
-                switch (resultType)
+                switch (resultTypeName)
                 {
                     case RESULT_TYPE_SEQUEST:
                         result = GetSEQUESTFiles();
@@ -557,7 +564,7 @@ namespace AnalysisManagerExtractionPlugin
                         break;
 
                     default:
-                        LogError("Invalid tool result type: " + resultType);
+                        LogError("Invalid tool result type: " + resultTypeName);
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -566,15 +573,15 @@ namespace AnalysisManagerExtractionPlugin
                     return result;
                 }
 
-                RetrieveToolVersionFile(resultType);
+                RetrieveToolVersionFile(resultTypeName);
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
                 LogError("Error retrieving input files", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private CloseOutType GetSEQUESTFiles()
@@ -1298,7 +1305,7 @@ namespace AnalysisManagerExtractionPlugin
         /// (including the search engine parameter file, _ModDefs.txt and MassCorrectionTags.txt)
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
-        protected internal CloseOutType RetrieveMiscFiles(string resultType)
+        protected internal CloseOutType RetrieveMiscFiles(string resultTypeName)
         {
             var paramFileName = mJobParams.GetParam("ParmFileName");
             var modDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
@@ -1327,7 +1334,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Confirm that the file was actually created
                 var fiModDefsFile = new FileInfo(Path.Combine(mWorkDir, modDefsFilename));
 
-                if (!fiModDefsFile.Exists && resultType == RESULT_TYPE_MSPATHFINDER)
+                if (!fiModDefsFile.Exists && resultTypeName.Equals(RESULT_TYPE_MSPATHFINDER))
                 {
                     // MSPathFinder should have already created the ModDefs file during the previous step
                     // Retrieve it from the transfer directory now
@@ -1335,13 +1342,13 @@ namespace AnalysisManagerExtractionPlugin
                     fiModDefsFile.Refresh();
                 }
 
-                if (resultType == RESULT_TYPE_XTANDEM)
+                if (resultTypeName.Equals(RESULT_TYPE_XTANDEM))
                 {
                     // Retrieve the taxonomy.xml file (PHRPReader uses for it)
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
-                if (!fiModDefsFile.Exists && resultType != RESULT_TYPE_MSALIGN && resultType != RESULT_TYPE_TOPPIC)
+                if (!fiModDefsFile.Exists && !resultTypeName.Equals(RESULT_TYPE_MSALIGN) && !resultTypeName.Equals(RESULT_TYPE_TOPPIC))
                 {
                     mMessage = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +
@@ -1352,7 +1359,7 @@ namespace AnalysisManagerExtractionPlugin
                 mJobParams.AddResultFileToSkip(paramFileName);
                 mJobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
 
-                var logModFilesFileNotFound = (resultType == RESULT_TYPE_MSALIGN);
+                var logModFilesFileNotFound = resultTypeName.Equals(RESULT_TYPE_MSALIGN);
 
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, we need to keep the file
@@ -1380,10 +1387,12 @@ namespace AnalysisManagerExtractionPlugin
                 // Examine the parameter file to check whether a phospho STY search was performed
                 // If so, retrieving the instrument data file so that we can run AScore
 
-                var runAScore = CheckAScoreRequired(resultType, Path.Combine(mWorkDir, paramFileName));
+                var runAScore = CheckAScoreRequired(resultTypeName, Path.Combine(mWorkDir, paramFileName));
 
                 if (!runAScore)
+                {
                     return CloseOutType.CLOSEOUT_SUCCESS;
+                }
 
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
 
