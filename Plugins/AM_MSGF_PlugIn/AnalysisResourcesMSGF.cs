@@ -94,13 +94,14 @@ namespace AnalysisManagerMSGFPlugin
             var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
             bool validToolType;
-            if (resultType == PeptideHitResultTypes.Sequest ||
-                resultType == PeptideHitResultTypes.XTandem ||
-                resultType == PeptideHitResultTypes.Inspect ||
-                resultType == PeptideHitResultTypes.MSGFPlus || // MS-GF+
-                resultType == PeptideHitResultTypes.MODa ||
-                resultType == PeptideHitResultTypes.MODPlus ||
-                resultType == PeptideHitResultTypes.MSPathFinder)
+            if (resultType is
+                PeptideHitResultTypes.Sequest or
+                PeptideHitResultTypes.XTandem or
+                PeptideHitResultTypes.Inspect or
+                PeptideHitResultTypes.MSGFPlus or
+                PeptideHitResultTypes.MODa or
+                PeptideHitResultTypes.MODPlus or
+                PeptideHitResultTypes.MSPathFinder)
             {
                 validToolType = true;
             }
@@ -139,9 +140,10 @@ namespace AnalysisManagerMSGFPlugin
                     onlyCopyFirstHitsAndSynopsisFiles = !MSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion);
                 }
             }
-            else if (resultType == PeptideHitResultTypes.MODa ||
-                     resultType == PeptideHitResultTypes.MODPlus ||
-                     resultType == PeptideHitResultTypes.MSPathFinder)
+            else if (resultType is
+                PeptideHitResultTypes.MODa or
+                PeptideHitResultTypes.MODPlus or
+                PeptideHitResultTypes.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
                 onlyCopyFirstHitsAndSynopsisFiles = true;
