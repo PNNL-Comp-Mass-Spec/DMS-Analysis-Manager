@@ -1077,10 +1077,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="enabled"></param>
         public void SetOption(Global.AnalysisResourceOptions resourceOption, bool enabled)
         {
-            if (mResourceOptions == null)
-            {
-                mResourceOptions = new Dictionary<Global.AnalysisResourceOptions, bool>();
-            }
+            mResourceOptions ??= new Dictionary<Global.AnalysisResourceOptions, bool>();
 
             // Add/update resourceOption
             mResourceOptions[resourceOption] = enabled;
