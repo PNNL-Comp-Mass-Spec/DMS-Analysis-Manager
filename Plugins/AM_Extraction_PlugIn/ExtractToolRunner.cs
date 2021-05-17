@@ -119,7 +119,9 @@ namespace AnalysisManagerExtractionPlugin
                 CloseOutType result;
                 var processingSuccess = true;
 
-                switch (mJobParams.GetParam("ResultType"))
+                var resultTypeName = AnalysisResources.GetResultType(mJobParams);
+
+                switch (resultTypeName)
                 {
                     case AnalysisResources.RESULT_TYPE_SEQUEST:
                         // Run the Peptide Extractor DLL
@@ -251,7 +253,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     default:
                         // Should never get here - invalid result type specified
-                        LogError("Invalid ResultType specified: " + mJobParams.GetParam("ResultType"));
+                        LogError("Invalid ResultType specified: " + resultTypeName);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -2427,7 +2429,9 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            if (mJobParams.GetParam("ResultType") == AnalysisResources.RESULT_TYPE_SEQUEST)
+            var resultTypeName = AnalysisResources.GetResultType(mJobParams);
+
+            if (resultTypeName.Equals(AnalysisResources.RESULT_TYPE_SEQUEST))
             {
                 // SEQUEST result type
 

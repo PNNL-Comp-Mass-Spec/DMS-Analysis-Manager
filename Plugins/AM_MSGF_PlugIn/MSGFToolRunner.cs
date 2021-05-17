@@ -151,12 +151,14 @@ namespace AnalysisManagerMSGFPlugin
             var rawDataType = AnalysisResources.GetRawDataType(mJobParams.GetParam("RawDataType"));
 
             // Resolve resultType
-            var resultType = ReaderFactory.GetPeptideHitResultType(mJobParams.GetParam("ResultType"));
+            var resultTypeName = AnalysisResources.GetResultType(mJobParams);
+
+            var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
             if (resultType == PeptideHitResultTypes.Unknown)
             {
                 // Result type is not supported
-                LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + mJobParams.GetParam("ResultType"));
+                LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + resultTypeName);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -438,7 +438,8 @@ namespace AnalysisManagerExtractionPlugin
             mRetrieveOrganismDB = true;
             mPendingFileRenames = new Dictionary<string, string>();
 
-            var resultType = mJobParams.GetParam("ResultType");
+            var resultTypeName = GetResultType(mJobParams);
+
             if (string.IsNullOrWhiteSpace(resultTypeName))
             {
                 LogError("Job parameter ResultType is missing; cannot get resources for extraction");

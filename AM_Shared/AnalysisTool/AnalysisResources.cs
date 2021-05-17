@@ -197,6 +197,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string RESULT_TYPE_MAXQUANT = "MXQ_Peptide_Hit";
 
         /// <summary>
+        /// Result type for MSFragger
+        /// </summary>
+        public const string RESULT_TYPE_MSFRAGGER = "MSF_Peptide_Hit";
+
+        /// <summary>
         /// Concatenated dta file
         /// </summary>
         public const string CDTA_EXTENSION = "_dta.txt";
@@ -2456,6 +2461,74 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Look for job parameter ResultType
+        /// If found, return the value
+        /// Otherwise, try to determine the ResultType from the script name
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <returns>Result type name if found, otherwise an empty string</returns>
+        public static string GetResultType(IJobParams jobParams)
+        {
+            var resultTypeName = jobParams.GetParam("ResultType");
+
+            if (!string.IsNullOrWhiteSpace(resultTypeName))
+            {
+                return resultTypeName;
+            }
+
+            // The ToolName job parameter holds the name of the job script we are executing
+            var scriptName = jobParams.GetParam("ToolName");
+
+            if (scriptName.StartsWith("MaxQuant"))
+            {
+                return RESULT_TYPE_MAXQUANT;
+            }
+
+            if (scriptName.StartsWith("MODa"))
+            {
+                return RESULT_TYPE_MODA;
+            }
+
+            if (scriptName.StartsWith("MODPlus"))
+            {
+                return RESULT_TYPE_MODPLUS;
+            }
+
+            if (scriptName.StartsWith("MSAlign"))
+            {
+                return RESULT_TYPE_MSALIGN;
+            }
+
+            if (scriptName.StartsWith("MSFragger"))
+            {
+                return RESULT_TYPE_MSFRAGGER;
+            }
+
+            if (scriptName.StartsWith("MSPathFinder"))
+            {
+                return RESULT_TYPE_MSPATHFINDER;
+            }
+
+            if (scriptName.StartsWith("MSGFPlus"))
+            {
+                return RESULT_TYPE_MSGFPLUS;
+            }
+
+            if (scriptName.StartsWith("TopPIC"))
+            {
+                return RESULT_TYPE_TOPPIC;
+            }
+
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (scriptName.StartsWith("XTandem"))
+            {
+                return RESULT_TYPE_XTANDEM;
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
