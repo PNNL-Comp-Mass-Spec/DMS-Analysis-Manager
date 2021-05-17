@@ -140,14 +140,12 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception in CreatePrecursorInfoFile", ex);
                 return false;
             }
-
         }
     }
 }

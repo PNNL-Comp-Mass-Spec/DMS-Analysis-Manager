@@ -172,7 +172,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Parameter file formatting error
                 LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
                 return false;
-
             }
             catch (Exception ex)
             {

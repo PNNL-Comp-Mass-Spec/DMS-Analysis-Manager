@@ -2316,6 +2316,7 @@ namespace AnalysisManagerProg
                 ShowTrace("Getting job resources");
 
                 resultCode = toolResourcer.GetResources();
+
                 if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return true;
