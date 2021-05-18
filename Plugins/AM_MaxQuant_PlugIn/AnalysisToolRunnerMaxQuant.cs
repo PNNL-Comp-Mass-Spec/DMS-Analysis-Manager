@@ -904,7 +904,37 @@ namespace AnalysisManagerMaxQuantPlugIn
                 "MaxQuantPLib.dll"
             };
 
-            return StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs, true);
+            var success = StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs, true);
+            if (!success)
+                return false;
+
+            if (!StepToolName.Equals("MaxqS1", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            try
+            {
+                // Rename Tool_Version_Info_MaxqS1.txt to Tool_Version_Info_MaxQuant.txt
+                var sourceFile = new FileInfo(Path.Combine(mWorkDir, "Tool_Version_Info_MaxqS1.txt"));
+
+                if (!sourceFile.Exists)
+                {
+                    LogWarning("MaxqS1 tool version info file not found: " + sourceFile.FullName);
+                    return false;
+                }
+
+                var targetFile = new FileInfo(Path.Combine(mWorkDir, "Tool_Version_Info_MaxQuant.txt"));
+
+                if (targetFile.Exists)
+                    targetFile.Delete();
+
+                sourceFile.MoveTo(targetFile.FullName);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in StoreToolVersionInfo", ex);
+                return false;
+            }
         }
 
         /// <summary>
