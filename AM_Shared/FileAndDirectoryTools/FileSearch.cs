@@ -533,14 +533,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         }
                         else
                         {
-                            if (directoryToCheck.Exists)
+                            if (directoryToCheck.Exists && File.Exists(Path.Combine(directoryPath, fileToFind)))
                             {
-                                if (File.Exists(Path.Combine(directoryPath, fileToFind)))
-                                {
-                                    matchFound = true;
-                                    matchingDirectoryPath = directoryPath;
-                                    break;
-                                }
+                                matchFound = true;
+                                matchingDirectoryPath = directoryPath;
+                                break;
                             }
                         }
                     }
