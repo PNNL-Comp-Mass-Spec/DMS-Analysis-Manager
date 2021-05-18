@@ -40,18 +40,12 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(PSM currentPSM)
         {
-            var passesFilters = false;
-
             // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
             // This will typically keep all data in the _xt.txt file
 
             var logEValue = currentPSM.GetScoreDbl(XTandemSynFileReader.GetColumnNameByID(XTandemSynFileColumns.EValue), 0);
-            if (logEValue <= -0.3)
-            {
-                passesFilters = true;
-            }
 
-            return passesFilters;
+            return logEValue <= -0.3;
         }
     }
 }

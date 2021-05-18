@@ -40,8 +40,6 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(PSM currentPSM)
         {
-            var passesFilters = false;
-
             // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
             // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
@@ -49,12 +47,7 @@ namespace AnalysisManagerMSGFPlugin
             var totalPRMScore = currentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.TotalPRMScore));
             var fScore = currentPSM.GetScoreDbl(InspectSynFileReader.GetColumnNameByID(InspectSynFileColumns.FScore));
 
-            if (pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0)
-            {
-                passesFilters = true;
-            }
-
-            return passesFilters;
+            return pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0;
         }
     }
 }

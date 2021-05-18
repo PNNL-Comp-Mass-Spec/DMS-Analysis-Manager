@@ -391,8 +391,7 @@ namespace AnalysisManagerBase.JobConfig
             if (Global.OfflineMode)
                 return true;
 
-            var success = StoreToolVersionInDatabase(toolVersionInfoCombined);
-            return success;
+            return StoreToolVersionInDatabase(toolVersionInfoCombined);
         }
 
         /// <summary>
@@ -475,8 +474,7 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var success = SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
-                return success;
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
             }
             catch (Exception ex)
             {

@@ -40,18 +40,12 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(PSM currentPSM)
         {
-            var passesFilters = false;
-
             // Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
             // This will typically keep all data in the _syn.txt file
 
             var probability = currentPSM.GetScoreDbl(MODPlusSynFileReader.GetColumnNameByID(MODPlusSynFileColumns.Probability), 0);
-            if (probability >= 0.05)
-            {
-                passesFilters = true;
-            }
 
-            return passesFilters;
+            return probability >= 0.05;
         }
     }
 }
