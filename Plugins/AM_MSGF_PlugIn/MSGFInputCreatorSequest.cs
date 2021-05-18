@@ -1,19 +1,12 @@
-﻿//*********************************************************************************************************
-// Written by Matthew Monroe for the US Department of Energy
-// Pacific Northwest National Laboratory, Richland, WA
-//
-// Created 07/20/2010
-//
-// This class reads a SEQUEST _syn.txt file in support of creating the input file for MSGF
-//
-//*********************************************************************************************************
-
-using PHRPReader;
+﻿using PHRPReader;
 using PHRPReader.Data;
 using PHRPReader.Reader;
 
 namespace AnalysisManagerMSGFPlugin
 {
+    /// <summary>
+    /// This class reads a SEQUEST _syn.txt file in support of creating the input file for MSGF
+    /// </summary>
     public sealed class MSGFInputCreatorSequest : MSGFInputCreator
     {
         // Ignore Spelling: DelCn, Minima, tryptic

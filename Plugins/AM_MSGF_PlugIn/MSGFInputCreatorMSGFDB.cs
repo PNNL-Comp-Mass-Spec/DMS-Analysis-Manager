@@ -1,21 +1,14 @@
-﻿//*********************************************************************************************************
-// Written by Matthew Monroe for the US Department of Energy
-// Pacific Northwest National Laboratory, Richland, WA
-//
-// Created 07/20/2010
-//
-// This class reads a msgfdb_syn.txt file in support of creating the input file for MSGF
-//
-//*********************************************************************************************************
-
-using PHRPReader;
-using System;
+﻿using System;
 using System.IO;
+using PHRPReader;
 using PHRPReader.Reader;
 using PHRPReader.Data;
 
 namespace AnalysisManagerMSGFPlugin
 {
+    /// <summary>
+    /// This class reads an MS-GF+ _syn.txt file in support of creating the input file for MSGF
+    /// </summary>
     public sealed class MSGFInputCreatorMSGFDB : MSGFInputCreator
     {
         // Ignore Spelling: msgfdb, MODa, fht
@@ -166,7 +159,7 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(PSM currentPSM)
         {
-            // All MSGFDB data is considered to be "filter-passing"
+            // All MS-GF+ data is considered to be "filter-passing"
             return true;
         }
     }

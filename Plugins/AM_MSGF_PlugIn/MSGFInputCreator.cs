@@ -1,26 +1,20 @@
-﻿//*********************************************************************************************************
-// Written by Matthew Monroe for the US Department of Energy
-// Pacific Northwest National Laboratory, Richland, WA
-//
-// Created 07/20/2010
-//
-// This class reads a tab-delimited text file (created by the Peptide File Extractor or by PHRP)
-// and creates a tab-delimited text file suitable for processing by MSGF
-//
-// The class must be derived by a sub-class customized for the specific analysis tool (SEQUEST, X!Tandem, Inspect, etc.)
-//
-//*********************************************************************************************************
-
-using MsMsDataFileReader;
-using PHRPReader;
-using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using MsMsDataFileReader;
+using PHRPReader;
 using PHRPReader.Data;
+using PRISM;
 
 namespace AnalysisManagerMSGFPlugin
 {
+    /// <summary>
+    /// This class reads a tab-delimited text file (created by the Peptide File Extractor or by PHRP)
+    /// and creates a tab-delimited text file suitable for processing by MSGF
+    /// </summary>
+    /// <remarks>
+    /// The class must be derived by a sub-class customized for the specific analysis tool (SEQUEST, X!Tandem, Inspect, etc.)
+    /// </remarks>
     public abstract class MSGFInputCreator : EventNotifier
     {
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss, tt
