@@ -677,39 +677,38 @@ namespace AnalysisManagerMSGFPlugin
             switch (resultType)
             {
                 case PeptideHitResultTypes.Sequest:
-
                     // Convert SEQUEST results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorSequest(mDatasetName, mWorkDir);
                     break;
 
                 case PeptideHitResultTypes.XTandem:
-
                     // Convert X!Tandem results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorXTandem(mDatasetName, mWorkDir);
                     break;
 
                 case PeptideHitResultTypes.Inspect:
-
                     // Convert Inspect results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorInspect(mDatasetName, mWorkDir);
                     break;
 
                 case PeptideHitResultTypes.MSGFPlus:
-
                     // Convert MS-GF+ results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMSGFDB(mDatasetName, mWorkDir);
                     break;
 
                 case PeptideHitResultTypes.MODa:
-
                     // Convert MODa results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMODa(mDatasetName, mWorkDir);
                     break;
 
                 case PeptideHitResultTypes.MODPlus:
-
                     // Convert MODPlus results to input format required for MSGF
                     mMSGFInputCreator = new MSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
+                    break;
+
+                case PeptideHitResultTypes.MaxQuant:
+                    // Convert MaxQuant results to input format required for MSGF
+                    mMSGFInputCreator = new MSGFInputCreatorMaxQuant(mDatasetName, mWorkDir);
                     break;
 
                 default:

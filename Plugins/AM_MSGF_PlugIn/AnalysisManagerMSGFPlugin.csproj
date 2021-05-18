@@ -61,6 +61,7 @@
     <Compile Include="AnalysisResourcesMSGF.cs" />
     <Compile Include="MSGFInputCreator.cs" />
     <Compile Include="MSGFInputCreatorInspect.cs" />
+    <Compile Include="MSGFInputCreatorMaxQuant.cs" />
     <Compile Include="MSGFInputCreatorMODa.cs" />
     <Compile Include="MSGFInputCreatorMODPlus.cs" />
     <Compile Include="MSGFInputCreatorMSGFDB.cs" />
