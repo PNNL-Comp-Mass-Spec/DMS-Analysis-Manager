@@ -96,10 +96,6 @@ namespace AnalysisManagerMSGFPlugin
 
         public string MSGFResultsFilePath => mMSGFResultsFilePath;
 
-        public string PHRPFirstHitsFilePath => mPHRPFirstHitsFilePath;
-
-        public string PHRPSynopsisFilePath => mPHRPSynopsisFilePath;
-
         #endregion
 
         /// <summary>
