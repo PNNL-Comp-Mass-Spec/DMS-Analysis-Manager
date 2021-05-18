@@ -1457,6 +1457,13 @@ namespace AnalysisManagerExtractionPlugin
                 var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
                 var toolVersionFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
+
+                if (string.IsNullOrWhiteSpace(toolVersionFile))
+                {
+                    LogError("Error in RetrieveToolVersionFile: GetToolVersionInfoFilename returned an empty string for the ToolVersionInfoFile for result type " + resultTypeName);
+                    return false;
+                }
+
                 var toolVersionFileNewName = string.Empty;
 
                 var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);

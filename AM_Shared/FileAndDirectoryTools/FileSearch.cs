@@ -444,6 +444,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(fileToFind))
+                {
+                    OnErrorEvent("Argument fileToFind sent to FindDataFile is an empty string");
+                    return string.Empty;
+                }
+
                 // Fill collection with possible directory locations
                 // The order of searching is:
                 //  a. Check the "inputDirectoryName" and then each of the Shared Results Directories in the Transfer directory
