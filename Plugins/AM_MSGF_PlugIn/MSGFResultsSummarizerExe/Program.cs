@@ -23,7 +23,7 @@ namespace MSGFResultsSummarizerExe
     {
         // Ignore spelling: msgfdb, mspath, Phosphopeptides, Tryptic, xt
 
-        private const string PROGRAM_DATE = "March 25, 2021";
+        private const string PROGRAM_DATE = "May 20, 2021";
 
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
@@ -274,24 +274,36 @@ namespace MSGFResultsSummarizerExe
                 Console.WriteLine(("Unique Peptides (" + filterText + " Filter): ").PadRight(35) + summarizer.UniquePeptideCountMSGF);
                 Console.WriteLine(("Unique Proteins (" + filterText + " Filter): ").PadRight(35) + summarizer.UniqueProteinCountMSGF);
 
+                string detailedStatsFilter;
+
+                if (summarizer.ResultType == PeptideHitResultTypes.MaxQuant)
+                {
+                    detailedStatsFilter = "PEP Filter";
+                }
+                else
+                {
+                    detailedStatsFilter = "FDR Filter";
+                }
+
                 Console.WriteLine();
                 Console.WriteLine("Total PSMs (FDR Filter): ".PadRight(35) + summarizer.TotalPSMsFDR);
                 Console.WriteLine("Unique Peptides (FDR Filter): ".PadRight(35) + summarizer.UniquePeptideCountFDR);
-                Console.WriteLine("Tryptic Peptides (FDR Filter): ".PadRight(35) + summarizer.TrypticPeptidesFDR);
                 Console.WriteLine("Unique Proteins (FDR Filter): ".PadRight(35) + summarizer.UniqueProteinCountFDR);
 
+                Console.WriteLine(string.Format("Tryptic Peptides ({0}): ", detailedStatsFilter).PadRight(35) + summarizer.TrypticPeptidesFDR);
+
                 Console.WriteLine();
-                Console.WriteLine("Unique Phosphopeptides (FDR Filter): ".PadRight(35) + summarizer.UniquePhosphopeptideCountFDR);
+                Console.WriteLine(string.Format("Unique Phosphopeptides ({0}): ", detailedStatsFilter).PadRight(35) + summarizer.UniquePhosphopeptideCountFDR);
                 Console.WriteLine("Phosphopeptides with C-term K: ".PadRight(35) + summarizer.UniquePhosphopeptidesCTermK_FDR);
                 Console.WriteLine("Phosphopeptides with C-term R: ".PadRight(35) + summarizer.UniquePhosphopeptidesCTermR_FDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Missed Cleavage Ratio (FDR Filter): ".PadRight(35) + summarizer.MissedCleavageRatioFDR);
+                Console.WriteLine(string.Format("Missed Cleavage Ratio ({0}): ", detailedStatsFilter).PadRight(35) + summarizer.MissedCleavageRatioFDR);
                 Console.WriteLine("Missed Cleavage Ratio for Phosphopeptides: ".PadRight(35) + summarizer.MissedCleavageRatioPhosphoFDR);
 
                 Console.WriteLine();
-                Console.WriteLine("Keratin Peptides (FDR Filter): ".PadRight(35) + summarizer.KeratinPeptidesFDR);
-                Console.WriteLine("Trypsin Peptides (FDR Filter): ".PadRight(35) + summarizer.TrypsinPeptidesFDR);
+                Console.WriteLine(string.Format("Keratin Peptides ({0}): ", detailedStatsFilter).PadRight(35) + summarizer.KeratinPeptidesFDR);
+                Console.WriteLine(string.Format("Trypsin Peptides ({0}): ", detailedStatsFilter).PadRight(35) + summarizer.TrypsinPeptidesFDR);
 
                 Console.WriteLine();
                 Console.WriteLine("Percent MSn Scans No PSM: ".PadRight(38) + summarizer.PercentMSnScansNoPSM.ToString("0.0") + "%");
