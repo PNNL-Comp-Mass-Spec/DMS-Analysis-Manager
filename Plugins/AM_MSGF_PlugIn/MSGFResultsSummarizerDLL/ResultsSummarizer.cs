@@ -1466,7 +1466,7 @@ namespace MSGFResultsSummarizer
                     {
                         // Use the EValue reported by MSAlign
 
-                        if (currentPSM.TryGetScore("EValue", out var eValueText))
+                        if (currentPSM.TryGetScore(MSAlignSynFileReader.GetColumnNameByID(MSAlignSynFileColumns.EValue), out var eValueText))
                         {
                             valid = double.TryParse(eValueText, out eValue);
                         }
