@@ -169,55 +169,55 @@ namespace MSGFResultsSummarizer
 
         public int SpectraSearched { get; private set; }
 
-        public int TotalPSMsFDR => mFDRBasedCounts.TotalPSMs;
+        public int TotalPSMsFDR => mFDRBasedCounts?.TotalPSMs ?? 0;
 
-        public int TotalPSMsMSGF => mMSGFBasedCounts.TotalPSMs;
+        public int TotalPSMsMSGF => mMSGFBasedCounts?.TotalPSMs ?? 0;
 
         public bool SaveResultsToTextFile { get; set; } = true;
 
-        public int UniquePeptideCountFDR => mFDRBasedCounts.UniquePeptideCount;
+        public int UniquePeptideCountFDR => mFDRBasedCounts?.UniquePeptideCount ?? 0;
 
-        public int UniquePeptideCountMSGF => mMSGFBasedCounts.UniquePeptideCount;
+        public int UniquePeptideCountMSGF => mMSGFBasedCounts?.UniquePeptideCount ?? 0;
 
-        public int UniqueProteinCountFDR => mFDRBasedCounts.UniqueProteinCount;
+        public int UniqueProteinCountFDR => mFDRBasedCounts?.UniqueProteinCount ?? 0;
 
-        public int UniqueProteinCountMSGF => mMSGFBasedCounts.UniqueProteinCount;
+        public int UniqueProteinCountMSGF => mMSGFBasedCounts?.UniqueProteinCount ?? 0;
 
-        public int UniquePhosphopeptideCountFDR => mFDRBasedCounts.UniquePhosphopeptideCount;
+        public int UniquePhosphopeptideCountFDR => mFDRBasedCounts?.UniquePhosphopeptideCount ?? 0;
 
-        public int UniquePhosphopeptideCountMSGF => mMSGFBasedCounts.UniquePhosphopeptideCount;
+        public int UniquePhosphopeptideCountMSGF => mMSGFBasedCounts?.UniquePhosphopeptideCount ?? 0;
 
-        public int UniquePhosphopeptidesCTermK_FDR => mFDRBasedCounts.UniquePhosphopeptidesCTermK;
+        public int UniquePhosphopeptidesCTermK_FDR => mFDRBasedCounts?.UniquePhosphopeptidesCTermK ?? 0;
 
-        public int UniquePhosphopeptidesCTermK_MSGF => mMSGFBasedCounts.UniquePhosphopeptidesCTermK;
+        public int UniquePhosphopeptidesCTermK_MSGF => mMSGFBasedCounts?.UniquePhosphopeptidesCTermK ?? 0;
 
-        public int UniquePhosphopeptidesCTermR_FDR => mFDRBasedCounts.UniquePhosphopeptidesCTermR;
+        public int UniquePhosphopeptidesCTermR_FDR => mFDRBasedCounts?.UniquePhosphopeptidesCTermR ?? 0;
 
-        public int UniquePhosphopeptidesCTermR_MSGF => mMSGFBasedCounts.UniquePhosphopeptidesCTermR;
+        public int UniquePhosphopeptidesCTermR_MSGF => mMSGFBasedCounts?.UniquePhosphopeptidesCTermR ?? 0;
 
-        public float MissedCleavageRatioFDR => mFDRBasedCounts.MissedCleavageRatio;
+        public float MissedCleavageRatioFDR => mFDRBasedCounts?.MissedCleavageRatio ?? 0;
 
-        public float MissedCleavageRatioMSGF => mMSGFBasedCounts.MissedCleavageRatio;
+        public float MissedCleavageRatioMSGF => mMSGFBasedCounts?.MissedCleavageRatio ?? 0;
 
-        public float MissedCleavageRatioPhosphoFDR => mFDRBasedCounts.MissedCleavageRatioPhospho;
+        public float MissedCleavageRatioPhosphoFDR => mFDRBasedCounts?.MissedCleavageRatioPhospho ?? 0;
 
-        public float MissedCleavageRatioPhosphoMSGF => mMSGFBasedCounts.MissedCleavageRatioPhospho;
+        public float MissedCleavageRatioPhosphoMSGF => mMSGFBasedCounts?.MissedCleavageRatioPhospho ?? 0;
 
-        public int KeratinPeptidesFDR => mFDRBasedCounts.KeratinPeptides;
+        public int KeratinPeptidesFDR => mFDRBasedCounts?.KeratinPeptides ?? 0;
 
-        public int KeratinPeptidesMSGF => mMSGFBasedCounts.KeratinPeptides;
+        public int KeratinPeptidesMSGF => mMSGFBasedCounts?.KeratinPeptides ?? 0;
 
-        public int TrypsinPeptidesFDR => mFDRBasedCounts.TrypsinPeptides;
+        public int TrypsinPeptidesFDR => mFDRBasedCounts?.TrypsinPeptides ?? 0;
 
-        public int TrypsinPeptidesMSGF => mMSGFBasedCounts.TrypsinPeptides;
+        public int TrypsinPeptidesMSGF => mMSGFBasedCounts?.TrypsinPeptides ?? 0;
 
-        public int TrypticPeptidesMSGF => mMSGFBasedCounts.TrypticPeptides;
+        public int TrypticPeptidesMSGF => mMSGFBasedCounts?.TrypticPeptides ?? 0;
 
-        public int TrypticPeptidesFDR => mFDRBasedCounts.TrypticPeptides;
+        public int TrypticPeptidesFDR => mFDRBasedCounts?.TrypticPeptides ?? 0;
 
-        public int AcetylPeptidesMSGF => mMSGFBasedCounts.AcetylPeptides;
+        public int AcetylPeptidesMSGF => mMSGFBasedCounts?.AcetylPeptides ?? 0;
 
-        public int AcetylPeptidesFDR => mFDRBasedCounts.AcetylPeptides;
+        public int AcetylPeptidesFDR => mFDRBasedCounts?.AcetylPeptides ?? 0;
 
         #endregion
 
