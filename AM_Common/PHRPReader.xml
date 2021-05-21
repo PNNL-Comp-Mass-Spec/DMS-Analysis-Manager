@@ -75,7 +75,7 @@
         </member>
         <member name="P:PHRPReader.clsPHRPReader.PeptideHitResultType">
             <summary>
-            Peptide hit result type; Sequest, XTandem, Inspect, MSGFPlus, etc.
+            Peptide hit result type; SEQUEST, XTandem, Inspect, MSGFPlus, etc.
             </summary>
         </member>
         <member name="P:PHRPReader.clsPHRPReader.PercentComplete">
@@ -628,9 +628,14 @@
             Peptide sequence, including modification symbols
             </summary>
         </member>
+        <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.DynamicModifications">
+            <summary>
+            Comma separated list of dynamic modifications in the peptide
+            </summary>
+        </member>
         <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.Proteins">
             <summary>
-            Proteins
+            Protein names
             </summary>
             <remarks>
             Semicolon separated list
@@ -672,10 +677,13 @@
             Score difference to the second best identified peptide with a different amino acid sequence
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.Intensity">
+        <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.TotalPeptideIntensity">
             <summary>
             Summed up extracted ion current (XIC) of all isotopic clusters associated with this peptide
             </summary>
+            <remarks>
+            All peptides with the same sequence will have the same total peptide intensity value for a given dataset
+            </remarks>
         </member>
         <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.MassAnalyzer">
             <summary>
@@ -1838,27 +1846,27 @@
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.DynamicMod">
             <summary>
-            Dynamic mod on a residue or peptide terminus; supported by Sequest and notated via a modification symbol; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
+            Dynamic mod on a residue or peptide terminus; supported by SEQUEST and notated via a modification symbol; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.StaticMod">
             <summary>
-            Static mod on a residue or peptide terminus; supported by Sequest but not explicitly notated; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
+            Static mod on a residue or peptide terminus; supported by SEQUEST but not explicitly notated; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod">
             <summary>
-            Peptide terminus static mod (DMS Symbol is T); used by Sequest and MSGFDB; note that terminal mods are always dynamic in X!Tandem
+            Peptide terminus static mod (DMS Symbol is T); used by SEQUEST and MSGFDB; note that terminal mods are always dynamic in X!Tandem
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.IsotopicMod">
             <summary>
-            Isotopic mod, e.g. N15, or C13; supported by Sequest; most likely not supported by XTandem
+            Isotopic mod, e.g. N15, or C13; supported by SEQUEST; most likely not supported by XTandem
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod">
             <summary>
-            Protein terminus static mod; supported by Sequest; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
+            Protein terminus static mod; supported by SEQUEST; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
             </summary>
         </member>
         <member name="T:PHRPReader.Data.ModificationDefinition.ResidueModificationType">
@@ -1873,27 +1881,27 @@
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ResidueModificationType.DynamicMod">
             <summary>
-            Dynamic mod on a residue or peptide terminus; supported by Sequest and notated via a modification symbol; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
+            Dynamic mod on a residue or peptide terminus; supported by SEQUEST and notated via a modification symbol; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ResidueModificationType.StaticMod">
             <summary>
-            Static mod on a residue or peptide terminus; supported by Sequest but not explicitly notated; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
+            Static mod on a residue or peptide terminus; supported by SEQUEST but not explicitly notated; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ResidueModificationType.TerminalPeptideStaticMod">
             <summary>
-            Peptide terminus static mod (DMS Symbol is T); used by Sequest and MSGFDB; note that terminal mods are always dynamic in X!Tandem
+            Peptide terminus static mod (DMS Symbol is T); used by SEQUEST and MSGFDB; note that terminal mods are always dynamic in X!Tandem
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ResidueModificationType.IsotopicMod">
             <summary>
-            Isotopic mod, e.g. N15, or C13; supported by Sequest; most likely not supported by XTandem
+            Isotopic mod, e.g. N15, or C13; supported by SEQUEST; most likely not supported by XTandem
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.ResidueModificationType.ProteinTerminusStaticMod">
             <summary>
-            Protein terminus static mod; supported by Sequest; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
+            Protein terminus static mod; supported by SEQUEST; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.mModificationSymbol">
@@ -2592,7 +2600,7 @@
         </member>
         <member name="P:PHRPReader.Data.PSM.MassErrorDa">
             <summary>
-            Mass difference, in daltons, between the monoisotopic mass of the precursor ion and the calculated (theoretical) monoisotopic mass of the peptide
+            Mass difference, in Daltons, between the monoisotopic mass of the precursor ion and the calculated (theoretical) monoisotopic mass of the peptide
             </summary>
         </member>
         <member name="P:PHRPReader.Data.PSM.MassErrorPPM">
@@ -2893,7 +2901,7 @@
         </member>
         <member name="P:PHRPReader.Data.ScanStatsExInfo.ScanEvent">
             <summary>
-            scan event
+            Scan event
             </summary>
         </member>
         <member name="P:PHRPReader.Data.ScanStatsExInfo.MasterIndex">
@@ -3123,6 +3131,7 @@
             <summary>
             Dynamic and static mods to search for
             </summary>
+            <remarks>This only populated for MSAlign, MODa, and MODPlus</remarks>
         </member>
         <member name="P:PHRPReader.Data.SearchEngineParameters.Parameters">
             <summary>
@@ -3389,6 +3398,11 @@
             MaxQuant
             </summary>
         </member>
+        <member name="F:PHRPReader.PeptideHitResultTypes.MSFragger">
+            <summary>
+            MSFragger
+            </summary>
+        </member>
         <member name="T:PHRPReader.MSGFPlusParamFileModExtractor">
             <summary>
             This class reads a DMS-based parameter file for MS-GF+ or MSPathFinder to extract the dynamic and static modification information
@@ -3492,7 +3506,7 @@
         </member>
         <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModName">
             <summary>
-            Mod name (read from the parameter file) isn't used by MS-GF+, but it is used by MSPathFinder
+            Mod name (read from the parameter file) isn't used by MS-GF+, but it is used by MSPathFinder and MaxQuant
             </summary>
         </member>
         <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModMass">
@@ -3512,8 +3526,20 @@
         </member>
         <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModType">
             <summary>
-            Modification type
+            Modification type, as tracked internally by PHRP
             </summary>
+            <remarks>
+            PHRP does not support static mods at the N or C terminus that only apply to specific residues
+            When these are found, the ModType tracked in-memory is changed to DynamicMod, DynNTermPeptide, DynCTermPeptide, DynNTermProtein, or DynCTermProtein
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModTypeInParameterFile">
+            <summary>
+            Modification type, as defined in the parameter file
+            </summary>
+            <remarks>
+            As explained in <see cref="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModType"/>, this modification type could differ from ModType
+            </remarks>
         </member>
         <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.ModInfo.ModSymbol">
             <summary>
@@ -6860,7 +6886,10 @@
             <param name="inputFilePath">Input file path</param>
             <param name="peptideHitResultType">Peptide Hit Results file type</param>
             <param name="loadModsAndSeqInfo">Controls whether or not the _SeqInfo.txt and _SeqToProteinMap.txt files should be read</param>
-            <remarks>If inputFilePath is an empty string, the functions that solely depend on dataset name will be callable, but data related functions will not be callable</remarks>
+            <remarks>
+            If inputFilePath is an empty string, the methods that solely depend on dataset name will be callable,
+            but data related methods will not be callable
+            </remarks>
         </member>
         <member name="M:PHRPReader.Reader.SynFileReaderBaseClass.#ctor(System.String,System.String,PHRPReader.PeptideHitResultTypes,PHRPReader.StartupOptions)">
             <summary>
@@ -6870,7 +6899,10 @@
             <param name="inputFilePath">Input file path</param>
             <param name="peptideHitResultType"></param>
             <param name="startupOptions">Startup Options, in particular LoadModsAndSeqInfo and MaxProteinsPerPSM</param>
-            <remarks>If inputFilePath is an empty string, the functions that solely depend on dataset name will be callable, but data related functions will not be callable</remarks>
+            <remarks>
+            If inputFilePath is an empty string, the methods that solely depend on dataset name will be callable,
+            but data related methods will not be callable
+            </remarks>
         </member>
         <member name="M:PHRPReader.Reader.SynFileReaderBaseClass.InitializeReader(System.String,System.String,PHRPReader.PeptideHitResultTypes,PHRPReader.StartupOptions)">
             <summary>
@@ -6881,7 +6913,7 @@
             <param name="peptideHitResultType">Peptide Hit Results file type</param>
             <param name="startupOptions">Startup options</param>
             <remarks>
-            If inputFilePath is an empty string,  the functions that solely depend on dataset name will be callable, but data related functions will not be callable
+            If inputFilePath is an empty string, the methods that solely depend on dataset name will be callable, but data related methods will not be callable
             startupOptions.LoadModsAndSeqInfo controls whether or not the _SeqInfo.txt and _SeqToProteinMap.txt files should be read
             Setting startupOptions.MaxProteinsPerPSM to a non-zero value will limit the number of proteins that are tracked
             </remarks>
@@ -8013,6 +8045,16 @@
             </summary>
             <remarks>Use these options to define load behavior to be used when instantiating PHRP reader</remarks>
         </member>
+        <member name="P:PHRPReader.StartupOptions.DisableOpeningInputFiles">
+            <summary>
+            When true, do not try to open the input file
+            This allows the input file to be non-existent, or even an empty string
+            </summary>
+            <remarks>
+            Note that some methods (e.g. LoadSearchEngineParameters) accept a filename but not a full path
+            To allow for the InputDirectoryPath to be initialized, instantiate the reader with a full path to a non-existent file
+            </remarks>
+        </member>
         <member name="P:PHRPReader.StartupOptions.LoadModsAndSeqInfo">
             <summary>
             If true, load the modification and SeqInfo data
@@ -8044,6 +8086,42 @@
             <summary>
             Constructor
             </summary>
+        </member>
+        <member name="T:PHRPReader.XmlReaderUtilities">
+            <summary>
+            Utility methods for reading data from XML files using an XDocument
+            </summary>
+        </member>
+        <member name="M:PHRPReader.XmlReaderUtilities.GetElementValueOrDefault(System.Xml.Linq.XElement,System.String[])">
+            <summary>
+            Traverse an XML node hierarchy for the given element names
+            If the final element is found, return its value, otherwise return an empty string
+            </summary>
+            <param name="parentNode"></param>
+            /// <param name="elementNames"></param>
+            <remarks>See also <see cref="M:PHRPReader.XmlReaderUtilities.TryGetElementValue(System.Xml.Linq.XElement,System.String,System.String@)"/></remarks>
+            <returns>Value if found, or an empty string</returns>
+        </member>
+        <member name="M:PHRPReader.XmlReaderUtilities.TryGetAttribute(System.Xml.Linq.XElement,System.String,System.String@)">
+            <summary>
+            Get the named attribute from the given element
+            </summary>
+            <param name="item"></param>
+            <param name="attributeName"></param>
+            <param name="attributeValue"></param>
+            <returns>True if found, otherwise false</returns>
+        </member>
+        <member name="M:PHRPReader.XmlReaderUtilities.TryGetElementValue(System.Xml.Linq.XElement,System.String,System.String@)">
+            <summary>
+            Look for the given element below the given parent
+            If found, update elementValue with its value and return true
+            Otherwise, return false
+            </summary>
+            <param name="parentItem"></param>
+            <param name="elementName"></param>
+            <param name="elementValue"></param>
+            <returns>True if found, otherwise false</returns>
+            <remarks>See also <see cref="M:PHRPReader.XmlReaderUtilities.GetElementValueOrDefault(System.Xml.Linq.XElement,System.String[])"/></remarks>
         </member>
     </members>
 </doc>
