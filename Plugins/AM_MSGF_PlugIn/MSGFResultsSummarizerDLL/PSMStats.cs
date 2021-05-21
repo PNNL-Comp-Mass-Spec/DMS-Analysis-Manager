@@ -1,8 +1,9 @@
-﻿
-namespace MSGFResultsSummarizer
+﻿namespace MSGFResultsSummarizer
 {
     internal class PSMStats
     {
+        // Ignore Spelling: acetylated, phosphopeptide, phosphopeptides, phosphorylated, tryptic
+
         /// <summary>
         /// Number of spectra with a match
         /// </summary>

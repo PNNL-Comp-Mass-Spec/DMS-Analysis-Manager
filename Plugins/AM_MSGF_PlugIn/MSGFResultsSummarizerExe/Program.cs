@@ -21,7 +21,7 @@ namespace MSGFResultsSummarizerExe
 {
     internal static class Program
     {
-        // Ignore spelling: mspath, msgfdb, xt
+        // Ignore spelling: msgfdb, mspath, Phosphopeptides, Tryptic, xt
 
         private const string PROGRAM_DATE = "March 25, 2021";
 
