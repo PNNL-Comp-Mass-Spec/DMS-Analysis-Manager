@@ -304,6 +304,32 @@ namespace MSGFResultsSummarizer
             }
         }
 
+        /// <summary>
+        /// Copies peptide counts from mMSGFBasedCounts mFDRBasedCounts
+        /// This is used for MaxQuant data, since we don't have FDRs but we want to keep track of tryptic counts, phosphopeptide counts, etc.
+        /// </summary>
+        /// <remarks>
+        /// Does not copy the following values:
+        ///   TotalPSMs
+        ///   UniquePeptideCount
+        ///   UniqueProteinCount
+        /// </remarks>
+        public void CopyMSGFCountsToFDRCounts()
+        {
+            mFDRBasedCounts ??= new PSMStats();
+
+            mFDRBasedCounts.TrypticPeptides = mMSGFBasedCounts.TrypticPeptides;
+
+            mFDRBasedCounts.UniquePhosphopeptideCount = mMSGFBasedCounts.UniquePhosphopeptideCount;
+            mFDRBasedCounts.UniquePhosphopeptidesCTermK = mMSGFBasedCounts.UniquePhosphopeptidesCTermK;
+            mFDRBasedCounts.UniquePhosphopeptidesCTermR = mMSGFBasedCounts.UniquePhosphopeptidesCTermR;
+
+            mFDRBasedCounts.MissedCleavageRatio = mMSGFBasedCounts.MissedCleavageRatio;
+            mFDRBasedCounts.MissedCleavageRatioPhospho = mMSGFBasedCounts.MissedCleavageRatioPhospho;
+            mFDRBasedCounts.KeratinPeptides = mMSGFBasedCounts.KeratinPeptides;
+            mFDRBasedCounts.TrypsinPeptides = mMSGFBasedCounts.TrypsinPeptides;
+        }
+
         private void ExamineFirstHitsFile(string firstHitsFilePath)
         {
             try
@@ -1224,6 +1250,11 @@ namespace MSGFResultsSummarizer
 
                 if (!(success || successViaFDR))
                     return false;
+
+                if (ResultType == PeptideHitResultTypes.MaxQuant && mFDRBasedCounts == null)
+                {
+                    CopyMSGFCountsToFDRCounts();
+                }
 
                 if (SaveResultsToTextFile)
                 {
