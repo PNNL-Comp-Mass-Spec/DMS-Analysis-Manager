@@ -408,7 +408,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in ExamineFirstHitsFile: " + ex.Message);
+                SetErrorMessage("Exception in ExamineFirstHitsFile: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
             }
         }
@@ -536,7 +536,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in VerifyReporterIonPTMs: " + ex.Message);
+                SetErrorMessage("Exception in VerifyReporterIonPTMs: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
             }
         }
@@ -1142,7 +1142,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception storing PSM Results in database: " + ex.Message);
+                SetErrorMessage("Exception storing PSM Results in database: " + ex.Message, ex);
                 success = false;
             }
 
@@ -1298,7 +1298,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in ProcessMSGFResults: " + ex.Message);
+                SetErrorMessage("Exception in ProcessMSGFResults: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
@@ -1768,7 +1768,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in LoadPSMs: " + ex.Message);
+                SetErrorMessage("Exception in LoadPSMs: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
@@ -2005,15 +2005,15 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception saving results to " + outputFilePath + ": " + ex.Message);
+                SetErrorMessage("Exception saving results to " + outputFilePath + ": " + ex.Message, ex);
             }
         }
 
-        private void SetErrorMessage(string errMsg)
+        private void SetErrorMessage(string errMsg, Exception ex = null)
         {
             Console.WriteLine(errMsg);
             mErrorMessage = errMsg;
-            OnErrorEvent(errMsg);
+            OnErrorEvent(errMsg, ex);
         }
 
         /// <summary>
@@ -2130,7 +2130,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception summarizing results: " + ex.Message);
+                SetErrorMessage("Exception summarizing results: " + ex.Message, ex);
                 return false;
             }
 
