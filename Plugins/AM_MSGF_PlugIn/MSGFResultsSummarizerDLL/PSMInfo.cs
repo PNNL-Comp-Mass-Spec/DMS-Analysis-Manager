@@ -153,6 +153,8 @@ namespace MSGFResultsSummarizer
 
         public class PSMObservation
         {
+            public string DatasetIdOrName { get; set; }
+
             public int Scan { get; set; }
 
             /// <summary>
@@ -163,7 +165,10 @@ namespace MSGFResultsSummarizer
             /// <summary>
             /// MSGF SpecEValue; will be UNKNOWN_MSGF_SPEC_EVALUE (10) if MSGF SpecEValue is not available
             /// </summary>
-            /// <remarks>MSPathFinder results use this field to store SpecEValue</remarks>
+            /// <remarks>
+            /// MSPathFinder results use this field to store SpecEValue
+            /// MaxQuant results use this field to store PEP
+            /// </remarks>
             public double MSGF { get; set; }
 
             /// <summary>
@@ -193,6 +198,7 @@ namespace MSGFResultsSummarizer
 
             public void Clear()
             {
+                DatasetIdOrName = string.Empty;
                 Scan = 0;
                 FDR = UNKNOWN_FDR;
                 MSGF = UNKNOWN_MSGF_SPEC_EVALUE;

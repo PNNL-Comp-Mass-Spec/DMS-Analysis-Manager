@@ -161,6 +161,10 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public double PercentMSnScansNoPSM { get; private set; }
 
+        /// <summary>
+        /// Store PSM results in the database for the given analysis job
+        /// </summary>
+        /// <remarks>Skipped if ContactDatabase is false or if the job cannot be determined</remarks>
         public bool PostJobPSMResultsToDB { get; set; }
 
         public PeptideHitResultTypes ResultType { get; }
@@ -283,9 +287,11 @@ namespace MSGFResultsSummarizer
         {
             try
             {
-                // Initialize the list that will be used to track the number of spectra searched
-                // Keys are Scan_Charge, values are Scan number
-                var uniqueSpectra = new Dictionary<string, int>();
+                // Initialize the dictionary that will be used to track the number of spectra searched (grouped by dataset if MaxQuant results)
+                // Keys are dataset name or ID (empty string of not MaxQuant)
+                // Values are a dictionary where keys are Scan_Charge and values are scan number
+
+                var uniqueSpectraByDataset = new Dictionary<string, Dictionary<string, int>>();
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
@@ -296,18 +302,34 @@ namespace MSGFResultsSummarizer
                 {
                     var currentPSM = reader.CurrentPSM;
 
-                    if (currentPSM.Charge >= 0)
-                    {
-                        var scanChargeCombo = currentPSM.ScanNumber + "_" + currentPSM.Charge;
+                    var datasetIdOrName = ResultType == PeptideHitResultTypes.MaxQuant ? GetMaxQuantDatasetIdOrName(currentPSM) : string.Empty;
 
-                        if (!uniqueSpectra.ContainsKey(scanChargeCombo))
+                    var scanKey = currentPSM.Charge >= 0 ? currentPSM.ScanNumber + "_" + currentPSM.Charge : currentPSM.ScanNumber.ToString();
+
+                    if (uniqueSpectraByDataset.TryGetValue(datasetIdOrName, out var uniqueSpectra))
+                    {
+                        if (!uniqueSpectra.ContainsKey(scanKey))
                         {
-                            uniqueSpectra.Add(scanChargeCombo, currentPSM.ScanNumber);
+                            uniqueSpectra.Add(scanKey, currentPSM.ScanNumber);
                         }
+                    }
+                    else
+                    {
+                        var newUniqueSpectra = new Dictionary<string, int>
+                        {
+                            {scanKey, currentPSM.ScanNumber}
+                        };
+                        uniqueSpectraByDataset.Add(datasetIdOrName, newUniqueSpectra);
                     }
                 }
 
-                SpectraSearched = uniqueSpectra.Count;
+                Console.WriteLine();
+
+                SpectraSearched = 0;
+                foreach (var item in uniqueSpectraByDataset)
+                {
+                    SpectraSearched += item.Value.Count;
+                }
 
                 // Set these to defaults for now
                 MaximumScanGapAdjacentMSn = 0;
@@ -318,9 +340,13 @@ namespace MSGFResultsSummarizer
                     return;
                 }
 
-                var scanList = uniqueSpectra.Values.Distinct().ToList();
+                var scanListByDataset = new Dictionary<string, List<int>>();
+                foreach (var item in uniqueSpectraByDataset)
+                {
+                    scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
+                }
 
-                CheckForScanGaps(scanList);
+                CheckForScanGaps(scanListByDataset);
             }
             catch (Exception ex)
             {
@@ -329,49 +355,79 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        private void CheckForScanGaps(List<int> scanList)
+        /// <summary>
+        /// Look for scan range gaps in the spectra list
+        /// The occurrence of large gaps indicates that a processing thread in MS-GF+ crashed and the results may be incomplete
+        /// </summary>
+        /// <param name="scanListByDataset">Keys are Dataset ID or Dataset Name; values are a list of scan numbers</param>
+        private void CheckForScanGaps(Dictionary<string, List<int>> scanListByDataset)
         {
-            // Look for scan range gaps in the spectra list
-            // The occurrence of large gaps indicates that a processing thread in MS-GF+ crashed and the results may be incomplete
-            scanList.Sort();
-
-            var success = LookupScanStats(out var totalSpectra, out var totalMSnSpectra);
-            if (!success || totalSpectra <= 0)
-            {
-                DatasetScanStatsLookupError = true;
-                return;
-            }
-
             MaximumScanGapAdjacentMSn = 0;
 
-            for (var i = 1; i <= scanList.Count - 1; i++)
-            {
-                var scanGap = scanList[i] - scanList[i - 1];
+            var warnIfNotFound = ResultType != PeptideHitResultTypes.MaxQuant;
 
-                if (scanGap > MaximumScanGapAdjacentMSn)
+            foreach (var item in scanListByDataset)
+            {
+                var success = LookupScanStats(DatasetName, out var totalSpectra, out var totalMSnSpectra, warnIfNotFound);
+
+                if (!success &&
+                    ResultType == PeptideHitResultTypes.MaxQuant &&
+                    int.TryParse(item.Key, out var datasetID))
                 {
-                    MaximumScanGapAdjacentMSn = scanGap;
+                    var lookupSuccess = LookupDatasetNameByID(datasetID, out var datasetName);
+
+                    if (lookupSuccess && !string.IsNullOrWhiteSpace(datasetName))
+                    {
+                        // Call LookupScanStats again, but with the correct dataset name
+                        success = LookupScanStats(datasetName, out totalSpectra, out totalMSnSpectra, true);
+                    }
                 }
-            }
 
-            if (totalMSnSpectra > 0)
-            {
-                PercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
-            }
-            else
-            {
-                // Report 100% because we cannot accurately compute this value without knowing totalMSnSpectra
-                PercentMSnScansNoPSM = 100;
-            }
-
-            if (scanList.Count > 0)
-            {
-                // Compare the last scan number seen to the total number of scans
-                var scanGap = totalSpectra - scanList[scanList.Count - 1] - 1;
-
-                if (scanGap > MaximumScanGapAdjacentMSn)
+                if (!success || totalSpectra <= 0)
                 {
-                    MaximumScanGapAdjacentMSn = scanGap;
+                    DatasetScanStatsLookupError = true;
+                    return;
+                }
+
+                var maximumScanGap = 0;
+
+                var scanList = item.Value;
+                scanList.Sort();
+
+                for (var i = 1; i < scanList.Count; i++)
+                {
+                    var scanGap = scanList[i] - scanList[i - 1];
+
+                    if (scanGap > maximumScanGap)
+                    {
+                        maximumScanGap = scanGap;
+                    }
+                }
+
+                if (totalMSnSpectra > 0)
+                {
+                    PercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
+                }
+                else
+                {
+                    // Report 100% because we cannot accurately compute this value without knowing totalMSnSpectra
+                    PercentMSnScansNoPSM = 100;
+                }
+
+                if (scanList.Count > 0)
+                {
+                    // Compare the last scan number seen to the total number of scans
+                    var scanGap = totalSpectra - scanList[scanList.Count - 1] - 1;
+
+                    if (scanGap > maximumScanGap)
+                    {
+                        maximumScanGap = scanGap;
+                    }
+                }
+
+                if (maximumScanGap > MaximumScanGapAdjacentMSn)
+                {
+                    MaximumScanGapAdjacentMSn = maximumScanGap;
                 }
             }
         }
@@ -428,19 +484,66 @@ namespace MSGFResultsSummarizer
         }
 
         /// <summary>
+        /// Lookup dataset name using dataset ID
+        /// </summary>
+        /// <param name="datasetID"></param>
+        /// <param name="datasetName">Output: dataset name, if found</param>
+        /// <remarks>True if success; false if an error, including if the dataset is not found in the database</remarks>
+        private bool LookupDatasetNameByID(int datasetID, out string datasetName)
+        {
+            datasetName = string.Empty;
+
+            try
+            {
+                if (datasetID <= 0)
+                    return false;
+
+                var queryDatasetID = "Select Dataset From V_Dataset_Export Where ID = " + datasetID;
+
+                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
+                RegisterEvents(dbTools);
+
+                // ReSharper disable once ExplicitCallerInfoArgument
+                var success = dbTools.GetQueryResults(queryDatasetID, out var queryResults, callingFunction: "LookupDatasetNameByID");
+
+                if (!success)
+                {
+                    OnWarningEvent("GetQueryResults returned false querying V_Dataset_Export with dataset ID: " + datasetID);
+                    return false;
+                }
+
+                if (queryResults.Count == 0)
+                {
+                    OnWarningEvent(string.Format("Dataset ID {0} not found in the database; cannot determine dataset name", datasetID));
+                    return false;
+                }
+
+                datasetName = queryResults[0][0];
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Exception looking up dataset name using dataset ID: " + ex.Message, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
         /// </summary>
-        /// <param name="totalSpectra"></param>
-        /// <param name="totalMSnSpectra"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="totalSpectra">Output: number of spectra in the dataset</param>
+        /// <param name="totalMSnSpectra">Output: number of MS/MS spectra in the dataset</param>
+        /// <param name="warnIfNotFound">When true, if the dataset is not found, show a warning message</param>
         /// <remarks>True if success; false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
-        private bool LookupScanStats(out int totalSpectra, out int totalMSnSpectra)
+        private bool LookupScanStats(string datasetName, out int totalSpectra, out int totalMSnSpectra, bool warnIfNotFound = true)
         {
             totalSpectra = 0;
             totalMSnSpectra = 0;
 
             try
             {
-                if (string.IsNullOrEmpty(DatasetName))
+                if (string.IsNullOrEmpty(datasetName))
                 {
                     SetErrorMessage("Dataset name is empty; cannot lookup scan stats");
                     return false;
@@ -448,7 +551,7 @@ namespace MSGFResultsSummarizer
 
                 var queryScanStats = " SELECT Scan_Count_Total, " +
                                      "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
-                                     " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "' GROUP BY Scan_Count_Total";
+                                     " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + datasetName + "' GROUP BY Scan_Count_Total";
 
                 var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
@@ -473,7 +576,7 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + DatasetName + "'";
+                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + datasetName + "'";
 
                 // ReSharper disable once ExplicitCallerInfoArgument
                 var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
@@ -489,12 +592,14 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                SetErrorMessage("Dataset not found in the database; cannot retrieve scan counts: " + DatasetName);
+                if (warnIfNotFound)
+                    OnWarningEvent("Dataset not found in the database; cannot retrieve scan counts: " + datasetName);
+
                 return false;
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception retrieving scan stats from the database: " + ex.Message);
+                SetErrorMessage("Exception retrieving scan stats from the database: " + ex.Message, ex);
                 return false;
             }
         }
@@ -839,6 +944,15 @@ namespace MSGFResultsSummarizer
             return PSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
+        private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
+        {
+            var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
+            if (datasetID > 0)
+                return datasetID.ToString();
+
+            return currentPSM.GetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.Dataset));
+        }
+
         private StartupOptions GetMinimalMemoryPHRPStartupOptions()
         {
             var startupOptions = new StartupOptions
@@ -1099,19 +1213,25 @@ namespace MSGFResultsSummarizer
                 if (!PostJobPSMResultsToDB)
                     return true;
 
-                if (ContactDatabase)
+                if (!ContactDatabase)
                 {
-                    ReportDebugMessage("Call PostJobPSMResults for job " + mJob);
-
-                    var psmResultsPosted = PostJobPSMResults(mJob);
-
-                    ReportDebugMessage("PostJobPSMResults returned " + psmResultsPosted);
-
-                    return psmResultsPosted;
+                    SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
+                    return false;
                 }
 
-                SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
-                return false;
+                if (mJob == 0)
+                {
+                    ReportDebugMessage("Cannot call PostJobPSMResults since the job could not be determined");
+                    return false;
+                }
+
+                ReportDebugMessage("Call PostJobPSMResults for job " + mJob);
+
+                var psmResultsPosted = PostJobPSMResults(mJob);
+
+                ReportDebugMessage("PostJobPSMResults returned " + psmResultsPosted);
+
+                return psmResultsPosted;
             }
             catch (Exception ex)
             {
@@ -1158,8 +1278,11 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus ||
-                    ResultType == PeptideHitResultTypes.MSPathFinder)
+                if (ResultType is
+                    PeptideHitResultTypes.MODa or
+                    PeptideHitResultTypes.MODPlus or
+                    PeptideHitResultTypes.MSPathFinder or
+                    PeptideHitResultTypes.MaxQuant)
                 {
                     loadMSGFResults = false;
                 }
@@ -1226,6 +1349,10 @@ namespace MSGFResultsSummarizer
                 //
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
+                // This is used to avoid storing multiple PSMs for a given scan
+                // For MaxQuant results, we store DatasetNameOrId_ScanNumber
+                // For all other results, we simply store scan number (as a string)
+                var scansStored = new SortedSet<string>();
                 using var reader = new ReaderFactory(phrpSynopsisFilePath, startupOptions);
                 RegisterEvents(reader);
 
@@ -1237,6 +1364,33 @@ namespace MSGFResultsSummarizer
                     {
                         // Only keep the first match for each spectrum
                         continue;
+                    }
+
+                    string datasetIdOrName;
+                    string scanKey;
+                    if (ResultType == PeptideHitResultTypes.MaxQuant)
+                    {
+                        datasetIdOrName = GetMaxQuantDatasetIdOrName(currentPSM);
+                        scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                    }
+                    else
+                    {
+                        datasetIdOrName = string.Empty;
+                        scanKey = currentPSM.ScanNumber.ToString();
+                    }
+
+                    if (currentPSM.ScanNumber > 0 && scansStored.Contains(scanKey))
+                    {
+                        // Skip this PSM since its scan key is already in scansStored
+                        continue;
+                    }
+
+                    scansStored.Add(scanKey);
+
+                    if (!(DateTime.UtcNow.Subtract(lastStatusTime).TotalMilliseconds < 500))
+                    {
+                        Console.Write(".");
+                        lastStatusTime = DateTime.UtcNow;
                     }
 
                     var valid = false;
@@ -1270,6 +1424,14 @@ namespace MSGFResultsSummarizer
 
                         // SpecEValue was not present
                         // That's OK, QValue should be present
+                    }
+                    else if (ResultType == PeptideHitResultTypes.MaxQuant)
+                    {
+                        // Use PEP for specEValue
+                        if (currentPSM.TryGetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.PEP), out var posteriorErrorProbabilityText))
+                        {
+                            valid = double.TryParse(posteriorErrorProbabilityText, out specEValue);
+                        }
                     }
                     else
                     {
@@ -1371,17 +1533,17 @@ namespace MSGFResultsSummarizer
 
                         foreach (var observation in normalizedPSMInfo.Observations)
                         {
-                            if (observation.Scan != currentPSM.ScanNumber)
+                            if (!(observation.DatasetIdOrName == datasetIdOrName && observation.Scan == currentPSM.ScanNumber))
+                            {
                                 continue;
+                            }
 
                             // Scan already stored
                             // Update the scores if this PSM has a better score than the cached one
-                            if (psmFDR > PSMInfo.UNKNOWN_FDR)
+
+                            if (psmFDR > PSMInfo.UNKNOWN_FDR && psmFDR < observation.FDR)
                             {
-                                if (psmFDR < observation.FDR)
-                                {
-                                    observation.FDR = psmFDR;
-                                }
+                                observation.FDR = psmFDR;
                             }
 
                             if (psmMSGF < observation.MSGF)
@@ -1402,6 +1564,7 @@ namespace MSGFResultsSummarizer
                         {
                             var observation = new PSMInfo.PSMObservation
                             {
+                                DatasetIdOrName = datasetIdOrName,
                                 Scan = currentPSM.ScanNumber,
                                 FDR = psmFDR,
                                 MSGF = psmMSGF,
@@ -1507,6 +1670,7 @@ namespace MSGFResultsSummarizer
 
                         var observation = new PSMInfo.PSMObservation
                         {
+                            DatasetIdOrName = datasetIdOrName,
                             Scan = currentPSM.ScanNumber,
                             FDR = psmFDR,
                             MSGF = psmMSGF,

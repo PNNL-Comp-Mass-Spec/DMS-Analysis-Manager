@@ -104,7 +104,8 @@ namespace MSGFResultsSummarizerExe
                     {"_inspect_syn_MSGF.txt", PeptideHitResultTypes.Inspect},
                     {"_syn_MSGF.txt", PeptideHitResultTypes.Sequest},
                     {"_msalign_syn.txt", PeptideHitResultTypes.MSAlign},
-                    {"_mspath_syn.txt", PeptideHitResultTypes.MSPathFinder}
+                    {"_mspath_syn.txt", PeptideHitResultTypes.MSPathFinder},
+                    {"_maxq_syn.txt", PeptideHitResultTypes.MaxQuant}
                 };
 
                 var resultType = PeptideHitResultTypes.Unknown;
@@ -203,7 +204,7 @@ namespace MSGFResultsSummarizerExe
                     if (underscoreIndex > 0)
                     {
                         var namePart = sourceFile.DirectoryName.Substring(underscoreIndex + 1);
-                        if (namePart.ToLower().StartsWith("auto"))
+                        if (namePart.StartsWith("auto", StringComparison.OrdinalIgnoreCase))
                         {
                             namePart = namePart.Substring(4);
                             int.TryParse(namePart, out mJob);
@@ -254,6 +255,11 @@ namespace MSGFResultsSummarizerExe
                 {
                     Console.WriteLine("EValue Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
                     filterText = "EValue";
+                }
+                else if (summarizer.ResultType == PeptideHitResultTypes.MaxQuant)
+                {
+                    Console.WriteLine("PEP Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
+                    filterText = "PEP";
                 }
                 else
                 {
