@@ -283,6 +283,27 @@ namespace MSGFResultsSummarizer
             }
         }
 
+        /// <summary>
+        /// Append PSM stats if available, otherwise append zeros
+        /// </summary>
+        /// <param name="psmStats"></param>
+        /// <param name="stats"></param>
+        private void AppendStats(PSMStats psmStats, ICollection<string> stats)
+        {
+            if (psmStats == null)
+            {
+                stats.Add("0");
+                stats.Add("0");
+                stats.Add("0");
+            }
+            else
+            {
+                stats.Add(psmStats.TotalPSMs.ToString());
+                stats.Add(psmStats.UniquePeptideCount.ToString());
+                stats.Add(psmStats.UniqueProteinCount.ToString());
+            }
+        }
+
         private void ExamineFirstHitsFile(string firstHitsFilePath)
         {
             try
@@ -1926,14 +1947,11 @@ namespace MSGFResultsSummarizer
                     mJob.ToString(),
                     MSGFThreshold.ToString("0.00E+00"),
                     FDRThreshold.ToString("0.000"),
-                    SpectraSearched.ToString(),
-                    mMSGFBasedCounts.TotalPSMs.ToString(),
-                    mMSGFBasedCounts.UniquePeptideCount.ToString(),
-                    mMSGFBasedCounts.UniqueProteinCount.ToString(),
-                    mFDRBasedCounts.TotalPSMs.ToString(),
-                    mFDRBasedCounts.UniquePeptideCount.ToString(),
-                    mFDRBasedCounts.UniqueProteinCount.ToString()
+                    SpectraSearched.ToString()
                 };
+
+                AppendStats(mMSGFBasedCounts, stats);
+                AppendStats(mFDRBasedCounts, stats);
 
                 writer.WriteLine(string.Join("\t", stats));
             }
