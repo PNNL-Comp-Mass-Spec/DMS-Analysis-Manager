@@ -342,6 +342,9 @@ namespace MSGFResultsSummarizer
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
+                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(firstHitsFilePath, 80));
+                var lastStatusTime = DateTime.UtcNow;
+
                 using var reader = new ReaderFactory(firstHitsFilePath, startupOptions);
                 RegisterEvents(reader);
 
@@ -368,6 +371,14 @@ namespace MSGFResultsSummarizer
                         };
                         uniqueSpectraByDataset.Add(datasetIdOrName, newUniqueSpectra);
                     }
+
+                    if (DateTime.UtcNow.Subtract(lastStatusTime).TotalMilliseconds < 500)
+                    {
+                        continue;
+                    }
+
+                    Console.Write(".");
+                    lastStatusTime = DateTime.UtcNow;
                 }
 
                 Console.WriteLine();
@@ -1405,6 +1416,10 @@ namespace MSGFResultsSummarizer
                 // For MaxQuant results, we store DatasetNameOrId_ScanNumber
                 // For all other results, we simply store scan number (as a string)
                 var scansStored = new SortedSet<string>();
+
+                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(phrpSynopsisFilePath, 80));
+                var lastStatusTime = DateTime.UtcNow;
+
                 using var reader = new ReaderFactory(phrpSynopsisFilePath, startupOptions);
                 RegisterEvents(reader);
 
@@ -1746,6 +1761,8 @@ namespace MSGFResultsSummarizer
                         }
                     }
                 }
+
+                Console.WriteLine();
 
                 return true;
             }
