@@ -5198,7 +5198,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             foreach (var instrumentGroup in mInstrumentGroupsStored)
             {
-                var instrumentName = instrumentGroup.Value.Count == 1 ? instrumentGroup.Value.First() : string.Empty;
+                var instrumentName = instrumentGroup.Value.FirstOrDefault();
 
                 GetInstrumentAccession(instrumentGroup.Key, instrumentName, out var accession, out var description);
 
