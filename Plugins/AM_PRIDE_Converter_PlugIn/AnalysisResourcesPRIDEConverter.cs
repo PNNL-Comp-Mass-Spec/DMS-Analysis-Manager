@@ -445,10 +445,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var connectionString = mMgrParams.GetParam("BrokerConnectionString");
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+                var dataPackageStoragePath = GetDataPackageStoragePath(connectionString, dataPackageID);
 
                 var matchFound = false;
                 var sourceFolders = new List<string> {
-                    GetDataPackageStoragePath(connectionString, dataPackageID),
+                    dataPackageStoragePath,
                     transferFolderPath
                 };
 
@@ -488,15 +489,26 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     templateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
 
-                    LogWarning(
-                        "PX Submission template file not found in the data package folder; retrieving " + templateFileName + " from " +
-                        paramFileStoragePath);
+                    if (string.IsNullOrEmpty(dataPackageStoragePath))
+                    {
+                        LogWarning(string.Format(
+                            "View V_DMS_Data_Packages does not have data package {0} (or column [Share Path] is empty);" +
+                            "unable to retrieve the PX Submission template file from the data package directory", dataPackageID));
+                    }
+                    else
+                    {
+                        LogWarning(string.Format(
+                            "PX Submission template file not found in the data package directory: {0}; looked for both {1} and any .px file",
+                            dataPackageStoragePath, DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME));
+                    }
+
+                    LogWarning(string.Format("Retrieving {0} from {1}", templateFileName, paramFileStoragePath));
 
                     if (!FileSearch.RetrieveFile(templateFileName, paramFileStoragePath, 1))
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
-                            mMessage = "Template PX file " + templateFileName + " to found in the data package folder";
+                            mMessage = string.Format("Template PX file {0} not found in {1}", templateFileName, paramFileStoragePath);
                         }
                         return false;
                     }
