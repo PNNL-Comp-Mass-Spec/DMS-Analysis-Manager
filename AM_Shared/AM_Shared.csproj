@@ -104,6 +104,7 @@
     <Compile Include="AnalysisTool\IToolRunner.cs" />
     <Compile Include="AnalysisTool\RunDosProgram.cs" />
     <Compile Include="DataFileTools\CDTAUtilities.cs" />
+    <Compile Include="DataFileTools\DataPackageInfo.cs" />
     <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
     <Compile Include="DataFileTools\ISpectraFilter.cs" />
     <Compile Include="DataFileTools\PrecursorInfoFileCreator.cs" />
