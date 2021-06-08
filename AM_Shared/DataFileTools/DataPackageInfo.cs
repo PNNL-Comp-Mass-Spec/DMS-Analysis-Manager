@@ -3,7 +3,7 @@ using AnalysisManagerBase.AnalysisTool;
 
 namespace AnalysisManagerBase.DataFileTools
 {
-    internal class DataPackageInfo
+    public class DataPackageInfo
     {
         /// <summary>
         /// Packed parameter DataPackageDatasets

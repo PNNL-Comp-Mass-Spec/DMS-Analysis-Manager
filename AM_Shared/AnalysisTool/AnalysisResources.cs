@@ -680,6 +680,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public FileSearch FileSearch { get; private set; }
 
         /// <summary>
+        /// Job Parameters
+        /// </summary>
+        public IJobParams JobParams => mJobParams;
+
+        /// <summary>
         /// True when MyEMSL search is disabled
         /// </summary>
         public bool MyEMSLSearchDisabled
@@ -1681,7 +1686,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Method to disable MyEMSL search
         /// </summary>
-        protected void DisableMyEMSLSearch()
+        public void DisableMyEMSLSearch()
         {
             mMyEMSLUtilities.ClearDownloadQueue();
             MyEMSLSearchDisabled = true;
@@ -2388,7 +2393,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Retrieve the .mzML file for this dataset
         /// </summary>
         /// <returns>Closeout code</returns>
-        protected CloseOutType GetMzMLFile()
+        public CloseOutType GetMzMLFile()
         {
             LogMessage("Getting mzML file");
 
@@ -4489,7 +4494,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool RetrieveDataPackageDatasetFiles(
+        public bool RetrieveDataPackageDatasetFiles(
             bool retrieveMzMLFiles,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out Dictionary<string, string> datasetRawFilePaths,

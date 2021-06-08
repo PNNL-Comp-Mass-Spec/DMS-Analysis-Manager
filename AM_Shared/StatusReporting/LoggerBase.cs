@@ -27,7 +27,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// 10 to not log to disk
         /// </param>
         /// <remarks>The message is shown in dark gray in the console.</remarks>
-        protected void LogDebug(string statusMessage, int logFileDebugLevel = 0)
+        public void LogDebug(string statusMessage, int logFileDebugLevel = 0)
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
             LogTools.LogDebug(statusMessage, writeToLog);

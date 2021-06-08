@@ -145,7 +145,7 @@ namespace AnalysisManagerMSGFPlugin
                 PeptideHitResultTypes.MODPlus or
                 PeptideHitResultTypes.MSPathFinder)
             {
-                // We do not need any raw data files for MODa, modPlus, or MSPathFinder
+                // We do not need any raw data files for MODa, ModPlus, or MSPathFinder since we don't run MSGF on top-down results
                 onlyCopyFirstHitsAndSynopsisFiles = true;
             }
             else
@@ -160,8 +160,9 @@ namespace AnalysisManagerMSGFPlugin
                         case RawDataTypeConstants.ThermoRawFile:
                         case RawDataTypeConstants.mzML:
                         case RawDataTypeConstants.mzXML:
+                            // This is a valid data type
                             break;
-                        // This is a valid data type
+
                         default:
                             mMessage = "Dataset type " + rawDataType + " is not supported by MSGF";
                             LogDebug(

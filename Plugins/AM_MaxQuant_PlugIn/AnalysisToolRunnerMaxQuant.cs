@@ -16,6 +16,7 @@ using System.Xml.Linq;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.DataFileTools;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
