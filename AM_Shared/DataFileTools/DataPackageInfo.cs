@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using AnalysisManagerBase.AnalysisTool;
 
-namespace AnalysisManagerMaxQuantPlugIn
+namespace AnalysisManagerBase.DataFileTools
 {
     internal class DataPackageInfo
     {
