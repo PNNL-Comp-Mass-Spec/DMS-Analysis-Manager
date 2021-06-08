@@ -3,131 +3,131 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.156
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerApePlugIn", "AM_Ape_PlugIn\AnalysisManagerApePlugIn.csproj", "{41393E6D-5164-462C-81EE-C1A07CFAD4C2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerApePlugIn", "Plugins\AM_Ape_PlugIn\AnalysisManagerApePlugIn.csproj", "{41393E6D-5164-462C-81EE-C1A07CFAD4C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerAScorePlugIn", "AM_AScore_PlugIn\AnalysisManagerAScorePlugIn.csproj", "{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerAScorePlugIn", "Plugins\AM_AScore_PlugIn\AnalysisManagerAScorePlugIn.csproj", "{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerCyclopsPlugIn", "AM_Cyclops_PlugIn\AnalysisManagerCyclopsPlugIn.csproj", "{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerCyclopsPlugIn", "Plugins\AM_Cyclops_PlugIn\AnalysisManagerCyclopsPlugIn.csproj", "{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDecon2lsPlugIn", "AM_Decon2ls_PlugIn_Decon2LSV2\AnalysisManagerDecon2lsPlugIn.csproj", "{4E7586EC-4A03-433B-B98D-393DA95C020C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDecon2lsPlugIn", "Plugins\AM_Decon2ls_PlugIn_Decon2LSV2\AnalysisManagerDecon2lsPlugIn.csproj", "{4E7586EC-4A03-433B-B98D-393DA95C020C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaImportPlugIn", "AM_DTA_Import_PlugIn\AnalysisManagerDtaImportPlugIn.csproj", "{BD78C2C2-9834-47FF-B550-DD48A647F710}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaImportPlugIn", "Plugins\AM_DTA_Import_PlugIn\AnalysisManagerDtaImportPlugIn.csproj", "{BD78C2C2-9834-47FF-B550-DD48A647F710}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaSplitPlugIn", "AM_DTA_Split_PlugIn\AnalysisManagerDtaSplitPlugIn.csproj", "{2892CB95-88A4-498F-9BAE-517666A68318}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaSplitPlugIn", "Plugins\AM_DTA_Split_PlugIn\AnalysisManagerDtaSplitPlugIn.csproj", "{2892CB95-88A4-498F-9BAE-517666A68318}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDTASpectraFileGen", "AM_DTASpectraFileGen_PlugIn\AnalysisManagerDTASpectraFileGen.csproj", "{7E950799-BC28-4790-B0BF-2631AB660E17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDTASpectraFileGen", "Plugins\AM_DTASpectraFileGen_PlugIn\AnalysisManagerDTASpectraFileGen.csproj", "{7E950799-BC28-4790-B0BF-2631AB660E17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerExtractionPlugin", "AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.csproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerExtractionPlugin", "Plugins\AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.csproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerICR2LSPlugIn", "AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.csproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerICR2LSPlugIn", "Plugins\AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.csproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", "AM_IDM_Plugin\AnalysisManagerIDMPlugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", "Plugins\AM_IDM_Plugin\AnalysisManagerIDMPlugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "Plugins\AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInSpecTPlugIn", "AM_InSpecT_PlugIn\AnalysisManagerInSpecTPlugIn.csproj", "{C8422F47-9F58-4839-A211-61F763CD336C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInSpecTPlugIn", "Plugins\AM_InSpecT_PlugIn\AnalysisManagerInSpecTPlugIn.csproj", "{C8422F47-9F58-4839-A211-61F763CD336C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInspResultsAssemblyPlugIn", "AM_InspectResultsAssembly_PlugIn\AnalysisManagerInspResultsAssemblyPlugIn.csproj", "{FA91A92B-057C-4728-9A6A-774CE004AB05}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInspResultsAssemblyPlugIn", "Plugins\AM_InspectResultsAssembly_PlugIn\AnalysisManagerInspResultsAssemblyPlugIn.csproj", "{FA91A92B-057C-4728-9A6A-774CE004AB05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "AM_LCMSFeatureFinder_Plugin\AnalysisManagerLCMSFeatureFinderPlugIn.csproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "Plugins\AM_LCMSFeatureFinder_Plugin\AnalysisManagerLCMSFeatureFinderPlugIn.csproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMagePlugIn", "AM_Mage_PlugIn\AnalysisManagerMagePlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMagePlugIn", "Plugins\AM_Mage_PlugIn\AnalysisManagerMagePlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMasicPlugin", "AM_Masic_Plugin\AnalysisManagerMasicPlugin.csproj", "{EC6B65D1-30E9-4AEF-A360-52E99056BD61}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMasicPlugin", "Plugins\AM_Masic_Plugin\AnalysisManagerMasicPlugin.csproj", "{EC6B65D1-30E9-4AEF-A360-52E99056BD61}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignPlugIn", "AM_MSAlign_Plugin\AnalysisManagerMSAlignPlugIn.csproj", "{0F3AF0B0-8CE4-4B2C-B243-7862271C4D1E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignPlugIn", "Plugins\AM_MSAlign_Plugin\AnalysisManagerMSAlignPlugIn.csproj", "{0F3AF0B0-8CE4-4B2C-B243-7862271C4D1E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSDeconvPlugIn", "AM_MSDeconv_Plugin\AnalysisManagerMSDeconvPlugIn.csproj", "{2999072A-B9F2-4E0E-976A-76C74A6F2B53}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSDeconvPlugIn", "Plugins\AM_MSDeconv_Plugin\AnalysisManagerMSDeconvPlugIn.csproj", "{2999072A-B9F2-4E0E-976A-76C74A6F2B53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "Plugins\AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSMSSpectrumFilterAM", "AM_MSMSSpectrumFilter_PlugIn\MSMSSpectrumFilterAM.csproj", "{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSMSSpectrumFilterAM", "Plugins\AM_MSMSSpectrumFilter_PlugIn\MSMSSpectrumFilterAM.csproj", "{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLBrukerPlugIn", "AM_MSXML_Bruker_PlugIn\AnalysisManagerMSXMLBrukerPlugIn.csproj", "{2A46F87F-966D-45AE-BFF2-CDB24AD06143}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLBrukerPlugIn", "Plugins\AM_MSXML_Bruker_PlugIn\AnalysisManagerMSXMLBrukerPlugIn.csproj", "{2A46F87F-966D-45AE-BFF2-CDB24AD06143}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLGenPlugIn", "AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLGenPlugIn", "Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMultiAlign_Aggregator_PlugIn", "AM_MultiAlign_Aggregator_PlugIn\AnalysisManagerMultiAlign_Aggregator_PlugIn.csproj", "{8101C095-C93A-4B5D-BACE-9761D50D1B73}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMultiAlign_Aggregator_PlugIn", "Plugins\AM_MultiAlign_Aggregator_PlugIn\AnalysisManagerMultiAlign_Aggregator_PlugIn.csproj", "{8101C095-C93A-4B5D-BACE-9761D50D1B73}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMultiAlignPlugIn", "AM_MultiAlign_Plugin\AnalysisManagerMultiAlignPlugIn.csproj", "{9733CBC1-40A3-48B8-9416-E6ADED82184E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMultiAlignPlugIn", "Plugins\AM_MultiAlign_Plugin\AnalysisManagerMultiAlignPlugIn.csproj", "{9733CBC1-40A3-48B8-9416-E6ADED82184E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerOMSSAPlugIn", "AM_OMSSA_PlugIn\AnalysisManagerOMSSAPlugIn.csproj", "{7B621D07-D1B6-409B-9F11-25A9B8610441}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerOMSSAPlugIn", "Plugins\AM_OMSSA_PlugIn\AnalysisManagerOMSSAPlugIn.csproj", "{7B621D07-D1B6-409B-9F11-25A9B8610441}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPhospho_FDR_AggregatorPlugIn", "AM_Phospho_FDR_Aggregator_PlugIn\AnalysisManagerPhospho_FDR_AggregatorPlugIn.csproj", "{4A642BDC-EF25-4DFC-9B77-3278AB5AC08A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPhospho_FDR_AggregatorPlugIn", "Plugins\AM_Phospho_FDR_Aggregator_PlugIn\AnalysisManagerPhospho_FDR_AggregatorPlugIn.csproj", "{4A642BDC-EF25-4DFC-9B77-3278AB5AC08A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEMzXMLPlugIn", "AM_PRIDE_MzXML_PlugIn\AnalysisManagerPRIDEMzXMLPlugIn.csproj", "{9D9FFB40-9F3D-4734-8B2E-78D60363817A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEMzXMLPlugIn", "Plugins\AM_PRIDE_MzXML_PlugIn\AnalysisManagerPRIDEMzXMLPlugIn.csproj", "{9D9FFB40-9F3D-4734-8B2E-78D60363817A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsXferPlugin", "AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.csproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsXferPlugin", "Plugins\AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.csproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSequestPlugin", "AM_Sequest_PlugIn\AnalysisManagerSequestPlugin.csproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSequestPlugin", "Plugins\AM_Sequest_PlugIn\AnalysisManagerSequestPlugin.csproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn", "AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.csproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn", "Plugins\AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.csproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerXTandemPlugIn", "AM_XTandem_PlugIn\AnalysisManagerXTandemPlugIn.csproj", "{E29686F3-709C-4C38-8B9F-534F71682770}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerXTandemPlugIn", "Plugins\AM_XTandem_PlugIn\AnalysisManagerXTandemPlugIn.csproj", "{E29686F3-709C-4C38-8B9F-534F71682770}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDeconPeakDetectorPlugIn", "AM_DeconPeakDetector_PlugIn\AnalysisManagerDeconPeakDetectorPlugIn.csproj", "{C244E5E3-A545-4E6F-91FD-EB946E9BC229}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDeconPeakDetectorPlugIn", "Plugins\AM_DeconPeakDetector_PlugIn\AnalysisManagerDeconPeakDetectorPlugIn.csproj", "{C244E5E3-A545-4E6F-91FD-EB946E9BC229}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerGlyQIQPlugin", "AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.csproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerGlyQIQPlugin", "Plugins\AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.csproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLipidMapSearchPlugIn", "AM_LipidMapSearch_Plugin\AnalysisManagerLipidMapSearchPlugIn.csproj", "{ABBE557F-6955-4EFB-9892-8F028AD420DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLipidMapSearchPlugIn", "Plugins\AM_LipidMapSearch_Plugin\AnalysisManagerLipidMapSearchPlugIn.csproj", "{ABBE557F-6955-4EFB-9892-8F028AD420DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODaPlugIn", "AM_MODa_PlugIn\AnalysisManagerMODaPlugIn.csproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODaPlugIn", "Plugins\AM_MODa_PlugIn\AnalysisManagerMODaPlugIn.csproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignHistonePlugin", "AM_MSAlign_Histone_Plugin\AnalysisManagerMSAlignHistonePlugin.csproj", "{146B6C50-F2D5-409C-B424-BCB1B6C421AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignHistonePlugin", "Plugins\AM_MSAlign_Histone_Plugin\AnalysisManagerMSAlignHistonePlugin.csproj", "{146B6C50-F2D5-409C-B424-BCB1B6C421AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignQuantPlugIn", "AM_MSAlign_Quant_Plugin\AnalysisManagerMSAlignQuantPlugIn.csproj", "{46993519-3E09-475B-B836-7A32108AAFD1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignQuantPlugIn", "Plugins\AM_MSAlign_Quant_Plugin\AnalysisManagerMSAlignQuantPlugIn.csproj", "{46993519-3E09-475B-B836-7A32108AAFD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSPathFinderPlugin", "AM_MSPathFinder_Plugin\AnalysisManagerMSPathFinderPlugin.csproj", "{62E15FEE-C239-4896-8FD2-7551A5D1A070}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSPathFinderPlugin", "Plugins\AM_MSPathFinder_Plugin\AnalysisManagerMSPathFinderPlugin.csproj", "{62E15FEE-C239-4896-8FD2-7551A5D1A070}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMzRefineryPlugIn", "AM_Mz_Refinery_Plugin\AnalysisManagerMzRefineryPlugIn.csproj", "{2B8D4538-555C-4D01-A508-A75CBE76147C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMzRefineryPlugIn", "Plugins\AM_Mz_Refinery_Plugin\AnalysisManagerMzRefineryPlugIn.csproj", "{2B8D4538-555C-4D01-A508-A75CBE76147C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPBFGenerator", "AM_PBFSpectraFileGen_PlugIn\AnalysisManagerPBFGenerator.csproj", "{5A93C411-3A34-4C0B-A84D-EFFA65BAD19E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPBFGenerator", "Plugins\AM_PBFSpectraFileGen_PlugIn\AnalysisManagerPBFGenerator.csproj", "{5A93C411-3A34-4C0B-A84D-EFFA65BAD19E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEConverterPlugIn", "AM_PRIDE_Converter_PlugIn\AnalysisManagerPRIDEConverterPlugIn.csproj", "{A6C648E6-F0C4-4A76-9740-0DCF39973E84}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEConverterPlugIn", "Plugins\AM_PRIDE_Converter_PlugIn\AnalysisManagerPRIDEConverterPlugIn.csproj", "{A6C648E6-F0C4-4A76-9740-0DCF39973E84}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProSightQuantPlugIn", "AM_ProSightPC_Quant_Plugin\AnalysisManagerProSightQuantPlugIn.csproj", "{813F112C-4E00-4107-AE8F-FABD559CA982}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProSightQuantPlugIn", "Plugins\AM_ProSightPC_Quant_Plugin\AnalysisManagerProSightQuantPlugIn.csproj", "{813F112C-4E00-4107-AE8F-FABD559CA982}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerRepoPkgrPlugIn", "AM_RepoPkgr_PlugIn\AnalysisManagerRepoPkgrPlugIn.csproj", "{02AB78CA-A428-4EF8-918F-D8864172AE7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerRepoPkgrPlugIn", "Plugins\AM_RepoPkgr_PlugIn\AnalysisManagerRepoPkgrPlugIn.csproj", "{02AB78CA-A428-4EF8-918F-D8864172AE7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsCleanupPlugin", "AM_ResultsCleanup_PlugIn\AnalysisManagerResultsCleanupPlugin.csproj", "{AEC999A5-5321-48AA-860E-8756DB701466}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsCleanupPlugin", "Plugins\AM_ResultsCleanup_PlugIn\AnalysisManagerResultsCleanupPlugin.csproj", "{AEC999A5-5321-48AA-860E-8756DB701466}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerBrukerDAExportPlugin", "AM_Bruker_DA_Export\AnalysisManagerBrukerDAExportPlugin.csproj", "{BC82FA0C-5BB5-4D84-BB6B-5F6B3E0670DB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerBrukerDAExportPlugin", "Plugins\AM_Bruker_DA_Export\AnalysisManagerBrukerDAExportPlugin.csproj", "{BC82FA0C-5BB5-4D84-BB6B-5F6B3E0670DB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDataImportPlugIn", "AM_DataImport_Plugin\AnalysisManagerDataImportPlugIn.csproj", "{9B826DC8-FCD9-4B28-A308-592F01FAC23C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDataImportPlugIn", "Plugins\AM_DataImport_Plugin\AnalysisManagerDataImportPlugIn.csproj", "{9B826DC8-FCD9-4B28-A308-592F01FAC23C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMSIPlugin", "AM_NOMSI\AnalysisManagerNOMSIPlugin.csproj", "{E3C76058-381B-4F60-97E5-879A8F634BDA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerNOMSIPlugin", "Plugins\AM_NOMSI\AnalysisManagerNOMSIPlugin.csproj", "{E3C76058-381B-4F60-97E5-879A8F634BDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProMexPlugin", "AM_ProMex_Plugin\AnalysisManagerProMexPlugin.csproj", "{5ADEE0CA-782C-4039-978A-C43CD171BA09}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProMexPlugin", "Plugins\AM_ProMex_Plugin\AnalysisManagerProMexPlugin.csproj", "{5ADEE0CA-782C-4039-978A-C43CD171BA09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODPlusPlugin", "AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.csproj", "{F797EDD0-F632-45B8-8421-1F4A3F50314A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODPlusPlugin", "Plugins\AM_MODPlus_Plugin\AnalysisManagerMODPlusPlugin.csproj", "{F797EDD0-F632-45B8-8421-1F4A3F50314A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCARTPlugIn", "AM_QC-ART_PlugIn\AnalysisManagerQCARTPlugIn.csproj", "{F418E32A-6B5F-4F40-809E-730D20F32FA1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCARTPlugIn", "Plugins\AM_QC-ART_PlugIn\AnalysisManagerQCARTPlugIn.csproj", "{F418E32A-6B5F-4F40-809E-730D20F32FA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMetaboliteDetectorPlugin", "AM_MetaboliteDetector_Plugin\AnalysisManagerMetaboliteDetectorPlugin.csproj", "{665C2F14-4954-4609-BBA4-C91206C318B2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMetaboliteDetectorPlugin", "Plugins\AM_MetaboliteDetector_Plugin\AnalysisManagerMetaboliteDetectorPlugin.csproj", "{665C2F14-4954-4609-BBA4-C91206C318B2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "Plugins\AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_Debug", "..\AM_Program\AnalysisManagerProg_Debug.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_Debug", "AM_Program\AnalysisManagerProg_Debug.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerFormularityPlugin", "AM_Formularity\AnalysisManagerFormularityPlugin.csproj", "{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerFormularityPlugin", "Plugins\AM_Formularity\AnalysisManagerFormularityPlugin.csproj", "{0D58E37F-A5FB-4529-BF14-8F4BA9BB2EBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopFDPlugIn", "AM_TopFD_Plugin\AnalysisManagerTopFDPlugIn.csproj", "{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopFDPlugIn", "Plugins\AM_TopFD_Plugin\AnalysisManagerTopFDPlugIn.csproj", "{C41EF735-13A0-4B9D-B4E1-4867C1F9450F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopPICPlugIn", "AM_TopPIC_Plugin\AnalysisManagerTopPICPlugIn.csproj", "{0E0AFB73-3BAC-4093-8F25-B411E8416623}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerTopPICPlugIn", "Plugins\AM_TopPIC_Plugin\AnalysisManagerTopPICPlugIn.csproj", "{0E0AFB73-3BAC-4093-8F25-B411E8416623}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaRefineryPlugIn", "AM_DtaRefinery_PlugIn\AnalysisManagerDtaRefineryPlugIn.csproj", "{E5D7B07E-CB50-4098-8849-7ADA965C642F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDtaRefineryPlugIn", "Plugins\AM_DtaRefinery_PlugIn\AnalysisManagerDtaRefineryPlugIn.csproj", "{E5D7B07E-CB50-4098-8849-7ADA965C642F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFDBPlugIn", "AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.csproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFDBPlugIn", "Plugins\AM_MSGFDB_PlugIn\AnalysisManagerMSGFDBPlugIn.csproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_ThermoPeakDataExporter", "AM_ThermoPeakDataExporter\AM_ThermoPeakDataExporter.csproj", "{EE4D45FB-4CE6-4110-96FA-1C909BBEE793}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_ThermoPeakDataExporter", "Plugins\AM_ThermoPeakDataExporter\AM_ThermoPeakDataExporter.csproj", "{EE4D45FB-4CE6-4110-96FA-1C909BBEE793}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMaxQuantPlugIn", "AM_MaxQuant_PlugIn\AnalysisManagerMaxQuantPlugIn.csproj", "{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMaxQuantPlugIn", "Plugins\AM_MaxQuant_PlugIn\AnalysisManagerMaxQuantPlugIn.csproj", "{12B6A7D7-4D7A-48D8-B18A-9033F3795F66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizerExe", "AM_MSGF_PlugIn\MSGFResultsSummarizerExe\MSGFResultsSummarizerExe.csproj", "{6F9965FA-1606-42C1-AEE8-260E316CC39F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizerExe", "Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerExe\MSGFResultsSummarizerExe.csproj", "{6F9965FA-1606-42C1-AEE8-260E316CC39F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
