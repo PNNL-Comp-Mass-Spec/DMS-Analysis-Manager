@@ -1541,6 +1541,10 @@ namespace MSGFResultsSummarizer
                     {
                         psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                     }
+                    else if (ResultType == PeptideHitResultTypes.MaxQuant)
+                    {
+                        psmFDR = currentPSM.GetScoreDbl(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                    }
                     else
                     {
                         psmFDR = PSMInfo.UNKNOWN_FDR;
