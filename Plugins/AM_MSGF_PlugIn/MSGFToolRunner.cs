@@ -1929,7 +1929,8 @@ namespace AnalysisManagerMSGFPlugin
             // Input file
             arguments += " -i " + PossiblyQuotePath(inputFilePath);
 
-            // Folder containing .mzXML, .mzML, or .mgf file
+            // Folder containing .mzXML or .mgf file
+            // Note that this class converts .mzML files to .mzXML
             arguments += " -d " + PossiblyQuotePath(mWorkDir);
 
             // Output file

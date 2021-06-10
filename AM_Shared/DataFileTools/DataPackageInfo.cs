@@ -3,6 +3,9 @@ using AnalysisManagerBase.AnalysisTool;
 
 namespace AnalysisManagerBase.DataFileTools
 {
+    /// <summary>
+    /// Data package info
+    /// </summary>
     public class DataPackageInfo
     {
         /// <summary>

@@ -7,8 +7,18 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase.DataFileTools
 {
+    /// <summary>
+    /// Utilities for copying dataset files locally
+    /// </summary>
     public class DatasetFileRetriever : PRISM.EventNotifier
     {
+        /// <summary>
+        /// Error message
+        /// </summary>
+        /// <remarks>
+        /// This is cleared when <see cref="RetrieveInstrumentFilesForJobDatasets"/>
+        /// or <see cref="RetrieveDataPackageDatasetFiles"/> is called
+        /// </remarks>
         public string ErrorMessage { get; private set; }
 
         private readonly AnalysisResources mResourceClass;
@@ -63,6 +73,15 @@ namespace AnalysisManagerBase.DataFileTools
             }
         }
 
+        /// <summary>
+        /// Retrieve instrument files for either the current job (if dataPackageID is 0)
+        /// or for the jobs associated with a data package
+        /// </summary>
+        /// <param name="dataPackageID">0 to use the current job and dataset, non-zero to use jobs in a data package</param>
+        /// <param name="usingMzML">True if this job's settings file indicates to use .mzML files instead of the original instrument file</param>
+        /// <param name="progressPercentAtFinish">Final percent complete value to use for computing incremental progress</param>
+        /// <param name="dataPackageInfo">Output: new instance of DataPackageInfo, which tracks datasets, experiments, files, etc. associated with this job</param>
+        /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         public CloseOutType RetrieveInstrumentFilesForJobDatasets(
             int dataPackageID,
             bool usingMzML,
@@ -70,7 +89,6 @@ namespace AnalysisManagerBase.DataFileTools
             out DataPackageInfo dataPackageInfo,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
-
             ErrorMessage = string.Empty;
 
             dataPackageInfo = new DataPackageInfo(dataPackageID);
@@ -95,13 +113,12 @@ namespace AnalysisManagerBase.DataFileTools
             }
         }
 
-
         /// <summary>
         /// Determine the dataset files associated with the current data package
         /// </summary>
         /// <param name="dataPackageInfo"></param>
-        /// <param name="usingMzML">True if working with .mzML files</param>
-        /// <param name="progressPercentAtFinish"></param>
+        /// <param name="usingMzML">True if this job's settings file indicates to use .mzML files instead of the original instrument file</param>
+        /// <param name="progressPercentAtFinish">Final percent complete value to use for computing incremental progress</param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveDataPackageDatasets(
             DataPackageInfo dataPackageInfo,
