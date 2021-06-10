@@ -72,8 +72,8 @@ namespace AnalysisManagerMSGFPlugin
             // Get analysis results files
             var resultTypeName = GetResultType(mJobParams);
 
-            result = GetInputFiles(resultTypeName);
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var retrievalResult = GetInputFiles(resultTypeName);
+            if (retrievalResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
