@@ -230,6 +230,14 @@ namespace AnalysisManagerMSGFPlugin
                         processingError = true;
                     }
                 }
+                else if (resultType == PeptideHitResultTypes.MaxQuant)
+                {
+                    // Analysis tool is MaxQuant, which could have multiple datasets
+                    // This plugin does not include the required logic for running MSGF against a multi-dataset result file
+
+                    mMessage = "The MSGF step tool does not support MaxQuant";
+                    processingError = true;
+                }
                 else
                 {
                     if (!ProcessFilesWrapper(rawDataType, resultType, doNotFilterPeptides, mgfInstrumentData))
