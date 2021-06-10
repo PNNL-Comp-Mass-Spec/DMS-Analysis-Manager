@@ -79,19 +79,13 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 var workingDirectory = new DirectoryInfo(mResourceClass.WorkDir);
 
-                CloseOutType datasetCopyResult;
-
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (dataPackageID > 0)
                 {
-                    datasetCopyResult = RetrieveDataPackageDatasets(dataPackageInfo, usingMzML, progressPercentAtFinish, out dataPackageDatasets);
-                }
-                else
-                {
-                    datasetCopyResult = RetrieveSingleDataset(workingDirectory, dataPackageInfo, out dataPackageDatasets);
+                    return RetrieveDataPackageDatasets(dataPackageInfo, usingMzML, progressPercentAtFinish, out dataPackageDatasets);
                 }
 
-                return datasetCopyResult;
-
+                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, out dataPackageDatasets);
             }
             catch (Exception ex)
             {

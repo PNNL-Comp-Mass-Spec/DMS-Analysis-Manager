@@ -1538,8 +1538,7 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     // All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
                     // If retrievalOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
-                    var success = RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
-                    return success;
+                    return RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
                 }
 
                 return true;

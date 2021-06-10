@@ -3489,8 +3489,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (Global.OfflineMode)
                 return true;
 
-            var success = mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(targetDirectoryPath, directoryLayout);
-            return success;
+            return mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(targetDirectoryPath, directoryLayout);
         }
 
         /// <summary>
@@ -4947,8 +4946,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, otherwise false</returns>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {
-            var success = FileSearch.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName);
-            return success;
+            return FileSearch.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName);
         }
 
         /// <summary>

@@ -753,8 +753,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     }
                 }
 
-                var success = CopyFileToServerCache(msXMLCacheDirectoryPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
-                return success;
+                return CopyFileToServerCache(msXMLCacheDirectoryPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
             }
             catch (Exception ex)
             {
@@ -4135,9 +4134,7 @@ namespace AnalysisManagerBase.AnalysisTool
             mDotNetZipTools.DebugLevel = mDebugLevel;
 
             // Note that mDotNetZipTools logs error messages using LogTools
-            var success = mDotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
-
-            return success;
+            return mDotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
         }
 
         /// <summary>
@@ -4199,9 +4196,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Verify that the zip file is not corrupt
                 // Files less than 4 GB get a full CRC check
                 // Large files get a quick check
-                var success = VerifyZipFile(zipFilePath);
-
-                return success;
+                return VerifyZipFile(zipFilePath);
             }
             catch (Exception ex)
             {

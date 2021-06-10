@@ -3050,9 +3050,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Use DotNetZip
                 unzipToolName = DotNetZipTools.DOTNET_ZIP_NAME;
                 mDotNetZipTools.DebugLevel = mDebugLevel;
-                var success = mDotNetZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
 
-                return success;
+                return mDotNetZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
             }
             catch (Exception ex)
             {
