@@ -685,6 +685,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public IJobParams JobParams => mJobParams;
 
         /// <summary>
+        /// Manager parameters
+        /// </summary>
+        public IMgrParams MgrParams => mMgrParams;
+
+        /// <summary>
         /// True when MyEMSL search is disabled
         /// </summary>
         public bool MyEMSLSearchDisabled
