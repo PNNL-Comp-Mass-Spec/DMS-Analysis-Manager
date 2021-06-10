@@ -48,6 +48,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var workingDirectory = new DirectoryInfo(mWorkDir);
+
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
@@ -131,7 +132,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return resultCode;
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
-
                 RegisterEvents(datasetFileRetriever);
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
