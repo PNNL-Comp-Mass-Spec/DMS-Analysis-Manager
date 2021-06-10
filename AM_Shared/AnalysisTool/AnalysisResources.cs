@@ -4467,59 +4467,6 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
-        /// </summary>
-        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
-        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
-        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
-        /// <returns>True if success, false if an error</returns>
-        protected bool RetrieveDataPackageDatasetFiles(
-            bool retrieveMzMLFiles,
-            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
-            out Dictionary<string, string> datasetRawFilePaths)
-        {
-            const float progressPercentAtStart = 0;
-            const float progressPercentAtFinish = 20;
-            return RetrieveDataPackageDatasetFiles(
-                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
-                progressPercentAtStart, progressPercentAtFinish);
-        }
-
-        /// <summary>
-        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
-        /// </summary>
-        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
-        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
-        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
-        /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
-        /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
-        /// <returns>True if success, false if an error</returns>
-        public bool RetrieveDataPackageDatasetFiles(
-            bool retrieveMzMLFiles,
-            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
-            out Dictionary<string, string> datasetRawFilePaths,
-            float progressPercentAtStart,
-            float progressPercentAtFinish)
-        {
-            // Gigasax.DMS_Pipeline
-            var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
-
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
-
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
-            RegisterEvents(dbTools);
-
-            var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);
-            RegisterEvents(dataPackageFileHandler);
-
-            var success = dataPackageFileHandler.RetrieveDataPackageDatasetFiles(
-                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
-                progressPercentAtStart, progressPercentAtFinish);
-
-            return success;
-        }
-
-        /// <summary>
         /// Retrieves the PHRP files for the PeptideHit jobs defined for the data package associated with this aggregation job
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>

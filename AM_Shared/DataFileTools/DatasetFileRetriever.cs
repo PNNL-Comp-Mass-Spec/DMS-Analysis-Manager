@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase.DataFileTools
 {
@@ -118,7 +119,7 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset</param>
 
-                var filesRetrieved = mResourceClass.RetrieveDataPackageDatasetFiles(
+                var filesRetrieved = RetrieveDataPackageDatasetFiles(
                     usingMzML,
                     out dataPackageDatasets, out var datasetRawFilePaths,
                     0, progressPercentAtFinish
@@ -153,6 +154,47 @@ namespace AnalysisManagerBase.DataFileTools
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        /// <summary>
+        /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
+        /// </summary>
+        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
+        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
+        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
+        /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool RetrieveDataPackageDatasetFiles(
+            bool retrieveMzMLFiles,
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out Dictionary<string, string> datasetRawFilePaths,
+            float progressPercentAtStart,
+            float progressPercentAtFinish)
+        {
+            ErrorMessage = string.Empty;
+
+            // Gigasax.DMS_Pipeline
+            var brokerDbConnectionString = mResourceClass.MgrParams.GetParam("BrokerConnectionString");
+
+            var dataPackageID = mResourceClass.JobParams.GetJobParameter("DataPackageID", -1);
+
+            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: mResourceClass.TraceMode);
+            RegisterEvents(dbTools);
+
+            var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, mResourceClass);
+            RegisterEvents(dataPackageFileHandler);
+
+            var success = dataPackageFileHandler.RetrieveDataPackageDatasetFiles(
+                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
+                progressPercentAtStart, progressPercentAtFinish);
+
+            if (!success)
+            {
+                ErrorMessage = dataPackageFileHandler.ErrorMessage;
+            }
+
+            return success;
         }
 
         /// <summary>
