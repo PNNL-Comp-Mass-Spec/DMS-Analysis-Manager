@@ -54,6 +54,7 @@
     <Compile Include="AnalysisResourcesMaxQuant.cs" />
     <Compile Include="AnalysisToolRunnerMaxQuant.cs" />
     <Compile Include="DmsStepInfo.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MaxQuantRuntimeOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
