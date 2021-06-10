@@ -64,8 +64,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Cache folder path
         /// </summary>
-        /// <remarks>Named PeptideAtlas because we previously pushed data to PeptideAtlas</remarks>
-        public const string DEFAULT_CACHE_FOLDER_PATH = @"\\protoapps\PeptideAtlas_Staging";
+        public const string DEFAULT_CACHE_FOLDER_PATH = @"\\protoapps\MassIVE_Staging";
 
         /// <summary>
         /// Retrieve required files

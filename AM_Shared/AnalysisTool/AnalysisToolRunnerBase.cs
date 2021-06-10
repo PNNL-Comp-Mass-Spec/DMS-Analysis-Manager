@@ -784,7 +784,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="transferDirectoryPath">Base transfer directory path to use
         /// e.g. \\proto-6\DMS3_Xfer\ or
-        /// \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
+        /// \\protoapps\MassIVE_Staging\1000_DataPackageName</param>
         /// <returns>True if success, otherwise false</returns>
         protected bool CopyResultsFolderToServer(string transferDirectoryPath)
         {
