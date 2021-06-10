@@ -24,8 +24,6 @@ namespace AnalysisManagerBase.JobConfig
         // ReSharper disable once CommentTypo
         // Ignore Spelling: cryptum, gzip, kv, mzid, msgfplus
 
-        #region "Constants"
-
         /// <summary>
         /// Job info file prefix
         /// </summary>
@@ -37,10 +35,6 @@ namespace AnalysisManagerBase.JobConfig
         /// File that tracks Job number and whether or not the search used a .mzML file
         /// </summary>
         public const string DATA_PKG_JOB_METADATA_FILE = "DataPkgJobMetadata.txt";
-
-        #endregion
-
-        #region "Structures"
 
         /// <summary>
         /// Data package retrieval options
@@ -102,10 +96,6 @@ namespace AnalysisManagerBase.JobConfig
             public bool SearchUsedMzML;
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private readonly AnalysisResources mAnalysisResources;
 
         /// <summary>
@@ -115,7 +105,14 @@ namespace AnalysisManagerBase.JobConfig
 
         private readonly DataPackageInfoLoader mDataPackageInfoLoader;
 
-        #endregion
+        /// <summary>
+        /// Error message
+        /// </summary>
+        /// <remarks>
+        /// This is cleared when <see cref="RetrieveDataPackageDatasetFiles"/>
+        /// or <see cref="RetrieveDataPackagePeptideHitJobPHRPFiles"/> is called
+        /// </remarks>
+        public string ErrorMessage { get; private set; } = "";
 
         /// <summary>
         /// Constructor
@@ -182,7 +179,8 @@ namespace AnalysisManagerBase.JobConfig
                     {
                         if (string.IsNullOrEmpty(stepToolFilter))
                         {
-                            OnErrorEvent(string.Format("Unable to determine the input directory for job {0}", job));
+                            ErrorMessage = string.Format("Unable to determine the input directory for job {0}", job);
+                            OnErrorEvent(ErrorMessage);
                             return string.Empty;
                         }
 
@@ -1089,12 +1087,6 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Set to true to obtain the mzXML or mzML file for the dataset associated with this job
-        /// </summary>
-        /// <remarks>If the .mzXML file does not exist, retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
-        public bool RetrieveMzXMLFile;
-
-        /// <summary>
         /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
         /// </summary>
         /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
@@ -1110,6 +1102,8 @@ namespace AnalysisManagerBase.JobConfig
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
+            ErrorMessage = string.Empty;
+
             // This dictionary tracks the info for the datasets associated with this aggregation job's data package
             // Keys are DatasetID, values are dataset info
             dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
@@ -1121,7 +1115,8 @@ namespace AnalysisManagerBase.JobConfig
 
             if (Global.OfflineMode)
             {
-                throw new Exception("RetrieveDataPackageDatasetFiles does not support offline mode");
+                ErrorMessage = "RetrieveDataPackageDatasetFiles does not support offline mode";
+                throw new Exception(ErrorMessage);
             }
 
             try
@@ -1130,7 +1125,11 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (!success || dataPackageDatasets.Count == 0)
                 {
-                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
+                    ErrorMessage = string.Format(
+                        "Did not find any datasets associated with this job's data package (ID {0})",
+                        mDataPackageInfoLoader.DataPackageID);
+
+                    OnErrorEvent(ErrorMessage);
                     return false;
                 }
             }
@@ -1315,6 +1314,8 @@ namespace AnalysisManagerBase.JobConfig
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
+            ErrorMessage = string.Empty;
+
             // Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Directory\Dataset.raw Dataset.raw"
             // Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
             var rawFileRetrievalCommands = new Dictionary<int, string>();
@@ -1335,7 +1336,8 @@ namespace AnalysisManagerBase.JobConfig
 
             if (Global.OfflineMode)
             {
-                throw new Exception("RetrieveDataPackagePeptideHitJobPHRPFiles does not support offline mode");
+                ErrorMessage = "RetrieveDataPackagePeptideHitJobPHRPFiles does not support offline mode";
+                throw new Exception(ErrorMessage);
             }
 
             var workDirInfo = new DirectoryInfo(workingDir);
@@ -1346,7 +1348,11 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (!success || dataPackageDatasets.Count == 0)
                 {
-                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
+                    ErrorMessage = string.Format(
+                        "Did not find any datasets associated with this job's data package (ID {0})",
+                        mDataPackageInfoLoader.DataPackageID);
+
+                    OnErrorEvent(ErrorMessage);
                     return false;
                 }
             }
@@ -1514,7 +1520,11 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (rawFileRetrievalCommands.Count == 0)
                 {
-                    OnErrorEvent("Did not find any datasets associated with this job's data package (ID " + mDataPackageInfoLoader.DataPackageID + ")");
+                    ErrorMessage = string.Format(
+                        "Did not find any datasets associated with this job's data package (ID {0})",
+                        mDataPackageInfoLoader.DataPackageID);
+
+                    OnErrorEvent(ErrorMessage);
                     return false;
                 }
 
