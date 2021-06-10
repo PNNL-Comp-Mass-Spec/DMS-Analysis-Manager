@@ -706,11 +706,6 @@ namespace AnalysisManagerMSGFPlugin
                     mMSGFInputCreator = new MSGFInputCreatorMODPlus(mDatasetName, mWorkDir);
                     break;
 
-                case PeptideHitResultTypes.MaxQuant:
-                    // Convert MaxQuant results to input format required for MSGF
-                    mMSGFInputCreator = new MSGFInputCreatorMaxQuant(mDatasetName, mWorkDir);
-                    break;
-
                 default:
                     // Should never get here; invalid result type specified
                     LogError("Invalid PeptideHit ResultType specified: " + resultType);

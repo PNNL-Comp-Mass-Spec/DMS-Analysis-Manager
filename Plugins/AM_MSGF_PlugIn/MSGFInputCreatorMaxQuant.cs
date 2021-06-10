@@ -1,4 +1,5 @@
-﻿using PHRPReader;
+﻿using System;
+using PHRPReader;
 using PHRPReader.Data;
 using PHRPReader.Reader;
 
@@ -7,6 +8,7 @@ namespace AnalysisManagerMSGFPlugin
     /// <summary>
     /// This class reads a MaxQuant _syn.txt file in support of creating the input file for MSGF
     /// </summary>
+    [Obsolete("Unused")]
     public sealed class MSGFInputCreatorMaxQuant : MSGFInputCreator
     {
         /// <summary>
