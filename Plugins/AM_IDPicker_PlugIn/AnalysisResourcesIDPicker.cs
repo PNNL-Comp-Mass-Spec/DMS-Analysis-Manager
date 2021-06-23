@@ -262,20 +262,23 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 mJobParams.AddResultFileToSkip(fileToGet);
 
-                if (kvEntry.Key == synFileNameExpected)
+                if (kvEntry.Key != synFileNameExpected)
                 {
-                    // Check whether the synopsis file is empty
-                    synFilePath = Path.Combine(mWorkDir, Path.GetFileName(fileToGet));
+                    continue;
+                }
 
-                    if (!ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
-                    {
-                        // The synopsis file is empty
-                        LogWarning(errorMessage);
+                // Check whether the synopsis file is empty
+                synFilePath = Path.Combine(mWorkDir, Path.GetFileName(fileToGet));
 
-                        // We don't want to fail the job out yet; instead, we'll exit now, then let the ToolRunner exit with a Completion message of "Synopsis file is empty"
-                        mSynopsisFileIsEmpty = true;
-                        return true;
-                    }
+                // ReSharper disable once InvertIf
+                if (!ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
+                {
+                    // The synopsis file is empty
+                    LogWarning(errorMessage);
+
+                    // We don't want to fail the job out yet; instead, we'll exit now, then let the ToolRunner exit with a Completion message of "Synopsis file is empty"
+                    mSynopsisFileIsEmpty = true;
+                    return true;
                 }
             }
 
