@@ -1,6 +1,5 @@
 ﻿using AnalysisManagerBase;
 using PHRPReader;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -30,11 +29,6 @@ namespace AnalysisManagerIDPickerPlugIn
         public const string DEFAULT_IDPICKER_PARAM_FILE_NAME = "IDPicker_Defaults.txt";
 
         private bool mSynopsisFileIsEmpty;
-
-        /// <summary>
-        /// This dictionary holds any filenames that we need to rename after copying locally
-        /// </summary>
-        private Dictionary<string, string> mInputFileRenames;
 
         /// <summary>
         /// Initialize options
@@ -223,8 +217,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 return false;
             }
 
-            mInputFileRenames = new Dictionary<string, string>();
-
             var fileNamesToGet = GetPHRPFileNames(resultType, datasetName);
             mSynopsisFileIsEmpty = false;
 
@@ -308,32 +300,6 @@ namespace AnalysisManagerIDPickerPlugIn
             if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return false;
-            }
-
-            foreach (var item in mInputFileRenames)
-            {
-                var file = new FileInfo(Path.Combine(mWorkDir, item.Key));
-                if (!file.Exists)
-                {
-                    mMessage = "File " + item.Key + " not found; unable to rename to " + item.Value;
-                    LogError(mMessage);
-                    eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                    return false;
-                }
-
-                try
-                {
-                    file.MoveTo(Path.Combine(mWorkDir, item.Value));
-                }
-                catch (Exception ex)
-                {
-                    mMessage = "Error renaming file " + item.Key + " to " + item.Value;
-                    LogError(mMessage + "; " + ex.Message);
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                    return false;
-                }
-
-                mJobParams.AddResultFileToSkip(item.Value);
             }
 
             return true;
