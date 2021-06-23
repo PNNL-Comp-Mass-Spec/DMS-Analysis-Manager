@@ -200,15 +200,15 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="searchEngineParamFileName">Search engine parameter file name</param>
-        /// <param name="eReturnCode">Return code</param>
+        /// <param name="returnCode">Return code</param>
         /// <returns>True if success, otherwise false</returns>
-        private bool GetInputFiles(string datasetName, string searchEngineParamFileName, out CloseOutType eReturnCode)
+        private bool GetInputFiles(string datasetName, string searchEngineParamFileName, out CloseOutType returnCode)
         {
-            // This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
+            // This tracks the filenames to find. The Boolean value is True if the file is Required, false if not required
 
-            eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+            returnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
-            var resultTypeName = mJobParams.GetParam("ResultType");
+            var resultTypeName = GetResultType(mJobParams);
 
             // Make sure the ResultType is valid
             var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
@@ -219,7 +219,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                 LogError(mMessage);
-                eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
 
@@ -263,7 +263,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (fileRequired)
                     {
                         // Errors were reported in function call, so just return
-                        eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
                 }
@@ -297,7 +297,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
                     {
                         // File not found
-                        eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
 

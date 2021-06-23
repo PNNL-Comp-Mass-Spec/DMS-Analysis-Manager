@@ -132,15 +132,15 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Determine the result type
                 var resultType = AnalysisResources.GetResultType(mJobParams);
 
-                var ePHRPResultType = ReaderFactory.GetPeptideHitResultType(resultType);
-                if (ePHRPResultType == PeptideHitResultTypes.Unknown)
+                var phrpResultType = ReaderFactory.GetPeptideHitResultType(resultType);
+                if (phrpResultType == PeptideHitResultTypes.Unknown)
                 {
                     mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Define the path to the synopsis file
-                var synFilePath = Path.Combine(mWorkDir, ReaderFactory.GetPHRPSynopsisFileName(ePHRPResultType, mDatasetName));
+                var synFilePath = Path.Combine(mWorkDir, ReaderFactory.GetPHRPSynopsisFileName(phrpResultType, mDatasetName));
                 if (!File.Exists(synFilePath))
                 {
                     var alternateFilePath = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");
@@ -191,7 +191,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Create the PepXML file
-                var pepXmlSuccess = CreatePepXMLFile(fastaFile.FullName, synFilePath, ePHRPResultType);
+                var pepXmlSuccess = CreatePepXMLFile(fastaFile.FullName, synFilePath, phrpResultType);
                 if (!pepXmlSuccess)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -219,7 +219,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
-                    var idPickerSuccess = RunIDPickerWrapper(ePHRPResultType, synFilePath, fastaFile.FullName, out var processingError, out var criticalError);
+                    var idPickerSuccess = RunIDPickerWrapper(phrpResultType, synFilePath, fastaFile.FullName, out var processingError, out var criticalError);
 
                     if (criticalError)
                     {
@@ -297,7 +297,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool RunIDPickerWrapper(PeptideHitResultTypes ePHRPResultType, string synFilePath, string fastaFilePath,
+        private bool RunIDPickerWrapper(PeptideHitResultTypes phrpResultType, string synFilePath, string fastaFilePath,
             out bool processingError, out bool criticalError)
         {
             bool success;
@@ -307,11 +307,11 @@ namespace AnalysisManagerIDPickerPlugIn
             // Determine the prefix used by decoy proteins
             var decoyPrefix = string.Empty;
 
-            if (ePHRPResultType == PeptideHitResultTypes.MSGFPlus)
+            if (phrpResultType == PeptideHitResultTypes.MSGFPlus)
             {
                 // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
-                success = LookForDecoyProteinsInMSGFPlusResults(synFilePath, ePHRPResultType, ref decoyPrefix);
+                success = LookForDecoyProteinsInMSGFPlusResults(synFilePath, phrpResultType, ref decoyPrefix);
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -353,7 +353,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Convert the search scores in the pepXML file to q-values
-            success = RunQonvert(fastaFilePath, decoyPrefix, ePHRPResultType);
+            success = RunQonvert(fastaFilePath, decoyPrefix, phrpResultType);
             if (!success)
             {
                 processingError = true;
@@ -506,7 +506,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes ePHRPResultType)
+        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes phrpResultType)
         {
             // PepXML file creation should generally be done in less than 10 minutes
             // However, for huge fasta files, conversion could take several hours
@@ -527,7 +527,7 @@ namespace AnalysisManagerIDPickerPlugIn
                                 " /F:" + PossiblyQuotePath(fastaFilePath) +
                                 " /H:" + iHitsPerSpectrum;
 
-                if (ePHRPResultType == PeptideHitResultTypes.MODa || ePHRPResultType == PeptideHitResultTypes.MODPlus)
+                if (phrpResultType is PeptideHitResultTypes.MODa or PeptideHitResultTypes.MODPlus or PeptideHitResultTypes.MaxQuant)
                 {
                     // For MODa and MODPlus, the SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     //   Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
@@ -1007,8 +1007,8 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
-        /// <param name="ePHRPResultType"></param>
-        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PeptideHitResultTypes ePHRPResultType)
+        /// <param name="phrpResultType"></param>
+        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PeptideHitResultTypes phrpResultType)
         {
             const int maxRuntimeMinutes = 90;
 
@@ -1021,7 +1021,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
 
             // Possibly override some options
-            if (ePHRPResultType == PeptideHitResultTypes.MODa || ePHRPResultType == PeptideHitResultTypes.MODPlus)
+            if (phrpResultType == PeptideHitResultTypes.MODa || phrpResultType == PeptideHitResultTypes.MODPlus)
             {
                 // Higher MODa probability scores are better
                 mIDPickerOptions["SearchScoreWeights"] = "Probability 1";
