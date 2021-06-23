@@ -37,7 +37,6 @@ namespace AnalysisManagerIDPickerPlugIn
         private const string IDPicker_Qonvert = "idpQonvert.exe";
         private const string IDPicker_Assemble = "idpAssemble.exe";
         private const string IDPicker_Report = "idpReport.exe";
-        private const string IDPicker_GUI = "IdPickerGui.exe";
 
         private const string ASSEMBLE_GROUPING_FILENAME = "Assemble.txt";
         private const string ASSEMBLE_OUTPUT_FILENAME = "IDPicker_AssembledResults.xml";
