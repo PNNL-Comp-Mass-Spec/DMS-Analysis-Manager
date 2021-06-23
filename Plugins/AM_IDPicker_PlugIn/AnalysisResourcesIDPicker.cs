@@ -233,6 +233,19 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogDebug("Retrieving the " + resultType + " files");
             }
 
+            var toolVersionUtility = new ToolVersionUtilities(mMgrParams, mJobParams, mJob, DatasetName, StepToolName, mDebugLevel, mWorkDir);
+            RegisterEvents(toolVersionUtility);
+
+            var toolVersionFileFound = toolVersionUtility.RetrieveToolVersionInfoFile(FileSearch, resultType);
+
+            if (!toolVersionFileFound)
+            {
+                mMessage = "Tool version info file not found; this is required to store the MS/MS search tool info in the .pepXML file";
+                LogError(mMessage);
+                returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                return false;
+            }
+
             var synFileNameExpected = ReaderFactory.GetPHRPSynopsisFileName(resultType, datasetName);
             var synFilePath = string.Empty;
 
@@ -243,20 +256,6 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
                 var success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
-
-                var toolVersionInfoFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
-
-                if (!success && resultType == PeptideHitResultTypes.MSGFPlus &&
-                    toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
-                {
-                    const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
-                    success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
-                    if (success)
-                    {
-                        // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                        File.Move(Path.Combine(mWorkDir, toolVersionFileLegacy), Path.Combine(mWorkDir, fileToGet));
-                    }
-                }
 
                 if (!success)
                 {

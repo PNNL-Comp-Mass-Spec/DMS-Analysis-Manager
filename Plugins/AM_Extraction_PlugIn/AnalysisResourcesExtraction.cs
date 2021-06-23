@@ -694,7 +694,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Copy MaxQuant files to the working directory
         /// </summary>
-        /// <returns></returns>
         /// <remarks>Does not support retrieving PrecursorInfo.txt files from MyEMSL</remarks>
         private CloseOutType GetMaxQuantFiles()
         {
@@ -1447,67 +1446,28 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        protected bool RetrieveToolVersionFile(string resultTypeName)
+        protected void RetrieveToolVersionFile(string resultTypeName)
         {
-            bool success;
-
             try
             {
                 // Make sure the ResultType is valid
                 var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
-                var toolVersionFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
-
-                if (string.IsNullOrWhiteSpace(toolVersionFile))
+                if (resultType == PeptideHitResultTypes.Unknown)
                 {
-                    LogError("Error in RetrieveToolVersionFile: GetToolVersionInfoFilename returned an empty string for the ToolVersionInfoFile for result type " + resultTypeName);
-                    return false;
+                    LogWarning("Result type is unknown; cannot retrieve the tool version file");
+                    return;
                 }
 
-                var toolVersionFileNewName = string.Empty;
+                var toolVersionUtility = new ToolVersionUtilities(mMgrParams, mJobParams, mJob, DatasetName, StepToolName, mDebugLevel, mWorkDir);
+                RegisterEvents(toolVersionUtility);
 
-                var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
-                if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
-                {
-                    // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
-                    // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
-                    // We'll copy the current file locally, then rename it to the expected name
-                    toolVersionFileNewName = toolVersionFile;
-                    toolVersionFile = "Tool_Version_Info_MSGFPlus_IMS.txt";
-                }
-
-                success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFile, false, false);
-
-                if (success && !string.IsNullOrEmpty(toolVersionFileNewName))
-                {
-                    mPendingFileRenames.Add(toolVersionFile, toolVersionFileNewName);
-
-                    toolVersionFile = toolVersionFileNewName;
-                }
-                else if (!success)
-                {
-                    if (toolVersionFile.IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
-                        success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
-                        if (success)
-                        {
-                            // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                            mPendingFileRenames.Add(toolVersionFileLegacy, toolVersionFile);
-                            mJobParams.AddResultFileToSkip(toolVersionFileLegacy);
-                        }
-                    }
-                }
-
-                mJobParams.AddResultFileToSkip(toolVersionFile);
+                toolVersionUtility.RetrieveToolVersionInfoFile(FileSearch, resultType);
             }
             catch (Exception ex)
             {
                 LogError("Error in RetrieveToolVersionFile: " + ex.Message);
-                return false;
             }
-
-            return success;
         }
     }
 }

@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using PHRPReader;
 using PRISM;
 using PRISMDatabaseUtils;
 
@@ -282,6 +284,99 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             return success;
+        }
+
+        /// <summary>
+        /// Retrieve the tool version info file for the given peptide hit result type
+        /// </summary>
+        /// <param name="fileSearchUtility"></param>
+        /// <param name="resultType"></param>
+        /// <returns>True if the file is found and successfully copied, otherwise false</returns>
+        public bool RetrieveToolVersionInfoFile(FileSearch fileSearchUtility, PeptideHitResultTypes resultType)
+        {
+            try
+            {
+                if (resultType == PeptideHitResultTypes.Unknown)
+                {
+                    OnErrorEvent("Cannot retrieve a ToolVersionInfo file when the peptide hit result type is Unknown");
+                    return false;
+                }
+
+                var toolVersionFilenames = ReaderFactory.GetToolVersionInfoFilenames(resultType);
+
+                if (toolVersionFilenames.Count == 0)
+                {
+                    OnErrorEvent("Error in RetrieveToolVersionInfoFile: GetToolVersionInfoFilenames returned an empty list for result type " + resultType);
+                    return false;
+                }
+
+                var toolVersionFileNewName = string.Empty;
+
+                var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
+
+                if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
+                {
+                    // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
+                    // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
+                    // We'll copy the current file locally, then rename it to the expected name
+                    toolVersionFileNewName = toolVersionFilenames[0];
+                    toolVersionFilenames[0] = "Tool_Version_Info_MSGFPlus_IMS.txt";
+                }
+
+                var toolVersionFileMatched = string.Empty;
+
+                foreach (var candidateToolVersionFile in toolVersionFilenames)
+                {
+                    var success = fileSearchUtility.FindAndRetrieveMiscFiles(candidateToolVersionFile, unzip: false, searchArchivedDatasetDir: false, logFileNotFound: false);
+
+                    if (!success)
+                    {
+                        continue;
+                    }
+
+                    toolVersionFileMatched = candidateToolVersionFile;
+
+                    if (string.IsNullOrEmpty(toolVersionFileNewName))
+                    {
+                        break;
+                    }
+
+                    var sourceFile = new FileInfo(Path.Combine(WorkDir, candidateToolVersionFile));
+                    sourceFile.MoveTo(Path.Combine(WorkDir, toolVersionFileNewName));
+
+                    toolVersionFileMatched = toolVersionFileNewName;
+                    break;
+                }
+
+                if (string.IsNullOrEmpty(toolVersionFileMatched) && toolVersionFilenames[0].IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
+                    var success = fileSearchUtility.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
+                    if (success)
+                    {
+                        // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
+                        var sourceFile = new FileInfo(Path.Combine(WorkDir, toolVersionFileLegacy));
+                        sourceFile.MoveTo(Path.Combine(WorkDir, toolVersionFilenames[0]));
+
+                        mJobParams.AddResultFileToSkip(toolVersionFileLegacy);
+                        toolVersionFileMatched = toolVersionFilenames[0];
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(toolVersionFileMatched))
+                {
+                    OnWarningEvent("Warning: Tool version info file not found: " + toolVersionFilenames[0]);
+                    return false;
+                }
+
+                mJobParams.AddResultFileToSkip(toolVersionFileMatched);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in RetrieveToolVersionInfoFile: " + ex.Message);
+                return false;
+            }
         }
 
         /// <summary>
