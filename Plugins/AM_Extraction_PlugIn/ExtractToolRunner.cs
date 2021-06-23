@@ -329,7 +329,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="filteredMODaResultsFileName">Output parameter: name of the filtered results file (in the working directory)</param>
         /// <param name="keepAllResults"></param>
-        /// <returns>The path to the .txt file if successful; empty string if an error</returns>
+        /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFileName, bool keepAllResults)
         {
             var fdrThreshold = mJobParams.GetJobParameter("MODaFDRThreshold", 0.05f);
@@ -637,6 +637,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Create the Peptide to Protein map file for the given MS-GF+ results file
         /// </summary>
         /// <param name="resultsFileName"></param>
+        /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType CreateMSGFPlusResultsProteinToPeptideMappingFile(string resultsFileName)
         {
             LogMessage("Creating the missing _PepToProtMap.txt file");

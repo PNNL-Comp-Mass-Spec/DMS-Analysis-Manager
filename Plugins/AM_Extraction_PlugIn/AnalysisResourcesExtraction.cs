@@ -28,7 +28,7 @@ namespace AnalysisManagerExtractionPlugin
     {
         // ReSharper disable once CommentTypo
         // Ignore Spelling: bioml, Defs, diff, dta, foreach, gzipped
-        // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml, Parm, phospho, phosphorylation
+        // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml, Parm, phospho, phosphorylation, txt
 
         /// <summary>
         /// ModDefs file suffix
@@ -736,7 +736,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (fileCountCopied == 0 && sourceDirectory.Parent != null)
             {
-                // Look for files in the parent directory
+                // Look for files in the parent directory, since sourceDirectory is likely the txt subdirectory
                 var fileCountCopiedParent = GetMaxQuantPrecursorInfoFiles(sourceDirectory.Parent, out var fileCopyErrorParent);
 
                 if (fileCopyErrorParent)

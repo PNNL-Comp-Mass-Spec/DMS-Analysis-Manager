@@ -15,8 +15,11 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class AnalysisToolRunnerIDPicker : AnalysisToolRunnerBase
     {
-        // ReSharper disable once CommentTypo
-        // Ignore Spelling: cmd, idp, Qonvert, prepend, parm, MODa, xxx, msgfspecprob
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: app, cmd, idp, MODa, msgfspecprob, parm, prepend, Qonvert, xxx
+
+        // ReSharper restore CommentTypo
 
         #region "Module Variables"
 
@@ -526,9 +529,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (ePHRPResultType == PeptideHitResultTypes.MODa || ePHRPResultType == PeptideHitResultTypes.MODPlus)
                 {
-                    // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
-                    // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
-                    // Therefore, don't include them in the PepXML file
+                    // For MODa and MODPlus, the SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
+                    //   Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
+                    //   Therefore, don't include them in the PepXML file
+                    // MaxQuant results don't have a _msgf.txt file
                     arguments += " /NoMSGF";
                 }
 

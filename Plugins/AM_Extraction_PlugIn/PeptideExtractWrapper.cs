@@ -148,7 +148,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                // Call the dll
+                // Call the DLL
                 if (mDebugLevel >= 1)
                 {
                     OnDebugEvent("Beginning peptide extraction");

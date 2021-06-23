@@ -17,7 +17,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class ToolVersionUtilities : EventNotifier
     {
-        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
+        // Ignore Spelling: msgfplus, yyyy-MM-dd hh:mm:ss tt
 
         #region "Constants"
 
