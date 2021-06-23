@@ -10,6 +10,8 @@ using PHRPReader;
 using PRISM;
 using PRISMDatabaseUtils;
 
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerBase.JobConfig
 {
     /// <summary>
@@ -122,7 +124,6 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="versionInfo">Output: version info</param>
         /// <returns>True if success; false if an error</returns>
         // ReSharper disable once InconsistentNaming
-        // ReSharper disable once UnusedMember.Global
         public bool GetMSConvertToolVersion(string msConvertPath, out string versionInfo)
         {
             versionInfo = string.Empty;
@@ -790,7 +791,6 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
-        // ReSharper disable once UnusedMember.Global
         public bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
