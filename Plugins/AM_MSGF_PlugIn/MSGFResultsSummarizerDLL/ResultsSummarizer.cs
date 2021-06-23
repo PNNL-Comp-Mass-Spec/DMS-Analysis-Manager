@@ -1126,8 +1126,10 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Process this dataset's synopsis file to determine the PSM stats
         /// </summary>
+        /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
         /// <returns>True if success; false if an error</returns>
-        public bool ProcessMSGFResults()
+        /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
+        public bool ProcessMSGFResults(string synopsisFileNameFromPHRP = "")
         {
             DatasetScanStatsLookupError = false;
 
@@ -1146,12 +1148,23 @@ namespace MSGFResultsSummarizer
 
                 /////////////////////
                 // Define the file paths
-                //
+
                 // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                var phrpFirstHitsFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                string phrpFirstHitsFileName;
 
                 // We use the Synopsis file to count the number of peptides and proteins observed
-                var phrpSynopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
+                string phrpSynopsisFileName;
+
+                // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
+
+                if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
+                {
+                    phrpSynopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
+                }
+                else
+                {
+                    phrpSynopsisFileName = synopsisFileNameFromPHRP;
+                }
 
                 if (ResultType is
                     PeptideHitResultTypes.XTandem or PeptideHitResultTypes.MSAlign or
@@ -1161,11 +1174,44 @@ namespace MSGFResultsSummarizer
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     phrpFirstHitsFileName = phrpSynopsisFileName;
                 }
+                else
+                {
+                    phrpFirstHitsFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                }
+
+                // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
 
                 if (phrpSynopsisFileName == null)
                     throw new NullReferenceException(nameof(phrpSynopsisFileName) + " is null");
 
+                if (string.IsNullOrWhiteSpace(phrpSynopsisFileName))
+                    throw new Exception(nameof(phrpSynopsisFileName) + " is an empty string");
+
                 var modSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
+
+                const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
+
+                if (ResultType == PeptideHitResultTypes.MaxQuant &&
+                    modSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name
+
+                    if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
+                    {
+                        SetErrorMessage("Variable phrpSynopsisFileName is an empty string for this aggregation job, cannot summarize results; this is unexpected");
+                        return false;
+                    }
+
+                    var index = phrpSynopsisFileName.IndexOf("_maxq_syn", StringComparison.OrdinalIgnoreCase);
+                    if (index < 0)
+                    {
+                        SetErrorMessage("Did not find '_maxq_syn' in phrpSynopsisFileName for this aggregation job; this is unexpected: " + phrpSynopsisFileName);
+                        return false;
+                    }
+
+                    var baseName = phrpSynopsisFileName.Substring(0, index);
+                    modSummaryFileName = baseName + MAXQ_MOD_SUMMARY_FILE_SUFFIX;
+                }
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(phrpSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
@@ -1175,13 +1221,13 @@ namespace MSGFResultsSummarizer
 
                 if (!File.Exists(phrpSynopsisFilePath))
                 {
-                    SetErrorMessage("File not found: " + phrpSynopsisFilePath);
+                    SetErrorMessage("File not found, cannot summarize results: " + phrpSynopsisFilePath);
                     return false;
                 }
 
                 if (!File.Exists(phrpModSummaryFilePath))
                 {
-                    OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods");
+                    OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods while summarizing results");
                 }
                 else
                 {
