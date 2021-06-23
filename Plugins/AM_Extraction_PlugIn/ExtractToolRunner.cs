@@ -350,7 +350,8 @@ namespace AnalysisManagerExtractionPlugin
             return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODPlusResultsFileName, keepAllResults);
         }
 
-        private CloseOutType ConvertMODaOrMODPlusResultsToTxt(float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
+        private CloseOutType ConvertMODaOrMODPlusResultsToTxt(
+            float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
             out string filteredResultsFileName, bool keepAllResults)
         {
             filteredResultsFileName = string.Empty;
@@ -1264,7 +1265,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.Sequest,
                 inputFileName,
                 true,
-                true);
+                true,
+                out _);
         }
 
         private CloseOutType RunPhrpForXTandem()
@@ -1278,7 +1280,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.XTandem,
                 synopsisFileName,
                 true,
-                true);
+                true,
+                out _);
         }
 
         private CloseOutType RunPHRPForMaxQuant()
@@ -1293,7 +1296,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.MaxQuant,
                 synopsisFileName,
                 false,
-                true);
+                true,
+                out var synopsisFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
@@ -1301,7 +1305,7 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MaxQuant script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MaxQuant);
+            return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFilePath);
         }
 
         private CloseOutType RunPhrpForMSAlign()
@@ -1315,7 +1319,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.MSAlign,
                 synopsisFileName,
                 false,
-                true);
+                true,
+                out var synopsisFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
@@ -1323,7 +1328,7 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MSAlign script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MSAlign);
+            return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFilePath);
         }
 
         private CloseOutType RunPhrpForMODa(string filteredMODaResultsFileName)
@@ -1334,7 +1339,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.MODa,
                 string.Empty,
                 true,
-                true);
+                true,
+                out _);
         }
 
         private CloseOutType RunPhrpForMODPlus(string filteredMODPlusResultsFileName)
@@ -1345,7 +1351,8 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.MODPlus,
                 string.Empty,
                 false,
-                true);
+                true,
+                out _);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -1607,21 +1614,23 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideHitResultTypes.MSPathFinder,
                 synopsisFileName,
                 false,
-                true);
+                true,
+                out _);
         }
 
         private CloseOutType RunPHRPForTopPIC()
         {
             var inputFileName = mDatasetName + "_TopPIC_PrSMs.txt";
-            var synFilePath = mDatasetName + "_toppic_syn.txt";
+            var synopsisFileName = mDatasetName + "_toppic_syn.txt";
 
             return RunPHRPWork(
                 "TopPIC",
                 inputFileName,
                 PeptideHitResultTypes.TopPIC,
-                synFilePath,
+                synopsisFileName,
                 false,
-                true);
+                true,
+                out _);
         }
 
         /// <summary>
@@ -1633,6 +1642,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="synopsisFileName">If defined, calls ValidatePHRPResultMassErrors() to validate mass errors in the synopsis file</param>
         /// <param name="createFirstHitsFile"></param>
         /// <param name="createSynopsisFile"></param>
+        /// <param name="synopsisFileNameFromPHRP"></param>
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType RunPHRPWork(
             string toolName,
@@ -1640,7 +1650,8 @@ namespace AnalysisManagerExtractionPlugin
             PeptideHitResultTypes resultType,
             string synopsisFileName,
             bool createFirstHitsFile,
-            bool createSynopsisFile)
+            bool createSynopsisFile,
+            out string synopsisFileNameFromPHRP)
         {
             var currentStep = "Initializing";
 
@@ -1655,8 +1666,6 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("ExtractToolRunner.RunPHRPWork(); Starting PHRP");
                 }
 
-                var synFilePath = string.IsNullOrWhiteSpace(synopsisFileName) ? string.Empty : Path.Combine(mWorkDir, synopsisFileName);
-
                 try
                 {
                     // The goal:
@@ -1668,6 +1677,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (!File.Exists(peptideSearchResultsFilePath))
                     {
                         LogError(string.Format("{0} results file not found: {1}", toolName, Path.GetFileName(peptideSearchResultsFilePath)));
+                        synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
@@ -1682,6 +1692,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (result == CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         // Message has already been logged
+                        synopsisFileNameFromPHRP = string.Empty;
                         return result;
                     }
 
@@ -1690,20 +1701,56 @@ namespace AnalysisManagerExtractionPlugin
                         var msg = "Error running PHRP";
                         if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                             msg += "; " + phrp.ErrMsg;
+
                         LogWarning(msg);
+                        synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
                 catch (Exception ex)
                 {
                     LogError("Exception running PHRP", ex);
+                    synopsisFileNameFromPHRP = string.Empty;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (string.IsNullOrWhiteSpace(synFilePath))
+                if (string.IsNullOrWhiteSpace(synopsisFileName))
                 {
                     // Skip validating mass errors
+                    synopsisFileNameFromPHRP = string.Empty;
                     return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+                {
+                    // PHRP auto-named the synopsis file based on the datasets in this data package
+                    // Auto-find the file
+                    var workDirInfo = new DirectoryInfo(mWorkDir);
+
+                    if (resultType != PeptideHitResultTypes.MaxQuant)
+                    {
+                        LogError("Cannot validate mass errors for this aggregation job, unsupported result type: " + resultType);
+
+                        synopsisFileNameFromPHRP = string.Empty;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    const string searchPattern = "*" + PHRPReader.Reader.MaxQuantSynFileReader.FILENAME_SUFFIX_SYN;
+
+                    var synopsisFileCandidates = workDirInfo.GetFiles(searchPattern).ToList();
+
+                    if (synopsisFileCandidates.Count == 0)
+                    {
+                        LogError("PHRP did not create a synopsis file for this aggregation job");
+                        synopsisFileNameFromPHRP = string.Empty;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    synopsisFileNameFromPHRP = synopsisFileCandidates[0].Name;
+                }
+                else
+                {
+                    synopsisFileNameFromPHRP = synopsisFileName;
                 }
 
                 // Validate that the mass errors are within tolerance
@@ -1711,7 +1758,9 @@ namespace AnalysisManagerExtractionPlugin
                     ? "input.xml"
                     : mJobParams.GetParam("ParmFileName");
 
-                if (!ValidatePHRPResultMassErrors(synFilePath, resultType, parameterFileName))
+                var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileNameFromPHRP);
+
+                if (!ValidatePHRPResultMassErrors(synopsisFilePath, resultType, parameterFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1721,6 +1770,7 @@ namespace AnalysisManagerExtractionPlugin
             catch (Exception ex)
             {
                 LogError("Error in RunPHRPWork at step " + currentStep, ex);
+                synopsisFileNameFromPHRP = string.Empty;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1808,7 +1858,8 @@ namespace AnalysisManagerExtractionPlugin
                     PeptideHitResultTypes.Inspect,
                     string.Empty,
                     true,
-                    false);
+                    false,
+                    out _);
 
                 try
                 {
@@ -1840,7 +1891,8 @@ namespace AnalysisManagerExtractionPlugin
                     PeptideHitResultTypes.Inspect,
                     synFileName,
                     false,
-                    true);
+                    true,
+                    out _);
 
                 try
                 {
@@ -2476,7 +2528,13 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType)
+        /// <summary>
+        /// Examine the synopsis (and optionally first hits) files to summarize PSMs
+        /// </summary>
+        /// <param name="resultType">Result type</param>
+        /// <param name="synopsisFileNameFromPHRP">Synopsis file path, as reported by PHRP</param>
+        /// <returns>CloseOutType representing success or failure</returns>
+        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP)
         {
             var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
@@ -2492,7 +2550,7 @@ namespace AnalysisManagerExtractionPlugin
             summarizer.SaveResultsToTextFile = false;
             summarizer.DatasetName = mDatasetName;
 
-            var success = summarizer.ProcessMSGFResults();
+            var success = summarizer.ProcessMSGFResults(synopsisFileNameFromPHRP);
 
             if (success)
             {
