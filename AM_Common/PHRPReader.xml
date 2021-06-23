@@ -75,7 +75,7 @@
         </member>
         <member name="P:PHRPReader.clsPHRPReader.PeptideHitResultType">
             <summary>
-            Peptide hit result type; SEQUEST, XTandem, Inspect, MSGFPlus, etc.
+            Peptide hit result type; SEQUEST, XTandem, InSpecT, MSGFPlus, etc.
             </summary>
         </member>
         <member name="P:PHRPReader.clsPHRPReader.PercentComplete">
@@ -584,6 +584,11 @@
         </member>
         <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.PrecursorMZ">
             <summary>
+            Precursor ion m/z (observed value, read from a _PrecursorInfo.txt file by PHRP)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.PrecursorMZ_MaxQuant">
+            <summary>
             Precursor ion m/z (theoretical value, not observed value)
             </summary>
             <remarks>
@@ -991,11 +996,6 @@
             Spec E-Value
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.SpecProb_EValue">
-            <summary>
-            Obsolete name for Spec E-Value (MS-GF+) or SpecProb (MSGFDB)
-            </summary>
-        </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.RankSpecEValue">
             <summary>
             Ranked score
@@ -1004,19 +1004,9 @@
             Rank 1 means lowest (best) Spec E-value, 2 means next higher E-value, etc. (ties get the same rank)
             </remarks>
         </member>
-        <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.RankSpecProb">
-            <summary>
-            Obsolete name for Rank Spec E-Value (MS-GF+) or Rank SpecProb (MSGFDB)
-            </summary>
-        </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.EValue">
             <summary>
             E-Value
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.PValue_EValue">
-            <summary>
-            Obsolete name for E-Value (MS-GF+) or P-Value (MSGFDB)
             </summary>
         </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.QValue">
@@ -1027,11 +1017,6 @@
             Only present if searched using -tda 1
             </remarks>
         </member>
-        <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.FDR_QValue">
-            <summary>
-            Obsolete name for Q-Value (MS-GF+) or FDR (MSGFDB)
-            </summary>
-        </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.PepQValue">
             <summary>
             Peptide Q-Value
@@ -1039,11 +1024,6 @@
             <remarks>
             Only present if searched using -tda 1
             </remarks>
-        </member>
-        <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.PepFDR_PepQValue">
-            <summary>
-            Obsolete name for PepQValue (MS-GF+) or PepFDR (MSGFDB)
-            </summary>
         </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.EFDR">
             <summary>
@@ -2219,12 +2199,12 @@
         </member>
         <member name="F:PHRPReader.Data.PeptideModificationContainer.N_TERMINAL_PEPTIDE_MOD_SYMBOL_INSPECT">
             <summary>
-            Symbol used by Inspect for tracking a modification at the peptide N-terminus
+            Symbol used by InSpecT for tracking a modification at the peptide N-terminus
             </summary>
         </member>
         <member name="F:PHRPReader.Data.PeptideModificationContainer.C_TERMINAL_PEPTIDE_MOD_SYMBOL_INSPECT">
             <summary>
-            Symbol used by Inspect for tracking a modification at the peptide C-terminus
+            Symbol used by InSpecT for tracking a modification at the peptide C-terminus
             </summary>
         </member>
         <member name="F:PHRPReader.Data.PeptideModificationContainer.mDefaultModificationSymbols">
@@ -3418,7 +3398,7 @@
         </member>
         <member name="F:PHRPReader.PeptideHitResultTypes.Inspect">
             <summary>
-            Inspect
+            InSpecT
             </summary>
         </member>
         <member name="F:PHRPReader.PeptideHitResultTypes.MSGFPlus">
@@ -4415,7 +4395,7 @@
         </member>
         <member name="P:PHRPReader.ReaderFactory.PeptideHitResultType">
             <summary>
-            Peptide hit result type; SEQUEST, XTandem, Inspect, MSGFPlus, etc.
+            Peptide hit result type; SEQUEST, XTandem, InSpecT, MSGFPlus, etc.
             </summary>
         </member>
         <member name="P:PHRPReader.ReaderFactory.PercentComplete">
@@ -4805,6 +4785,13 @@
             <returns>Filename</returns>
         </member>
         <member name="M:PHRPReader.ReaderFactory.GetToolVersionInfoFilename(PHRPReader.PeptideHitResultTypes)">
+            <summary>
+            Get the tool version info filename for the given analysis tool
+            </summary>
+            <param name="resultType"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.ReaderFactory.GetToolVersionInfoFilenames(PHRPReader.PeptideHitResultTypes)">
             <summary>
             Get the tool version info filename for the given analysis tool
             </summary>
@@ -5334,17 +5321,17 @@
         </member>
         <member name="T:PHRPReader.Reader.InspectSynFileReader">
             <summary>
-            PHRP SynFileReader for Inspect
+            PHRP SynFileReader for InSpecT
             </summary>
         </member>
         <member name="F:PHRPReader.Reader.InspectSynFileReader.FILENAME_SUFFIX_SYN">
             <summary>
-            Inspect synopsis file suffix
+            InSpecT synopsis file suffix
             </summary>
         </member>
         <member name="F:PHRPReader.Reader.InspectSynFileReader.FILENAME_SUFFIX_FHT">
             <summary>
-            Inspect first hits file suffix
+            InSpecT first hits file suffix
             </summary>
         </member>
         <member name="F:PHRPReader.Reader.InspectSynFileReader.INS_SEARCH_ENGINE_NAME">
@@ -5354,7 +5341,7 @@
         </member>
         <member name="F:PHRPReader.Reader.InspectSynFileReader.mSynopsisFileColumn">
             <summary>
-            Mapping from enum to synopsis file column name for Inspect
+            Mapping from enum to synopsis file column name for InSpecT
             </summary>
         </member>
         <member name="P:PHRPReader.Reader.InspectSynFileReader.PHRPFirstHitsFileName">
@@ -5523,7 +5510,7 @@
         </member>
         <member name="M:PHRPReader.Reader.InspectSynFileReader.LoadSearchEngineParameters(System.String,PHRPReader.Data.SearchEngineParameters@)">
             <summary>
-            Parses the specified Inspect parameter file
+            Parses the specified InSpecT parameter file
             </summary>
             <param name="searchEngineParamFileName"></param>
             <param name="searchEngineParams"></param>
@@ -6402,7 +6389,7 @@
         </member>
         <member name="M:PHRPReader.Reader.MSGFPlusSynFileReader.GetMSGFDBColumnNameByID(PHRPReader.Data.MSGFDBSynFileColumns)">
             <summary>
-            Get the MSGFDB column name associated with the given column
+            Get the MSGFDB column name associated with the given column (for legacy tool MSGFDB, not MS-GF+)
             </summary>
             <param name="column"></param>
             <returns>Column name</returns>
@@ -6890,7 +6877,7 @@
         </member>
         <member name="P:PHRPReader.Reader.SynFileReaderBaseClass.PeptideHitResultType">
             <summary>
-            Peptide hit result type; Sequest, XTandem, Inspect, MSGFPlus, etc.
+            Peptide hit result type; Sequest, XTandem, InSpecT, MSGFPlus, etc.
             </summary>
         </member>
         <member name="P:PHRPReader.Reader.SynFileReaderBaseClass.PepToProteinMap">
