@@ -207,9 +207,14 @@ namespace AnalysisManagerIDPickerPlugIn
             // Make sure the ResultType is valid
             var resultType = ReaderFactory.GetPeptideHitResultType(resultTypeName);
 
-            if (!(resultType == PeptideHitResultTypes.Sequest || resultType == PeptideHitResultTypes.XTandem ||
-                  resultType == PeptideHitResultTypes.Inspect || resultType == PeptideHitResultTypes.MSGFPlus ||
-                  resultType == PeptideHitResultTypes.MODa || resultType == PeptideHitResultTypes.MODPlus))
+            if (resultType is not (
+                PeptideHitResultTypes.Sequest or
+                PeptideHitResultTypes.XTandem or
+                PeptideHitResultTypes.Inspect or
+                PeptideHitResultTypes.MSGFPlus or
+                PeptideHitResultTypes.MODa or
+                PeptideHitResultTypes.MODPlus or
+                PeptideHitResultTypes.MaxQuant))
             {
                 mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
                 LogError(mMessage);
@@ -285,9 +290,8 @@ namespace AnalysisManagerIDPickerPlugIn
             if (resultType == PeptideHitResultTypes.XTandem)
             {
                 // X!Tandem requires a few additional parameter files
-                var extraFilesToGet = XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, searchEngineParamFileName));
 
-                foreach (var fileName in extraFilesToGet)
+                foreach (var fileName in XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, searchEngineParamFileName)))
                 {
                     if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
                     {
@@ -300,6 +304,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return false;
@@ -405,7 +410,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="resultType">PHRP result type (SEQUEST, X!Tandem, etc.)</param>
         /// <param name="datasetName">Dataset name</param>
-        /// <returns>A generic list with the filenames to find.  The Boolean value is True if the file is Required, false if not required</returns>
+        /// <returns>A generic list with the filenames to find. The Boolean value is True if the file is Required, false if not required</returns>
         private SortedList<string, bool> GetPHRPFileNames(PeptideHitResultTypes resultType, string datasetName)
         {
             var fileNamesToGet = new SortedList<string, bool>();
@@ -419,7 +424,9 @@ namespace AnalysisManagerIDPickerPlugIn
             fileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(resultType, datasetName), true);
             fileNamesToGet.Add(ReaderFactory.GetPHRPPepToProteinMapFileName(resultType, datasetName), false);
 
-            if (resultType != PeptideHitResultTypes.MODa && resultType != PeptideHitResultTypes.MODPlus)
+            if (resultType != PeptideHitResultTypes.MODa &&
+                resultType != PeptideHitResultTypes.MODPlus &&
+                resultType != PeptideHitResultTypes.MaxQuant)
             {
                 fileNamesToGet.Add(ReaderFactory.GetMSGFFileName(synFileName), true);
             }
