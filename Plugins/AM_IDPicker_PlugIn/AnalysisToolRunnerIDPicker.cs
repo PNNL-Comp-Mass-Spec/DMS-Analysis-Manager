@@ -130,7 +130,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Determine the result type
-                var resultType = mJobParams.GetParam("ResultType");
+                var resultType = AnalysisResources.GetResultType(mJobParams);
 
                 var ePHRPResultType = ReaderFactory.GetPeptideHitResultType(resultType);
                 if (ePHRPResultType == PeptideHitResultTypes.Unknown)

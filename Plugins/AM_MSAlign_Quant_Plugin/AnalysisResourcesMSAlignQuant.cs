@@ -39,7 +39,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return result;
             }
 
-            var resultType = mJobParams.GetParam("ResultType");
+            var resultType = GetResultType(mJobParams);
 
             // Get analysis results files
             if (GetInputFiles(resultType) != CloseOutType.CLOSEOUT_SUCCESS)
