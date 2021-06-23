@@ -1264,7 +1264,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (dmsStepNodes.Count == 0)
                     {
-                        if (mDatasetName.Equals("Aggregation"))
+                        if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
                         {
                             LogError("MaxQuant parameter file does not have a dmsSteps section; this is required for data-package based MaxQuant tasks");
                             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -1441,7 +1441,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (dmsStepNodes.Count == 0)
                     {
-                        if (!datasetName.Equals("Aggregation"))
+                        if (!Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
                             return CloseOutType.CLOSEOUT_SUCCESS;
 
                         errorMessage = "MaxQuant parameter file does not have a dmsSteps section; this is required for data-package based MaxQuant tasks";

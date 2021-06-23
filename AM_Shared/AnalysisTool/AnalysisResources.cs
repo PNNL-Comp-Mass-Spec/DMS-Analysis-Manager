@@ -43,6 +43,11 @@ namespace AnalysisManagerBase.AnalysisTool
         #region "Constants"
 
         /// <summary>
+        /// Dataset name for aggregation jobs
+        /// </summary>
+        public const string AGGREGATION_JOB_DATASET = "Aggregation";
+
+        /// <summary>
         /// MyEMSL path flag
         /// </summary>
         public const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
@@ -3338,7 +3343,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            if (Global.IsMatch(dataPkgDataset.Dataset, "Aggregation"))
+            if (Global.IsMatch(dataPkgDataset.Dataset, AGGREGATION_JOB_DATASET))
             {
                 aggregationJob = true;
             }
@@ -3398,7 +3403,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            if (Global.IsMatch(dataPkgJob.Dataset, "Aggregation"))
+            if (Global.IsMatch(dataPkgJob.Dataset, AGGREGATION_JOB_DATASET))
             {
                 aggregationJob = true;
             }

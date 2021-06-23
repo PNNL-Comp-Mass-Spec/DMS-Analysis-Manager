@@ -1125,7 +1125,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 var directoryExists = analysisResults.FolderExistsWithRetry(transferDirectoryPath);
 
-                if (!directoryExists && !Global.IsMatch(Dataset, "Aggregation"))
+                if (!directoryExists && !Global.IsMatch(Dataset, AnalysisResources.AGGREGATION_JOB_DATASET))
                 {
                     LogError("Transfer directory not found: " + transferDirectoryPath);
                     return string.Empty;
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             string remoteTransferDirectoryPath;
 
-            if (Global.IsMatch(Dataset, "Aggregation"))
+            if (Global.IsMatch(Dataset, AnalysisResources.AGGREGATION_JOB_DATASET))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
                 remoteTransferDirectoryPath = transferDirectoryPath;
@@ -1157,8 +1157,10 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 // Append the dataset directory name to the transfer directory path
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+
                 if (string.IsNullOrWhiteSpace(datasetDirectoryName))
                     datasetDirectoryName = Dataset;
+
                 remoteTransferDirectoryPath = Path.Combine(transferDirectoryPath, datasetDirectoryName);
             }
 
