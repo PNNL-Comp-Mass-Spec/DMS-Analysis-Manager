@@ -421,20 +421,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 fileNamesToGet.Add(ReaderFactory.GetMSGFFileName(synFileName), true);
             }
 
-            var toolVersionFile = ReaderFactory.GetToolVersionInfoFilename(resultType);
-            var toolNameForScript = mJobParams.GetJobParameter("ToolName", "");
-            if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")
-            {
-                // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
-                // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
-                // We'll copy the current file locally, then rename it to the expected name
-                const string originalName = "Tool_Version_Info_MSGFPlus_IMS.txt";
-                mInputFileRenames.Add(originalName, toolVersionFile);
-                toolVersionFile = originalName;
-            }
-
-            fileNamesToGet.Add(toolVersionFile, true);
-
             return fileNamesToGet;
         }
     }
