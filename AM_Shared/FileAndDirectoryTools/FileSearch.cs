@@ -464,9 +464,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 var sharedResultDirNames = GetSharedResultDirList().ToList();
 
-                var parentDirPaths = new List<string> {
+                var parentDirPaths = new List<string>
+                {
                     mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH),
-                    mJobParams.GetParam("DatasetStoragePath")};
+                    mJobParams.GetParam("DatasetStoragePath")
+                };
 
                 if (searchArchivedDatasetDir)
                 {
