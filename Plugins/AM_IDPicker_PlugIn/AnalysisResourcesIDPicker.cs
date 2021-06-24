@@ -45,122 +45,129 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-            // Retrieve shared resources, including the JobParameters file from the previous job step
-            var sharedResourceResult = GetSharedResources();
-            if (sharedResourceResult != CloseOutType.CLOSEOUT_SUCCESS)
+            try
             {
-                return sharedResourceResult;
-            }
-
-            // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MSGF+, etc.)
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-
-            if (!FileSearch.FindAndRetrieveMiscFiles(paramFileName, false))
-            {
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-            }
-            mJobParams.AddResultFileToSkip(paramFileName);
-
-            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-            if (!AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
-            {
-#pragma warning disable 162
-                // Retrieve the IDPicker parameter file specified for this job
-                if (!RetrieveIDPickerParamFile())
+                // Retrieve shared resources, including the JobParameters file from the previous job step
+                var sharedResourceResult = GetSharedResources();
+                if (sharedResourceResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return sharedResourceResult;
                 }
-#pragma warning restore 162
-            }
 
-            var rawDataTypeName = mJobParams.GetParam("RawDataType");
-            var rawDataType = GetRawDataType(rawDataTypeName);
-            var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
+                // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MSGF+, etc.)
+                var paramFileName = mJobParams.GetParam("ParmFileName");
 
-            // Retrieve the PSM result files, PHRP files, and MSGF file
-            if (!GetInputFiles(DatasetName, paramFileName, out var result))
-            {
-                return result == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FILE_NOT_FOUND : result;
-            }
-
-            if (mSynopsisFileIsEmpty)
-            {
-                // Don't retrieve any additional files
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-
-            if (!mgfInstrumentData)
-            {
-                // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
-
-                if (rawDataType == RawDataTypeConstants.ThermoRawFile || rawDataType == RawDataTypeConstants.UIMF)
+                if (!FileSearch.FindAndRetrieveMiscFiles(paramFileName, false))
                 {
-                    var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
-                    if (noScanStats)
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                }
+                mJobParams.AddResultFileToSkip(paramFileName);
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (!AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
+                {
+#pragma warning disable 162
+                    // Retrieve the IDPicker parameter file specified for this job
+                    if (!RetrieveIDPickerParamFile())
                     {
-                        LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is True");
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
+#pragma warning restore 162
+                }
+
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                var rawDataType = GetRawDataType(rawDataTypeName);
+                var mgfInstrumentData = mJobParams.GetJobParameter("MGFInstrumentData", false);
+
+                // Retrieve the PSM result files, PHRP files, and MSGF file
+                if (!GetInputFiles(DatasetName, paramFileName, out var result))
+                {
+                    return result == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FILE_NOT_FOUND : result;
+                }
+
+                if (mSynopsisFileIsEmpty)
+                {
+                    // Don't retrieve any additional files
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                if (!mgfInstrumentData)
+                {
+                    // Retrieve the MASIC ScanStats.txt and ScanStatsEx.txt files
+
+                    if (rawDataType == RawDataTypeConstants.ThermoRawFile || rawDataType == RawDataTypeConstants.UIMF)
+                    {
+                        var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
+                        if (noScanStats)
+                        {
+                            LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is True");
+                        }
+                        else
+                        {
+                            var masicResult = RetrieveMASICFilesWrapper();
+                            if (masicResult != CloseOutType.CLOSEOUT_SUCCESS)
+                            {
+                                return masicResult;
+                            }
+                        }
                     }
                     else
                     {
-                        var masicResult = RetrieveMASICFilesWrapper();
-                        if (masicResult != CloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            return masicResult;
-                        }
+                        LogWarning("Not retrieving MASIC files since unsupported data type: " + rawDataTypeName);
                     }
                 }
-                else
+
+                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
-                    LogWarning("Not retrieving MASIC files since unsupported data type: " + rawDataTypeName);
-                }
-            }
-
-            if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
-            {
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
-
-            var splitFasta = mJobParams.GetJobParameter("SplitFasta", false);
-
-            if (splitFasta)
-            {
-                // Override the SplitFasta job parameter
-                mJobParams.SetParam("SplitFasta", "False");
-            }
-
-            if (splitFasta && AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
-            {
-                // Do not retrieve the fasta file
-                // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
-                mFastaFileName = LookupLegacyFastaFileName();
-
-                if (string.IsNullOrEmpty(mFastaFileName))
-                {
-                    if (string.IsNullOrEmpty(mMessage))
-                    {
-                        mMessage = "Unable to determine the legacy fasta file name";
-                        LogError(mMessage);
-                    }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", mFastaFileName);
-            }
-            else
-            {
-                // Retrieve the Fasta file
-                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
-                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
-                    return resultCode;
-            }
+                var splitFasta = mJobParams.GetJobParameter("SplitFasta", false);
 
-            if (splitFasta)
-            {
-                // Restore the setting for SplitFasta
-                mJobParams.SetParam("SplitFasta", "True");
-            }
+                if (splitFasta)
+                {
+                    // Override the SplitFasta job parameter
+                    mJobParams.SetParam("SplitFasta", "False");
+                }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+                if (splitFasta && AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
+                {
+                    // Do not retrieve the fasta file
+                    // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
+                    mFastaFileName = LookupLegacyFastaFileName();
+
+                    if (string.IsNullOrEmpty(mFastaFileName))
+                    {
+                        if (string.IsNullOrEmpty(mMessage))
+                        {
+                            LogError("Unable to determine the legacy fasta file name");
+                        }
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
+
+                    mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", mFastaFileName);
+                }
+                else
+                {
+                    // Retrieve the Fasta file
+                    var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+                    if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                        return resultCode;
+                }
+
+                if (splitFasta)
+                {
+                    // Restore the setting for SplitFasta
+                    mJobParams.SetParam("SplitFasta", "True");
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error retrieving input files", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         private string LookupLegacyFastaFileName()
