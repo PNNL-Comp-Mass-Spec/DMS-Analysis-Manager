@@ -678,6 +678,51 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
+        /// Look for _maxq_syn.txt files in the given directory
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <param name="fileCountFound">Output: number of _maxq_syn.txt files</param>
+        /// <returns>Name of the first file, if found; empty string if no match</returns>
+        public string FindMaxQuantSynopsisFile(string directoryPath, out int fileCountFound)
+        {
+            var synopsisFileName = FindMaxQuantSynopsisFile(directoryPath, out fileCountFound, out var errorMessage);
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                OnErrorEvent(errorMessage);
+            }
+
+            return synopsisFileName;
+        }
+
+        /// <summary>
+        /// Look for _maxq_syn.txt files in the given directory
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <param name="fileCountFound">Output: number of _maxq_syn.txt files</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>Name of the first file, if found; empty string if no match</returns>
+        public static string FindMaxQuantSynopsisFile(string directoryPath, out int fileCountFound, out string errorMessage)
+        {
+            const string searchPattern = "*" + PHRPReader.Reader.MaxQuantSynFileReader.FILENAME_SUFFIX_SYN;
+
+            var directoryInfo = new DirectoryInfo(directoryPath);
+
+            if (!directoryInfo.Exists)
+            {
+                errorMessage = "Directory not found (in FindMaxQuantSynopsisFile): " + directoryPath;
+                fileCountFound = 0;
+                return string.Empty;
+            }
+
+            var synopsisFileCandidates = directoryInfo.GetFiles(searchPattern).ToList();
+
+            fileCountFound = synopsisFileCandidates.Count;
+
+            errorMessage = string.Empty;
+            return synopsisFileCandidates.Count == 0 ? string.Empty : synopsisFileCandidates[0].Name;
+        }
+
+        /// <summary>
         /// Looks for the newest .mzXML or .mzML file for this dataset
         /// </summary>
         /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML or .mzML file was found in the MSXml cache</param>

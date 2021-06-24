@@ -6,17 +6,19 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using AnalysisManagerMSGFDBPlugIn;
-using PHRPReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
+using PHRPReader;
+using PHRPReader.Reader;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
 
@@ -1725,7 +1727,6 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // PHRP auto-named the synopsis file based on the datasets in this data package
                     // Auto-find the file
-                    var workDirInfo = new DirectoryInfo(mWorkDir);
 
                     if (resultType != PeptideHitResultTypes.MaxQuant)
                     {
@@ -1735,18 +1736,21 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    const string searchPattern = "*" + PHRPReader.Reader.MaxQuantSynFileReader.FILENAME_SUFFIX_SYN;
+                    synopsisFileNameFromPHRP = FileSearch.FindMaxQuantSynopsisFile(mWorkDir, out var fileCountFound, out var errorMessage);
 
-                    var synopsisFileCandidates = workDirInfo.GetFiles(searchPattern).ToList();
+                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        LogError(errorMessage);
+                        synopsisFileNameFromPHRP = string.Empty;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
 
-                    if (synopsisFileCandidates.Count == 0)
+                    if (fileCountFound == 0)
                     {
                         LogError("PHRP did not create a synopsis file for this aggregation job");
                         synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
-
-                    synopsisFileNameFromPHRP = synopsisFileCandidates[0].Name;
                 }
                 else
                 {
