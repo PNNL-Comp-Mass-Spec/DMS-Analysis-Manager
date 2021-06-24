@@ -34,11 +34,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return result;
             }
 
-            var transferFolderName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), DatasetName);
+            var transferDirectoryName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), DatasetName);
             var zippedResultName = DatasetName + "_inspect.zip";
             const string searchLogResultName = "InspectSearchLog.txt";
 
-            transferFolderName = Path.Combine(transferFolderName, mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            transferDirectoryName = Path.Combine(transferDirectoryName, mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             // Retrieve Fasta file (used by the PeptideToProteinMapper)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
@@ -52,7 +52,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Retrieve the Inspect Input Params file
-            if (!FileSearch.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName))
+            if (!FileSearch.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferDirectoryName))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -63,11 +63,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 // This is not a parallelized job
                 // Retrieve the zipped Inspect result file
-                if (!FileSearch.RetrieveFile(zippedResultName, transferFolderName))
+                if (!FileSearch.RetrieveFile(zippedResultName, transferDirectoryName))
                 {
                     if (mDebugLevel >= 3)
                     {
-                        LogError("RetrieveFile returned False for " + zippedResultName + " using directory " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + zippedResultName + " using directory " + transferDirectoryName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -86,11 +86,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Retrieve the Inspect search log file
-                if (!FileSearch.RetrieveFile(searchLogResultName, transferFolderName))
+                if (!FileSearch.RetrieveFile(searchLogResultName, transferDirectoryName))
                 {
                     if (mDebugLevel >= 3)
                     {
-                        LogError("RetrieveFile returned False for " + searchLogResultName + " using directory " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + searchLogResultName + " using directory " + transferDirectoryName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -119,11 +119,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         protected bool RetrieveMultiInspectResultFiles()
         {
             int numOfResultFiles;
-            var transferFolderName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), DatasetName);
+            var transferDirectoryName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), DatasetName);
 
             var fileCopyCount = 0;
 
-            transferFolderName = Path.Combine(transferFolderName, mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            transferDirectoryName = Path.Combine(transferDirectoryName, mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             try
             {
@@ -146,22 +146,22 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 var inspectResultsFile = DatasetName + "_" + fileNum + "_inspect.txt";
                 var dtaFilename = DatasetName + "_" + fileNum + "_dta.txt";
 
-                if (File.Exists(Path.Combine(transferFolderName, inspectResultsFile)))
+                if (File.Exists(Path.Combine(transferDirectoryName, inspectResultsFile)))
                 {
-                    if (!CopyFileToWorkDir(inspectResultsFile, transferFolderName, mWorkDir))
+                    if (!CopyFileToWorkDir(inspectResultsFile, transferDirectoryName, mWorkDir))
                     {
                         // Error copying file (error will have already been logged)
                         if (mDebugLevel >= 3)
                         {
-                            LogError("CopyFileToWorkDir returned False for " + inspectResultsFile + " using directory " + transferFolderName);
+                            LogError("CopyFileToWorkDir returned False for " + inspectResultsFile + " using directory " + transferDirectoryName);
                         }
                         return false;
                     }
                     fileCopyCount++;
 
                     // Update the list of files to delete from the server
-                    mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, inspectResultsFile));
-                    mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, dtaFilename));
+                    mJobParams.AddServerFileToDelete(Path.Combine(transferDirectoryName, inspectResultsFile));
+                    mJobParams.AddServerFileToDelete(Path.Combine(transferDirectoryName, dtaFilename));
 
                     // Update the list of local files to delete
                     mJobParams.AddResultFileToSkip(inspectResultsFile);
@@ -183,15 +183,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         _ => string.Empty
                     };
 
-                    if (string.IsNullOrWhiteSpace(fileName) || !File.Exists(Path.Combine(transferFolderName, fileName)))
+                    if (string.IsNullOrWhiteSpace(fileName) || !File.Exists(Path.Combine(transferDirectoryName, fileName)))
                         continue;
 
-                    if (!CopyFileToWorkDir(fileName, transferFolderName, mWorkDir))
+                    if (!CopyFileToWorkDir(fileName, transferDirectoryName, mWorkDir))
                     {
                         // Error copying file (error will have already been logged)
                         if (mDebugLevel >= 3)
                         {
-                            LogError("CopyFileToWorkDir returned False for " + fileName + " using directory " + transferFolderName);
+                            LogError("CopyFileToWorkDir returned False for " + fileName + " using directory " + transferDirectoryName);
                         }
                         return false;
                     }
@@ -199,7 +199,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     fileCopyCount++;
 
                     // Update the list of files to delete from the server
-                    mJobParams.AddServerFileToDelete(Path.Combine(transferFolderName, fileName));
+                    mJobParams.AddServerFileToDelete(Path.Combine(transferDirectoryName, fileName));
 
                     // Update the list of local files to delete
                     mJobParams.AddResultFileToSkip(fileName);

@@ -92,9 +92,9 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                var transferFolderPath = GetTransferFolderPathForJobStep(useInputDirectory: false);
+                var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory: false);
 
-                if (string.IsNullOrEmpty(transferFolderPath))
+                if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
                     // Transfer folder parameter is empty; abort the search for result files
                     // This error will be properly dealt with elsewhere
@@ -103,7 +103,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 foreach (var suffix in fileSuffixes)
                 {
-                    var sourceFile = new FileInfo(Path.Combine(transferFolderPath, DatasetName + suffix));
+                    var sourceFile = new FileInfo(Path.Combine(transferDirectoryPath, DatasetName + suffix));
 
                     if (!sourceFile.Exists)
                     {
@@ -112,7 +112,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
 
                     // Copy the file
-                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, mWorkDir, BaseLogger.LogLevels.ERROR))
+                    if (!CopyFileToWorkDir(sourceFile.Name, transferDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
                     {
                         // Error copying; move on to the next file
                         continue;

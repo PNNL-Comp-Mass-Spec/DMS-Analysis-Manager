@@ -89,7 +89,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var remoteTransferFolderPath = Path.Combine(cacheFolderPath, resultsFolderName);
+            var remoteTransferDirectoryPath = Path.Combine(cacheFolderPath, resultsFolderName);
 
             // Check whether we are only creating the .msgf files
             var createMSGFReportFilesOnly = mJobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
@@ -97,7 +97,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var retrievalOptions = new DataPackageFileHandler.DataPackageRetrievalOptionsType
             {
                 CreateJobPathFiles = true,
-                RemoteTransferFolderPath = remoteTransferFolderPath,
+                RemoteTransferDirectoryPath = remoteTransferDirectoryPath,
                 RetrieveMzXMLFile = createPrideXMLFiles && !createMSGFReportFilesOnly,
                 RetrievePHRPFiles = createPrideXMLFiles,
                 RetrieveDTAFiles = mJobParams.GetJobParameter("CreateMGFFiles", true),
@@ -357,10 +357,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var templateFileName = GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
-                    mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
+                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package folder path";
                     LogError(mMessage);
                     return false;
                 }
@@ -432,12 +432,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var templateFileName = GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                // Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
+                // Note that transferDirectoryPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-                var transferFolderPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
-                if (string.IsNullOrEmpty(transferFolderPath))
+                var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
+                if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
-                    mMessage = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
+                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package folder path";
                     LogError(mMessage);
                     return false;
                 }
@@ -449,7 +449,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var matchFound = false;
                 var sourceFolders = new List<string> {
                     dataPackageStoragePath,
-                    transferFolderPath
+                    transferDirectoryPath
                 };
 
                 foreach (var sourceFolderPath in sourceFolders)

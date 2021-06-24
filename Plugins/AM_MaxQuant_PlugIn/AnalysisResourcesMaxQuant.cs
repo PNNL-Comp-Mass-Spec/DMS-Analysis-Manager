@@ -66,7 +66,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var useInputDirectory = usingMzML;
                 var includeDatasetName = dataPackageID <= 0;
 
-                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory, includeDatasetName);
+                var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory, includeDatasetName);
 
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;

@@ -1813,7 +1813,7 @@ namespace AnalysisManagerExtractionPlugin
                 return;
             }
 
-            var transferDirPath = GetTransferFolderPath();
+            var transferDirPath = GetTransferDirectoryPath();
 
             if (string.IsNullOrWhiteSpace(transferDirPath))
             {

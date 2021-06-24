@@ -1543,10 +1543,10 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                var transferFolderPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
                 var inputFolderName = mJobParams.GetParam("inputFolderName");
 
-                folderToCheck = Path.Combine(Path.Combine(transferFolderPath, mDatasetName), inputFolderName);
+                folderToCheck = Path.Combine(Path.Combine(transferDirectoryPath, mDatasetName), inputFolderName);
 
                 if (mDebugLevel >= 3)
                 {

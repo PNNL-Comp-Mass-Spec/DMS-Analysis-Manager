@@ -83,7 +83,7 @@ namespace AnalysisManagerSequestPlugin
 
         private bool mTempJobParamsCopied;
         private DateTime mLastTempFileCopyTime;
-        private string mTransferFolderPath;
+        private string mTransferDirectoryPath;
 
         private DateTime mLastOutFileCountTime = DateTime.UtcNow;
         private DateTime mLastActiveNodeQueryTime = DateTime.UtcNow;
@@ -148,9 +148,9 @@ namespace AnalysisManagerSequestPlugin
             mSequestAppearsStalled = false;
             mAbortSinceSequestIsStalled = false;
 
-            mTransferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+            mTransferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+            mTransferDirectoryPath = Path.Combine(mTransferDirectoryPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            mTransferDirectoryPath = Path.Combine(mTransferDirectoryPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             // Initialize the out file watcher
             mOutFileWatcher = new FileSystemWatcher();
@@ -536,18 +536,18 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        private bool CopyFileToTransferFolder(string sourceFileName, string targetFileName, bool addToListOfServerFilesToDelete)
+        private bool CopyFileToTransferDirectory(string sourceFileName, string targetFileName, bool addToListOfServerFilesToDelete)
         {
             try
             {
                 var sourceFilePath = Path.Combine(mWorkDir, sourceFileName);
-                var targetFilePath = Path.Combine(mTransferFolderPath, targetFileName);
+                var targetFilePath = Path.Combine(mTransferDirectoryPath, targetFileName);
 
                 if (File.Exists(sourceFilePath))
                 {
-                    if (!Directory.Exists(mTransferFolderPath))
+                    if (!Directory.Exists(mTransferDirectoryPath))
                     {
-                        Directory.CreateDirectory(mTransferFolderPath);
+                        Directory.CreateDirectory(mTransferDirectoryPath);
                     }
 
                     File.Copy(sourceFilePath, targetFilePath, true);
@@ -563,7 +563,7 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 1)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                        "Error copying file " + sourceFileName + " to " + mTransferFolderPath + ": " + ex.Message);
+                        "Error copying file " + sourceFileName + " to " + mTransferDirectoryPath + ": " + ex.Message);
                 }
                 return false;
             }
@@ -931,12 +931,12 @@ namespace AnalysisManagerSequestPlugin
                         if (!mTempJobParamsCopied)
                         {
                             sourceFileName = "JobParameters_" + mJob + ".xml";
-                            success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
+                            success = CopyFileToTransferDirectory(sourceFileName, sourceFileName + ".tmp", true);
 
                             if (success)
                             {
                                 sourceFileName = mJobParams.GetParam("ParmFileName");
-                                success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
+                                success = CopyFileToTransferDirectory(sourceFileName, sourceFileName + ".tmp", true);
                             }
 
                             if (success)
@@ -949,12 +949,12 @@ namespace AnalysisManagerSequestPlugin
                         {
                             // Copy the _out.txt.tmp file
                             sourceFileName = Path.GetFileName(mTempConcatenatedOutFilePath);
-                            success = CopyFileToTransferFolder(sourceFileName, sourceFileName, true);
+                            success = CopyFileToTransferDirectory(sourceFileName, sourceFileName, true);
                         }
 
                         // Copy the sequest.log file (rename to sequest.log.tmp when copying)
                         sourceFileName = "sequest.log";
-                        success = CopyFileToTransferFolder(sourceFileName, sourceFileName + ".tmp", true);
+                        success = CopyFileToTransferDirectory(sourceFileName, sourceFileName + ".tmp", true);
 
                         mLastTempFileCopyTime = DateTime.UtcNow;
                     }
@@ -990,7 +990,7 @@ namespace AnalysisManagerSequestPlugin
                     sequestLogFile.MoveTo(Path.Combine(mWorkDir, newName));
 
                     // Copy the renamed sequest.log file to the transfer directory
-                    CopyFileToTransferFolder(newName, newName, false);
+                    CopyFileToTransferDirectory(newName, newName, false);
                 }
             }
             catch (Exception ex)

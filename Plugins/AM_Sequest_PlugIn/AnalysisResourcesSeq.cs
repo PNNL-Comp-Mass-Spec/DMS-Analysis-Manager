@@ -165,24 +165,24 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var jobNum = mJobParams.GetParam("Job");
-                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
-                if (string.IsNullOrWhiteSpace(transferFolderPath))
+                if (string.IsNullOrWhiteSpace(transferDirectoryPath))
                 {
                     // Transfer folder path is not defined
-                    LogWarning("transferFolderPath is empty; this is unexpected");
+                    LogWarning("transferDirectoryPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Checking for " + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
+                    LogDebug("Checking for " + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferDirectoryPath);
                 }
 
-                var sourceDirectory = new DirectoryInfo(transferFolderPath);
+                var sourceDirectory = new DirectoryInfo(transferDirectoryPath);
 
                 if (!sourceDirectory.Exists)
                 {
@@ -287,7 +287,7 @@ namespace AnalysisManagerSequestPlugin
                     mJobParams.AddServerFileToDelete(firstLogFile.FullName);
 
                     // Copy the new file back to the transfer folder (necessary in case this job fails)
-                    File.Copy(localFilePath, Path.Combine(transferFolderPath, existingSeqLogFileRenamed));
+                    File.Copy(localFilePath, Path.Combine(transferDirectoryPath, existingSeqLogFileRenamed));
                 }
                 catch (Exception)
                 {

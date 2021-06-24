@@ -206,24 +206,24 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 var strJob = mJobParams.GetParam("Job");
-                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
-                if (string.IsNullOrWhiteSpace(transferFolderPath))
+                if (string.IsNullOrWhiteSpace(transferDirectoryPath))
                 {
                     // Transfer folder path is not defined
-                    LogWarning("transferFolderPath is empty; this is unexpected");
+                    LogWarning("transferDirectoryPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Checking for " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
+                    LogDebug("Checking for " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferDirectoryPath);
                 }
 
-                var diSourceFolder = new DirectoryInfo(transferFolderPath);
+                var diSourceFolder = new DirectoryInfo(transferDirectoryPath);
 
                 if (!diSourceFolder.Exists)
                 {

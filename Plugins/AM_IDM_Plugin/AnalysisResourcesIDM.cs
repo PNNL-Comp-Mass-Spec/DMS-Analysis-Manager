@@ -30,7 +30,7 @@ namespace AnalysisManager_IDM_Plugin
                     LogMessage("Retrieving input files");
                 }
 
-                var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+                var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
                 {

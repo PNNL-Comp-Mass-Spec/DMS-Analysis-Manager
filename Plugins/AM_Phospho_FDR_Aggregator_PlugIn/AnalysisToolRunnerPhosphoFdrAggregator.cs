@@ -161,7 +161,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
 
                 // Override the dataset name and transfer folder path so that the results get copied to the correct location
-                RedefineAggregationJobDatasetAndTransferFolder();
+                RedefineAggregationJobDatasetAndTransferDirectory();
 
                 var success = CopyResultsToTransferDirectory();
 

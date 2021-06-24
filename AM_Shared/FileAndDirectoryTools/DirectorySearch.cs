@@ -566,9 +566,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetName), false);
                 }
 
-                AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetDirectoryName), false);
+                AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), datasetDirectoryName), false);
                 if (datasetDirectoryName != datasetName)
-                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetName), false);
+                    AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), datasetName), false);
 
                 var fileNotFoundEncountered = false;
 

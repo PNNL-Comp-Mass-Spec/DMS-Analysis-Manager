@@ -405,7 +405,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Transfer directory path
         /// </summary>
-        public const string JOB_PARAM_TRANSFER_FOLDER_PATH = "transferFolderPath";
+        public const string JOB_PARAM_TRANSFER_DIRECTORY_PATH = "transferFolderPath";
 
         /// <summary>
         /// Name of the XML file with job parameters, created in the working directory
@@ -2104,7 +2104,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
                 var includeDatasetName = dataPackageID <= 0;
 
-                var transferDirectoryPath = GetTransferFolderPathForJobStep(useInputDirectory: true, includeDatasetName: includeDatasetName);
+                var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory: true, includeDatasetName: includeDatasetName);
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
                     // Transfer directory parameter is empty; nothing to retrieve
@@ -2907,9 +2907,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="useInputDirectory">True to use "InputFolderName", False to use "OutputFolderName"</param>
         /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
-        protected string GetTransferFolderPathForJobStep(bool useInputDirectory, bool includeDatasetName = true)
+        protected string GetTransferDirectoryPathForJobStep(bool useInputDirectory, bool includeDatasetName = true)
         {
-            return GetTransferFolderPathForJobStep(
+            return GetTransferDirectoryPathForJobStep(
                 mJobParams, useInputDirectory,
                 out _, out _,
                 includeDatasetName, mDatasetName);
@@ -2920,27 +2920,28 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="useInputDirectory">True to use "InputFolderName", False to use "OutputFolderName"</param>
-        /// <param name="missingJobParamTransferFolderPath"></param>
+        /// <param name="missingJobParamTransferDirectoryPath"></param>
         /// <param name="missingJobParamResultsDirectoryName"></param>
         /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
         /// <param name="datasetName">Dataset name</param>
-        public static string GetTransferFolderPathForJobStep(
+        public static string GetTransferDirectoryPathForJobStep(
             IJobParams jobParams,
             bool useInputDirectory,
-            out bool missingJobParamTransferFolderPath,
+            out bool missingJobParamTransferDirectoryPath,
             out bool missingJobParamResultsDirectoryName,
             bool includeDatasetName = true,
             string datasetName = "")
         {
-            var transferDirPathBase = jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirPathBase = jobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH);
             if (string.IsNullOrEmpty(transferDirPathBase))
             {
                 // Transfer directory parameter is empty; return an empty string
-                missingJobParamTransferFolderPath = true;
+                missingJobParamTransferDirectoryPath = true;
                 missingJobParamResultsDirectoryName = false;
                 return string.Empty;
             }
-            missingJobParamTransferFolderPath = false;
+
+            missingJobParamTransferDirectoryPath = false;
 
             string datasetDirectoryName;
             if (includeDatasetName)

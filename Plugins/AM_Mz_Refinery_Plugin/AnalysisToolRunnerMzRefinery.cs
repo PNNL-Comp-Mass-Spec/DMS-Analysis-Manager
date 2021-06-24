@@ -359,7 +359,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // If we get here, MS-GF+ succeeded, but MzRefinery or PostProcessing failed
-                LogWarning("Processing failed; see results at " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                LogWarning("Processing failed; see results at " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH));
                 if (mUnableToUseMzRefinery)
                 {
                     return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;

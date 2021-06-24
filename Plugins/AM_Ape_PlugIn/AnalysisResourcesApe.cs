@@ -104,7 +104,7 @@ namespace AnalysisManager_Ape_PlugIn
             // ReSharper disable once IdentifierTypo
             const string ITRAQ_ANALYSIS_TYPE = "iTRAQ";
 
-            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
             var analysisType = mJobParams.GetParam("AnalysisType");
 
             if (analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -157,7 +157,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetQRollupFiles()
         {
-            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+            var dataPackagePath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
             {

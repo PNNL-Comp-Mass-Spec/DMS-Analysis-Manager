@@ -982,7 +982,7 @@ namespace AnalysisManagerProg
             var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
             jobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
-            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-3\DMS3_XFER");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH, @"\\proto-3\DMS3_XFER");
             jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME, "Test_Dataset");
 
             toolRunner.RunTool();
@@ -1432,7 +1432,7 @@ namespace AnalysisManagerProg
 
             jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
             jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
-            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-10\DMS3_Xfer");
+            jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH, @"\\proto-10\DMS3_Xfer");
 
             resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 

@@ -381,12 +381,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
                 // Assure that the remote transfer folder exists
-                var remoteTransferFolder = CreateRemoteTransferFolder(analysisResults, mCacheFolderPath);
+                var remoteTransferDirectory = CreateRemoteTransferDirectory(analysisResults, mCacheFolderPath);
 
                 try
                 {
                     // Create the remote Transfer Directory
-                    analysisResults.CreateFolderWithRetry(remoteTransferFolder, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                    analysisResults.CreateFolderWithRetry(remoteTransferDirectory, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
                 }
                 catch (Exception ex)
                 {
@@ -398,7 +398,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Read the PX_Submission_Template.px file
                 var templateParameters = ReadTemplatePXSubmissionFile();
 
-                var jobFailureCount = ProcessJobs(analysisResults, remoteTransferFolder, templateParameters, dataPackageDatasets);
+                var jobFailureCount = ProcessJobs(analysisResults, remoteTransferDirectory, templateParameters, dataPackageDatasets);
 
                 // Create the PX Submission file
                 var success = CreatePXSubmissionFile(templateParameters);
@@ -449,12 +449,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Process the analysis jobs in mDataPackagePeptideHitJobs
         /// </summary>
         /// <param name="analysisResults"></param>
-        /// <param name="remoteTransferFolder"></param>
+        /// <param name="remoteTransferDirectory"></param>
         /// <param name="templateParameters"></param>
         /// <param name="dataPackageDatasets">Datasets in the data package (keys are DatasetID)</param>
         private int ProcessJobs(
             AnalysisResults analysisResults,
-            string remoteTransferFolder,
+            string remoteTransferDirectory,
             IReadOnlyDictionary<string, string> templateParameters,
             IReadOnlyDictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
@@ -494,7 +494,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     var result = ProcessJob(
                         jobInfo, analysisResults, dataPackageDatasets,
-                        remoteTransferFolder, datasetRawFilePaths,
+                        remoteTransferDirectory, datasetRawFilePaths,
                         templateParameters, assumeInstrumentDataUnpurged);
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -521,7 +521,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                TransferPreviousDatasetFiles(analysisResults, remoteTransferFolder);
+                TransferPreviousDatasetFiles(analysisResults, remoteTransferDirectory);
 
                 // Look for datasets associated with the data package that have no PeptideHit jobs
                 // Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
@@ -3069,13 +3069,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return false;
         }
 
-        private bool FileExistsInTransferFolder(string remoteTransferFolder, string filePath, string optionalSuffix = "")
+        private bool FileExistsInTransferDirectory(string remoteTransferDirectory, string filePath, string optionalSuffix = "")
         {
             var fileName = Path.GetFileName(filePath);
             if (fileName == null)
                 return false;
 
-            if (File.Exists(Path.Combine(remoteTransferFolder, fileName)))
+            if (File.Exists(Path.Combine(remoteTransferDirectory, fileName)))
                 return true;
 
             if (string.IsNullOrWhiteSpace(optionalSuffix))
@@ -3083,7 +3083,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            return File.Exists(Path.Combine(remoteTransferFolder, fileName + optionalSuffix));
+            return File.Exists(Path.Combine(remoteTransferDirectory, fileName + optionalSuffix));
         }
 
         private string GetCVString(SampleMetadata.CvParamInfo cvParamInfo)
@@ -3559,15 +3559,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="jobInfo">Keys are job numbers and values contain job info</param>
         /// <param name="analysisResults"></param>
         /// <param name="dataPackageDatasets"></param>
-        /// <param name="remoteTransferFolder"></param>
-        /// <param name="datasetRawFilePaths"></param>
+        /// <param name="remoteTransferDirectory"></param>
+        /// <param name="datasetRawFilePaths"></param>t
         /// <param name="templateParameters"></param>
         /// <param name="assumeInstrumentDataUnpurged"></param>
         private CloseOutType ProcessJob(
             KeyValuePair<int, DataPackageJobInfo> jobInfo,
             AnalysisResults analysisResults,
             IReadOnlyDictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
-            string remoteTransferFolder,
+            string remoteTransferDirectory,
             IReadOnlyDictionary<string, string> datasetRawFilePaths,
             IReadOnlyDictionary<string, string> templateParameters,
             bool assumeInstrumentDataUnpurged)
@@ -3579,7 +3579,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (mPreviousDatasetName != dataset)
             {
-                TransferPreviousDatasetFiles(analysisResults, remoteTransferFolder);
+                TransferPreviousDatasetFiles(analysisResults, remoteTransferDirectory);
 
                 // Retrieve the dataset files for this dataset
                 mPreviousDatasetName = dataset;
@@ -3623,7 +3623,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Retrieve the PHRP files, MS-GF+ results, and _dta.txt or .mzML.gz file for this job
             var filesCopied = new List<string>();
 
-            var success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferFolder, filesCopied);
+            var success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferDirectory, filesCopied);
             if (!success)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -3643,7 +3643,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             resultFiles.MGFFilePath = string.Empty;
             if (mCreateMGFFiles && !searchedMzML)
             {
-                if (FileExistsInTransferFolder(remoteTransferFolder, dataset + DOT_MGF))
+                if (FileExistsInTransferDirectory(remoteTransferDirectory, dataset + DOT_MGF))
                 {
                     // The .mgf file already exists on the remote server; update .MGFFilePath
                     // The path to the file doesn't matter; just the name
@@ -3675,7 +3675,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!assumeInstrumentDataUnpurged && !searchedMzML && !File.Exists(resultFiles.MGFFilePath))
                 {
                     // .mgf file not found
-                    // We don't check for .mzML.gz files since those are not copied locally if they already exist in remoteTransferFolder
+                    // We don't check for .mzML.gz files since those are not copied locally if they already exist in remoteTransferDirectory
                     resultFiles.MGFFilePath = string.Empty;
                 }
             }
@@ -3686,7 +3686,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 mMessage = string.Empty;
 
-                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, datasetInfo, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
+                success = UpdateMzIdFiles(remoteTransferDirectory, jobInfo.Value, datasetInfo, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -3920,7 +3920,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             int job,
             string dataset,
             AnalysisResults analysisResults,
-            string remoteTransferFolder,
+            string remoteTransferDirectory,
             ICollection<string> filesCopied)
         {
             var filesToCopy = new List<string>();
@@ -3965,14 +3965,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (otherFiles.Count == 0 && cdtaFile && mzidFiles.Count > 0)
                     {
-                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + DOT_MGF))
+                        if (FileExistsInTransferDirectory(remoteTransferDirectory, dataset + DOT_MGF))
                         {
-                            var allowSkip = mzidFiles.All(remoteMzIdFile => FileExistsInTransferFolder(remoteTransferFolder, remoteMzIdFile));
+                            var allowSkip = mzidFiles.All(remoteMzIdFile => FileExistsInTransferDirectory(remoteTransferDirectory, remoteMzIdFile));
 
                             if (allowSkip)
                             {
                                 LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz files already exist at {1}", job,
-                                                       remoteTransferFolder));
+                                                       remoteTransferDirectory));
 
                                 foreach (var sourceFilePath in filesToCopy)
                                 {
@@ -4030,14 +4030,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         // mzML files can be large
                         // If the file already exists in the transfer directory and the sizes match, do not recopy
 
-                        var fileInTransferDirectory = new FileInfo(Path.Combine(remoteTransferFolder, sourceFile.Name));
+                        var fileInTransferDirectory = new FileInfo(Path.Combine(remoteTransferDirectory, sourceFile.Name));
 
                         if (fileInTransferDirectory.Exists)
                         {
                             if (fileInTransferDirectory.Length == sourceFile.Length)
                             {
                                 alreadyCopiedToTransferDirectory = true;
-                                LogDebug(string.Format("Skipping file {0} since already copied to {1}", sourceFile.Name, remoteTransferFolder));
+                                LogDebug(string.Format("Skipping file {0} since already copied to {1}", sourceFile.Name, remoteTransferDirectory));
                             }
                         }
                     }
@@ -4358,7 +4358,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void TransferPreviousDatasetFiles(AnalysisResults analysisResults, string remoteTransferFolder)
+        private void TransferPreviousDatasetFiles(AnalysisResults analysisResults, string remoteTransferDirectory)
         {
             // Delete the dataset files for the previous dataset
             var filesToRetry = new List<string>();
@@ -4375,7 +4375,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.IsNullOrWhiteSpace(sourceFilePath))
                             continue;
 
-                        var targetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(sourceFilePath));
+                        var targetFilePath = Path.Combine(remoteTransferDirectory, Path.GetFileName(sourceFilePath));
 
                         if (!File.Exists(sourceFilePath))
                             continue;
@@ -4398,7 +4398,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 catch (Exception ex)
                 {
                     // Folder creation error
-                    LogError("Exception copying files to " + remoteTransferFolder, ex);
+                    LogError("Exception copying files to " + remoteTransferDirectory, ex);
                     filesToRetry.AddRange(mPreviousDatasetFilesToCopy);
                 }
 
@@ -4503,7 +4503,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
         /// Lastly, remove any empty ModificationParams elements
         /// </summary>
-        /// <param name="remoteTransferFolder">Remote transfer folder</param>
+        /// <param name="remoteTransferDirectory">Remote transfer folder</param>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="dataPkgDatasetInfo">Dataset info for this job</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
@@ -4512,7 +4512,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="templateParameters"></param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMzIdFiles(
-            string remoteTransferFolder,
+            string remoteTransferDirectory,
             DataPackageJobInfo dataPkgJob,
             DataPackageDatasetInfo dataPkgDatasetInfo,
             bool searchedMzML,
@@ -4578,7 +4578,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // If <ModificationParams /> is found, remove it
 
-                var success = UpdateMzIdFile(remoteTransferFolder, dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out var mzIdFilePath, out mzIdExistsRemotely);
+                var success = UpdateMzIdFile(remoteTransferDirectory, dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out var mzIdFilePath, out mzIdExistsRemotely);
                 if (success)
                 {
                     mzIdFilePaths.Add(mzIdFilePath);
@@ -4590,7 +4590,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
                     {
                         success = UpdateMzIdFile(
-                            remoteTransferFolder,
+                            remoteTransferDirectory,
                             dataPkgJob.Job,
                             dataPkgJob.Dataset,
                             searchedMzML,
@@ -4638,7 +4638,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
         /// Lastly, remove any empty ModificationParams elements
         /// </summary>
-        /// <param name="remoteTransferFolder">Remote transfer folder</param>
+        /// <param name="remoteTransferDirectory">Remote transfer folder</param>
         /// <param name="dataPkgJob">Data package job</param>
         /// <param name="dataPkgDataset">Data package dataset</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
@@ -4648,7 +4648,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMzIdFile(
-            string remoteTransferFolder,
+            string remoteTransferDirectory,
             int dataPkgJob,
             string dataPkgDataset,
             bool searchedMzML,
@@ -4684,7 +4684,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // Job-specific version not found locally
                     // If the file already exists in the remote transfer folder, assume that it is up-to-date
-                    if (FileExistsInTransferFolder(remoteTransferFolder, mzIdFilePath))
+                    if (FileExistsInTransferDirectory(remoteTransferDirectory, mzIdFilePath))
                     {
                         LogDebug("Skip updating the .mzid.gz file since already in the transfer folder");
                         mzIdExistsRemotely = true;
@@ -4700,7 +4700,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (!File.Exists(mzIdFilePath))
                     {
-                        if (FileExistsInTransferFolder(remoteTransferFolder, mzIdFilePath))
+                        if (FileExistsInTransferDirectory(remoteTransferDirectory, mzIdFilePath))
                         {
                             LogDebug("Skip updating the .mzid.gz file since already in the transfer folder");
                             mzIdExistsRemotely = true;

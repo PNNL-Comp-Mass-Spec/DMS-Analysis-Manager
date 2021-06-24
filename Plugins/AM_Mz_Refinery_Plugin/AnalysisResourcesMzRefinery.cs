@@ -176,7 +176,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
         {
             var resultsFolderName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
-            var transferFolderPath = mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
@@ -185,14 +185,14 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(transferFolderPath))
+            if (string.IsNullOrWhiteSpace(transferDirectoryPath))
             {
-                mMessage = "Transfer folder not defined (job parameter transferFolderPath)";
+                mMessage = "Transfer folder not defined (job parameter transferDirectoryPath)";
                 LogError(mMessage);
                 return false;
             }
 
-            var transferDirectory = new DirectoryInfo(Path.Combine(transferFolderPath, DatasetName, resultsFolderName));
+            var transferDirectory = new DirectoryInfo(Path.Combine(transferDirectoryPath, DatasetName, resultsFolderName));
             if (!transferDirectory.Exists)
             {
                 // This is not an error -- it just means there are no existing MS-GF+ results to use

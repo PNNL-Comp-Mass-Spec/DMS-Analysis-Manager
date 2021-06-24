@@ -466,7 +466,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 var parentDirPaths = new List<string>
                 {
-                    mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH),
+                    mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH),
                     mJobParams.GetParam("DatasetStoragePath")
                 };
 
@@ -3069,6 +3069,5 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         #endregion
-
     }
 }

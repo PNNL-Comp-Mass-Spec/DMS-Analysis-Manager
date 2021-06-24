@@ -55,7 +55,7 @@ namespace AnalysisManagerIDPickerPlugIn
         private const float PROGRESS_PCT_IDPicker_COMPLETE = 95;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        private string mIDPickerProgramFolder = string.Empty;
+        private string mIDPickerProgramDirectory = string.Empty;
         private string mIDPickerParamFileNameLocal = string.Empty;
 
         private string mPeptideListToXMLExePath = string.Empty;
@@ -74,8 +74,8 @@ namespace AnalysisManagerIDPickerPlugIn
         // This list tracks error message text that we look for when considering whether or not to ignore an error message
         private ConcurrentBag<string> mCmdRunnerErrorsToIgnore;
 
-        // This list tracks files that we want to include in the zipped up IDPicker report folder
-        private List<string> mFilenamesToAddToReportFolder;
+        // This list tracks files that we want to include in the zipped up IDPicker report directory
+        private List<string> mFilenamesToAddToReportDirectory;
 
         private bool mBatchFilesMoved;
 
@@ -97,7 +97,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mIDPickerOptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             mCmdRunnerErrors = new ConcurrentBag<string>();
             mCmdRunnerErrorsToIgnore = new ConcurrentBag<string>();
-            mFilenamesToAddToReportFolder = new List<string>();
+            mFilenamesToAddToReportDirectory = new List<string>();
 
             try
             {
@@ -114,7 +114,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 mProgress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES;
 
-                // Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
+                // Determine the path to the IDPicker program (idpQonvert); directory will also contain idpAssemble.exe and idpReport.exe
                 var progLocQonvert = string.Empty;
 
                 // ReSharper disable ConditionIsAlwaysTrueOrFalse
@@ -253,7 +253,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    // In order to help diagnose things, we will move whatever files were created into the result directory,
                     //  archive it using CopyFailedResultsToArchiveDirectory, return CloseOutType.CLOSEOUT_FAILED
 
                     mJobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME);
@@ -263,11 +263,11 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var folderCreated = MakeResultsDirectory();
-                if (!folderCreated)
+                var directoryCreated = MakeResultsDirectory();
+                if (!directoryCreated)
                 {
                     // MakeResultsDirectory handles posting to local log, so set database error message and exit
-                    mMessage = "Error making results folder";
+                    mMessage = "Error making results directory";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -276,7 +276,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     var moveResult = MoveFilesIntoIDPickerSubdirectory();
                     if (moveResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
+                        // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
                         mMessage = "Error moving files into IDPicker subdirectory";
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -483,11 +483,11 @@ namespace AnalysisManagerIDPickerPlugIn
         }
 
         /// <summary>
-        /// Copies a file into folder reportFolderPath then adds it to mJobParams.AddResultFileToSkip
+        /// Copies a file into directory reportDirectoryPath then adds it to mJobParams.AddResultFileToSkip
         /// </summary>
         /// <param name="fileName"></param>
-        /// <param name="reportFolderPath"></param>
-        private void CopyFileIntoReportFolder(string fileName, string reportFolderPath)
+        /// <param name="reportDirectoryPath"></param>
+        private void CopyFileIntoReportDirectory(string fileName, string reportDirectoryPath)
         {
             try
             {
@@ -495,13 +495,13 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (sourceFile.Exists)
                 {
-                    sourceFile.CopyTo(Path.Combine(reportFolderPath, fileName), true);
+                    sourceFile.CopyTo(Path.Combine(reportDirectoryPath, fileName), true);
                     mJobParams.AddResultFileToSkip(fileName);
                 }
             }
             catch (Exception ex)
             {
-                LogWarning("Error copying ConsoleOutput file into the IDPicker Report folder: " + ex.Message);
+                LogWarning("Error copying ConsoleOutput file into the IDPicker Report Directory: " + ex.Message);
             }
         }
 
@@ -813,10 +813,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
             try
             {
-                var resFolderNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
+                var resultsDirectoryNamePath = Path.Combine(mWorkDir, mResultsDirectoryName);
 
-                var sourceFolder = new DirectoryInfo(resFolderNamePath);
-                var targetFolder = sourceFolder.CreateSubdirectory("IDPicker");
+                var sourceDirectory = new DirectoryInfo(resultsDirectoryNamePath);
+                var targetDirectory = sourceDirectory.CreateSubdirectory("IDPicker");
 
                 var fileSpecs = new List<string>();
                 var filesToMove = new List<FileInfo>();
@@ -833,7 +833,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 foreach (var fileSpec in fileSpecs)
                 {
-                    filesToMove.AddRange(sourceFolder.GetFiles(fileSpec));
+                    filesToMove.AddRange(sourceDirectory.GetFiles(fileSpec));
                 }
 
                 foreach (var fileToMove in filesToMove)
@@ -849,7 +849,7 @@ namespace AnalysisManagerIDPickerPlugIn
                             fileToMove.Refresh();
                             if (fileToMove.Exists)
                             {
-                                fileToMove.MoveTo(Path.Combine(targetFolder.FullName, fileToMove.Name));
+                                fileToMove.MoveTo(Path.Combine(targetDirectory.FullName, fileToMove.Name));
                             }
                             success = true;
                         }
@@ -966,7 +966,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file");
 
             // Define the path to the .Exe
-            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble);
+            var progLoc = Path.Combine(mIDPickerProgramDirectory, IDPicker_Assemble);
 
             // Build the command string, for example:
             //  Assemble.xml -MaxFDR 0.1 -b Assemble.txt
@@ -1017,7 +1017,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("could not find the default residue masses file");
 
             // Define the path to the .Exe
-            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
+            var progLoc = Path.Combine(mIDPickerProgramDirectory, IDPicker_Qonvert);
 
             // Possibly override some options
             if (phrpResultType == PeptideHitResultTypes.MODa || phrpResultType == PeptideHitResultTypes.MODPlus)
@@ -1071,7 +1071,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             const int maxRuntimeMinutes = 60;
 
-            const string outputFolderName = "IDPicker";
+            const string outputDirectoryName = "IDPicker";
 
             // Define the errors that we can ignore
             ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
@@ -1079,12 +1079,12 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file");
 
             // Define the path to the .Exe
-            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Report);
+            var progLoc = Path.Combine(mIDPickerProgramDirectory, IDPicker_Report);
 
             // Build the command string, for example:
             //  report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -OutputTextReport true
 
-            var arguments = outputFolderName + " " + mIdpAssembleFilePath;
+            var arguments = outputDirectoryName + " " + mIdpAssembleFilePath;
             arguments = AppendArgument(arguments, "ReportMaxFDR", "MaxFDR", "0.05");
             arguments = AppendArgument(arguments, "MinDistinctPeptides", "2");
             arguments = AppendArgument(arguments, "MinAdditionalPeptides", "2");
@@ -1100,10 +1100,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (success)
             {
-                var reportFolder = new DirectoryInfo(Path.Combine(mWorkDir, outputFolderName));
+                var reportDirectory = new DirectoryInfo(Path.Combine(mWorkDir, outputDirectoryName));
 
-                // Make sure the output folder was created
-                if (!reportFolder.Exists)
+                // Make sure the output directory was created
+                if (!reportDirectory.Exists)
                 {
                     mMessage = "IDPicker report folder file not found";
                     LogError(mMessage + " at " + reportFolder.FullName);
@@ -1114,8 +1114,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     var tsvFileFound = false;
 
-                    // Move the .tsv files from the Report folder up one level
-                    foreach (var tsvFile in reportFolder.GetFiles("*.tsv"))
+                    // Move the .tsv files from the Report Directory up one level
+                    foreach (var tsvFile in reportDirectory.GetFiles("*.tsv"))
                     {
                         tsvFile.MoveTo(Path.Combine(mWorkDir, tsvFile.Name));
                         tsvFileFound = true;
@@ -1131,24 +1131,24 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (success)
                 {
-                    // Copy the ConsoleOutput and RunProgram batch files into the Report folder (and add them to the files to Skip)
-                    // mFilenamesToAddToReportFolder will already contain the batch file names
+                    // Copy the ConsoleOutput and RunProgram batch files into the Report Directory (and add them to the files to Skip)
+                    // mFilenamesToAddToReportDirectory will already contain the batch file names
 
-                    mFilenamesToAddToReportFolder.Add(IPD_Qonvert_CONSOLE_OUTPUT);
-                    mFilenamesToAddToReportFolder.Add(IPD_Assemble_CONSOLE_OUTPUT);
-                    mFilenamesToAddToReportFolder.Add(IPD_Report_CONSOLE_OUTPUT);
+                    mFilenamesToAddToReportDirectory.Add(IPD_Qonvert_CONSOLE_OUTPUT);
+                    mFilenamesToAddToReportDirectory.Add(IPD_Assemble_CONSOLE_OUTPUT);
+                    mFilenamesToAddToReportDirectory.Add(IPD_Report_CONSOLE_OUTPUT);
 
-                    foreach (var fileToAdd in mFilenamesToAddToReportFolder)
+                    foreach (var fileToAdd in mFilenamesToAddToReportDirectory)
                     {
-                        CopyFileIntoReportFolder(fileToAdd, reportFolder.FullName);
+                        CopyFileIntoReportDirectory(fileToAdd, reportDirectory.FullName);
                     }
 
                     mBatchFilesMoved = true;
 
-                    // Zip the report folder
+                    // Zip the Report Directory
                     var zippedResultsFilePath = Path.Combine(mWorkDir, "IDPicker_HTML_Results.zip");
                     mDotNetZipTools.DebugLevel = mDebugLevel;
-                    success = mDotNetZipTools.ZipDirectory(reportFolder.FullName, zippedResultsFilePath, true);
+                    success = mDotNetZipTools.ZipDirectory(reportDirectory.FullName, zippedResultsFilePath, true);
 
                     if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
@@ -1214,7 +1214,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 programDescription = programDescription.Replace(" ", "_");
 
                 var batchFileName = "Run_" + programDescription + ".bat";
-                mFilenamesToAddToReportFolder.Add(batchFileName);
+                mFilenamesToAddToReportDirectory.Add(batchFileName);
 
                 // Update the Exe path to point to the RunProgram batch file; update arguments to be empty
                 exePath = Path.Combine(mWorkDir, batchFileName);
@@ -1351,20 +1351,20 @@ namespace AnalysisManagerIDPickerPlugIn
                     return false;
                 }
 
-                mIDPickerProgramFolder = idPickerProgram.Directory.FullName;
+                mIDPickerProgramDirectory = idPickerProgram.Directory.FullName;
 
                 // Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
-                var idpAssembleExePath = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble);
+                var idpAssembleExePath = Path.Combine(mIDPickerProgramDirectory, IDPicker_Assemble);
                 mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpAssembleExePath);
                 toolFiles.Add(new FileInfo(idpAssembleExePath));
 
                 // Lookup the version of idpReport.exe
-                var idpReportExePath = Path.Combine(mIDPickerProgramFolder, IDPicker_Report);
+                var idpReportExePath = Path.Combine(mIDPickerProgramDirectory, IDPicker_Report);
                 mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, idpReportExePath);
                 toolFiles.Add(new FileInfo(idpReportExePath));
 
                 // Also include idpQonvert.exe in toolFiles (version determination does not work)
-                var idpQonvertExePath = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
+                var idpQonvertExePath = Path.Combine(mIDPickerProgramDirectory, IDPicker_Qonvert);
                 toolFiles.Add(new FileInfo(idpQonvertExePath));
 
                 // Lookup the version of PeptideListToXML.exe

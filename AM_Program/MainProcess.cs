@@ -2903,7 +2903,7 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = mMgrParams.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
-                var transferDir = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+                var transferDir = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
                 var transferDirMinFreeSpaceGB = mMgrParams.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
                 var orgDbDir = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);

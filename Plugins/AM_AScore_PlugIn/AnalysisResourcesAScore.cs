@@ -147,7 +147,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreCIDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreCIDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreCIDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH)))
         //        {
         //            return false;
         //        }
@@ -157,7 +157,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreETDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreETDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreETDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH)))
         //        {
         //            return false;
         //        }
@@ -167,7 +167,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!string.IsNullOrEmpty(mJobParams.GetParam("AScoreHCDParamFile")))
         //    {
-        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreHCDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+        //        if (!FileSearch.RetrieveFile(mJobParams.GetParam("AScoreHCDParamFile"), mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH)))
         //        {
         //            return false;
         //        }

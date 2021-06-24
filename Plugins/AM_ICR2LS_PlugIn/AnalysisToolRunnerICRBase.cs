@@ -167,20 +167,20 @@ namespace AnalysisManagerICR2LSPlugIn
                         return;
                 }
 
-                var transferFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
-                if (string.IsNullOrEmpty(transferFolderPath))
+                var transferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+                if (string.IsNullOrEmpty(transferDirectoryPath))
                     return;
 
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-                transferFolderPath = Path.Combine(transferFolderPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-                var diTransferFolder = new DirectoryInfo(transferFolderPath);
-                if (!diTransferFolder.Exists)
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+                if (!transferDirectory.Exists)
                 {
-                    diTransferFolder.Create();
+                    transferDirectory.Create();
                 }
 
-                var fiTargetFileFinal = new FileInfo(Path.Combine(diTransferFolder.FullName, Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE));
+                var fiTargetFileFinal = new FileInfo(Path.Combine(transferDirectory.FullName, Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE));
                 var fiTargetFileTemp = new FileInfo(fiTargetFileFinal.FullName + ".new");
 
                 mPEKResultsFile.CopyTo(fiTargetFileTemp.FullName, true);

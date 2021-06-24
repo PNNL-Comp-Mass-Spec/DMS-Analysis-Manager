@@ -43,7 +43,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                     dirLocalRScriptFolder.Create();
                 }
 
-                var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
+                var dataPackageFolderPath = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
                 var analysisType = mJobParams.GetParam("AnalysisType");
 
                 if (analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)

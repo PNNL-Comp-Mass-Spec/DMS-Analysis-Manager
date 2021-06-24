@@ -85,15 +85,15 @@ namespace AnalysisManagerResultsCleanupPlugin
 
                 var includeDatasetName = dataPackageID <= 0;
 
-                var resultsDirectoryPath = AnalysisResources.GetTransferFolderPathForJobStep(
+                var resultsDirectoryPath = AnalysisResources.GetTransferDirectoryPathForJobStep(
                     mJobParams, true,
-                    out var missingJobParamTransferFolderPath,
+                    out var missingJobParamTransferDirectoryPath,
                     out var missingJobParamResultsDirectoryName,
                     includeDatasetName, mDatasetName);
 
-                if (missingJobParamTransferFolderPath)
+                if (missingJobParamTransferDirectoryPath)
                 {
-                    mMessage = "transferFolderPath not found in the job parameters";
+                    mMessage = "transferDirectoryPath not found in the job parameters";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

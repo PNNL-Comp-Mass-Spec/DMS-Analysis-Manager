@@ -464,9 +464,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 mJobParams.AddResultFileToSkip(fileToFind);
                 mJobParams.AddResultFileExtensionToSkip("_peaks.txt");
 
-                var diTransferFolder = new DirectoryInfo(mJobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH));
-                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-                if (diSourceFolder.FullName.StartsWith(diTransferFolder.FullName, StringComparison.OrdinalIgnoreCase))
+                var transferDirectory = new DirectoryInfo(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH));
+                var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+                if (sourceDirectory.FullName.StartsWith(transferDirectory.FullName, StringComparison.OrdinalIgnoreCase))
                 {
                     // The Peaks.txt file is in the transfer folder
                     // If the analysis finishes successfully, we can delete the file from the transfer folder

@@ -85,7 +85,7 @@ namespace AnalysisManagerBase.JobConfig
             /// <summary>
             /// Remote transfer directory path; used to save DataPkgJobMetadata.txt
             /// </summary>
-            public string RemoteTransferFolderPath;
+            public string RemoteTransferDirectoryPath;
         }
 
         private struct DataPackageJobMetadata
@@ -1399,12 +1399,12 @@ namespace AnalysisManagerBase.JobConfig
                 mAnalysisResources.CacheCurrentDataAndJobInfo();
 
                 // Look for a DataPkgJobMetadata.txt file
-                var dataPkgJobMetadataFile = new FileInfo(Path.Combine(retrievalOptions.RemoteTransferFolderPath, DATA_PKG_JOB_METADATA_FILE));
+                var dataPkgJobMetadataFile = new FileInfo(Path.Combine(retrievalOptions.RemoteTransferDirectoryPath, DATA_PKG_JOB_METADATA_FILE));
 
                 Dictionary<int, DataPackageJobMetadata> cachedJobMetadata;
                 int cachedMetadataCountAtStart;
 
-                if (!string.IsNullOrWhiteSpace(retrievalOptions.RemoteTransferFolderPath) && dataPkgJobMetadataFile.Exists)
+                if (!string.IsNullOrWhiteSpace(retrievalOptions.RemoteTransferDirectoryPath) && dataPkgJobMetadataFile.Exists)
                 {
                     cachedJobMetadata = LoadCachedDataPkgJobMetadata(dataPkgJobMetadataFile);
                     cachedMetadataCountAtStart = cachedJobMetadata.Count;

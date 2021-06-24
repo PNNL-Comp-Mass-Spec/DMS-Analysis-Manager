@@ -768,7 +768,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, otherwise false</returns>
         protected bool CopyResultsFolderToServer()
         {
-            var transferDirectoryPath = GetTransferFolderPath();
+            var transferDirectoryPath = GetTransferDirectoryPath();
 
             if (string.IsNullOrEmpty(transferDirectoryPath))
             {
@@ -828,7 +828,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 // Determine the remote transfer directory path (create it if missing)
-                targetDirectoryPath = CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
+                targetDirectoryPath = CreateRemoteTransferDirectory(analysisResults, transferDirectoryPath);
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
                     analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
@@ -1087,20 +1087,20 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Creates the directory if it does not exist
         /// </summary>
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(AnalysisResults analysisResults)
+        protected string CreateRemoteTransferDirectory(AnalysisResults analysisResults)
         {
-            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
             // Verify transfer directory exists
-            // First make sure TransferFolderPath is defined
+            // First make sure transferDirectoryPath is defined
             if (string.IsNullOrEmpty(transferDirectoryPath))
             {
                 const string msg = "Transfer directory path not defined";
-                LogError(msg, msg + "; job param 'transferFolderPath' is empty");
+                LogError(msg, msg + "; job param 'transferDirectoryPath' is empty");
                 return string.Empty;
             }
 
-            return CreateRemoteTransferFolder(analysisResults, transferDirectoryPath);
+            return CreateRemoteTransferDirectory(analysisResults, transferDirectoryPath);
         }
 
         /// <summary>
@@ -1110,7 +1110,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="analysisResults">Analysis results object</param>
         /// <param name="transferDirectoryPath">Base transfer directory path, e.g. \\proto-11\DMS3_Xfer\</param>
         /// <returns>The full path to the remote transfer directory; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(AnalysisResults analysisResults, string transferDirectoryPath)
+        protected string CreateRemoteTransferDirectory(AnalysisResults analysisResults, string transferDirectoryPath)
         {
             if (string.IsNullOrEmpty(mResultsDirectoryName))
             {
@@ -2068,13 +2068,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Lookup the base transfer directory path
         /// </summary>
         /// <remarks>For example, \\proto-7\DMS3_XFER\</remarks>
-        protected string GetTransferFolderPath()
+        protected string GetTransferDirectoryPath()
         {
-            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
             if (string.IsNullOrEmpty(transferDirectoryPath))
             {
-                LogError("Transfer directory path not defined; job param 'transferFolderPath' is empty");
+                LogError("Transfer directory path not defined; job param 'transferDirectoryPath' is empty");
                 return string.Empty;
             }
 
@@ -3197,12 +3197,12 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Updates the dataset name to the final directory name in the transferFolderPath job parameter
+        /// Updates the dataset name to the final directory name in the transferDirectoryPath job parameter
         /// Updates the transfer directory path to remove the final directory name
         /// </summary>
-        protected void RedefineAggregationJobDatasetAndTransferFolder()
+        protected void RedefineAggregationJobDatasetAndTransferDirectory()
         {
-            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
             var transferDirectory = new DirectoryInfo(transferDirectoryPath);
 
             mDatasetName = transferDirectory.Name;
@@ -3213,7 +3213,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             transferDirectoryPath = transferDirectory.Parent.FullName;
-            mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferDirectoryPath);
+            mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH, transferDirectoryPath);
         }
 
         /// <summary>
@@ -3781,7 +3781,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 mSummaryFile.Add("Processor" + '\t' + mMgrName);
                 mSummaryFile.Add("Tool" + '\t' + toolAndStepTool);
                 mSummaryFile.Add("Dataset Name" + '\t' + Dataset);
-                mSummaryFile.Add("Xfer Folder" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                mSummaryFile.Add("Xfer Folder" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH));
                 mSummaryFile.Add("Param File Name" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
                 mSummaryFile.Add("Settings File Name" + '\t' + mJobParams.GetParam("SettingsFileName"));
                 mSummaryFile.Add("Legacy Organism Db Name" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
