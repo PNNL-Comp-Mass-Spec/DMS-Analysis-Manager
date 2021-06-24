@@ -139,7 +139,14 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Define the path to the synopsis file
-                var synFilePath = Path.Combine(mWorkDir, ReaderFactory.GetPHRPSynopsisFileName(phrpResultType, mDatasetName));
+
+                var aggregationJobSynopsisFileName = mJobParams.GetJobParameter("AggregationJobSynopsisFileName", string.Empty);
+
+                var synopsisFileName = string.IsNullOrWhiteSpace(aggregationJobSynopsisFileName) ?
+                    ReaderFactory.GetPHRPSynopsisFileName(phrpResultType, mDatasetName) :
+                    aggregationJobSynopsisFileName;
+
+                var synFilePath = Path.Combine(mWorkDir, synopsisFileName);
                 if (!File.Exists(synFilePath))
                 {
                     var alternateFilePath = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");

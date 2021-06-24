@@ -8,6 +8,7 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PHRPReader.Reader;
 using PRISMDatabaseUtils;
+using System;
 
 namespace AnalysisManagerIDPickerPlugIn
 {
@@ -27,6 +28,8 @@ namespace AnalysisManagerIDPickerPlugIn
         /// Default IDPicker parameter file name
         /// </summary>
         public const string DEFAULT_IDPICKER_PARAM_FILE_NAME = "IDPicker_Defaults.txt";
+
+        public const string JOB_PARAM_AGGREGATION_JOB_SYNOPSIS_FILE = "AggregationJobSynopsisFileName";
 
         private bool mSynopsisFileIsEmpty;
 
@@ -204,8 +207,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <returns>True if success, otherwise false</returns>
         private bool GetInputFiles(string datasetName, string searchEngineParamFileName, out CloseOutType returnCode)
         {
-            // This tracks the filenames to find. The Boolean value is True if the file is Required, false if not required
-
             returnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             var resultTypeName = GetResultType(mJobParams);
@@ -226,6 +227,22 @@ namespace AnalysisManagerIDPickerPlugIn
                 returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
+
+            if (Global.IsMatch(datasetName, AGGREGATION_JOB_DATASET))
+            {
+                // Update datasetName using the base name used by the _maxq_syn.txt file for this aggregation job
+                if (!GetMaxQuantSynopsisFileBaseName(out var baseName))
+                {
+                    // The error has already been logged
+                    returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return false;
+                }
+
+                datasetName = baseName;
+            }
+
+            // fileNamesToGet tracks the filenames to find
+            // Keys are filenames to find and values are true if the file is required, false if not required
 
             var fileNamesToGet = GetPHRPFileNames(resultType, datasetName);
             mSynopsisFileIsEmpty = false;
@@ -316,6 +333,56 @@ namespace AnalysisManagerIDPickerPlugIn
 
             return true;
         }
+
+        private bool GetMaxQuantSynopsisFileBaseName(out string baseName)
+        {
+            baseName = string.Empty;
+
+            try
+            {
+                var transferDirectoryPath = GetTransferDirectoryPathForJobStep(true, false);
+
+                if (string.IsNullOrWhiteSpace(transferDirectoryPath))
+                {
+                    LogError("GetTransferDirectoryPathForJobStep returned an empty string; cannot determine the synopsis file base name");
+                    return false;
+                }
+
+                var synopsisFileName = FileSearch.FindMaxQuantSynopsisFile(transferDirectoryPath, out var fileCountFound);
+
+                if (fileCountFound == 0)
+                {
+                    LogError("PHRP synopsis file not found in the transfer directory for this aggregation job: " + transferDirectoryPath);
+                    return false;
+                }
+
+                if (fileCountFound > 1)
+                {
+                    LogError("Multiple PHRP synopsis files were found in the transfer directory for this aggregation job: " + transferDirectoryPath);
+                    return false;
+                }
+
+
+                var index = synopsisFileName.IndexOf(MaxQuantSynFileReader.FILENAME_SUFFIX_SYN, StringComparison.OrdinalIgnoreCase);
+                if (index <= 0)
+                {
+                    LogError("Cannot determine the base name from the MaxQuant synopsis file name: " + synopsisFileName);
+                    return false;
+                }
+
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_AGGREGATION_JOB_SYNOPSIS_FILE, synopsisFileName);
+
+                baseName = synopsisFileName.Substring(0, index);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error determining the base name of the MaxQuant synopsis file", ex);
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// Retrieve the ID Picker parameter file
@@ -414,7 +481,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="resultType">PHRP result type (SEQUEST, X!Tandem, etc.)</param>
         /// <param name="datasetName">Dataset name</param>
-        /// <returns>A generic list with the filenames to find. The Boolean value is True if the file is Required, false if not required</returns>
+        /// <returns>A sorted list where keys are filenames to find and values are true if the file is required, false if not required</returns>
         private SortedList<string, bool> GetPHRPFileNames(PeptideHitResultTypes resultType, string datasetName)
         {
             var fileNamesToGet = new SortedList<string, bool>();
