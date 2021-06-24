@@ -134,7 +134,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 var phrpResultType = ReaderFactory.GetPeptideHitResultType(resultType);
                 if (phrpResultType == PeptideHitResultTypes.Unknown)
                 {
-                    mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
+                    LogError("Invalid tool result type (not supported by IDPicker): " + resultType);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!AnalysisResources.ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
                 {
                     // The synopsis file is empty
-                    mMessage = errorMessage;
+                    LogError(errorMessage);
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
@@ -165,8 +165,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!skipIDPicker && !fastaFile.Exists)
                 {
                     // Fasta file not found
-                    mMessage = "Fasta file not found: " + fastaFile.Name;
                     LogError("Fasta file not found: " + fastaFile.FullName);
+                    mMessage = "Fasta file not found: " + fastaFile.Name;
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -181,7 +181,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Store the version of IDPicker and PeptideListToXML in the database
                 // Alternatively, if skipIDPicker is true, just store the version of PeptideListToXML
 
-                // This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
+                // This function updates mPeptideListToXMLExePath and mIDPickerProgramDirectory
                 if (!StoreToolVersionInfo(progLocQonvert, skipIDPicker))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
@@ -193,10 +193,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 var pepXmlSuccess = CreatePepXMLFile(fastaFile.FullName, synFilePath, phrpResultType);
                 if (!pepXmlSuccess)
                 {
-                    if (string.IsNullOrEmpty(mMessage))
-                    {
-                        mMessage = "Error creating PepXML file";
-                    }
                     LogError("Error creating PepXML file for job " + mJob);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -290,8 +286,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->RunTool";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -315,7 +310,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = "Error looking for decoy proteins in the MSGF+ synopsis file";
+                        LogError("Error looking for decoy proteins in the MS-GF+ synopsis file");
                     }
                     criticalError = true;
                     return false;
@@ -330,7 +325,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = "Error looking for decoy proteins in the Fasta file";
+                        LogError("Error looking for decoy proteins in the Fasta file");
                     }
                     criticalError = true;
                     return false;
@@ -466,8 +461,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->CreateAssembleFile";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->CreateAssembleFile", ex);
                 return false;
             }
 
@@ -551,8 +545,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Make sure the .pepXML file was created
                     if (!File.Exists(mPepXMLFilePath))
                     {
-                        mMessage = "Error creating PepXML file";
-                        LogError(mMessage + ", job " + mJob);
+                        LogError("Error creating PepXML file, job " + mJob);
                         success = false;
                     }
                     else
@@ -563,8 +556,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->CreatePepXMLFile";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->CreatePepXMLFile", ex);
                 return false;
             }
 
@@ -606,7 +598,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (!fastaFileReader.OpenFile(fastaFilePath))
                 {
-                    mMessage = "Error reading fasta file with ProteinFileReader";
+                    LogError("Error reading fasta file with ProteinFileReader");
                     return false;
                 }
 
@@ -654,8 +646,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->DetermineDecoyProteinPrefix";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->DetermineDecoyProteinPrefix", ex);
                 return false;
             }
 
@@ -685,7 +676,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 mIDPickerParamFileNameLocal = mJobParams.GetParam(AnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
                 if (string.IsNullOrEmpty(mIDPickerParamFileNameLocal))
                 {
-                    mMessage = "IDPicker parameter file not defined";
+                    LogError("IDPicker parameter file not defined");
                     return false;
                 }
 
@@ -747,8 +738,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->LoadIDPickerOptions";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->LoadIDPickerOptions", ex);
                 return false;
             }
 
@@ -799,8 +789,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFPlusResults";
-                LogError(mMessage, ex);
+                LogError("Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFPlusResults", ex);
                 return false;
             }
 
@@ -955,7 +944,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    mMessage = "Error running idpAssemble";
+                    LogError("Error running idpAssemble");
                 }
                 return false;
             }
@@ -986,8 +975,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Make sure the output file was created
                 if (!File.Exists(mIdpAssembleFilePath))
                 {
-                    mMessage = "IDPicker Assemble results file not found";
-                    LogError(mMessage + " at " + mIdpAssembleFilePath);
+                    LogError("IDPicker Assemble results file not found: " + mIdpAssembleFilePath);
                     success = false;
                 }
                 else
@@ -1055,8 +1043,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Make sure the output file was created
                 if (!File.Exists(mIdpXMLFilePath))
                 {
-                    mMessage = "IDPicker Qonvert results file not found";
-                    LogError(mMessage + " at " + mIdpXMLFilePath);
+                    LogError("IDPicker Qonvert results file not found: " + mIdpXMLFilePath);
                     success = false;
                 }
             }
@@ -1105,8 +1092,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Make sure the output directory was created
                 if (!reportDirectory.Exists)
                 {
-                    mMessage = "IDPicker report folder file not found";
-                    LogError(mMessage + " at " + reportFolder.FullName);
+                    LogError("IDPicker report directory file not found: " + reportDirectory.FullName);
                     success = false;
                 }
 
@@ -1123,8 +1109,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                     if (!tsvFileFound)
                     {
-                        mMessage = "IDPicker report folder does not contain any TSV files";
-                        LogError(mMessage + "; " + reportFolder.FullName);
+                        LogError("IDPicker report directory does not contain any TSV files: " + reportDirectory.FullName);
                         success = false;
                     }
                 }

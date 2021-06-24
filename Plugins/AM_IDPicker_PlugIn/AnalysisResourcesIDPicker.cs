@@ -175,8 +175,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
             if (string.IsNullOrWhiteSpace(dmsConnectionString))
             {
-                mMessage = "Error in LookupLegacyFastaFileName: manager parameter ConnectionString is not defined";
-                LogError(mMessage);
+                LogError("Error in LookupLegacyFastaFileName: manager parameter ConnectionString is not defined");
                 return string.Empty;
             }
 
@@ -189,7 +188,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {
-                mMessage = "Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + mJob;
+                LogError("Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + mJob);
                 return string.Empty;
             }
 
@@ -223,8 +222,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 PeptideHitResultTypes.MODPlus or
                 PeptideHitResultTypes.MaxQuant))
             {
-                mMessage = "Invalid tool result type (not supported by IDPicker): " + resultType;
-                LogError(mMessage);
+                LogError("Invalid tool result type (not supported by IDPicker): " + resultType);
                 returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
@@ -244,8 +242,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!toolVersionFileFound)
             {
-                mMessage = "Tool version info file not found; this is required to store the MS/MS search tool info in the .pepXML file";
-                LogError(mMessage);
+                LogError("Tool version info file not found; this is required to store the MS/MS search tool info in the .pepXML file");
                 returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
