@@ -2340,6 +2340,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // DatasetStoragePath has the directory (on the storage server) just above the dataset directory
             var datasetStoragePath = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+
             if (string.IsNullOrEmpty(datasetStoragePath))
             {
                 datasetStoragePath = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");

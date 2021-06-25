@@ -2338,7 +2338,7 @@ namespace AnalysisManagerProg
                 if (SkippedStepTool(resultCode))
                 {
                     compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? string.Empty : toolResourcer.Message;
-                    errorProcessing =false;
+                    errorProcessing = false;
                 }
                 else
                 {
