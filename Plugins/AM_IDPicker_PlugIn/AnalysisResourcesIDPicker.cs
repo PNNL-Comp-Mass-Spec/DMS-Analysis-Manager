@@ -29,7 +29,15 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         public const string DEFAULT_IDPICKER_PARAM_FILE_NAME = "IDPicker_Defaults.txt";
 
+        /// <summary>
+        /// Additional job parameter added if this is an aggregation job
+        /// </summary>
         public const string JOB_PARAM_AGGREGATION_JOB_SYNOPSIS_FILE = "AggregationJobSynopsisFileName";
+
+        /// <summary>
+        /// Additional job parameter added if this is an aggregation job
+        /// </summary>
+        public const string JOB_PARAM_AGGREGATION_JOB_PHRP_BASE_NAME = "AggregationJobPhrpBaseName";
 
         private bool mSynopsisFileIsEmpty;
 
@@ -370,9 +378,11 @@ namespace AnalysisManagerIDPickerPlugIn
                     return false;
                 }
 
+                baseName = synopsisFileName.Substring(0, index);
+
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_AGGREGATION_JOB_SYNOPSIS_FILE, synopsisFileName);
 
-                baseName = synopsisFileName.Substring(0, index);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_AGGREGATION_JOB_PHRP_BASE_NAME, baseName);
 
                 return true;
             }

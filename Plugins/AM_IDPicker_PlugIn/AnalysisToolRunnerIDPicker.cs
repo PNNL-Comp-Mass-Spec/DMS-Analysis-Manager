@@ -140,13 +140,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Define the path to the synopsis file
 
-                var aggregationJobSynopsisFileName = mJobParams.GetJobParameter("AggregationJobSynopsisFileName", string.Empty);
-
-                var synopsisFileName = string.IsNullOrWhiteSpace(aggregationJobSynopsisFileName) ?
-                    ReaderFactory.GetPHRPSynopsisFileName(phrpResultType, mDatasetName) :
-                    aggregationJobSynopsisFileName;
+                GetEffectiveSynopsisFileName(phrpResultType, out var synopsisFileName, out var phrpBaseName);
 
                 var synFilePath = Path.Combine(mWorkDir, synopsisFileName);
+
                 if (!File.Exists(synFilePath))
                 {
                     var alternateFilePath = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");
@@ -197,7 +194,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Create the PepXML file
-                var pepXmlSuccess = CreatePepXMLFile(fastaFile.FullName, synFilePath, phrpResultType);
+                var pepXmlSuccess = CreatePepXMLFile(fastaFile.FullName, synFilePath, phrpResultType, phrpBaseName);
+
                 if (!pepXmlSuccess)
                 {
                     LogError("Error creating PepXML file for job " + mJob);
@@ -221,7 +219,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
-                    var idPickerSuccess = RunIDPickerWrapper(phrpResultType, synFilePath, fastaFile.FullName, out var processingError, out var criticalError);
+                    var idPickerSuccess = RunIDPickerWrapper(phrpResultType, phrpBaseName, synFilePath, fastaFile.FullName, out var processingError, out var criticalError);
 
                     if (criticalError)
                     {
@@ -235,7 +233,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (processingSuccess)
                 {
                     // Zip the PepXML file
-                    var zipSuccess = ZipPepXMLFile();
+                    var zipSuccess = ZipPepXMLFile(phrpBaseName);
                     if (!zipSuccess)
                         processingSuccess = false;
                 }
@@ -298,7 +296,9 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool RunIDPickerWrapper(PeptideHitResultTypes phrpResultType, string synFilePath, string fastaFilePath,
+        private bool RunIDPickerWrapper(
+            PeptideHitResultTypes phrpResultType, string phrpBaseName,
+            string synFilePath, string fastaFilePath,
             out bool processingError, out bool criticalError)
         {
             bool success;
@@ -354,7 +354,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Convert the search scores in the pepXML file to q-values
-            success = RunQonvert(fastaFilePath, decoyPrefix, phrpResultType);
+            success = RunQonvert(fastaFilePath, decoyPrefix, phrpResultType, phrpBaseName);
             if (!success)
             {
                 processingError = true;
@@ -362,7 +362,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Organizes the search results into a hierarchy
-            success = RunAssemble();
+            success = RunAssemble(phrpBaseName);
             if (!success)
             {
                 processingError = true;
@@ -453,13 +453,13 @@ namespace AnalysisManagerIDPickerPlugIn
             return arguments;
         }
 
-        private bool CreateAssembleFile(string assembleFilePath)
+        private bool CreateAssembleFile(string assembleFilePath, string phrpBaseName)
         {
             try
             {
                 // Prepend dataset name with PNNL/
                 // Also make sure it doesn't contain any spaces
-                var datasetLabel = "PNNL/" + mDatasetName.Replace(" ", "_");
+                var datasetLabel = "PNNL/" + phrpBaseName.Replace(" ", "_");
 
                 // Create the Assemble.txt file
                 using var writer = new StreamWriter(new FileStream(assembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
@@ -506,7 +506,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes phrpResultType)
+        private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes phrpResultType, string phrpBaseName)
         {
             // PepXML file creation should generally be done in less than 10 minutes
             // However, for huge fasta files, conversion could take several hours
@@ -519,13 +519,13 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Set up and execute a program runner to run PeptideListToXML
                 var paramFileName = mJobParams.GetParam("ParmFileName");
 
-                mPepXMLFilePath = Path.Combine(mWorkDir, mDatasetName + ".pepXML");
-                var iHitsPerSpectrum = mJobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
+                mPepXMLFilePath = Path.Combine(mWorkDir, phrpBaseName + ".pepXML");
+                var hitsPerSpectrum = mJobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
 
                 var arguments = PossiblyQuotePath(synFilePath) +
                                 " /E:" + PossiblyQuotePath(paramFileName) +
                                 " /F:" + PossiblyQuotePath(fastaFilePath) +
-                                " /H:" + iHitsPerSpectrum;
+                                " /H:" + hitsPerSpectrum;
 
                 if (phrpResultType is PeptideHitResultTypes.MODa or PeptideHitResultTypes.MODPlus or PeptideHitResultTypes.MaxQuant)
                 {
@@ -658,6 +658,22 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             return true;
+        }
+
+        private void GetEffectiveSynopsisFileName(PeptideHitResultTypes phrpResultType, out string synopsisFileName, out string phrpBaseName)
+        {
+            var aggregationJobSynopsisFileName = mJobParams.GetJobParameter(AnalysisResourcesIDPicker.JOB_PARAM_AGGREGATION_JOB_SYNOPSIS_FILE, string.Empty);
+            var aggregationJobPhrpBaseName = mJobParams.GetJobParameter(AnalysisResourcesIDPicker.JOB_PARAM_AGGREGATION_JOB_PHRP_BASE_NAME, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(aggregationJobSynopsisFileName))
+            {
+                synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(phrpResultType, mDatasetName);
+                phrpBaseName = mDatasetName;
+                return;
+            }
+
+            synopsisFileName = aggregationJobSynopsisFileName;
+            phrpBaseName = aggregationJobPhrpBaseName;
         }
 
         private bool IgnoreError(string errorMessage)
@@ -938,7 +954,9 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <summary>
         /// Run idpAssemble to organizes the search results into a hierarchy
         /// </summary>
-        private bool RunAssemble()
+        /// <param name="phrpBaseName"></param>
+        /// <returns></returns>
+        private bool RunAssemble(string phrpBaseName)
         {
             const int maxRuntimeMinutes = 90;
 
@@ -946,7 +964,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // Since we're only processing one dataset, the file will only have one line
             var assembleFilePath = Path.Combine(mWorkDir, ASSEMBLE_GROUPING_FILENAME);
 
-            var success = CreateAssembleFile(assembleFilePath);
+            var success = CreateAssembleFile(assembleFilePath, phrpBaseName);
             if (!success)
             {
                 if (string.IsNullOrEmpty(mMessage))
@@ -1002,7 +1020,8 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
         /// <param name="phrpResultType"></param>
-        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PeptideHitResultTypes phrpResultType)
+        /// <param name="phrpBaseName"></param>
+        private bool RunQonvert(string fastaFilePath, string decoyPrefix, PeptideHitResultTypes phrpResultType, string phrpBaseName)
         {
             const int maxRuntimeMinutes = 90;
 
@@ -1043,7 +1062,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var success = RunProgramWork("IDPQonvert", progLoc, arguments, IPD_Qonvert_CONSOLE_OUTPUT, true, maxRuntimeMinutes);
 
-            mIdpXMLFilePath = Path.Combine(mWorkDir, mDatasetName + ".idpXML");
+            mIdpXMLFilePath = Path.Combine(mWorkDir, phrpBaseName + ".idpXML");
 
             if (success)
             {
@@ -1375,11 +1394,11 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
-        private bool ZipPepXMLFile()
+        private bool ZipPepXMLFile(string phrpBaseName)
         {
             try
             {
-                var zippedPepXMLFilePath = Path.Combine(mWorkDir, mDatasetName + "_pepXML.zip");
+                var zippedPepXMLFilePath = Path.Combine(mWorkDir, phrpBaseName + "_pepXML.zip");
 
                 if (!ZipFile(mPepXMLFilePath, false, zippedPepXMLFilePath))
                 {
