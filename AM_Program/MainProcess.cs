@@ -2880,6 +2880,23 @@ namespace AnalysisManagerProg
 
                     if (string.IsNullOrEmpty(datasetStoragePath))
                     {
+                        var datasetName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+
+                        if (Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+                        {
+                            datasetStoragePath = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackagePath");
+
+                            if (string.IsNullOrEmpty(datasetStoragePath))
+                            {
+                                errorMessage = "DataPackagePath job parameter is empty";
+                                LogError(errorMessage);
+                                return false;
+                            }
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(datasetStoragePath))
+                    {
                         errorMessage = "DatasetStoragePath job parameter is empty";
                         LogError(errorMessage);
                         return false;

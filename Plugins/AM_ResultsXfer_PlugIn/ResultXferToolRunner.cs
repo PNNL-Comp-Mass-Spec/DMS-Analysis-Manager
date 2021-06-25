@@ -356,9 +356,35 @@ namespace AnalysisManagerResultsXferPlugin
         protected virtual CloseOutType PerformResultsXfer()
         {
             var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
-            var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
+            string datasetStoragePath;
 
-            // Check whether the transfer folder and the dataset directory reside on the same server as this manager
+            bool appendDatasetDirectoryName;
+
+            if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+            {
+                appendDatasetDirectoryName = false;
+
+                datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackagePath");
+
+                if (string.IsNullOrEmpty(datasetStoragePath))
+                {
+                    LogError("DataPackagePath job parameter is empty");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            else
+            {
+                appendDatasetDirectoryName = true;
+                datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
+
+                if (string.IsNullOrEmpty(datasetStoragePath))
+                {
+                    LogError("DatasetStoragePath job parameter is empty");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            // Check whether the transfer directory and the dataset directory reside on the same server as this manager
             var serverName = Environment.MachineName;
             var movingLocalFiles = false;
 
@@ -385,15 +411,24 @@ namespace AnalysisManagerResultsXferPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
-            if (string.IsNullOrWhiteSpace(datasetDirectoryName))
-            {
-                LogError("Results transfer failed, job parameter DatasetFolderName is empty; cannot continue");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            string directoryToMove;
 
-            // Verify input folder exists in storage server xfer folder
-            var folderToMove = Path.Combine(transferDirectoryPath, datasetDirectoryName, inputDirectory);
+            if (appendDatasetDirectoryName)
+            {
+                var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+                if (string.IsNullOrWhiteSpace(datasetDirectoryName))
+                {
+                    LogError("Results transfer failed, job parameter DatasetFolderName is empty; cannot continue");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Verify input directory exists in storage server transfer directory
+                directoryToMove = Path.Combine(transferDirectoryPath, datasetDirectoryName, inputDirectory);
+            }
+            else
+            {
+                directoryToMove = Path.Combine(transferDirectoryPath, inputDirectory);
+            }
 
             if (!Directory.Exists(directoryToMove))
             {
@@ -407,9 +442,19 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Verify that the dataset directory exists on storage server
-            // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-            var datasetDir = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
-            var diDatasetFolder = new DirectoryInfo(datasetDir);
+            // If it doesn't exist, we will auto-create it
+
+            string datasetDirectoryPath;
+            if (appendDatasetDirectoryName)
+            {
+                datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            }
+            else
+            {
+                datasetDirectoryPath = datasetStoragePath;
+            }
+
+            var datasetDirectory = new DirectoryInfo(datasetDirectoryPath);
 
             if (!datasetDirectory.Exists)
             {
