@@ -2162,7 +2162,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     mJobParams.AddResultFileToSkip(sourceJobParamXMLFile.Name);
                 }
 
-                mJobParams.AddAdditionalParameter("JobParameters", "PreviousJobStepParameterFile", sourceJobParamXMLFile.Name);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "PreviousJobStepParameterFile", sourceJobParamXMLFile.Name);
                 return success;
             }
             catch (Exception ex)
