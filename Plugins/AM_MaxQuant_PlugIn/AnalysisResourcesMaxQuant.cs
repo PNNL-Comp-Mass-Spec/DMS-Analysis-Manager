@@ -21,6 +21,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private const string MAXQUANT_PEAK_STEP_TOOL = "MaxqPeak";
 
+        internal const string JOB_PARAM_PROTEIN_DESCRIPTION_PARSE_RULE = "ProteinDescriptionParseRule";
+
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -80,10 +82,22 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                if (!string.IsNullOrWhiteSpace(previousJobStepParameterFilePath))
+                string proteinDescriptionParseRule;
+
+                if (string.IsNullOrWhiteSpace(previousJobStepParameterFilePath))
+                {
+                    proteinDescriptionParseRule = string.Empty;
+                }
+                else
                 {
                     var skipStepToolPrevJobStep = CheckSkipMaxQuant(
-                        workingDirectory, previousJobStepParameterFilePath, out var abortProcessingPrevJobStep, out var skipReason, out var dmsSteps);
+                        workingDirectory,
+                        Path.GetFileName(previousJobStepParameterFilePath),
+                        true,
+                        out var abortProcessingPrevJobStep,
+                        out var skipReason,
+                        out var dmsSteps,
+                        out proteinDescriptionParseRule);
 
                     if (abortProcessingPrevJobStep)
                     {
@@ -110,7 +124,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // Also examine the original parameter file, in case it has numeric values defined for startStepID
-                var skipStepTool = CheckSkipMaxQuant(workingDirectory, paramFileName, out var abortProcessing, out var skipReason2, out _);
+                var skipStepTool = CheckSkipMaxQuant(
+                    workingDirectory, paramFileName, false,
+                    out var abortProcessing,
+                    out var skipReason2,
+                    out _, out _);
 
                 if (abortProcessing)
                 {
@@ -130,6 +148,20 @@ namespace AnalysisManagerMaxQuantPlugIn
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
+
+                if (StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
+                {
+                    var parseRuleResult = DetermineProteinDescriptionParseRule(out proteinDescriptionParseRule);
+                    if (parseRuleResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        return parseRuleResult;
+                }
+
+                if (!string.IsNullOrWhiteSpace(proteinDescriptionParseRule))
+                {
+                    // Store proteinDescriptionParseRule as a job parameter so that the tool runner can use it
+                    mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROTEIN_DESCRIPTION_PARSE_RULE,
+                        proteinDescriptionParseRule);
+                }
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
@@ -161,7 +193,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (fileCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
                     return fileCopyResult;
 
-                if (StepToolName.Equals(AnalysisResourcesMaxQuant.MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
+                if (StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
                 {
                     // Retrieve files ScanStats.txt and ScanStatsEx.txt for each dataset
                     // PHRP uses the ScanStatsEx.txt file to compute mass errors for each PSM
@@ -185,16 +217,32 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
+        /// <summary>
+        /// Read the DMS step nodes from a MaxQuant parameter file (either from a previous job step or the master parameter file)
+        /// Examine the nodes to determine if this job step should be skipped
+        /// Also reads and returns the value of the protein description parse rule node
+        /// </summary>
+        /// <param name="workingDirectory"></param>
+        /// <param name="maxQuantParameterFileName"></param>
+        /// <param name="requireFastaFileNodes"></param>
+        /// <param name="abortProcessing">Output: will be true if an error occurred</param>
+        /// <param name="skipReason">Output: skip reason</param>
+        /// <param name="dmsSteps">Output: </param>
+        /// <param name="proteinDescriptionParseRule">Output: protein description parse rule (RegEx for extracting protein descriptions from the FASTA file)</param>
+        /// <returns>True if this job step should be skipped, otherwise False</returns>
         private bool CheckSkipMaxQuant(
             FileSystemInfo workingDirectory,
             string maxQuantParameterFileName,
+            bool requireFastaFileNodes,
             out bool abortProcessing,
             out string skipReason,
-            out Dictionary<int, DmsStepInfo> dmsSteps)
+            out Dictionary<int, DmsStepInfo> dmsSteps,
+            out string proteinDescriptionParseRule)
         {
             abortProcessing = false;
             skipReason = string.Empty;
             dmsSteps = new Dictionary<int, DmsStepInfo>();
+            proteinDescriptionParseRule = string.Empty;
 
             try
             {
@@ -206,6 +254,20 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // XDocument can often be easier to use since XDocument is LINQ-based
 
                 var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var descriptionParseRuleNodes = doc.Elements("MaxQuantParams").Elements("fastaFiles").Elements("FastaFileInfo").Elements("descriptionParseRule").ToList();
+
+                if (descriptionParseRuleNodes.Count == 0 && requireFastaFileNodes)
+                {
+                    LogError("MaxQuant parameter file from previous job step is missing node <fastaFiles><FastaFileInfo><descriptionParseRule>");
+                    abortProcessing = true;
+                    return false;
+                }
+
+                if (descriptionParseRuleNodes.Count > 0)
+                {
+                    proteinDescriptionParseRule = descriptionParseRuleNodes[0].Value;
+                }
 
                 var dmsStepNodes = doc.Elements("MaxQuantParams").Elements("dmsSteps").Elements("step").ToList();
 
@@ -306,6 +368,77 @@ namespace AnalysisManagerMaxQuantPlugIn
             catch (Exception ex)
             {
                 LogError("Exception in CreatePrecursorInfoFile", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        /// <summary>
+        /// Examine the protein header lines in this job's FASTA file
+        /// Define the protein description parse rule that MaxQuant should use, depending on whether or not every header line has a protein name and protein description
+        /// </summary>
+        /// <returns>Result Code</returns>
+        private CloseOutType DetermineProteinDescriptionParseRule(out string proteinDescriptionParseRule)
+        {
+            try
+            {
+                var localOrgDbDirectory = new DirectoryInfo(mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR));
+                var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
+
+                var generatedFastaFile = new FileInfo(Path.Combine(localOrgDbDirectory.FullName, generatedFastaFileName));
+
+                if (!generatedFastaFile.Exists)
+                {
+                    LogError("Generated FASTA file not found; cannot determine the protein description parse rule");
+                    proteinDescriptionParseRule = string.Empty;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                var fastaFileReader = new ProteinFileReader.FastaFileReader();
+
+                if (!fastaFileReader.OpenFile(generatedFastaFile.FullName))
+                {
+                    LogError("Error reading FASTA file with ProteinFileReader to determine the protein description parse rule");
+                    proteinDescriptionParseRule = string.Empty;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                var missingProteinDescription = false;
+
+                while (true)
+                {
+                    var inputProteinFound = fastaFileReader.ReadNextProteinEntry();
+
+                    if (!inputProteinFound)
+                    {
+                        break;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(fastaFileReader.ProteinDescription))
+                    {
+                        continue;
+                    }
+
+                    missingProteinDescription = true;
+                    break;
+                }
+
+                if (missingProteinDescription)
+                {
+                    // One or more proteins does not have a protein description
+                    proteinDescriptionParseRule = AnalysisToolRunnerMaxQuant.PROTEIN_NAME_AND_DESCRIPTION_REGEX;
+                }
+                else
+                {
+                    // All of the proteins has a description
+                    proteinDescriptionParseRule = AnalysisToolRunnerMaxQuant.PROTEIN_DESCRIPTION_REGEX;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in DetermineProteinDescriptionParseRule", ex);
+                proteinDescriptionParseRule = string.Empty;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

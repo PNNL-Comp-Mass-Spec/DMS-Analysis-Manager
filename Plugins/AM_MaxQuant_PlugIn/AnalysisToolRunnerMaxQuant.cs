@@ -42,6 +42,10 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private const float PROGRESS_PCT_COMPLETE = 99;
 
+        internal const string PROTEIN_DESCRIPTION_REGEX = ">[^ ]+ +(.*)";
+
+        internal const string PROTEIN_NAME_AND_DESCRIPTION_REGEX = ">(.*)";
+
         private string mMaxQuantProgLoc;
         private string mConsoleOutputErrorMsg;
 
@@ -1311,10 +1315,24 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     fastaFileNodes.Clear();
 
+                    var proteinDescriptionParseRule = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResourcesMaxQuant.JOB_PARAM_PROTEIN_DESCRIPTION_PARSE_RULE, string.Empty);
+
                     var fastaFileInfoNode = new XElement("FastaFileInfo");
                     fastaFileInfoNode.Add(new XElement("fastaFilePath", mLocalFASTAFilePath));
                     fastaFileInfoNode.Add(new XElement("identifierParseRule", ">([^ ]+)"));
-                    fastaFileInfoNode.Add(new XElement("descriptionParseRule", ">([^ ]+) *(.*)"));
+
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                    if (string.IsNullOrWhiteSpace(proteinDescriptionParseRule))
+                    {
+                        // This RegEx will match both the protein name and protein description
+                        fastaFileInfoNode.Add(new XElement("descriptionParseRule", PROTEIN_NAME_AND_DESCRIPTION_REGEX));
+                    }
+                    else
+                    {
+                        // Use the RegEx used by the previous job step
+                        fastaFileInfoNode.Add(new XElement("descriptionParseRule", proteinDescriptionParseRule));
+                    }
+
                     fastaFileInfoNode.Add(new XElement("taxonomyParseRule", string.Empty));
                     fastaFileInfoNode.Add(new XElement("variationParseRule", @">[^\s]+\s+(.+)"));
                     fastaFileInfoNode.Add(new XElement("modificationParseRule", string.Empty));
