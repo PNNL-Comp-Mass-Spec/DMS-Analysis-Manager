@@ -2418,11 +2418,11 @@ namespace AnalysisManagerMSGFPlugin
                 summarizer.SaveResultsToTextFile = false;
                 summarizer.DatasetName = mDatasetName;
 
-                success = summarizer.ProcessMSGFResults();
+                success = summarizer.ProcessPSMResults();
 
                 if (!success)
                 {
-                    const string msg = "Error calling ProcessMSGFResults";
+                    const string msg = "Error calling ProcessPSMResults";
 
                     var detailedMsg = msg;
 

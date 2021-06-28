@@ -71,7 +71,7 @@ namespace MSGFResultsSummarizerExe
                     return -1;
                 }
 
-                var success = SummarizeMSGFResults();
+                var success = SummarizePSMResults();
 
                 if (!success)
                 {
@@ -92,7 +92,7 @@ namespace MSGFResultsSummarizerExe
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        private static bool SummarizeMSGFResults()
+        private static bool SummarizePSMResults()
         {
             try
             {
@@ -233,7 +233,7 @@ namespace MSGFResultsSummarizerExe
 
                 summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-                var success = summarizer.ProcessMSGFResults();
+                var success = summarizer.ProcessPSMResults();
 
                 if (!success)
                 {

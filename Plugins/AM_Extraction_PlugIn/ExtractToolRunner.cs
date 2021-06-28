@@ -2554,7 +2554,7 @@ namespace AnalysisManagerExtractionPlugin
             summarizer.SaveResultsToTextFile = false;
             summarizer.DatasetName = mDatasetName;
 
-            var success = summarizer.ProcessMSGFResults(synopsisFileNameFromPHRP);
+            var success = summarizer.ProcessPSMResults(synopsisFileNameFromPHRP);
 
             if (success)
             {

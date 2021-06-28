@@ -94,7 +94,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// PHRP _syn.txt file name
         /// </summary>
-        /// <remarks>This is auto-determined in ProcessMSGFResults</remarks>
+        /// <remarks>This is auto-determined in ProcessPSMResults</remarks>
         private string mMSGFSynopsisFileName = string.Empty;
 
         #endregion
@@ -1129,7 +1129,7 @@ namespace MSGFResultsSummarizer
         /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
-        public bool ProcessMSGFResults(string synopsisFileNameFromPHRP = "")
+        public bool ProcessPSMResults(string synopsisFileNameFromPHRP = "")
         {
             DatasetScanStatsLookupError = false;
 
@@ -1313,7 +1313,6 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in ProcessMSGFResults: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
