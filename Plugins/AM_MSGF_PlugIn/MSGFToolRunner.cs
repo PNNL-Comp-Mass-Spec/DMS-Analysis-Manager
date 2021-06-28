@@ -1417,6 +1417,7 @@ namespace AnalysisManagerMSGFPlugin
             var searchToolParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
 
             var success = CheckETDModeEnabled(resultType, searchToolParamFilePath);
+
             if (!success)
             {
                 LogError("Error examining param file to determine if ETD mode was enabled");
@@ -2505,8 +2506,6 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool UpdateProteinModsFile(PeptideHitResultTypes resultType, string msgfResultsFilePath)
         {
-            bool success;
-
             try
             {
                 LogDebug("Contact PHRPReader.GetPHRPProteinModsFileName for resultType " + resultType, 3);
@@ -2522,7 +2521,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 LogDebug("Load MSGFResults from " + msgfResultsFilePath, 3);
 
-                success = LoadMSGFResults(msgfResultsFilePath, out var msgfResults);
+                var success = LoadMSGFResults(msgfResultsFilePath, out var msgfResults);
+
                 if (!success)
                 {
                     return false;

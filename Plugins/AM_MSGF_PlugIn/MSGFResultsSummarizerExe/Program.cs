@@ -23,7 +23,7 @@ namespace MSGFResultsSummarizerExe
     {
         // Ignore spelling: msgfdb, mspath, Phosphopeptides, Tryptic, xt
 
-        private const string PROGRAM_DATE = "June 3, 2021";
+        private const string PROGRAM_DATE = "June 28, 2021";
 
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
