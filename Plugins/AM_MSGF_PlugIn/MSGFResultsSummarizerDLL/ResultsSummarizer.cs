@@ -805,7 +805,13 @@ namespace MSGFResultsSummarizer
             if (!validMSGFOrEValue)
             {
                 // None of the data has MSGF values or E-Values; cannot compute FDR using MSGF or E-Value
+
+                if (valuesWithFDR / (double)psmResults.Count > 0.20)
                 {
+                    // 20% or more of the psmResults does have a valid FDR; use that data for filtering
+                    FilterPSMsByFDR(psmResults, resultIDtoFDRMap, FDRThreshold);
+
+                    return true;
                 }
 
                 SetErrorMessage("Data does not contain MSGF values or E-Values; cannot compute a decoy-based FDR");
@@ -870,8 +876,14 @@ namespace MSGFResultsSummarizer
             {
                 // We never encountered any decoy proteins; cannot compute FDR
 
+                if (valuesWithFDR / (double)psmResults.Count > 0.20)
                 {
+                    // 20% or more of the psmResults does have a valid FDR; use that data for filtering
+                    FilterPSMsByFDR(psmResults, resultIDtoFDRMap, FDRThreshold);
+
+                    return true;
                 }
+
                 OnWarningEvent("Data does not contain decoy proteins; cannot compute a decoy-based FDR");
                 psmResults.Clear();
                 return false;
