@@ -1346,6 +1346,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
+                SetErrorMessage("Exception in ProcessPSMResults: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
