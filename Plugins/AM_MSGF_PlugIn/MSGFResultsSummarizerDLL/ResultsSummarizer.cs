@@ -748,132 +748,153 @@ namespace MSGFResultsSummarizer
         private bool FilterPSMsByFDR(IDictionary<int, PSMInfo> psmResults)
         {
             var fdrAlreadyComputed = true;
+            var valuesWithFDR = 0;
+            var resultIDtoFDRMap = new Dictionary<int, double>();
+
             foreach (var psmResult in psmResults)
             {
                 if (psmResult.Value.BestFDR < 0)
                 {
                     fdrAlreadyComputed = false;
-                    break;
-                }
-            }
 
-            var resultIDtoFDRMap = new Dictionary<int, double>();
-            if (fdrAlreadyComputed)
-            {
-                foreach (var psmResult in psmResults)
+                    resultIDtoFDRMap.Add(psmResult.Key, 1);
+                }
+                else
                 {
+                    valuesWithFDR++;
                     resultIDtoFDRMap.Add(psmResult.Key, psmResult.Value.BestFDR);
                 }
             }
-            else
+
+            if (fdrAlreadyComputed)
             {
-                // Sort the data by ascending SpecEValue, then step through the list and compute FDR
-                // Use FDR = #Reverse / #Forward
-                //
-                // Alternative FDR formula is: FDR = 2 * #Reverse / (#Forward + #Reverse)
-                // But, since MS-GF+ uses "#Reverse / #Forward" we'll use that here too
-                //
-                // If no reverse hits are present or if none of the data has MSGF values, we'll clear psmResults and update mErrorMessage
+                // Remove entries from psmResults where .FDR is larger than FDRThreshold
+                FilterPSMsByFDR(psmResults, resultIDtoFDRMap, FDRThreshold);
 
-                // Populate a list with the MSGF values and ResultIDs so that we can step through the data and compute the FDR for each entry
-                var msgfToResultIDMap = new List<KeyValuePair<double, int>>();
+                return true;
+            }
 
-                var validMSGFOrEValue = false;
-                foreach (var psmResult in psmResults)
+            // Sort the data by ascending SpecEValue, then step through the list and compute FDR
+            // Use FDR = #Reverse / #Forward
+            //
+            // Alternative FDR formula is: FDR = 2 * #Reverse / (#Forward + #Reverse)
+            // But, since MS-GF+ uses "#Reverse / #Forward" we'll use that here too
+            //
+            // If no reverse hits are present or if none of the data has MSGF values, we'll clear psmResults and update mErrorMessage
+
+            // Populate a list with the MSGF values and ResultIDs so that we can step through the data and compute the FDR for each entry
+            var msgfToResultIDMap = new List<KeyValuePair<double, int>>();
+
+            var validMSGFOrEValue = false;
+            foreach (var psmResult in psmResults)
+            {
+                if (psmResult.Value.BestMSGF < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
                 {
-                    if (psmResult.Value.BestMSGF < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
-                    {
-                        msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGF, psmResult.Key));
-                        if (psmResult.Value.BestMSGF < 1)
-                            validMSGFOrEValue = true;
-                    }
-                    else
-                    {
-                        msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestEValue, psmResult.Key));
-                        if (psmResult.Value.BestEValue < PSMInfo.UNKNOWN_EVALUE)
-                            validMSGFOrEValue = true;
-                    }
+                    msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGF, psmResult.Key));
+                    if (psmResult.Value.BestMSGF < 1)
+                        validMSGFOrEValue = true;
                 }
-
-                if (!validMSGFOrEValue)
+                else
                 {
-                    // None of the data has MSGF values or E-Values; cannot compute FDR
-                    SetErrorMessage("Data does not contain MSGF values or EValues; cannot compute a decoy-based FDR");
-                    psmResults.Clear();
-                    return false;
-                }
-
-                // Sort msgfToResultIDMap
-                msgfToResultIDMap.Sort(new MSGFtoResultIDMapComparer());
-
-                var forwardResults = 0;
-                var decoyResults = 0;
-                var missedResultIDsAtStart = new List<int>();
-
-                foreach (var resultItem in msgfToResultIDMap)
-                {
-                    var protein = psmResults[resultItem.Value].Protein.ToLower();
-
-                    // MTS reversed proteins                 'reversed[_]%'
-                    // MTS scrambled proteins                'scrambled[_]%'
-                    // X!Tandem decoy proteins               '%[:]reversed'
-                    // Inspect reversed/scrambled proteins   'xxx.%'
-                    // MSGFDB reversed proteins  'rev[_]%'
-                    // MS-GF+ reversed proteins  'xxx[_]%'
-
-                    if (protein.StartsWith("reversed_") || protein.StartsWith("scrambled_") || protein.EndsWith(":reversed") ||
-                        protein.StartsWith("xxx_") || protein.StartsWith("xxx.") || protein.StartsWith("rev_"))
-                    {
-                        decoyResults++;
-                    }
-                    else
-                    {
-                        forwardResults++;
-                    }
-
-                    if (forwardResults > 0)
-                    {
-                        // Compute and store the FDR for this entry
-                        var fdrThreshold = decoyResults / (float)forwardResults;
-                        resultIDtoFDRMap.Add(resultItem.Value, fdrThreshold);
-
-                        if (missedResultIDsAtStart.Count > 0)
-                        {
-                            foreach (var resultID in missedResultIDsAtStart)
-                            {
-                                resultIDtoFDRMap.Add(resultID, fdrThreshold);
-                            }
-                            missedResultIDsAtStart.Clear();
-                        }
-                    }
-                    else
-                    {
-                        // We cannot yet compute the FDR since all proteins up to this point are decoy proteins
-                        // Update missedResultIDsAtStart
-                        missedResultIDsAtStart.Add(resultItem.Value);
-                    }
-                }
-
-                if (decoyResults == 0)
-                {
-                    // We never encountered any decoy proteins; cannot compute FDR
-                    OnWarningEvent("Data does not contain decoy proteins; cannot compute a decoy-based FDR");
-                    psmResults.Clear();
-                    return false;
+                    msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestEValue, psmResult.Key));
+                    if (psmResult.Value.BestEValue < PSMInfo.UNKNOWN_EVALUE)
+                        validMSGFOrEValue = true;
                 }
             }
 
-            // Remove entries from psmResults where .FDR is larger than mFDRThreshold
+            if (!validMSGFOrEValue)
+            {
+                // None of the data has MSGF values or E-Values; cannot compute FDR using MSGF or E-Value
+                {
+                }
 
+                SetErrorMessage("Data does not contain MSGF values or E-Values; cannot compute a decoy-based FDR");
+                psmResults.Clear();
+                return false;
+            }
+
+            // Sort msgfToResultIDMap
+            msgfToResultIDMap.Sort(new MSGFtoResultIDMapComparer());
+
+            var forwardResults = 0;
+            var decoyResults = 0;
+            var missedResultIDsAtStart = new List<int>();
+
+            var resultIDtoFDRMapFromDecoy = new Dictionary<int, double>();
+
+            foreach (var resultItem in msgfToResultIDMap)
+            {
+                var protein = psmResults[resultItem.Value].Protein.ToLower();
+
+                // MTS reversed proteins                 'reversed[_]%'
+                // MTS scrambled proteins                'scrambled[_]%'
+                // X!Tandem decoy proteins               '%[:]reversed'
+                // Inspect reversed/scrambled proteins   'xxx.%'
+                // MSGFDB reversed proteins  'rev[_]%'
+                // MS-GF+ reversed proteins  'xxx[_]%'
+
+                if (protein.StartsWith("reversed_") || protein.StartsWith("scrambled_") || protein.EndsWith(":reversed") ||
+                    protein.StartsWith("xxx_") || protein.StartsWith("xxx.") || protein.StartsWith("rev_"))
+                {
+                    decoyResults++;
+                }
+                else
+                {
+                    forwardResults++;
+                }
+
+                if (forwardResults > 0)
+                {
+                    // Compute and store the FDR for this entry
+                    var fdrThreshold = decoyResults / (float)forwardResults;
+                    resultIDtoFDRMapFromDecoy.Add(resultItem.Value, fdrThreshold);
+
+                    if (missedResultIDsAtStart.Count > 0)
+                    {
+                        foreach (var resultID in missedResultIDsAtStart)
+                        {
+                            resultIDtoFDRMapFromDecoy.Add(resultID, fdrThreshold);
+                        }
+                        missedResultIDsAtStart.Clear();
+                    }
+                }
+                else
+                {
+                    // We cannot yet compute the FDR since all proteins up to this point are decoy proteins
+                    // Update missedResultIDsAtStart
+                    missedResultIDsAtStart.Add(resultItem.Value);
+                }
+            }
+
+            if (decoyResults == 0)
+            {
+                // We never encountered any decoy proteins; cannot compute FDR
+
+                {
+                }
+                OnWarningEvent("Data does not contain decoy proteins; cannot compute a decoy-based FDR");
+                psmResults.Clear();
+                return false;
+            }
+
+            // Remove entries from psmResults where .FDR is larger than FDRThreshold
+            FilterPSMsByFDR(psmResults, resultIDtoFDRMapFromDecoy, FDRThreshold);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Remove entries from psmResults where .FDR is larger than fdrThreshold
+        /// </summary>
+        private void FilterPSMsByFDR(IDictionary<int, PSMInfo> psmResults, Dictionary<int, double> resultIDtoFDRMap, double fdrThreshold)
+        {
             foreach (var resultItem in resultIDtoFDRMap)
             {
-                if (resultItem.Value > FDRThreshold)
+                if (resultItem.Value > fdrThreshold)
                 {
                     psmResults.Remove(resultItem.Key);
                 }
             }
-
-            return true;
         }
 
         private bool FilterPSMsByEValue(double eValueThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
