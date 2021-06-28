@@ -2550,7 +2550,7 @@ namespace AnalysisManagerExtractionPlugin
             summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
             summarizer.ContactDatabase = true;
-            summarizer.PostJobPSMResultsToDB = false;
+            summarizer.PostJobPSMResultsToDB = true;
             summarizer.SaveResultsToTextFile = false;
             summarizer.DatasetName = mDatasetName;
 
