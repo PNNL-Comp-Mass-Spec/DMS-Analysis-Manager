@@ -343,15 +343,8 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                // Delete the PHRP console output file, since we didn't encounter any errors and the file is typically not useful
-                try
-                {
-                    File.Delete(mPHRPConsoleOutputFilePath);
-                }
-                catch (Exception)
-                {
-                    // Ignore errors here
-                }
+                // Skip the PHRP console output file since we didn't encounter any errors
+                mJobParams.AddResultFileToSkip(mPHRPConsoleOutputFilePath);
 
                 if (mDebugLevel >= 3)
                 {
