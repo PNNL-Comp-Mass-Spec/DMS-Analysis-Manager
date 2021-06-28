@@ -1390,10 +1390,11 @@ namespace MSGFResultsSummarizer
             try
             {
                 if (ResultType is
+                    PeptideHitResultTypes.MaxQuant or
                     PeptideHitResultTypes.MODa or
                     PeptideHitResultTypes.MODPlus or
                     PeptideHitResultTypes.MSPathFinder or
-                    PeptideHitResultTypes.MaxQuant)
+                    PeptideHitResultTypes.MSAlign)
                 {
                     loadMSGFResults = false;
                 }
@@ -1519,7 +1520,7 @@ namespace MSGFResultsSummarizer
                             valid = double.TryParse(eValueText, out eValue);
                         }
                     }
-                    else if (ResultType == PeptideHitResultTypes.MODa || ResultType == PeptideHitResultTypes.MODPlus)
+                    else if (ResultType is PeptideHitResultTypes.MODa or PeptideHitResultTypes.MODPlus)
                     {
                         // MODa / MODPlus results don't have spectral probability, but they do have FDR
                         valid = true;
@@ -1569,33 +1570,49 @@ namespace MSGFResultsSummarizer
                     var psmEValue = eValue;
                     double psmFDR;
 
-                    if (ResultType is PeptideHitResultTypes.MSGFPlus or PeptideHitResultTypes.MSAlign)
+                    switch (ResultType)
                     {
-                        psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
-                        if (psmFDR < 0)
-                        {
-                            psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.EFDR), PSMInfo.UNKNOWN_FDR);
-                        }
-                    }
-                    else if (ResultType == PeptideHitResultTypes.MODa)
-                    {
-                        psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.GetColumnNameByID(MODaSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
-                    }
-                    else if (ResultType == PeptideHitResultTypes.MODPlus)
-                    {
-                        psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.GetColumnNameByID(MODPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
-                    }
-                    else if (ResultType == PeptideHitResultTypes.MSPathFinder)
-                    {
-                        psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
-                    }
-                    else if (ResultType == PeptideHitResultTypes.MaxQuant)
-                    {
-                        psmFDR = currentPSM.GetScoreDbl(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
-                    }
-                    else
-                    {
-                        psmFDR = PSMInfo.UNKNOWN_FDR;
+                        case PeptideHitResultTypes.MaxQuant:
+                            psmFDR = currentPSM.GetScoreDbl(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
+                        case PeptideHitResultTypes.MODa:
+                            psmFDR = currentPSM.GetScoreDbl(MODaSynFileReader.GetColumnNameByID(MODaSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
+                        case PeptideHitResultTypes.MODPlus:
+                            psmFDR = currentPSM.GetScoreDbl(MODPlusSynFileReader.GetColumnNameByID(MODPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
+                        case PeptideHitResultTypes.MSAlign:
+                            psmFDR = currentPSM.GetScoreDbl(MSAlignSynFileReader.GetColumnNameByID(MSAlignSynFileColumns.FDR), PSMInfo.UNKNOWN_FDR);
+                            break;
+
+                        case PeptideHitResultTypes.MSGFPlus:
+                            psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+
+                            if (psmFDR < 0)
+                            {
+                                psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.EFDR), PSMInfo.UNKNOWN_FDR);
+                            }
+
+                            break;
+
+                        case PeptideHitResultTypes.MSPathFinder:
+                            psmFDR = currentPSM.GetScoreDbl(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
+                        case PeptideHitResultTypes.Inspect:
+                        case PeptideHitResultTypes.MSFragger:
+                        case PeptideHitResultTypes.Sequest:
+                        case PeptideHitResultTypes.TopPIC:
+                        case PeptideHitResultTypes.XTandem:
+                        case PeptideHitResultTypes.Unknown:
+                            psmFDR = PSMInfo.UNKNOWN_FDR;
+                            break;
+
+                        default:
+                            throw new ArgumentOutOfRangeException();
                     }
 
                     var normalizedPeptide = new NormalizedPeptideInfo(string.Empty);
@@ -1763,8 +1780,9 @@ namespace MSGFResultsSummarizer
                         }
 
                         // Check whether this peptide is partially or fully tryptic
-                        if (currentPSM.CleavageState == PeptideCleavageStateCalculator.PeptideCleavageState.Full ||
-                            currentPSM.CleavageState == PeptideCleavageStateCalculator.PeptideCleavageState.Partial)
+                        if (currentPSM.CleavageState is
+                            PeptideCleavageStateCalculator.PeptideCleavageState.Full or
+                            PeptideCleavageStateCalculator.PeptideCleavageState.Partial)
                         {
                             psmInfo.Tryptic = true;
                         }
