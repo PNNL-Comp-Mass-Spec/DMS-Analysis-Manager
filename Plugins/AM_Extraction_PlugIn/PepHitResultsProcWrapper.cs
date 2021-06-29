@@ -366,8 +366,8 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private readonly Regex reProcessing = new(@"Processing: (\d+)");
-        private readonly Regex reProcessingPHRP = new(@"^([0-9.]+)\% complete");
+        private readonly Regex mProcessingMatcher = new(@"Processing: (\d+)");
+        private readonly Regex mProcessingPhrpMatcher = new(@"^([0-9.]+)\% complete");
 
         private void ParsePHRPConsoleOutputFile()
         {
@@ -417,7 +417,7 @@ namespace AnalysisManagerExtractionPlugin
                     Match reMatch;
                     if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
                     {
-                        reMatch = reProcessing.Match(lineIn);
+                        reMatch = mProcessingMatcher.Match(lineIn);
                         if (reMatch.Success)
                         {
                             float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
@@ -425,7 +425,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        reMatch = reProcessingPHRP.Match(lineIn);
+                        reMatch = mProcessingPhrpMatcher.Match(lineIn);
                         if (reMatch.Success)
                         {
                             float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
