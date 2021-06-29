@@ -45,12 +45,7 @@ namespace MSGFResultsSummarizerExe
 
             try
             {
-                var proceed = false;
-                if (commandLineParser.ParseCommandLine())
-                {
-                    if (SetOptionsUsingCommandLineParameters(commandLineParser))
-                        proceed = true;
-                }
+                var proceed = commandLineParser.ParseCommandLine() && SetOptionsUsingCommandLineParameters(commandLineParser);
 
                 if (!proceed || commandLineParser.NeedToShowHelp)
                 {
@@ -73,18 +68,18 @@ namespace MSGFResultsSummarizerExe
 
                 var success = SummarizePSMResults();
 
-                if (!success)
-                {
-                    return -1;
-                }
+                if (success)
+                    return 0;
+
+                ConsoleMsgUtils.SleepSeconds(1.5);
+                return -1;
             }
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Error occurred in Program->Main", ex);
+                ConsoleMsgUtils.SleepSeconds(1.5);
                 return -1;
             }
-
-            return 0;
         }
 
         private static string GetAppVersion()
