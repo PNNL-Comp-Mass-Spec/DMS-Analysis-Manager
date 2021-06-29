@@ -1713,6 +1713,11 @@ namespace AnalysisManagerExtractionPlugin
                         synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
+
+                    if (!string.IsNullOrWhiteSpace(phrp.WarningMessage))
+                    {
+                        mEvalMessage = Global.AppendToComment(mEvalMessage, phrp.WarningMessage);
+                    }
                 }
                 catch (Exception ex)
                 {
