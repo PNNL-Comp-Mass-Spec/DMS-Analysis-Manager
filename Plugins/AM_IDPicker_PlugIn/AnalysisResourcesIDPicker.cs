@@ -370,7 +370,6 @@ namespace AnalysisManagerIDPickerPlugIn
                     return false;
                 }
 
-
                 var index = synopsisFileName.IndexOf(MaxQuantSynFileReader.FILENAME_SUFFIX_SYN, StringComparison.OrdinalIgnoreCase);
                 if (index <= 0)
                 {
@@ -392,7 +391,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 return false;
             }
         }
-
 
         /// <summary>
         /// Retrieve the ID Picker parameter file
