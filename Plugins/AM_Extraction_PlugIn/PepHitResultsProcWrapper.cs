@@ -247,30 +247,13 @@ namespace AnalysisManagerExtractionPlugin
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to mErrMsg
 
-                    var consoleOutputFile = new FileInfo(mPHRPConsoleOutputFilePath);
-                    var errorMessageFound = false;
+                    var errorMessageFound = ReadErrorMessagesFromConsoleOutputFile(mPHRPConsoleOutputFilePath, out var errorMessage);
 
-                    if (consoleOutputFile.Exists)
+                    if (errorMessageFound)
                     {
-                        using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                        while (!reader.EndOfStream)
-                        {
-                            var lineIn = reader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(lineIn))
-                                continue;
-
-                            if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
-                                continue;
-
-                            mErrMsg += "; " + lineIn;
-                            OnWarningEvent(lineIn);
-
-                            errorMessageFound = true;
-                        }
+                        mErrorMessage = Global.AppendToComment(mErrorMessage, errorMessage);
                     }
-
-                    if (!errorMessageFound)
+                    else
                     {
                         mErrorMessage = Global.AppendToComment(mErrorMessage, "Unknown PHRP error message");
                         OnWarningEvent("Unknown PHRP error message");
@@ -443,6 +426,46 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
+        private bool ReadErrorMessagesFromConsoleOutputFile(string phrpConsoleOutputFilePath, out string errorMessage)
+        {
+            var consoleOutputFile = new FileInfo(phrpConsoleOutputFilePath);
+
+            if (!consoleOutputFile.Exists)
+            {
+                errorMessage = string.Empty;
+                return false;
+            }
+
+            using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            var errorMessageData = new StringBuilder();
+
+            while (!reader.EndOfStream)
+            {
+                var lineIn = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(lineIn))
+                    continue;
+
+                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
+                    continue;
+
+                if (errorMessageData.Length > 0)
+                    errorMessageData.Append("; ");
+
+                errorMessageData.Append(lineIn);
+
+                OnWarningEvent(lineIn);
+            }
+
+            if (errorMessageData.Length == 0)
+            {
+                errorMessage = string.Empty;
+                return false;
+            }
+
+            errorMessage = errorMessageData.ToString();
+            return true;
+        }
         private void ReportError(string message)
         {
             mErrorMessage = message;
