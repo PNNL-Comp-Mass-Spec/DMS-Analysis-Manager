@@ -54,6 +54,8 @@ namespace AnalysisManagerExtractionPlugin
 
         public string ErrorMessage => mErrorMessage ?? string.Empty;
 
+        public string WarningMessage => mWarningMessage ?? string.Empty;
+
         #endregion
 
         #region "Methods"
@@ -114,6 +116,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 mProgress = 0;
                 mErrorMessage = string.Empty;
+                mWarningMessage = string.Empty;
 
                 if (string.IsNullOrWhiteSpace(peptideSearchResultsFilePath))
                 {
@@ -305,16 +308,34 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!skipProteinMods && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
-                        if (!string.IsNullOrWhiteSpace(fastaFilePath))
+                        var lookForProteinModsFile = true;
+
+                        if (ReadWarningMessagesFromConsoleOutputFile(mPHRPConsoleOutputFilePath, out var warningMessages))
                         {
-                            if (PHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
+                            // Look for warning "Skipping creation of the ProteinMods file"
+                            foreach (var message in warningMessages)
+                            {
+                                if (message.IndexOf(PHRPBaseClass.WARNING_MESSAGE_SKIPPING_PROTEIN_MODS_FILE_CREATION, StringComparison.OrdinalIgnoreCase) >= 0)
+                                {
+                                    mWarningMessage = message;
+                                    lookForProteinModsFile = false;
+                                }
+                            }
+                        }
+
+                        if (lookForProteinModsFile)
+                        {
+                            if (!string.IsNullOrWhiteSpace(fastaFilePath))
+                            {
+                                if (PHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
+                                {
+                                    filesToCheck.Add("_ProteinMods.txt");
+                                }
+                            }
+                            else if (resultType == PeptideHitResultTypes.MSGFPlus)
                             {
                                 filesToCheck.Add("_ProteinMods.txt");
                             }
-                        }
-                        else if (resultType == PeptideHitResultTypes.MSGFPlus)
-                        {
-                            filesToCheck.Add("_ProteinMods.txt");
                         }
                     }
                 }
@@ -466,6 +487,35 @@ namespace AnalysisManagerExtractionPlugin
             errorMessage = errorMessageData.ToString();
             return true;
         }
+
+        private bool ReadWarningMessagesFromConsoleOutputFile(string phrpConsoleOutputFilePath, out SortedSet<string> warningMessages)
+        {
+            warningMessages = new SortedSet<string>();
+
+            var consoleOutputFile = new FileInfo(phrpConsoleOutputFilePath);
+
+            if (!consoleOutputFile.Exists)
+            {
+                return false;
+            }
+
+            using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+            while (!reader.EndOfStream)
+            {
+                var lineIn = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(lineIn))
+                    continue;
+
+                if (!lineIn.StartsWith("Warning:", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                warningMessages.Add(lineIn);
+            }
+
+            return warningMessages.Count > 0;
+        }
+
         private void ReportError(string message)
         {
             mErrorMessage = message;
