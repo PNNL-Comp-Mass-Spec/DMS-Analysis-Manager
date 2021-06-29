@@ -2677,7 +2677,7 @@ namespace AnalysisManagerExtractionPlugin
                 DateTime.UtcNow.Subtract(mLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
             {
                 mLastPHRPStatusLog = DateTime.UtcNow;
-                LogDebug("Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
+                LogDebug(string.Format("Running PHRP: {0}; {1}% complete", taskDescription, percentComplete));
             }
         }
 
