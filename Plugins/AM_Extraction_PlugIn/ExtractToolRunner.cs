@@ -1557,8 +1557,11 @@ namespace AnalysisManagerExtractionPlugin
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                            msg += "; " + phrp.ErrMsg;
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrorMessage))
+                        {
+                            msg = Global.AppendToComment(msg, phrp.ErrorMessage);
+                        }
+
                         LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -1701,8 +1704,10 @@ namespace AnalysisManagerExtractionPlugin
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
-                            msg += "; " + phrp.ErrMsg;
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrorMessage))
+                        {
+                            msg = Global.AppendToComment(msg, phrp.ErrorMessage);
+                        }
 
                         LogWarning(msg);
                         synopsisFileNameFromPHRP = string.Empty;
@@ -2078,12 +2083,12 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
-                        LogError("Error running Peptide Prophet: " + peptideProphet.ErrMsg);
+                        LogError("Error running Peptide Prophet: " + peptideProphet.ErrorMessage);
                         LogWarning("Input file: " + synFileNameAndSize);
                     }
                     else
                     {
-                        LogErrorNoMessageUpdate("Error running Peptide Prophet on file " + synFileNameAndSize + ": " + peptideProphet.ErrMsg);
+                        LogErrorNoMessageUpdate("Error running Peptide Prophet on file " + synFileNameAndSize + ": " + peptideProphet.ErrorMessage);
                     }
 
                     if (ignorePeptideProphetErrors)

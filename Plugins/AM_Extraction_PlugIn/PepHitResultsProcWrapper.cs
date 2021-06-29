@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
@@ -43,14 +44,15 @@ namespace AnalysisManagerExtractionPlugin
         private readonly IJobParams mJobParams;
 
         private int mProgress;
-        private string mErrMsg = string.Empty;
+        private string mErrorMessage = string.Empty;
         private string mPHRPConsoleOutputFilePath;
+        private string mWarningMessage = string.Empty;
 
         #endregion
 
         #region "Properties"
 
-        public string ErrMsg => mErrMsg ?? string.Empty;
+        public string ErrorMessage => mErrorMessage ?? string.Empty;
 
         #endregion
 
@@ -111,7 +113,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 mProgress = 0;
-                mErrMsg = string.Empty;
+                mErrorMessage = string.Empty;
 
                 if (string.IsNullOrWhiteSpace(peptideSearchResultsFilePath))
                 {
@@ -270,7 +272,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!errorMessageFound)
                     {
-                        mErrMsg += "; Unknown error message";
+                        mErrorMessage = Global.AppendToComment(mErrorMessage, "Unknown PHRP error message");
                         OnWarningEvent("Unknown PHRP error message");
                     }
 
@@ -443,8 +445,8 @@ namespace AnalysisManagerExtractionPlugin
 
         private void ReportError(string message)
         {
-            mErrMsg = message;
-            OnErrorEvent(mErrMsg);
+            mErrorMessage = message;
+            OnErrorEvent(mErrorMessage);
         }
 
         private CloseOutType ValidatePrimaryResultsFile(FileInfo psmResultsFile, string fileSuffix, string fileDescription)
@@ -465,7 +467,7 @@ namespace AnalysisManagerExtractionPlugin
             var synopsisFileHasData = AnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
             if (!synopsisFileHasData)
             {
-                mErrMsg = errorMessage;
+                mErrorMessage = errorMessage;
                 OnWarningEvent(errorMessage);
                 return CloseOutType.CLOSEOUT_NO_DATA;
             }

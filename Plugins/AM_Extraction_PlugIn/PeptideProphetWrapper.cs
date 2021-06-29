@@ -48,7 +48,7 @@ namespace AnalysisManagerExtractionPlugin
 
         public short DebugLevel { get; set; } = 1;
 
-        public string ErrMsg { get; private set; } = string.Empty;
+        public string ErrorMessage { get; private set; } = string.Empty;
 
         public string InputFile { get; set; } = string.Empty;
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             try
             {
-                ErrMsg = string.Empty;
+                ErrorMessage = string.Empty;
 
                 var inputFile = new FileInfo(InputFile);
                 if (inputFile.Directory == null)
@@ -134,12 +134,15 @@ namespace AnalysisManagerExtractionPlugin
                             var lineIn = reader.ReadLine();
                             if (!string.IsNullOrWhiteSpace(lineIn))
                             {
-                                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
+                                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
                                 {
-                                    ErrMsg += "; " + lineIn;
-                                    OnWarningEvent(ErrMsg);
-                                    errorMessageFound = true;
+                                    continue;
                                 }
+
+                                ErrorMessage = Global.AppendToComment(ErrorMessage, lineIn);
+
+                                OnWarningEvent(lineIn);
+                                errorMessageFound = true;
                             }
                         }
                         reader.Close();
@@ -147,7 +150,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!errorMessageFound)
                     {
-                        ErrMsg += "; Unknown error message";
+                        ErrorMessage += "; Unknown error message";
                         OnWarningEvent("Unknown PeptideProphet error message");
                     }
 
@@ -167,13 +170,13 @@ namespace AnalysisManagerExtractionPlugin
 
         private void ReportError(string message, Exception ex = null)
         {
-            ErrMsg = message;
-            OnErrorEvent(ErrMsg, ex);
+            ErrorMessage = message;
+            OnErrorEvent(ErrorMessage, ex);
         }
 
         private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            ReportError("PeptideProphetRunner: " + ErrMsg);
+            ReportError("PeptideProphetRunner: " + ErrorMessage);
         }
 
         private DateTime mLastStatusUpdate = DateTime.MinValue;
