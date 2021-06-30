@@ -459,6 +459,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 // For MaxQuant results, also look in the txt directory below the input directory
 
+                var datasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 var inputDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME);
 
@@ -472,14 +473,23 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (searchArchivedDatasetDir)
                 {
-                    if (!MyEMSLSearchDisabled)
+                    if (!MyEMSLSearchDisabled && !string.IsNullOrWhiteSpace(datasetDirectoryName))
                     {
                         parentDirPaths.Add(MYEMSL_PATH_FLAG);
                     }
-                    if (mAuroraAvailable)
+
+                    var datasetArchivePath = mJobParams.GetParam("DatasetArchivePath");
+
+                    if (mAuroraAvailable && !string.IsNullOrWhiteSpace(datasetArchivePath))
                     {
-                        parentDirPaths.Add(mJobParams.GetParam("DatasetArchivePath"));
+                        parentDirPaths.Add(datasetArchivePath);
                     }
+                }
+
+                if (Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+                {
+                    // Also add the data package directory
+                    parentDirPaths.Add(mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH));
                 }
 
                 var directoriesToSearch = new List<string>();
@@ -512,8 +522,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, sharedDirName, subdirectoriesToAppend);
                     }
 
-                    // Parent directory \ Dataset directory
-                    FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, string.Empty, subdirectoriesToAppend);
+                    if (!string.IsNullOrWhiteSpace(datasetDirectoryName))
+                    {
+                        // Parent directory \ Dataset directory
+                        FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, string.Empty,
+                            subdirectoriesToAppend);
+                    }
                 }
 
                 var matchingDirectoryPath = string.Empty;

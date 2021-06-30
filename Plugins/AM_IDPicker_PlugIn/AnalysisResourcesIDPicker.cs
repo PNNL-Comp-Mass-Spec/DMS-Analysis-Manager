@@ -181,6 +181,18 @@ namespace AnalysisManagerIDPickerPlugIn
             }
         }
 
+        private void FindMaxQuantSynopsisFile(FileSystemInfo directoryToCheck, out string synopsisFileName, out int fileCountFound)
+        {
+            if (directoryToCheck.Exists)
+            {
+                synopsisFileName = FileSearch.FindMaxQuantSynopsisFile(directoryToCheck.FullName, out fileCountFound);
+                return;
+            }
+
+            fileCountFound = 0;
+            synopsisFileName = string.Empty;
+        }
+
         private string LookupLegacyFastaFileName()
         {
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
@@ -356,17 +368,65 @@ namespace AnalysisManagerIDPickerPlugIn
                     return false;
                 }
 
-                var synopsisFileName = FileSearch.FindMaxQuantSynopsisFile(transferDirectoryPath, out var fileCountFound);
+                var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+
+                string sourceDirectoryDescription;
+                string dataPackageResultDirectoryPath;
+
+                string synopsisFileName;
+                int fileCountFound;
+
+                FindMaxQuantSynopsisFile(transferDirectory, out var transferDirectorySynopsisFileName, out var transferDirectoryFileCountFound);
+
+                if (transferDirectoryFileCountFound == 0)
+                {
+                    // The job may have finished and we're re-running a job step
+                    // Look for the synopsis file in the data package directory
+
+                    sourceDirectoryDescription = "data package directory";
+
+                    var dataPackageDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATA_PACKAGE_PATH);
+                    if (string.IsNullOrWhiteSpace(dataPackageDirectoryPath))
+                    {
+                        LogError(string.Format("Job parameter {0} is an empty string; unable to find the synopsis file", JOB_PARAM_DATA_PACKAGE_PATH));
+                        return false;
+                    }
+
+                    var inputDirectoryName = mJobParams.GetParam(JOB_PARAM_INPUT_FOLDER_NAME);
+                    if (string.IsNullOrWhiteSpace(dataPackageDirectoryPath))
+                    {
+                        LogError(string.Format("Job parameter {0} is an empty string; unable to find the synopsis file", JOB_PARAM_INPUT_FOLDER_NAME));
+                        return false;
+                    }
+
+                    dataPackageResultDirectoryPath = Path.Combine(dataPackageDirectoryPath, inputDirectoryName);
+                    var dataPackageResultDirectory = new DirectoryInfo(dataPackageResultDirectoryPath);
+
+                    FindMaxQuantSynopsisFile(dataPackageResultDirectory, out synopsisFileName, out fileCountFound);
+                }
+                else
+                {
+                    sourceDirectoryDescription = "transfer directory";
+                    dataPackageResultDirectoryPath = string.Empty;
+
+                    synopsisFileName = transferDirectorySynopsisFileName;
+                    fileCountFound = transferDirectoryFileCountFound;
+                }
 
                 if (fileCountFound == 0)
                 {
-                    LogError("PHRP synopsis file not found in the transfer directory for this aggregation job: " + transferDirectoryPath);
+                    var msg = "PHRP synopsis file not found in the transfer directory or the data package directory for this aggregation job";
+                    LogError(msg, string.Format("{0}: {1} and {2}", msg, transferDirectoryPath, dataPackageResultDirectoryPath));
                     return false;
                 }
 
                 if (fileCountFound > 1)
                 {
-                    LogError("Multiple PHRP synopsis files were found in the transfer directory for this aggregation job: " + transferDirectoryPath);
+                    LogError(string.Format(
+                        "Multiple PHRP synopsis files were found in the {0} for this aggregation job: {1}",
+                        sourceDirectoryDescription,
+                        string.IsNullOrWhiteSpace(dataPackageResultDirectoryPath) ? transferDirectoryPath : dataPackageResultDirectoryPath));
+
                     return false;
                 }
 
