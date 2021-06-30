@@ -2884,7 +2884,7 @@ namespace AnalysisManagerProg
 
                         if (Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
                         {
-                            datasetStoragePath = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackagePath");
+                            datasetStoragePath = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH);
 
                             if (string.IsNullOrEmpty(datasetStoragePath))
                             {

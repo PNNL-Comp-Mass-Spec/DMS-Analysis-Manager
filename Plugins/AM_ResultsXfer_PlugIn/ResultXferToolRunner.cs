@@ -364,7 +364,7 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 appendDatasetDirectoryName = false;
 
-                datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackagePath");
+                datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH);
 
                 if (string.IsNullOrEmpty(datasetStoragePath))
                 {

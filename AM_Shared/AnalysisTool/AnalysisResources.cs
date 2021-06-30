@@ -339,6 +339,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string JOB_PARAM_DATASET_NAME = "DatasetNum";
 
         /// <summary>
+        /// Data package path
+        /// </summary>
+        public const string JOB_PARAM_DATA_PACKAGE_PATH = "DataPackagePath";
+
+        /// <summary>
         /// Packed job parameter DatasetFilePaths
         /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS = "PackedParam_DatasetFilePaths";
