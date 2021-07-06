@@ -39,7 +39,24 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (msXmlGenerator.Equals("skip", StringComparison.OrdinalIgnoreCase))
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
+
+                if (Global.IsMatch(scriptName, "MaxQuant_DataPkg"))
+                {
+                    var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+                    var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+
+                    if (dataPackageID > 0 && !usingMzML)
+                    {
+                        EvalMessage = string.Format("Skipping MSXMLGen since script is {0} and job parameter CreateMzMLFiles is false", scriptName);
+                        LogMessage(EvalMessage);
+                        return CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN;
+                    }
+                }
+
+                if (Global.IsMatch(msXmlGenerator, "skip"))
                 {
                     EvalMessage = "Skipping MSXMLGen since job parameter MSXMLGenerator is 'skip'";
                     LogMessage(EvalMessage);
@@ -47,9 +64,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 currentTask = "Determine RawDataType";
-
-                // The ToolName job parameter holds the name of the job script we are executing
-                var scriptName = mJobParams.GetParam("ToolName");
 
                 var proMexBruker = scriptName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
