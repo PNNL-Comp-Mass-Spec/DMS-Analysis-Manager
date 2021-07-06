@@ -39,6 +39,16 @@ namespace AnalysisManagerBase.DataFileTools
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES = "PackedParam_DatasetFileTypes";
 
         /// <summary>
+        /// Packed parameter PackedParam_DatasetMaxQuantParamGroups
+        /// </summary>
+        /// <remarks>
+        /// Tracks the MaxQuant Parameter Group Index for datasets
+        /// Keys are dataset IDs
+        /// Values are an integer (stored as a string)
+        /// </remarks>
+        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP = "PackedParam_DatasetMaxQuantParamGroups";
+
+        /// <summary>
         /// Packed parameter DataPackageExperiments
         /// </summary>
         /// <remarks>
@@ -80,6 +90,13 @@ namespace AnalysisManagerBase.DataFileTools
         public Dictionary<int, string> DatasetFileTypes { get; }
 
         /// <summary>
+        /// Keys are dataset IDs
+        /// Values are the MaxQuant parameter group index or number read from the Package Comment field for the dataset
+        /// </summary>
+        /// <remarks>Will be 0 if the Package Comment field does not have a MaxQuant Group defined</remarks>
+        public Dictionary<int, int> DatasetMaxQuantParamGroup { get; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="dataPackageID"></param>
@@ -91,6 +108,7 @@ namespace AnalysisManagerBase.DataFileTools
             Experiments = new Dictionary<int, string>();
             DatasetFiles = new Dictionary<int, string>();
             DatasetFileTypes = new Dictionary<int, string>();
+            DatasetMaxQuantParamGroup = new Dictionary<int, int>();
         }
 
         /// <summary>
@@ -107,6 +125,12 @@ namespace AnalysisManagerBase.DataFileTools
             Experiments = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_EXPERIMENTS);
             DatasetFiles = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             DatasetFileTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
+            DatasetMaxQuantParamGroup = new Dictionary<int, int>();
+
+            foreach (var item in toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP))
+            {
+                DatasetMaxQuantParamGroup.Add(item.Key, int.TryParse(item.Value, out var paramGroupIndex) ? paramGroupIndex : 0);
+            }
         }
 
         /// <summary>
@@ -118,6 +142,7 @@ namespace AnalysisManagerBase.DataFileTools
             Experiments.Clear();
             DatasetFiles.Clear();
             DatasetFileTypes.Clear();
+            DatasetMaxQuantParamGroup.Clear();
         }
 
         /// <summary>
@@ -130,6 +155,7 @@ namespace AnalysisManagerBase.DataFileTools
             analysisResources.StorePackedJobParameterDictionary(Experiments, JOB_PARAM_DICTIONARY_DATA_PACKAGE_EXPERIMENTS);
             analysisResources.StorePackedJobParameterDictionary(DatasetFiles, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             analysisResources.StorePackedJobParameterDictionary(DatasetFileTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
+            analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP);
         }
     }
 }
