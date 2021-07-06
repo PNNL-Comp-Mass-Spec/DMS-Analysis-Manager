@@ -1256,7 +1256,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Keys in this dictionary are step IDs
                 // Values are step info
-                var dmsSteps = new Dictionary<int, DmsStepInfo>();
+                var dmsSteps = new SortedDictionary<int, DmsStepInfo>();
 
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -1297,13 +1297,16 @@ namespace AnalysisManagerMaxQuantPlugIn
                     var experimentChildCount = RemoveNodeChildren(doc, "experiments");
                     var fractionChildCount = RemoveNodeChildren(doc, "fractions");
 
+                    var parameterGroupNodes = doc.Elements("MaxQuantParams").Elements("parameterGroups").Elements("parameterGroup").ToList();
+
                     var nodesToValidate = new Dictionary<string, int>
                     {
                         {"fastaFiles", fastaFileNodes.Count},
                         {"numThreads", numThreadsNode.Count},
                         {"filePaths", filePathChildCount},
                         {"experiments", experimentChildCount},
-                        {"fractions", fractionChildCount}
+                        {"fractions", fractionChildCount},
+                        {"parameterGroups", parameterGroupNodes.Count}
                     };
 
                     if (!ValidateNodesPresent(nodesToValidate))
@@ -1351,25 +1354,87 @@ namespace AnalysisManagerMaxQuantPlugIn
                     // If the experiment ends in text similar to "_f22", assume this is a fractionated sample and this is fraction 22
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+                    // Check whether datasets in this data package have non-zero values for MaxQuant Parameter Group
+                    //
+                    // If found, determine the group indices to use (auto adjusting from group 1 and group 2 to groupIndex 0 and groupIndex 1 if necessary)
+                    // We will use this information to duplicate the first <parameterGroup></parameterGroup> section from the master parameter file to add the necessary number of <parameterGroup> sections (if the file already has the extras, use them)
+                    // The groupIndex values are used when adding datasets
+                    // See: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-
+
+                    // Keys in this dictionary are MaxQuant group index values (0-based)
+                    // Values are a list of dataset IDs
+                    var dataPackageDatasetsByParamGroup = new SortedDictionary<int, SortedSet<int>>();
+
                     foreach (var item in dataPackageInfo.Datasets)
                     {
-                        var datasetId = item.Key;
+                        var groupIndex = dataPackageInfo.DatasetMaxQuantParamGroup[item.Key];
 
-                        var datasetFileOrDirectoryName = dataPackageInfo.DatasetFiles[datasetId];
-                        var experiment = dataPackageInfo.Experiments[datasetId];
+                        if (dataPackageDatasetsByParamGroup.TryGetValue(groupIndex, out var matchedDatasetsForGroup))
+                        {
+                            matchedDatasetsForGroup.Add(item.Key);
+                            continue;
+                        }
 
-                        filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
+                        var datasetsForGroup = new SortedSet<int>
+                        {
+                            item.Key
+                        };
 
-                        experimentNodes.Add(new XElement("string", experiment));
+                        dataPackageDatasetsByParamGroup.Add(groupIndex, datasetsForGroup);
+                    }
 
-                        var match = fractionMatcher.Match(experiment);
+                    // This dictionary is used to guarantee that the group index values in the customized MaxQuant parameter file start at 0 and are contiguous
+                    // Keys in this dictionary are the group index or number defined by the user in the data package
+                    // Values are 0 for the first group, 1 for the second, 2 for the 3rd, etc.
+                    var groupIndexOrNumberMap = new SortedDictionary<int, int>();
 
-                        var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
-                        fractionNodes.Add(new XElement("short", fractionNumber));
+                    foreach (var groupIndexOrNumber in dataPackageDatasetsByParamGroup.Keys)
+                    {
+                        var zeroBasedGroupIndex = groupIndexOrNumberMap.Count;
+                        groupIndexOrNumberMap.Add(groupIndexOrNumber, zeroBasedGroupIndex);
+                    }
 
-                        ptmNodes.Add(new XElement("boolean", "False"));
-                        paramGroupIndexNodes.Add(new XElement("int", "0"));
-                        referenceChannelNodes.Add(new XElement("string", string.Empty));
+                    foreach (var paramGroupItem in dataPackageDatasetsByParamGroup)
+                    {
+                        var paramGroupIndex = groupIndexOrNumberMap[paramGroupItem.Key];
+
+                        foreach (var datasetId in paramGroupItem.Value)
+                        {
+                            var datasetFileOrDirectoryName = dataPackageInfo.DatasetFiles[datasetId];
+                            var experiment = dataPackageInfo.Experiments[datasetId];
+
+                            filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
+
+                            experimentNodes.Add(new XElement("string", experiment));
+
+                            var match = fractionMatcher.Match(experiment);
+
+                            var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
+                            fractionNodes.Add(new XElement("short", fractionNumber));
+
+                            ptmNodes.Add(new XElement("boolean", "False"));
+                            paramGroupIndexNodes.Add(new XElement("int", paramGroupIndex));
+                            referenceChannelNodes.Add(new XElement("string", string.Empty));
+                        }
+                    }
+
+                    var parameterGroupNodesUpdated = false;
+
+                    if (dataPackageDatasetsByParamGroup.Count > 0)
+                    {
+                        // Remove any extra nodes (this likely won't be needed since most of the MaxQuant parameter files will have just one <parameterGroup> node)
+                        while (parameterGroupNodes.Count > dataPackageDatasetsByParamGroup.Count)
+                        {
+                            parameterGroupNodes.RemoveAt(parameterGroupNodes.Count - 1);
+                            parameterGroupNodesUpdated = true;
+                        }
+
+                        // Add additional <parameterGroup></parameterGroup> nodes, if necessary
+                        while (parameterGroupNodes.Count < dataPackageDatasetsByParamGroup.Count)
+                        {
+                            parameterGroupNodes.Add(parameterGroupNodes[0]);
+                            parameterGroupNodesUpdated = true;
+                        }
                     }
 
                     // Replace the first FastaFileInfo node
@@ -1388,6 +1453,12 @@ namespace AnalysisManagerMaxQuantPlugIn
                     // Replace the PTM nodes
                     // ReSharper disable once StringLiteralTypo
                     ReplaceChildNodes(doc, "ptms", ptmNodes);
+
+                    if (parameterGroupNodesUpdated)
+                    {
+                        // Replace the parameter group nodes
+                        ReplaceChildNodes(doc, "parameterGroups", parameterGroupNodes);
+                    }
 
                     // Replace the param group index nodes
                     ReplaceChildNodes(doc, "paramGroupIndices", paramGroupIndexNodes);
