@@ -87,6 +87,19 @@ namespace AnalysisManagerBase.JobConfig
         public string DatasetDirectoryPath { get; set; }
 
         /// <summary>
+        /// Data package comment
+        /// </summary>
+        public string DataPackageComment { get; set; }
+
+        /// <summary>
+        /// MaxQuant parameter group index or number (or 0 if undefined)
+        /// </summary>
+        /// <remarks>
+        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-
+        /// </remarks>
+        public int MaxQuantParamGroup { get; set; }
+
+        /// <summary>
         /// Archive directory path
         /// </summary>
         /// <remarks>This path is not applicable for datasets in MyEMSL</remarks>
@@ -117,8 +130,13 @@ namespace AnalysisManagerBase.JobConfig
             Experiment_Tissue_Name = string.Empty;
             Experiment_NEWT_ID = 0;
             Experiment_NEWT_Name = string.Empty;
+
             DatasetDirectoryPath = string.Empty;
             DatasetArchivePath = string.Empty;
+
+            DataPackageComment = string.Empty;
+            MaxQuantParamGroup = 0;
+
             RawDataType = string.Empty;
         }
     }

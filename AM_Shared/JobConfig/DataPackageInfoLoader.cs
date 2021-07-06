@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using AnalysisManagerBase.StatusReporting;
 using PHRPReader;
 using PRISM.Logging;
@@ -9,6 +10,8 @@ using PRISMDatabaseUtils;
 
 namespace AnalysisManagerBase.JobConfig
 {
+    // Ignore Spelling: Maxq
+
     /// <summary>
     /// Data package info loader
     /// </summary>
@@ -73,7 +76,7 @@ namespace AnalysisManagerBase.JobConfig
             // Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
             // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
 
-            sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ");
+            sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, PackageComment, ");
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism,");
             sqlStr.Append("        Experiment_NEWT_ID, Experiment_NEWT_Name, Experiment_Tissue_ID, Experiment_Tissue_Name,");
             sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
@@ -330,6 +333,15 @@ namespace AnalysisManagerBase.JobConfig
             var datasetName = curRow["Dataset"].CastDBVal<string>();
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
+            var packageComment = curRow["PackageComment"].CastDBVal<string>();
+
+            // Examine the comment to look for "MaxQuant Group 0"  (case insensitive)
+            var groupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ ]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            var match = groupMatcher.Match(packageComment);
+
+            var paramGroupIndexOrNumber = match.Success ? int.Parse(match.Groups["GroupIndex"].Value) : 0;
+
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
@@ -344,7 +356,9 @@ namespace AnalysisManagerBase.JobConfig
                 Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
                 DatasetDirectoryPath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
                 DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
-                RawDataType = curRow["RawDataType"].CastDBVal<string>()
+                RawDataType = curRow["RawDataType"].CastDBVal<string>(),
+                DataPackageComment = packageComment,
+                MaxQuantParamGroup = paramGroupIndexOrNumber
             };
         }
 
