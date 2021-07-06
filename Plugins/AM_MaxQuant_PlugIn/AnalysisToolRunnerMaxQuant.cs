@@ -745,6 +745,12 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
+        /// <summary>
+        /// Remove the child nodes of the given parent nodes
+        /// </summary>
+        /// <param name="doc"></param>
+        /// <param name="parentNodeName"></param>
+        /// <returns>Count removed</returns>
         private int RemoveNodeChildren(XContainer doc, string parentNodeName)
         {
             var childNodeCount = 0;
@@ -1701,7 +1707,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// Validate that each list in the dictionary has at least one item
         /// </summary>
         /// <param name="nodesToValidate">Keys are a description of the item, values the number of child nodes of each parent</param>
-        /// <returns>True all of the items are valid, otherwise false</returns>
+        /// <returns>True if all of the items are valid, otherwise false</returns>
         private bool ValidateNodesPresent(Dictionary<string, int> nodesToValidate)
         {
             foreach (var item in nodesToValidate.Where(item => item.Value == 0))
