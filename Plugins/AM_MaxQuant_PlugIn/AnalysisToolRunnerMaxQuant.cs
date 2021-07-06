@@ -117,6 +117,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+                RegisterEvents(dataPackageInfo);
 
                 // Customize the path to the FASTA file, the number of threads to use, the dataset files, etc.
                 // This will involve a dry-run of MaxQuant if startStepID values in the dmsSteps elements are "auto" instead of integers

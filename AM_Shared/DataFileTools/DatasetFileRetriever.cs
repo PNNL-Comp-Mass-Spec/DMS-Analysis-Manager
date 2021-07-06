@@ -92,6 +92,7 @@ namespace AnalysisManagerBase.DataFileTools
             ErrorMessage = string.Empty;
 
             dataPackageInfo = new DataPackageInfo(dataPackageID);
+            RegisterEvents(dataPackageInfo);
 
             try
             {

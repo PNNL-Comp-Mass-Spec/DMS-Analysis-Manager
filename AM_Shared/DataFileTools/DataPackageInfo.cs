@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using AnalysisManagerBase.AnalysisTool;
+using PRISM;
 
 namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
     /// Data package info
     /// </summary>
-    public class DataPackageInfo
+    public class DataPackageInfo : EventNotifier
     {
         /// <summary>
         /// Packed parameter DataPackageDatasets
@@ -131,6 +132,33 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 DatasetMaxQuantParamGroup.Add(item.Key, int.TryParse(item.Value, out var paramGroupIndex) ? paramGroupIndex : 0);
             }
+
+            // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
+            foreach (var datasetId in Datasets.Keys)
+            {
+                AddKeyIfMissing("Experiments", Experiments, datasetId);
+                AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId);
+                AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId);
+                AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId);
+            }
+        }
+
+        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, int> targetDictionary, int datasetId)
+        {
+            if (targetDictionary.ContainsKey(datasetId))
+                return;
+
+            OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId));
+            targetDictionary.Add(datasetId, 0);
+        }
+
+        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, string> targetDictionary, int datasetId)
+        {
+            if (targetDictionary.ContainsKey(datasetId))
+                return;
+
+            OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId));
+            targetDictionary.Add(datasetId, string.Empty);
         }
 
         /// <summary>
