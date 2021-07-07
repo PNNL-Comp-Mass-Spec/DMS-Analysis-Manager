@@ -39,7 +39,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 

@@ -415,7 +415,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (fileCountFound == 0)
                 {
-                    var msg = "PHRP synopsis file not found in the transfer directory or the data package directory for this aggregation job";
+                    const string msg = "PHRP synopsis file not found in the transfer directory or the data package directory for this aggregation job";
                     LogError(msg, string.Format("{0}: {1} and {2}", msg, transferDirectoryPath, dataPackageResultDirectoryPath));
                     return false;
                 }
