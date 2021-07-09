@@ -23,7 +23,7 @@ namespace AnalysisManagerMSPathFinderPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSPathFinder : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Frag, tda, Samwise, Dehydro, Acetyl, Parm, Ic
+        // Ignore Spelling: Acetyl, Dehydro, Frag, Ic, Parm, Samwise, tda
 
         #region "Constants and Enums"
 

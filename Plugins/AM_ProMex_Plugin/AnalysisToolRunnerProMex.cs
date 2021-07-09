@@ -22,7 +22,7 @@ namespace AnalysisManagerProMexPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerProMex : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: deisotope, deisotoped, Csv, ver, Da
+        // Ignore Spelling: Csv, Da, deisotope, deisotoped, ver
 
         private const string PROMEX_CONSOLE_OUTPUT = "ProMex_ConsoleOutput.txt";
 
