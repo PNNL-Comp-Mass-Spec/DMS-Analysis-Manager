@@ -1115,6 +1115,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
         public void AddResultFileExtensionToSkip(string extension)
         {
+            if (string.IsNullOrWhiteSpace(extension))
+                return;
+
             mJobParams.AddResultFileExtensionToSkip(extension);
         }
 
@@ -1125,6 +1128,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>FileName can be a file path; only the filename will be stored in mResultFilesToSkip</remarks>
         public void AddResultFileToSkip(string sourceFilename)
         {
+            if (string.IsNullOrWhiteSpace(sourceFilename))
+                return;
+
             mJobParams.AddResultFileToSkip(sourceFilename);
         }
 
