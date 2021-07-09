@@ -137,7 +137,7 @@ namespace AnalysisManagerProMexPlugIn
             return proMexBruker;
         }
 
-        protected CloseOutType RetrieveMzMLFile()
+        private CloseOutType RetrieveMzMLFile()
         {
             var currentTask = "Initializing";
 
@@ -165,7 +165,7 @@ namespace AnalysisManagerProMexPlugIn
             }
         }
 
-        protected CloseOutType RetrievePBFFile()
+        private CloseOutType RetrievePBFFile()
         {
             var currentTask = "Initializing";
 

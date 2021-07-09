@@ -24,18 +24,16 @@ namespace AnalysisManagerProMexPlugIn
     {
         // Ignore Spelling: deisotope, deisotoped, Csv, ver, Da
 
+        private const string PROMEX_CONSOLE_OUTPUT = "ProMex_ConsoleOutput.txt";
 
-        protected const string PROMEX_CONSOLE_OUTPUT = "ProMex_ConsoleOutput.txt";
+        private const float PROGRESS_PCT_STARTING = 1;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private string mConsoleOutputErrorMsg;
 
+        private string mProMexParamFileName;
 
-        protected string mConsoleOutputErrorMsg;
-
-        protected string mProMexParamFilePath;
-
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs ProMex
@@ -346,7 +344,7 @@ namespace AnalysisManagerProMexPlugIn
             }
         }
 
-        protected bool StartProMex(string progLoc)
+        private bool StartProMex(string progLoc)
         {
             mConsoleOutputErrorMsg = string.Empty;
 
@@ -528,7 +526,7 @@ namespace AnalysisManagerProMexPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
             {
