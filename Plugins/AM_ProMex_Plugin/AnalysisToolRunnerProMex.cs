@@ -313,9 +313,11 @@ namespace AnalysisManagerProMexPlugIn
 
             // Set up and execute a program runner to run ProMex
 
+            var binResolutionArgument = binResolutionPPM == 0 ? string.Empty : string.Format(" -BinningResolutionPPM:{0}", binResolutionPPM);
 
             var arguments =
                 " -i:" + msFilePath +
+                binResolutionArgument +
                 " -ParamFile:" + mProMexParamFileName;
 
             if (mDebugLevel >= 1)
