@@ -466,9 +466,7 @@ namespace AnalysisManagerProMexPlugIn
                 "InformedProteomics.Backend.dll"
             };
 
-            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
-
-            return success;
+            return StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;

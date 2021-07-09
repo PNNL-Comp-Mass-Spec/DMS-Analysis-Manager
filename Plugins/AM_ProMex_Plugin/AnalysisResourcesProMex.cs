@@ -132,9 +132,7 @@ namespace AnalysisManagerProMexPlugIn
         {
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = jobParams.GetParam("ToolName");
-            var proMexBruker = scriptName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
-
-            return proMexBruker;
+            return scriptName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
         }
 
         private CloseOutType RetrieveMzMLFile()
