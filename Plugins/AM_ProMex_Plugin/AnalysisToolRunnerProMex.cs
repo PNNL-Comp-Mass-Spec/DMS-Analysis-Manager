@@ -124,7 +124,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
-                mJobParams.AddResultFileToSkip(mProMexParamFilePath);
+                mJobParams.AddResultFileToSkip(mProMexParamFileName);
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -146,22 +146,6 @@ namespace AnalysisManagerProMexPlugIn
             mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
-        }
-
-        protected Dictionary<string, string> GetProMexParameterNames()
-        {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
-            {
-                {"MinCharge", "minCharge"},
-                {"MaxCharge", "maxCharge"},
-                {"MinMass", "minMass"},
-                {"MaxMass", "maxMass"},
-                {"Score", "score"},
-                {"Csv", "csv"},
-                {"MaxThreads", "maxThreads"}
-            };
-
-            return dctParamNames;
         }
 
         private const string REGEX_ProMex_PROGRESS = @"Processing ([0-9.]+)\%";
@@ -270,46 +254,6 @@ namespace AnalysisManagerProMexPlugIn
             }
         }
 
-        /// <summary>
-        /// Read the ProMex options file and convert the options to command line switches
-        /// </summary>
-        /// <param name="cmdLineOptions">Output: MSGFDb command line arguments</param>
-        /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseProMexParameterFile(out string cmdLineOptions)
-        {
-            cmdLineOptions = string.Empty;
-
-            var parameterFileName = mJobParams.GetParam("ProMexParamFile");
-
-            // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
-            // we check for it here since the name comes from the settings file, so we want to customize the error message
-            if (string.IsNullOrWhiteSpace(parameterFileName))
-            {
-                LogError("ProMex parameter file not defined in the job settings (param name ProMexParamFile)");
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-            }
-
-            var result = LoadSettingsFromKeyValueParameterFile("ProMex", parameterFileName, out var paramFileEntries, out var paramFileReader);
-
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return result;
-            }
-
-            // Obtain the dictionary that maps parameter names to argument names
-            var paramToArgMapping = GetProMexParameterNames();
-            var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "-");
-            if (string.IsNullOrWhiteSpace(cmdLineOptions))
-            {
-                mMessage = paramFileReader.ErrorMessage;
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
         private bool PostProcessProMexResults(FileSystemInfo fiResultsFile)
         {
             // Make sure there are at least two features in the .ms1ft file
@@ -348,24 +292,9 @@ namespace AnalysisManagerProMexPlugIn
         {
             mConsoleOutputErrorMsg = string.Empty;
 
-            // Read the ProMex Parameter File
-            // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
+            mProMexParamFileName = mJobParams.GetParam("ProMexParamFile");
 
-            var result = ParseProMexParameterFile(out var cmdLineOptions);
-
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(cmdLineOptions))
-            {
-                if (string.IsNullOrEmpty(mMessage))
-                {
-                    mMessage = "Problem parsing ProMex parameter file";
-                }
-                return false;
-            }
+            var binResolutionPPM = mJobParams.GetJobParameter("ProMex", "BinResolutionPPM", 0);
 
             string msFilePath;
 
@@ -384,8 +313,10 @@ namespace AnalysisManagerProMexPlugIn
 
             // Set up and execute a program runner to run ProMex
 
-            var arguments = " -i " + msFilePath +
-                            " " + cmdLineOptions;
+
+            var arguments =
+                " -i:" + msFilePath +
+                " -ParamFile:" + mProMexParamFileName;
 
             if (mDebugLevel >= 1)
             {
