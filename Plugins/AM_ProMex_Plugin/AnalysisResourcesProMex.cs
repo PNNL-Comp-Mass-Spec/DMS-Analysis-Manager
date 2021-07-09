@@ -93,11 +93,11 @@ namespace AnalysisManagerProMexPlugIn
             {
                 if (proMexScript)
                 {
-                    UpdateStatusMessage("see the parameter file name defined for this Analysis Job");
+                    UpdateStatusMessage("see the parameter file name defined for this Analysis Job", true);
                 }
                 else
                 {
-                    UpdateStatusMessage("see the Analysis Job's settings file, entry ProMexParamFile");
+                    UpdateStatusMessage("see the Analysis Job's settings file, entry ProMexParamFile", true);
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
