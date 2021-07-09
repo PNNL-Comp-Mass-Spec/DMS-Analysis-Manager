@@ -24,26 +24,18 @@ namespace AnalysisManagerProMexPlugIn
     {
         // Ignore Spelling: deisotope, deisotoped, Csv, ver, Da
 
-        #region "Constants and Enums"
 
         protected const string PROMEX_CONSOLE_OUTPUT = "ProMex_ConsoleOutput.txt";
 
         protected const float PROGRESS_PCT_STARTING = 1;
         protected const float PROGRESS_PCT_COMPLETE = 99;
 
-        #endregion
-
-        #region "Module Variables"
 
         protected string mConsoleOutputErrorMsg;
 
         protected string mProMexParamFilePath;
 
         protected RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs ProMex
@@ -548,10 +540,6 @@ namespace AnalysisManagerProMexPlugIn
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -575,7 +563,5 @@ namespace AnalysisManagerProMexPlugIn
                 LogProgress("ProMex");
             }
         }
-
-        #endregion
     }
 }
