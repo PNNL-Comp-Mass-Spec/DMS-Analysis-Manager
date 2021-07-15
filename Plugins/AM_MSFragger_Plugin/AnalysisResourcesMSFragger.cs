@@ -6,7 +6,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.IO;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
@@ -57,8 +56,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var workingDirectory = new DirectoryInfo(mWorkDir);
-
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
@@ -100,7 +97,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
                     usingMzML,
-                    AnalysisToolRunnerMSFragger.PROGRESS_PCT_STARTING,
+                    AnalysisToolRunnerMSFragger.PROGRESS_PCT_INITIALIZING,
                     out var dataPackageInfo,
                     out _);
 
@@ -117,7 +114,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Store information about the datasets in several packed job parameters
                 dataPackageInfo.StorePackedDictionaries(this);
 
-
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -132,5 +128,4 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
         }
     }
-
 }

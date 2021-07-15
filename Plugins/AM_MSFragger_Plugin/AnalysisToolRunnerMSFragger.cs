@@ -9,8 +9,11 @@ using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMSFraggerPlugIn
@@ -23,35 +26,55 @@ namespace AnalysisManagerMSFraggerPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSFragger : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
+        // ReSharper disable CommentTypo
 
-        private const string MSFragger_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
-        private const string MSFragger_JAR_NAME = "MSFragger.jar";
+        // Ignore Spell: Acetylation, Batmass, Da, degen, deisotoping, dev, dir, Flammagenitus, fragpipe, freequantInsilicos
+        // Ignore Spell: nocheck, Nterm, pepindex, plex, postprocessing, ptw, timsdata, tmt, tol, Xmx
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        // Ignore Spell: peptideprophet, decoyprobs, ppm, accmass, nonparam, expectscore
 
-        #endregion
+        // ReSharper restore CommentTypo
 
-        #region "Module Variables"
+        // ReSharper disable IdentifierTypo
 
+        private const string MSFRAGGER_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
+
+        private const string MSFRAGGER_JAR_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.2\MSFragger-3.2.jar";
+
+        private const string PEPXML_EXTENSION = ".pepXML";
+
+        private const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
+
+        private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-2.4.0.jar";
+
+        private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
+
+        public const float PROGRESS_PCT_INITIALIZING = 1;
+
+        private enum ProgressPercentValues
+        {
+            Undefined = 0,
+            Initializing = 1,
+            StartingMSFragger = 2,
+            MSFraggerComplete = 90,
+            ProcessingComplete = 99
+        }
         private bool mToolVersionWritten;
 
         // Populate this with a tool version reported to the console
         private string mMSFraggerVersion;
 
         private string mMSFraggerProgLoc;
+
         private string mConsoleOutputErrorMsg;
+
+        private int mDatasetCount;
 
         private string mLocalFASTAFilePath;
 
         private DateTime mLastConsoleOutputParse;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSFragger tool
@@ -61,6 +84,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         {
             try
             {
+                mProgress = (int)ProgressPercentValues.Initializing;
+
                 // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -76,7 +101,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to MSFragger
-                mMSFraggerProgLoc = DetermineProgramLocation("MSFraggerProgLoc", MSFragger_JAR_NAME);
+                mMSFraggerProgLoc = DetermineProgramLocation("MSFraggerProgLoc", MSFRAGGER_JAR_RELATIVE_PATH);
 
                 if (string.IsNullOrWhiteSpace(mMSFraggerProgLoc))
                 {
@@ -86,6 +111,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Store the MSFragger version info in the database after the first line is written to file MSFragger_ConsoleOutput.txt
                 mToolVersionWritten = false;
                 mMSFraggerVersion = string.Empty;
+
                 mConsoleOutputErrorMsg = string.Empty;
 
                 if (!ValidateFastaFile())
@@ -93,10 +119,10 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the mzML file using MSFragger
+                // Process the mzML files using MSFragger
                 var processingResult = StartMSFragger();
 
-                mProgress = PROGRESS_PCT_COMPLETE;
+                mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
                 // Stop the job timer
                 mStopTime = DateTime.UtcNow;
@@ -137,9 +163,59 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
         {
-            mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
+        }
+
+        /// <summary>
+        /// Group the datasets in dataPackageInfo by experiment name
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <remarks>Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__</remarks>
+        /// <returns>Dictionary where keys are experiment name and values are dataset ID</returns>
+        public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperiment(DataPackageInfo dataPackageInfo)
+        {
+            // Keys in this dictionary are Experiment Group name
+            // Values are a list of dataset IDs
+            var dataPackageDatasetsByExperiment = new SortedDictionary<string, SortedSet<int>>();
+
+            foreach (var item in dataPackageInfo.Datasets)
+            {
+                var experimentGroup = dataPackageInfo.DatasetExperimentGroup[item.Key];
+                var experimentGroupToUse = string.IsNullOrWhiteSpace(experimentGroup) ? UNDEFINED_EXPERIMENT_GROUP : experimentGroup;
+
+                if (dataPackageDatasetsByExperiment.TryGetValue(experimentGroupToUse, out var matchedDatasetsForGroup))
+                {
+                    matchedDatasetsForGroup.Add(item.Key);
+                    continue;
+                }
+
+                var datasetsForGroup = new SortedSet<int>
+                {
+                    item.Key
+                };
+
+                dataPackageDatasetsByExperiment.Add(experimentGroupToUse, datasetsForGroup);
+            }
+
+            return dataPackageDatasetsByExperiment;
+        }
+
+        /// <summary>
+        /// Given a linked list of progress values (which should have populated in ascending order), find the next progress value
+        /// </summary>
+        /// <param name="progressValues"></param>
+        /// <param name="currentProgress"></param>
+        /// <returns>Next progress value, or 100 if either the current value is not found, or the next value is not defined</returns>
+        private int GetNextProgressValue(LinkedList<int> progressValues, int currentProgress)
+        {
+            var currentNode = progressValues.Find(currentProgress);
+
+            if (currentNode?.Next == null)
+                return 100;
+
+            return currentNode.Next.Value;
         }
 
         /// <summary>
@@ -157,70 +233,163 @@ namespace AnalysisManagerMSFraggerPlugIn
             return coreCount;
         }
 
+        private Regex GetRegEx(string matchPattern, bool ignoreCase = true)
+        {
+            var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
+            return new Regex(matchPattern, options);
+        }
+
         /// <summary>
         /// Parse the MSFragger console output file to determine the MSFragger version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string consoleOutputFilePath)
+        private void ParseMSFraggerConsoleOutputFile(string consoleOutputFilePath)
         {
-            const string MSFTBX = "MSFTBX";
+            // ReSharper disable once IdentifierTypo
+            // ReSharper disable once StringLiteralTypo
+            const string BATMASS_IO_VERSION = "Batmass-IO version";
 
+            // ReSharper disable CommentTypo
+
+            // ----------------------------------------------------
             // Example Console output
-            //
-            // Running MSFragger
-            // MSFragger version MSFragger-20190222
-            // ...
-            //
-            // Sequence database filtered and tagged in 62ms
-            // Digestion completed in 438ms
-            // Merged digestion results in 106ms
-            // Sorting digested sequences...
-            //    	of length 7: 583315
-            // 	  	of length 8: 565236
-            // 	  	of length 9: 575341
-            // 	  	of length 10: 546050
-            //    	of length 11: 527565
-            //     	of length 50: 3491
-            // 	DONE
-            // Removing duplicates and compacting...
-            // Reduced to 6653770  peptides in 22392ms
-            // Generating modified peptides...DONE in 1135ms
-            //   Generated 11025300 modified peptides
-            // Merging peptide pools from threads... DONE in 62ms
-            // Sorting modified peptides by mass...DONE in 759ms
-            // Peptide index written in 627ms
-            // Selected fragment tolerance 0.10 Da and maximum fragment slice size of 6361.86MB
-            //   1001868396 fragments to be searched in 2 slices (7.46GB total)
-            // Operating on slice 1 of 2: 4463ms
-            // 	DatasetName.mzML 7042ms
-            // 	DatasetName.mzML 7042ms [progress: 29940/50420 (59.38%) - 5945.19 spectra/s]
-            // 	DatasetName.mzML 7042ms [progress: 50420/50420 (100.00%) - 4926.63 spectra/s] - completed 9332ms
-            //   Operating on slice 2 of 2: 3769ms
-            //	DatasetName.mzML 2279ms
-            //	DatasetName.mzML 2279ms [progress: 50420/50420 (100.00%) - 18550.40 spectra/s] - completed 2788ms
+            // ----------------------------------------------------
 
-            var processingSteps = new SortedList<string, int>
+            // MSFragger version MSFragger-3.2
+            // Batmass-IO version 1.22.1
+            // timsdata library version timsdata-2-7-0
+            // (c) University of Michigan
+            // RawFileReader reading tool. Copyright (c) 2016 by Thermo Fisher Scientific, Inc. All rights reserved.
+            // System OS: Windows 10, Architecture: AMD64
+            // Java Info: 1.8.0_232, OpenJDK 64-Bit Server VM,
+            // JVM started with 8 GB memory
+            // Checking database...
+            // Checking spectral files...
+            // C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML: Scans = 9698
+            // ***********************************FIRST SEARCH************************************
+            // Parameters:
+            // ...
+            // Number of unique peptides
+            //         of length 7: 28622
+            //         of length 8: 27618
+            //         of length 9: 25972
+            // ...
+            //         of length 50: 3193
+            // In total 590010 peptides.
+            // Generated 1061638 modified peptides.
+            // Number of peptides with more than 5000 modification patterns: 0
+            // Selected fragment index width 0.10 Da.
+            // 50272922 fragments to be searched in 1 slices (0.75 GB total)
+            // Operating on slice 1 of 1:
+            //         Fragment index slice generated in 1.38 s
+            //         001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML 1.2 s | deisotoping 0.6 s
+            //                 [progress: 9451/9451 (100%) - 14191 spectra/s] 0.7s | postprocessing 0.1 s
+            // ***************************FIRST SEARCH DONE IN 0.153 MIN**************************
+            //
+            // *********************MASS CALIBRATION AND PARAMETER OPTIMIZATION*******************
+            // ...
+            // ************MASS CALIBRATION AND PARAMETER OPTIMIZATION DONE IN 0.523 MIN*********
+            //
+            // ************************************MAIN SEARCH************************************
+            // Checking database...
+            // Parameters:
+            // ...
+            // Number of unique peptides
+            //         of length 7: 29253
+            //         of length 8: 28510
+            // ...
+            //         of length 50: 6832
+            // In total 778855 peptides.
+            // Generated 1469409 modified peptides.
+            // Number of peptides with more than 5000 modification patterns: 0
+            // Selected fragment index width 0.10 Da.
+            // 76707996 fragments to be searched in 1 slices (1.14 GB total)
+            // Operating on slice 1 of 1:
+            //         Fragment index slice generated in 1.38 s
+            //         001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzBIN_calibrated 0.1 s
+            //                 [progress: 9380/9380 (100%) - 15178 spectra/s] 0.6s | postprocessing 1.5 s
+            // ***************************MAIN SEARCH DONE IN 0.085 MIN***************************
+            //
+            // *******************************TOTAL TIME 0.761 MIN********************************
+
+            // ----------------------------------------------------
+            // Output when multiple datasets:
+            // ----------------------------------------------------
+            // Operating on slice 1 of 1:
+            //         Fragment index slice generated in 1.69 s
+            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 1.1 s | deisotoping 0.7 s
+            //                 [progress: 8271/8271 (100%) - 23631 spectra/s] 0.4s | postprocessing 0.0 s
+            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzML 1.2 s | deisotoping 0.3 s
+            //                 [progress: 20186/20186 (100%) - 19317 spectra/s] 1.0s | postprocessing 0.1 s
+            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzML 1.2 s | deisotoping 0.1 s
+            //                 [progress: 18994/18994 (100%) - 20336 spectra/s] 0.9s | postprocessing 0.1 s
+
+            // ----------------------------------------------------
+            // Output when multiple slices (and multiple datasets)
+            // ----------------------------------------------------
+            // Selected fragment index width 0.02 Da.
+            // 649333606 fragments to be searched in 2 slices (9.68 GB total)
+            // Operating on slice 1 of 2:
+            //         Fragment index slice generated in 7.69 s
+            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 0.6 s | deisotoping 0.0 s
+            //                 [progress: 8271/8271 (100%) - 38115 spectra/s] 0.2s
+            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
+            //                 [progress: 19979/19979 (100%) - 13518 spectra/s] 1.5s
+            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
+            //                 [progress: 18812/18812 (100%) - 13563 spectra/s] 1.4s
+            // Operating on slice 2 of 2:
+            //         Fragment index slice generated in 9.02 s
+            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 0.6 s | deisotoping 0.0 s
+            //                 [progress: 8271/8271 (100%) - 37767 spectra/s] 0.2s | postprocessing 1.0 s
+            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
+            //                 [progress: 19979/19979 (100%) - 30690 spectra/s] 0.7s | postprocessing 2.4 s
+            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzBIN_calibrated 0.2 s
+            //                 [progress: 18812/18812 (100%) - 29348 spectra/s] 0.6s | postprocessing 1.7 s
+
+            // ReSharper restore CommentTypo
+
+            const int FIRST_SEARCH_START = 2;
+            const int FIRST_SEARCH_DONE = 44;
+
+            const int MAIN_SEARCH_START = 50;
+            const int MAIN_SEARCH_DONE = (int)ProgressPercentValues.MSFraggerComplete;
+
+            var processingSteps = new SortedList<Regex, int>
             {
-                {"JVM started", 0},
-                {"Sequence database filtered and tagged", 2},
-                {"Digestion completed", 5},
-                {"Sorting digested sequences", 6},
-                {"Removing duplicates and compacting", 8},
-                {"Generating modified peptides", 10},
-                {"Peptide index written", 11},
-                {"Operating on slice", 12},
-                {"Done", 98}
+                { GetRegEx("^JVM started"), 1},
+                { GetRegEx(@"^\*+FIRST SEARCH\*+"), FIRST_SEARCH_START},
+                { GetRegEx(@"^\*+FIRST SEARCH DONE"), FIRST_SEARCH_DONE},
+                { GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+"), FIRST_SEARCH_DONE + 1},
+                { GetRegEx(@"^\*+MAIN SEARCH\*+"), MAIN_SEARCH_START},
+                { GetRegEx(@"^\*+MAIN SEARCH DONE"), MAIN_SEARCH_DONE}
             };
+
+            var slabProgressRanges = new Dictionary<int, int>
+            {
+                {FIRST_SEARCH_START, FIRST_SEARCH_DONE},  // First Search Progress Range
+                {MAIN_SEARCH_START, MAIN_SEARCH_DONE}     // Main Search Progress Range
+            };
+
+            // Use a linked list to keep track of the progress values
+            // This makes lookup of the next progress value easier
+            var progressValues = new LinkedList<int>();
+            foreach (var item in (from progressValue in processingSteps.Values orderby progressValue select progressValue))
+            {
+                progressValues.AddLast(item);
+            }
+            progressValues.AddLast(100);
+
+            // RegEx to match lines like:
+            //  001. Sample_Bane_06May21_20-11-16.mzML 1.0 s | deisotoping 0.6 s
+            var datasetMatcher = new Regex(@"^ +(?<DatasetNumber>\d+)\. .+ deisotoping ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // RegEx to match lines like:
             // Operating on slice 1 of 2: 4463ms
-            var sliceMatcher = new Regex(@"Operating on slice (?<Current>\d+) of (?<Total>\d+)",
-                                         RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var sliceMatcher = new Regex(@"Operating on slice (?<Current>\d+) of (?<Total>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            // Regex to match lines like:
+            // RegEx to match lines like:
             // DatasetName.mzML 7042ms [progress: 29940/50420 (59.38%) - 5945.19 spectra/s]
-            var progressMatcher = new Regex(@"progress: \d+/\d+ \((?<PercentComplete>[0-9.]+)%\)",
-                                            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var progressMatcher = new Regex(@"progress: \d+/\d+ \((?<PercentComplete>[0-9.]+)%\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -241,9 +410,11 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
                 var currentProgress = 0;
-                float subtaskProgress = 0;
                 var currentSlice = 0;
                 var totalSlices = 0;
+
+                var currentDatasetId = 0;
+                float datasetProgress = 0;
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
@@ -256,12 +427,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
-                    if (linesRead <= 5)
+                    if (linesRead < 5)
                     {
                         // The first line has the path to the MSFragger .jar file and the command line arguments
                         // The second line is dashes
-                        // The third line should be: Running MSFragger
-                        // The fourth line should have the version
+                        // The third line should have the MSFragger version
 
                         if (string.IsNullOrEmpty(mMSFraggerVersion) &&
                             dataLine.StartsWith("MSFragger version", StringComparison.OrdinalIgnoreCase))
@@ -274,91 +444,118 @@ namespace AnalysisManagerMSFraggerPlugIn
                             mMSFraggerVersion = string.Copy(dataLine);
                         }
 
-                        if (dataLine.StartsWith(MSFTBX, StringComparison.OrdinalIgnoreCase) &&
-                            mMSFraggerVersion.IndexOf(MSFTBX, StringComparison.OrdinalIgnoreCase) < 0)
+                        if (dataLine.StartsWith(BATMASS_IO_VERSION, StringComparison.OrdinalIgnoreCase) &&
+                            mMSFraggerVersion.IndexOf(BATMASS_IO_VERSION, StringComparison.OrdinalIgnoreCase) < 0)
                         {
                             mMSFraggerVersion = mMSFraggerVersion + "; " + dataLine;
                         }
+
+                        continue;
+                    }
+
+                    foreach (var processingStep in processingSteps)
+                    {
+                        if (!processingStep.Key.IsMatch(dataLine))
+                            continue;
+
+                        currentProgress = processingStep.Value;
+                    }
+
+                    // Check whether the line starts with the text error
+                    // Future: possibly adjust this check
+
+                    if (currentProgress > 1 &&
+                        dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
+                        string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                    {
+                        mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
+                    }
+
+                    var sliceMatch = sliceMatcher.Match(dataLine);
+                    if (sliceMatch.Success)
+                    {
+                        currentSlice = int.Parse(sliceMatch.Groups["Current"].Value);
+                        totalSlices = int.Parse(sliceMatch.Groups["Total"].Value);
+                    }
+                    else if (currentSlice > 0)
+                    {
+                        var datasetMatch = datasetMatcher.Match(dataLine);
+
+                        if (datasetMatch.Success)
+                        {
+                            currentDatasetId = int.Parse(datasetMatch.Groups["DatasetNumber"].Value);
+                        }
+
+                        var progressMatch = progressMatcher.Match(dataLine);
+                        if (progressMatch.Success)
+                        {
+                            datasetProgress = float.Parse(progressMatch.Groups["PercentComplete"].Value);
+                        }
+                    }
+                }
+
+                float effectiveProgressOverall;
+
+                var processSlab = slabProgressRanges.Any(item => currentProgress >= item.Key && currentProgress < item.Value);
+
+                if (processSlab)
+                {
+                    float currentProgressOnSlice;
+                    float nextProgressOnSlice;
+
+                    if (currentDatasetId == 0 || mDatasetCount == 0)
+                    {
+                        currentProgressOnSlice = 0;
+                        nextProgressOnSlice = 100;
                     }
                     else
                     {
-                        foreach (var processingStep in processingSteps)
-                        {
-                            if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
-                                continue;
-
-                            currentProgress = processingStep.Value;
-                        }
-
-                        if (linesRead > 12 &&
-                            dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0 &&
-                            string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                        {
-                            mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
-                        }
-
-                        var sliceMatch = sliceMatcher.Match(dataLine);
-                        if (sliceMatch.Success)
-                        {
-                            if (int.TryParse(sliceMatch.Groups["Current"].Value, out var itemValue))
-                                currentSlice = itemValue;
-
-                            if (int.TryParse(sliceMatch.Groups["Total"].Value, out var totalValue))
-                                totalSlices = totalValue;
-                        } else if (currentSlice > 0)
-                        {
-                            var progressMatch = progressMatcher.Match(dataLine);
-                            if (progressMatch.Success)
-                            {
-                                if (float.TryParse(progressMatch.Groups["PercentComplete"].Value, out var progressValue))
-                                {
-                                    subtaskProgress = progressValue;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                float effectiveProgress;
-                if (currentSlice > 0 && totalSlices > 0)
-                {
-                    var nextProgress = 100;
-
-                    // Find the % progress value for step following the current step
-                    foreach (var item in processingSteps)
-                    {
-                        if (item.Value > currentProgress && item.Value < nextProgress)
-                            nextProgress = item.Value;
+                        currentProgressOnSlice = (currentDatasetId - 1) * (100f / mDatasetCount);
+                        nextProgressOnSlice = currentDatasetId * (100f / mDatasetCount);
                     }
 
-                    // First compute the effective progress for the start of this slice
-                    var sliceProgress = ComputeIncrementalProgress(currentProgress, nextProgress,
-                                                                   currentSlice - 1, totalSlices);
+                    // First compute the effective progress for this slice
+                    var sliceProgress = ComputeIncrementalProgress(currentProgressOnSlice, nextProgressOnSlice, datasetProgress);
 
-                    // Now bump up the effective progress based on subtaskProgress
-                    var addonProgress = (nextProgress - currentProgress) / (float)totalSlices * subtaskProgress / 100;
-                    effectiveProgress = sliceProgress + addonProgress;
+                    // Next compute the progress processing all of the slices (which as a group can be considered a "slab")
+                    var currentProgressOnSlab = (currentSlice - 1) * (100f / totalSlices);
+                    var nextProgressOnSlab = currentSlice * (100f / totalSlices);
+
+                    var slabProgress = ComputeIncrementalProgress(currentProgressOnSlab, nextProgressOnSlab, sliceProgress);
+
+                    // Now compute the effective overall progress
+
+                    var nextProgress = GetNextProgressValue(progressValues, currentProgress);
+
+                    effectiveProgressOverall = ComputeIncrementalProgress(currentProgress, nextProgress, slabProgress);
                 }
                 else
                 {
-                    effectiveProgress = currentProgress;
+                    effectiveProgressOverall = currentProgress;
                 }
 
-                mProgress = effectiveProgress;
+                mProgress = effectiveProgressOverall;
             }
             catch (Exception ex)
             {
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing the MSFragger console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
         private CloseOutType StartMSFragger()
         {
-            LogMessage("Running MSFragger");
+            LogMessage("Preparing to run MSFragger");
+
+            // If this job applies to a single dataset, dataPackageID will be 0
+            // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+            var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+            RegisterEvents(dataPackageInfo);
 
             // Customize the path to the FASTA file and the number of threads to use
             var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath);
@@ -381,45 +578,53 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
-            if (javaMemorySizeMB < 2000)
-                javaMemorySizeMB = 2000;
-
-            // Set up and execute a program runner to run MSFragger
-
-            var mzMLFile = mDatasetName + AnalysisResources.DOT_MZML_EXTENSION;
-
-            // Set up and execute a program runner to run MSFragger
-            var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + mMSFraggerProgLoc;
-
-            arguments += " " + paramFilePath;
-            arguments += " " + Path.Combine(mWorkDir, mzMLFile);
-
-            LogDebug(javaProgLoc + " " + arguments);
-
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(mWorkDir, MSFragger_CONSOLE_OUTPUT)
+                ConsoleOutputFilePath = Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT)
             };
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgress = PROGRESS_PCT_STARTING;
+            mProgress = (int)ProgressPercentValues.Initializing;
             ResetProgRunnerCpuUsage();
+
+            var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
+            if (javaMemorySizeMB < 2000)
+                javaMemorySizeMB = 2000;
+
+            LogMessage("Running MSFragger");
+            mProgress = (int)ProgressPercentValues.StartingMSFragger;
+
+            // Set up and execute a program runner to run MSFragger
+            var arguments = new StringBuilder();
+
+            arguments.AppendFormat(" -Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);
+
+            arguments.AppendFormat(" {0}", paramFilePath);
+
+            // Append the .mzML files
+            foreach (var item in dataPackageInfo.DatasetFiles)
+            {
+                arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
+            }
+
+            mDatasetCount = dataPackageInfo.DatasetFiles.Count;
+
+            LogDebug(javaProgLoc + " " + arguments);
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments, "MSFragger", true);
+            var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
 
             if (!mToolVersionWritten)
             {
                 if (string.IsNullOrWhiteSpace(mMSFraggerVersion))
                 {
-                    ParseConsoleOutputFile(Path.Combine(mWorkDir, MSFragger_CONSOLE_OUTPUT));
+                    ParseMSFraggerConsoleOutputFile(Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT));
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -445,37 +650,48 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Validate that MSFragger created a .pepXML file
-            var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, Dataset + ".pepXML"));
-            if (!pepXmlFile.Exists)
-            {
-                LogError("MSFragger did not create a .pepXML file");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            var successCount = 0;
 
-            if (pepXmlFile.Length == 0)
+            // Validate that MSFragger created a .pepXML file and a .tsv file for each dataset
+            // Zip each .pepXML file
+            foreach (var item in dataPackageInfo.Datasets)
             {
-                LogError("pepXML file created by MSFragger is empty");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+                var datasetName = item.Value;
 
-            // Zip the .pepXML file
-            var zipSuccess = ZipOutputFile(pepXmlFile, ".pepXML file");
-            if (!zipSuccess)
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+                var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
+                var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
 
-            // Rename the zipped file
-            var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
-            if (!zipFile.Exists)
-            {
-                LogError("Zipped pepXML file not found");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+                string optionalDatasetInfo;
+                if (dataPackageInfo.Datasets.Count > 0)
+                {
+                    optionalDatasetInfo = "for dataset " + datasetName;
+                }
+                else
+                {
+                    optionalDatasetInfo = string.Empty;
+                }
 
-            var newZipFilePath = Path.Combine(mWorkDir, Dataset + "_pepXML.zip");
-            zipFile.MoveTo(newZipFilePath);
+                if (!pepXmlFile.Exists)
+                {
+                    LogError(string.Format("MSFragger did not create a .pepXML file{0}", optionalDatasetInfo));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!tsvFile.Exists)
+                {
+                    LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
+                }
+
+                if (pepXmlFile.Length == 0)
+                {
+                    LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
+                }
+
+                var zipSuccess = ZipPepXmlFile(datasetName, pepXmlFile);
+
+                if (zipSuccess)
+                    successCount++;
+            }
 
             mStatusTools.UpdateAndWrite(mProgress);
             if (mDebugLevel >= 3)
@@ -483,9 +699,75 @@ namespace AnalysisManagerMSFraggerPlugIn
                 LogDebug("MSFragger Search Complete");
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
+        private bool ZipPepXmlFile(string datasetName, FileInfo pepXmlFile)
+        {
+            return ZipPepXmlFile(this, datasetName, pepXmlFile);
+        }
+
+        public static bool ZipPepXmlFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
+        {
+
+            var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
+            if (!zipSuccess)
+            {
+                return false;
+            }
+
+            // Rename the zipped file
+            var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
+            if (!zipFile.Exists)
+            {
+                toolRunner.LogError("Zipped pepXML file not found; cannot rename");
+                return false;
+            }
+
+            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, datasetName + "_pepXML.zip");
+            var existingTargetFile = new FileInfo(newZipFilePath);
+            if (existingTargetFile.Exists)
+            {
+                toolRunner.LogMessage(string.Format("Replacing {0} with updated version", existingTargetFile.Name));
+                existingTargetFile.Delete();
+            }
+
+            zipFile.MoveTo(newZipFilePath);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        private bool StoreToolVersionInfo()
+        {
+            if (mDebugLevel >= 2)
+            {
+                LogDebug("Determining tool version info");
+            }
+
+            // Store paths to key files in toolFiles
+            var toolFiles = new List<FileInfo> {
+                new(mMSFraggerProgLoc)
+            };
+
+            try
+            {
+                return SetStepTaskToolVersion(mMSFraggerVersion, toolFiles);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Update the fasta file name defined in the MSFragger parameter file
+        /// In addition, check whether any reporter ions are defined as static or dynamic mods
+        /// </summary>
+        /// <param name="paramFilePath"></param>
         private CloseOutType UpdateMSFraggerParameterFile(out string paramFilePath)
         {
             paramFilePath = string.Empty;
@@ -551,36 +833,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception updating the MSFragger parameter file", ex);
+                LogError("Error updating the MSFragger parameter file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
-            }
-        }
-
-        /// <summary>
-        /// Stores the tool version info in the database
-        /// </summary>
-        private bool StoreToolVersionInfo()
-        {
-            if (mDebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            var toolVersionInfo = string.Copy(mMSFraggerVersion);
-
-            // Store paths to key files in toolFiles
-            var toolFiles = new List<FileInfo> {
-                new FileInfo(mMSFraggerProgLoc)
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
             }
         }
 
@@ -602,12 +856,12 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(proteinOptions))
+            if (!string.IsNullOrEmpty(proteinOptions) && proteinOptions.IndexOf("seq_direction=forward", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    // fastaFileIsDecoy = true;
-                }
+                // The FASTA file does not have decoy sequences
+                // MSFragger will be unable to optimize parameters and Peptide Prophet will likely fail
+
+                LogWarning("Protein options for this analysis job contain seq_direction=forward; decoy proteins will not be used (which could lead to errors)");
             }
 
             // Copy the FASTA file to the working directory
@@ -620,13 +874,39 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             mJobParams.AddResultFileToSkip(fastaFile.Name);
             mJobParams.AddResultFileExtensionToSkip("pepindex");
+            mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;
         }
 
-        #endregion
+        private bool ZipPepXmlFiles(DataPackageInfo dataPackageInfo)
+        {
+            try
+            {
+                // Zip each .pepXML file
+                var successCount = 0;
 
-        #region "Event Handlers"
+                foreach (var dataset in dataPackageInfo.Datasets)
+                {
+                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, dataset.Value + PEPXML_EXTENSION));
+
+                    var zipSuccess = ZipPepXmlFile(dataset.Value, pepXmlFile);
+                    if (!zipSuccess)
+                    {
+                        continue;
+                    }
+
+                    successCount++;
+                }
+
+                return successCount == dataPackageInfo.Datasets.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipPepXmlFiles", ex);
+                return false;
+            }
+        }
 
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
@@ -642,7 +922,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(Path.Combine(mWorkDir, MSFragger_CONSOLE_OUTPUT));
+            ParseMSFraggerConsoleOutputFile(Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT));
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSFraggerVersion))
             {
@@ -653,7 +933,5 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             LogProgress("MSFragger");
         }
-
-        #endregion
     }
 }
