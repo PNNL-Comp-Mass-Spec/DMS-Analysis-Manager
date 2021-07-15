@@ -1361,8 +1361,8 @@ namespace AnalysisManagerMaxQuantPlugIn
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     // Check whether datasets in this data package have non-zero values for MaxQuant Parameter Group
-                    //
-                    // If found, determine the group indices to use (auto adjusting from group 1 and group 2 to groupIndex 0 and groupIndex 1 if necessary)
+
+                    // If any are found, determine the group indices to use (auto adjusting from group 1 and group 2 to groupIndex 0 and groupIndex 1 if necessary)
                     // We will use this information to duplicate the first <parameterGroup></parameterGroup> section from the master parameter file to add the necessary number of <parameterGroup> sections (if the file already has the extras, use them)
                     // The groupIndex values are used when adding datasets
                     // See: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-

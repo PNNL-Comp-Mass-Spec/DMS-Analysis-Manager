@@ -143,7 +143,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
         /// <summary>
         /// File path to which the console output will be written if WriteConsoleOutputToFile is true
-        /// If blank, file path will be auto-defined in the WorkDir  when program execution starts
+        /// If blank, file path will be auto-defined in the WorkDir when program execution starts
         /// </summary>
         public string ConsoleOutputFilePath { get; set; } = string.Empty;
 
