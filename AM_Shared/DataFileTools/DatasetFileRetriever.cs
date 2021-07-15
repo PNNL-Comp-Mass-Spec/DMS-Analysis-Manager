@@ -154,6 +154,8 @@ namespace AnalysisManagerBase.DataFileTools
 
                     dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+
+                    dataPackageInfo.DatasetExperimentGroup.Add(datasetID, dataset.Value.DatasetExperimentGroup);
                     dataPackageInfo.DatasetMaxQuantParamGroup.Add(datasetID, dataset.Value.MaxQuantParamGroup);
 
                     mResourceClass.AddResultFileToSkip(datasetFileName);

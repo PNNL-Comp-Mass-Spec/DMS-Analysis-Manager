@@ -91,6 +91,15 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         public string DataPackageComment { get; set; }
 
+
+        /// <summary>
+        /// Dataset experiment group name (used by MSFragger); empty string if not defined
+        /// </summary>
+        /// <remarks>
+        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report
+        /// </remarks>
+        public string DatasetExperimentGroup { get; set; }
+
         /// <summary>
         /// MaxQuant parameter group index or number (or 0 if undefined)
         /// </summary>
@@ -135,6 +144,7 @@ namespace AnalysisManagerBase.JobConfig
             DatasetArchivePath = string.Empty;
 
             DataPackageComment = string.Empty;
+            DatasetExperimentGroup = string.Empty;
             MaxQuantParamGroup = 0;
 
             RawDataType = string.Empty;

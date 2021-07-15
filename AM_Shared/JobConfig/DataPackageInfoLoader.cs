@@ -335,12 +335,19 @@ namespace AnalysisManagerBase.JobConfig
 
             var packageComment = curRow["PackageComment"].CastDBVal<string>();
 
+            // Examine the comment to look for "MSFragger Group GroupName"  (case insensitive)
+            var experimentGroupMatcher = new Regex(@"(MSFragger|MSFrag|FragPipe|MaxQuant)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            var match1 = experimentGroupMatcher.Match(packageComment);
+
+            var datasetExperimentGroup = match1.Success ? match1.Groups["GroupName"].Value : string.Empty;
+
             // Examine the comment to look for "MaxQuant Group 0"  (case insensitive)
-            var groupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ ]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var maxQuantGroupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ ]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var match = groupMatcher.Match(packageComment);
+            var match2 = maxQuantGroupMatcher.Match(packageComment);
 
-            var paramGroupIndexOrNumber = match.Success ? int.Parse(match.Groups["GroupIndex"].Value) : 0;
+            var paramGroupIndexOrNumber = match2.Success ? int.Parse(match2.Groups["GroupIndex"].Value) : 0;
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
@@ -358,6 +365,7 @@ namespace AnalysisManagerBase.JobConfig
                 DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
                 RawDataType = curRow["RawDataType"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
+                DatasetExperimentGroup = datasetExperimentGroup,
                 MaxQuantParamGroup = paramGroupIndexOrNumber
             };
         }
