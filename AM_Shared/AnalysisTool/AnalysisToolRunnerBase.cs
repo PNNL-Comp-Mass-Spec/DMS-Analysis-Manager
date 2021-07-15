@@ -1487,27 +1487,35 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Determine the path to the correct version of the step tool
         /// </summary>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="programNameOrRelativePath">
+        /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
+        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe
+        /// </para>
+        /// </param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
-        protected string DetermineProgramLocation(string progLocManagerParamName, string exeName)
+        protected string DetermineProgramLocation(string progLocManagerParamName, string programNameOrRelativePath)
         {
-            return DetermineProgramLocation(progLocManagerParamName, exeName, out _);
+            return DetermineProgramLocation(progLocManagerParamName, programNameOrRelativePath, out _);
         }
 
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="programNameOrRelativePath">
+        /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
+        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe
+        /// </para>
+        /// </param>
         /// <param name="specificStepToolVersion">Output: value of job parameter StepToolName_Version if defined, otherwise an empty string</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
-        protected string DetermineProgramLocation(string progLocManagerParamName, string exeName, out string specificStepToolVersion)
+        protected string DetermineProgramLocation(string progLocManagerParamName, string programNameOrRelativePath, out string specificStepToolVersion)
         {
             var progLoc = DetermineProgramLocation(
                 mMgrParams, mJobParams, StepToolName,
-                progLocManagerParamName, exeName,
+                progLocManagerParamName, programNameOrRelativePath,
                 out var errorMessage,
                 out specificStepToolVersion);
 
@@ -1527,13 +1535,17 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="jobParams">Job parameters</param>
         /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="programNameOrRelativePath">
+        /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
+        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe
+        /// </para>
+        /// </param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="specificStepToolVersion">Output: value of job parameter StepToolName_Version if defined, otherwise an empty string</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         public static string DetermineProgramLocation(
             IMgrParams mgrParams, IJobParams jobParams,
-            string stepToolName, string progLocManagerParamName, string exeName,
+            string stepToolName, string progLocManagerParamName, string programNameOrRelativePath,
             out string errorMessage,
             out string specificStepToolVersion)
         {
@@ -1545,7 +1557,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             specificStepToolVersion = jobParams.GetParam(stepToolName + "_Version");
 
-            return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName, specificStepToolVersion, mgrParams, out errorMessage);
+            return DetermineProgramLocation(stepToolName, progLocManagerParamName, programNameOrRelativePath, specificStepToolVersion, mgrParams, out errorMessage);
         }
 
         /// <summary>
@@ -1553,15 +1565,19 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe; for MaxQuant this is bin\MaxQuantCmd.exe</param>
-        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subdirectory located below the primary ProgLoc location)</param>
+        /// <param name="programNameOrRelativePath">
+        /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
+        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe
+        /// </para>
+        /// </param>
+        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subdirectory located below the default program directory)</param>
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         public static string DetermineProgramLocation(
             string stepToolName,
             string progLocManagerParamName,
-            string exeName,
+            string programNameOrRelativePath,
             string stepToolVersion,
             IMgrParams mgrParams,
             out string errorMessage)
