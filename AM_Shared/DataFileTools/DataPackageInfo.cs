@@ -49,6 +49,15 @@ namespace AnalysisManagerBase.DataFileTools
         /// </remarks>
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS = "PackedParam_DatasetMaxQuantParamGroups";
 
+        /// <summary>
+        /// Packed parameter PackedParam_DatasetExperimentGroups
+        /// </summary>
+        /// <remarks>
+        /// Tracks the Experiment Group names for datasets (used by MSFragger)
+        /// Keys are dataset IDs
+        /// Values are group names, or an empty string if no group
+        /// </remarks>
+        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_EXPERIMENT_GROUPS = "PackedParam_DatasetExperimentGroups";
 
         /// <summary>
         /// Packed parameter DataPackageExperiments
@@ -95,8 +104,32 @@ namespace AnalysisManagerBase.DataFileTools
         /// Keys are dataset IDs
         /// Values are the MaxQuant parameter group index or number read from the Package Comment field for the dataset
         /// </summary>
-        /// <remarks>Will be 0 if the Package Comment field does not have a MaxQuant Group defined</remarks>
+        /// <remarks>
+        /// <para>
+        /// Value is 0 if the Package Comment field does not have a MaxQuant Group defined
+        /// </para>
+        /// <para>
+        /// Group Index is defined with "MaxQuant Group 0" or "MaxQuant Group 1" in the Package Comment field
+        /// </para>
+        /// </remarks>
         public Dictionary<int, int> DatasetMaxQuantParamGroup { get; }
+
+        /// <summary>
+        /// Keys are dataset IDs
+        /// Values are the MSFragger Experiment Group from the Package Comment field for the dataset
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Value is an empty string if the Package Comment field does not have an Experiment Group defined
+        /// </para>
+        /// <para>
+        /// Experiment group is defined with "FragPipe Group QC_Shew_20_01" or "MSFragger Group QC_Shew_20_01" in the Package Comment field
+        /// </para>
+        /// <para>
+        /// Experiment group names can have letters, numbers, or underscores
+        /// </para>
+        /// </remarks>
+        public Dictionary<int, string> DatasetExperimentGroup { get; }
 
         /// <summary>
         /// Constructor
@@ -111,6 +144,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles = new Dictionary<int, string>();
             DatasetFileTypes = new Dictionary<int, string>();
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
+            DatasetExperimentGroup = new Dictionary<int, string>();
         }
 
         /// <summary>
@@ -128,10 +162,16 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             DatasetFileTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
+            DatasetExperimentGroup = new Dictionary<int, string>();
 
             foreach (var item in toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS))
             {
                 DatasetMaxQuantParamGroup.Add(item.Key, int.TryParse(item.Value, out var paramGroupIndex) ? paramGroupIndex : 0);
+            }
+
+            foreach (var item in toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_EXPERIMENT_GROUPS))
+            {
+                DatasetExperimentGroup.Add(item.Key, item.Value);
             }
 
             // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
@@ -141,6 +181,7 @@ namespace AnalysisManagerBase.DataFileTools
                 AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId);
                 AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId);
                 AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId);
+                AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId);
             }
         }
 
@@ -172,6 +213,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles.Clear();
             DatasetFileTypes.Clear();
             DatasetMaxQuantParamGroup.Clear();
+            DatasetExperimentGroup.Clear();
         }
 
         /// <summary>
@@ -185,6 +227,7 @@ namespace AnalysisManagerBase.DataFileTools
             analysisResources.StorePackedJobParameterDictionary(DatasetFiles, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             analysisResources.StorePackedJobParameterDictionary(DatasetFileTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS);
+            analysisResources.StorePackedJobParameterDictionary(DatasetExperimentGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_EXPERIMENT_GROUPS);
         }
     }
 }
