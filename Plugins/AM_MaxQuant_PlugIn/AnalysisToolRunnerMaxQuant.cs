@@ -1687,15 +1687,12 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(proteinOptions))
+            if (!string.IsNullOrEmpty(proteinOptions) && proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    // The FASTA file has decoy sequences
-                    LogError("Protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy " +
-                             "(since MaxQuant will auto-add decoy sequences)");
-                    return false;
-                }
+                // The FASTA file has decoy sequences
+                LogError("Protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy " +
+                         "(since MaxQuant will auto-add decoy sequences)");
+                return false;
             }
 
             mLocalFASTAFilePath = fastaFile.FullName;
