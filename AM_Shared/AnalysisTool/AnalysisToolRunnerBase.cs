@@ -1585,9 +1585,9 @@ namespace AnalysisManagerBase.AnalysisTool
             errorMessage = string.Empty;
 
             // Lookup the path to the directory that contains the Step tool
-            var progLoc = mgrParams.GetParam(progLocManagerParamName);
+            var defaultProgramDirectory = mgrParams.GetParam(progLocManagerParamName);
 
-            if (string.IsNullOrWhiteSpace(progLoc))
+            if (string.IsNullOrWhiteSpace(defaultProgramDirectory))
             {
                 errorMessage = "Manager parameter " + progLocManagerParamName + " is not defined in the Manager Control DB";
                 LogTools.LogError(errorMessage);
@@ -1596,32 +1596,43 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Check whether the settings file specifies that a specific version of the step tool be used
 
+            string programDirectoryPath;
+            string programName;
+
             if (!string.IsNullOrWhiteSpace(stepToolVersion))
             {
-                // Specific version is defined; verify that the directory exists
-                progLoc = Path.Combine(progLoc, stepToolVersion);
+                // Specific version is defined; verify that the directory exists (as a subdirectory below the default program directory)
+                programDirectoryPath = Path.Combine(defaultProgramDirectory, stepToolVersion);
 
-                if (!Directory.Exists(progLoc))
+                if (!Directory.Exists(programDirectoryPath))
                 {
                     errorMessage = "Version-specific directory not found for " + stepToolName;
-                    LogTools.LogError(errorMessage + ": " + progLoc);
+                    LogTools.LogError(errorMessage + ": " + programDirectoryPath);
                     return string.Empty;
                 }
 
-                LogTools.LogMessage("Using specific version of " + stepToolName + ": " + progLoc);
+                LogTools.LogMessage("Using specific version of " + stepToolName + ": " + programDirectoryPath);
+
+                // When using a specific version, remove any relative path information in programNameOrRelativePath
+                programName = Path.GetFileName(programNameOrRelativePath);
+            }
+            else
+            {
+                programDirectoryPath = defaultProgramDirectory;
+                programName = programNameOrRelativePath;
             }
 
-            // Define the path to the .Exe, then verify that it exists
-            progLoc = Path.Combine(progLoc, exeName);
+            // Define the path to the .Exe or .jar file, then verify that it exists
+            var programPath = Path.Combine(programDirectoryPath, programName);
 
-            if (!File.Exists(progLoc))
+            if (!File.Exists(programPath))
             {
-                errorMessage = "Cannot find " + stepToolName + " program file " + exeName;
-                LogTools.LogError(errorMessage + " at " + progLoc);
+                errorMessage = "Cannot find " + stepToolName + " program file " + programName;
+                LogTools.LogError(errorMessage + " at " + programDirectoryPath);
                 return string.Empty;
             }
 
-            return progLoc;
+            return programPath;
         }
 
         /// <summary>
