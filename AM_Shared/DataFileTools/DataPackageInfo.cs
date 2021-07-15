@@ -47,7 +47,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// Keys are dataset IDs
         /// Values are an integer (stored as a string)
         /// </remarks>
-        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP = "PackedParam_DatasetMaxQuantParamGroups";
+        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS = "PackedParam_DatasetMaxQuantParamGroups";
+
 
         /// <summary>
         /// Packed parameter DataPackageExperiments
@@ -128,7 +129,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFileTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
 
-            foreach (var item in toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP))
+            foreach (var item in toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS))
             {
                 DatasetMaxQuantParamGroup.Add(item.Key, int.TryParse(item.Value, out var paramGroupIndex) ? paramGroupIndex : 0);
             }
@@ -183,7 +184,7 @@ namespace AnalysisManagerBase.DataFileTools
             analysisResources.StorePackedJobParameterDictionary(Experiments, JOB_PARAM_DICTIONARY_DATA_PACKAGE_EXPERIMENTS);
             analysisResources.StorePackedJobParameterDictionary(DatasetFiles, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             analysisResources.StorePackedJobParameterDictionary(DatasetFileTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
-            analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUP);
+            analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS);
         }
     }
 }
