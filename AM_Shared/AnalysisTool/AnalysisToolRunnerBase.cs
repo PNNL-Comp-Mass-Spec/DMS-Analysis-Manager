@@ -257,6 +257,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         public string StepToolName { get; private set; }
 
+        /// <summary>
+        /// Working directory path
+        /// </summary>
+        public string WorkingDirectory => mWorkDir;
+
         #endregion
 
         #region "Methods"
@@ -2397,7 +2402,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Read a parameter file with Key=Value settings (as used by MS-GF+, MSPathFinder, and TopPIC)
+        /// Read a parameter file with Key=Value settings (as used by MS-GF+, MSFragger, MSPathFinder, and TopPIC)
         /// </summary>
         /// <param name="toolName">Tool name (for logging)</param>
         /// <param name="workingDirectoryPath">Directory with the parameter file</param>
@@ -4263,7 +4268,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="fileDescription"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
-        protected bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
+        public bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
         {
             try
             {

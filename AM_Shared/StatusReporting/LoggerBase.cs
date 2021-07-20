@@ -39,7 +39,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
         /// <remarks>The error is shown in red in the console</remarks>
-        protected virtual void LogError(string errorMessage, bool logToDb = false)
+        public virtual void LogError(string errorMessage, bool logToDb = false)
         {
             ConsoleMsgUtils.ShowErrorCustom(errorMessage, false);
 
@@ -87,7 +87,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// 10 to not log to disk
         /// </param>
         /// <param name="isError">True if this is an error</param>
-        protected void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
+        public void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
             LogTools.LogMessage(statusMessage, isError, writeToLog);

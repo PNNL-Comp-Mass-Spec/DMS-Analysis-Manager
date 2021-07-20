@@ -158,7 +158,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
-        protected override void LogError(string errorMessage, bool logToDb = false)
+        public override void LogError(string errorMessage, bool logToDb = false)
         {
             mMessage = Global.AppendToComment(mMessage, errorMessage);
             base.LogError(errorMessage, logToDb);
