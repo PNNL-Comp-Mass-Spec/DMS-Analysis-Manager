@@ -731,9 +731,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(javaExePath, arguments, "MS-GF+", true);
-
-            return success;
+            return mCmdRunner.RunProgram(javaExePath, arguments, "MS-GF+", true);
         }
 
         private void AddResultFileToSkipIfNoError(string fileName)
