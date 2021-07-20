@@ -58,6 +58,12 @@
       <Version>2.6.28</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AM_MSFragger_Plugin\AnalysisManagerMSFraggerPlugIn.csproj">
+      <Project>{dae7c38e-a9ac-44c2-ac16-f3cea558927d}</Project>
+      <Name>AnalysisManagerMSFraggerPlugIn</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /Y
