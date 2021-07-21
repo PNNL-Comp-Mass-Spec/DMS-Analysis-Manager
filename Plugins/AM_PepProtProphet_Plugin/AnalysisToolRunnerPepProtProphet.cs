@@ -84,17 +84,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             ProcessingComplete = 99
         }
 
-        private enum ReporterIonMode
-        {
-            Disabled = 0,
-            Itraq4 = 1,
-            Itraq8 = 2,
-            Tmt6 = 3,
-            Tmt10 = 4,
-            Tmt11 = 5,
-            Tmt16 = 6
-        }
-
         private bool mToolVersionWritten;
 
         // Populate this with a tool version reported to the console
