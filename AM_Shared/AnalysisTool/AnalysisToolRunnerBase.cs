@@ -317,10 +317,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             mResultsDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
 
-            if (mDebugLevel > 3)
-            {
-                LogDebug("AnalysisToolRunnerBase.Setup()");
-            }
+            LogDebug("AnalysisToolRunnerBase.Setup()", 3);
 
             mDotNetZipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
             RegisterEvents(mDotNetZipTools);
@@ -358,14 +355,11 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var elapsedTime = stopTime.Subtract(startTime);
 
-            if (mDebugLevel >= 2)
-            {
-                LogDebug($"CalcElapsedTime: StartTime = {startTime}; StopTime = {stopTime}");
+            LogDebug($"CalcElapsedTime: StartTime = {startTime}; StopTime = {stopTime}", 2);
 
-                LogDebug($"CalcElapsedTime: {elapsedTime.Hours} Hours, {elapsedTime.Minutes} Minutes, {elapsedTime.Seconds} Seconds");
+            LogDebug($"CalcElapsedTime: {elapsedTime.Hours} Hours, {elapsedTime.Minutes} Minutes, {elapsedTime.Seconds} Seconds", 2);
 
-                LogDebug($"CalcElapsedTime: TotalMinutes = {elapsedTime.TotalMinutes:0.00}");
-            }
+            LogDebug($"CalcElapsedTime: TotalMinutes = {elapsedTime.TotalMinutes:0.00}", 2);
 
             return elapsedTime.Hours.ToString("###0") + ":" + elapsedTime.Minutes.ToString("00") + ":" + elapsedTime.Seconds.ToString("00");
         }
@@ -4210,10 +4204,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     if (File.Exists(zipFilePath))
                     {
-                        if (mDebugLevel >= 3)
-                        {
-                            LogDebug("Deleting target .zip file: " + zipFilePath);
-                        }
+                        LogDebug("Deleting target .zip file: " + zipFilePath, 3);
 
                         File.Delete(zipFilePath);
                     }
@@ -4326,6 +4317,5 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         #endregion
-
     }
 }

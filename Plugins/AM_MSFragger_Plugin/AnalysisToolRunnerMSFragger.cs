@@ -436,11 +436,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                         if (string.IsNullOrEmpty(mMSFraggerVersion) &&
                             dataLine.StartsWith("MSFragger version", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (mDebugLevel >= 2)
-                            {
-                                LogDebug(dataLine);
-                            }
-
+                            LogDebug(dataLine, mDebugLevel);
                             mMSFraggerVersion = string.Copy(dataLine);
                         }
 
@@ -694,10 +690,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
-            if (mDebugLevel >= 3)
-            {
-                LogDebug("MSFragger Search Complete");
-            }
+            LogDebug("MSFragger Search Complete", mDebugLevel);
 
             return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
@@ -709,7 +702,6 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         public static bool ZipPepXmlFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
         {
-
             var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
             if (!zipSuccess)
             {
@@ -742,10 +734,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         private bool StoreToolVersionInfo()
         {
-            if (mDebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
+            LogDebug("Determining tool version info", mDebugLevel);
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
