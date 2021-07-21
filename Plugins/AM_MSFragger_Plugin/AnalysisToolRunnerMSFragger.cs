@@ -35,19 +35,11 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         // ReSharper restore CommentTypo
 
-        // ReSharper disable IdentifierTypo
-
         private const string MSFRAGGER_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
 
         private const string MSFRAGGER_JAR_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.2\MSFragger-3.2.jar";
 
         private const string PEPXML_EXTENSION = ".pepXML";
-
-        private const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
-
-        private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-2.4.0.jar";
-
-        private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
 
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
@@ -166,40 +158,6 @@ namespace AnalysisManagerMSFraggerPlugIn
             mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
-        }
-
-        /// <summary>
-        /// Group the datasets in dataPackageInfo by experiment name
-        /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <remarks>Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__</remarks>
-        /// <returns>Dictionary where keys are experiment name and values are dataset ID</returns>
-        public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperiment(DataPackageInfo dataPackageInfo)
-        {
-            // Keys in this dictionary are Experiment Group name
-            // Values are a list of dataset IDs
-            var dataPackageDatasetsByExperiment = new SortedDictionary<string, SortedSet<int>>();
-
-            foreach (var item in dataPackageInfo.Datasets)
-            {
-                var experimentGroup = dataPackageInfo.DatasetExperimentGroup[item.Key];
-                var experimentGroupToUse = string.IsNullOrWhiteSpace(experimentGroup) ? UNDEFINED_EXPERIMENT_GROUP : experimentGroup;
-
-                if (dataPackageDatasetsByExperiment.TryGetValue(experimentGroupToUse, out var matchedDatasetsForGroup))
-                {
-                    matchedDatasetsForGroup.Add(item.Key);
-                    continue;
-                }
-
-                var datasetsForGroup = new SortedSet<int>
-                {
-                    item.Key
-                };
-
-                dataPackageDatasetsByExperiment.Add(experimentGroupToUse, datasetsForGroup);
-            }
-
-            return dataPackageDatasetsByExperiment;
         }
 
         /// <summary>
