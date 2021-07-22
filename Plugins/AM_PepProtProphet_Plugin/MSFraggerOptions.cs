@@ -41,7 +41,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Whether or not to run Abacus
         /// </summary>
-        /// <remarks>Defaults to true, but is ignored if only analyzing a single dataset</remarks>
+        /// <remarks>Defaults to true, but is ignored if we only have a single experiment group (or no experiment groups)</remarks>
         public bool RunAbacus { get; set; }
 
         /// <summary>

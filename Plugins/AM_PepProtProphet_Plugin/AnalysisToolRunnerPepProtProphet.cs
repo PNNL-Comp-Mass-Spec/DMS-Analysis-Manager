@@ -69,7 +69,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             ResultsFilter = 5,
             FreeQuant = 6,
             LabelQuant = 7,
-            GenerateReport = 8
+            GenerateReport = 8,
+            Abacus = 9
         }
 
         private enum ProgressPercentValues
@@ -274,14 +275,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.RunFreeQuant && !options.RunIonQuant)
                 {
-                    var freeQuantSuccess = RunFreeQuant();
+                    var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories);
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
-                    var labelQuantSuccess = RunLabelQuant(options.ReporterIonMode);
+                    var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
                     if (!labelQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -294,9 +295,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
-                if (datasetCount > 1 && options.RunAbacus)
+                if (experimentGroupWorkingDirectories.Count > 1 && options.RunAbacus)
                 {
-                    var abacusSuccess = RunAbacus();
+                    var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
                     if (!abacusSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -305,7 +306,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.RunIonQuant)
                 {
-                    var ionQuantSuccess = RunIonQuant();
+                    var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
                     if (!ionQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -1266,24 +1267,132 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunAbacus()
+        private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
         {
-            // PhilosopherAbacus [Work dir: C:\FragPipe_Test2\Results]
-            // C:\DMS_Programs\MSFragger\FragPipe\tools\philosopher\philosopher.exe abacus --razor --reprint --tag XXX_ --protein CHI_IXN CHI_DA
+            try
+            {
+                LogDebug("Running Abacus", 2);
 
-            return false;
+                mCmdRunner.WorkDir = mWorkDir;
+
+                // PhilosopherAbacus [Work dir: C:\FragPipe_Test2\Results]
+                var arguments = new StringBuilder();
+
+                arguments.Append("abacus --razor --reprint --tag XXX_");
+
+                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                {
+                    arguments.Append(" --labels");
+                }
+
+                // Append the experiment group working directory names
+
+                arguments.Append(" --protein");
+
+                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                {
+                    arguments.AppendFormat(" {0}", experimentGroupDirectory.Name);
+                }
+
+                return RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "running abacus");
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunAbacus", ex);
+                return false;
+            }
         }
 
-        private bool RunCrystalC(Dictionary<string, List<int>> datasetIDsByExperiment)
+        private bool RunCrystalC(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            MSFraggerOptions options)
         {
-            // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_DA]
-            // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_DA\crystalc-0-CHI_IXN_DA_31_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_DA\CHI_IXN_DA_31_Bane_06May21_20-11-16.pepXML
-            // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_IXN]
-            // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_IXN\crystalc-1-CHI_IXN_DA_30_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_IXN\CHI_IXN_DA_30_Bane_06May21_20-11-16.pepXML
-            // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_IXN]
-            // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_IXN\crystalc-2-CHI_IXN_DA_29_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_IXN\CHI_IXN_DA_29_Bane_06May21_20-11-16.pepXML
+            try
+            {
+                LogDebug("Running Crystal-C", 2);
 
-            return false;
+                var successCount = 0;
+
+                if (!FindFragPipeLibDirectory(out var libDirectory))
+                    return false;
+
+                var arguments = new StringBuilder();
+
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+
+                    var pepXmlFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "interact.pep.xml"));
+
+                    if (!pepXmlFile.Exists)
+                    {
+                        LogError("Peptide prophet results file not found: " + pepXmlFile.FullName);
+                        continue;
+                    }
+
+                    arguments.Clear();
+
+                    // ReSharper disable once StringLiteralTypo
+                    arguments.AppendFormat("-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1}", libDirectory.FullName, pepXmlFile.FullName);
+
+                    // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_DA]
+                    // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_DA\crystalc-0-CHI_IXN_DA_31_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_DA\CHI_IXN_DA_31_Bane_06May21_20-11-16.pepXML
+                    // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_IXN]
+                    // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_IXN\crystalc-1-CHI_IXN_DA_30_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_IXN\CHI_IXN_DA_30_Bane_06May21_20-11-16.pepXML
+                    // Crystal-C [Work dir: C:\FragPipe_Test2\Results\CHI_IXN]
+                    // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\FragPipe_Test2\Results\CHI_IXN\crystalc-2-CHI_IXN_DA_29_Bane_06May21_20-11-16.pepXML.params C:\FragPipe_Test2\Results\CHI_IXN\CHI_IXN_DA_29_Bane_06May21_20-11-16.pepXML
+
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetFile = new FileInfo(Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles[datasetId]));
+                        if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                        {
+                            LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
+                            continue;
+                        }
+
+                        arguments.AppendFormat(" {0}", datasetFile.FullName);
+                    }
+
+                    // ReSharper disable CommentTypo
+
+                    // Example command:
+                    // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\CHI_IXN\interact.pep.xml C:\DMS_WorkDir\CHI_IXN_DA_30_Bane_06May21_20-11-16.mzML C:\FragPipe_Test2\CHI_IXN_DA_29_Bane_06May21_20-11-16.mzML
+
+                    // ReSharper enable CommentTypo
+
+                    mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+
+                    LogDebug(options.JavaProgLoc + " " + arguments);
+
+                    var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                    if (!processingSuccess)
+                    {
+                        if (mCmdRunner.ExitCode != 0)
+                        {
+                            LogWarning("Java returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                        }
+                        else
+                        {
+                            LogWarning("Call to Java failed (but exit code is 0)");
+                        }
+
+                        continue;
+                    }
+
+                    successCount++;
+                }
+
+                return successCount == datasetIDsByExperimentGroup.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunCrystalC", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -1336,20 +1445,29 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectoryPath);
         }
 
-        private bool RunFreeQuant()
+        private bool RunFreeQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             try
             {
                 LogDebug("Running FreeQuant", 2);
 
-                // ReSharper disable once StringLiteralTypo
-                var arguments = @"freequant --ptw 0.4 --tol 10 --isolated --dir C:\DMS_WorkDir";
+                var successCount = 0;
 
-                var directoryPath = mWorkDir;
+                // Run FreeQuant inside each experiment group working directory
 
-                var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "annotate the database", directoryPath);
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                {
+                    // ReSharper disable once StringLiteralTypo
+                    var arguments = string.Format("freequant --ptw 0.4 --tol 10 --isolated --dir {0}", mWorkDir);
 
-                return success;
+                    var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "annotate the database", experimentGroupDirectory.FullName);
+
+                    if (success)
+                        successCount++;
+                }
+
+                return successCount == experimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
@@ -1358,11 +1476,78 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunIonQuant()
+        private bool RunIonQuant(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            MSFraggerOptions options)
         {
             try
             {
                 LogDebug("Running IonQuant", 2);
+
+                var brukerLibPath = @"C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\bruker";
+                var thermoLibPath = @"C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo";
+                var ionQuantJarPath = @"C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.5.5.jar";
+                var batmassJarPath = @"C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar";
+
+                // ToDo: Customize this
+                var threadCount = 8;
+
+                int matchBetweenRunsFlag;
+                if (options.MatchBetweenRuns)
+                    matchBetweenRunsFlag = 1;
+                else
+                    matchBetweenRunsFlag = 0;
+
+                var arguments = new StringBuilder();
+
+                arguments.AppendFormat(
+                    "{0} -Xmx10G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4}\" ionquant.IonQuant",
+                    options.JavaProgLoc, brukerLibPath, thermoLibPath, ionQuantJarPath, batmassJarPath);
+
+                arguments.AppendFormat(" --threads {0} --ionmobility 0 --mbr {1}", threadCount, matchBetweenRunsFlag);
+
+                arguments.Append(" --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10");
+                arguments.Append(" --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1");
+                arguments.Append(" --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1");
+
+                if (experimentGroupWorkingDirectories.Count <= 1)
+                {
+                    arguments.AppendFormat(" --psm psm.tsv --specdir {0}", mWorkDir);
+
+                    foreach (var datasetIDs in datasetIDsByExperimentGroup.Values)
+                    {
+                        foreach (var datasetId in datasetIDs)
+                        {
+                            var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                            arguments.AppendFormat(" {0}.pepXML", datasetName);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                    {
+                        arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
+                    }
+
+                    arguments.AppendFormat(" --multidir . --specdir {0}", mWorkDir);
+
+                    foreach (var item in datasetIDsByExperimentGroup)
+                    {
+                        var experimentGroupName = item.Key;
+                        var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+
+                        foreach (var datasetId in item.Value)
+                        {
+                            var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                            arguments.AppendFormat(@" {0}\{1}.pepXML ", experimentWorkingDirectory.Name, datasetName);
+                        }
+                    }
+                }
 
                 return true;
             }
