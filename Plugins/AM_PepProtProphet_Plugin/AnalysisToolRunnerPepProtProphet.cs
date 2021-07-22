@@ -549,7 +549,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             foreach (var item in dataPackageInfo.Datasets)
             {
-                var experimentGroup = dataPackageInfo.DatasetExperimentGroup[item.Key];
+                var datasetId = item.Key;
+
+                var experimentGroup = dataPackageInfo.DatasetExperimentGroup[datasetId];
+
+                if (string.IsNullOrWhiteSpace(experimentGroup) && dataPackageInfo.Datasets.Count == 1)
+                {
+                    var experimentName = dataPackageInfo.Experiments[datasetId];
+
+                    var singleDatasetGroup = new SortedSet<int>
+                    {
+                        datasetId
+                    };
+
+                    datasetIDsByExperimentGroup.Add(experimentName, singleDatasetGroup);
+                    continue;
+                }
 
                 var experimentGroupToUse = string.IsNullOrWhiteSpace(experimentGroup) ? UNDEFINED_EXPERIMENT_GROUP : experimentGroup;
 
