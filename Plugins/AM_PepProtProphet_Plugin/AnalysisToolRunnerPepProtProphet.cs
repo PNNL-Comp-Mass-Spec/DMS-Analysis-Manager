@@ -862,6 +862,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Move results into subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        /// <param name="experimentGroupWorkingDirectories"></param>
         private bool MoveResultsIntoSubdirectories(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -869,24 +875,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                var dataPackageDatasetsByExperiment = GetDataPackageDatasetsByExperiment(dataPackageInfo);
-
-                var experimentCount = dataPackageDatasetsByExperiment.Count;
-
-                foreach (var item in dataPackageDatasetsByExperiment)
+                if (datasetIDsByExperimentGroup.Count <= 1)
                 {
-                    var experimentName = item.Key;
-                    var experimentWorkingDirectory = experimentWorkingDirectories[experimentName];
+                    // Nothing to do
+                    return true;
+                }
 
-                    var datasetIDs = new List<int>();
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = item.Key;
+                    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                     foreach (var datasetId in item.Value)
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
-                        datasetIDs.Add(datasetId);
-
-                        if (experimentCount <= 1)
-                            continue;
 
                         var sourceFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
 
@@ -894,8 +896,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         sourceFile.MoveTo(targetPath);
                     }
-
-                    datasetIDsByExperiment.Add(experimentName, datasetIDs);
                 }
 
                 return true;
@@ -951,7 +951,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            // Move the pepXML files into the experiment group directories
+            // Since we have multiple experiment groups, move the pepXML files into subdirectories
             var moveSuccess = MoveResultsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
