@@ -812,38 +812,33 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var parameter in paramFileEntries)
                 {
-                    if (parameter.Key.Equals("precursor_mass_lower"))
+                    switch (parameter.Key)
                     {
-                        if (!GetParamValueDouble(parameter, out precursorMassLower))
-                            return false;
+                        case "precursor_mass_lower":
+                            if (!GetParamValueDouble(parameter, out precursorMassLower))
+                                return false;
 
-                        continue;
-                    }
+                            break;
 
-                    if (parameter.Key.Equals("precursor_mass_upper"))
-                    {
-                        if (!GetParamValueDouble(parameter, out precursorMassUpper))
-                            return false;
+                        case "precursor_mass_upper":
+                            if (!GetParamValueDouble(parameter, out precursorMassUpper))
+                                return false;
 
-                        continue;
-                    }
+                            break;
 
-                    if (parameter.Key.Equals("precursor_mass_units"))
-                    {
-                        if (!GetParamValueInt(parameter, out precursorMassUnits))
-                            return false;
+                        case "precursor_mass_units":
+                            if (!GetParamValueInt(parameter, out precursorMassUnits))
+                                return false;
 
-                        continue;
+                            break;
                     }
                 }
-
 
                 if (precursorMassUnits > 0 && precursorMassLower < -25 && precursorMassUpper > 50)
                 {
                     // Wide, Dalton-based tolerances
                     // Assume open search
                     options.OpenSearch = true;
-
                 }
                 else
                 {
