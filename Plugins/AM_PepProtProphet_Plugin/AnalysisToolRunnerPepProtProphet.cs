@@ -584,53 +584,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return datasetIDsByExperimentGroup;
         }
 
-        private bool FindFragPipeLibDirectory(out DirectoryInfo libDirectory)
-        {
-            // ReSharper disable CommentTypo
-
-            // mPhilosopherProgLoc has the path to philosopher.exe, for example
-            // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe
-
-            // Construct the path to the fragpipe lib directory, which should be at
-            // C:\DMS_Programs\MSFragger\fragpipe\lib
-
-            // ReSharper restore CommentTypo
-
-            var philosopherProgram = new FileInfo(mPhilosopherProgLoc);
-
-            if (philosopherProgram.Directory == null)
-            {
-                LogError("Unable to determine the parent directory of " + mPhilosopherProgLoc);
-                libDirectory = null;
-                return false;
-            }
-
-            var toolsDirectory = philosopherProgram.Directory.Parent;
-            if (toolsDirectory == null)
-            {
-                LogError("Unable to determine the parent directory of " + philosopherProgram.Directory.FullName);
-                libDirectory = null;
-                return false;
-            }
-
-            var fragPipeDirectory = toolsDirectory.Parent;
-            if (fragPipeDirectory == null)
-            {
-                LogError("Unable to determine the parent directory of " + toolsDirectory.FullName);
-                libDirectory = null;
-                return false;
-            }
-
-            libDirectory = new DirectoryInfo(Path.Combine(fragPipeDirectory.FullName, "lib"));
-            if (libDirectory.Exists)
-            {
-                return true;
-            }
-
-            LogError("FragPipe lib directory not found: " + libDirectory.FullName);
-            return false;
-        }
-
         private bool GetParamValueDouble(KeyValuePair<string, string> parameter, out double value)
         {
             if (double.TryParse(parameter.Value, out value))
@@ -1313,7 +1266,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var successCount = 0;
 
-                if (!FindFragPipeLibDirectory(out var libDirectory))
+                // Find the Grppr jar file
+                if (!options.LibraryFinder.FindJarFileGrppr(out var jarFileGrppr))
                     return false;
 
                 var arguments = new StringBuilder();
@@ -1952,8 +1906,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 var successCount = 0;
-
-                if (!FindFragPipeLibDirectory(out var libDirectory))
+                if (!options.LibraryFinder.FindFragPipeLibDirectory(out var libDirectory))
                     return false;
 
                 var arguments = new StringBuilder();
@@ -2058,8 +2011,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 var successCount = 0;
-
-                if (!FindFragPipeLibDirectory(out var libDirectory))
+                if (!options.LibraryFinder.FindFragPipeLibDirectory(out var libDirectory))
                     return false;
 
                 foreach (var item in workspaceDirectoryByDatasetId)
