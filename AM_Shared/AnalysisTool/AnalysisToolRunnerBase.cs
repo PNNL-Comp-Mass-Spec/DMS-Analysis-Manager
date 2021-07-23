@@ -913,7 +913,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             try
             {
-                if (analysisResults.FolderExistsWithRetry(targetDirectoryPath))
+                if (analysisResults.DirectoryExistsWithRetry(targetDirectoryPath))
                 {
                     // The target directory already exists
 
@@ -951,7 +951,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     // Need to create the target directory
                     try
                     {
-                        analysisResults.CreateFolderWithRetry(targetDirectoryPath);
+                        analysisResults.CreateDirectoryWithRetry(targetDirectoryPath);
                     }
                     catch (Exception ex)
                     {
@@ -1122,7 +1122,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // If this is an Aggregation job, we create missing directories later in this method
             try
             {
-                var directoryExists = analysisResults.FolderExistsWithRetry(transferDirectoryPath);
+                var directoryExists = analysisResults.DirectoryExistsWithRetry(transferDirectoryPath);
 
                 if (!directoryExists && !Global.IsMatch(Dataset, AnalysisResources.AGGREGATION_JOB_DATASET))
                 {
@@ -1166,7 +1166,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Create the target directory if it doesn't exist
             try
             {
-                analysisResults.CreateFolderWithRetry(remoteTransferDirectoryPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                analysisResults.CreateDirectoryWithRetry(remoteTransferDirectoryPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
             }
             catch (Exception ex)
             {

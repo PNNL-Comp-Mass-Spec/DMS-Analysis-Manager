@@ -62,9 +62,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         public const string PX_SUBMISSION_FILE_SUFFIX = ".px";
 
         /// <summary>
-        /// Cache folder path
+        /// Cache directory path
         /// </summary>
-        public const string DEFAULT_CACHE_FOLDER_PATH = @"\\protoapps\MassIVE_Staging";
+        public const string DEFAULT_CACHE_DIRECTORY_PATH = @"\\protoapps\MassIVE_Staging";
 
         /// <summary>
         /// Retrieve required files
@@ -80,7 +80,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var createPrideXMLFiles = mJobParams.GetJobParameter("CreatePrideXMLFiles", false);
 
-            var cacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_FOLDER_PATH);
+            var cacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_DIRECTORY_PATH);
 
             var resultsFolderName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(resultsFolderName))
@@ -350,33 +350,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool RetrieveMSGFReportTemplateFile()
         {
             // Retrieve the template .msgf-pride.xml file
-            // Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
+            // Although there is a default in the PRIDE_Converter parameter file directory, it should ideally be customized and placed in the data package directory
 
             try
             {
                 var templateFileName = GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
-                // First look for the template file in the data package folder
+                // First look for the template file in the data package directory
                 var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
-                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package folder path";
+                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package directory path";
                     LogError(mMessage);
                     return false;
                 }
 
-                var diDataPackageFolder = new DirectoryInfo(dataPackagePath);
-                var matchingFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
+                var dataPackageDirectory = new DirectoryInfo(dataPackagePath);
+                var matchingFiles = dataPackageDirectory.GetFiles(templateFileName).ToList();
 
                 if (matchingFiles.Count == 0)
                 {
-                    // File not found; see if any files ending in MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-                    matchingFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX).ToList();
+                    // File not found; see if any files ending in MSGF_REPORT_FILE_SUFFIX exist in the data package directory
+                    matchingFiles = dataPackageDirectory.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX).ToList();
 
                     if (matchingFiles.Count == 0)
                     {
-                        // File not found; see if any files containing MSGF_REPORT_FILE_SUFFIX exist in the data package folder
-                        matchingFiles = diDataPackageFolder.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX + "*").ToList();
+                        // File not found; see if any files containing MSGF_REPORT_FILE_SUFFIX exist in the data package directory
+                        matchingFiles = dataPackageDirectory.GetFiles("*" + MSGF_REPORT_FILE_SUFFIX + "*").ToList();
                     }
                 }
 
@@ -395,7 +395,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     templateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
                     LogWarning(
-                        "MSGF Report template file not found in the data package folder; retrieving " + templateFileName + "from " +
+                        "MSGF Report template file not found in the data package directory; retrieving " + templateFileName + "from " +
                         paramFileStoragePath);
 
                     if (string.IsNullOrEmpty(paramFileStoragePath))
@@ -425,19 +425,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool RetrievePXSubmissionTemplateFile()
         {
             // Retrieve the template PX Submission file
-            // Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
+            // Although there is a default parameter file in the PRIDE_Converter parameter file directory, it should ideally be customized and placed in the data package directory
 
             try
             {
                 var templateFileName = GetPXSubmissionTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
 
-                // First look for the template file in the data package folder
+                // First look for the template file in the data package directory
                 // Note that transferDirectoryPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
                 var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
-                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package folder path";
+                    mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package directory path";
                     LogError(mMessage);
                     return false;
                 }
@@ -447,23 +447,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var dataPackageStoragePath = GetDataPackageStoragePath(connectionString, dataPackageID);
 
                 var matchFound = false;
-                var sourceFolders = new List<string> {
+                var sourceDirectories = new List<string> {
                     dataPackageStoragePath,
                     transferDirectoryPath
                 };
 
-                foreach (var sourceFolderPath in sourceFolders)
+                foreach (var sourceDirectoryPath in sourceDirectories)
                 {
-                    if (string.IsNullOrEmpty(sourceFolderPath))
+                    if (string.IsNullOrEmpty(sourceDirectoryPath))
                         continue;
 
-                    var diDataPackageFolder = new DirectoryInfo(sourceFolderPath);
-                    var matchingFiles = diDataPackageFolder.GetFiles(templateFileName).ToList();
+                    var dataPackageDirectory = new DirectoryInfo(sourceDirectoryPath);
+                    var matchingFiles = dataPackageDirectory.GetFiles(templateFileName).ToList();
 
                     if (matchingFiles.Count == 0)
                     {
                         // File not found; see if any files ending in PX_SUBMISSION_FILE_SUFFIX exist in the data package folder
-                        matchingFiles = diDataPackageFolder.GetFiles("*" + PX_SUBMISSION_FILE_SUFFIX).ToList();
+                        matchingFiles = dataPackageDirectory.GetFiles("*" + PX_SUBMISSION_FILE_SUFFIX).ToList();
                     }
 
                     if (matchingFiles.Count > 0)

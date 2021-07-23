@@ -101,7 +101,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool mProcessMzIdFiles;
 
-        private string mCacheFolderPath = string.Empty;
+        private string mCacheDirectoryPath = string.Empty;
         private string mPreviousDatasetName = string.Empty;
 
         /// <summary>
@@ -355,7 +355,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                mCacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", AnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
+                mCacheDirectoryPath = mJobParams.GetJobParameter("CacheFolderPath", string.Empty);
+
+                if (string.IsNullOrWhiteSpace(mCacheDirectoryPath))
+                {
+                    mCacheDirectoryPath = mJobParams.GetJobParameter("CacheDirectoryPath", AnalysisResourcesPRIDEConverter.DEFAULT_CACHE_DIRECTORY_PATH);
+                }
 
                 LogMessage("Running PRIDEConverter");
 
@@ -380,13 +385,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // The analysisResults object is used to copy files to/from this computer
                 var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
-                // Assure that the remote transfer folder exists
-                var remoteTransferDirectory = CreateRemoteTransferDirectory(analysisResults, mCacheFolderPath);
+                // Assure that the remote transfer directory exists
+                var remoteTransferDirectory = CreateRemoteTransferDirectory(analysisResults, mCacheDirectoryPath);
 
                 try
                 {
                     // Create the remote Transfer Directory
-                    analysisResults.CreateFolderWithRetry(remoteTransferDirectory, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                    analysisResults.CreateDirectoryWithRetry(remoteTransferDirectory, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
                 }
                 catch (Exception ex)
                 {
@@ -434,7 +439,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 DefineFilesToSkipTransfer();
 
-                var copySuccess = CopyResultsToTransferDirectory(mCacheFolderPath);
+                var copySuccess = CopyResultsToTransferDirectory(mCacheDirectoryPath);
 
                 return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
