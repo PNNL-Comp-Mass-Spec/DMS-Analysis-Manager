@@ -46,6 +46,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const string PEPTIDE_PROPHET_CONSOLE_OUTPUT = "PeptideProphet_ConsoleOutput.txt";
         private const string PROTEIN_PROPHET_CONSOLE_OUTPUT = "ProteinProphet_ConsoleOutput.txt";
 
+        /// <summary>
+        /// Reserve 15 GB when running Crystal-C with Java
+        /// </summary>
+        public const int CRYSTALC_MEMORY_SIZE_GB = 15;
+
+        /// <summary>
+        /// Reserve 15 GB when running IonQuant with Java
+        /// </summary>
+        public const int ION_QUANT_MEMORY_SIZE_GB = 15;
+
         // ReSharper restore IdentifierTypo
 
         private const string PEPXML_EXTENSION = ".pepXML";

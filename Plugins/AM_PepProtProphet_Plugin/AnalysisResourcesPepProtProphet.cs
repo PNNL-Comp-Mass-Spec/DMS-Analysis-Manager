@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.IO;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
@@ -47,15 +48,46 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return result;
                 }
 
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+
+                var optionsLoaded = LoadMSFraggerOptions(paramFilePath, out var options);
+                if (!optionsLoaded)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (options.OpenSearch)
+                {
+                    // Make sure the machine has enough free memory to run Crystal-C
+                    currentTask = "ValidateFreeMemorySize";
+
+                    if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
+                if (options.RunIonQuant)
+                {
+                    // Make sure the machine has enough free memory to run IonQuant
+                    // Setting MSFraggerJavaMemorySize is stored in the settings file for the job
+                    currentTask = "ValidateFreeMemorySize";
+
+                    if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
+                currentTask = "Get DataPackageID";
+
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
+                // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
+                // In contrast, MaxQuant can work with either .raw files or .mzML files
+                const bool usingMzML = true;
 
-
-
-
-
-
-                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;
 
                 // Retrieve param file
@@ -140,6 +172,41 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Parse the MSFragger parameter file to determine certain processing options
+        /// </summary>
+        /// <param name="paramFilePath"></param>
+        /// <param name="options">Output: instance of the MSFragger options class</param>
+        /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
+        /// <returns>True if success, false if an error</returns>
+        private bool LoadMSFraggerOptions(string paramFilePath, out MSFraggerOptions options)
+        {
+            options = new MSFraggerOptions(mJobParams, null, 1);
+            RegisterEvents(options);
+
+            try
+            {
+                options.LoadMSFraggerOptions(paramFilePath);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LoadMSFraggerOptions", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateFreeMemorySizeGB(string programName, int memoryRequiredGB)
+        {
+            if (ValidateFreeMemorySize(memoryRequiredGB * 1024, StepToolName, false))
+            {
+                return true;
+            }
+
+            mMessage = "Not enough free memory to run " + programName;
+            return false;
         }
     }
 }
