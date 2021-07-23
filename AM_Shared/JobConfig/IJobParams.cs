@@ -10,7 +10,7 @@ using AnalysisManagerBase.AnalysisTool;
 
 namespace AnalysisManagerBase.JobConfig
 {
-    // Ignore Spelling: ann, bool, Quant
+    // Ignore Spelling: ann, bool, Quant, Sequest
 
     #region "Enums"
 

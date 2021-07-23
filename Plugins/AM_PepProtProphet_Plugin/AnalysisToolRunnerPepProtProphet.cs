@@ -27,11 +27,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: accmass, batmass-io, bruker, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
-        // Ignore Spelling: Flammagenitus, fragpipe, freequant, Insilicos, java, mapmods, masswidth, maxppmdiff, minprob, multidir
-        // Ignore Spelling: nocheck, nonparam, peptideprophet, pepxml, ppm, protxml, psm, --ptw, prot, specdir, tmt, --tol, Xmx
+        // Ignore Spelling: annot, accmass, batmass-io, bruker, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
+        // Ignore Spelling: Flammagenitus, fragpipe, freequant, Insilicos, itraq, java, labelquant, mapmods, masswidth, maxppmdiff, minprob, multidir
+        // Ignore Spelling: nocheck, nonparam, peptideprophet, pepxml, plex, ppm, protxml, psm, --ptw, prot, specdir, tmt, --tol, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
 
+        // IonQuant command line arguments
+        // Ignore Spelling: ionmobility, mbr, proteinquant, requantify, mztol, imtol, rttol, mbrmincorr, mbrrttol, mbrimtol, mbrtoprun
+        // Ignore Spelling: ionfdr, proteinfdr, peptidefdr, minisotopes, minscans, writeindex, --tp, minfreq, minexps
 
         // ReSharper restore CommentTypo
 

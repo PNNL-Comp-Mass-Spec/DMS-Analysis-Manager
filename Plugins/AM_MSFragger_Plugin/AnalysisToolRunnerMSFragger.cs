@@ -18,8 +18,6 @@ using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
-    // Ignore Spelling: Fragger
-
     /// <summary>
     /// Class for running MSFragger analysis
     /// </summary>
@@ -28,10 +26,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spell: Acetylation, Batmass, Da, degen, deisotoping, dev, dir, Flammagenitus, fragpipe, freequantInsilicos
-        // Ignore Spell: nocheck, Nterm, pepindex, plex, postprocessing, ptw, timsdata, tmt, tol, Xmx
-
-        // Ignore Spell: peptideprophet, decoyprobs, ppm, accmass, nonparam, expectscore
+        // Ignore Spelling: Batmass, Da, deisotoping, fragpipe, pepindex, postprocessing, timsdata, Xmx
 
         // ReSharper restore CommentTypo
 
