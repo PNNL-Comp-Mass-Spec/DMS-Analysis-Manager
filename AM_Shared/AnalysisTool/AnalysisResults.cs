@@ -17,7 +17,8 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public class AnalysisResults : AnalysisMgrBase
     {
-        #region "Module variables"
+        // Ignore Spelling: holdoff
+
         private const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
 
         private const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
@@ -36,18 +37,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>Instance of class AnalysisMgrSettings</remarks>
         private readonly IMgrParams mMgrParams;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// explanation of what happened to last operation this class performed
         /// </summary>
         public string Message => mMessage;
 
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Constructor
         /// </summary>
@@ -638,7 +632,6 @@ namespace AnalysisManagerBase.AnalysisTool
             return false;
         }
 
-        #endregion
         /// <summary>
         /// Check for the existence of a directory, retrying if an error
         /// </summary>
