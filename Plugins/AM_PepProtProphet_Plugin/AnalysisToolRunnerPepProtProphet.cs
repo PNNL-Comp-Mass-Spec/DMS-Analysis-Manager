@@ -291,8 +291,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ResultsFilterComplete;
 
-                if (options.RunFreeQuant && !options.RunIonQuant)
+                if (options.ReporterIonMode != ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant)
                 {
+                    // Always run FreeQuant when we have reporter ions
+                    // If no reporter ions, either run FreeQuant or run IonQuant
+
                     var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories);
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -1144,9 +1147,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Running FreeQuant", 2);
 
+                // Run FreeQuant inside each experiment group working directory, referencing the job's working directory using --dir
                 var successCount = 0;
-
-                // Run FreeQuant inside each experiment group working directory
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)

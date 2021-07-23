@@ -61,7 +61,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Whether or not to run FreeQuant
         /// </summary>
-        /// <remarks>Defaults to false; ignored if RunIonQuant is enabled</remarks>
+        /// <remarks>
+        /// Defaults to false, but forced to true if reporter ions are used
+        /// If no reporter ions, RunFreeQuant is ignored if RunIonQuant is enabled</remarks>
         public bool RunFreeQuant { get; set; }
 
         /// <summary>
