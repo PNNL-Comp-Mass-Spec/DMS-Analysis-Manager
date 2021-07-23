@@ -98,7 +98,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         // Populate this with a tool version reported to the console
         private string mPhilosopherVersion;
-        private string mTmtIntegratorVersion;
 
         private string mPhilosopherProgLoc;
         private string mTmtIntegratorProgLoc;
@@ -149,7 +148,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Store the Philosopher version info in the database after the first line is written to file Philosopher_ConsoleOutput.txt
                 mPhilosopherVersion = string.Empty;
-                mTmtIntegratorVersion = string.Empty;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
