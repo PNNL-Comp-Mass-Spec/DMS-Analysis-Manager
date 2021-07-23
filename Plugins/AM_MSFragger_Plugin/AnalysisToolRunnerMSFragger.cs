@@ -641,7 +641,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
                 }
 
-                var zipSuccess = ZipPepXmlFile(datasetName, pepXmlFile);
+                var zipSuccess = ZipPepXmlFile(this, datasetName, pepXmlFile);
 
                 if (zipSuccess)
                     successCount++;
@@ -651,40 +651,6 @@ namespace AnalysisManagerMSFraggerPlugIn
             LogDebug("MSFragger Search Complete", mDebugLevel);
 
             return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-        }
-
-        private bool ZipPepXmlFile(string datasetName, FileInfo pepXmlFile)
-        {
-            return ZipPepXmlFile(this, datasetName, pepXmlFile);
-        }
-
-        public static bool ZipPepXmlFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
-        {
-            var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
-            if (!zipSuccess)
-            {
-                return false;
-            }
-
-            // Rename the zipped file
-            var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
-            if (!zipFile.Exists)
-            {
-                toolRunner.LogError("Zipped pepXML file not found; cannot rename");
-                return false;
-            }
-
-            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, datasetName + "_pepXML.zip");
-            var existingTargetFile = new FileInfo(newZipFilePath);
-            if (existingTargetFile.Exists)
-            {
-                toolRunner.LogMessage(string.Format("Replacing {0} with updated version", existingTargetFile.Name));
-                existingTargetFile.Delete();
-            }
-
-            zipFile.MoveTo(newZipFilePath);
-
-            return true;
         }
 
         /// <summary>
@@ -826,33 +792,33 @@ namespace AnalysisManagerMSFraggerPlugIn
             return true;
         }
 
-        private bool ZipPepXmlFiles(DataPackageInfo dataPackageInfo)
+        public static bool ZipPepXmlFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
         {
-            try
+            var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
+            if (!zipSuccess)
             {
-                // Zip each .pepXML file
-                var successCount = 0;
-
-                foreach (var dataset in dataPackageInfo.Datasets)
-                {
-                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, dataset.Value + PEPXML_EXTENSION));
-
-                    var zipSuccess = ZipPepXmlFile(dataset.Value, pepXmlFile);
-                    if (!zipSuccess)
-                    {
-                        continue;
-                    }
-
-                    successCount++;
-                }
-
-                return successCount == dataPackageInfo.Datasets.Count;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in ZipPepXmlFiles", ex);
                 return false;
             }
+
+            // Rename the zipped file
+            var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
+            if (!zipFile.Exists)
+            {
+                toolRunner.LogError("Zipped pepXML file not found; cannot rename");
+                return false;
+            }
+
+            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, datasetName + "_pepXML.zip");
+            var existingTargetFile = new FileInfo(newZipFilePath);
+            if (existingTargetFile.Exists)
+            {
+                toolRunner.LogMessage(string.Format("Replacing {0} with updated version", existingTargetFile.Name));
+                existingTargetFile.Delete();
+            }
+
+            zipFile.MoveTo(newZipFilePath);
+
+            return true;
         }
 
         /// <summary>
