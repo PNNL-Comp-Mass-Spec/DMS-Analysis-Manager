@@ -165,7 +165,9 @@ namespace AnalysisManager_Mage_PlugIn
                     // Data package 3545 does not have any DeconTools jobs; the IDM tool uses _isos.csv files if they exist, but they're not required
                     var warningMessage = msg + "; the IDM tool uses _isos.csv files if they exist, but they're not required";
                     LogWarning(warningMessage);
-                    mJobParams.AddAdditionalParameter("AnalysisResourcesClass", "Evaluation_Message", warningMessage);
+
+                    // Uncomment to instruct the AnalysisToolRunnerMAC class to add the warning message to the Evaluation_Message field in the database
+                    // mJobParams.AddAdditionalParameter("AnalysisResourcesClass", "Evaluation_Message", warningMessage);
                     break;
 
                 default:
