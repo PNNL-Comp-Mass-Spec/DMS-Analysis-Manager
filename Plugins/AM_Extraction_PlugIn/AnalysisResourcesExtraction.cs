@@ -484,7 +484,7 @@ namespace AnalysisManagerExtractionPlugin
                 // If it is over 2 GB in size, do not retrieve the file, and force skipProteinMods to false
                 const float MAX_LEGACY_FASTA_SIZE_GB = 2;
 
-                // Retrieve the Fasta file; required to create the _ProteinMods.txt file
+                // Retrieve the FASTA file; required to create the _ProteinMods.txt file
                 var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
                 {
@@ -681,7 +681,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             else
             {
-                // The OrgDB (aka fasta file) is not required
+                // The OrgDB (aka FASTA file) is not required
                 mRetrieveOrganismDB = false;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -860,7 +860,7 @@ namespace AnalysisManagerExtractionPlugin
                 var useLegacyMSGFDB = false;
 
                 // Look for file DatasetName_msgfplus.mzid.gz
-                // or for split fasta, DatasetName_msgfplus_Part1.mzid.gz
+                // or for split FASTA, DatasetName_msgfplus_Part1.mzid.gz
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
                 var sourceDir = FileSearch.FindDataFile(fileToFind, true, false);
@@ -1082,7 +1082,7 @@ namespace AnalysisManagerExtractionPlugin
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                                 }
 
-                                // This class will auto-create the PepToProtMap.txt file after the fasta file is retrieved
+                                // This class will auto-create the PepToProtMap.txt file after the FASTA file is retrieved
                                 createPepToProtMapFile = true;
                             }
                         }

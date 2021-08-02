@@ -69,9 +69,9 @@ namespace AnalysisManagerBase.JobConfig
         public string Tool { get; set; }
 
         /// <summary>
-        /// Number of steps in a split fasta job
+        /// Number of steps in a split FASTA job
         /// </summary>
-        /// <remarks>0 if not a split fasta job</remarks>
+        /// <remarks>0 if not a split FASTA job</remarks>
         public int NumberOfClonedSteps { get; set; }
 
         /// <summary>
@@ -95,7 +95,7 @@ namespace AnalysisManagerBase.JobConfig
         public string ParameterFileName { get; set; }
 
         /// <summary>
-        /// Generated Fasta File Name
+        /// Generated FASTA File Name
         /// </summary>
         public string GeneratedFASTAFileName { get; set; }
 

@@ -1764,7 +1764,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (!fastaFileReader.OpenFile(fastaFilePath))
                     {
-                        var msg = "Error opening fasta file " + orgDBNameGenerated + "; fastaFileReader.OpenFile() returned false";
+                        var msg = "Error opening FASTA file " + orgDBNameGenerated + "; fastaFileReader.OpenFile() returned false";
                         LogError(msg + "; see " + localOrgDBFolder);
                         mMessage = msg;
                         return false;
@@ -2387,7 +2387,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     writer.WriteEndElement();          // Sequence
                 }
 
-                writer.WriteEndElement();          // Fasta
+                writer.WriteEndElement();          // FASTA
 
                 // In the future, we might write out customized PTMs here
                 // For now, just copy over whatever is in the template msgf-report.xml file

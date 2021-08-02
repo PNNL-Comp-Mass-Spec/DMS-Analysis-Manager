@@ -9,7 +9,7 @@ namespace AnalysisManagerBase.DataFileTools
     public class ProteinCollectionInfo
     {
         /// <summary>
-        /// Legacy Fasta file name
+        /// Legacy FASTA file name
         /// </summary>
         /// <remarks>Will be "na" when using a protein collection</remarks>
         public string LegacyFastaName { get; set; }

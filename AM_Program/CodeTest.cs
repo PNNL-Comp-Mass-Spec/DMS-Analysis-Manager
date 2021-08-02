@@ -767,7 +767,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test copying a large fasta file to a remote host
+        /// Test copying a large FASTA file to a remote host
         /// </summary>
         public void TestCopyToRemote()
         {
@@ -851,13 +851,13 @@ namespace AnalysisManagerProg
             var proteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
             const string proteinOptions = "seq_direction=forward,filetype=fasta";
 
-            // Test a 2 MB fasta file:
+            // Test a 2 MB FASTA file:
             proteinCollectionList = "Micrococcus_luteus_NCTC2665_Uniprot_20160119,Tryp_Pig_Bov";
 
-            // Test a 34 MB fasta file
+            // Test a 34 MB FASTA file
             // proteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig";
 
-            // Test 100 MB fasta file
+            // Test 100 MB FASTA file
             // legacyFasta = "na"
             // proteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
 
@@ -903,7 +903,7 @@ namespace AnalysisManagerProg
         /// <param name="proteinOptions"></param>
         public bool TestProteinDBExport(string destinationDirectory, string legacyFasta, string proteinCollectionList, string proteinOptions)
         {
-            // Instantiate fasta tool if not already done
+            // Instantiate FASTA tool if not already done
             if (mFastaTools == null)
             {
                 if (string.IsNullOrEmpty(mFastaToolsCnStr))
@@ -920,17 +920,17 @@ namespace AnalysisManagerProg
                 mFastaTools.FileGenerationProgress += FileGenerationProgress;
             }
 
-            // Initialize fasta generation state variables
+            // Initialize FASTA generation state variables
             mGenerationComplete = false;
 
-            // Setup a timer to prevent an infinite loop if there's a fasta generation problem
+            // Setup a timer to prevent an infinite loop if there's a FASTA generation problem
             mFastaTimer = new System.Timers.Timer();
             mFastaTimer.Elapsed += FastaTimer_Elapsed;
 
             mFastaTimer.Interval = FASTA_GEN_TIMEOUT_INTERVAL_SEC * 1000;
             mFastaTimer.AutoReset = false;
 
-            // Create the fasta file
+            // Create the FASTA file
             mFastaGenTimeOut = false;
             try
             {
@@ -943,7 +943,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // Wait for fasta creation to finish
+            // Wait for FASTA creation to finish
             while (!mGenerationComplete)
             {
                 Global.IdleLoop(2);
@@ -951,7 +951,7 @@ namespace AnalysisManagerProg
 
             if (mFastaGenTimeOut)
             {
-                // Fasta generator hung - report error and exit
+                // FASTA generator hung - report error and exit
                 Console.WriteLine("Timeout error while generating OrgDb file (" + FASTA_GEN_TIMEOUT_INTERVAL_SEC + " seconds have elapsed)");
                 return false;
             }
@@ -1560,16 +1560,16 @@ namespace AnalysisManagerProg
 
         private void FileGenerationStarted(string taskMsg)
         {
-            // Reset the fasta generation timer
+            // Reset the FASTA generation timer
             mFastaTimer.Start();
         }
 
         private void FileGenerationCompleted(string FullOutputPath)
         {
-            // Get the name of the fasta file that was generated
+            // Get the name of the FASTA file that was generated
             mFastaFileName = Path.GetFileName(FullOutputPath);
 
-            // Stop the fasta generation timer so no false error occurs
+            // Stop the FASTA generation timer so no false error occurs
             mFastaTimer?.Stop();
 
             // Set the completion flag
@@ -1578,13 +1578,13 @@ namespace AnalysisManagerProg
 
         private void FileGenerationProgress(string statusMsg, double fractionDone)
         {
-            // Reset the fasta generation timer
+            // Reset the FASTA generation timer
             mFastaTimer.Start();
         }
 
         private void FastaTimer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            // If this event occurs, it means there was a hang during fasta generation and the manager will have to quit
+            // If this event occurs, it means there was a hang during FASTA generation and the manager will have to quit
             mFastaTimer.Stop();
 
             // Stop the timer to prevent false errors
@@ -1593,7 +1593,7 @@ namespace AnalysisManagerProg
             // Set the timeout flag so an error will be reported
             mGenerationComplete = true;
 
-            // Set the completion flag so the fasta generation wait loop will exit
+            // Set the completion flag so the FASTA generation wait loop will exit
         }
 
         /// <summary>

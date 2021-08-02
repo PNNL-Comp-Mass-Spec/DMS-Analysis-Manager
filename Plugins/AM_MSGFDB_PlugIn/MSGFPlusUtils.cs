@@ -1065,16 +1065,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                // Read the original fasta file to create a decoy fasta file
+                // Read the original FASTA file to create a decoy FASTA file
                 var decoyFastaFilePath = GenerateDecoyFastaFile(fastaFilePath, mWorkDir);
                 fastaFileToSearch = decoyFastaFilePath;
 
                 if (string.IsNullOrEmpty(decoyFastaFilePath))
                 {
-                    // Problem creating the decoy fasta file
+                    // Problem creating the decoy FASTA file
                     if (string.IsNullOrEmpty(ErrorMessage))
                     {
-                        ErrorMessage = "Error creating a decoy version of the fasta file";
+                        ErrorMessage = "Error creating a decoy version of the FASTA file";
                     }
                     OnErrorEvent(ErrorMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1211,9 +1211,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Create a trimmed version of fastaFilePath, with max size maxFastaFileSizeMB
         /// </summary>
-        /// <param name="fastaFilePath">Fasta file to trim</param>
+        /// <param name="fastaFilePath">FASTA file to trim</param>
         /// <param name="maxFastaFileSizeMB">Maximum file size</param>
-        /// <returns>Full path to the trimmed fasta; empty string if a problem</returns>
+        /// <returns>Full path to the trimmed FASTA; empty string if a problem</returns>
         private string CreateTrimmedFasta(string fastaFilePath, int maxFastaFileSizeMB)
         {
             try
@@ -1238,13 +1238,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (FileSyncUtils.ValidateFileVsHashcheck(trimmedFasta.FullName, hashcheckFilePath, out _))
                     {
-                        // The trimmed fasta file is valid
-                        OnStatusEvent("Using existing trimmed fasta: " + trimmedFasta.Name);
+                        // The trimmed FASTA file is valid
+                        OnStatusEvent("Using existing trimmed FASTA: " + trimmedFasta.Name);
                         return trimmedFasta.FullName;
                     }
                 }
 
-                OnStatusEvent("Creating trimmed fasta: " + trimmedFasta.Name);
+                OnStatusEvent("Creating trimmed FASTA: " + trimmedFasta.Name);
 
                 // Construct the list of required contaminant proteins
                 var contaminantUtility = new FastaContaminantUtility();
@@ -1305,7 +1305,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                OnStatusEvent("Trimmed fasta created using " + proteinCount + " proteins; creating the hashcheck file");
+                OnStatusEvent("Trimmed FASTA created using " + proteinCount + " proteins; creating the hashcheck file");
 
                 Global.CreateHashcheckFile(trimmedFasta.FullName, true);
 
@@ -1313,20 +1313,20 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception trimming fasta file to " + maxFastaFileSizeMB + " MB";
+                ErrorMessage = "Exception trimming FASTA file to " + maxFastaFileSizeMB + " MB";
                 OnErrorEvent(ErrorMessage, ex);
                 return string.Empty;
             }
         }
 
         /// <summary>
-        /// Creates a decoy version of the fasta file specified by inputFilePath
+        /// Creates a decoy version of the FASTA file specified by inputFilePath
         /// This new file will include the original proteins plus reversed versions of the original proteins
         /// Protein names will be prepended with REV_ or XXX_
         /// </summary>
-        /// <param name="inputFilePath">Fasta file to process</param>
+        /// <param name="inputFilePath">FASTA file to process</param>
         /// <param name="outputDirectoryPath">Output folder to create decoy file in</param>
-        /// <returns>Full path to the decoy fasta file</returns>
+        /// <returns>Full path to the decoy FASTA file</returns>
         private string GenerateDecoyFastaFile(string inputFilePath, string outputDirectoryPath)
         {
             const char PROTEIN_LINE_START_CHAR = '>';
@@ -1337,7 +1337,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var sourceFile = new FileInfo(inputFilePath);
                 if (!sourceFile.Exists)
                 {
-                    ErrorMessage = "Fasta file not found: " + sourceFile.FullName;
+                    ErrorMessage = "FASTA file not found: " + sourceFile.FullName;
                     return string.Empty;
                 }
 
@@ -1345,14 +1345,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (mDebugLevel >= 2)
                 {
-                    OnStatusEvent("Creating decoy fasta file at " + decoyFastaFilePath);
+                    OnStatusEvent("Creating decoy FASTA file at " + decoyFastaFilePath);
                 }
 
                 var fastaFileReader = new ProteinFileReader.FastaFileReader();
 
                 if (!fastaFileReader.OpenFile(inputFilePath))
                 {
-                    OnErrorEvent("Error reading fasta file with ProteinFileReader to create decoy file");
+                    OnErrorEvent("Error reading FASTA file with ProteinFileReader to create decoy file");
                     return string.Empty;
                 }
 
@@ -1386,7 +1386,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating decoy fasta file", ex);
+                OnErrorEvent("Exception creating decoy FASTA file", ex);
                 return string.Empty;
             }
         }
@@ -1587,7 +1587,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var indexedDBCreator = new CreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(indexedDBCreator);
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
             fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
@@ -1598,8 +1598,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!fastaFile.Exists)
             {
-                // Fasta file not found
-                OnErrorEvent("Fasta file not found: " + fastaFile.FullName);
+                // FASTA file not found
+                OnErrorEvent("FASTA file not found: " + fastaFile.FullName);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -1643,7 +1643,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (!fastaFileIsDecoy && Global.BytesToGB(fastaFile.Length) > 1)
                     {
-                        // Large Fasta file (over 1 GB in size)
+                        // Large FASTA file (over 1 GB in size)
                         // TDA is 0, so we're performing a forward-only search
                         // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
 
@@ -1669,8 +1669,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (maxFastaFileSizeMB > 0 && fastaFileSizeKB / 1024.0 > maxFastaFileSizeMB)
             {
-                // Create a trimmed version of the fasta file
-                OnStatusEvent("Fasta file is over " + maxFastaFileSizeMB + " MB; creating a trimmed version of the fasta file");
+                // Create a trimmed version of the FASTA file
+                OnStatusEvent("FASTA file is over " + maxFastaFileSizeMB + " MB; creating a trimmed version of the FASTA file");
 
                 var fastaFilePathTrimmed = string.Empty;
 
@@ -1691,7 +1691,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         var sleepTimeSec = randomGenerator.Next(10, 19);
 
-                        OnStatusEvent("Fasta file trimming failed; waiting " + sleepTimeSec + " seconds then trying again");
+                        OnStatusEvent("FASTA file trimming failed; waiting " + sleepTimeSec + " seconds then trying again");
                         Global.IdleLoop(sleepTimeSec);
                     }
                 }
@@ -1710,10 +1710,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (mDebugLevel >= 3 || (mDebugLevel >= 1 && fastaFileSizeKB > 500))
             {
-                OnStatusEvent("Indexing Fasta file to create Suffix Array files");
+                OnStatusEvent("Indexing FASTA file to create Suffix Array files");
             }
 
-            // Look for the suffix array files that should exist for the fasta file
+            // Look for the suffix array files that should exist for the FASTA file
             // Either copy them from Gigasax (or Proto-7) or re-create them
             //
             var indexIteration = 0;
@@ -1749,7 +1749,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var sleepTimeSec = randomGenerator.Next(10, 19);
 
-                OnStatusEvent("Fasta file indexing failed; waiting " + sleepTimeSec + " seconds then trying again");
+                OnStatusEvent("FASTA file indexing failed; waiting " + sleepTimeSec + " seconds then trying again");
                 Global.IdleLoop(sleepTimeSec);
             }
 
@@ -2353,7 +2353,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Read the MS-GF+ options file and optionally create a new, customized version
         /// </summary>
-        /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+        /// <param name="fastaFileIsDecoy">True if the FASTA file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
@@ -2377,7 +2377,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Read the MS-GF+ options file and create a new, customized version
         /// </summary>
-        /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+        /// <param name="fastaFileIsDecoy">True if the FASTA file has had forward and reverse index files created</param>
         /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
         /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
@@ -2862,7 +2862,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (tdaSetting > 0)
                 {
-                    // Make sure the .Fasta file is not a Decoy fasta
+                    // Make sure the .Fasta file is not a Decoy FASTA
                     if (fastaFileIsDecoy)
                     {
                         OnErrorEvent("Parameter file / decoy protein collection conflict: " +

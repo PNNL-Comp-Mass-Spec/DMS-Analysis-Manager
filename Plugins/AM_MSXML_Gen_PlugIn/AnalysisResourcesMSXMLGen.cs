@@ -168,7 +168,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (!string.IsNullOrEmpty(mzMLRefParamFile))
                 {
-                    // Retrieve the Fasta file
+                    // Retrieve the FASTA file
                     var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                     currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;

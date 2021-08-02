@@ -103,7 +103,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (message.StartsWith("Warning, taxonomy file not found"))
                 {
-                    // Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
+                    // Ignore this warning; the taxonomy file would have been used to determine the FASTA file that was searched
                     // We don't need that information in this application
                 }
                 else

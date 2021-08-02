@@ -87,7 +87,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WaitForExistingLockfile(fiRemoteLockFile1, debugLevel, maxWaitTimeHours);
                 }
 
-                // Look for the .MSGFPlusIndexFileInfo file for this fasta file
+                // Look for the .MSGFPlusIndexFileInfo file for this FASTA file
                 var indexFileInfo = new FileInfo(
                     Path.Combine(remoteIndexDirectory.FullName,
                                  fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
@@ -139,7 +139,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 else
                 {
                     // Confirm that each file in filesToCopy exists on the remote server
-                    // If using a legacy fasta file, must also confirm that each file is newer than the fasta file that was indexed
+                    // If using a legacy FASTA file, must also confirm that each file is newer than the FASTA file that was indexed
                     filesAreValid = ValidateFiles(
                         remoteIndexDirectory.FullName, filesToCopy, usingLegacyFasta,
                         fiFastaFile.LastWriteTimeUtc, true);
@@ -263,7 +263,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Copies the suffix array files for the specified fasta file to the remote MSGFPlus_Index_File share
+        /// Copies the suffix array files for the specified FASTA file to the remote MSGFPlus_Index_File share
         /// </summary>
         /// <param name="fastaFile"></param>
         /// <param name="remoteIndexDirPath"></param>
@@ -352,7 +352,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                // Create the .MSGFPlusIndexFileInfo file for this fasta file
+                // Create the .MSGFPlusIndexFileInfo file for this FASTA file
                 var msgfPlusIndexFileInfo = new FileInfo(
                     Path.Combine(remoteIndexDirectory.FullName, fastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
@@ -420,7 +420,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Protein collection files will start with ID_ then have at least 6 integers, then an alphanumeric hash string, for example ID_004208_295531A4.fasta
-                // If the filename does not match that pattern, we're using a legacy fasta file
+                // If the filename does not match that pattern, we're using a legacy FASTA file
                 var reProtectionCollectionFasta = new Regex(@"ID_\d{6,}_[0-9a-z]+\.fasta", RegexOptions.IgnoreCase);
                 var usingLegacyFasta = !reProtectionCollectionFasta.IsMatch(fastaFile.Name);
 
@@ -503,17 +503,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else if (usingLegacyFasta)
                     {
-                        // Make sure all of the index files have a file modification date newer than the fasta file
-                        // We only do this for legacy fasta files, since their file modification date will be the same on all pubs
+                        // Make sure all of the index files have a file modification date newer than the FASTA file
+                        // We only do this for legacy FASTA files, since their file modification date will be the same on all pubs
 
-                        // We can't do this for programmatically generated fasta files (that use protein collections)
+                        // We can't do this for programmatically generated FASTA files (that use protein collections)
                         // since their modification date will be the time that the file was created
 
                         foreach (var fiIndexFile in existingFiles)
                         {
                             if (fiIndexFile.LastWriteTimeUtc < fastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
                             {
-                                OnStatusEvent("Index file is older than the fasta file; " + fiIndexFile.FullName + " modified " +
+                                OnStatusEvent("Index file is older than the FASTA file; " + fiIndexFile.FullName + " modified " +
                                               fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT) + " vs. " +
                                               fastaFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
@@ -657,7 +657,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                // Try to create the index files for fasta file dBFileNameInput
+                // Try to create the index files for FASTA file dBFileNameInput
                 currentTask = "Look for java.exe and .jar file";
 
                 // Verify that Java exists
@@ -1002,7 +1002,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var reExtractNum = new Regex(@"^ID_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            // DMS-generated fasta files will have a name of the form ID_003949_3D6802EE.fasta
+            // DMS-generated FASTA files will have a name of the form ID_003949_3D6802EE.fasta
             // Parse out the number (003949 in this case)
             var reMatch = reExtractNum.Match(fastaFileName);
             if (reMatch.Success)
@@ -1304,7 +1304,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (usingLegacyFasta)
                 {
-                    // Require that the index files be newer than the fasta file (ignore the .LastUsed file)
+                    // Require that the index files be newer than the FASTA file (ignore the .LastUsed file)
                     if (fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1))
                     {
                         if (!string.Equals(fiSourceFile.Extension, FileSyncUtils.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
@@ -1312,7 +1312,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
                             var dateThreshold = dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                            OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
+                            OnStatusEvent(string.Format("{0} is older than the FASTA file; {1} modified {2} vs. {3}; indexing is required",
                                                         sourceDescription,
                                                         fiSourceFile.FullName,
                                                         sourceFileDate,

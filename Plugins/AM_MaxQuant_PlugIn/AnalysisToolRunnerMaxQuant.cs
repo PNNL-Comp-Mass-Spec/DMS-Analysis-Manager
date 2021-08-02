@@ -28,7 +28,7 @@ namespace AnalysisManagerMaxQuantPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: \andromeda, andromeda, apar, apl, aplfiles, deisotoping, dotnet, dryrun
+        // Ignore Spelling: \andromeda, andromeda, apar, apl, aplfiles, deisotoping, dotnet, dryrun, fasta
         // Ignore Spelling: proc, ptms, Quant, resourcer, sdk, secpepFiles, txt
 
         // ReSharper restore CommentTypo
@@ -1087,7 +1087,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         if (!updatedPath.Equals(generatedFastaFilePath))
                         {
                             LogWarning(string.Format(
-                                "Mismatch between FASTA file path in andromeda parameter file {0} and the generated fasta file: {1} vs. {2}",
+                                "Mismatch between FASTA file path in andromeda parameter file {0} and the generated FASTA file: {1} vs. {2}",
                                 parameterFile.FullName, updatedPath, generatedFastaFilePath));
                         }
 
@@ -1670,7 +1670,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         private bool ValidateFastaFile()
         {
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
             var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
@@ -1681,8 +1681,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             if (!fastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                // FASTA file not found
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 

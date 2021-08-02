@@ -2964,7 +2964,7 @@ namespace AnalysisManagerProg
 
                 if (orgDbRequired)
                 {
-                    // Verify that the local fasta file cache directory has sufficient free space
+                    // Verify that the local FASTA file cache directory has sufficient free space
 
                     ShowTrace("Validating free space for the Org DB directory: " + orgDbDir);
 

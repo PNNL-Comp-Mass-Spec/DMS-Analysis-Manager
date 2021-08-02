@@ -107,7 +107,7 @@ namespace AnalysisManagerExtractionPlugin
                 var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-                // However, if job parameter SkipProteinMods is True, the Fasta file will not have been retrieved
+                // However, if job parameter SkipProteinMods is True, the FASTA file will not have been retrieved
                 var fastaFileName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 if (string.IsNullOrWhiteSpace(fastaFileName))
                 {
@@ -400,7 +400,7 @@ namespace AnalysisManagerExtractionPlugin
                         LogMessage("Verifying the decoy prefix in " + fastaFile.Name);
                     }
 
-                    // Determine the most common decoy prefix in the Fasta file
+                    // Determine the most common decoy prefix in the FASTA file
                     var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
                     var bestPrefix = new KeyValuePair<double, string>(0, string.Empty);
 

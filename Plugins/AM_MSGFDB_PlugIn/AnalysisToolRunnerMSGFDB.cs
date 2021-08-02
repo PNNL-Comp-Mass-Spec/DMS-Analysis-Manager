@@ -241,7 +241,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Index the Fasta file (if needed) then run MS-GF+
+        /// Index the FASTA file (if needed) then run MS-GF+
         /// </summary>
         /// <param name="javaProgLoc"></param>
         /// <param name="mzidResultsFile">MS-GF+ results file</param>
@@ -404,7 +404,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
-            // The amount of memory required depends on both the fasta file size and the size of the input data file (_dta.txt or .mzML)
+            // The amount of memory required depends on both the FASTA file size and the size of the input data file (_dta.txt or .mzML)
             //   since data from all spectra are cached in memory.
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
@@ -457,7 +457,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Set up and execute a program runner to run MS-GF+
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
 
-            // Define the input file, output file, and fasta file
+            // Define the input file, output file, and FASTA file
             // It is safe to simply use the input file name since the working directory will be mWorkDir
             arguments += " -s " + inputFile.Name;
             arguments += " -o " + mzidResultsFile.Name;

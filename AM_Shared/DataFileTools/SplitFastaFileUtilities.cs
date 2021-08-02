@@ -98,7 +98,7 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Creates a new lock file to allow the calling process to either create the split fasta file or validate that the split fasta file exists
+        /// Creates a new lock file to allow the calling process to either create the split FASTA file or validate that the split FASTA file exists
         /// </summary>
         /// <param name="baseFastaFile"></param>
         /// <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
@@ -187,8 +187,8 @@ namespace AnalysisManagerBase.DataFileTools
                     // Something went wrong 4 times in a row (typically either creating or deleting the .Lock file)
                     // Abort
 
-                    // Exception: Unable to create Lockfile required to split fasta file ...
-                    throw new Exception("Unable to create " + LOCK_FILE_PROGRESS_TEXT + " required to split fasta file " + baseFastaFile.FullName + "; tried 4 times without success");
+                    // Exception: Unable to create Lockfile required to split FASTA file ...
+                    throw new Exception("Unable to create " + LOCK_FILE_PROGRESS_TEXT + " required to split FASTA file " + baseFastaFile.FullName + "; tried 4 times without success");
                 }
             }
 
@@ -233,7 +233,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// Lookup the details for LegacyFASTAFileName in the database
         /// </summary>
         /// <param name="legacyFASTAFileName"></param>
-        /// <param name="organismName">Output parameter: the organism name for this fasta file</param>
+        /// <param name="organismName">Output parameter: the organism name for this FASTA file</param>
         /// <returns>The path to the file if found; empty string if no match</returns>
         private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
         {
@@ -244,7 +244,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             organismName = string.Empty;
 
-            // Query V_Legacy_Static_File_Locations in the Protein_Sequences database for the path to the fasta file
+            // Query V_Legacy_Static_File_Locations in the Protein_Sequences database for the path to the FASTA file
             // This queries table T_DMS_Organism_DB_Info in MT_Main
             // That table is updated using data in DMS5
             //
@@ -395,11 +395,11 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Validate that the split fasta file exists
+        /// Validate that the split FASTA file exists
         /// </summary>
         /// <param name="baseFastaName">Original (non-split) filename, e.g. RefSoil_2013-11-07.fasta</param>
-        /// <param name="splitFastaName">Split fasta filename, e.g. RefSoil_2013-11-07_10x_05.fasta</param>
-        /// <returns>True if the split fasta file is defined in DMS</returns>
+        /// <param name="splitFastaName">Split FASTA filename, e.g. RefSoil_2013-11-07_10x_05.fasta</param>
+        /// <returns>True if the split FASTA file is defined in DMS</returns>
         /// <remarks>If the split file is not found, will automatically split the original file and update DMS with the split file information</remarks>
         public bool ValidateSplitFastaFile(string baseFastaName, string splitFastaName)
         {
@@ -419,7 +419,7 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         if (!mFileCopyUtilities.FileExistsWithRetry(knownSplitFastaFilePath, BaseLogger.LogLevels.DEBUG))
                         {
-                            // If the directory exists but no split fasta files exist, assume that we need to re-split the FASTA file
+                            // If the directory exists but no split FASTA files exist, assume that we need to re-split the FASTA file
                             var existingSplitFastaFile = new FileInfo(knownSplitFastaFilePath);
                             if (existingSplitFastaFile.Directory?.Exists != true)
                             {
@@ -428,7 +428,7 @@ namespace AnalysisManagerBase.DataFileTools
                                 return false;
                             }
 
-                            // Extract out the base split fasta name
+                            // Extract out the base split FASTA name
                             // For example, extract out "OrgDB_2018-07-14_25x" from "OrgDB_2018-07-14_25x_01.fasta"
                             var reBaseName = new System.Text.RegularExpressions.Regex(@"(?<BaseName>.+\d+x)_\d+");
                             var reMatch = reBaseName.Match(Path.GetFileNameWithoutExtension(knownSplitFastaFilePath));
@@ -551,23 +551,23 @@ namespace AnalysisManagerBase.DataFileTools
                     return false;
                 }
 
-                // Verify that the fasta files were created
+                // Verify that the FASTA files were created
                 currentTask = "Verify new files";
                 foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
                 {
                     var splitFastaFileInfo = new FileInfo(currentSplitFile.FilePath);
                     if (!splitFastaFileInfo.Exists)
                     {
-                        ErrorMessage = "Newly created split fasta file not found: " + currentSplitFile.FilePath;
+                        ErrorMessage = "Newly created split FASTA file not found: " + currentSplitFile.FilePath;
                         OnErrorEvent(ErrorMessage);
                         DeleteLockStream(lockFilePath, lockStream);
                         return false;
                     }
                 }
 
-                OnStatusEvent("Fasta file successfully split into " + mNumSplitParts + " parts");
+                OnStatusEvent("FASTA file successfully split into " + mNumSplitParts + " parts");
 
-                // Store the newly created Fasta file names, plus their protein and residue stats, in DMS
+                // Store the newly created FASTA file names, plus their protein and residue stats, in DMS
                 currentTask = "StoreSplitFastaFileNames";
                 success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo);
                 if (!success)
@@ -585,7 +585,7 @@ namespace AnalysisManagerBase.DataFileTools
                 currentTask = "UpdateCachedOrganismDBInfo";
                 UpdateCachedOrganismDBInfo();
 
-                // Delete any cached MSGFPlus index files corresponding to the split fasta files
+                // Delete any cached MSGFPlus index files corresponding to the split FASTA files
 
                 if (!string.IsNullOrWhiteSpace(MSGFPlusIndexFilesFolderPathLegacyDB))
                 {
@@ -661,7 +661,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         private void Splitter_ErrorEvent(string message, Exception ex)
         {
-            ErrorMessage = "Fasta Splitter Error: " + message;
+            ErrorMessage = "FASTA Splitter Error: " + message;
             OnErrorEvent(message, ex);
         }
 

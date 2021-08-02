@@ -907,7 +907,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var sourceHashcheck = (from item in hashcheckFiles orderby item.LastWriteTime descending select item).First();
 
-            LogDebug("Verifying that the generated fasta file exists on the remote host");
+            LogDebug("Verifying that the generated FASTA file exists on the remote host");
 
             // Check whether the file needs to be copied
             // Skip the copy if it exists and has the same size
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Call this function to copy files from the working directory to a remote host for remote processing
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
-        /// Plugins should also copy fasta files if appropriate
+        /// Plugins should also copy FASTA files if appropriate
         /// </summary>
         /// <exception cref="NotImplementedException"></exception>
         /// <returns>True if success, false if an error</returns>
@@ -1325,7 +1325,7 @@ namespace AnalysisManagerBase.AnalysisTool
         // Ignore Spelling: Nx
 
         /// <summary>
-        /// Creates a Fasta file using Protein_Exporter.dll
+        /// Creates a FASTA file using Protein_Exporter.dll
         /// </summary>
         /// <param name="proteinCollectionInfo"></param>
         /// <param name="targetDirectory">Directory where file will be created</param>
@@ -1340,10 +1340,10 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             if (mDebugLevel >= 1)
             {
-                // Creating fasta file in ...
+                // Creating FASTA file in ...
                 // or
-                // Preview retrieval of fasta file ...
-                LogMessage(string.Format("{0} fasta file in {1}",
+                // Preview retrieval of FASTA file ...
+                LogMessage(string.Format("{0} FASTA file in {1}",
                     previewMode ? "Preview retrieval of" : "Creating",
                     targetDirectory));
             }
@@ -1353,7 +1353,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 Directory.CreateDirectory(targetDirectory);
             }
 
-            // Instantiate fasta tool if not already done
+            // Instantiate FASTA tool if not already done
             if (mFastaTools == null)
             {
                 if (string.IsNullOrWhiteSpace(mFastaToolsCnStr))
@@ -1427,20 +1427,20 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
             }
 
-            // Initialize fasta generation state variables
+            // Initialize FASTA generation state variables
             mFastaFileName = string.Empty;
 
-            // Set up variables for fasta creation call
+            // Set up variables for FASTA creation call
 
             if (!proteinCollectionInfo.IsValid)
             {
                 if (string.IsNullOrWhiteSpace(proteinCollectionInfo.ErrorMessage))
                 {
-                    mMessage = "Unknown error determining the Fasta file or protein collection to use; unable to obtain Fasta file";
+                    mMessage = "Unknown error determining the FASTA file or protein collection to use; unable to obtain FASTA file";
                 }
                 else
                 {
-                    mMessage = proteinCollectionInfo.ErrorMessage + "; unable to obtain Fasta file";
+                    mMessage = proteinCollectionInfo.ErrorMessage + "; unable to obtain FASTA file";
                 }
 
                 LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
@@ -1454,11 +1454,11 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (!proteinCollectionInfo.UsingLegacyFasta)
                 {
-                    LogError("Cannot use protein collections when running a SplitFasta job; choose a Legacy fasta file instead");
+                    LogError("Cannot use protein collections when running a SplitFasta job; choose a Legacy FASTA file instead");
                     return false;
                 }
 
-                // Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
+                // Running a SplitFasta job; need to update the name of the FASTA file to be of the form FastaFileName_NNx_nn.fasta
                 // where NN is the number of total cloned steps and nn is this job's specific step number
 
                 legacyFastaToUse = GetSplitFastaFileName(mJobParams, out var errorMessage, out var numberOfClonedSteps);
@@ -1503,10 +1503,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (mDebugLevel >= 1)
                 {
-                    LogMessage("Verifying that split fasta file exists: " + legacyFastaToUse);
+                    LogMessage("Verifying that split FASTA file exists: " + legacyFastaToUse);
                 }
 
-                // Make sure the original fasta file has already been split into the appropriate number parts
+                // Make sure the original FASTA file has already been split into the appropriate number parts
                 // and that DMS knows about them
                 mSplitFastaFileUtility = new SplitFastaFileUtilities(
                     dmsConnectionString, proteinSeqsDBConnectionString,
@@ -1586,7 +1586,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     if (string.IsNullOrEmpty(hashString))
                     {
-                        // Fasta generator returned empty hash string
+                        // FASTA generator returned empty hash string
                         LogError("mFastaTools.ExportFASTAFile returned an empty Hash string for the OrgDB; unable to continue; " + orgDBDescription);
                         return false;
                     }
@@ -1594,17 +1594,17 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                if (ex.Message.StartsWith("Legacy fasta file not found:", StringComparison.OrdinalIgnoreCase))
+                if (ex.Message.StartsWith("Legacy FASTA file not found:", StringComparison.OrdinalIgnoreCase))
                 {
                     var rePathMatcher = new Regex(@"not found: (?<SourceDirectory>.+)\\");
                     var reMatch = rePathMatcher.Match(ex.Message);
                     if (reMatch.Success)
                     {
-                        mMessage = "Legacy fasta file not found at " + reMatch.Groups["SourceDirectory"].Value;
+                        mMessage = "Legacy FASTA file not found at " + reMatch.Groups["SourceDirectory"].Value;
                     }
                     else
                     {
-                        mMessage = "Legacy fasta file not found in the organism directory for this job";
+                        mMessage = "Legacy FASTA file not found in the organism directory for this job";
                     }
                 }
                 else
@@ -1618,7 +1618,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (string.IsNullOrEmpty(mFastaFileName))
             {
-                // Fasta generator never raised event FileGenerationCompleted
+                // FASTA generator never raised event FileGenerationCompleted
                 LogError("mFastaTools did not raise event FileGenerationCompleted; unable to continue; " + orgDBDescription);
                 return false;
             }
@@ -1628,7 +1628,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (mDebugLevel >= 1)
             {
                 // Log the name of the .Fasta file we're using
-                LogDebugMessage("Fasta generation complete, using database: " + mFastaFileName, null);
+                LogDebugMessage("FASTA generation complete, using database: " + mFastaFileName, null);
 
                 if (mDebugLevel >= 2 && !previewMode)
                 {
@@ -1638,7 +1638,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         var fastaFileMsg = new StringBuilder();
 
-                        fastaFileMsg.Append("Fasta file last modified: " +
+                        fastaFileMsg.Append("FASTA file last modified: " +
                             GetHumanReadableTimeInterval(
                                 DateTime.UtcNow.Subtract(fastaFile.LastWriteTimeUtc)) + " ago at " +
                                             fastaFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
@@ -1990,7 +1990,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
+        /// Examine the FASTA file to determine the fraction of the proteins that are decoy (reverse) proteins
         /// </summary>
         /// <param name="fastaFile">FASTA file to examine</param>
         /// <param name="proteinCount">Output parameter: total protein count</param>
@@ -2003,7 +2003,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Examine the fasta file to determine the fraction of the proteins that are decoy (reverse) proteins
+        /// Examine the FASTA file to determine the fraction of the proteins that are decoy (reverse) proteins
         /// </summary>
         /// <param name="fastaFile">FASTA file to examine</param>
         /// <param name="decoyProteinPrefix"></param>
@@ -2190,7 +2190,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>Dictionary of FASTA files, including the last usage date for each</returns>
         private static Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo orgDbDirectory)
         {
-            // Keys are the fasta file; values are the lastUsed time of the file (nominally obtained from a .hashcheck or .LastUsed file)
+            // Keys are the FASTA file; values are the lastUsed time of the file (nominally obtained from a .hashcheck or .LastUsed file)
             var fastaFiles = new Dictionary<FileInfo, DateTime>();
 
             var lastProgress = DateTime.UtcNow;
@@ -2770,11 +2770,11 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Get the name of the split fasta file to use for this job
+        /// Get the name of the split FASTA file to use for this job
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage">Output parameter: error message</param>
-        /// <returns>The name of the split fasta file to use</returns>
+        /// <returns>The name of the split FASTA file to use</returns>
         /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
         {
@@ -2782,12 +2782,12 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Get the name of the split fasta file to use for this job
+        /// Get the name of the split FASTA file to use for this job
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage">Output parameter: error message</param>
         /// <param name="numberOfClonedSteps">Output parameter: total number of cloned steps</param>
-        /// <returns>The name of the split fasta file to use</returns>
+        /// <returns>The name of the split FASTA file to use</returns>
         /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage, out int numberOfClonedSteps)
         {
@@ -2851,7 +2851,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Compute the split fasta iteration for the current job step
+        /// Compute the split FASTA iteration for the current job step
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage"></param>
@@ -3178,7 +3178,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// or if running MS-GF+ (or similar), the split FASTA file corresponding to this job step</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
         /// <returns>Space required, in MB</returns>
-        /// <remarks>Uses both mJobParams and mMgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
+        /// <remarks>Uses both mJobParams and mMgrParams; returns 0 if a problem (e.g. the legacy FASTA file is not listed in V_Organism_DB_File_Export)</remarks>
         public double LookupLegacyDBDiskSpaceRequiredMB(
             ProteinCollectionInfo proteinCollectionInfo,
             out string legacyFastaName,
@@ -3220,11 +3220,11 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (!success || legacyDbSize == null || legacyDbSize.Count == 0)
                 {
                     // Empty query results
-                    var statusMessage = "Warning: Could not determine the legacy fasta file's size for job " + mJob + ", file " + legacyFastaName;
+                    var statusMessage = "Warning: Could not determine the legacy FASTA file's size for job " + mJob + ", file " + legacyFastaName;
                     if (proteinCollectionInfo.UsingSplitFasta)
                     {
                         // Likely the FASTA file has not yet been split
-                        LogMessage(statusMessage + "; likely the split fasta file has not yet been created");
+                        LogMessage(statusMessage + "; likely the split FASTA file has not yet been created");
                     }
                     else
                     {
@@ -3236,7 +3236,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!int.TryParse(legacyDbSize.First(), out var fileSizeKB))
                 {
-                    var logMessage = "Legacy fasta file size is not numeric, job " + mJob + ", file " + legacyFastaName + ": " + legacyDbSize.First();
+                    var logMessage = "Legacy FASTA file size is not numeric, job " + mJob + ", file " + legacyFastaName + ": " + legacyDbSize.First();
                     LogMessage(logMessage, 0, true);
                     return 0;
                 }
@@ -3554,7 +3554,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return 0;
             }
 
-            // Delete all files associated with this fasta file
+            // Delete all files associated with this FASTA file
             var filesToDelete = new List<FileInfo>();
             filesToDelete.AddRange(fileToPurge.Directory.GetFiles(baseName + ".*"));
 
@@ -3596,11 +3596,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="orgDbDirectoryPath">Organism database directory with FASTA files and related index files; supports Windows shares and Linux paths</param>
         /// <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
-        /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file (in megabytes)</param>
+        /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given FASTA file (in megabytes)</param>
         /// <param name="maxDirectorySizeGB">If greater than 0, the maximum amount of space that files can occupy (in gigabytes)</param>
         /// <param name="legacyFastaFileBaseName">
-        /// Legacy fasta file name (without .fasta)
-        /// For split fasta jobs, should not include the split count and segment number, e.g. should not include _25x_07 or _25x_08
+        /// Legacy FASTA file name (without .fasta)
+        /// For split FASTA jobs, should not include the split count and segment number, e.g. should not include _25x_07 or _25x_08
         /// </param>
         /// <param name="preview">When true, preview the files that would be deleted</param>
         /// <remarks>
@@ -3696,7 +3696,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Purge Fasta Files until the drive free space falls below a threshold
+        /// Purge FASTA Files until the drive free space falls below a threshold
         /// This method is Windows specific
         /// </summary>
         /// <param name="localDriveInfo"></param>
@@ -3743,14 +3743,14 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         if (logInfoMessages)
                         {
-                            LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
+                            LogMessage("All FASTA files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
                                 "will not purge any more files to free disk space");
                         }
                         break;
                     }
                 }
 
-                // Delete all files associated with this fasta file
+                // Delete all files associated with this FASTA file
                 // However, do not delete it if the name starts with legacyFastaFileBaseName
                 var bytesDeleted = PurgeFastaFiles(fileToPurge, legacyFastaFileBaseName, mDebugLevel, preview);
                 totalBytesPurged += bytesDeleted;
@@ -3996,14 +3996,14 @@ namespace AnalysisManagerBase.AnalysisTool
                         if (fastaFiles.TryGetValue(fileToPurge, out var lastUsed) &&
                             DateTime.UtcNow.Subtract(lastUsed).TotalDays < 5)
                         {
-                            LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
+                            LogTools.LogMessage("All FASTA files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
                                                 "will not purge any more files to free disk space");
 
                             filesProcessed = fastaFilesByLastUse.Count;
                             break;
                         }
 
-                        // Delete all files associated with this fasta file
+                        // Delete all files associated with this FASTA file
                         // However, do not delete it if the name starts with legacyFastaFileBaseName
                         var bytesDeleted = PurgeFastaFiles(fileToPurge, legacyFastaFileBaseName, debugLevel, preview);
                         totalBytesPurged += bytesDeleted;
@@ -4069,13 +4069,13 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (remoteFasta == null)
             {
-                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                LogDebug(string.Format("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
                 return false;
             }
 
             if (remoteHashcheck == null)
             {
-                LogDebug(string.Format("Fasta .hashcheck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                LogDebug(string.Format("FASTA .hashcheck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
                 return false;
             }
 
@@ -4114,7 +4114,7 @@ namespace AnalysisManagerBase.AnalysisTool
             else
             {
                 LogDebug(string.Format(
-                    "Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                    "FASTA file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
                     "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
                     transferUtility.RemoteHostName));
             }
@@ -4235,7 +4235,7 @@ namespace AnalysisManagerBase.AnalysisTool
             try
             {
                 // Note that LoadDataPackageJobInfo does not update NumberOfClonedSteps in dataPackageJobs
-                // RetrieveAggregateFiles does not support split-fasta jobs, so it does not need NumberOfClonedSteps and thus no need to call RetrieveDataPackagePeptideHitJobInfo
+                // RetrieveAggregateFiles does not support Split-FASTA jobs, so it does not need NumberOfClonedSteps and thus no need to call RetrieveDataPackagePeptideHitJobInfo
                 if (!LoadDataPackageJobInfo(out dataPackageJobs))
                 {
                     mMessage = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
@@ -4540,9 +4540,9 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
+        /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
-        /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
+        /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
@@ -4554,9 +4554,9 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
+        /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
-        /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
+        /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="maxLegacyFASTASizeGB">
         /// Maximum FASTA file size to retrieve when retrieving a legacy (standalone) FASTA file
@@ -4644,7 +4644,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (proteinCollectionInfo.UsingLegacyFasta)
                 {
-                    // Estimate the drive space required to download the fasta file and its associated MS-GF+ index files
+                    // Estimate the drive space required to download the FASTA file and its associated MS-GF+ index files
                     requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo, out var legacyFastaName, out fastaFileSizeGB);
 
                     if (fastaFileSizeGB > maxLegacyFASTASizeGB)
@@ -4658,15 +4658,15 @@ namespace AnalysisManagerBase.AnalysisTool
                     }
                 }
 
-                // Delete old fasta files and suffix array files if getting low on disk space
-                // Do not delete any files related to the current Legacy Fasta file (if defined)
+                // Delete old FASTA files and suffix array files if getting low on disk space
+                // Do not delete any files related to the current Legacy FASTA file (if defined)
 
                 if (!previewMode)
                 {
                     PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, FREE_SPACE_THRESHOLD_PERCENT, requiredFreeSpaceMB, orgDBDirMaxSizeGB, legacyFastaFileBaseName);
                 }
 
-                // Make a new fasta file from scratch
+                // Make a new FASTA file from scratch
                 if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath, decoyProteinsUseXXX, previewMode))
                 {
                     // There was a problem. Log entries in lower-level routines provide documentation
@@ -4682,7 +4682,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         fastaFileSizeGB = Global.BytesToGB(fastaFile.Length);
                 }
 
-                // Fasta file was successfully generated. Put the name of the generated FASTA file in the
+                // FASTA file was successfully generated. Put the name of the generated FASTA file in the
                 // job data class for other methods to use
                 if (!mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName))
                 {
@@ -4691,7 +4691,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
-                // Delete old fasta files and suffix array files if getting low on disk space
+                // Delete old FASTA files and suffix array files if getting low on disk space
                 // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
                 if (!previewMode)
                 {
@@ -4740,7 +4740,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 };
 
                 // Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
-                // Furthermore, the full path to the fasta file is only necessary when creating SEQUEST parameter files
+                // Furthermore, the full path to the FASTA file is only necessary when creating SEQUEST parameter files
 
                 // Job parameter ToolName tracks the pipeline script name (whose name is based on the primary analysis tool for the script)
                 var scriptName = mJobParams.GetParam("ToolName", string.Empty);
@@ -5358,7 +5358,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
         private void FastaTools_FileGenerationCompleted(string fullOutputPath)
         {
-            // Get the name of the fasta file that was generated
+            // Get the name of the FASTA file that was generated
             mFastaFileName = Path.GetFileName(fullOutputPath);
         }
 
@@ -5376,7 +5376,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     mFastaToolsLastLogTime = DateTime.UtcNow;
                     mFastaToolFractionDoneSaved = fractionDone;
-                    LogDebugMessage("Generating Fasta file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg);
+                    LogDebugMessage("Generating FASTA file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg);
                 }
             }
         }
