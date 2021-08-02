@@ -661,15 +661,6 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Job parameters file
-        /// </summary>
-        [Obsolete("Use the version that takes an integer")]
-        public static string JobParametersFilename(string jobNum)
-        {
-            return Global.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
-        }
-
-        /// <summary>
         /// Add/updates the value for the given parameter (searches all sections)
         /// </summary>
         /// <param name="paramName">Parameter name</param>

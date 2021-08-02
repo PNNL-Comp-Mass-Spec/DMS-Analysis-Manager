@@ -392,42 +392,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="directoryPath">Directory to create</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
-        [Obsolete("Use CreateDirectoryWithRetry")]
-        public void CreateFolderWithRetry(string directoryPath)
-        {
-            CreateDirectoryWithRetry(directoryPath);
-        }
-
-        /// <summary>
-        /// Create the directory (if it does not yet exist)
-        /// </summary>
-        /// <param name="directoryPath">Directory to create</param>
-        /// <param name="maxRetryCount">Maximum attempts</param>
-        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        [Obsolete("Use CreateDirectoryWithRetry")]
-        public void CreateFolderWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds)
-        {
-            CreateDirectoryWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds);
-        }
-
-        /// <summary>
-        /// Create the directory (if it does not yet exist)
-        /// </summary>
-        /// <param name="directoryPath">Directory to create</param>
-        /// <param name="maxRetryCount">Maximum attempts</param>
-        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
-        [Obsolete("Use CreateDirectoryWithRetry")]
-        public void CreateFolderWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
-        {
-            CreateDirectoryWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
-        }
-
-        /// <summary>
-        /// Create the directory (if it does not yet exist)
-        /// </summary>
-        /// <param name="directoryPath">Directory to create</param>
-        /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         public void CreateDirectoryWithRetry(string directoryPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
@@ -630,45 +594,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Exception occurred; return False
             return false;
-        }
-
-        /// <summary>
-        /// Check for the existence of a directory, retrying if an error
-        /// </summary>
-        /// <param name="directoryPath">Directory to check</param>
-        /// <returns>True if the directory exists, otherwise false</returns>
-        /// <remarks>Checks up to 3 times, waiting 15 seconds between attempts</remarks>
-        [Obsolete("Use DirectoryExistsWithRetry")]
-        public bool FolderExistsWithRetry(string directoryPath)
-        {
-            return DirectoryExistsWithRetry(directoryPath);
-        }
-
-        /// <summary>
-        /// Check for the existence of a directory, retrying if an error
-        /// </summary>
-        /// <param name="directoryPath">Directory to check</param>
-        /// <param name="maxRetryCount">Maximum attempts</param>
-        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        /// <returns>True if the directory exists, otherwise false</returns>
-        [Obsolete("Use DirectoryExistsWithRetry")]
-        public bool FolderExistsWithRetrX(string directoryPath, int maxRetryCount, int retryHoldoffSeconds)
-        {
-            return DirectoryExistsWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds);
-        }
-
-        /// <summary>
-        /// Check for the existence of a directory, retrying if an error
-        /// </summary>
-        /// <param name="directoryPath">Directory to check</param>
-        /// <param name="maxRetryCount">Maximum attempts</param>
-        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
-        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
-        /// <returns>True if the directory exists, otherwise false</returns>
-        [Obsolete("Use DirectoryExistsWithRetry")]
-        public bool FolderExistsWithRetry(string directoryPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
-        {
-            return DirectoryExistsWithRetry(directoryPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
     }
 }
