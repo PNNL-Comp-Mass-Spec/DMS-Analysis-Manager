@@ -672,7 +672,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         }
 
         /// <summary>
-        /// Update the fasta file name defined in the MSFragger parameter file
+        /// Update the FASTA file name defined in the MSFragger parameter file
         /// In addition, check whether any reporter ions are defined as static or dynamic mods
         /// </summary>
         /// <param name="paramFilePath"></param>
@@ -748,7 +748,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private bool ValidateFastaFile()
         {
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
@@ -758,8 +758,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             if (!fastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                // FASTA file not found
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 

@@ -2015,7 +2015,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool ValidateFastaFile()
         {
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
@@ -2029,8 +2029,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return true;
             }
 
-            // Fasta file not found
-            LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+            // FASTA file not found
+            LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
             return false;
         }
 

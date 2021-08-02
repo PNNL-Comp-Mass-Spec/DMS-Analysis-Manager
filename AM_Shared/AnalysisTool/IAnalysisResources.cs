@@ -16,7 +16,7 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public interface IAnalysisResources
     {
-        #region "Properties"
+        // Ignore Spelling: resourcer
 
         /// <summary>
         /// Status message
@@ -38,10 +38,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Set this to true if we need to abort processing as soon as possible due to a critical error
         /// </summary>
         bool NeedToAbortProcessing { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Initialize class
@@ -67,7 +63,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Call this function to copy files from the working directory to a remote host for remote processing
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
-        /// Plugins should also copy fasta files if appropriate
+        /// Plugins should also copy FASTA files if appropriate
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         bool CopyResourcesToRemote(RemoteTransferUtility transferUtility);
@@ -85,8 +81,5 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="resourceOption">Option to set</param>
         /// <param name="enabled">True or false</param>
         void SetOption(Global.AnalysisResourceOptions resourceOption, bool enabled);
-
-        #endregion
-
     }
 }
