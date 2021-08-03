@@ -51,7 +51,6 @@
   <ItemGroup>
     <Compile Include="AnalysisResourcesPepProtProphet.cs" />
     <Compile Include="AnalysisToolRunnerPepProtProphet.cs" />
-    <Compile Include="FragPipeLibFinder.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MSFraggerOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
