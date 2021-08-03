@@ -497,155 +497,168 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private CloseOutType StartMSFragger()
         {
-            LogMessage("Preparing to run MSFragger");
-
-            // If this job applies to a single dataset, dataPackageID will be 0
-            // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
-            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
-
-            var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
-            RegisterEvents(dataPackageInfo);
-
-            // Customize the path to the FASTA file and the number of threads to use
-            var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath);
-
-            if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
+            try
             {
-                return resultCode;
-            }
+                LogMessage("Preparing to run MSFragger");
 
-            if (string.IsNullOrWhiteSpace(paramFilePath))
-            {
-                LogError("MSFragger parameter file name returned by UpdateMSFraggerParameterFile is empty");
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+                // If this job applies to a single dataset, dataPackageID will be 0
+                // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-            // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
-            var javaProgLoc = GetJavaProgLoc();
-            if (string.IsNullOrEmpty(javaProgLoc))
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+                var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+                RegisterEvents(dataPackageInfo);
 
-            mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
-            {
-                CreateNoWindow = true,
-                CacheStandardOutput = true,
-                EchoOutputToConsole = true,
-                WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT)
-            };
-            RegisterEvents(mCmdRunner);
-            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+                // Customize the path to the FASTA file and the number of threads to use
+                var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath);
 
-            mProgress = (int)ProgressPercentValues.Initializing;
-            ResetProgRunnerCpuUsage();
-
-            var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
-            if (javaMemorySizeMB < 2000)
-                javaMemorySizeMB = 2000;
-
-            LogMessage("Running MSFragger");
-            mProgress = (int)ProgressPercentValues.StartingMSFragger;
-
-            // Set up and execute a program runner to run MSFragger
-            var arguments = new StringBuilder();
-
-            arguments.AppendFormat(" -Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);
-
-            arguments.AppendFormat(" {0}", paramFilePath);
-
-            // Append the .mzML files
-            foreach (var item in dataPackageInfo.DatasetFiles)
-            {
-                arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
-            }
-
-            mDatasetCount = dataPackageInfo.DatasetFiles.Count;
-
-            LogDebug(javaProgLoc + " " + arguments);
-
-            // Start the program and wait for it to finish
-            // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
-
-            if (!mToolVersionWritten)
-            {
-                if (string.IsNullOrWhiteSpace(mMSFraggerVersion))
+                if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    ParseMSFraggerConsoleOutputFile(Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT));
-                }
-                mToolVersionWritten = StoreToolVersionInfo();
-            }
-
-            if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-            {
-                LogError(mConsoleOutputErrorMsg);
-            }
-
-            if (!processingSuccess)
-            {
-                LogError("Error running MSFragger");
-
-                if (mCmdRunner.ExitCode != 0)
-                {
-                    LogWarning("MSFragger returned a non-zero exit code: " + mCmdRunner.ExitCode);
-                }
-                else
-                {
-                    LogWarning("Call to MSFragger failed (but exit code is 0)");
+                    return resultCode;
                 }
 
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            var successCount = 0;
-
-            // Validate that MSFragger created a .pepXML file and a .tsv file for each dataset
-            // Zip each .pepXML file
-            foreach (var item in dataPackageInfo.Datasets)
-            {
-                var datasetName = item.Value;
-
-                var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
-                var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
-
-                string optionalDatasetInfo;
-                if (dataPackageInfo.Datasets.Count > 0)
+                if (string.IsNullOrWhiteSpace(paramFilePath))
                 {
-                    optionalDatasetInfo = "for dataset " + datasetName;
-                }
-                else
-                {
-                    optionalDatasetInfo = string.Empty;
-                }
-
-                if (!pepXmlFile.Exists)
-                {
-                    LogError(string.Format("MSFragger did not create a .pepXML file{0}", optionalDatasetInfo));
+                    LogError("MSFragger parameter file name returned by UpdateMSFraggerParameterFile is empty");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!tsvFile.Exists)
+                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
-                    LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (pepXmlFile.Length == 0)
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
                 {
-                    LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT)
+                };
+                RegisterEvents(mCmdRunner);
+                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+                mProgress = (int)ProgressPercentValues.Initializing;
+                ResetProgRunnerCpuUsage();
+
+                var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
+                if (javaMemorySizeMB < 2000)
+                    javaMemorySizeMB = 2000;
+
+                LogMessage("Running MSFragger");
+                mProgress = (int)ProgressPercentValues.StartingMSFragger;
+
+                // Set up and execute a program runner to run MSFragger
+                var arguments = new StringBuilder();
+
+                arguments.AppendFormat(" -Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);
+
+                arguments.AppendFormat(" {0}", paramFilePath);
+
+                // Append the .mzML files
+                foreach (var item in dataPackageInfo.DatasetFiles)
+                {
+                    arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
                 }
 
-                var zipSuccess = ZipPepXmlFile(this, datasetName, pepXmlFile);
+                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
 
-                if (zipSuccess)
-                    successCount++;
+                LogDebug(javaProgLoc + " " + arguments);
+
+                // Start the program and wait for it to finish
+                // However, while it's running, LoopWaiting will get called via events
+                var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
+
+                if (!mToolVersionWritten)
+                {
+                    if (string.IsNullOrWhiteSpace(mMSFraggerVersion))
+                    {
+                        ParseMSFraggerConsoleOutputFile(Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT));
+                    }
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+
+                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputErrorMsg);
+                }
+
+                if (!processingSuccess)
+                {
+                    LogError("Error running MSFragger");
+
+                    if (mCmdRunner.ExitCode != 0)
+                    {
+                        LogWarning("MSFragger returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        LogWarning("Call to MSFragger failed (but exit code is 0)");
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var successCount = 0;
+
+                // Validate that MSFragger created a .pepXML file and a .tsv file for each dataset
+                // Zip each .pepXML file
+                foreach (var item in dataPackageInfo.Datasets)
+                {
+                    var datasetName = item.Value;
+
+                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
+                    var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
+
+                    string optionalDatasetInfo;
+                    if (dataPackageInfo.Datasets.Count > 0)
+                    {
+                        optionalDatasetInfo = "for dataset " + datasetName;
+                    }
+                    else
+                    {
+                        optionalDatasetInfo = string.Empty;
+                    }
+
+                    if (!pepXmlFile.Exists)
+                    {
+                        LogError(string.Format("MSFragger did not create a .pepXML file{0}", optionalDatasetInfo));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (!tsvFile.Exists)
+                    {
+                        LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
+                    }
+
+                    if (pepXmlFile.Length == 0)
+                    {
+                        LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
+                    }
+
+                    var zipSuccess = ZipPepXmlFile(this, datasetName, pepXmlFile);
+
+                    if (zipSuccess)
+                        successCount++;
+                }
+
+                mStatusTools.UpdateAndWrite(mProgress);
+                LogDebug("MSFragger Search Complete", mDebugLevel);
+
+                return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
+            catch (Exception ex)
+            {
+                LogError("Error in StartMSFragger", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
 
             mStatusTools.UpdateAndWrite(mProgress);
             LogDebug("MSFragger Search Complete", mDebugLevel);
 
-            return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>
