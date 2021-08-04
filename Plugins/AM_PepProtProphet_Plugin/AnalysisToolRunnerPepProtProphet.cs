@@ -1173,6 +1173,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // ReSharper restore StringLiteralTypo
 
                         mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                        mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "CrystalC_ConsoleOutput.txt");
 
                         LogDebug(options.JavaProgLoc + " " + arguments);
 
@@ -1847,6 +1848,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore CommentTypo
 
                 mCmdRunner.WorkDir = mWorkDir;
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "PTMShepherd_ConsoleOutput.txt");
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
 
@@ -2101,6 +2103,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper enable CommentTypo
 
                     mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "RewritePepXml_ConsoleOutput.txt");
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
 
@@ -2211,6 +2214,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         libDirectory.FullName, pepXmlFile.FullName, datasetFile.FullName);
 
                     mCmdRunner.WorkDir = workingDirectory.FullName;
+                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "RewritePepXml_ConsoleOutput.txt");
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
 
