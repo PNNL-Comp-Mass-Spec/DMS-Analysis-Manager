@@ -33,7 +33,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private const string MSFRAGGER_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
 
-        private const string MSFRAGGER_JAR_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.2\MSFragger-3.2.jar";
+        private const string MSFRAGGER_JAR_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.3\MSFragger-3.3.jar";
 
         private const string PEPXML_EXTENSION = ".pepXML";
 

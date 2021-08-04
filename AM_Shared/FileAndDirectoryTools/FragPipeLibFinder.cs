@@ -124,7 +124,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileBatmassIO(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.22.1.jar
+            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -132,7 +132,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "batmass-io-1.22.1.jar"));
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "batmass-io-1.23.4.jar"));
             if (jarFile.Exists)
                 return true;
 
