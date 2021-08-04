@@ -14,6 +14,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMSFraggerPlugIn
@@ -40,8 +41,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private enum ProgressPercentValues
         {
-            Undefined = 0,
-            Initializing = 1,
+            Initializing = 0,
+            VerifyingMzMLFiles = 1,
             StartingMSFragger = 2,
             MSFraggerComplete = 90,
             ProcessingComplete = 99
@@ -190,6 +191,116 @@ namespace AnalysisManagerMSFraggerPlugIn
         {
             var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
             return new Regex(matchPattern, options);
+        }
+
+        private bool MzMLFilesAreCentroided(string javaProgLoc, DataPackageInfo dataPackageInfo)
+        {
+            try
+            {
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = false
+                };
+                RegisterEvents(cmdRunner);
+
+                if (dataPackageInfo.DatasetFiles.Count > 1)
+                    LogMessage("Verifying that the .mzML files are centroided");
+                else
+                    LogMessage("Verifying that the .mzML file is centroided");
+
+                // Set up and execute a program runner to run CheckCentroid
+
+                // Determine the path to Philosopher
+                var philosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
+                if (string.IsNullOrWhiteSpace(philosopherProgLoc))
+                {
+                    return false;
+                }
+
+                var philosopherExe = new FileInfo(philosopherProgLoc);
+
+                var libraryFinder = new FragPipeLibFinder(philosopherExe);
+
+                // Find the fragpipe jar file
+                if (!libraryFinder.FindJarFileFragPipe(out var jarFileFragPipe))
+                    return false;
+
+                // ReSharper disable CommentTypo
+                // ReSharper disable IdentifierTypo
+
+                // Find the Batmass-IO jar file
+                if (!libraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
+                    return false;
+
+                // ReSharper restore CommentTypo
+                // ReSharper restore IdentifierTypo
+
+                const int threadCount = 4;
+
+                // Examine each .mzML file
+
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var item in dataPackageInfo.DatasetFiles)
+                {
+                    var mzMLFile = new FileInfo(Path.Combine(mWorkDir, item.Value));
+                    if (!mzMLFile.Exists)
+                    {
+                        LogError(".mzML file not found: " + mzMLFile.FullName);
+                        return false;
+                    }
+
+                    // ReSharper disable once StringLiteralTypo
+                    var arguments = string.Format(
+                        "java -Xmx4G -cp \"{0};{1}\" com.dmtavt.fragpipe.util.CheckCentroid {2} {3}",
+                        jarFileFragPipe.FullName,
+                        jarFileBatmassIO.FullName,
+                        mzMLFile.FullName,
+                        threadCount);
+
+                    LogDebug(javaProgLoc + " " + arguments);
+
+                    // Start the program and wait for it to finish
+                    var processingSuccess = cmdRunner.RunProgram(javaProgLoc, arguments, "CheckCentroid", true);
+
+                    if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                    {
+                        LogError(mConsoleOutputErrorMsg);
+                        return false;
+                    }
+
+                    if (!processingSuccess)
+                    {
+                        LogError("Error running CheckCentroid");
+
+                        if (cmdRunner.ExitCode != 0)
+                        {
+                            LogWarning("CheckCentroid returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        }
+                        else
+                        {
+                            LogWarning("Call to CheckCentroid failed (but exit code is 0)");
+                        }
+
+                        return false;
+                    }
+
+                    if (cmdRunner.CachedConsoleErrors.Contains("has non-centroid scans"))
+                    {
+                        LogError("CheckCentroid found non-centroided MS2 spectra; MSFragger requires centroided scans");
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MzMLFilesAreCentroided", ex);
+                return false;
+            }
         }
 
         /// <summary>
@@ -525,6 +636,13 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
                 if (string.IsNullOrEmpty(javaProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+
+                // Confirm that the .mzML files have centroided MS2 spectra
+                if (!MzMLFilesAreCentroided(javaProgLoc, dataPackageInfo))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
