@@ -1770,18 +1770,26 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Running Protein Prophet", 2);
 
                 // ReSharper disable CommentTypo
+                // ReSharper disable StringLiteralTypo
 
                 var arguments = new StringBuilder();
 
-                // Closed search without TMT; also, open search:
+                // Closed search without TMT or iTRAQ; also, open search:
                 // --maxppmdiff 2000000 --output combined
 
-                // Closed search, with TMT:
+                // Closed search, with TMT or iTRAQ:
                 // --maxppmdiff 2000000 --minprob 0.9 --output combined
 
-                // ReSharper disable once StringLiteralTypo
-                arguments.Append("--maxppmdiff 2000000 --output combined");
+                arguments.Append("--maxppmdiff 2000000");
 
+                if (options.ReporterIonMode != ReporterIonModes.Disabled && !options.OpenSearch)
+                {
+                    arguments.Append(" --minprob 0.9");
+                }
+
+                arguments.Append(" --output combined");
+
+                // ReSharper restore StringLiteralTypo
                 // ReSharper restore CommentTypo
 
                 foreach (var pepXmlFile in peptideProphetPepXmlFiles)
