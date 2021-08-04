@@ -28,9 +28,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: annot, accmass, batmass-io, bruker, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
+        // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
         // Ignore Spelling: Flammagenitus, fragpipe, freequant, Insilicos, itraq, java, labelquant, mapmods, masswidth, maxppmdiff, minprob, multidir
-        // Ignore Spelling: nocheck, nonparam, peptideprophet, pepxml, plex, ppm, protxml, psm, --ptw, prot, specdir, tmt, --tol, Xmx
+        // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, protxml, psm, psms, --ptw, prot
+        // Ignore Spelling: razorbin, specdir, tdc, tmt, --tol, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
 
         // IonQuant command line arguments

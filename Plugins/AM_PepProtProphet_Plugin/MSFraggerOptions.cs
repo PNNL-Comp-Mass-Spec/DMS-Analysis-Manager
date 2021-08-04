@@ -107,8 +107,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Constructor
         /// </summary>
         /// <param name="jobParams"></param>
-        /// <param name="philosopherExe"></param>
+        /// <param name="philosopherExe">Path to philosopher.exe</param>
         /// <param name="datasetCount"></param>
+        /// <remarks>
+        /// philosopherExe can be null if the LibraryFinder property will not be accessed by the calling method
+        /// </remarks>
         public MSFraggerOptions(IJobParams jobParams, FileInfo philosopherExe, int datasetCount)
         {
             mJobParams = jobParams;

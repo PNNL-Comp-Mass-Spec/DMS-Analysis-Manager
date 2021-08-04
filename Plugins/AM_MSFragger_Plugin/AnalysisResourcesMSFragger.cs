@@ -19,7 +19,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     public class AnalysisResourcesMSFragger : AnalysisResources
     {
-        // Ignore Spelling: Fragger, ParmFile, resourcer
+        // Ignore Spelling: centroided, Fragger, ParmFile, resourcer
 
         /// <summary>
         /// Initialize options
@@ -59,6 +59,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
+                // Furthermore, the .mzML files need to have centroided MS2 spectra
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
                 const bool usingMzML = true;
 

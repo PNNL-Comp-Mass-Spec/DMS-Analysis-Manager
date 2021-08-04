@@ -3877,7 +3877,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Reset the ProgRunner start time and the CPU usage queue
         /// </summary>
-        /// <remarks>Public because used by DtaGenThermoRaw</remarks>
+        /// <remarks>Public because used by DtaGenThermoRaw and other step tools</remarks>
         public void ResetProgRunnerCpuUsage()
         {
             mProgRunnerStartTime = DateTime.UtcNow;

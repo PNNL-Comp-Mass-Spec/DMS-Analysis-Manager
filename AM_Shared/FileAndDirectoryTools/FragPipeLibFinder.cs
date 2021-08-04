@@ -25,6 +25,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-v3-05.exe";
 
+        /// <summary>
+        /// Path to philosopher.exe
+        /// </summary>
         public FileInfo PhilosopherExe { get; }
 
         private DirectoryInfo mFragPipeLibDirectory;
@@ -34,7 +37,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="philosopherExe"></param>
+        /// <param name="philosopherExe">Path to philosopher.exe</param>
         public FragPipeLibFinder(FileInfo philosopherExe)
         {
             PhilosopherExe = philosopherExe;
