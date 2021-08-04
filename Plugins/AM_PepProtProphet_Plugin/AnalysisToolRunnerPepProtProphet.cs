@@ -1051,15 +1051,33 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Running Abacus", 2);
 
                 mCmdRunner.WorkDir = mWorkDir;
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "Abacus_ConsoleOutput.txt");
 
                 var arguments = new StringBuilder();
 
-                arguments.Append("abacus --razor --reprint --tag XXX_");
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                // When Match Between Runs or Open Search is not in use:
+                // --razor --picked --reprint --tag XXX_ --protein
+
+                // Otherwise, exclude --picked, giving:
+                // --razor --reprint --tag XXX_ --protein
+
+                arguments.Append("abacus --razor");
+
+                if (!options.MatchBetweenRuns && !options.OpenSearch)
                 {
-                    arguments.Append(" --labels");
+                    arguments.Append(" --picked");
                 }
+
+                arguments.Append(" --reprint --tag XXX_");
+
+                // Version 15 of FragPipe would append --labels if reporter ions were in use
+                // This has been disabled in version 16
+
+                // if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                // {
+                //     arguments.Append(" --labels");
+                // }
 
                 // Append the experiment group working directory names
 
