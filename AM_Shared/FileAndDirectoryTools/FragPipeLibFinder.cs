@@ -188,6 +188,30 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
+        /// Find the fragpipe .jar file
+        /// </summary>
+        /// <param name="jarFile"></param>
+        /// <returns>True if found, otherwise false</returns>
+        public bool FindJarFileFragPipe(out FileInfo jarFile)
+        {
+            // Typically at c:\dms_programs\MSFragger\fragpipe\lib\fragpipe-16.0.jar
+
+            if (!FindFragPipeLibDirectory(out var libDirectory))
+            {
+                jarFile = null;
+                return false;
+            }
+
+            jarFile = new FileInfo(Path.Combine(libDirectory.FullName, "fragpipe-16.0.jar"));
+            if (jarFile.Exists)
+                return true;
+
+            // ReSharper disable once StringLiteralTypo
+            OnErrorEvent("Fragpipe .jar file not found: " + jarFile.FullName);
+            return false;
+        }
+
+        /// <summary>
         /// Find the Grppr .jar file
         /// </summary>
         /// <param name="jarFile"></param>
