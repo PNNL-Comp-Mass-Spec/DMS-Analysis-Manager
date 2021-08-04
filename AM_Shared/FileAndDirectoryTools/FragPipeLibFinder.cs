@@ -3,13 +3,14 @@ using PRISM;
 
 // ReSharper disable CommentTypo
 // ReSharper disable IdentifierTypo
+// ReSharper disable UnusedMember.Global
 
-namespace AnalysisManagerPepProtProphetPlugIn
+namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     /// <summary>
     /// This class is used to determine paths to FragPipe related directories and .jar files
     /// </summary>
-    internal class FragPipeLibFinder : EventNotifier
+    public class FragPipeLibFinder : EventNotifier
     {
         // Ignore Spelling: batmass-io, bruker, crystalc, fragpipe, grppr, ionquant
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
