@@ -619,6 +619,12 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
                 RegisterEvents(dataPackageInfo);
 
+                if (dataPackageInfo.DatasetFiles.Count == 0)
+                {
+                    LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
                 // Customize the path to the FASTA file and the number of threads to use
                 var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath);
 
