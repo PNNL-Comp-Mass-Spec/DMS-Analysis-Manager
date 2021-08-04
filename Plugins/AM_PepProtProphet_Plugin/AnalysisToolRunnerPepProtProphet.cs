@@ -1948,7 +1948,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunResultsFilter(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunResultsFilter(
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            MSFraggerOptions options,
+            bool usedProteinProphet)
         {
             try
             {
@@ -1957,6 +1960,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var successCount = 0;
 
                 var arguments = new StringBuilder();
+
+                var razorBinFilePath = Path.Combine(experimentGroupWorkingDirectories.Values.First().FullName, @".meta\razor.bin");
 
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
@@ -1990,8 +1995,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     arguments.AppendFormat(" --pepxml {0}", experimentGroupDirectory.FullName);
 
-                    // ReSharper disable once StringLiteralTypo
-                    arguments.AppendFormat(" --protxml {0}", Path.Combine(experimentGroupDirectory.FullName, "combined.prot.xml"));
+                    if (usedProteinProphet)
+                    {
+                        // ReSharper disable StringLiteralTypo
+
+                        arguments.AppendFormat(" --protxml {0}", Path.Combine(experimentGroupDirectory.FullName, "combined.prot.xml"));
+
+                        // Each invocation of filter uses the same razor.bin file
+                        arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
+
+                        // ReSharper restore StringLiteralTypo
+                    }
 
                     var success = RunPhilosopher(PhilosopherToolType.ResultsFilter, arguments.ToString(), "filter results", experimentGroupDirectory.FullName);
 
