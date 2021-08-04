@@ -15,6 +15,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         // Ignore Spelling: batmass-io, bruker, crystalc, fragpipe, grppr, ionquant
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
+        /// <summary>
+        /// Relative path to philosopher.exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
+        /// </summary>
+        public const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
         public FileInfo PhilosopherExe { get; }
 
         private DirectoryInfo mFragPipeLibDirectory;

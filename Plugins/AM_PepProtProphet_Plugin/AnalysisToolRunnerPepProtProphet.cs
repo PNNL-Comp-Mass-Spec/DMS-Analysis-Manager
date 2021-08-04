@@ -64,8 +64,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private const string PEPXML_EXTENSION = ".pepXML";
 
-        private const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
-
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
         private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-2.4.0.jar";
@@ -152,7 +150,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mFastaFilePath = string.Empty;
 
                 // Determine the path to Philosopher
-                mPhilosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", PHILOSOPHER_RELATIVE_PATH);
+
+                mPhilosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
 
                 mTmtIntegratorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", TMT_INTEGRATOR_JAR_RELATIVE_PATH);
 
