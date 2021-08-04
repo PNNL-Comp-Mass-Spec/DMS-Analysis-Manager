@@ -242,6 +242,7 @@ xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DotNetZip.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Npgsql.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PdfSharp.Charting.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PdfSharp.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
