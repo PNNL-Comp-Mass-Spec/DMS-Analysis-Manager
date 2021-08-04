@@ -1792,11 +1792,31 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore StringLiteralTypo
                 // ReSharper restore CommentTypo
 
-                foreach (var pepXmlFile in peptideProphetPepXmlFiles)
+                if (peptideProphetPepXmlFiles.Count > 1)
                 {
-                    arguments.AppendFormat(" {0}", pepXmlFile.FullName);
+                    // Create a text file listing the .pep.xml files, one per line (thus reducing the length of the command line)
+                    var fileListFile = new FileInfo(Path.Combine(mWorkDir, "filelist_proteinprophet.txt"));
+
+                    using (var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        foreach (var pepXmlFile in peptideProphetPepXmlFiles)
+                        {
+                            writer.WriteLine(pepXmlFile.FullName);
+                        }
+                    }
+
+                    arguments.AppendFormat(" {0}", fileListFile.FullName);
+                }
+                else
+                {
+                    // Simply append the .pep.xml file name
+                    foreach (var pepXmlFile in peptideProphetPepXmlFiles)
+                    {
+                        arguments.AppendFormat(" {0}", pepXmlFile.FullName);
+                    }
                 }
 
+                // ReSharper disable CommentTypo
                 return RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run protein prophet");
             }
             catch (Exception ex)
