@@ -1817,6 +1817,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // ReSharper disable CommentTypo
+
+                // Note that Protein Prophet creates a subdirectory named 6c436c4-ccee-42bd-b2e7-cc9e23e14ab5 below the user's temp directory
+                // Inside this directory, files batchcoverage.exe and DatabaseParser.exe are created
+                // When Protein Prophet finishes, these files are deleted
+                // Antivirus scanning processes sometimes lock these files, preventing their deletion, leading to errors like these:
+
+                // ERRO[16:24:59] remove C:\Users\D3L243\AppData\Local\Temp\06c436c4-ccee-42bd-b2e7-cc9e23e14ab5\batchcoverage.exe: The process cannot access the file because it is being used by another process.
+                // ERRO[16:25:43] remove C:\Users\D3L243\AppData\Local\Temp\06c436c4-ccee-42bd-b2e7-cc9e23e14ab5\DatabaseParser.exe: The process cannot access the file because it is being used by another process.
+
+                // These errors can be safely ignored
+
+                // ReSharper restore CommentTypo
+
                 return RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run protein prophet");
             }
             catch (Exception ex)
