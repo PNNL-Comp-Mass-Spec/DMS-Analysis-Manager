@@ -39,8 +39,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         // ReSharper restore CommentTypo
 
+        private const string JAVA_CONSOLE_OUTPUT = "Java_ConsoleOutput.txt";
+
         private const string PHILOSOPHER_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
         private const string PHILOSOPHER_CONSOLE_OUTPUT_COMBINED = "Philosopher_ConsoleOutput_Combined.txt";
+
+        private const string PERCOLATOR_CONSOLE_OUTPUT = "Percolator_ConsoleOutput.txt";
+        private const string PERCOLATOR_CONSOLE_OUTPUT_COMBINED = "Percolator_ConsoleOutput_Combined.txt";
 
         // ReSharper disable IdentifierTypo
 
@@ -112,6 +117,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // Populate this with a tool version reported to the console
         private string mPhilosopherVersion;
 
+        private string mPercolatorProgLoc;
         private string mPhilosopherProgLoc;
         private string mTmtIntegratorProgLoc;
 
@@ -149,7 +155,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mFastaFilePath = string.Empty;
 
-                // Determine the path to Philosopher
+                // Determine the path to Percolator, Philosopher, and TMT Integrator
+
+                mPercolatorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PERCOLATOR_RELATIVE_PATH);
 
                 mPhilosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
 
@@ -261,26 +269,58 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.CrystalCComplete;
                 }
 
+                bool psmValidationSuccess;
+                List<FileInfo> peptideProphetPepXmlFiles;
 
-                // Run Peptide Prophet
-                var peptideProphetSuccess = RunPeptideProphet(
-                    dataPackageInfo,
-                    datasetIDsByExperimentGroup,
-                    experimentGroupWorkingDirectories,
-                    options,
-                    out var peptideProphetPepXmlFiles);
+                if (options.MS1ValidationMode == MS1ValidationModes.PeptideProphet)
+                {
+                    // Run Peptide Prophet
+                    psmValidationSuccess = RunPeptideProphet(
+                        dataPackageInfo,
+                        datasetIDsByExperimentGroup,
+                        experimentGroupWorkingDirectories,
+                        options,
+                        out peptideProphetPepXmlFiles);
+                }
+                else if (options.MS1ValidationMode == MS1ValidationModes.Percolator)
+                {
+                    // Run Percolator
+                    psmValidationSuccess = RunPercolator(
+                        dataPackageInfo,
+                        datasetIDsByExperimentGroup,
+                        experimentGroupWorkingDirectories,
+                        options,
+                        out peptideProphetPepXmlFiles);
+                }
+                else
+                {
+                    peptideProphetPepXmlFiles = new List<FileInfo>();
+                    psmValidationSuccess = true;
+                }
 
-                if (!peptideProphetSuccess)
+                if (!psmValidationSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 mProgress = (int)ProgressPercentValues.PeptideProphetComplete;
 
-                // Run Protein Prophet
-                var proteinProphetSuccess = RunProteinProphet(peptideProphetPepXmlFiles);
-                if (!proteinProphetSuccess)
-                    return CloseOutType.CLOSEOUT_FAILED;
 
-                mProgress = (int)ProgressPercentValues.ProteinProphetComplete;
+                bool usedProteinProphet;
+
+                if (peptideProphetPepXmlFiles.Count > 0)
+                {
+                    // Run Protein Prophet
+                    var proteinProphetSuccess = RunProteinProphet(peptideProphetPepXmlFiles, options);
+                    if (!proteinProphetSuccess)
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    mProgress = (int)ProgressPercentValues.ProteinProphetComplete;
+
+                    usedProteinProphet = true;
+                }
+                else
+                {
+                    usedProteinProphet = false;
+                }
 
                 var dbAnnotateSuccess = RunDatabaseAnnotation(experimentGroupWorkingDirectories);
                 if (!dbAnnotateSuccess)
@@ -288,7 +328,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.DBAnnotationComplete;
 
-                var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options);
+                var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options, usedProteinProphet);
                 if (!filterSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -361,9 +401,61 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in PostProcessMSFraggerResults", ex);
+                LogError("Error in ExecuteWorkflow", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        /// <summary>
+        /// Convert the output from Percolator to .pep.xml
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="fragPipeLibDirectory"></param>
+        /// <param name="experimentGroupDirectory"></param>
+        /// <param name="datasetName"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ConvertPercolatorOutputToPepXML(
+            MSFraggerOptions options,
+            FileSystemInfo fragPipeLibDirectory,
+            FileSystemInfo experimentGroupDirectory, string datasetName)
+        {
+            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+
+            // ReSharper disable StringLiteralTypo
+
+            var arguments = string.Format(
+                "-cp {0}/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML " +
+                "{1}.pin " +
+                "{1} " +
+                "{1}_percolator_target_psms.tsv " +
+                "{1}_percolator_decoy_psms.tsv " +
+                "interact-{0} " +
+                "DDA",
+                fragPipeLibDirectory.FullName,
+                datasetName);
+
+            // ReSharper restore StringLiteralTypo
+
+            LogDebug(options.JavaProgLoc + " " + arguments);
+
+            var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Java", true);
+
+            if (processingSuccess)
+            {
+                return true;
+            }
+
+            if (mCmdRunner.ExitCode != 0)
+            {
+                LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
+            }
+            else
+            {
+                LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -1480,6 +1572,119 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private bool RunPercolator(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            MSFraggerOptions options,
+            out List<FileInfo> peptideProphetPepXmlFiles)
+        {
+            peptideProphetPepXmlFiles = new List<FileInfo>();
+
+            try
+            {
+                mJobParams.AddResultFileToSkip(JAVA_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip(PERCOLATOR_CONSOLE_OUTPUT);
+
+                if (!options.LibraryFinder.FindFragPipeLibDirectory(out var fragPipeLibDirectory))
+                    return false;
+
+                var successCount = 0;
+
+                // Run percolator on each dataset
+
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+
+                    LogDebug("Running Percolator in " + experimentGroupDirectory.FullName);
+
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                        var percolatorSuccess = RunPercolator(experimentGroupDirectory, datasetName, out var percolatorPsmFiles);
+                        if (!percolatorSuccess)
+                            continue;
+
+                        var percolatorToPepXMLSuccess = ConvertPercolatorOutputToPepXML(options, fragPipeLibDirectory, experimentGroupDirectory, datasetName);
+                        if (!percolatorToPepXMLSuccess)
+                            continue;
+
+                        foreach (var psmFile in percolatorPsmFiles)
+                        {
+                            try
+                            {
+                                if (psmFile.Exists)
+                                    psmFile.Delete();
+                            }
+                            catch (Exception ex)
+                            {
+                                LogWarning(string.Format("Error deleting {0}: {1}", psmFile.FullName, ex.Message));
+                            }
+                        }
+
+                        successCount++;
+                    }
+                }
+
+                return successCount == dataPackageInfo.Datasets.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunPercolator", ex);
+                return false;
+            }
+        }
+
+        private bool RunPercolator(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
+        {
+            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
+
+            // ReSharper disable StringLiteralTypo
+
+            var targetPsmFile = string.Format("{0}_percolator_target_psms.tsv", datasetName);
+            var decoyPsmFile = string.Format("{0}_percolator_decoy_psms.tsv", datasetName);
+
+            var arguments = string.Format(
+                "--only-psms --no-terminate --post-processing-tdc --num-threads 4 " +
+                "--results-psms {1} " +
+                "--decoy-results-psms {2} " +
+                "{0}.pin",
+                datasetName,
+                targetPsmFile,
+                decoyPsmFile);
+
+            // ReSharper restore StringLiteralTypo
+
+            percolatorPsmFiles = new List<FileInfo>
+            {
+                new(Path.Combine(mCmdRunner.WorkDir, targetPsmFile)),
+                new(Path.Combine(mCmdRunner.WorkDir, decoyPsmFile))
+            };
+
+            LogDebug(mPercolatorProgLoc + " " + arguments);
+
+            var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
+
+            if (processingSuccess)
+            {
+                return true;
+            }
+
+            if (mCmdRunner.ExitCode != 0)
+            {
+                LogWarning("Percolator returned a non-zero exit code: " + mCmdRunner.ExitCode);
+            }
+            else
+            {
+                LogWarning("Call to Percolator failed (but exit code is 0)");
+            }
+
+            return false;
+        }
+
         private bool RunPhilosopher(PhilosopherToolType toolType, string arguments, string currentTask, string workingDirectoryPath = "")
         {
             try
@@ -1533,7 +1738,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunProteinProphet(IEnumerable<FileInfo> peptideProphetPepXmlFiles)
+        /// <summary>
+        /// Run protein prophet
+        /// </summary>
+        /// <param name="peptideProphetPepXmlFiles">List of .pep.xml files created by peptide prophet</param>
+        /// <param name="options"></param>
+        private bool RunProteinProphet(ICollection<FileInfo> peptideProphetPepXmlFiles, MSFraggerOptions options)
         {
             try
             {

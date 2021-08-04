@@ -19,6 +19,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Relative path to philosopher.exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
         public const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
+
+        /// <summary>
+        /// Relative path to the percolator .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
+        /// </summary>
+        public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-v3-05.exe";
+
         public FileInfo PhilosopherExe { get; }
 
         private DirectoryInfo mFragPipeLibDirectory;

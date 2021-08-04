@@ -9,6 +9,13 @@ using PRISM;
 
 namespace AnalysisManagerPepProtProphetPlugIn
 {
+    public enum MS1ValidationModes
+    {
+        Disabled = 0,
+        PeptideProphet = 1,
+        Percolator = 2
+    }
+
     public enum ReporterIonModes
     {
         Disabled = 0,
@@ -78,6 +85,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIonQuant { get; set; }
 
         /// <summary>
+        /// Whether to run PeptideProphet, Percolator, or nothing
+        /// </summary>
+        /// <remarks>Defaults to PeptideProphet, but auto-set to Percolator if MatchBetweenRuns is true or TMT is in use</remarks>
+        public MS1ValidationModes MS1ValidationMode { get; set; }
+
+        /// <summary>
+        /// True when the MS1 validation mode was auto-defined (since job parameters RunPeptideProphet and/or RunPercolator were not present)
+        /// </summary>
+        public bool MS1ValidationModeAutoDefined { get; }
+
+        /// <summary>
         /// Whether to run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
@@ -104,6 +122,39 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             MatchBetweenRuns = mJobParams.GetJobParameter("MatchBetweenRuns", true);
 
+            var runPeptideProphetValue = mJobParams.GetJobParameter("RunPeptideProphet", string.Empty);
+            var runPercolatorValue = mJobParams.GetJobParameter("RunPercolator", string.Empty);
+
+            if (IsUndefinedOrAuto(runPeptideProphetValue) && IsUndefinedOrAuto(runPercolatorValue))
+            {
+                // Use Percolator if Match Between Runs is enabled, otherwise use Peptide Prophet
+                // This value will get updated by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
+                MS1ValidationMode = MatchBetweenRuns ? MS1ValidationModes.Percolator : MS1ValidationModes.PeptideProphet;
+
+                MS1ValidationModeAutoDefined = true;
+            }
+            else
+            {
+                var runPeptideProphet = !string.IsNullOrWhiteSpace(runPeptideProphetValue) && bool.Parse(runPeptideProphetValue);
+
+                var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorValue) && bool.Parse(runPercolatorValue);
+
+                if (runPercolator)
+                {
+                    MS1ValidationMode = MS1ValidationModes.Percolator;
+                }
+                else if (runPeptideProphet)
+                {
+                    MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+                }
+                else
+                {
+                    MS1ValidationMode = MS1ValidationModes.Disabled;
+                }
+
+                MS1ValidationModeAutoDefined = false;
+            }
+
             RunAbacus = mJobParams.GetJobParameter("RunAbacus", true);
 
             var ms1QuantDisabled = mJobParams.GetJobParameter("MS1QuantDisabled", false);
@@ -115,7 +166,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             else
             {
-                var runFreeQuant= mJobParams.GetJobParameter("RunFreeQuant", false);
+                var runFreeQuant = mJobParams.GetJobParameter("RunFreeQuant", false);
 
                 if (datasetCount > 1)
                 {
@@ -348,6 +399,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
+        /// Return true if the value is an empty string or the word "auto"
+        /// </summary>
+        /// <param name="value"></param>
+        private bool IsUndefinedOrAuto(string value)
+        {
+            return string.IsNullOrWhiteSpace(value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <param name="paramFilePath"></param>
@@ -407,10 +467,31 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Wide, Dalton-based tolerances
                     // Assume open search
                     OpenSearch = true;
+
+                    // Always use PeptideProphet with open searches
+                    if (MS1ValidationModeAutoDefined && MS1ValidationMode == MS1ValidationModes.Percolator)
+                    {
+                        MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+                    }
                 }
                 else
                 {
                     OpenSearch = false;
+
+                    if (MS1ValidationMode != MS1ValidationModes.Disabled && !MS1ValidationModeAutoDefined)
+                    {
+                        if (MS1ValidationMode == MS1ValidationModes.Percolator &&
+                            ReporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
+                        {
+                            MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+                        }
+
+                        if (MS1ValidationMode == MS1ValidationModes.PeptideProphet &&
+                            ReporterIonMode is ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16)
+                        {
+                            MS1ValidationMode = MS1ValidationModes.Percolator;
+                        }
+                    }
                 }
 
                 return !string.IsNullOrWhiteSpace(JavaProgLoc);
