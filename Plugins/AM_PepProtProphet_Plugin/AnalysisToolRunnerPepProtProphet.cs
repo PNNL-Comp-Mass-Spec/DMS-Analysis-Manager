@@ -304,6 +304,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.PeptideProphetComplete;
 
+                if (options.OpenSearch)
+                {
+                    // ToDo: Possibly run PTM Prophet
+                }
 
                 bool usedProteinProphet;
 
@@ -1368,6 +1372,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
                     }
+
+                    // ToDo: Switch to using filelist_ionquant.txt
+
+                    //  --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
 
                     arguments.AppendFormat(" --multidir . --specdir {0}", mWorkDir);
 

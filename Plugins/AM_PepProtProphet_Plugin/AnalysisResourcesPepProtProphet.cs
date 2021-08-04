@@ -121,6 +121,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return datasetCopyResult;
                 }
 
+                if (dataPackageID > 0)
+                {
+                    // Look for a file named AliasNames.txt in the data package directory
+                    // If found, copy it locally
+                    // If not found, it will be auto-generated during the LabelQuant step
+
+                    // ToDo: base.Retrieve
+                }
+
                 currentTask = "GetPepXMLFiles";
 
                 var pepXmlResultCode = GetPepXMLFiles(dataPackageInfo);
