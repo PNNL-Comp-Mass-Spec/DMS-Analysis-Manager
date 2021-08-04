@@ -412,7 +412,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             // ReSharper restore CommentTypo
 
-            const int FIRST_SEARCH_START = 2;
+            const int FIRST_SEARCH_START = (int)ProgressPercentValues.StartingMSFragger + 1;
             const int FIRST_SEARCH_DONE = 44;
 
             const int MAIN_SEARCH_START = 50;
@@ -420,7 +420,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             var processingSteps = new SortedList<Regex, int>
             {
-                { GetRegEx("^JVM started"), 1},
+                { GetRegEx("^JVM started"), (int)ProgressPercentValues.StartingMSFragger},
                 { GetRegEx(@"^\*+FIRST SEARCH\*+"), FIRST_SEARCH_START},
                 { GetRegEx(@"^\*+FIRST SEARCH DONE"), FIRST_SEARCH_DONE},
                 { GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+"), FIRST_SEARCH_DONE + 1},
@@ -640,6 +640,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                mProgress = (int)ProgressPercentValues.VerifyingMzMLFiles;
+                ResetProgRunnerCpuUsage();
 
                 // Confirm that the .mzML files have centroided MS2 spectra
                 if (!MzMLFilesAreCentroided(javaProgLoc, dataPackageInfo))
@@ -657,9 +659,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                 };
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-                mProgress = (int)ProgressPercentValues.Initializing;
-                ResetProgRunnerCpuUsage();
 
                 var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
                 if (javaMemorySizeMB < 2000)
@@ -772,11 +771,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                 LogError("Error in StartMSFragger", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-        }
-
-            mStatusTools.UpdateAndWrite(mProgress);
-            LogDebug("MSFragger Search Complete", mDebugLevel);
-
         }
 
         /// <summary>
