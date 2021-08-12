@@ -1490,6 +1490,9 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
+                var dmsConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+                var proteinSeqsDBConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, mMgrName);
+
                 // Lookup the MSGFPlus Index Folder path
                 var msgfPlusIndexFilesDirPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
                 if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathLegacyDB))
@@ -1509,7 +1512,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Make sure the original FASTA file has already been split into the appropriate number parts
                 // and that DMS knows about them
                 mSplitFastaFileUtility = new SplitFastaFileUtilities(
-                    dmsConnectionString, proteinSeqsDBConnectionString,
+                    dmsConnectionStringToUse, proteinSeqsDBConnectionStringToUse,
                     numberOfClonedSteps, mMgrName, TraceMode, mFileCopyUtilities);
 
                 RegisterEvents(mSplitFastaFileUtility);
@@ -1898,7 +1901,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
         /// <param name="dataPackageID">Data Package ID</param>
         /// <returns>Storage path if successful, empty path if an error or unknown data package</returns>
-        protected static string GetDataPackageStoragePath(string connectionString, int dataPackageID)
+        protected string GetDataPackageStoragePath(string connectionString, int dataPackageID)
         {
             var sqlStr = new StringBuilder();
 
@@ -1906,7 +1909,9 @@ namespace AnalysisManagerBase.AnalysisTool
             sqlStr.Append("From V_DMS_Data_Packages ");
             sqlStr.Append("Where ID = " + dataPackageID);
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: false);
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
             if (!success)
@@ -3033,7 +3038,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             return DataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
@@ -3061,7 +3068,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             return DataPackageInfoLoader.LoadDataPackageJobInfo(dbTools, dataPackageID, out dataPackageJobs);
@@ -3118,7 +3127,9 @@ namespace AnalysisManagerBase.AnalysisTool
             // Gigasax.DMS5
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
-            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
@@ -3191,7 +3202,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Results, as a list of columns (first row only if multiple rows)
 
-                var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var legacyDbSize);
@@ -4507,7 +4520,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);

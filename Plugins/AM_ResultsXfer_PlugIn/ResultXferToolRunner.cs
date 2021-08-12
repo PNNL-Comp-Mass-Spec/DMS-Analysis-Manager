@@ -77,7 +77,9 @@ namespace AnalysisManagerResultsXferPlugin
         {
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionString);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
+            var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionStringToUse);
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
@@ -86,7 +88,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             datasetStoragePath = datasetStorageVolServer;
 
-            var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionString);
+            var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionStringToUse);
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferDirectoryPath);

@@ -186,12 +186,14 @@ namespace AnalysisManagerMSPathFinderPlugin
                     // Gigasax.DMS_Pipeline
                     var dmsConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
+                    var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
                     var sql = " SELECT Input_Folder_Name " +
                               " FROM T_Job_Steps" +
                               " WHERE Job = " + mJob + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
                               " ORDER by Step_Number DESC";
 
-                    var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+                    var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                     RegisterEvents(dbTools);
 
                     var success = Global.GetQueryResultsTopRow(dbTools, sql, out var inputFolderNameFromDB);

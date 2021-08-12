@@ -563,7 +563,9 @@ namespace MASIC_ReporterIonObsStatsUploader
                 Console.WriteLine();
                 OnStatusEvent(string.Format("Pushing stats into DMS for Job {0}, Dataset {1}", jobNumber, datasetName));
 
-                var dbTools = DbToolsFactory.GetDBTools(Options.ConnectionString, debugMode: Options.VerboseMode);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(Options.ConnectionString, "ReporterIonStatsUploader");
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: Options.VerboseMode);
                 dbTools.DebugEvent += ProcedureExecutor_DebugEvent;
                 dbTools.StatusEvent += ProcedureExecutor_StatusEvent;
                 dbTools.WarningEvent += ProcedureExecutor_WarningEvent;

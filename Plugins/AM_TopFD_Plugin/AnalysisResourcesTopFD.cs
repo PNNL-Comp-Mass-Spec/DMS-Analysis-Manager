@@ -172,6 +172,8 @@ namespace AnalysisManagerTopFDPlugIn
                 // Data Source=gigasax;Initial Catalog=DMS_Pipeline
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
+                var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
                 // Part 1: Find other TopFD jobs for this dataset
                 var jobStepsQuery = "SELECT Job, Tool_Version, Output_Folder " +
                                     "FROM V_Job_Steps_History_Export " +
@@ -180,7 +182,7 @@ namespace AnalysisManagerTopFDPlugIn
                                     "      State = 5 " +
                                     "ORDER BY Job Desc";
 
-                var dbToolsDMSPipeline = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: mMgrParams.TraceMode);
+                var dbToolsDMSPipeline = DbToolsFactory.GetDBTools(brokerDbConnectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbToolsDMSPipeline);
 
                 var successForJobs = dbToolsDMSPipeline.GetQueryResults(jobStepsQuery, out var jobStepsResults);
@@ -259,13 +261,15 @@ namespace AnalysisManagerTopFDPlugIn
                 // Data Source=gigasax;Initial Catalog=DMS5
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
                 // Part 2: Determine the settings files for the jobs in jobCandidates
                 var settingsFileQuery = "SELECT Job, SettingsFileName " +
                                         "FROM V_Analysis_Job_Export_DataPkg " +
                                         "WHERE Job in (" + jobList + ") " +
                                         "ORDER BY Job Desc";
 
-                var dbToolsDMS = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: mMgrParams.TraceMode);
+                var dbToolsDMS = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbToolsDMS);
 
                 var successForSettingsFiles = dbToolsDMS.GetQueryResults(settingsFileQuery, out var settingsFileResults);

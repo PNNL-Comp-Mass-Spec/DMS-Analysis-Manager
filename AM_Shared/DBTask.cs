@@ -143,10 +143,10 @@ namespace AnalysisManagerBase
             ManagerName = mMgrParams.ManagerName;
 
             // Gigasax.DMS5
-            mConnStr = mMgrParams.GetParam("ConnectionString");
+            mConnStr = DbToolsFactory.AddApplicationNameToConnectionString(mMgrParams.GetParam("ConnectionString"), ManagerName);
 
             // Gigasax.DMS_Pipeline
-            mBrokerConnStr = mMgrParams.GetParam("BrokerConnectionString");
+            mBrokerConnStr = DbToolsFactory.AddApplicationNameToConnectionString(mMgrParams.GetParam("BrokerConnectionString"), ManagerName);
 
             mDebugLevel = debugLvl;
 

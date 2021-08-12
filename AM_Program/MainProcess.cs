@@ -21,6 +21,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerProg
 {
@@ -2832,6 +2833,7 @@ namespace AnalysisManagerProg
 
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
 
             float brokerDbStatusUpdateIntervalMinutes = mMgrParams.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
@@ -2847,7 +2849,7 @@ namespace AnalysisManagerProg
             var messageQueueTopicMgrStatus = mMgrParams.GetParam("MessageQueueTopicMgrStatus");
 
             statusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, mMgrDirectoryPath);
-            statusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
+            statusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, connectionStringToUse, brokerDbStatusUpdateIntervalMinutes);
             statusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
         }
 

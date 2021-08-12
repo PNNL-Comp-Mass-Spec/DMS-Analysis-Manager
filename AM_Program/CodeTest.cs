@@ -1254,7 +1254,9 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, true);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_TestRunQuery");
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, true);
             RegisterEvents(dbTools);
 
             dbTools.GetQueryResultsDataTable(sqlStr, out var results, retryCount);
@@ -1275,7 +1277,9 @@ namespace AnalysisManagerProg
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, timeoutSeconds, debugMode: true);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_TestRunSP");
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, debugMode: true);
             RegisterEvents(dbTools);
 
             var cmd = dbTools.CreateCommand("GetJobStepParamsAsTable", CommandType.StoredProcedure);

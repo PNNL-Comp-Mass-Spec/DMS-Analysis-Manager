@@ -192,9 +192,11 @@ namespace AnalysisManagerBase.DataFileTools
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mResourceClass.MgrParams.GetParam("BrokerConnectionString");
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mResourceClass.MgrParams.ManagerName);
+
             var dataPackageID = mResourceClass.JobParams.GetJobParameter("DataPackageID", -1);
 
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: mResourceClass.TraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mResourceClass.TraceMode);
             RegisterEvents(dbTools);
 
             var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, mResourceClass);

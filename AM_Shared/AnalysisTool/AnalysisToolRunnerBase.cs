@@ -1798,6 +1798,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 return currentDebugLevel;
             }
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, managerName);
+
             var sqlQuery =
                 "SELECT ParameterName, ParameterValue " +
                 "FROM V_MgrParams " +
@@ -1805,7 +1807,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var callingFunctions = Global.AppendToComment(callingFunction, "GetManagerDebugLevel");
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: false);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: false);
 
             var success = dbTools.GetQueryResults(sqlQuery, out var mgrParamsFromDb, callingFunction: callingFunctions);
 
@@ -2313,7 +2315,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             return DataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
@@ -2342,7 +2346,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 return new List<DataPackageJobInfo>();
             }
 
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             return DataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(dbTools, dataPackageID, out additionalJobs, out errorMsg);

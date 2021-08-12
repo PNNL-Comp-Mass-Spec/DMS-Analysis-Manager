@@ -202,9 +202,11 @@ namespace AnalysisManagerIDPickerPlugIn
                 return string.Empty;
             }
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
             var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
 
-            var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: TraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var orgDbNameForJob);

@@ -837,7 +837,9 @@ namespace AnalysisManagerQCARTPlugin
                 // Gigasax.DMS5
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
-                var dbTools = DbToolsFactory.GetDBTools(dmsConnectionString, debugMode: mMgrParams.TraceMode);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbTools);
 
                 // Get a table to hold the results of the query

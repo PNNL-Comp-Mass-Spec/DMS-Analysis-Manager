@@ -625,12 +625,15 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
                 var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);

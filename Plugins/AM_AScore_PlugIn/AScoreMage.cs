@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -210,9 +211,11 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="jobsToProcess"></param>
         private void ApplyAScoreToJobs(ISinkModule jobsToProcess)
         {
-            var connStr = mMgrParams.RequireMgrParam("ConnectionString");
+            var connectionString = mMgrParams.RequireMgrParam("ConnectionString");
 
-            var ascoreModule = new MageAScoreModule(connStr);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
+
+            var ascoreModule = new MageAScoreModule(connectionStringToUse);
 
             ascoreModule.ErrorEvent += OnErrorEvent;
             ascoreModule.WarningEvent += OnWarningEvent;

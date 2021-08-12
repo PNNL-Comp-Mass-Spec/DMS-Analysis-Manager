@@ -133,9 +133,11 @@ namespace AnalysisManagerProg
                     return;
                 }
 
-                ShowTrace("AckManagerUpdateRequired using " + connectionString);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+                ShowTrace("AckManagerUpdateRequired using " + connectionStringToUse);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution
@@ -358,7 +360,9 @@ namespace AnalysisManagerProg
             // Gigasax.DMS_Pipeline
             var connectionString = GetParam("BrokerConnectionString");
 
-            ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionString);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+
+            ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionStringToUse);
 
             // Construct the SQL to obtain the information:
             //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
@@ -373,7 +377,7 @@ namespace AnalysisManagerProg
             ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Query the database
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount);
@@ -390,8 +394,10 @@ namespace AnalysisManagerProg
             if (queryResults.Count < 1)
             {
                 // No data was returned
-                var statusMessage = "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " +
-                                    connectionString;
+                var statusMessage = string.Format(
+                    "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using {0}",
+                    connectionStringToUse);
+
                 ReportError(statusMessage, false);
                 return false;
             }

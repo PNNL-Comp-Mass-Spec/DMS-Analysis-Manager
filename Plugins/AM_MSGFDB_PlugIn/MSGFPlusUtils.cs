@@ -3090,7 +3090,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 const int retryCount = 2;
 
-                var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbTools);
 
                 // Get a table to hold the results of the query

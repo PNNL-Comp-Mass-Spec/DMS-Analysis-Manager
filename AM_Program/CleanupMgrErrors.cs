@@ -533,7 +533,9 @@ namespace AnalysisManagerProg
             {
                 failureMessage ??= string.Empty;
 
-                var dbTools = DbToolsFactory.GetDBTools(mMgrConfigDBConnectionString, debugMode: mTraceMode);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mMgrConfigDBConnectionString, mManagerName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
                 // Set up the command object prior to SP execution

@@ -8,6 +8,8 @@ namespace AnalysisManager_AScore_PlugIn
     {
         private readonly IMgrParams mMgrParams;
 
+        public string ManagerName => mMgrParams.ManagerName;
+
         public bool TraceMode => mMgrParams.TraceMode;
 
         public ManagerParameters(IMgrParams mgrParams)

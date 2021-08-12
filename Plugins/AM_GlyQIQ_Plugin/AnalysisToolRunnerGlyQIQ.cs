@@ -519,7 +519,9 @@ namespace AnalysisManagerGlyQIQPlugin
                         connectionString = dmsConnectionStringOverride;
                     }
 
-                    mStoredProcedureExecutor = DbToolsFactory.GetDBTools(strConnectionString, debugMode: TraceMode);
+                    var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
+                    mStoredProcedureExecutor = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                     RegisterEvents(mStoredProcedureExecutor);
 
                     UnregisterEventHandler((EventNotifier)mStoredProcedureExecutor, BaseLogger.LogLevels.ERROR);

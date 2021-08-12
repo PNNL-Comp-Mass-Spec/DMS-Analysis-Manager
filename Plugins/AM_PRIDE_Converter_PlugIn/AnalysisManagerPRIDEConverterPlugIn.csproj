@@ -74,6 +74,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="PRISM-DatabaseUtils">
+      <Version>1.1.9</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.6.29</Version>
     </PackageReference>

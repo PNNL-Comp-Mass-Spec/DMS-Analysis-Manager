@@ -53,11 +53,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
             var dataPkgId = mJobParams.GetJobParameter("DataPackageID", -1);
 
             // additionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 
-            var dbTools = DbToolsFactory.GetDBTools(brokerDbConnectionString, debugMode: TraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             var dataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPkgId);

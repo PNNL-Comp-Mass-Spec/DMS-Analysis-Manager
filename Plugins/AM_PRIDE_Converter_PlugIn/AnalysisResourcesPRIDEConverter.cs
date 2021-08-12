@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
@@ -443,6 +444,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 var connectionString = mMgrParams.GetParam("BrokerConnectionString");
+
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
                 var dataPackageStoragePath = GetDataPackageStoragePath(connectionString, dataPackageID);
 

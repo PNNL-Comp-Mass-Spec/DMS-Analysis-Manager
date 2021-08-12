@@ -323,6 +323,8 @@ namespace AnalysisManagerSMAQCPlugIn
 
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+
             var success = false;
 
             var sqlStr = "SELECT Instrument_ID " +
@@ -331,7 +333,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             instrumentID = 0;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
             if (dbTools.GetQueryScalar(sqlStr, out var objResult, retryCount, 5))
