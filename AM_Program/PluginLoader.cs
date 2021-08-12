@@ -107,7 +107,7 @@ namespace AnalysisManagerProg
         /// <param name="stepToolName"></param>
         /// <param name="className">Output: name of class for plugin</param>
         /// <param name="assemblyName">Output: name of assembly for plugin</param>
-        /// <returns>TRUE for success, FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool GetPluginInfo(
             PluginClassTypes classType,
             string stepToolName,

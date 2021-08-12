@@ -115,7 +115,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// but instead creates a series of files named s*.zip_StoragePathInfo.txt,
         /// and each file's first line will be the full path to the source file
         /// </param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CopySFoldersToWorkDir(bool createStoragePathInfoOnly)
         {
             var datasetDirectoryPath = mDirectorySearch.FindValidDirectory(DatasetName, "s*.zip",
@@ -218,8 +218,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
-        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip)
         {
@@ -230,9 +230,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
-        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        /// <param name="searchArchivedDatasetDir">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir)
         {
@@ -243,10 +243,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
-        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        /// <param name="searchArchivedDatasetDir">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound)
         {
             return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound);
@@ -256,10 +256,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
-        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        /// <param name="searchArchivedDatasetDir">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath)
         {
@@ -270,11 +270,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <param name="fileName">Name of file to be retrieved</param>
-        /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
-        /// <param name="searchArchivedDatasetDir">TRUE if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool FindAndRetrieveMiscFiles(
             string fileName, bool unzip, bool searchArchivedDatasetDir,
             out string sourceDirPath, bool logFileNotFound)
@@ -434,7 +434,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <param name="searchArchivedDatasetDir">
-        /// TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched
+        /// True if the EMSL archive (Aurora) or MyEMSL should also be searched
         /// (mAuroraAvailable and MyEMSLSearchDisabled take precedence)
         /// </param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
@@ -1081,7 +1081,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Existing files will be overwritten
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath)
         {
             return mDotNetZipTools.GUnzipFile(gzipFilePath);
@@ -1494,7 +1494,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="fileExtension">File extension to match; must contain a period, for example ".raw"</param>
         /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var datasetFilePath = mDirectorySearch.FindDatasetFile(maxAttempts, fileExtension);
@@ -1530,7 +1530,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves the _DTA.txt file (either zipped or unzipped).
         /// </summary>
-        /// <returns>TRUE for success, FALSE for error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the _dta.zip or _dta.txt file already exists in the working directory, will not re-copy it from the remote directory</remarks>
         public bool RetrieveDtaFiles()
         {
@@ -1635,7 +1635,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="fileName">Name of file to be copied</param>
         /// <param name="sourceDirectoryPath">Source directory that has the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveFile(string fileName, string sourceDirectoryPath)
         {
             // Copy the file
@@ -1650,7 +1650,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceDirectoryPath">Source directory that has the file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveFile(string fileName, string sourceDirectoryPath, int maxCopyAttempts,
             BaseLogger.LogLevels logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR)
         {
@@ -1666,10 +1666,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves an Agilent ion trap .mgf file or .cdf/.mgf pair for analysis job in progress
         /// </summary>
-        /// <param name="getCdfAlso">TRUE if .cdf file is needed along with .mgf file; FALSE otherwise</param>
+        /// <param name="getCdfAlso">True if a .cdf file is needed along with the .mgf file</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="maxAttempts"></param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var mgfFilePath = mDirectorySearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
@@ -1860,10 +1860,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Retrieves zipped, concatenated OUT file, unzips, and splits into individual OUT files
+        /// Retrieves zipped, concatenated OUT file, unzips, and optionally splits into individual .out files
         /// </summary>
-        /// <param name="unConcatenate">TRUE to split concatenated file; FALSE to leave the file concatenated</param>
-        /// <returns>TRUE for success, FALSE for error</returns>
+        /// <param name="unConcatenate">True to split the concatenated file into individual .out files</param>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveOutFiles(bool unConcatenate)
         {
             // Retrieve zipped OUT file
@@ -2362,7 +2362,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
         /// <param name="rawDataTypeName">Type of data to copy</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveSpectra(string rawDataTypeName)
         {
             const bool createStoragePathInfoOnly = false;
@@ -2377,7 +2377,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// When true, then does not actually copy the dataset file (or directory), and instead creates a file named Dataset.raw_StoragePathInfo.txt,
         /// and this file's first line will be the full path to the spectrum file (or spectrum directory)
         /// </param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveSpectra(string rawDataTypeName, bool createStoragePathInfoOnly)
         {
             return RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly, DirectorySearch.DEFAULT_MAX_RETRY_COUNT);
@@ -2392,7 +2392,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// The first line in the StoragePathInfo file will be the full path to the spectrum file (or spectrum directory)
         /// </param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveSpectra(string rawDataTypeName, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var success = false;
@@ -2500,7 +2500,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves an Agilent or Bruker .D directory for the analysis job in progress
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
         {
             var fileNamesToSkip = new List<string>();
@@ -2517,7 +2517,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves a Micromass .raw directory for the analysis job in progress
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveDotRawFolder(bool createStoragePathInfoOnly)
         {
             return RetrieveDotXFolder(AnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, new List<string>());
@@ -2529,7 +2529,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="directoryExtension">Extension on the directory name; for example, ".D"</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="fileNamesToSkip"></param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveDotXFolder(
             string directoryExtension,
             bool createStoragePathInfoOnly,
@@ -2897,7 +2897,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Unzips dataset directories to the working directory
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrieveSFolders(bool createStoragePathInfoOnly, int maxAttempts)
         {
             try

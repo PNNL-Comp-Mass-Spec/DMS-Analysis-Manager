@@ -69,7 +69,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <summary>
         /// Retrieves zipped, concatenated DTA file, unzips, and splits into individual DTA files
         /// </summary>
-        /// <returns>TRUE for success, FALSE for error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RetrieveDtaFiles()
         {
             // Retrieve zipped DTA file

@@ -109,7 +109,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Value showing if a transfer task was assigned
         /// </summary>
-        /// <returns>TRUE if task was assigned; otherwise false</returns>
+        /// <returns>True if task was assigned, otherwise false</returns>
         public bool TaskWasAssigned { get; protected set; } = false;
 
         /// <summary>

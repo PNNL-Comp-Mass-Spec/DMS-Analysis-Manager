@@ -325,7 +325,7 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <param name="resultType"></param>
         /// <param name="searchToolParamFilePath"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CheckETDModeEnabled(PeptideHitResultTypes resultType, string searchToolParamFilePath)
         {
             mETDMode = false;
@@ -387,7 +387,7 @@ namespace AnalysisManagerMSGFPlugin
         /// If it is, sets mETDMode to True
         /// </summary>
         /// <param name="searchToolParamFilePath">MS-GF+ parameter file to read</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CheckETDModeEnabledMSGFPlus(string searchToolParamFilePath)
         {
             const string MSGFPLUS_FRAG_METHOD_TAG = "FragmentationMethodID";
@@ -467,7 +467,7 @@ namespace AnalysisManagerMSGFPlugin
         /// If it is, sets mETDMode to True
         /// </summary>
         /// <param name="searchToolParamFilePath">SEQUEST parameter file to read</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CheckETDModeEnabledSequest(string searchToolParamFilePath)
         {
             const string SEQUEST_ION_SERIES_TAG = "ion_series";
@@ -560,7 +560,7 @@ namespace AnalysisManagerMSGFPlugin
         /// If it is, sets mETDMode to True
         /// </summary>
         /// <param name="searchToolParamFilePath">X!Tandem XML parameter file to read</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CheckETDModeEnabledXTandem(string searchToolParamFilePath)
         {
             try
@@ -1537,7 +1537,7 @@ namespace AnalysisManagerMSGFPlugin
         /// If found, copies the file to the work directory
         /// </summary>
         /// <param name="fileNameToFind"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool RetrievePreGeneratedDataFile(string fileNameToFind)
         {
             var folderToCheck = "??";

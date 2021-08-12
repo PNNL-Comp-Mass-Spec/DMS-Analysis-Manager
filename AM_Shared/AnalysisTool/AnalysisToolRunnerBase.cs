@@ -731,7 +731,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Contrast with CopyMSXmlToCache in AnalysisToolRunnerMSXMLGen, where the target directory is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
@@ -1182,7 +1182,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
         /// <param name="FileNamePath">Full path to file for deletion</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Raises exception if error occurs</remarks>
         public bool DeleteFileWithRetries(string FileNamePath)
         {
@@ -1194,7 +1194,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="FileNamePath">Full path to file for deletion</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Raises exception if error occurs</remarks>
         public static bool DeleteFileWithRetries(string FileNamePath, int debugLevel)
         {
@@ -1207,7 +1207,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="fileNamePath">Full path to file for deletion</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="maxRetryCount">Maximum number of deletion attempts</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Raises exception if error occurs</remarks>
         public static bool DeleteFileWithRetries(string fileNamePath, int debugLevel, int maxRetryCount)
         {
@@ -2144,7 +2144,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;
@@ -2166,7 +2166,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetDirectoryPath">Output directory for the unzipped file</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;
@@ -3245,7 +3245,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Deletes files in specified directory that have been previously flagged as not wanted in results directory
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>List of files to delete is tracked via mJobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
         public bool RemoveNonResultServerFiles()
         {
@@ -3484,7 +3484,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
-        /// <returns>True for success, False for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
         {
@@ -3522,7 +3522,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
         /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
@@ -3535,7 +3535,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             return mToolVersionUtilities.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFilePath);
@@ -3783,7 +3783,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Updates the analysis summary file
         /// </summary>
-        /// <returns>TRUE for success, FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool UpdateSummaryFile()
         {
             try
@@ -3840,7 +3840,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Output directory is mWorkDir
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
-        /// <returns>True if successful, false if a problem</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath)
         {
             return UnzipFile(zipFilePath, mWorkDir, string.Empty);
@@ -3852,7 +3852,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
-        /// <returns>True if successful, false if a problem</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
             return UnzipFile(zipFilePath, targetDirectory, string.Empty);
@@ -3865,7 +3865,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
         /// <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
-        /// <returns>True if successful, false if a problem</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;
@@ -4170,7 +4170,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;
@@ -4189,7 +4189,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Compress a file using SharpZipLib
         /// </summary>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>IonicZip is faster, so we typically use function ZipFile</remarks>
         [Obsolete("Use ZipFile, which uses DotNetZip")]
         public bool ZipFileSharpZipLib(string sourceFilePath)
@@ -4236,7 +4236,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
             mDotNetZipTools.DebugLevel = mDebugLevel;

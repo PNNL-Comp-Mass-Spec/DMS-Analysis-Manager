@@ -50,7 +50,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="precursorMassTolerance"></param>
         /// <param name="psmCount"></param>
         /// <param name="errorCount"></param>
-        /// <returns>True if successful, false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool ExaminePHRPResults(
             string inputFilePath,
             PeptideHitResultTypes resultType,

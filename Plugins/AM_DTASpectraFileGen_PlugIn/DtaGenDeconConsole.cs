@@ -110,7 +110,7 @@ namespace DTASpectraFileGen
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool ConvertMGFtoDTA()
         {
             var rawDataTypeName = mJobParams.GetJobParameter("RawDataType", "");
@@ -141,7 +141,7 @@ namespace DTASpectraFileGen
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool ConvertRawToMGF(AnalysisResources.RawDataTypeConstants rawDataType)
         {
             string rawFilePath;

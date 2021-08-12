@@ -207,7 +207,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.ProgRunner.GarbageCollectNow)
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool CleanWorkDir()
         {
             return CleanWorkDir(mWorkingDirPath, DEFAULT_HOLDOFF_SECONDS);
@@ -217,7 +217,7 @@ namespace AnalysisManagerProg
         /// Deletes all files in working directory
         /// </summary>
         /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.ProgRunner.GarbageCollectNow()</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool CleanWorkDir(float holdoffSeconds)
         {
             return CleanWorkDir(mWorkingDirPath, holdoffSeconds);
@@ -228,7 +228,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="workDirPath">Full path to working directory</param>
         /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.ProgRunner.GarbageCollectNow()</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool CleanWorkDir(string workDirPath, float holdoffSeconds)
         {
             double actualHoldoffSeconds;
@@ -473,7 +473,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Determines if error deleting files flag file exists in application directory
         /// </summary>
-        /// <returns>TRUE if flag file exists; FALSE otherwise</returns>
+        /// <returns>True if flag file exists, otherwise false</returns>
         public bool DetectErrorDeletingFilesFlagFile()
         {
             var testFile = Path.Combine(mMgrDirectoryPath, ERROR_DELETING_FILES_FILENAME);
@@ -484,7 +484,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Determines if flag file exists in application directory
         /// </summary>
-        /// <returns>TRUE if flag file exists; FALSE otherwise</returns>
+        /// <returns>True if flag file exists, otherwise false</returns>
         public bool DetectStatusFlagFile()
         {
             var flagFile = new FileInfo(FlagFilePath);

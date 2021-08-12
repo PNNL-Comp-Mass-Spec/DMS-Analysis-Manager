@@ -418,7 +418,7 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="fastaFileName">Fasta file name</param>
         /// <param name="orgDbDirectoryPath">Fasta file location on analysis machine</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool VerifyDatabase(string fastaFileName, string orgDbDirectoryPath)
         {
             var hostFilePath = mMgrParams.GetParam("HostsFileLocation");
@@ -666,7 +666,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="destPath">Fasta storage location on cluster node</param>
         /// <param name="fileAlreadyExists">Output parameter: true if the file already exists</param>
         /// <param name="notEnoughFreeSpace">Output parameter: true if the target node does not have enough space for the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
         private bool VerifyRemoteDatabase(string sourceFastaPath, string destPath, out bool fileAlreadyExists, out bool notEnoughFreeSpace)
         {

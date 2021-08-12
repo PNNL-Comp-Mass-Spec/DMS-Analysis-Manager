@@ -250,7 +250,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
         /// <param name="errorMsg"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This procedure is used by AnalysisToolRunnerPRIDEConverter</remarks>
         private static bool LookupJobParametersFromHistory(
             IDBTools dbTools,

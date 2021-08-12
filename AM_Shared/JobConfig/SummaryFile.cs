@@ -37,7 +37,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Writes the summary file to the specified location
         /// </summary>
         /// <param name="analysisSummaryFilePath">Full path of summary file to create</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool SaveSummaryFile(string analysisSummaryFilePath)
         {
             try

@@ -104,7 +104,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Existing files will be overwritten
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath)
         {
             return GUnzipFile(gzipFilePath, mWorkDir);
@@ -116,7 +116,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
             return GUnzipFile(gzipFilePath, targetDirectory, ExtractExistingFileAction.OverwriteSilently);
@@ -128,7 +128,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="gzipFilePath">.gz file to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory, ExtractExistingFileAction overwriteBehavior)
         {
             MostRecentZipFilePath = gzipFilePath;
@@ -222,7 +222,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
             var sourceFile = new FileInfo(sourceFilePath);
@@ -235,7 +235,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetFolderPath">Target directory to create the .gz file</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetFolderPath, bool deleteSourceAfterZip)
         {
             var sourceFile = new FileInfo(sourceFilePath);
@@ -408,7 +408,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Existing files will be overwritten
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath)
         {
             return UnzipFile(zipFilePath, mWorkDir);
@@ -420,7 +420,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
             return UnzipFile(zipFilePath, targetDirectory, string.Empty, ExtractExistingFileAction.OverwriteSilently);
@@ -433,7 +433,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
         /// <param name="fileFilter">Filter to apply when unzipping</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter)
         {
             return UnzipFile(zipFilePath, targetDirectory, fileFilter, ExtractExistingFileAction.OverwriteSilently);
@@ -446,7 +446,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
         /// <param name="fileFilter">Filter to apply when unzipping</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, ExtractExistingFileAction overwriteBehavior)
         {
             Message = string.Empty;
@@ -631,7 +631,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
             var zipFilePath = GetZipFilePathForFile(sourceFilePath);
@@ -645,7 +645,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
             var fileToZip = new FileInfo(sourceFilePath);
@@ -743,7 +743,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
         /// <param name="recurse">If True, recurse through all subdirectories</param>
         /// <param name="fileFilter">Filter to apply when zipping</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter)
         {
             var directoryToZip = new DirectoryInfo(sourceDirectoryPath);

@@ -105,7 +105,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves the manager and global settings from various databases
         /// </summary>
-        /// <returns>True if successful; False on error</returns>
+        /// <returns>True if success, false if an error</returns>
         bool LoadDBSettings();
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace AnalysisManagerBase
         /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
-        /// <returns>True if successful; False on error</returns>
+        /// <returns>True if success, false if an error</returns>
         bool LoadSettings(Dictionary<string, string> configFileSettings);
 
         /// <summary>

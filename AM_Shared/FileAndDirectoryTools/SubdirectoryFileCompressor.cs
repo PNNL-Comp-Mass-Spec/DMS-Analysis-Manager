@@ -325,7 +325,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="directoryToZip"></param>
         /// <param name="recurse">True to include subdirectories</param>
         /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
-        /// <returns>True if successful; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool ZipDirectory(
             DotNetZipTools zipTools,
             DirectoryInfo directoryToZip,

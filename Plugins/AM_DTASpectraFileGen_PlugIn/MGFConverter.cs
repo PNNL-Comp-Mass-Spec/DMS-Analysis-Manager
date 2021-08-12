@@ -88,7 +88,7 @@ namespace DTASpectraFileGen
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
         /// This function is called by MakeDTAFilesThreaded
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ConvertMGFtoDTA(AnalysisResources.RawDataTypeConstants rawDataType, string datasetName)
         {
             bool success;

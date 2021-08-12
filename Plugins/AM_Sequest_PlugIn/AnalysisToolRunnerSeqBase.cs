@@ -614,7 +614,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="WorkDir">Working directory</param>
         /// <param name="DSName">Dataset name</param>
         /// <param name="JobNum">Job number</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected virtual bool ConcatOutFiles(string WorkDir, string DSName, int JobNum)
         {
             const int MAX_RETRY_ATTEMPTS = 5;
@@ -1296,7 +1296,7 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="WorkDir">Working directory</param>
         /// <param name="JobNum">Job number</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
         {
             var OutFileName = mDatasetName + "_out.txt";

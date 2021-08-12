@@ -1301,7 +1301,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFileName">Name of file to copy</param>
         /// <param name="sourceDirectoryPath">Path to directory where input file is located</param>
         /// <param name="targetDirectoryPath">Destination directory for file copy</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         protected bool CopyFileToWorkDir(string sourceFileName, string sourceDirectoryPath, string targetDirectoryPath)
         {
@@ -1315,7 +1315,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceDirectoryPath">Path to directory where input file is located</param>
         /// <param name="targetDirectoryPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceDirectoryPath, string targetDirectoryPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
@@ -1331,7 +1331,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="targetDirectory">Directory where file will be created</param>
         /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool CreateFastaFile(
             ProteinCollectionInfo proteinCollectionInfo,
             string targetDirectory,
@@ -1673,7 +1673,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="FileText">String containing XML file contents</param>
         /// <param name="FileNamePath">Name of file to create</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         [Obsolete("Unused")]
         private bool CreateSettingsFile(string FileText, string FileNamePath)
         {
@@ -3030,7 +3030,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Existing files will be overwritten
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool GUnzipFile(string gzipFilePath)
         {
             return FileSearch.GUnzipFile(gzipFilePath);
@@ -3118,7 +3118,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobInfo">Output parameter: Job Info</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
         protected bool LookupJobInfo(int jobNumber, out DataPackageJobInfo jobInfo)
         {
@@ -4545,7 +4545,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode, bool previewMode = false)
         {
@@ -4564,7 +4564,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
         /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to True as of April 2019)</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(
             string orgDbDirectoryPath,
@@ -4682,8 +4682,8 @@ namespace AnalysisManagerBase.AnalysisTool
                         fastaFileSizeGB = Global.BytesToGB(fastaFile.Length);
                 }
 
-                // FASTA file was successfully generated. Put the name of the generated FASTA file in the
-                // job data class for other methods to use
+                // FASTA file was successfully generated.
+                // Put the name of the generated FASTA file in the job data class for other methods to use
                 if (!mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to mJobParams");
@@ -4713,7 +4713,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Uses the ParamFileGenerator DLL to obtain the parameter file defined for this job
         /// </summary>
         /// <param name="paramFileName">Name of param file to be created</param>
-        /// <returns>True for success; False for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool RetrieveGeneratedParamFile(string paramFileName)
         {
             IGenerateFile paramFileGenerator = null;
@@ -5006,7 +5006,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="workDir">Folder with the CDTA file</param>
         /// <param name="inputFileName">CDTA filename</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool ValidateCDTAFileRemoveSparseSpectra(string workDir, string inputFileName)
         {
             var success = mCDTAUtilities.RemoveSparseSpectra(workDir, inputFileName);
@@ -5031,7 +5031,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="outputFilePath">
         /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
         /// </param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         protected bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated, string outputFilePath)
         {
             var success = mCDTAUtilities.ValidateCDTAFileScanAndCSTags(sourceFilePath, replaceSourceFile, deleteSourceFileIfUpdated, outputFilePath);

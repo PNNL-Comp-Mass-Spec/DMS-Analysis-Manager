@@ -84,7 +84,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="workDir">Folder with the CDTA file</param>
         /// <param name="inputFileName">CDTA filename</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RemoveSparseSpectra(string workDir, string inputFileName)
         {
             const int MINIMUM_ION_COUNT = 3;
@@ -285,7 +285,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <param name="outputFilePath">
         /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
         /// </param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated,
                                                   string outputFilePath)
         {

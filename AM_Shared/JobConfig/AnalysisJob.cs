@@ -1910,7 +1910,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="compMsg">Comment to insert in database</param>
         /// <param name="evalCode">Integer results evaluation code</param>
         /// <param name="evalMsg">Message describing evaluation results</param>
-        /// <returns>True for success, False for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {

@@ -520,7 +520,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="datasetID"></param>
         /// <param name="datasetName">Output: dataset name, if found</param>
-        /// <remarks>True if success; false if an error, including if the dataset is not found in the database</remarks>
+        /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
         private bool LookupDatasetNameByID(int datasetID, out string datasetName)
         {
             datasetName = string.Empty;
@@ -567,7 +567,7 @@ namespace MSGFResultsSummarizer
         /// <param name="totalSpectra">Output: number of spectra in the dataset</param>
         /// <param name="totalMSnSpectra">Output: number of MS/MS spectra in the dataset</param>
         /// <param name="warnIfNotFound">When true, if the dataset is not found, show a warning message</param>
-        /// <remarks>True if success; false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
+        /// <remarks>True if success, false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
         private bool LookupScanStats(string datasetName, out int totalSpectra, out int totalMSnSpectra, bool warnIfNotFound = true)
         {
             totalSpectra = 0;
@@ -1160,7 +1160,7 @@ namespace MSGFResultsSummarizer
         /// Process this dataset's synopsis file to determine the PSM stats
         /// </summary>
         /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
         public bool ProcessPSMResults(string synopsisFileNameFromPHRP = "")
         {
@@ -1361,7 +1361,7 @@ namespace MSGFResultsSummarizer
         /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
-        /// <returns>True if successful, false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool LoadPSMs(
             string phrpSynopsisFilePath,
             IDictionary<int, PSMInfo> normalizedPSMs,

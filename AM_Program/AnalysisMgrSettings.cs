@@ -164,7 +164,7 @@ namespace AnalysisManagerProg
         /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
-        /// <returns>True if successful; False on error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
             var loadSettingsFromDB = !Global.OfflineMode;
@@ -453,12 +453,11 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Writes specified value to an application config file.
+        /// Writes specified value to an application config file
         /// </summary>
         /// <param name="key">Name for parameter (case sensitive)</param>
         /// <param name="value">New value for parameter</param>
-        /// <returns>TRUE for success; FALSE for error (ErrMsg property contains reason)</returns>
-        /// <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
+        /// <returns>True if success, false if an error (ErrMsg property contains reason)</returns>
         public bool WriteConfigSetting(string key, string value)
         {
             ErrMsg = string.Empty;
@@ -508,7 +507,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Loads an app config file for changing parameters
         /// </summary>
-        /// <returns>App config file as an XML document if successful; NOTHING on failure</returns>
+        /// <returns>application config file as an XML document if successful; null if an error</returns>
         private XmlDocument LoadConfigDocument()
         {
             try

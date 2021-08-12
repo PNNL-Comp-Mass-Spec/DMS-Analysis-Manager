@@ -122,7 +122,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="msConvertPath">Full path to msconvert.exe</param>
         /// <param name="versionInfo">Output: version info</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         // ReSharper disable once InconsistentNaming
         public bool GetMSConvertToolVersion(string msConvertPath, out string versionInfo)
         {
@@ -426,7 +426,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
-        /// <returns>True for success, False for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
         {
@@ -625,7 +625,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
         /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         public bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
@@ -660,7 +660,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
             bool success;
@@ -720,7 +720,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
             try
@@ -779,7 +779,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x86.exe");
@@ -790,7 +790,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
             return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
@@ -802,7 +802,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="toolVersionInfo"></param>
         /// <param name="dllFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
         {
             try

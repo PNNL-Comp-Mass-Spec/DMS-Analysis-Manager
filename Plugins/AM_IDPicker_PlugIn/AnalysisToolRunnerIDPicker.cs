@@ -575,7 +575,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="fastaFilePath"></param>
         /// <param name="decoyPrefix"></param>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool DetermineDecoyProteinPrefix(string fastaFilePath, out string decoyPrefix)
         {
             decoyPrefix = string.Empty;

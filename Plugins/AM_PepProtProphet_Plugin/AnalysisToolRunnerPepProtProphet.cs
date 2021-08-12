@@ -620,7 +620,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="experimentGroupNames"></param>
         /// <param name="experimentGroupWorkingDirectories"></param>
-        /// <remarks>Also creates a subdirectory for each experiment if experimentGroupNames has more than one item</remarks>
+        /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
             IReadOnlyCollection<string> experimentGroupNames,
@@ -779,7 +779,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">
-        /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment
+        /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
         /// </param>
         /// <param name="experimentGroupWorkingDirectories"></param>
@@ -803,7 +803,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             datasetIDsByExperimentGroup = GetDataPackageDatasetsByExperimentGroup(dataPackageInfo);
 
             // Initialize the Philosopher workspace (creates a hidden directory named .meta)
-            // If Experiment Groups are defined, we also create a subdirectory for each experiment and initialize it
+            // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
 
             var experimentGroupNames = datasetIDsByExperimentGroup.Keys.ToList();
 
@@ -1546,7 +1546,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                // Run Peptide Prophet separately against each experiment
+                // Run Peptide Prophet separately against each experiment group
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
@@ -2110,7 +2110,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
         /// <remarks>
-        /// This method is called when peptide prophet was run against groups of dataset (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)</remarks>
+        /// This method is called when peptide prophet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
+        /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
+        /// </remarks>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
             DataPackageInfo dataPackageInfo,

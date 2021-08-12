@@ -175,7 +175,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <param name="workDir">Directory where .raw file should be found</param>
         /// <param name="datasetName">Name of dataset being processed</param>
-        /// <returns>TRUE if file found; FALSE otherwise</returns>
+        /// <returns>True if file found, otherwise false</returns>
         private bool VerifyRawFileExists(string workDir, string datasetName)
         {
             string dataFileExtension;
@@ -232,7 +232,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Initializes the class
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         protected override bool InitSetup()
         {
             // Verifies all necessary files exist in the specified locations
@@ -355,7 +355,7 @@ namespace DTASpectraFileGen
         /// Method that actually makes the DTA files
         /// This method is called by MakeDTAFilesThreaded
         /// </summary>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool MakeDTAFiles()
         {
             const int LOOPING_CHUNK_SIZE = 25000;
@@ -739,7 +739,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Verifies at least one DTA file was created
         /// </summary>
-        /// <returns>TRUE if at least 1 file created; FALSE otherwise</returns>
+        /// <returns>True if at least 1 file created, otherwise false</returns>
         private bool VerifyDtaCreation()
         {
             if (mRunningExtractMSn)

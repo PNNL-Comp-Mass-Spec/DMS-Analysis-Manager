@@ -201,7 +201,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Initializes the manager settings
         /// </summary>
-        /// <returns>TRUE for success, FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         private bool InitMgr()
         {
             var hostName = System.Net.Dns.GetHostName();

@@ -64,7 +64,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Convert a .mzML file to .mzXML
         /// </summary>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This is used by class MSGFRunner in the MSGF Plugin</remarks>
         public bool ConvertMzMLToMzXML()
         {
@@ -149,7 +149,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Generate the mzXML
         /// </summary>
-        /// <returns>True if success; false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>This is used by class MSGFRunner in the MSGF Plugin</remarks>
         public bool CreateMZXMLFile()
         {

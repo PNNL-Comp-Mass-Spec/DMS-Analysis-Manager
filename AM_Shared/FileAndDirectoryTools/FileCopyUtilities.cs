@@ -105,7 +105,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFileName">Name of file to copy</param>
         /// <param name="sourceFolderPath">Path to folder where input file is located</param>
         /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath)
         {
@@ -121,7 +121,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFolderPath">Path to folder where input file is located</param>
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
@@ -138,7 +138,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
             string sourceFileName,
@@ -158,8 +158,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFolderPath">Path to folder where input file is located</param>
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <param name="createStoragePathInfoOnly">True if a storage path info file should be created instead of copying the file</param>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
             string sourceFileName,
@@ -180,9 +180,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFolderPath">Path to folder where input file is located</param>
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
+        /// <param name="createStoragePathInfoOnly">True if a storage path info file should be created instead of copying the file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
             string sourceFileName,
@@ -251,7 +251,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool CopyFileToWorkDirWithRename(
             string datasetName,
             string sourceFileName,
@@ -276,7 +276,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// When true, does not actually copy the specified file, and instead creates a file named FileName_StoragePathInfo.txt
         /// The first line of the StoragePathInfo.txt file will be the full path to the source file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool CopyFileToWorkDirWithRename(
             string datasetName,
             string sourceFileName,
@@ -335,8 +335,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="SrcFilePath">Full path to source file</param>
         /// <param name="DestFilePath">Full path to destination file</param>
-        /// <param name="Overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
-        /// <returns>TRUE for success; FALSE for error</returns>
+        /// <param name="Overwrite">True to overwrite existing destination file</param>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Logs copy errors</remarks>
         public bool CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite)
         {
@@ -349,9 +349,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="sourceFilePath">Full path to source file</param>
         /// <param name="destinationFilePath">Full path to destination file</param>
-        /// <param name="overwrite">TRUE to overwrite existing destination file; FALSE otherwise</param>
+        /// <param name="overwrite">True to overwrite existing destination file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
-        /// <returns>TRUE for success; FALSE for error</returns>
+        /// <returns>True if success, false if an error</returns>
         /// <remarks>Logs copy errors</remarks>
         public bool CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, int maxCopyAttempts)
         {

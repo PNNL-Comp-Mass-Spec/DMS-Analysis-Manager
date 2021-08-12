@@ -77,7 +77,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
-        /// <returns>True if successful, false if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool GenerateScanStatsFiles(string inputFilePath, string outputDirectoryPath, int datasetID)
         {
             try
