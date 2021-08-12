@@ -518,7 +518,7 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     // The file now exists
                     ErrorMessage = string.Empty;
-                    currentTask = "DeleteLockStream (fasta file now exists)";
+                    currentTask = "DeleteLockStream (FASTA file now exists)";
                     DeleteLockStream(lockFilePath, lockStream);
                     return true;
                 }
@@ -624,7 +624,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 // Delete the lock file
-                currentTask = "DeleteLockStream (fasta file created)";
+                currentTask = "DeleteLockStream (FASTA file created)";
                 DeleteLockStream(lockFilePath, lockStream);
             }
             catch (Exception ex)

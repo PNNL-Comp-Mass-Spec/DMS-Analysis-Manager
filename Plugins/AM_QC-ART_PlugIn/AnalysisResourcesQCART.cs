@@ -222,7 +222,7 @@ namespace AnalysisManagerQCARTPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the baseline dataset names and Masic Jobs so they can be used by AnalysisToolRunnerQCART
+                // Store the baseline dataset names and MASIC Jobs so they can be used by AnalysisToolRunnerQCART
                 StorePackedJobParameterDictionary(baselineDatasets, JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
                 currentTask = "Retrieve QC Metrics from DMS";
@@ -558,7 +558,7 @@ namespace AnalysisManagerQCARTPlugin
         /// Log an error message with one of these formats:
         ///   Could not do X for A
         ///   Could not do X for A or B
-        ///   Could not do X for A or 3 other datsets
+        ///   Could not do X for A or 3 other datasets
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="datasetNames">List of dataset names</param>

@@ -1324,7 +1324,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     // The return code was not an empty string, which indicates an error
                     LogError("RequestAnalysisJobFromDB(), SP execution has return code " + returnCode +
-                             "; Msg text = " + (string)messageParam.Value);
+                             "; Message text = " + (string)messageParam.Value);
 
                     return RequestTaskResult.ResultError;
                 }
@@ -1365,7 +1365,7 @@ namespace AnalysisManagerBase.JobConfig
                     default:
                         // There was an SP error
                         LogError("AnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
-                                 "Msg text = " + Convert.ToString(messageParam.Value));
+                                 "Message text = " + Convert.ToString(messageParam.Value));
                         return RequestTaskResult.ResultError;
                 }
             }

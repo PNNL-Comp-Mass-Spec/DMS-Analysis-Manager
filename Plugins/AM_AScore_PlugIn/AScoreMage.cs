@@ -85,7 +85,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             mParamFilename = mJobParams.GetJobParam("AScoreParamFilename");
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             mFastaFilePath = string.Empty;
 
             var localOrgDbDirectory = mMgrParams.RequireMgrParam("OrgDbDir");
