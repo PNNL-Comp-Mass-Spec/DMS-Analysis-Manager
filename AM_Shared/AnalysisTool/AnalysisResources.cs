@@ -1669,27 +1669,6 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Creates an XML formatted settings file based on data from broker
-        /// </summary>
-        /// <param name="FileText">String containing XML file contents</param>
-        /// <param name="FileNamePath">Name of file to create</param>
-        /// <returns>True if success, false if an error</returns>
-        [Obsolete("Unused")]
-        private bool CreateSettingsFile(string FileText, string FileNamePath)
-        {
-            var formattedXMLWriter = new FormattedXMLWriter();
-
-            if (!formattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
-            {
-                LogError("Error creating settings file " + FileNamePath + ": " + formattedXMLWriter.ErrMsg);
-                mMessage = "Error creating settings file";
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Given two dates, returns the most recent date
         /// </summary>
         /// <param name="date1"></param>
@@ -4812,19 +4791,6 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 return false;
             }
-        }
-
-        /// <summary>
-        /// Creates the specified settings file from db info
-        /// </summary>
-        /// <returns>TRUE if file created successfully; FALSE otherwise</returns>
-        /// <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
-        [Obsolete("Unused")]
-        protected internal bool RetrieveSettingsFileFromDb()
-        {
-            var OutputFile = Path.Combine(mWorkDir, mJobParams.GetParam("SettingsFileName"));
-
-            return CreateSettingsFile(mJobParams.GetParam("ParameterXML"), OutputFile);
         }
 
         /// <summary>
