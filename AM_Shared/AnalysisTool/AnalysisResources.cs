@@ -3512,11 +3512,15 @@ namespace AnalysisManagerBase.AnalysisTool
                 return 0;
             }
 
+            // ReSharper disable StringLiteralTypo
+
             // Remove additional text from the base name if present
             var extensionsToTrim = new List<string> {
                 ".revcat",
                 ".icsfldecoy"
             };
+
+            // ReSharper restore StringLiteralTypo
 
             foreach (var item in extensionsToTrim)
             {

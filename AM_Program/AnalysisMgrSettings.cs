@@ -27,6 +27,7 @@ namespace AnalysisManagerProg
     /// </remarks>
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
+        // ReSharper disable once CommentTypo
         // Ignore Spelling: ack, mgractive, proteinseqs
 
         #region "Constants"
