@@ -443,19 +443,21 @@ namespace AnalysisManagerProg
                 " WHERE (JS.Job Between " + jobStart + " and " + jobEnd + ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)";
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
-            const short RetryCount = 2;
+            const short retryCount = 2;
 
-            var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: true);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_ProcessDtaRefineryLogFiles");
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: true);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResultsDataTable(sql, out var Dt, RetryCount);
+            var success = dbTools.GetQueryResultsDataTable(sql, out var dt, retryCount);
 
             if (!success)
             {
                 Console.WriteLine("Repeated errors running database query");
             }
 
-            if (Dt.Rows.Count < 1)
+            if (dt.Rows.Count < 1)
             {
                 // No data was returned
                 Console.WriteLine("DTA_Refinery jobs were not found for job range " + jobStart + " - " + jobEnd);
@@ -468,7 +470,7 @@ namespace AnalysisManagerProg
             // Note: add file DtaRefLogMassErrorExtractor to this project to use this functionality
             // var massErrorExtractor = new DtaRefLogMassErrorExtractor(mMgrSettings, workDir, mDebugLevel, postResultsToDB);
 
-            foreach (DataRow curRow in Dt.Rows)
+            foreach (DataRow curRow in dt.Rows)
             {
                 var dataset = curRow["Dataset"].CastDBVal<string>();
                 var datasetID = curRow["Dataset_ID"].CastDBVal<int>();

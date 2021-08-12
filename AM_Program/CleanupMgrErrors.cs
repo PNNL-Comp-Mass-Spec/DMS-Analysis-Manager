@@ -411,11 +411,11 @@ namespace AnalysisManagerProg
         /// Deletes the Decon2LS OA Server flag file
         /// </summary>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
-        public bool DeleteDeconServerFlagFile(int DebugLevel)
+        public bool DeleteDeconServerFlagFile(int debugLevel)
         {
             var flagFilePath = Path.Combine(mMgrDirectoryPath, DECON_SERVER_FLAG_FILE_NAME);
 
-            return DeleteFlagFile(flagFilePath, DebugLevel);
+            return DeleteFlagFile(flagFilePath, debugLevel);
         }
 
         /// <summary>
@@ -463,11 +463,11 @@ namespace AnalysisManagerProg
         /// Deletes the analysis manager flag file
         /// </summary>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
-        public bool DeleteStatusFlagFile(int DebugLevel)
+        public bool DeleteStatusFlagFile(int debugLevel)
         {
             var flagFilePath = FlagFilePath;
 
-            return DeleteFlagFile(flagFilePath, DebugLevel);
+            return DeleteFlagFile(flagFilePath, debugLevel);
         }
 
         /// <summary>

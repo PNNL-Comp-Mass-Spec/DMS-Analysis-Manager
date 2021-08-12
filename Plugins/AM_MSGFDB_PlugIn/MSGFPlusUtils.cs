@@ -289,14 +289,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="oMgrParams"></param>
-        /// <param name="oJobParams"></param>
+        /// <param name="mgrParams"></param>
+        /// <param name="jobParams"></param>
         /// <param name="workDir"></param>
         /// <param name="debugLevel"></param>
-        public MSGFPlusUtils(IMgrParams oMgrParams, IJobParams oJobParams, string workDir, short debugLevel)
+        public MSGFPlusUtils(IMgrParams mgrParams, IJobParams jobParams, string workDir, short debugLevel)
         {
-            mMgrParams = oMgrParams;
-            mJobParams = oJobParams;
+            mMgrParams = mgrParams;
+            mJobParams = jobParams;
 
             mWorkDir = workDir;
 

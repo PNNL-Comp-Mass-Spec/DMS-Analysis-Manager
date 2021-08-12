@@ -21,7 +21,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Convert .Fasta file to indexed DB files
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int DebugLevel, int JobNum, string InspectDir, string OrgDbDir)
+        public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int debugLevel, int jobNum, string inspectDir, string orgDbDir)
         {
             const float MAX_WAITTIME_HOURS = 1.0f;
             const float MAX_WAITTIME_PREVENT_REPEATS = 2.0f;
@@ -33,7 +33,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             try
             {
-                if (DebugLevel > 4)
+                if (debugLevel > 4)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                         "CreateInspectIndexedDB.CreateIndexedDbFiles(): Enter");
@@ -47,11 +47,11 @@ namespace AnalysisManagerInSpecTPlugIn
                     sngMaxWaitTimeHours = MAX_WAITTIME_PREVENT_REPEATS;
                 }
 
-                var strDBFileNameInput = Path.Combine(OrgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var strDBFileNameInput = Path.Combine(orgDbDir, jobParams.GetParam("PeptideSearch", "generatedFastaName"));
                 var blnUseShuffledDB = jobParams.GetJobParameter("InspectUsesShuffledDB", false);
 
                 var strOutputNameBase = Path.GetFileNameWithoutExtension(strDBFileNameInput);
-                var dbTrieFilenameBeforeShuffle = Path.Combine(OrgDbDir, strOutputNameBase + ".trie");
+                var dbTrieFilenameBeforeShuffle = Path.Combine(orgDbDir, strOutputNameBase + ".trie");
 
                 if (blnUseShuffledDB)
                 {
@@ -61,18 +61,18 @@ namespace AnalysisManagerInSpecTPlugIn
                     strOutputNameBase += "_shuffle";
                 }
 
-                var dbLockFilename = Path.Combine(OrgDbDir, strOutputNameBase + "_trie.lock");
-                var dbTrieFilename = Path.Combine(OrgDbDir, strOutputNameBase + ".trie");
+                var dbLockFilename = Path.Combine(orgDbDir, strOutputNameBase + "_trie.lock");
+                var dbTrieFilename = Path.Combine(orgDbDir, strOutputNameBase + ".trie");
 
-                var pythonProgLoc = mgrParams.GetParam("pythonprogloc");
+                var pythonProgLoc = mgrParams.GetParam("PythonProgLoc");
 
-                var objPrepDB = new RunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
+                var objPrepDB = new RunDosProgram(inspectDir + Path.DirectorySeparatorChar, debugLevel);
                 objPrepDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                 // Check to see if another Analysis Manager is already creating the indexed db files
                 if (File.Exists(dbLockFilename))
                 {
-                    if (DebugLevel >= 1)
+                    if (debugLevel >= 1)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                             "Lock file found: " + dbLockFilename + "; waiting for file to be removed by other manager generating .trie file " +
@@ -112,7 +112,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 // another manager creating it.
                 if (!File.Exists(dbTrieFilename))
                 {
-                    // Try to create the index files for fasta file strDBFileNameInput
+                    // Try to create the index files for FASTA file strDBFileNameInput
 
                     // Verify that python program file exists
                     if (!File.Exists(pythonProgLoc))
@@ -123,16 +123,16 @@ namespace AnalysisManagerInSpecTPlugIn
                     }
 
                     // Verify that the PrepDB python script exists
-                    var PrebDBScriptPath = Path.Combine(InspectDir, PREPDB_SCRIPT);
-                    if (!File.Exists(PrebDBScriptPath))
+                    var prebDBScriptPath = Path.Combine(inspectDir, PREPDB_SCRIPT);
+                    if (!File.Exists(prebDBScriptPath))
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                            "Cannot find PrepDB script: " + PrebDBScriptPath);
+                            "Cannot find PrepDB script: " + prebDBScriptPath);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     // Verify that the ShuffleDB python script exists
-                    var ShuffleDBScriptPath = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT);
+                    var ShuffleDBScriptPath = Path.Combine(inspectDir, SHUFFLEDB_SCRIPT);
                     if (blnUseShuffledDB)
                     {
                         if (!File.Exists(ShuffleDBScriptPath))
@@ -143,7 +143,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         }
                     }
 
-                    if (DebugLevel >= 3)
+                    if (debugLevel >= 3)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Creating lock file: " + dbLockFilename);
                     }
@@ -155,15 +155,15 @@ namespace AnalysisManagerInSpecTPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (DebugLevel >= 2)
+                    if (debugLevel >= 2)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                             "Creating indexed database file: " + dbTrieFilenameBeforeShuffle);
                     }
 
                     // Set up and execute a program runner to run PrepDB.py
-                    var arguments = " " + PrebDBScriptPath + " FASTA " + strDBFileNameInput;
-                    if (DebugLevel >= 1)
+                    var arguments = " " + prebDBScriptPath + " FASTA " + strDBFileNameInput;
+                    if (debugLevel >= 1)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, pythonProgLoc + " " + arguments);
                     }
@@ -171,11 +171,11 @@ namespace AnalysisManagerInSpecTPlugIn
                     if (!objPrepDB.RunProgram(pythonProgLoc, arguments, "PrepDB", true))
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR,
-                            "Error running " + PREPDB_SCRIPT + " for " + strDBFileNameInput + " : " + JobNum);
+                            "Error running " + PREPDB_SCRIPT + " for " + strDBFileNameInput + " : " + jobNum);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (DebugLevel >= 1)
+                    if (debugLevel >= 1)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                                           "Created .trie file for " + strDBFileNameInput);
@@ -184,7 +184,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     if (blnUseShuffledDB)
                     {
                         // Set up and execute a program runner to run ShuffleDB_seed.py
-                        var objShuffleDB = new RunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
+                        var objShuffleDB = new RunDosProgram(inspectDir + Path.DirectorySeparatorChar, debugLevel);
                         objShuffleDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                         arguments = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;
@@ -199,7 +199,7 @@ namespace AnalysisManagerInSpecTPlugIn
                             arguments += " -d " + intRandomNumberSeed;
                         }
 
-                        if (DebugLevel >= 1)
+                        if (debugLevel >= 1)
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, pythonProgLoc + " " + arguments);
                         }
@@ -207,18 +207,18 @@ namespace AnalysisManagerInSpecTPlugIn
                         if (!objShuffleDB.RunProgram(pythonProgLoc, arguments, "ShuffleDB", true))
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR,
-                                "Error running " + SHUFFLEDB_SCRIPT + " for " + dbTrieFilenameBeforeShuffle + " : " + JobNum);
+                                "Error running " + SHUFFLEDB_SCRIPT + " for " + dbTrieFilenameBeforeShuffle + " : " + jobNum);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
 
-                        if (DebugLevel >= 1)
+                        if (debugLevel >= 1)
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                                               "Shuffled .trie file created: " + dbTrieFilename);
                         }
                     }
 
-                    if (DebugLevel >= 3)
+                    if (debugLevel >= 3)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Deleting lock file: " + dbLockFilename);
                     }

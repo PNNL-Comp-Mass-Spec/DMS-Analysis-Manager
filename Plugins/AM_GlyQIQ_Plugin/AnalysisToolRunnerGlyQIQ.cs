@@ -502,7 +502,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (mStoredProcedureExecutor == null || !string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                 {
-                    string strConnectionString;
+                    string connectionString;
 
                     if (string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                     {
@@ -512,11 +512,11 @@ namespace AnalysisManagerGlyQIQPlugin
                         }
 
                         // Gigasax.DMS5
-                        strConnectionString = mMgrParams.GetParam("ConnectionString");
+                        connectionString = mMgrParams.GetParam("ConnectionString");
                     }
                     else
                     {
-                        strConnectionString = dmsConnectionStringOverride;
+                        connectionString = dmsConnectionStringOverride;
                     }
 
                     mStoredProcedureExecutor = DbToolsFactory.GetDBTools(strConnectionString, debugMode: TraceMode);

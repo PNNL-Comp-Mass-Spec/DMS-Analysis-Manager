@@ -322,7 +322,8 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             var connectionString = mMgrParams.GetParam("ConnectionString");
-            var blnSuccess = false;
+
+            var success = false;
 
             var sqlStr = "SELECT Instrument_ID " +
                          "FROM V_Dataset_Instrument_List_Report " +
@@ -338,7 +339,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (objResult != null)
                 {
                     instrumentID = objResult.CastDBVal<int>();
-                    blnSuccess = true;
+                    success = true;
                 }
             }
             else
@@ -349,12 +350,12 @@ namespace AnalysisManagerSMAQCPlugIn
                 return false;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 mMessage = "Error obtaining InstrumentID for dataset " + mDatasetID;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> lstResults, out string strXMLResults)
