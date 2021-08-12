@@ -2025,7 +2025,7 @@ namespace AnalysisManagerBase.JobConfig
 
         /// <summary>
         /// Uses the "ToolName" and "StepTool" entries in mJobParamsTable to generate the tool name for the current analysis job
-        /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
+        /// Example tool names are "SEQUEST, Step 3" or "DTA_Gen (SEQUEST), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <returns>Tool name and step number</returns>
         public string GetCurrentJobToolDescription()
@@ -2042,7 +2042,7 @@ namespace AnalysisManagerBase.JobConfig
 
         /// <summary>
         /// Generate a description of the tool (aka Pipeline Script), step tool, and optionally the step number for the current analysis job
-        /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
+        /// Example tool names are "SEQUEST, Step 3" or "DTA_Gen (SEQUEST), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
         /// <param name="toolName">Tool name</param>
         /// <param name="stepTool">Step tool name (allowed to be equivalent to toolName, or blank)</param>

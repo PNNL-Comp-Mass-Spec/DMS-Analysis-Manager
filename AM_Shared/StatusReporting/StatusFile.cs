@@ -28,7 +28,7 @@ namespace AnalysisManagerBase.StatusReporting
     /// </remarks>
     public class StatusFile : EventNotifier, IStatusFile
     {
-        // Ignore Spelling: GlyQ, ModPlus, PerfLib, yyyy-MM-dd, hh:mm:ss, tt
+        // Ignore Spelling: GlyQ, hyperthreading, ModPlus, PerfLib, tcp, yyyy-MM-dd, hh:mm:ss, tt
 
         #region "Module variables"
 
@@ -1337,7 +1337,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for SEQUEST, X!Tandem, and Inspect</param>
         public void UpdateAndWrite(TaskStatusCodes status, float percentComplete, int spectrumCountTotal)
         {
             TaskStatus = status;
@@ -1354,7 +1354,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="eTaskStatus">Task status code</param>
         /// <param name="eTaskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <param name="dtaCount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="dtaCount">Number of DTA files (i.e., spectra files); relevant for SEQUEST, X!Tandem, and Inspect</param>
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>

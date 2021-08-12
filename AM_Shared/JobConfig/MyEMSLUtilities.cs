@@ -13,7 +13,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class MyEMSLUtilities : EventNotifier
     {
-        // Ignore Spelling: yyyy-MM-dd hh:mm tt, dest
+        // Ignore Spelling: downloader, svc-dms, yyyy-MM-dd hh:mm tt, dest
 
         /// <summary>
         /// MyEMSL path flag

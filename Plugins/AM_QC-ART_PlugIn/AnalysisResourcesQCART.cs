@@ -25,6 +25,8 @@ namespace AnalysisManagerQCARTPlugin
     /// </summary>
     public class AnalysisResourcesQCART : AnalysisResources
     {
+        // Ignore Spelling: tryptic
+
         /// <summary>
         /// Job parameter tracking the dataset names and jobs to process
         /// </summary>

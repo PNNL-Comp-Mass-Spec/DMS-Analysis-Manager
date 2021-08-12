@@ -26,7 +26,7 @@ namespace AnalysisManagerBase.StatusReporting
         private Thread worker;
 
         /// <summary>
-        /// Synchronization and signalling stuff to coordinate with worker thread
+        /// Synchronization and signaling stuff to coordinate with worker thread
         /// </summary>
         private readonly EventWaitHandle waitHandle = new AutoResetEvent(false);
 

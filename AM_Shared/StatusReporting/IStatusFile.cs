@@ -123,6 +123,8 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     public interface IStatusFile
     {
+        // Ignore Spelling: hyperthreading, tcp
+
         #region "Properties"
 
         /// <summary>
@@ -303,7 +305,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for SEQUEST, X!Tandem, and Inspect</param>
         void UpdateAndWrite(TaskStatusCodes status, float percentComplete, int spectrumCountTotal);
 
         /// <summary>
@@ -313,7 +315,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="eTaskStatus">Task status code</param>
         /// <param name="eTaskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <param name="dtaCount">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="dtaCount">Number of DTA files (i.e., spectra files); relevant for SEQUEST, X!Tandem, and Inspect</param>
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>

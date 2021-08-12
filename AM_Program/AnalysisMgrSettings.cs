@@ -27,7 +27,7 @@ namespace AnalysisManagerProg
     /// </remarks>
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
-        // Ignore Spelling: ack, mgractive
+        // Ignore Spelling: ack, mgractive, proteinseqs
 
         #region "Constants"
 
@@ -505,7 +505,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads an app config file for changing parameters
+        /// Loads an application config file for changing parameters
         /// </summary>
         /// <returns>application config file as an XML document if successful; null if an error</returns>
         private XmlDocument LoadConfigDocument()

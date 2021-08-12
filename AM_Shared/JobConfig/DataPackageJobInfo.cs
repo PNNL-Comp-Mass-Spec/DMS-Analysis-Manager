@@ -8,6 +8,8 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class DataPackageJobInfo
     {
+        // Ignore Spelling: na
+
         /// <summary>
         /// Analysis job
         /// </summary>
