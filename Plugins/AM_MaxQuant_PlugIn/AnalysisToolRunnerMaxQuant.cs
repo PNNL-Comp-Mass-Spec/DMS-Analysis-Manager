@@ -1878,8 +1878,6 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -1900,7 +1898,5 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             LogProgress("MaxQuant");
         }
-
-        #endregion
     }
 }

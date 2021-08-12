@@ -14,7 +14,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class AnalysisResourcesRepoPkgr : AnalysisResources
     {
-        #region Constants
 
         /// <summary>
         /// Packed job parameter tracking the FASTA files used by the dataset
@@ -30,10 +29,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Packed job parameter for YearQuarter
         /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER = "PackedParam_DatasetStorage_YearQuarter";
-
-        #endregion
-
-        #region Member_Functions
 
         /// <summary>
         /// Do any resource-gathering tasks here
@@ -89,10 +84,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        #endregion // Member_Functions
-
-        #region Code_Adapted_From_Pride_Plugin
 
         private bool FindInstrumentDataFiles(
             DataPackageInfoLoader dataPackageInfoLoader,
@@ -417,8 +408,5 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             return "Job" + job + "_GeneratedFasta";
         }
-
-        #endregion // Code_Adapted_From_Pride_Plugin
-
     }
 }

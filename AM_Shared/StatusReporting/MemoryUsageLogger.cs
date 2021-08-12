@@ -21,8 +21,6 @@ namespace AnalysisManagerBase.StatusReporting
     {
         // Ignore Spelling: yyyy
 
-        #region "Constants and Enums"
-
         private const char COL_SEP = '\t';
 
         private const string LOG_FILE_EXTENSION = ".txt";
@@ -34,10 +32,6 @@ namespace AnalysisManagerBase.StatusReporting
         private const string LOG_FILE_DATE_REGEX = @"(?<Year>\d{4,4})-(?<Month>\d+)";
 
         private const string MEMORY_USAGE_LOG_PREFIX = "MemoryUsageLog";
-
-        #endregion
-
-        #region "Fields"
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
@@ -55,10 +49,6 @@ namespace AnalysisManagerBase.StatusReporting
         private bool mPerfCountersInitialized;
 
         private DateTime mLastWriteTime;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Output folder for the log file
@@ -79,9 +69,6 @@ namespace AnalysisManagerBase.StatusReporting
                 mMinimumMemoryUsageLogIntervalMinutes = value;
             }
         }
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -420,8 +407,5 @@ namespace AnalysisManagerBase.StatusReporting
                 }
             }
         }
-
-        #endregion
-
     }
 }

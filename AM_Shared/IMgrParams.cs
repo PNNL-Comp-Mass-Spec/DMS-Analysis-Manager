@@ -20,8 +20,6 @@ namespace AnalysisManagerBase
 
         // ReSharper restore CommentTypo
 
-        #region "Properties"
-
         /// <summary>
         /// Error message
         /// </summary>
@@ -41,10 +39,6 @@ namespace AnalysisManagerBase
         /// True when TraceMode has been enabled at the command line via /trace
         /// </summary>
         bool TraceMode { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
@@ -127,7 +121,5 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="configFileSettings"></param>
         void ValidatePgPass(IReadOnlyDictionary<string, string> configFileSettings);
-
-        #endregion
     }
 }

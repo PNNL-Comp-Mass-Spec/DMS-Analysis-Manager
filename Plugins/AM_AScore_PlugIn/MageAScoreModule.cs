@@ -25,16 +25,11 @@ namespace AnalysisManager_AScore_PlugIn
     {
         // Ignore Spelling: dta, InputColumnPos, cid, etd, hcd, msgfdb
 
-        #region Constants
 
         /// <summary>
         /// Base name for AScore output files
         /// </summary>
         public const string ASCORE_OUTPUT_FILE_NAME_BASE = "AScoreFile";
-
-        #endregion
-
-        #region Member Variables
 
         private readonly string mConnectionString;
 
@@ -51,10 +46,6 @@ namespace AnalysisManager_AScore_PlugIn
 
         private DotNetZipTools mDotNetZipTools;
 
-        #endregion
-
-        #region Properties
-
         public ExtractionType ExtractionParams { get; set; }
         public string ExtractedResultsFileName { get; set; }
         public bool TraceMode { get; set; }
@@ -64,10 +55,6 @@ namespace AnalysisManager_AScore_PlugIn
         public string AscoreParamFileName { get; set; }
 
         public string FastaFilePath { get; set; }
-
-        #endregion
-
-        #region Constructors
 
         // constructor
         public MageAScoreModule(string connectionString)
@@ -80,10 +67,6 @@ namespace AnalysisManager_AScore_PlugIn
         {
             mDotNetZipTools = dotNetZipTools;
         }
-
-        #endregion
-
-        #region Overrides of Mage ContentFilter
 
         /// <summary>
         /// Set up internal references
@@ -296,10 +279,6 @@ namespace AnalysisManager_AScore_PlugIn
             }
         }
 
-        #endregion
-
-        #region MageAScore Mage Pipelines
-
         // Build and run Mage pipeline to extract contents of job
         private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
         {
@@ -325,9 +304,6 @@ namespace AnalysisManager_AScore_PlugIn
             peFileContents.RunRoot(null);
         }
 
-        #endregion
-
-        #region MageAScore Utility Methods
 
         // look for "_dta.zip" file in job results directory and copy it to working directory and unzip it
         private string CopyDTAResults(string datasetName, string resultsDirectoryPath, int jobNumber, string toolName, string connectionString)
@@ -526,10 +502,6 @@ namespace AnalysisManager_AScore_PlugIn
             return currentJob;
         }
 
-        #endregion
-
-        #region "Event handlers and methods"
-
         /// <summary>
         /// Report an error
         /// </summary>
@@ -575,7 +547,5 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>Warning event</summary>
         /// <param name="message"></param>
         public delegate void WarningEventEventHandler(string message);
-
-        #endregion
     }
 }

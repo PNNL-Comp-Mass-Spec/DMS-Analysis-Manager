@@ -14,8 +14,6 @@ namespace AnalysisManager_Mage_PlugIn
     {
         // Ignore Spelling: Proc
 
-        #region Constructors
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -25,8 +23,6 @@ namespace AnalysisManager_Mage_PlugIn
             : base(jobParams, mgrParams)
         {
         }
-
-        #endregion
 
         /// <summary>
         /// Import contents of results files for jobs given by SQL query that satisfy given file name selector

@@ -20,15 +20,9 @@ namespace AnalysisManagerOMSSAPlugIn
     {
         // Ignore Spelling: omx
 
-        #region "Module Variables"
-
         private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
         private const float PROGRESS_PCT_PEPTIDE_HIT_START = 95;
         private const float PROGRESS_PCT_PEPTIDE_HIT_COMPLETE = 99;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs OMSSA tool
@@ -257,7 +251,5 @@ namespace AnalysisManagerOMSSAPlugIn
                 return false;
             }
         }
-
-        #endregion
     }
 }

@@ -448,8 +448,6 @@ namespace MSGFResultsSummarizerExe
             }
         }
 
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for the MSGResultsSummarizer
         /// </summary>
@@ -459,7 +457,5 @@ namespace MSGFResultsSummarizerExe
         {
             ShowErrorMessage(errorMessage, ex);
         }
-
-        #endregion
     }
 }

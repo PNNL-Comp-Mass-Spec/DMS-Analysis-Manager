@@ -19,14 +19,8 @@ namespace AnalysisManagerMSGFPlugin
     {
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss, tt
 
-        #region "Constants"
-
         private const string MSGF_INPUT_FILENAME_SUFFIX = "_MSGF_input.txt";
         public const string MSGF_RESULT_FILENAME_SUFFIX = "_MSGF.txt";
-
-        #endregion
-
-        #region "Module variables"
 
         protected readonly string mDatasetName;
         protected readonly string mWorkDir;
@@ -74,10 +68,6 @@ namespace AnalysisManagerMSGFPlugin
 
         private StreamWriter mLogFile;
 
-        #endregion
-
-        #region "Properties"
-
         public bool DoNotFilterPeptides { get; set; }
 
         public string ErrorMessage => mErrorMessage;
@@ -89,8 +79,6 @@ namespace AnalysisManagerMSGFPlugin
         public string MSGFInputFilePath => mMSGFInputFilePath;
 
         public string MSGFResultsFilePath => mMSGFResultsFilePath;
-
-        #endregion
 
         /// <summary>
         /// constructor
@@ -111,12 +99,8 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFCachedResults = new SortedDictionary<string, string>();
         }
 
-        #region "Functions to be defined in derived classes"
-
         protected abstract void InitializeFilePaths();
         protected abstract bool PassesFilters(PSM currentPSM);
-
-        #endregion
 
         public void AddUpdateMSGFResult(string scanNumber, string charge, string peptide, string msgfResultData)
         {

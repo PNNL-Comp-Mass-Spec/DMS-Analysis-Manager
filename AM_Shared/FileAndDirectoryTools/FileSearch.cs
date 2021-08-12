@@ -22,13 +22,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
         // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, txt, Workflows
 
-        #region "Constants"
-
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
-
-        #endregion
-
-        #region "Module variables"
 
         private readonly bool mAuroraAvailable;
 
@@ -48,10 +42,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private readonly DotNetZipTools mDotNetZipTools;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -61,14 +51,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// True if MyEMSL search is disabled
         /// </summary>
         public bool MyEMSLSearchDisabled { get; set; }
-
-        #endregion
-
-        #region "Events"
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -3126,7 +3108,5 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
         }
-
-        #endregion
     }
 }

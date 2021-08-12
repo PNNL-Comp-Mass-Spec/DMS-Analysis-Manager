@@ -1845,8 +1845,6 @@ namespace AnalysisManagerProg
             }
         }
 
-        #region "EventNotifier events"
-
         private void RegisterEvents(IEventNotifier processingClass)
         {
             processingClass.DebugEvent += DebugEventHandler;
@@ -1917,7 +1915,5 @@ namespace AnalysisManagerProg
         {
             LogMessage(message);
         }
-        #endregion
-
     }
 }

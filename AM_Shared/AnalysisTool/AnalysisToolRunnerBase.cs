@@ -32,8 +32,6 @@ namespace AnalysisManagerBase.AnalysisTool
         // Ignore Spelling: proteinseqs, protoapps, Quant, readw, sequest, str, subkey, subkeys, tdf, usr, wildcards, Xfer
         // Ignore Spelling: yyyy-MM-dd, hh:mm:ss tt
 
-        #region "Constants"
-
         /// <summary>
         /// Default date/time format
         /// </summary>
@@ -63,10 +61,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Purge interval for cached server files
         /// </summary>
         private const int CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS = 3;
-
-        #endregion
-
-        #region "Module variables"
 
         /// <summary>
         /// Job parameters
@@ -202,10 +196,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>Keys are the sampling date, value is the CPU usage (number of cores in use)</remarks>
         protected readonly Queue<KeyValuePair<DateTime, float>> mCoreUsageHistory;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -261,10 +251,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Working directory path
         /// </summary>
         public string WorkingDirectory => mWorkDir;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -4290,10 +4276,6 @@ namespace AnalysisManagerBase.AnalysisTool
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void SortUtility_ErrorEvent(string message, Exception ex)
         {
             mSortUtilityErrorMessage = message;
@@ -4321,7 +4303,5 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             LogWarning("SortUtility: " + Message);
         }
-
-        #endregion
     }
 }

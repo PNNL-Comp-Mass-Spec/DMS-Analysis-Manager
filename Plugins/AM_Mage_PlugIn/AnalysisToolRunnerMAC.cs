@@ -14,13 +14,9 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public abstract class AnalysisToolRunnerMAC : AnalysisToolRunnerBase
     {
-        #region "Constants"
-
         protected const string MAGE_LOG_FILE_NAME = "Mage_Log.txt";
 
         protected const float ProgressPctMacDone = 95;
-
-        #endregion
 
         /// <summary>
         /// Primary entry point for running MAC tool

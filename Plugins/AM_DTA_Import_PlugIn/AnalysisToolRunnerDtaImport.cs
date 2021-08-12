@@ -20,8 +20,6 @@ namespace AnalysisManagerDtaImportPlugIn
     {
         // Ignore Spelling: dta, pnl
 
-        #region "Methods"
-
         /// <summary>
         /// Runs DTA Import tool
         /// </summary>
@@ -116,7 +114,5 @@ namespace AnalysisManagerDtaImportPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
-        #endregion
     }
 }

@@ -20,16 +20,10 @@ namespace AnalysisManagerMultiAlignPlugIn
     {
         // Ignore Spelling: ParmFile
 
-        #region "Module Variables"
-
         protected const float PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
         protected const float PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
 
         protected RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MultiAlign tool
@@ -266,7 +260,5 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogProgress("MultiAlign");
         }
-
-        #endregion
     }
 }

@@ -19,8 +19,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
     /// </summary>
     public class AnalysisToolRunnerMetaboliteDetector : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         private const float PROGRESS_PCT_STARTING = 5;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
@@ -28,20 +26,12 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
         private const string METABOLITE_DETECTOR_RESULTS_FILE = "MetabDetector_Results.csv";
 
-        #endregion
-
-        #region "Module Variables"
-
         private string mConsoleOutputFile;
         private string mConsoleOutputErrorMsg;
 
         private string mMetaboliteDetectorProgLoc;
 
         private DateTime mLastConsoleOutputParse;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Processes data usingthe Metabolite Detector
@@ -351,10 +341,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_LoopWaiting()
         {
             // Synchronize the stored Debug level with the value stored in the database
@@ -373,7 +359,5 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

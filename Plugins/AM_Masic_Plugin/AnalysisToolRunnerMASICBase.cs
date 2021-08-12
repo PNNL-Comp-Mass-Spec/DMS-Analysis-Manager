@@ -26,8 +26,6 @@ namespace AnalysisManagerMasicPlugin
     {
         // Ignore Spelling: Traq, labelling, Glc, Az
 
-        #region "Module variables"
-
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
         private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
@@ -41,10 +39,6 @@ namespace AnalysisManagerMasicPlugin
 
         private string mReporterIonName = string.Empty;
         private int mReporterIonObservationRateTopNPct;
-
-        #endregion
-
-        #region "Methods"
 
         private void ExtractErrorsFromMASICLogFile(FileSystemInfo logFile)
         {
@@ -817,7 +811,5 @@ namespace AnalysisManagerMasicPlugin
 
             // Return False for any other exit codes
         }
-
-        #endregion
     }
 }

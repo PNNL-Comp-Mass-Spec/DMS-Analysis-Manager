@@ -21,16 +21,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     {
         // Ignore Spelling: Ini
 
-        #region "Module Variables"
-
         private const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
         private const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs LCMS Feature Finder tool
@@ -198,8 +192,5 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return false;
             }
         }
-
-        #endregion
-
     }
 }

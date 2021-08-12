@@ -20,8 +20,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     {
         // Ignore Spelling: Mage, Regex
 
-        #region Member Variables
-
         private string mResultsDBFileName = "";
         private string mWorkingDir;
         private JobParameters mJobParams;
@@ -59,18 +57,10 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             Complete = 9
         }
 
-        #endregion
-
-        #region Properties
-
         /// <summary>
         /// Status message
         /// </summary>
         public string Message => string.IsNullOrEmpty(mMessage) ? string.Empty : mMessage;
-
-        #endregion
-
-        #region Constructors
 
         /// <summary>
         /// Constructor
@@ -83,10 +73,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             mStatusTools = statusTools;
             Initialize(jobParams, mgrParams);
         }
-
-        #endregion
-
-        #region Initialization
 
         /// <summary>
         /// Set up internal variables
@@ -105,10 +91,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             mDebugLevel = Convert.ToInt16(mMgrParams.RequireMgrParam("DebugLevel"));
             mJobNum = mJobParams.RequireJobParam("Job");
         }
-
-        #endregion
-
-        #region Processing
 
         /// <summary>
         /// Do processing
@@ -205,10 +187,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             return true;
         }
-
-        #endregion
-
-        #region Mage Pipelines and Utilities
 
         private bool GetMultiAlignParameterFile()
         {
@@ -436,13 +414,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
         }
-
-        #endregion
-
-        // ------------------------------------------------------------------------------
-
-        #region Command Runner Code
-
         private void CmdRunnerOnErrorEvent(string strMessage, Exception ex)
         {
             OnErrorEvent(strMessage, ex);
@@ -703,11 +674,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
         }
 
-        #endregion
-
-        // ------------------------------------------------------------------------------
-        #region Mage MultiAlign class
-
         /// <summary>
         /// This is a Mage module that does MultiAlign processing
         /// of results for jobs that are supplied to it via standard tabular input
@@ -715,8 +681,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         [Obsolete("Unused")]
         public class MageMultiAlign : ContentFilter
         {
-            #region Member Variables
-
             private string[] mJobFieldNames;
 
             // indexes to look up values for some key job fields
@@ -724,19 +688,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             private int mParamFileIndex;
             private int mResultsDirectoryIndex;
 
-            #endregion
-
-            #region Properties
-
             /// <summary>
             /// Work directory
             /// </summary>
             public string WorkingDir { get; set; }
             // public string paramFilename { get; set; }
 
-            #endregion
-
-            #region Overrides of Mage ContentFilter
 
             // set up internal references
             protected override void ColumnDefsFinished()
@@ -761,10 +718,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     throw new Exception("ColumnDefsFinished could not find column Directory or Folder");
             }
 
-            #endregion
-
-            #region MageMultiAlign Mage Pipelines
-
             // Build and run Mage pipeline to extract contents of job
             [Obsolete("Unused")]
             private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
@@ -779,10 +732,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 var extractContentsPipeline = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParams, destination);
                 extractContentsPipeline.RunRoot(null);
             }
-
-            #endregion
-
-            #region MageMultiAlign Utility Methods
 
             // Build Mage source module containing one job to process
             [Obsolete("No longer used")]
@@ -803,14 +752,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
                 return obj.ToArray();
             }
-
-            #endregion
         }
-
-        #endregion
-
-        // ------------------------------------------------------------------------------
-        #region Mage File Import Class
 
         /// <summary>
         /// Simple Mage FileContentProcessor module
@@ -819,8 +761,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         public class MageFileImport : FileContentProcessor
         {
-            #region Properties
-
             // public string DBTableName { get; set; }
 
             /// <summary>
@@ -833,10 +773,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// </summary>
             public string ImportColumnList { get; set; }
 
-            #endregion
-
-            #region Constructors
-
             /// <summary>
             /// Constructor
             /// </summary>
@@ -847,15 +783,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 base.OutputDirectoryPath = "ignore";
                 base.OutputFileName = "ignore";
             }
-
-            #endregion
-
         }
-
-        #endregion
-
-        // ------------------------------------------------------------------------------
-        #region Classes for handling parameters
 
         /// <summary>
         /// Class for managing IJobParams object
@@ -956,7 +884,5 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return val;
             }
         }
-
-        #endregion
     }
 }

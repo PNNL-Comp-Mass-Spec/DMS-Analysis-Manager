@@ -29,8 +29,6 @@ namespace AnalysisManagerBase
     {
         // Ignore Spelling: cmd, hashcheck, hyperthreading, prepending, Sql, Utc
 
-        #region "Constants"
-
         /// <summary>
         /// Job parameters file prefix
         /// </summary>
@@ -51,10 +49,6 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string LOCK_FILE_EXTENSION = DMSUpdateManager.RemoteUpdateUtility.LOCK_FILE_EXTENSION;
 
-        #endregion
-
-        #region "Enums"
-
         /// <summary>
         /// Analysis resource true/false options
         /// </summary>
@@ -70,10 +64,6 @@ namespace AnalysisManagerBase
             /// </summary>
             MyEMSLSearchDisabled = 1
         }
-
-        #endregion
-
-        #region Properties
 
         /// <summary>
         /// When true, we are running on Linux and thus should not access any Windows features
@@ -112,17 +102,9 @@ namespace AnalysisManagerBase
             }
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private static string mAppDirectoryPath;
 
         private static SystemProcessInfo mSystemProcessInfo;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Appends a string to a job comment string
@@ -1242,10 +1224,6 @@ namespace AnalysisManagerBase
             return true;
         }
 
-        #endregion
-
-        #region "EventNotifier events"
-
         private static void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
@@ -1287,8 +1265,5 @@ namespace AnalysisManagerBase
         {
             LogTools.LogWarning(warningMessage);
         }
-
-        #endregion
-
     }
 }

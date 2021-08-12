@@ -23,8 +23,6 @@ namespace DTASpectraFileGen
     /// </summary>
     public abstract class DtaGen : EventNotifier, ISpectraFileProcessor
     {
-        #region "Module variables"
-
         protected string mErrMsg = string.Empty;
         protected string mWorkDir = string.Empty;    // Working directory on analysis machine
         protected string mDatasetName = string.Empty;
@@ -47,10 +45,6 @@ namespace DTASpectraFileGen
 
         // The following is a value between 0 and 100
         protected float mProgress;
-
-        #endregion
-
-        #region "Properties"
 
         public IStatusFile StatusTools
         {
@@ -84,10 +78,6 @@ namespace DTASpectraFileGen
         public int SpectraFileCount => mSpectraFileCount;
 
         public float Progress => mProgress;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Aborts processing
@@ -321,7 +311,5 @@ namespace DTASpectraFileGen
                 OnErrorEvent(", Error finding the most recently created .Dta file: " + ex.Message);
             }
         }
-
-        #endregion
     }
 }

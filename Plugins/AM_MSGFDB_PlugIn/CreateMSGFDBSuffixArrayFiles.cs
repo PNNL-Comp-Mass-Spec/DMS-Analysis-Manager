@@ -24,18 +24,10 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         // Ignore Spelling: canno, cp, programmatically, tda, Utc, Xmx
 
-        #region "Constants"
-
         private const string MSGF_PLUS_INDEX_FILE_INFO_SUFFIX = ".MSGFPlusIndexFileInfo";
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mErrorMessage = string.Empty;
         private readonly string mMgrName;
-
-        #endregion
 
         /// <summary>
         /// Error message

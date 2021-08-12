@@ -22,14 +22,8 @@ namespace AnalysisManagerDtaSplitPlugIn
     {
         // Ignore Spelling: pre
 
-        #region "Module Variables"
-
         protected Regex r_FileSeparator;
         protected Regex r_DTAFirstLine;        // Presently not used
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -408,7 +402,5 @@ namespace AnalysisManagerDtaSplitPlugIn
 
             return success;
         }
-
-        #endregion
     }
 }

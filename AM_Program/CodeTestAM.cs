@@ -20,8 +20,6 @@ namespace AnalysisManagerProg
     // ReSharper disable once UnusedMember.Global
     public class CodeTestAM : AnalysisToolRunnerBase
     {
-        #region "Methods"
-
         /// <summary>
         /// Initializes class
         /// </summary>
@@ -148,8 +146,5 @@ namespace AnalysisManagerProg
 
             return true;
         }
-
-        #endregion
-
     }
 }

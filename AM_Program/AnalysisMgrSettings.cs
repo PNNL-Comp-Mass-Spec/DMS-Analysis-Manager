@@ -30,8 +30,6 @@ namespace AnalysisManagerProg
         // ReSharper disable once CommentTypo
         // Ignore Spelling: ack, mgractive, proteinseqs
 
-        #region "Constants"
-
         /// <summary>
         /// Stored procedure used to acknowledge that a manager update is required
         /// </summary>
@@ -89,15 +87,7 @@ namespace AnalysisManagerProg
         /// <remarks>When running offline jobs, this path will be updated for each job task</remarks>
         public const string MGR_PARAM_WORK_DIR = "WorkDir";
 
-        #endregion
-
-        #region "Class variables"
-
         private readonly string mMgrDirectoryPath;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -529,8 +519,5 @@ namespace AnalysisManagerProg
                 return null;
             }
         }
-
-        #endregion
-
     }
 }

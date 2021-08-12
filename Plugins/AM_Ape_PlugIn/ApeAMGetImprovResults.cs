@@ -9,12 +9,6 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMGetImprovResults : ApeAMBase
     {
-        #region Member Variables
-
-        #endregion
-
-        #region Constructors
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -23,8 +17,6 @@ namespace AnalysisManager_Ape_PlugIn
         public ApeAMGetImprovResults(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
-
-        #endregion
 
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters

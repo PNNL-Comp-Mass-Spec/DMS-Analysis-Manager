@@ -14,12 +14,6 @@ namespace DTASpectraFileGen
 {
     public class MGFtoDtaGenMainProcess : DtaGen
     {
-        #region "Constants"
-
-        #endregion
-
-        #region "Module variables"
-
         private System.Threading.Thread mDTAFileCreationThread;
         private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
 
@@ -27,8 +21,6 @@ namespace DTASpectraFileGen
         private int mScanStart;
         private int mScanStop;
         private float mMWLower;
-
-        #endregion
 
         public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {

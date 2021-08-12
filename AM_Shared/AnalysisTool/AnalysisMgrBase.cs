@@ -11,8 +11,6 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public abstract class AnalysisMgrBase : LoggerBase
     {
-        #region "Module variables"
-
         private DateTime mLastLockQueueWaitTimeLog = DateTime.UtcNow;
 
         private DateTime mLockQueueWaitTimeStart = DateTime.UtcNow;
@@ -40,10 +38,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         protected IStatusFile mStatusTools;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// When true, show additional messages at the console
         /// </summary>
@@ -51,8 +45,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// This property is updated when the Setup method is called in AnalysisResources or AnalysisToolRunnerBase
         /// </remarks>
         public bool TraceMode { get; protected set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor
@@ -251,8 +243,6 @@ namespace AnalysisManagerBase.AnalysisTool
             mLockQueueWaitTimeStart = DateTime.UtcNow;
         }
 
-        #region "Event Handlers"
-
         private void FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (mDebugLevel >= 1)
@@ -319,10 +309,6 @@ namespace AnalysisManagerBase.AnalysisTool
             LogMessage(adminBypassMessage);
         }
 
-        #endregion
-
-        #region "EventNotifier events"
-
         /// <summary>
         /// Register event handlers
         /// </summary>
@@ -348,7 +334,5 @@ namespace AnalysisManagerBase.AnalysisTool
             mStatusTools.CurrentOperation = progressMessage;
             mStatusTools.UpdateAndWrite(percentComplete);
         }
-
-        #endregion
     }
 }

@@ -13,14 +13,10 @@ namespace AnalysisManagerExtractionPlugin
     {
         // Ignore Spelling: Da, psm, tol
 
-        #region "Module variables"
-
         private readonly int mDebugLevel;
 
         // This is a value between 0 and 100
         private const double mErrorThresholdPercent = 5;
-
-        #endregion
 
         public string ErrorMessage { get; private set; } = string.Empty;
 

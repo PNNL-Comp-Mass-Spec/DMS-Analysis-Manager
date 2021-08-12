@@ -40,16 +40,10 @@ namespace AnalysisManagerBase.JobConfig
 
         private readonly MyEMSLFileIDComparer mFileIDComparer;
 
-        #region "Events"
-
         /// <summary>
         /// File downloaded event
         /// </summary>
         public event EventHandler<FileDownloadedEventArgs> FileDownloaded;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// The most recently downloaded files; keys are the full paths to the downloaded file, values are extended file info
@@ -76,8 +70,6 @@ namespace AnalysisManagerBase.JobConfig
         /// Files most recently found via a call to FindFiles
         /// </summary>
         public List<DatasetDirectoryOrFileInfo> RecentlyFoundMyEMSLFiles => mRecentlyFoundMyEMSLFiles;
-
-        #endregion
 
         /// <summary>
         /// Constructor
@@ -322,8 +314,6 @@ namespace AnalysisManagerBase.JobConfig
             return false;
         }
 
-        #region "MyEMSL Event Handlers"
-
         private void MyEMSLDatasetListInfo_MyEMSLOffline(string message)
         {
             mMyEMSLConnectionErrorCount++;
@@ -375,7 +365,6 @@ namespace AnalysisManagerBase.JobConfig
 
             FileDownloaded?.Invoke(sender, e);
         }
-        #endregion
 
         /// <summary>
         /// Determines whether two DatasetDirectoryOrFileInfo instances refer to the same file in MyEMSL

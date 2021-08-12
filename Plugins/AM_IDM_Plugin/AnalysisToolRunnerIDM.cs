@@ -15,15 +15,7 @@ namespace AnalysisManager_IDM_Plugin
     /// </summary>
     internal class AnalysisToolRunnerIDM : AnalysisToolRunnerBase
     {
-        #region "Constants"
         public const string EXISTING_IDM_RESULTS_FILE_NAME = "ExistingIDMResults.db3";
-        #endregion
-
-        #region Members
-
-        #endregion
-
-        #region Methods
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -168,7 +160,5 @@ namespace AnalysisManager_IDM_Plugin
 
             StoreDotNETToolVersionInfo(idmDLL, true);
         }
-
-        #endregion
     }
 }

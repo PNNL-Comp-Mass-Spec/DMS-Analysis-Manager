@@ -479,14 +479,9 @@ namespace AnalysisManagerBase.DataFileTools
             }
         }
 
-        #region "Event Handlers"
-
         private void CDTACondenser_ProgressChanged(string taskDescription, float percentComplete)
         {
             OnProgressUpdate(taskDescription, percentComplete);
         }
-
-        #endregion
-
     }
 }

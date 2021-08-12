@@ -18,8 +18,6 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     public class DBStatusLogger : EventNotifier
     {
-        #region "Structures"
-
         /// <summary>
         /// Status info
         /// </summary>
@@ -160,10 +158,6 @@ namespace AnalysisManagerBase.StatusReporting
             public int SpectrumCount;
         }
 
-        #endregion
-
-        #region "Module variables"
-
         /// <summary>
         /// Stored procedure that could be used to report manager status; typically not used
         /// </summary>
@@ -176,10 +170,6 @@ namespace AnalysisManagerBase.StatusReporting
         private float mDBStatusUpdateIntervalMinutes;
 
         private DateTime mLastWriteTime;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Database connection string
@@ -204,10 +194,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// Pipeline database stored procedure executor
         /// </summary>
         private IDBTools PipelineDBProcedureExecutor { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -298,8 +284,5 @@ namespace AnalysisManagerBase.StatusReporting
                 Console.WriteLine("Error in DBStatusLogger.LogStatus: " + ex.Message);
             }
         }
-
-        #endregion
-
     }
 }

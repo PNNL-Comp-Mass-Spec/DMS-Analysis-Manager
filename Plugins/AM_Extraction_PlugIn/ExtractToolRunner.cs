@@ -33,8 +33,6 @@ namespace AnalysisManagerExtractionPlugin
         // Ignore Spelling: ascore, fdr, moda, MODa, modp, msgfdb, mspath, nal
         // Ignore Spelling: parm, Phrp, Prot, tda, toppic, tryptic, tsv, Txt, Utils, xmx
 
-        #region "Constants"
-
         public const float PROGRESS_EXTRACTION_START = 3;
 
         /// <summary>
@@ -62,19 +60,12 @@ namespace AnalysisManagerExtractionPlugin
         private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
         private const string MODPlus_FILTER_JAR_NAME = "tda_plus.jar";
 
-        #endregion
-
-        #region "Module variables"
-
         private MSGFPlusUtils mMSGFPlusUtils;
         private bool mMSGFPlusUtilsError;
 
         private string mGeneratedFastaFilePath;
 
         private string mMzidMergerConsoleOutputFilePath;
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the data extraction tool(s)
@@ -2635,10 +2626,6 @@ namespace AnalysisManagerExtractionPlugin
             return success;
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private DateTime mLastPepProphetStatusLog = DateTime.MinValue;
 
         private void PeptideProphet_PeptideProphetRunning(string pepProphetStatus, float percentComplete)
@@ -2718,7 +2705,5 @@ namespace AnalysisManagerExtractionPlugin
                 ParseMzidMergerConsoleOutputFile();
             }
         }
-
-        #endregion
     }
 }

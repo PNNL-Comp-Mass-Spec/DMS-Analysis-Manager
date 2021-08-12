@@ -24,8 +24,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public abstract class DBTask : LoggerBase
     {
-        #region "Enums"
-
         /// <summary>
         /// Tracks the outcome of requesting a new task
         /// </summary>
@@ -57,10 +55,6 @@ namespace AnalysisManagerBase
             Deadlock = 4
         }
 
-        #endregion
-
-        #region "Constants"
-
         /// <summary>
         /// Return value for success
         /// </summary>
@@ -70,10 +64,6 @@ namespace AnalysisManagerBase
         /// Return value when a task is not available
         /// </summary>
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
-
-        #endregion
-
-        #region "Module variables"
 
         /// <summary>
         /// Manager parameters
@@ -103,9 +93,6 @@ namespace AnalysisManagerBase
         /// </summary>
         public IDBTools PipelineDBProcedureExecutor { get; }
 
-        #endregion
-
-        #region "Properties"
         /// <summary>
         /// Value showing if a transfer task was assigned
         /// </summary>
@@ -126,10 +113,6 @@ namespace AnalysisManagerBase
         /// Manager name
         /// </summary>
         public string ManagerName { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -270,10 +253,6 @@ namespace AnalysisManagerBase
             LogDebug(paramDetails.ToString().TrimStart());
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void ProcedureExecutor_DebugEvent(string message)
         {
             LogDebug(message, (int)BaseLogger.LogLevels.DEBUG);
@@ -306,8 +285,5 @@ namespace AnalysisManagerBase
 
             LogError(message);
         }
-
-        #endregion
-
     }
 }

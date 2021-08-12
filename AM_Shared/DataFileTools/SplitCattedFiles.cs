@@ -12,14 +12,10 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class SplitCattedFiles
     {
-        #region "Constants"
-
         private const string REGEX_FILE_SEPARATOR = @"^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$";
         private const string REGEX_FILE_NAME_PARTS = @"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)";
 
         private const string REGEX_DTA_FIRST_LINE = @"^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+cs\=(?<chargestate>\d+)$";
-
-        #endregion
 
         private readonly Regex mFileSeparator;
         private readonly Regex mFileNameParts;

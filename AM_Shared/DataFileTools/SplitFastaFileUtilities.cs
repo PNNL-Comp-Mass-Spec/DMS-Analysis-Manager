@@ -637,8 +637,6 @@ namespace AnalysisManagerBase.DataFileTools
             return true;
         }
 
-        #region "Events and Event Handlers"
-
         /// <summary>
         /// Event raised when splitting starts
         /// </summary>
@@ -674,8 +672,5 @@ namespace AnalysisManagerBase.DataFileTools
         {
             OnProgressUpdate(taskDescription, (int)percentComplete);
         }
-
-        #endregion
-
     }
 }

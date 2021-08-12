@@ -29,15 +29,9 @@ namespace DTASpectraFileGen
 
         // ReSharper restore CommentTypo
 
-        #region "Constants"
-
         protected const int DEFAULT_SCAN_STOP = 99999999;
 
         private const string CONSOLE_OUTPUT_FILENAME = "DeconMSn_ConsoleOutput.txt";
-
-        #endregion
-
-        #region "Module variables"
 
         protected int mNumScans;
         protected RunDosProgram mCmdRunner;
@@ -49,10 +43,6 @@ namespace DTASpectraFileGen
 
         private FileSystemWatcher mDTAWatcher;
         private FileSystemWatcher mDeconMSnProgressWatcher;
-
-        #endregion
-
-        #region "API Declares"
 
         // API constants
         private const short OF_READ = 0x0;
@@ -76,10 +66,6 @@ namespace DTASpectraFileGen
         public const string MSCONVERT_FILENAME_LOWER = "msconvert.exe";
         public const string DECON_CONSOLE_FILENAME_LOWER = "deconconsole.exe";
         public const string RAWCONVERTER_FILENAME_LOWER = "rawconverter.exe";
-
-        #endregion
-
-        #region "Methods"
 
         public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
         {
@@ -769,10 +755,6 @@ namespace DTASpectraFileGen
             return true;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
@@ -817,8 +799,6 @@ namespace DTASpectraFileGen
         {
             UpdateDTAProgress(e.Name);
         }
-
-        #endregion
 
         private void DeconMSnProgressWatcher_Changed(object sender, FileSystemEventArgs e)
         {

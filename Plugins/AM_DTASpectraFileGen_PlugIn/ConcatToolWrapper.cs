@@ -18,8 +18,6 @@ namespace DTASpectraFileGen
     /// </summary>
     public class ConcatToolWrapper
     {
-        #region "Enums"
-
         public enum ConcatFileTypes
         {
             CONCAT_DTA,
@@ -27,27 +25,15 @@ namespace DTASpectraFileGen
             CONCAT_ALL
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private bool mCatInProgress;
 
         private IConcatenateFiles mCatTools;
-
-        #endregion
-
-        #region "Properties"
 
         public float Progress { get; private set; }
 
         public string ErrMsg { get; private set; }
 
         public string DataPath { get; set; }
-
-        #endregion
-
-        #region "Public Methods"
 
         public ConcatToolWrapper(string DataPath)
         {
@@ -110,10 +96,6 @@ namespace DTASpectraFileGen
             }
         }
 
-        #endregion
-
-        #region "Private methods"
-
         private void CatTools_ErrorNotification(string errorMessage)
         {
             mCatInProgress = false;
@@ -129,7 +111,5 @@ namespace DTASpectraFileGen
         {
             Progress = (float)(100.0 * fractionDone);
         }
-
-        #endregion
     }
 }

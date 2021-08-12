@@ -23,8 +23,6 @@ namespace AnalysisManagerResultsXferPlugin
     /// </summary>
     public class ResultXferToolRunner : AnalysisToolRunnerBase
     {
-        #region "Methods"
-
         /// <summary>
         /// Runs the results transfer tool
         /// </summary>
@@ -607,7 +605,5 @@ namespace AnalysisManagerResultsXferPlugin
                 return false;
             }
         }
-
-        #endregion
     }
 }

@@ -23,19 +23,11 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class PeptideProphetWrapper : EventNotifier
     {
-        #region "Constants"
-
         public const int MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES = 120;
-
-        #endregion
-
-        #region "Module variables"
 
         private readonly string mPeptideProphetRunnerLocation;
 
         protected RunDosProgram mCmdRunner;
-
-        #endregion
 
         /// <summary>
         /// Even used to report progress
@@ -43,8 +35,6 @@ namespace AnalysisManagerExtractionPlugin
         public event PeptideProphetRunningEventHandler PeptideProphetRunning;
 
         public delegate void PeptideProphetRunningEventHandler(string pepProphetStatus, float percentComplete);
-
-        #region "Properties"
 
         public short DebugLevel { get; set; } = 1;
 
@@ -55,10 +45,6 @@ namespace AnalysisManagerExtractionPlugin
         public string Enzyme { get; set; } = string.Empty;
 
         public string OutputFolderPath { get; set; } = string.Empty;
-
-        #endregion
-
-        #region "Methods"
 
         public PeptideProphetWrapper(string peptideProphetRunnerLocation)
         {
@@ -194,7 +180,5 @@ namespace AnalysisManagerExtractionPlugin
                 PeptideProphetRunning?.Invoke("Running", 50);
             }
         }
-
-        #endregion
     }
 }

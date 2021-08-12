@@ -16,16 +16,10 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFileNotFoundException : ApplicationException
     {
-        #region "Properties"
-
         /// <summary>
         /// Path to the file that was not found
         /// </summary>
         public string FilePath { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -36,9 +30,6 @@ namespace AnalysisManagerBase
         {
             FilePath = filePath;
         }
-
-        #endregion
-
     }
 
     /// <summary>
@@ -46,16 +37,10 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFolderNotFoundException : ApplicationException
     {
-        #region "Properties"
-
         /// <summary>
         /// Path to the directory that was not found
         /// </summary>
         public string FolderPath { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -66,8 +51,6 @@ namespace AnalysisManagerBase
         {
             FolderPath = folderPath;
         }
-        #endregion
-
     }
 
     /// <summary>
@@ -75,8 +58,6 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFileNotDeletedAfterRetryException : ApplicationException
     {
-        #region "Enums"
-
         /// <summary>
         /// Enum for reason that file could not be deleted
         /// </summary>
@@ -93,10 +74,6 @@ namespace AnalysisManagerBase
             Unauthorized_Access_Exception
         }
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Path to the file that could not be deleted
         /// </summary>
@@ -106,10 +83,6 @@ namespace AnalysisManagerBase
         /// Reason that file could not be deleted
         /// </summary>
         public RetryExceptionType ExcType { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -122,8 +95,6 @@ namespace AnalysisManagerBase
             FilePath = filePath;
             ExcType = ExceptionType;
         }
-        #endregion
-
     }
 
     /// <summary>
@@ -131,16 +102,10 @@ namespace AnalysisManagerBase
     /// </summary>
     public class AMFileNotDeletedException : ApplicationException
     {
-        #region "Properties"
-
         /// <summary>
         /// Path to the file that could not be deleted
         /// </summary>
         public string FilePath { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -151,7 +116,5 @@ namespace AnalysisManagerBase
         {
             FilePath = filePath;
         }
-        #endregion
-
     }
 }

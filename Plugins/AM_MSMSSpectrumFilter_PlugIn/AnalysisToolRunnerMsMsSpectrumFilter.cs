@@ -42,7 +42,6 @@ namespace MSMSSpectrumFilterAM
 
         private ProcessStatus mFilterStatus;
 
-        #region "Methods"
 
         public AnalysisToolRunnerMsMsSpectrumFilter()
         {
@@ -810,8 +809,6 @@ namespace MSMSSpectrumFilterAM
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        #endregion
 
         private void MsMsSpectrumFilter_ProgressChanged(string taskDescription, float percentComplete)
         {

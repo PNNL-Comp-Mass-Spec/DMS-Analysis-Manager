@@ -28,8 +28,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         private const float PROGRESS_PCT_STARTING = 5;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
@@ -38,20 +36,12 @@ namespace AnalysisManagerBrukerDAExportPlugin
         private const string BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR = "BrukerSpectraExportMethodDir";
         private const string BRUKER_SPECTRA_EXPORT_METHOD_PARAM = "BrukerSpectraExportMethod";
 
-        #endregion
-
-        #region "Module Variables"
-
         private string mConsoleOutputErrorMsg;
 
         private bool mMaxRuntimeReached;
 
         private DateTime mLastConsoleOutputParse;
         private DateTime mLastProgressWriteTime;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Exports spectra using Bruker Data Analysis
@@ -636,10 +626,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_LoopWaiting()
         {
             {
@@ -661,8 +647,5 @@ namespace AnalysisManagerBrukerDAExportPlugin
         {
             mMaxRuntimeReached = true;
         }
-
-        #endregion
-
     }
 }

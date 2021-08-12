@@ -13,7 +13,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class MageRepoPkgrPipelines
     {
-        #region Properties
         /// <summary>
         /// Data package that supplies items for repo cache (must be set by client before use)
         /// </summary>
@@ -51,18 +50,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         private bool EnableMetadataFile { get; }
 
-        #endregion
-
-        #region Constructors
 
         public MageRepoPkgrPipelines()
         {
             EnableMetadataFile = true;
         }
-
-        #endregion
-
-        #region Pipeline_Methods
 
         /// <summary>
         /// Copy given set of files for given set of items from data package
@@ -247,10 +239,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             return result;
         }
 
-        #endregion
-
-        #region Pipeline_Run_Event_Handlers
-
         /// <summary>
         /// Wire up the internal event handlers to the given Mage pipeline
         /// </summary>
@@ -279,8 +267,5 @@ namespace AnalysisManager_RepoPkgr_Plugin
             //	todo Log pipeline event message?
             Console.WriteLine(args.Message);
         }
-
-        #endregion
-
     }
 }

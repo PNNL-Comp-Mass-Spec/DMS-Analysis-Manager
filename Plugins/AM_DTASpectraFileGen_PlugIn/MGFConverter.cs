@@ -11,8 +11,6 @@ namespace DTASpectraFileGen
     {
         // Ignore Spelling: cvParam, IDtoScan, MGFtoDTA
 
-        #region "Structures"
-
         private struct ScanInfo
         {
             public int ScanStart;
@@ -20,19 +18,11 @@ namespace DTASpectraFileGen
             public int Charge;
         }
 
-        #endregion
-
-        #region "Member variables"
-
         private readonly int mDebugLevel;
         private readonly string mWorkDir;
         private string mErrMsg;
 
         private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
-
-        #endregion
-
-        #region "Properties"
 
         public string ErrorMessage
         {
@@ -69,8 +59,6 @@ namespace DTASpectraFileGen
                 return mMGFtoDTA.SpectraCountWritten;
             }
         }
-
-        #endregion
 
         /// <summary>
         /// Constructor

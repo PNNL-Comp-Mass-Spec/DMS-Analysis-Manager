@@ -17,13 +17,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class SummaryFile
     {
-        #region "Module Variables"
-
         private readonly List<string> mLines = new();
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Clears summary file data
@@ -65,8 +59,5 @@ namespace AnalysisManagerBase.JobConfig
         {
             mLines.Add(line);
         }
-
-        #endregion
-
     }
 }

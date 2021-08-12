@@ -21,17 +21,11 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerThermoPeakDataExporter : AnalysisToolRunnerBase
     {
-        #region "Constants"
-
         private const string THERMO_DATA_EXPORTER_CONSOLE_OUTPUT = "ThermoDataExporter_ConsoleOutput.txt";
         private const string THERMO_DATA_EXPORTER_EXE_NAME = "ThermoPeakDataExporter.exe";
 
         private const float PROGRESS_PCT_STARTING = 1;
         private const float PROGRESS_PCT_COMPLETE = 99;
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mConsoleOutputErrorMsg;
 
@@ -40,10 +34,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         private DateTime mLastConsoleOutputParse;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs ThermoPeakDataExporter tool
@@ -300,10 +290,6 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -324,7 +310,5 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
 
             LogProgress("ThermoPeakDataExporter");
         }
-
-        #endregion
     }
 }

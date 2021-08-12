@@ -12,8 +12,6 @@ using PRISM.Logging;
 
 namespace AnalysisManagerBase.DataFileTools
 {
-    #region "Enums"
-
     /// <summary>
     /// Return values for MakeProcess and Abort functions
     /// </summary>
@@ -75,9 +73,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         SF_ABORTING = 4
     }
-    #endregion
-
-    #region "Structures"
 
     /// <summary>
     /// Initialization parameters for classes that implement ISpectraFilter
@@ -119,15 +114,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         public IStatusFile StatusTools;
     }
-    #endregion
 
     /// <summary>
     /// Defines minimum required functionality for classes that will filter spectra files
     /// </summary>
     public interface ISpectraFilter
     {
-        #region "Properties"
-
         /// <summary>
         /// Allows calling program to get current status
         /// </summary>
@@ -147,9 +139,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// Count of spectra files that remain after filtering
         /// </summary>
         int SpectraFileCount { get; }
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Initializes parameters. Must be called before executing Start()
@@ -166,8 +155,5 @@ namespace AnalysisManagerBase.DataFileTools
         /// Abort processing
         /// </summary>
         ProcessStatus Abort();
-
-        #endregion
-
     }
 }

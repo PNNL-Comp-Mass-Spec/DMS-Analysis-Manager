@@ -21,8 +21,6 @@ namespace AnalysisManagerBase.JobConfig
     {
         // Ignore Spelling: msgfplus, yyyy-MM-dd hh:mm:ss tt
 
-        #region "Constants"
-
         /// <summary>
         /// MSConvert executable name, capitalized
         /// </summary>
@@ -43,10 +41,6 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         public const string TOOL_VERSION_INFO_SECTION_HEADER = "ToolVersionInfo:";
 
-        #endregion
-
-        #region "Module variables"
-
         /// <summary>
         /// Access to the job parameters
         /// </summary>
@@ -56,10 +50,6 @@ namespace AnalysisManagerBase.JobConfig
         /// Access to manager parameters
         /// </summary>
         private readonly IMgrParams mMgrParams;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Dataset name
@@ -91,8 +81,6 @@ namespace AnalysisManagerBase.JobConfig
         /// Working directory
         /// </summary>
         private string WorkDir { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

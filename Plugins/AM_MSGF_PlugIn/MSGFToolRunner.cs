@@ -30,8 +30,6 @@ namespace AnalysisManagerMSGFPlugin
         // ReSharper disable once CommentTypo
         // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, Glu, Lys, MODa, modp, msgfdb, Parm, Pre, Xmx
 
-        #region "Constants and enums"
-
         private const float PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
         private const float PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;
         private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 6;
@@ -87,10 +85,6 @@ namespace AnalysisManagerMSGFPlugin
             public int Entries;
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private bool mETDMode;
 
         private string mMSGFInputFilePath = string.Empty;
@@ -128,10 +122,6 @@ namespace AnalysisManagerMSGFPlugin
         private int mMSGFInputCreatorWarningCount;
 
         private bool mPostProcessingError;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSGF
@@ -2637,10 +2627,6 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void MSXmlCreator_LoopWaiting()
         {
             UpdateStatusFile(PROGRESS_PCT_MSXML_GEN_RUNNING);
@@ -2729,7 +2715,5 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

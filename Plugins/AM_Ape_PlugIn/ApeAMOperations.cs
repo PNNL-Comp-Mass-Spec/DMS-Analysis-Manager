@@ -8,31 +8,19 @@ namespace AnalysisManager_Ape_PlugIn
 {
     public class ApeAMOperations : EventNotifier
     {
-        #region Member Variables
-
         protected IJobParams mJobParams;
 
         protected IMgrParams mMgrParams;
 
         private DateTime mLastProgressTime = DateTime.UtcNow;
 
-        #endregion
-
-        #region "Properties"
-
         public string ErrorMessage { get; private set; } = string.Empty;
-
-        #endregion
-
-        #region Constructors
 
         public ApeAMOperations(IJobParams jobParams, IMgrParams mgrParams)
         {
             mJobParams = jobParams;
             mMgrParams = mgrParams;
         }
-
-        #endregion
 
         /// <summary>
         /// Run a list of Ape operations
@@ -49,8 +37,6 @@ namespace AnalysisManager_Ape_PlugIn
             }
             return ok;
         }
-
-        #region Ape Operations
 
         /// <summary>
         /// Run defined Ape operation(s)
@@ -155,8 +141,5 @@ namespace AnalysisManager_Ape_PlugIn
             mLastProgressTime = DateTime.UtcNow;
             ConsoleMsgUtils.ShowDebug(message);
         }
-
-        #endregion
-
     }
 }

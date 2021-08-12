@@ -24,15 +24,9 @@ namespace DTASpectraFileGen
     [Obsolete("This class is longer used")]
     public class DtaGenDeconConsole : DtaGenThermoRaw
     {
-        #region "Constants"
-
         private const int PROGRESS_DECON_CONSOLE_START = 5;
         private const int PROGRESS_MGF_TO_CDTA_START = 85;
         private const int PROGRESS_CDTA_CREATED = 95;
-
-        #endregion
-
-        #region "Structures"
 
         private struct DeconToolsStatusType
         {
@@ -46,15 +40,9 @@ namespace DTASpectraFileGen
             }
         }
 
-        #endregion
-
-        #region "Classwide variables"
-
         private string mInputFilePath;
         private bool mDeconConsoleExceptionThrown;
         private bool mDeconConsoleFinishedDespiteProgRunnerError;
-
-        #endregion
 
         private DeconToolsStatusType mDeconConsoleStatus;
 

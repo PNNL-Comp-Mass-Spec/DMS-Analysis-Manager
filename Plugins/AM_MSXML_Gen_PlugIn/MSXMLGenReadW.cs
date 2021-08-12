@@ -19,8 +19,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string ProgramName => "ReAdW";
 
-        #region "Methods"
-
         public MSXMLGenReadW(
             string workDir,
             string readWProgramPath,
@@ -96,7 +94,5 @@ namespace AnalysisManagerMsXmlGenPlugIn
             // No special setup is required for ReAdW
             return true;
         }
-
-        #endregion
     }
 }

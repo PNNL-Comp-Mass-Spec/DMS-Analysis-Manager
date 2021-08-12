@@ -6,7 +6,6 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMBase : EventNotifier
     {
-        #region Enums
         public enum SqlServerToSqlLiteConversionMode
         {
             ViperResults = 0,
@@ -17,9 +16,6 @@ namespace AnalysisManager_Ape_PlugIn
             QRollupResults = 5
         }
 
-        #endregion
-
-        #region Member Variables
         protected string mResultsDBFileName;
 
         protected string mWorkingDir;
@@ -30,16 +26,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         protected string mErrorMessage = string.Empty;
 
-        #endregion
-
-        #region "Properties"
-
         public string ErrorMessage => mErrorMessage;
 
-        #endregion
-
-        #region Constructors
-
+        /// <summary>
         public ApeAMBase(IJobParams jobParams, IMgrParams mgrParams)
         {
             mJobParams = jobParams;
@@ -47,10 +36,6 @@ namespace AnalysisManager_Ape_PlugIn
             mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
             mWorkingDir = RequireMgrParam("WorkDir");
         }
-
-        #endregion
-
-        #region Utility Methods
 
         public string RequireMgrParam(string paramName)
         {
@@ -81,8 +66,6 @@ namespace AnalysisManager_Ape_PlugIn
         {
             return mJobParams.GetJobParameter(paramName, defaultValue);
         }
-
-        #endregion
 
         /// <summary>Progress update</summary>
         /// <param name="progressMessage">Progress message</param>

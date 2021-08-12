@@ -27,7 +27,6 @@ namespace AnalysisManagerMSAlignPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
 
         protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
         protected const string MSAlign_JAR_NAME = "MSAlign.jar";
@@ -50,10 +49,6 @@ namespace AnalysisManagerMSAlignPlugIn
             v0pt7 = 3
         }
 
-        #endregion
-
-        #region "Structures"
-
         protected struct InputPropertyValues
         {
             public string FastaFileName;
@@ -70,10 +65,6 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        #endregion
-
-        #region "Module Variables"
-
         protected bool mToolVersionWritten;
         protected string mMSAlignVersion;
 
@@ -85,9 +76,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
         protected RunDosProgram mCmdRunner;
 
-        #endregion
 
-        #region "Methods"
 
         /// <summary>
         /// Runs MSAlign tool
@@ -1286,10 +1275,6 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -1317,7 +1302,5 @@ namespace AnalysisManagerMSAlignPlugIn
                 LogProgress("MSAlign");
             }
         }
-
-        #endregion
     }
 }

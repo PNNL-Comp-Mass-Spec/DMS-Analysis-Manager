@@ -13,7 +13,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FileCopyUtilities : EventNotifier
     {
-        #region "Constants"
 
         private const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
 
@@ -24,23 +23,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         public const string STORAGE_PATH_INFO_FILE_SUFFIX = "_StoragePathInfo.txt";
 
-        #endregion
-
-        #region "Module variables"
-
         private readonly int mDebugLevel;
 
         private readonly MyEMSLUtilities mMyEMSLUtilities;
 
         private readonly FileTools mFileTools;
-
-        #endregion
-
-        #region "Properties"
-
-        #endregion
-
-        #region "Events"
 
         /// <summary>
         /// Event raised to instruct the parent class to call ResetTimestampForQueueWaitTimeLogging
@@ -63,10 +50,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="startTimeUtc"></param>
         /// <param name="destinationFilePath"></param>
         public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destinationFilePath);
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -551,7 +534,5 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             ResetTimestampForQueueWaitTime?.Invoke();
         }
-
-        #endregion
     }
 }

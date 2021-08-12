@@ -23,8 +23,6 @@ namespace AnalysisManagerInSpecTPlugIn
     {
         // Ignore Spelling: Ctrl, parmFile
 
-        #region "Structures"
-
         protected struct ModInfo
         {
             public string ModName;
@@ -38,10 +36,6 @@ namespace AnalysisManagerInSpecTPlugIn
             public int MostRecentLineNumber;
             public int CachedCount;
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
         protected const string INSPECT_EXE_NAME = "inspect.exe";
@@ -65,9 +59,6 @@ namespace AnalysisManagerInSpecTPlugIn
         protected string mCloneStepRenumber;
         protected string mStepNum;
 
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs InSpecT tool
@@ -636,7 +627,5 @@ namespace AnalysisManagerInSpecTPlugIn
         {
             ParseInspectSearchLogFile(mInspectSearchLogFilePath);
         }
-
-        #endregion
     }
 }

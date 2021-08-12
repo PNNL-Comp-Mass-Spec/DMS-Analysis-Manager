@@ -17,25 +17,15 @@ namespace AnalysisManager_Mage_PlugIn
     {
         // Ignore Spelling: Workflows, Improv
 
-        #region Member Variables
-
         private readonly IJobParams mJobParams;
 
         private readonly IMgrParams mMgrParams;
 
         private bool mPreviousStepResultsImported;
 
-        #endregion
-
-        #region Properties
-
         public string WarningMsg { get; private set; } = "";
 
         public string WarningMsgVerbose { get; private set; } = "";
-
-        #endregion
-
-        #region Constructors
 
         public MageAMOperations(IJobParams jobParams, IMgrParams mgrParams, string logFilePath, bool appendDateToLogFileName)
         {
@@ -45,8 +35,6 @@ namespace AnalysisManager_Mage_PlugIn
 
             LogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
         }
-
-        #endregion
 
         /// <summary>
         /// Run a list of Mage operations
@@ -110,8 +98,6 @@ namespace AnalysisManager_Mage_PlugIn
             OnWarningEvent("Unrecognized Mage operation: " + mageOperation);
             return false;
         }
-
-        #region Mage Operations Functions
 
         private void AppendToWarningMessage(string message, string verboseMessage)
         {
@@ -439,10 +425,6 @@ namespace AnalysisManager_Mage_PlugIn
             }
         }
 
-        #endregion
-
-        #region Utility Functions
-
         /// <summary>
         /// Import any results from previous step, if there are any, and if they haven't already be imported
         /// </summary>
@@ -519,7 +501,5 @@ namespace AnalysisManager_Mage_PlugIn
                     break;
             }
         }
-
-        #endregion
     }
 }

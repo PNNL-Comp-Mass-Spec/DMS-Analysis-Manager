@@ -7,23 +7,14 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMRunWorkflow : ApeAMBase
     {
-        #region Member Variables
-
-        #endregion
-
-        #region Constructors
-
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        public ApeAMRunWorkflow(IJobParams jobParams, IMgrParams mgrParams)
-            : base(jobParams, mgrParams)
+        public ApeAMRunWorkflow(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
-
-        #endregion
 
         public bool RunWorkflow()
         {

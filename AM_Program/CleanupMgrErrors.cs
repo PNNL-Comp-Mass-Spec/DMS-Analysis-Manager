@@ -17,8 +17,6 @@ namespace AnalysisManagerProg
     {
         // Ignore Spelling: holdoff
 
-        #region "Constants"
-
         private const string SP_NAME_REPORT_MGR_ERROR_CLEANUP = "ReportManagerErrorCleanup";
 
         private const int DEFAULT_HOLDOFF_SECONDS = 3;
@@ -82,19 +80,11 @@ namespace AnalysisManagerProg
             Fail = 3
         }
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Full path to the flag file
         /// </summary>
         /// <remarks>Will be in the same directory as the manager executable</remarks>
         public string FlagFilePath => Path.Combine(mMgrDirectoryPath, FLAG_FILE_NAME);
-
-        #endregion
-
-        #region "Class wide Variables"
 
         private readonly bool mInitialized;
         private readonly string mMgrConfigDBConnectionString;
@@ -103,8 +93,6 @@ namespace AnalysisManagerProg
         private readonly string mMgrDirectoryPath;
         private readonly bool mTraceMode;
         private readonly string mWorkingDirPath;
-
-        #endregion
 
         /// <summary>
         /// Constructor

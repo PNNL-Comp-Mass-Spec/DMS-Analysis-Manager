@@ -23,8 +23,6 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class PeptideExtractWrapper : EventNotifier
     {
-        #region "Event Handlers"
-
         private void ExtractTools_EndTask()
         {
             mExtractInProgress = false;
@@ -78,10 +76,6 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        #endregion
-
-        #region "Module variables"
-
         private readonly short mDebugLevel;
         private bool mExtractInProgress;
         private clsPeptideFileExtractor mExtractTools;
@@ -95,10 +89,6 @@ namespace AnalysisManagerExtractionPlugin
         private float mProgress;
 
         private readonly IStatusFile mStatusTools;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -227,7 +217,5 @@ namespace AnalysisManagerExtractionPlugin
 
             return CloseOutType.CLOSEOUT_NO_DATA;
         }
-
-        #endregion
     }
 }

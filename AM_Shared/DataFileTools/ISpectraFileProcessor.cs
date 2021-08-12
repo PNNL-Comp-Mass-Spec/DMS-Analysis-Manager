@@ -13,8 +13,6 @@ using AnalysisManagerBase.StatusReporting;
 
 namespace AnalysisManagerBase.DataFileTools
 {
-    #region "Structures"
-
     /// <summary>
     /// Initialization parameters for classes that implement ISpectraFileProcessor
     /// </summary>
@@ -50,15 +48,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         public string DatasetName;
     }
-    #endregion
 
     /// <summary>
     /// Defines minimum required functionality for classes that will generate spectra files
     /// </summary>
     public interface ISpectraFileProcessor
     {
-        #region "Properties"
-
         /// <summary>
         /// Allows calling program to get current status
         /// </summary>
@@ -110,10 +105,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         IStatusFile StatusTools { set; }
 
-        #endregion
-
-        #region "Methods"
-
         /// <summary>
         /// Initializes parameters. Must be called before executing Start()
         /// </summary>
@@ -130,8 +121,5 @@ namespace AnalysisManagerBase.DataFileTools
         /// Aborts spectra file creation
         /// </summary>
         ProcessStatus Abort();
-
-        #endregion
-
     }
 }

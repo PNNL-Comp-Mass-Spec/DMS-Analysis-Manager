@@ -35,8 +35,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         protected override string ProgramName => "MSConvert";
 
-        #region "Methods"
-
         public MSXmlGenMSConvert(
             string workDir,
             string msConvertProgramPath,
@@ -181,7 +179,5 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             return proteowizardTools.RegisterProteoWizard();
         }
-
-        #endregion
     }
 }

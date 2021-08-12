@@ -15,7 +15,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// </summary>
     public class AnalysisResourcesMSXMLBruker : AnalysisResources
     {
-        #region "Methods"
 
         /// <summary>
         /// Retrieves files necessary for creating the .mzXML file
@@ -62,7 +61,5 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        #endregion
     }
 }

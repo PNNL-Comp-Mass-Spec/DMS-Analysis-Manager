@@ -31,8 +31,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Constants"
-
         /// <summary>
         /// Progress value for MS-GF+ starting
         /// </summary>
@@ -189,10 +187,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const string SCAN_COUNT_HIGH_RES_MSN = "ScanCountHighResMSn";
         public const string SCAN_COUNT_HCD_MSN = "ScanCountHCDMSn";
 
-        #endregion
-
-        #region "Events"
-
         /// <summary>
         /// Event raised when a peptide to protein mapping error has been ignored
         /// </summary>
@@ -202,10 +196,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Delegate for IgnorePreviousErrorEvent
         /// </summary>
         public delegate void IgnorePreviousErrorEventEventHandler(string messageToIgnore);
-
-        #endregion
-
-        #region "Module Variables"
 
         private readonly Regex mCommentExtractor;
 
@@ -217,10 +207,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Number of skipped continuum spectra
@@ -281,10 +267,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Number of completed processing tasks
         /// </summary>
         public int TaskCountCompleted { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -3682,10 +3664,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
-
-        #region "Event Methods"
-
         private DateTime mLastLogTime = DateTime.MinValue;
 
         private void PeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
@@ -3700,8 +3678,5 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnStatusEvent("Mapping peptides to proteins: " + percentComplete.ToString("0.0") + "% complete");
             }
         }
-
-        #endregion
-
     }
 }

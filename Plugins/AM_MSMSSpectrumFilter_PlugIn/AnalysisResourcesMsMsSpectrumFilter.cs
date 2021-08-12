@@ -24,8 +24,6 @@ namespace MSMSSpectrumFilterAM
     {
         // Ignore Spelling: Dta
 
-        #region "Methods"
-
         /// <summary>
         /// Retrieves files necessary for performance of Sequest analysis
         /// </summary>
@@ -256,7 +254,5 @@ namespace MSMSSpectrumFilterAM
                 return false;
             }
         }
-
-        #endregion
     }
 }

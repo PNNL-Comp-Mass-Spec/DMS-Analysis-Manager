@@ -40,8 +40,6 @@ namespace AnalysisManagerBase.AnalysisTool
         // Ignore Spelling: parm, resourcer, sequest, ser, tdf, tims, tof, uimf, wiff, xt, xtandem
         // Ignore Spelling: Bruker, Micromass, Orbitrap
 
-        #region "Constants"
-
         /// <summary>
         /// Dataset name for aggregation jobs
         /// </summary>
@@ -543,10 +541,6 @@ namespace AnalysisManagerBase.AnalysisTool
             Ascore = 1
         }
 
-        #endregion
-
-        #region "Module variables"
-
         /// <summary>
         /// Job parameters
         /// </summary>
@@ -649,10 +643,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// File copy utilities
         /// </summary>
         protected FileCopyUtilities mFileCopyUtilities;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Dataset name
@@ -766,10 +756,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Work directory path
         /// </summary>
         public string WorkDir => mWorkDir;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -5323,10 +5309,6 @@ namespace AnalysisManagerBase.AnalysisTool
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CDTAUtilities_ProgressEvent(string taskDescription, float percentComplete)
         {
             if (mDebugLevel >= 1)
@@ -5399,10 +5381,6 @@ namespace AnalysisManagerBase.AnalysisTool
             LogDebugMessage("Splitting " + baseFastaFileName + " into " + numSplitParts + " parts");
         }
 
-        #endregion
-
-        #region "FileCopyUtilities Events"
-
         private void FileCopyUtilities_CopyWithLocksComplete(DateTime startTimeUtc, string destinationFilePath)
         {
             LogCopyStats(startTimeUtc, destinationFilePath);
@@ -5413,16 +5391,9 @@ namespace AnalysisManagerBase.AnalysisTool
             ResetTimestampForQueueWaitTimeLogging();
         }
 
-        #endregion
-
-        #region "SpectraTypeClassifier Events"
-
         private void SpectraTypeClassifier_ReadingSpectra(int spectraProcessed)
         {
             LogDebugMessage(" ... " + spectraProcessed + " spectra parsed in the _dta.txt file");
         }
-
-        #endregion
-
     }
 }

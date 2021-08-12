@@ -10,16 +10,11 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMFileContentProcessor : FileContentProcessor
     {
-        #region Member Variables
 
         // Specific set of allowed file names.
         // If not null, processing will be restricted to only files in list
         // (derived from FileNameList property)
         private HashSet<string> _fileNameSet;
-
-        #endregion
-
-        #region Properties
 
         public MageAMFileProcessingPipelines FilePipeline { get; }
 
@@ -33,10 +28,6 @@ namespace AnalysisManager_Mage_PlugIn
         // Specific list of allowed file names.
         // If not null, processing will be restricted to only files in list
         public string FileNameList { get; set; }
-
-        #endregion
-
-        #region Constructors
 
         public MageAMFileContentProcessor()
         {
@@ -56,10 +47,6 @@ namespace AnalysisManager_Mage_PlugIn
             FilePipeline = filePipeline;
             Operation = "SimpleImport";
         }
-
-        #endregion
-
-        #region Overrides of base class
 
         /// <summary>
         /// Do necessary setup before pipeline runs
@@ -110,10 +97,6 @@ namespace AnalysisManager_Mage_PlugIn
             }
         }
 
-        #endregion
-
-        #region Utilities
-
         /// <summary>
         /// Convert comma-delimited list of item into a trimmed hash set
         /// </summary>
@@ -136,7 +119,5 @@ namespace AnalysisManager_Mage_PlugIn
         {
             _fileNameSet = string.IsNullOrEmpty(FileNameList) ? null : ConvertListToSet(FileNameList);
         }
-
-        #endregion
     }
 }

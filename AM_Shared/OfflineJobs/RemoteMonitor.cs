@@ -22,8 +22,6 @@ namespace AnalysisManagerBase.OfflineJobs
     {
         // Ignore Spelling: Unstarted
 
-        #region "Constants"
-
         private const int STALE_LOCK_FILE_AGE_HOURS = 24;
 
         private const int STALE_JOBSTATUS_FILE_AGE_HOURS = 24;
@@ -33,10 +31,6 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Files will be stored in a year-based directory, e.g. /Completed/2018/
         /// </summary>
         public const string ARCHIVED_TASK_QUEUE_DIRECTORY_NAME = "Completed";
-
-        #endregion
-
-        #region "Enums"
 
         /// <summary>
         /// Remote job status
@@ -68,10 +62,6 @@ namespace AnalysisManagerBase.OfflineJobs
             /// </summary>
             Failed = 4
         }
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Debug level
@@ -124,10 +114,6 @@ namespace AnalysisManagerBase.OfflineJobs
         /// </summary>
         public int StepNum { get; }
 
-        #endregion
-
-        #region "Fields"
-
         /// <summary>
         /// Cache of remote status files for this job
         /// Tracks full file paths
@@ -135,10 +121,6 @@ namespace AnalysisManagerBase.OfflineJobs
         private readonly SortedSet<string> mCachedStatusFiles;
 
         private bool mParametersUpdated;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -929,10 +911,6 @@ namespace AnalysisManagerBase.OfflineJobs
             return false;
         }
 
-        #endregion
-
-        #region "Events"
-
         /// <summary>
         /// Delegate for StaleJobStatusFileEvent and StaleLockFileEvent
         /// </summary>
@@ -969,7 +947,5 @@ namespace AnalysisManagerBase.OfflineJobs
         {
             StaleLockFileEvent?.Invoke(fileName, ageHours);
         }
-
-        #endregion
     }
 }

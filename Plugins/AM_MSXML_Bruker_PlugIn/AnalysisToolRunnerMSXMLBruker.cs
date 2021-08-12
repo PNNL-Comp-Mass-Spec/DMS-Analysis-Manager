@@ -21,7 +21,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     {
         // Ignore Spelling: Bruker, CompassXport, gzip
 
-        #region "Module Variables"
 
         protected const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
@@ -31,9 +30,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         protected CompassXportRunner mCompassXportRunner;
 
-        #endregion
-
-        #region "Methods"
 
         protected const int MAX_CSV_FILES = 50;
 
@@ -361,10 +357,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CompassXportRunner.LoopWaiting event
         /// </summary>
@@ -383,7 +375,5 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             LogDebug(commandLine);
         }
-
-        #endregion
     }
 }

@@ -21,8 +21,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Enums"
-
         public enum MSXMLOutputTypeConstants
         {
             Invalid = -1,
@@ -32,10 +30,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             JCAMP = 3,
             CSV = 4
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         private readonly string mWorkDir;
         private readonly string mCompassXportProgramPath;
@@ -51,15 +45,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         public delegate void LoopWaitingEventHandler();
 
-        #endregion
-
-        #region "Properties"
-
         public string ErrorMessage { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -218,7 +204,5 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             LoopWaiting?.Invoke();
         }
-
-        #endregion
     }
 }

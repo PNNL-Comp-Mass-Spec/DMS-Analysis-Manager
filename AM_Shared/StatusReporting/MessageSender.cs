@@ -178,8 +178,6 @@ namespace AnalysisManagerBase.StatusReporting
             }
         }
 
-        #region "Events and Event Handlers"
-
         public event ErrorEventEventHandler ErrorEvent;
         public delegate void ErrorEventEventHandler(string message, Exception ex);
 
@@ -191,7 +189,5 @@ namespace AnalysisManagerBase.StatusReporting
         {
             ErrorEvent?.Invoke(message, null);
         }
-
-        #endregion
     }
 }

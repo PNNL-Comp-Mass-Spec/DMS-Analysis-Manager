@@ -22,25 +22,15 @@ namespace AnalysisManagerMSGFPlugin
     {
         // Ignore Spelling: MODa, ModDefs, msgfdb, ParmFile
 
-        #region "Constants"
-
         /// <summary>
         /// ModDefs file suffix
         /// </summary>
         public const string PHRP_MOD_DEFS_SUFFIX = "_ModDefs.txt";
 
-        #endregion
-
-        #region "Module variables"
-
         /// <summary>
         /// Keys are the original file name, values are the new name
         /// </summary>
         private Dictionary<string, string> mPendingFileRenames;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Gets all files needed by MSGF
@@ -506,7 +496,5 @@ namespace AnalysisManagerMSGFPlugin
 
             return true;
         }
-
-        #endregion
     }
 }

@@ -24,15 +24,11 @@ namespace AnalysisManagerTopFDPlugIn
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
 
-        #region "Structures"
-
         private struct TopFDJobInfoType
         {
             public string ToolVersion;
             public string ResultsDirectoryName;
         }
-
-        #endregion
 
         /// <summary>
         /// Retrieve required files

@@ -26,8 +26,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         public const string JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME = "DeconTools_ParameterFileName";
 
-        #region "Methods"
-
         /// <summary>
         /// Retrieves files necessary for performance of Decon2ls analysis
         /// </summary>
@@ -447,7 +445,5 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
             }
         }
-
-        #endregion
     }
 }

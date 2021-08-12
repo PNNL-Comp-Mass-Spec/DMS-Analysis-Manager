@@ -11,8 +11,6 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase.StatusReporting
 {
-    #region "Enums"
-
     /// <summary>
     /// Manager Status constants
     /// </summary>
@@ -116,16 +114,12 @@ namespace AnalysisManagerBase.StatusReporting
         NO_TASK
     }
 
-    #endregion
-
     /// <summary>
     /// Interface used by classes that create and update analysis status file
     /// </summary>
     public interface IStatusFile
     {
         // Ignore Spelling: hyperthreading, tcp
-
-        #region "Properties"
 
         /// <summary>
         /// When true, status messages are being sent directly to the broker database
@@ -248,10 +242,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// When true, the status XML is being sent to the manager status message queue
         /// </summary>
         bool LogToMsgQueue { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Returns the number of cores
@@ -412,8 +402,5 @@ namespace AnalysisManagerBase.StatusReporting
         /// thus this should be set to false if simply reporting that the manager is idle
         /// </param>
         void WriteStatusFile(bool forceLogToBrokerDB, bool includeCpuUsage);
-
-        #endregion
-
     }
 }

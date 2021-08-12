@@ -22,8 +22,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         // Ignore Spelling: gzip, mgf, msconvert, readw, Reindex
 
-        #region "Module Variables"
-
         private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
         private string mMSXmlGeneratorAppPath = string.Empty;
@@ -31,10 +29,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         private AnalysisResources.MSXMLOutputTypeConstants mMSXmlOutputFileType;
 
         private DirectoryInfo mMSXmlCacheFolder;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs ReAdW or MSConvert
@@ -701,10 +695,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for msXmlGen.LoopWaiting event
         /// </summary>
@@ -722,7 +712,5 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             LogDebug(CommandLine);
         }
-
-        #endregion
     }
 }

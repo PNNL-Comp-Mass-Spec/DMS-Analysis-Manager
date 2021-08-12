@@ -23,8 +23,6 @@ namespace DTASpectraFileGen
     /// </summary>
     public class DtaGenToolRunner : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         public const string CDTA_FILE_SUFFIX = AnalysisResources.CDTA_EXTENSION;
 
         private const int CENTROID_CDTA_PROGRESS_START = 70;
@@ -40,17 +38,9 @@ namespace DTASpectraFileGen
             RawConverter = 6
         }
 
-        #endregion
-
-        #region "Module-wide variables"
-
         private bool mCentroidDTAs;
         private bool mConcatenateDTAs;
         private int mStepNum;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the analysis tool
@@ -1277,7 +1267,5 @@ namespace DTASpectraFileGen
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
-
-        #endregion
     }
 }

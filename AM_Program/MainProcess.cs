@@ -36,8 +36,6 @@ namespace AnalysisManagerProg
 
         // ReSharper restore CommentTypo
 
-        #region "Constants"
-
         private const int MAX_ERROR_COUNT = 10;
         private const string DECON2LS_FATAL_REMOTING_ERROR = "Fatal remoting error";
         private const string DECON2LS_CORRUPTED_MEMORY_ERROR = "Corrupted memory error";
@@ -46,10 +44,6 @@ namespace AnalysisManagerProg
         private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\AnalysisMgr";
 
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
-
-        #endregion
-
-        #region "Member variables"
 
         // Instance of class AnalysisMgrSettings
         private IMgrParams mMgrParams;
@@ -87,10 +81,6 @@ namespace AnalysisManagerProg
 
         private string mPluginLoaderStepTool = string.Empty;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// When true, do not log messages to the manager status message queue
         /// </summary>
@@ -115,9 +105,6 @@ namespace AnalysisManagerProg
         /// </summary>
         public bool TraceMode { get; set; }
 
-        #endregion
-
-        #region "Methods"
         /// <summary>
         /// Starts program execution
         /// </summary>
@@ -3211,10 +3198,6 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        #endregion
-
-        #region "EventNotifier events"
-
         private void CriticalErrorEvent(string message, Exception ex)
         {
             LogError(message, true);
@@ -3252,10 +3235,6 @@ namespace AnalysisManagerProg
             }
         }
 
-        #endregion
-
-        #region "RemoteMonitor events"
-
         private void RemoteMonitor_StaleLockFileEvent(string fileName, int ageHours)
         {
             var msg = string.Format("Stale remote lock file for {0}; {1} last modified {2} hours ago",
@@ -3271,8 +3250,6 @@ namespace AnalysisManagerProg
 
             LogErrorToDatabasePeriodically(msg, 12);
         }
-
-        #endregion
 
         /// <summary>
         /// Event handler for file watcher

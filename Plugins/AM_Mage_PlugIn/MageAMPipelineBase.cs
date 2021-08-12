@@ -13,17 +13,11 @@ namespace AnalysisManager_Mage_PlugIn
 {
     public class MageAMPipelineBase : EventNotifier
     {
-        #region Member Variables
-
         protected readonly Regex mProcessingResults = new(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
         protected int mLastProgressJob;
 
         protected DateTime mLastProgressTime = DateTime.UtcNow;
-
-        #endregion
-
-        #region Properties
 
         protected string ResultsDBFileName { get; }
 
@@ -55,15 +49,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <remarks>Updated by HandlePipelineUpdate</remarks>
         protected SortedSet<int> JobsProcessed { get; }
 
-        #endregion
-
-        #region Properties
-
         public string WorkingDir => WorkingDirPath;
-
-        #endregion
-
-        #region Constructors
 
         public MageAMPipelineBase(IJobParams jobParams, IMgrParams mgrParams)
         {
@@ -74,10 +60,6 @@ namespace AnalysisManager_Mage_PlugIn
 
             JobsProcessed = new SortedSet<int>();
         }
-
-        #endregion
-
-        #region Utility Methods
 
         public string GetResultsDBFilePath()
         {
@@ -177,10 +159,6 @@ namespace AnalysisManager_Mage_PlugIn
             }
         }
 
-        #endregion
-
-        #region Pipeline Event Handler Utilities
-
         protected void ConnectPipelineToStatusHandlers(ProcessingPipeline pipeline)
         {
             pipeline.OnStatusMessageUpdated += HandlePipelineUpdate;
@@ -192,10 +170,6 @@ namespace AnalysisManager_Mage_PlugIn
             pipelineQueue.OnRunCompleted += HandlePipelineUpdate;
             pipelineQueue.OnPipelineStarted += HandlePipelineCompletion;
         }
-
-        #endregion
-
-        #region Pipeline Update Message Handlers
 
         private void HandlePipelineUpdate(object sender, MageStatusEventArgs args)
         {
@@ -241,8 +215,5 @@ namespace AnalysisManager_Mage_PlugIn
         {
             OnDebugEvent(args.Message);
         }
-
-        #endregion
-
     }
 }

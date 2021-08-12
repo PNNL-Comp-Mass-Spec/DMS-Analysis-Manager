@@ -11,7 +11,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         // Ignore Spelling: mgf
 
-        #region "Constants"
 
         // Define a maximum runtime of 36 hours
         private const int MAX_RUNTIME_SECONDS = 36 * 60 * 60;
@@ -19,10 +18,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public const string MZXML_FILE_FORMAT = "mzXML";
         public const string MZML_FILE_FORMAT = "mzML";
         public const string MGF_FILE_FORMAT = "mgf";
-
-        #endregion
-
-        #region "Module Variables"
 
         protected readonly string mWorkDir;
         protected readonly string mProgramPath;
@@ -48,10 +43,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         public delegate void LoopWaitingEventHandler();
 
-        #endregion
-
-        #region "Properties"
-
         public string ConsoleOutputFileName { get; set; } = string.Empty;
 
         public string ConsoleOutputSuffix { get; set; } = string.Empty;
@@ -70,8 +61,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         protected abstract string ProgramName { get; }
 
         public string SourceFilePath { get; private set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

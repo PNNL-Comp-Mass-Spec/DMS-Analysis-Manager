@@ -28,8 +28,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     {
         // Ignore Spelling: InspResults, Pvalue, trie
 
-        #region "Constants and Enums"
-
         private const string PVALUE_MINLENGTH5_SCRIPT = "PValue_MinLength5.py";
 
         private const string ORIGINAL_INSPECT_FILE_SUFFIX = "_inspect.txt";
@@ -55,9 +53,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             CreatePeptideToProteinMapping = 4
         }
 
-        #endregion
-
-        #region "Structures"
 
         protected struct ModInfo
         {
@@ -65,10 +60,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
             public string Residues;
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
 
@@ -84,10 +75,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         // The percent complete values range from 0 to 100
         private const int PERCENT_COMPLETE_LEVEL_COUNT = 5;
         protected float[] mPercentCompleteStartLevels;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -1340,10 +1327,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void PeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
         {
             // Note that percentComplete is a value between 0 and 100
@@ -1357,7 +1340,5 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             LogProgress("Mapping peptides to proteins", 3);
         }
-
-        #endregion
     }
 }

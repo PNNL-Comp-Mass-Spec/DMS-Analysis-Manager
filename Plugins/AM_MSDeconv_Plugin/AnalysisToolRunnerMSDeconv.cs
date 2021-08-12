@@ -24,8 +24,6 @@ namespace AnalysisManagerMSDeconvPlugIn
     {
         // Ignore Spelling: centroided, Deconv, mgf, msalign, Xmx
 
-        #region "Module Variables"
-
         protected const string MSDECONV_CONSOLE_OUTPUT = "MSDeconv_ConsoleOutput.txt";
         protected const string MSDECONV_JAR_NAME = "MsDeconvConsole.jar";
 
@@ -41,10 +39,6 @@ namespace AnalysisManagerMSDeconvPlugIn
         protected string mConsoleOutputErrorMsg;
 
         protected RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSDeconv tool
@@ -610,10 +604,6 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -637,7 +627,5 @@ namespace AnalysisManagerMSDeconvPlugIn
                 LogProgress("MSDeconv");
             }
         }
-
-        #endregion
     }
 }

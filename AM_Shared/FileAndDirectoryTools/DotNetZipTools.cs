@@ -21,8 +21,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private readonly string mWorkDir;
 
-        #region "Properties"
-
         /// <summary>
         /// Debug level: ranges from 0 (minimum output) to 5 (max detail)
         /// </summary>
@@ -48,8 +46,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
         /// </summary>
         public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; } = new();
-
-        #endregion
 
         /// <summary>
         /// Constructor

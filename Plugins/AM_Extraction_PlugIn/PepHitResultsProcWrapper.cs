@@ -31,13 +31,7 @@ namespace AnalysisManagerExtractionPlugin
     {
         // Ignore Spelling: MODa, Parm, Pvalue, PepToProt
 
-        #region "Constants"
-
         public const string PHRP_LOG_FILE_NAME = "PHRP_LogFile.txt";
-
-        #endregion
-
-        #region "Module Variables"
 
         private readonly int mDebugLevel;
         private readonly IMgrParams mMgrParams;
@@ -48,17 +42,9 @@ namespace AnalysisManagerExtractionPlugin
         private string mPHRPConsoleOutputFilePath;
         private string mWarningMessage = string.Empty;
 
-        #endregion
-
-        #region "Properties"
-
         public string ErrorMessage => mErrorMessage ?? string.Empty;
 
         public string WarningMessage => mWarningMessage ?? string.Empty;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -548,10 +534,6 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastStatusUpdate = DateTime.MinValue;
 
         /// <summary>
@@ -566,7 +548,5 @@ namespace AnalysisManagerExtractionPlugin
                 ParsePHRPConsoleOutputFile();
             }
         }
-
-        #endregion
     }
 }

@@ -19,16 +19,11 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase
     {
-        #region Member Variables
 
         /// <summary>
         /// The parameters for the slated extraction
         /// </summary>
         protected ExtractionType ExtractionParams;
-
-        #endregion
-
-        #region Constructors
 
         /// <summary>
         /// Constructor
@@ -38,8 +33,6 @@ namespace AnalysisManager_Mage_PlugIn
         public MageAMExtractionPipelines(IJobParams jobParams, IMgrParams mgrParams) : base(jobParams, mgrParams)
         {
         }
-
-        #endregion
 
         /// <summary>
         /// Setup and run Mage Extractor pipeline according to job parameters

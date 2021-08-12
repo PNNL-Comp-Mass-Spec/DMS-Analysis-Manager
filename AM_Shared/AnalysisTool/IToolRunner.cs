@@ -21,8 +21,6 @@ namespace AnalysisManagerBase.AnalysisTool
     /// <remarks>Implemented by AnalysisToolRunnerBase</remarks>
     public interface IToolRunner
     {
-        #region "Properties"
-
         /// <summary>
         /// Evaluation code to be reported to the DMS_Pipeline DB
         /// </summary>
@@ -58,10 +56,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>RunTool sets this in AnalysisToolRunnerBase</remarks>
         DateTime StartTime { get; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Initializes class
@@ -129,8 +123,5 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="evalCode"></param>
         /// <param name="evalMsg"></param>
         void UpdateEvalCode(int evalCode, string evalMsg);
-
-        #endregion
-
     }
 }

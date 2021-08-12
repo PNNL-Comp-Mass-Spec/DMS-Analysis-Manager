@@ -23,8 +23,6 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         // Ignore Spelling: centroided, conf, Gzip, mzid, mzml, mzxml, Utils, Xmx
 
-        #region "Constants and Enums"
-
         private enum InputFileFormatTypes
         {
             Unknown = 0,
@@ -33,10 +31,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             MzML = 3,
             MGF = 4
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         private readonly List<string> mResultFilesToSkipIfNoError = new();
 
@@ -62,10 +56,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         private MSGFPlusUtils mMSGFPlusUtils;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MS-GF+ tool (aka MSGF+)
@@ -1338,10 +1328,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -1354,7 +1340,5 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             mMessage = mMessage.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
         }
-
-        #endregion
     }
 }

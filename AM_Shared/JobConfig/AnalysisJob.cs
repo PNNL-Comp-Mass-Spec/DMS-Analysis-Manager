@@ -30,8 +30,6 @@ namespace AnalysisManagerBase.JobConfig
     {
         // Ignore Spelling: dir, dirs, ok
 
-        #region "Constants"
-
         /// <summary>
         /// Job parameters section
         /// </summary>
@@ -61,10 +59,6 @@ namespace AnalysisManagerBase.JobConfig
         /// XML file with job parameters used when running job remotely
         /// </summary>
         public const string OFFLINE_JOB_PARAMS_FILE = "JobParams.xml";
-
-        #endregion
-
-        #region "Module variables"
 
         /// <summary>
         /// Job parameters
@@ -113,10 +107,6 @@ namespace AnalysisManagerBase.JobConfig
 
         private DateTime mStartTime;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// List of dataset names and dataset IDs associated with this aggregation job
         /// </summary>
@@ -152,10 +142,6 @@ namespace AnalysisManagerBase.JobConfig
         /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -2071,8 +2057,5 @@ namespace AnalysisManagerBase.JobConfig
 
             return toolAndStepTool;
         }
-
-        #endregion
-
     }
 }

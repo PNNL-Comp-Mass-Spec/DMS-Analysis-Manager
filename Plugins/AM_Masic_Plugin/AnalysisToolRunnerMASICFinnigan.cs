@@ -20,11 +20,7 @@ namespace AnalysisManagerMasicPlugin
     {
         // Ignore Spelling: parm
 
-        #region "Module Variables"
-
         private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
-
-        #endregion
 
         protected override CloseOutType RunMASIC()
         {
@@ -141,15 +137,11 @@ namespace AnalysisManagerMasicPlugin
             }
         }
 
-        #region "Event Handlers"
-
         private void MSXmlCreator_LoopWaiting()
         {
             UpdateStatusFile();
 
             LogProgress("MSXmlCreator");
         }
-
-        #endregion
     }
 }

@@ -17,7 +17,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class AnalysisToolRunnerRepoPkgr : AnalysisToolRunnerBase
     {
-        #region Constants
 
         protected const int PROGRESS_PCT_FASTA_FILES_COPIED = 10;
         protected const int PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED = 25;
@@ -26,9 +25,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         protected const int PROGRESS_PCT_INSTRUMENT_DATA_COPIED = 95;
 
         public const string WARNING_INSTRUMENT_DATA_MISSING = "WarningInstrumentDataMissing";
-        #endregion
-
-        #region Fields
 
         private bool mIncludeInstrumentData;
         private bool mIncludeSequestResults;
@@ -41,10 +37,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private MageRepoPkgrPipelines mRepoPackager;
 
         private string mMSXmlGeneratorAppPath;
-
-        #endregion
-
-        #region Main Logic
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -753,8 +745,5 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             return orgDbName;
         }
-
-        #endregion
-
     }
 }

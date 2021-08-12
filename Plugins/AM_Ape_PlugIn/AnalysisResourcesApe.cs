@@ -97,8 +97,6 @@ namespace AnalysisManager_Ape_PlugIn
             return true;
         }
 
-        #region Ape Operations
-
         private bool GetWorkflowFiles()
         {
             // ReSharper disable once IdentifierTypo
@@ -167,8 +165,5 @@ namespace AnalysisManager_Ape_PlugIn
 
             return true;
         }
-
-        #endregion
-
     }
 }

@@ -12,8 +12,6 @@ namespace AnalysisManagerBase.JobConfig
 {
     // Ignore Spelling: ann, bool, Quant, Sequest
 
-    #region "Enums"
-
     /// <summary>
     /// Job result codes (aka completion codes)
     /// </summary>
@@ -126,8 +124,6 @@ namespace AnalysisManagerBase.JobConfig
         CLOSEOUT_FAILED_REMOTE = 26
     }
 
-    #endregion
-
     /// <summary>
     /// Interface for the analysis job parameter storage class
     /// Also has the methods for Requesting a task and Closing a task
@@ -135,8 +131,6 @@ namespace AnalysisManagerBase.JobConfig
     /// <remarks>Implemented in AnalysisJob</remarks>
     public interface IJobParams
     {
-        #region "Properties"
-
         /// <summary>
         /// Dataset info list
         /// </summary>
@@ -166,10 +160,6 @@ namespace AnalysisManagerBase.JobConfig
         /// Flag set to True when .CloseTask is called
         /// </summary>
         bool TaskClosed { get; set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Adds (or updates) a job parameter
@@ -398,8 +388,5 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="keyName">Parameter name</param>
         /// <param name="value">Parameter value</param>
         void SetParam(string section, string keyName, string value);
-
-        #endregion
-
     }
 }

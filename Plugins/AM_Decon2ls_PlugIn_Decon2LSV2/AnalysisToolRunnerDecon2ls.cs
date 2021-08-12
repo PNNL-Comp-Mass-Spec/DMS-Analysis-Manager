@@ -23,16 +23,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     {
         // Ignore Spelling: ascii, baf, Bruker, CmdRunner, deconvolute, deisotope, Finnigan, fticr, HighAbu, Isos, ParmFile
 
-        #region "Constants"
-
         private const string DECON2LS_SCANS_FILE_SUFFIX = "_scans.csv";
         private const string DECON2LS_ISOS_FILE_SUFFIX = "_isos.csv";
         private const string DECON2LS_PEAKS_FILE_SUFFIX = "_peaks.txt";
 
         private const string MS_FILE_INFO_SCANNER_NO_ISOS_DATA = "No data found in the _isos.csv file";
-        #endregion
-
-        #region "Module variables"
 
         private AnalysisResources.RawDataTypeConstants mRawDataType = AnalysisResources.RawDataTypeConstants.Unknown;
         private string mRawDataTypeName = string.Empty;
@@ -50,10 +45,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private DeconToolsStatus mDeconToolsStatus;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Enums and Structures"
 
         private enum DeconToolsStateType
         {
@@ -94,10 +85,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 IsUIMF = false;
             }
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Validate the result files
@@ -1375,10 +1362,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastLogCheckTime = DateTime.MinValue;
 
         /// <summary>
@@ -1467,7 +1450,5 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (message.IndexOf(MS_FILE_INFO_SCANNER_NO_ISOS_DATA, StringComparison.OrdinalIgnoreCase) >= 0)
                 mMSFileInfoScannerReportsEmptyIsosFile = true;
         }
-
-        #endregion
     }
 }

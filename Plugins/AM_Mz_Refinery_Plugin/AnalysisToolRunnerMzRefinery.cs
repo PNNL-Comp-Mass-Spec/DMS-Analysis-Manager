@@ -32,8 +32,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
 
         private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
@@ -53,10 +51,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             MzRefiner = 2,
             PPMErrorCharter = 3
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         private readonly List<string> mResultFilesToSkipIfNoError = new();
 
@@ -91,10 +85,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// </summary>
         /// <remarks>MzRefinerProgRunnerMode keeps track of the current ProgRunner and is used by MonitorProgress</remarks>
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MS-GF+ then runs MSConvert with the MzRefiner filter
@@ -1830,10 +1820,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -1846,7 +1832,5 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             mMessage = mMessage.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
         }
-
-        #endregion
     }
 }

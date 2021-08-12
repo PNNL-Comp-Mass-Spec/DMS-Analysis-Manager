@@ -23,8 +23,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         // Ignore Spelling: Centroiding
 
-        #region "Class wide variables"
-
         private readonly string mMSXmlGeneratorAppPath;
         private readonly IJobParams mJobParams;
         private readonly string mWorkDir;
@@ -37,8 +35,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public event LoopWaitingEventHandler LoopWaiting;
 
         public delegate void LoopWaitingEventHandler();
-
-        #endregion
 
         public string ErrorMessage { get; private set; }
 
@@ -296,8 +292,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mDatasetName = datasetName;
         }
 
-        #region "Event Handlers"
-
         private void RegisterMsXmlGenEventHandlers(MSXmlGen msXmlGen)
         {
             RegisterEvents(msXmlGen);
@@ -324,8 +318,5 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 OnStatusEvent(CommandLine);
             }
         }
-
-        #endregion
-
     }
 }

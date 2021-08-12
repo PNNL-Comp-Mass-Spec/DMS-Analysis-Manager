@@ -17,16 +17,10 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class FormattedXMLWriter
     {
-        #region "Properties"
-
         /// <summary>
         /// Error message
         /// </summary>
         public string ErrMsg { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Write XML to disk
@@ -73,7 +67,5 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
         }
-        #endregion
-
     }
 }

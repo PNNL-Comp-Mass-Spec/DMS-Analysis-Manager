@@ -1984,8 +1984,6 @@ namespace AnalysisManagerBase.JobConfig
             return true;
         }
 
-        #region "Event Handlers"
-
         private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             if (message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -2003,7 +2001,5 @@ namespace AnalysisManagerBase.JobConfig
 
             OnErrorEvent(message);
         }
-
-        #endregion
     }
 }

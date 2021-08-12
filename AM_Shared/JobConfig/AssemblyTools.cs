@@ -17,8 +17,6 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class AssemblyTools
     {
-        #region "Methods"
-
         /// <summary>
         /// Call summaryFile.Add for each loaded assembly
         /// </summary>
@@ -88,8 +86,5 @@ namespace AnalysisManagerBase.JobConfig
                 summaryFile.Add(fileInfo);
             }
         }
-
-        #endregion
-
     }
 }

@@ -21,8 +21,6 @@ namespace AnalysisManagerIDPickerPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Module Variables"
-
         /// <summary>
         /// If True, always skip IDPicker
         /// </summary>
@@ -78,10 +76,6 @@ namespace AnalysisManagerIDPickerPlugIn
         private List<string> mFilenamesToAddToReportDirectory;
 
         private bool mBatchFilesMoved;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs PepXML converter and IDPicker tool
@@ -1418,10 +1412,6 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_ConsoleErrorEvent(string NewText, Exception ex)
         {
             if (mCmdRunnerErrors == null)
@@ -1464,7 +1454,5 @@ namespace AnalysisManagerIDPickerPlugIn
                 LogError("Aborted " + mCmdRunnerDescription);
             }
         }
-
-        #endregion
     }
 }

@@ -14,8 +14,6 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         private Dictionary<int, string> mScanTypeMap;
 
-        #region "Properties"
-
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -45,8 +43,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Working directory
         /// </summary>
         public string WorkDir { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

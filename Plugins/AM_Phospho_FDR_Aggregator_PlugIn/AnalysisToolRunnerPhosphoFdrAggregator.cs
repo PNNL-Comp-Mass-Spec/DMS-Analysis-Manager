@@ -25,7 +25,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     {
         // Ignore Spelling: cid, Da, etd, fht, hcd, Mage, msgfplus, sequest, xt, xtandem
 
-        #region "Constants and Enums"
 
         protected const string ASCORE_CONSOLE_OUTPUT_PREFIX = "AScore_ConsoleOutput";
 
@@ -43,10 +42,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             HCD = 3
         }
 
-        #endregion
-
-        #region "Structures"
-
         protected struct JobMetadataForAScore
         {
             public int Job;
@@ -58,10 +53,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             public string SpectrumFilePath;
         }
 
-        #endregion
-
-        #region "Module Variables"
-
         protected string mConsoleOutputErrorMsg;
 
         protected int mJobFoldersProcessed;
@@ -69,9 +60,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         protected RunDosProgram mCmdRunner;
 
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs PhosphoFdrAggregator tool
@@ -1103,7 +1091,5 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogProgress("PhosphoFdrAggregator");
             }
         }
-
-        #endregion
     }
 }

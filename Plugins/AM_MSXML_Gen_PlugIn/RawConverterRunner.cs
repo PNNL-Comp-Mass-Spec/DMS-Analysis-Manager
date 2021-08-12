@@ -10,26 +10,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         // Ignore Spelling: mgf
 
-        #region "Constants"
-
         public const string RAW_CONVERTER_FILENAME = "RawConverter.exe";
-
-        #endregion
-
-        #region "Member variables"
 
         /// <summary>
         /// 0 means no debugging, 1 for normal, 2 for verbose
         /// </summary>
         private readonly int mDebugLevel;
 
-        #endregion
-
-        #region "Properties"
-
         public string RawConverterExePath { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

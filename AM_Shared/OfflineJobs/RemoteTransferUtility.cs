@@ -21,8 +21,6 @@ namespace AnalysisManagerBase.OfflineJobs
     {
         // Ignore Spelling: passphrase, scp, sftp, SFtpFile, Dirs, yyyyMMdd_HHmm
 
-        #region "Constants"
-
         /// <summary>
         /// Step parameter RemoteInfo
         /// </summary>
@@ -56,15 +54,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// </summary>
         private const bool USE_MANAGER_REMOTE_INFO = true;
 
-        #endregion
-
-        #region "Module variables"
-
         private bool mUsingManagerRemoteInfo;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Dataset Name
@@ -156,10 +146,6 @@ namespace AnalysisManagerBase.OfflineJobs
         /// </summary>
         public string JobStepDescription => string.Format("job {0}, step {1}", JobNum, StepNum);
 
-        #endregion
-
-        #region "Status File Names"
-
         /// <summary>
         /// Filename of the .jobstatus status file
         /// </summary>
@@ -205,10 +191,6 @@ namespace AnalysisManagerBase.OfflineJobs
                 return statusFileNames;
             }
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -1035,8 +1017,5 @@ namespace AnalysisManagerBase.OfflineJobs
 
             return false;
         }
-
-        #endregion
-
     }
 }

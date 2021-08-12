@@ -18,8 +18,6 @@ namespace AnalysisManager_AScore_PlugIn
     {
         // Ignore Spelling: const, Mage, msgfdb, msgfplus, ParmFile
 
-        #region Member Variables
-
         protected string mResultsDBFileName = string.Empty;
         protected string mWorkingDir;
 
@@ -35,15 +33,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         public static DatasetListInfo mMyEMSLDatasetInfo;
 
-        #endregion
-
-        #region Properties
-
         public string ErrorMessage => mErrorMessage;
-
-        #endregion
-
-        #region Constructors
 
         public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
         {
@@ -61,10 +51,6 @@ namespace AnalysisManager_AScore_PlugIn
                 RegisterEvents(mMyEMSLDatasetInfo);
             }
         }
-
-        #endregion
-
-        #region Initialization
 
         /// <summary>
         /// Set up internal variables
@@ -107,10 +93,6 @@ namespace AnalysisManager_AScore_PlugIn
             mDotNetZipTools = dotNetZipTools;
         }
 
-        #endregion
-
-        #region Processing
-
         /// <summary>
         /// Do processing
         /// </summary>
@@ -135,10 +117,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             return true;
         }
-
-        #endregion
-
-        #region Mage Pipelines and Utilities
 
         private bool GetAScoreParameterFile()
         {
@@ -397,8 +375,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             return extractionParams;
         }
-
-        #endregion
 
         public IEnumerable<string> GetTempFileNames()
         {

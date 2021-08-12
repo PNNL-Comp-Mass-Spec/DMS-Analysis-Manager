@@ -18,8 +18,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     {
         // Ignore Spelling: pre, Xtract
 
-        #region "Constants"
-
         /// <summary>
         /// Maximum number of attempts to find a directory or file
         /// </summary>
@@ -32,10 +30,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
-        #endregion
-
-        #region "Module variables"
-
         private readonly bool mAuroraAvailable;
 
         private readonly int mDebugLevel;
@@ -46,10 +40,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private readonly FileCopyUtilities mFileCopyUtilities;
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -59,14 +49,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// True if MyEMSL search is disabled
         /// </summary>
         public bool MyEMSLSearchDisabled { get; set; }
-
-        #endregion
-
-        #region "Events"
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -891,7 +873,5 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             return false;
         }
-
-        #endregion
     }
 }

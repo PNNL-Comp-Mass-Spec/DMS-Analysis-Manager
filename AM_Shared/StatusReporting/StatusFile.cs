@@ -30,8 +30,6 @@ namespace AnalysisManagerBase.StatusReporting
     {
         // Ignore Spelling: GlyQ, hyperthreading, ModPlus, PerfLib, tcp, yyyy-MM-dd, hh:mm:ss, tt
 
-        #region "Module variables"
-
         /// <summary>
         /// Filename that indicates that processing needs to be aborted
         /// </summary>
@@ -72,10 +70,6 @@ namespace AnalysisManagerBase.StatusReporting
         private readonly Dictionary<TaskStatusCodes, string> mTaskStatusMap;
 
         private readonly Dictionary<TaskStatusDetailCodes, string> mTaskStatusDetailMap;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// When true, status messages are being sent directly to the broker database
@@ -261,10 +255,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <remarks>Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected</remarks>
         public bool AbortProcessingNow { get; private set; }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -1560,16 +1550,9 @@ namespace AnalysisManagerBase.StatusReporting
             mMessageSender?.Dispose();
         }
 
-        #endregion
-
-        #region "Event handlers"
-
         private void MessageSender_ErrorEvent(string message, Exception ex)
         {
             OnErrorEvent(message, ex);
         }
-
-        #endregion
-
     }
 }

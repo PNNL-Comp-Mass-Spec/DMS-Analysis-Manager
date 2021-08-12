@@ -19,8 +19,6 @@ namespace AnalysisManagerBase.AnalysisTool
     {
         // Ignore Spelling: usr
 
-        #region "Module variables"
-
         /// <summary>
         /// Monitor interval, in milliseconds
         /// </summary>
@@ -39,10 +37,6 @@ namespace AnalysisManagerBase.AnalysisTool
         private DateTime mStopTime;
 
         private bool mIsRunning;
-
-        #endregion
-
-        #region "Events"
 
         /// <summary>
         /// Class is waiting until next time it's due to check status of called program (good time for external processing)
@@ -74,10 +68,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Delegate for TimeoutEventHandler
         /// </summary>
         public delegate void TimeoutEventHandler();
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Text written to the Error stream by the external program (including carriage returns)
@@ -275,10 +265,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// If this is true, no window will be shown, even if CreateNoWindow=False
         /// </remarks>
         public bool WriteConsoleOutputToFile { get; set; } = false;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Constructor
@@ -573,8 +559,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
             return true;
         }
-
-        #endregion
 
         private void ProgRunner_ConsoleErrorEvent(string newText)
         {
