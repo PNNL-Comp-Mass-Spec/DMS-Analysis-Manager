@@ -306,10 +306,11 @@ namespace AnalysisManagerExtractionPlugin
                     return true;
                 }
 
-                ErrorMessage = percentInvalid.ToString("0.0") + "% of the peptides have a mass error over " +
-                                precursorMassTolerance.ToString("0.0") + " Da";
+                ErrorMessage = string.Format(
+                    "{0:F2}% of the peptides have a mass error over {1:F1} Da",
+                    percentInvalid, precursorMassTolerance);
 
-                var warningMessage = ErrorMessage + " (" + errorCount + " / " + psmCount + ")";
+                var warningMessage = string.Format("{0} ({1} / {2})", ErrorMessage, errorCount, psmCount);
 
                 if (percentInvalid <= mErrorThresholdPercent)
                 {
