@@ -1,9 +1,4 @@
-﻿using AnalysisManagerBase;
-using PRISM;
-using PRISM.AppSettings;
-using PRISM.Logging;
-using Renci.SshNet;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -14,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
@@ -21,7 +17,11 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
 using Cyclops;
+using PRISM;
+using PRISM.AppSettings;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
+using Renci.SshNet;
 
 namespace AnalysisManagerProg
 {
