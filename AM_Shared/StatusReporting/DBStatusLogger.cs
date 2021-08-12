@@ -216,8 +216,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="dbStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
         public DBStatusLogger(string dbConnectionString, float dbStatusUpdateIntervalMinutes)
         {
-            if (dbConnectionString == null)
-                dbConnectionString = string.Empty;
+            dbConnectionString ??= string.Empty;
 
             PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(dbConnectionString, debugMode: false);
             RegisterEvents(PipelineDBProcedureExecutor);

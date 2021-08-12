@@ -336,7 +336,7 @@ namespace AnalysisManagerBase.JobConfig
             var packageComment = curRow["PackageComment"].CastDBVal<string>();
 
             // Examine the comment to look for "MSFragger Group GroupName"  (case insensitive)
-            var experimentGroupMatcher = new Regex(@"(MSFragger|MSFrag|FragPipe|MaxQuant)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var experimentGroupMatcher = new Regex("(MSFragger|MSFrag|FragPipe|MaxQuant)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match1 = experimentGroupMatcher.Match(packageComment);
 
