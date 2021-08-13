@@ -632,14 +632,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// </summary>
         /// <param name="inspectParameterFilePath"></param>
         /// <param name="modList"></param>
-        private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, ref ModInfo[] modList)
+        private bool ExtractModInfoFromInspectParamFile(string inspectParameterFilePath, out List<ModInfo> modList)
         {
+            modList = new List<ModInfo>();
+
             try
             {
-                // Initialize modList
-                var modCount = 0;
-                modList = new ModInfo[-1 + 1];
-
                 if (mDebugLevel > 4)
                 {
                     LogDebug("AnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + inspectParameterFilePath);
@@ -675,27 +673,17 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         if (splitLine.Length >= 5 && splitLine[0].ToLower().Trim() == "mod")
                         {
-                            if (modList.Length == 0)
+                            var mod = new ModInfo
                             {
-                                modList = new ModInfo[1];
-                            }
-                            else if (modCount >= modList.Length)
-                            {
-                                Array.Resize(ref modList, modList.Length * 2);
-                            }
+                                ModName = splitLine[4],
+                                ModMass = splitLine[1],
+                                Residues = splitLine[2]
+                            };
 
-                            // var mod = modList[modCount];
-                            // mod.ModName = splitLine[4];
-                            // mod.ModMass = splitLine[1];
-                            // mod.Residues = splitLine[2];
-
-                            modCount++;
+                            modList.Add(mod);
                         }
                     }
                 }
-
-                // Shrink modList to the appropriate length
-                Array.Resize(ref modList, modCount);
             }
             catch (Exception ex)
             {
@@ -1021,8 +1009,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <param name="inspectParameterFilePath"></param>
         private bool UpdatePTModsFile(string inspectDirectoryPath, string inspectParameterFilePath)
         {
-            var modList = new ModInfo[0];
-
             var prevLineWasBlank = false;
 
             try
@@ -1033,12 +1019,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Read the mods defined in inspectInputFilePath
-                if (ExtractModInfoFromInspectParamFile(inspectParameterFilePath, ref modList))
+                if (ExtractModInfoFromInspectParamFile(inspectParameterFilePath, out var modList))
                 {
-                    if (modList.Length > 0)
+                    if (modList.Count > 0)
                     {
                         // Initialize modProcessed()
-                        var modProcessed = new bool[modList.Length];
+                        var modProcessed = new bool[modList.Count];
 
                         // Read PTMods.txt to look for the mods in modList
                         // While reading, will create a new file with any required updates
@@ -1084,7 +1070,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                             var matchFound = false;
 
                                             int index;
-                                            for (index = 0; index <= modList.Length - 1; index++)
+                                            for (index = 0; index < modList.Count; index++)
                                             {
                                                 if (modList[index].ModName.ToLower() == modName)
                                                 {
@@ -1139,7 +1125,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             }
 
                             // Look for any unprocessed mods
-                            for (var index = 0; index <= modList.Length - 1; index++)
+                            for (var index = 0; index < modList.Count; index++)
                             {
                                 if (!modProcessed[index])
                                 {
