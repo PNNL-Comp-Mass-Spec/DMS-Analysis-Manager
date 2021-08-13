@@ -489,8 +489,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var Msg = "Error creating empty SeqToProteinMap file: " + ex.Message;
-                LogError(Msg);
+                LogError("Error creating empty SeqToProteinMap file: " + ex.Message);
                 return false;
             }
 

@@ -1340,14 +1340,11 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             // Instantiate FASTA tool if not already done
-            if (mFastaTools == null)
+            if (mFastaTools == null && string.IsNullOrWhiteSpace(mFastaToolsCnStr))
             {
-                if (string.IsNullOrWhiteSpace(mFastaToolsCnStr))
-                {
-                    mMessage = "Protein database connection string not specified";
-                    LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
-                    return false;
-                }
+                mMessage = "Protein database connection string not specified";
+                LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
+                return false;
             }
 
             var retryCount = 1;

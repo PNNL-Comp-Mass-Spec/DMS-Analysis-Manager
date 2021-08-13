@@ -43,7 +43,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             if (mDbConnectionStrings.TryGetValue(dbTag, out var connectionString))
                 return connectionString;
 
-            OnErrorEvent(String.Format("{0} not found in the Connection Strings dictionary", dbTag));
+            OnErrorEvent(string.Format("{0} not found in the Connection Strings dictionary", dbTag));
             return string.Empty;
         }
 

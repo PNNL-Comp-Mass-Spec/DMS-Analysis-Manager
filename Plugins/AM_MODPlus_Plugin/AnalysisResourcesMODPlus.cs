@@ -201,7 +201,7 @@ namespace AnalysisManagerMODPlusPlugin
             var addonMsg = "choose a DMS-generated decoy protein collection or a legacy FASTA file with protein names that start with " +
                            string.Join(" or ", decoyPrefixes);
 
-            if (Math.Abs(maxPercentReverse - 0) < float.Epsilon)
+            if (Math.Abs(maxPercentReverse) < float.Epsilon)
             {
                 LogError("Legacy FASTA file " + fastaFile.Name + " does not have any decoy (reverse) proteins; " + addonMsg);
                 return false;

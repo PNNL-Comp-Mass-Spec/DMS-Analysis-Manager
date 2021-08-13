@@ -366,8 +366,7 @@ namespace AnalysisManager_AScore_PlugIn
                 LogTools.LogWarning("Unable to delete _dta.zip file: " + ex.Message);
             }
 
-            var unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
-            return unzippedDtaResultsFilePath;
+            return Path.ChangeExtension(dtaZipPathLocal, ".txt");
         }
 
         private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo resultsDirectory, int jobNumber, string toolName, string connectionString)

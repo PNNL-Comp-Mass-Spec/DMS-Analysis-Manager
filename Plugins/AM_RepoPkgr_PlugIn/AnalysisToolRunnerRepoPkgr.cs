@@ -105,9 +105,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var localOrgDBDirectory = mMgrParams.GetParam("OrgDbDir");
             var targetDirectoryPath = Path.Combine(mOutputResultsDirectoryPath, "Organism_Database");
 
-            var generatedOrgDBNames = ExtractPackedJobParameterList(AnalysisResourcesRepoPkgr.FASTA_FILES_FOR_DATA_PACKAGE);
-
-            foreach (var orgDbName in generatedOrgDBNames)
+            foreach (var orgDbName in ExtractPackedJobParameterList(AnalysisResourcesRepoPkgr.FASTA_FILES_FOR_DATA_PACKAGE))
             {
                 var sourceFilePath = Path.Combine(localOrgDBDirectory, orgDbName);
 
@@ -734,10 +732,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var success = dbTools.GetQueryResults(sqlQuery, out var results, retryCount, retryDelaySeconds: 2);
                 var proteinCollectionList = results.SelectMany(x => x).ToList();
 
-                if (proteinCollectionList.Count > 0 && proteinCollectionList.Count < 4)
+                if (proteinCollectionList.Count is > 0 and < 4)
                 {
-                    var orgDbNameNew = string.Join("_", proteinCollectionList) + ".fasta";
-                    return orgDbNameNew;
+                    return string.Join("_", proteinCollectionList) + ".fasta";
                 }
             }
             catch (Exception ex)

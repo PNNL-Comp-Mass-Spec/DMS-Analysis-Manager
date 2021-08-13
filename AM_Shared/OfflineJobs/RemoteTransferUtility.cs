@@ -175,22 +175,15 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Return a list of all status file names
         /// </summary>
         /// <remarks>Useful for skipping status files when copying job results</remarks>
-        public List<string> StatusFileNames
-        {
-            get
+        public List<string> StatusFileNames =>
+            new()
             {
-                var statusFileNames = new List<string>
-                {
-                    JobStatusFile,
-                    ProcessingFailureFile,
-                    ProcessingSuccessFile,
-                    StatusInfoFile,
-                    StatusLockFile
-                };
-
-                return statusFileNames;
-            }
-        }
+                JobStatusFile,
+                ProcessingFailureFile,
+                ProcessingSuccessFile,
+                StatusInfoFile,
+                StatusLockFile
+            };
 
         /// <summary>
         /// Constructor
