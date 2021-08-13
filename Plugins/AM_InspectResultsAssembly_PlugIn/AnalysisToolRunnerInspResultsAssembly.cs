@@ -54,8 +54,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             CreatePeptideToProteinMapping = 4
         }
 
-
-        protected struct ModInfo
+        private struct ModInfo
         {
             public string ModName;
             public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
@@ -64,9 +63,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
 
-        protected string mInspectResultsFileName;
+        private string mInspectResultsFileName;
 
-        protected string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
+        private string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
 
         // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
@@ -75,7 +74,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         //  at the start of each of the various processing steps performed in this procedure
         // The percent complete values range from 0 to 100
         private const int PERCENT_COMPLETE_LEVEL_COUNT = 5;
-        protected float[] mPercentCompleteStartLevels;
+        private float[] mPercentCompleteStartLevels;
 
         /// <summary>
         /// Constructor
@@ -744,7 +743,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return result;
         }
 
-        protected void InitializeVariables()
+        private void InitializeVariables()
         {
             // Define the percent complete values to use for the start of each processing step
 
@@ -962,7 +961,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
             var appFolderPath = Global.GetAppDirectoryPath();

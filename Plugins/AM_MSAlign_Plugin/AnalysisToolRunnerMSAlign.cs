@@ -27,21 +27,20 @@ namespace AnalysisManagerMSAlignPlugIn
 
         // ReSharper restore CommentTypo
 
+        private const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
+        private const string MSAlign_JAR_NAME = "MSAlign.jar";
 
-        protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
-        protected const string MSAlign_JAR_NAME = "MSAlign.jar";
+        private const float PROGRESS_PCT_STARTING = 1;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
+        private const string RESULT_TABLE_NAME_LEGACY = "result_table.txt";
 
-        protected const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
-        protected const string RESULT_TABLE_NAME_LEGACY = "result_table.txt";
-
-        protected const string RESULT_DETAILS_NAME_SUFFIX = "_MSAlign_ResultDetails.txt";
-        protected const string RESULT_DETAILS_NAME_LEGACY = "result.txt";
+        private const string RESULT_DETAILS_NAME_SUFFIX = "_MSAlign_ResultDetails.txt";
+        private const string RESULT_DETAILS_NAME_LEGACY = "result.txt";
 
         // Note that newer versions are assumed to have higher enum values
-        protected enum MSAlignVersionType
+        private enum MSAlignVersionType
         {
             Unknown = 0,
             v0pt5 = 1,
@@ -49,7 +48,7 @@ namespace AnalysisManagerMSAlignPlugIn
             v0pt7 = 3
         }
 
-        protected struct InputPropertyValues
+        private struct InputPropertyValues
         {
             public string FastaFileName;
             public string SpectrumFileName;
@@ -65,18 +64,16 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        protected bool mToolVersionWritten;
-        protected string mMSAlignVersion;
+        private bool mToolVersionWritten;
+        private string mMSAlignVersion;
 
-        protected string mMSAlignProgLoc;
-        protected string mConsoleOutputErrorMsg;
+        private string mMSAlignProgLoc;
+        private string mConsoleOutputErrorMsg;
 
-        protected string mMSAlignWorkFolderPath;
-        protected InputPropertyValues mInputPropertyValues;
+        private string mMSAlignWorkFolderPath;
+        private InputPropertyValues mInputPropertyValues;
 
-        protected RunDosProgram mCmdRunner;
-
-
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs MSAlign tool
@@ -316,7 +313,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        protected bool AddResultTableHeaderLine(string sourceFilePath)
+        private bool AddResultTableHeaderLine(string sourceFilePath)
         {
             try
             {
@@ -361,7 +358,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool CopyFastaCheckResidues(string sourceFilePath, string targetFilePath)
+        private bool CopyFastaCheckResidues(string sourceFilePath, string targetFilePath)
         {
             const int RESIDUES_PER_LINE = 60;
 
@@ -513,7 +510,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool CreateInputPropertiesFile(string paramFilePath, string mSInputFolderPath, MSAlignVersionType msAlignVersion)
+        private bool CreateInputPropertiesFile(string paramFilePath, string mSInputFolderPath, MSAlignVersionType msAlignVersion)
         {
             // ReSharper disable StringLiteralTypo
 
@@ -796,7 +793,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool InitializeMSInputFolder(string msAlignWorkFolderPath, MSAlignVersionType msAlignVersion)
+        private bool InitializeMSInputFolder(string msAlignWorkFolderPath, MSAlignVersionType msAlignVersion)
         {
             try
             {
@@ -978,7 +975,7 @@ namespace AnalysisManagerMSAlignPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {
@@ -1107,7 +1104,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
         }
 
-        protected bool ValidateAndCopyResultFiles(MSAlignVersionType msAlignVersion)
+        private bool ValidateAndCopyResultFiles(MSAlignVersionType msAlignVersion)
         {
             var resultsFolderPath = Path.Combine(mMSAlignWorkFolderPath, "msoutput");
             var resultsFilesToMove = new List<string>();
@@ -1171,7 +1168,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return !processingError;
         }
 
-        protected bool ValidateResultTableFile(string sourceFilePath)
+        private bool ValidateResultTableFile(string sourceFilePath)
         {
             try
             {
@@ -1233,7 +1230,7 @@ namespace AnalysisManagerMSAlignPlugIn
             return true;
         }
 
-        protected bool ZipMSAlignResultFolder(string folderName)
+        private bool ZipMSAlignResultFolder(string folderName)
         {
             try
             {

@@ -36,29 +36,27 @@ namespace AnalysisManagerInSpecTPlugIn
             public int MostRecentLineNumber;
             public int CachedCount;
         }
-
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
-        protected const string INSPECT_EXE_NAME = "inspect.exe";
+        private const string INSPECT_EXE_NAME = "inspect.exe";
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
-        protected string mInspectCustomParamFileName;
+        private string mInspectCustomParamFileName;
 
-        protected string mInspectConcatenatedDtaFilePath = "";
-        protected string mInspectResultsFilePath = "";
-        protected string mInspectErrorFilePath = "";
+        private string mInspectConcatenatedDtaFilePath = "";
+        private string mInspectResultsFilePath = "";
+        private string mInspectErrorFilePath = "";
 
-        protected bool mIsParallelInspect;
+        private bool mIsParallelInspect;
 
-        protected string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunTool
-        protected string mInspectSearchLogMostRecentEntry = string.Empty;
+        private string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunTool
+        private string mInspectSearchLogMostRecentEntry = string.Empty;
 
-        protected string mInspectConsoleOutputFilePath;
+        private string mInspectConsoleOutputFilePath;
 
-        protected FileSystemWatcher mSearchLogFileWatcher;
-        protected string mCloneStepRenumber;
-        protected string mStepNum;
-
+        private FileSystemWatcher mSearchLogFileWatcher;
+        private string mCloneStepRenumber;
+        private string mStepNum;
 
         /// <summary>
         /// Runs InSpecT tool
@@ -312,7 +310,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Looks for the inspect _errors.txt file in the working folder.  If present, reads and parses it
         /// </summary>
         /// <param name="errorFilename"></param>
-        protected bool ParseInspectErrorsFile(string errorFilename)
+        private bool ParseInspectErrorsFile(string errorFilename)
         {
             try
             {
@@ -593,7 +591,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string strInspectFolder)
+        private bool StoreToolVersionInfo(string strInspectFolder)
         {
             var toolVersionInfo = string.Empty;
 

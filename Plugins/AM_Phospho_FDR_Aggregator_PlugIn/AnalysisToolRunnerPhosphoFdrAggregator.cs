@@ -25,16 +25,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     {
         // Ignore Spelling: cid, Da, etd, fht, hcd, Mage, msgfplus, sequest, xt, xtandem
 
+        private const string ASCORE_CONSOLE_OUTPUT_PREFIX = "AScore_ConsoleOutput";
 
-        protected const string ASCORE_CONSOLE_OUTPUT_PREFIX = "AScore_ConsoleOutput";
+        private const string FILE_SUFFIX_ASCORE_RESULTS = "_ascore.txt";
+        private const string FILE_SUFFIX_SYN_PLUS_ASCORE = "_plus_ascore.txt";
 
-        protected const string FILE_SUFFIX_ASCORE_RESULTS = "_ascore.txt";
-        protected const string FILE_SUFFIX_SYN_PLUS_ASCORE = "_plus_ascore.txt";
+        private const float PROGRESS_PCT_PHOSPHO_FDR_RUNNING = 5;
+        private const float PROGRESS_PCT_PHOSPHO_FDR_COMPLETE = 99;
 
-        protected const float PROGRESS_PCT_PHOSPHO_FDR_RUNNING = 5;
-        protected const float PROGRESS_PCT_PHOSPHO_FDR_COMPLETE = 99;
-
-        protected enum DatasetTypeConstants
+        private enum DatasetTypeConstants
         {
             Unknown = 0,
             CID = 1,
@@ -42,7 +41,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             HCD = 3
         }
 
-        protected struct JobMetadataForAScore
+        private struct JobMetadataForAScore
         {
             public int Job;
             public string Dataset;
@@ -53,13 +52,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             public string SpectrumFilePath;
         }
 
-        protected string mConsoleOutputErrorMsg;
+        private string mConsoleOutputErrorMsg;
 
-        protected int mJobFoldersProcessed;
-        protected int mTotalJobFolders;
+        private int mJobFoldersProcessed;
+        private int mTotalJobFolders;
 
-        protected RunDosProgram mCmdRunner;
-
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs PhosphoFdrAggregator tool
@@ -163,7 +161,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected bool AddMSGFSpecProbValues(int jobNumber, string synFilePath, string fileTypeTag)
+        private bool AddMSGFSpecProbValues(int jobNumber, string synFilePath, string fileTypeTag)
         {
             try
             {
@@ -259,7 +257,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected void CacheFileSuffix(List<string> fileSuffixesToCombine, string datasetName, string fileName)
+        private void CacheFileSuffix(List<string> fileSuffixesToCombine, string datasetName, string fileName)
         {
             var baseName = Path.GetFileNameWithoutExtension(fileName);
             if (string.IsNullOrWhiteSpace(baseName))
@@ -273,7 +271,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected bool ConcatenateLogFiles(Dictionary<string, double> processingRunTimes)
+        private bool ConcatenateLogFiles(Dictionary<string, double> processingRunTimes)
         {
             try
             {
@@ -334,7 +332,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return true;
         }
 
-        protected bool ConcatenateResultFiles(string fileSuffix)
+        private bool ConcatenateResultFiles(string fileSuffix)
         {
             var currentFile = string.Empty;
             var firstFileProcessed = false;
@@ -417,7 +415,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected void CreateJobToDatasetMapFile(List<JobMetadataForAScore> jobsProcessed)
+        private void CreateJobToDatasetMapFile(List<JobMetadataForAScore> jobsProcessed)
         {
             var outputFilePath = Path.Combine(mWorkDir, "Job_to_Dataset_Map.txt");
 
@@ -431,7 +429,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
         }
 
-        protected string DetermineAScoreParamFilePath(string settingsFileName)
+        private string DetermineAScoreParamFilePath(string settingsFileName)
         {
             string bestAScoreParamFileName;
 
@@ -494,7 +492,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return Path.Combine(mWorkDir, bestAScoreParamFileName);
         }
 
-        protected bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref JobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
+        private bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref JobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
         {
             var fhtFile = string.Empty;
             var synFile = string.Empty;
@@ -647,7 +645,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Finds the directories that start with Job
         /// </summary>
         /// <returns>Dictionary where key is the Job number and value is a DirectoryInfo object</returns>
-        protected Dictionary<int, DirectoryInfo> GetJobFolderList()
+        private Dictionary<int, DirectoryInfo> GetJobFolderList()
         {
             var jobFolderList = new Dictionary<int, DirectoryInfo>();
 
@@ -769,7 +767,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>
         /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRunTimes)
+        private bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRunTimes)
         {
             var successOverall = true;
 
@@ -948,7 +946,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="fileTypeTag">Should be syn or fht; append to the AScore_ConsoleOutput file</param>
         /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
-        protected bool RunAscore(
+        private bool RunAscore(
             string progLoc,
             JobMetadataForAScore udtJobMetadata,
             string inputFilePath,
@@ -1060,7 +1058,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
             {

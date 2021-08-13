@@ -21,17 +21,15 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     {
         // Ignore Spelling: Bruker, CompassXport, gzip
 
+        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
-        protected const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
+        private const string COMPASS_XPORT = "CompassXport.exe";
 
-        protected const string COMPASS_XPORT = "CompassXport.exe";
+        private DirectoryInfo mMSXmlCacheFolder;
 
-        protected DirectoryInfo mMSXmlCacheFolder;
+        private CompassXportRunner mCompassXportRunner;
 
-        protected CompassXportRunner mCompassXportRunner;
-
-
-        protected const int MAX_CSV_FILES = 50;
+        private const int MAX_CSV_FILES = 50;
 
         /// <summary>
         /// Constructor
@@ -295,7 +293,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
 
