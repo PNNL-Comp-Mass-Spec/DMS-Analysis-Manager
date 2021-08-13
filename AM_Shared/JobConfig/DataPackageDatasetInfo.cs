@@ -91,7 +91,6 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         public string DataPackageComment { get; set; }
 
-
         /// <summary>
         /// Dataset experiment group name (used by MSFragger); empty string if not defined
         /// </summary>

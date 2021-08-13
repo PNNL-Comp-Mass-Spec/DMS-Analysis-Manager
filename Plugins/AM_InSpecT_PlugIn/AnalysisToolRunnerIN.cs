@@ -23,19 +23,6 @@ namespace AnalysisManagerInSpecTPlugIn
     {
         // Ignore Spelling: Ctrl, parmFile
 
-        protected struct ModInfo
-        {
-            public string ModName;
-            public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
-            public string Residues;
-        }
-
-        protected struct CachedSpectraCountInfo
-        {
-            public string MostRecentSpectrumInfo;
-            public int MostRecentLineNumber;
-            public int CachedCount;
-        }
         public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
         private const string INSPECT_EXE_NAME = "inspect.exe";
 

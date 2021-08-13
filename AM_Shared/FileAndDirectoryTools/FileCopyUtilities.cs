@@ -13,7 +13,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FileCopyUtilities : EventNotifier
     {
-
         private const int DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS = 15;
 
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;

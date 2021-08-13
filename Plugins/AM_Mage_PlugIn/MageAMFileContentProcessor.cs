@@ -39,14 +39,6 @@ namespace AnalysisManager_Mage_PlugIn
         /// <remarks>If not null, processing will be restricted to only files in list</remarks>
         public string FileNameList { get; set; }
 
-        public MageAMFileContentProcessor()
-        {
-            SourceDirectoryColumnName = "Directory";
-            SourceFileColumnName = "Name";
-            OutputDirectoryPath = "ignore";
-            OutputFileName = "ignore";
-            Operation = "SimpleImport";
-        }
         /// <summary>
         /// Constructor
         /// </summary>

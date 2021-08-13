@@ -65,8 +65,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private string mInspectResultsFileName;
 
-        private string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
-
         // Note that PeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
 

@@ -691,8 +691,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             /// Work directory
             /// </summary>
             public string WorkingDir { get; set; }
-            // public string paramFilename { get; set; }
-
 
             // set up internal references
             protected override void ColumnDefsFinished()

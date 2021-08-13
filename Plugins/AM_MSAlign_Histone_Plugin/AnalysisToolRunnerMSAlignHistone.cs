@@ -130,12 +130,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-#pragma warning disable CS0219 // Variable is assigned but its value is never used
-
                 // Assume v0.9
-                const MSAlignVersionType msAlignVersion = MSAlignVersionType.v0pt9;
-
-#pragma warning restore CS0219 // Variable is assigned but its value is never used
+                // MSAlignVersionType msAlignVersion = MSAlignVersionType.v0pt9;
 
                 // We will store the specific MSAlign version info in the database after the first line is written to file MSAlign_ConsoleOutput.txt
 
