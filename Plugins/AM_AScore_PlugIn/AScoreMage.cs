@@ -35,6 +35,12 @@ namespace AnalysisManager_AScore_PlugIn
 
         public string ErrorMessage => mErrorMessage;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
+        /// <param name="dotNetZipTools"></param>
         public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
         {
             Initialize(jobParams, mgrParams, dotNetZipTools);

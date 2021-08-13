@@ -29,6 +29,10 @@ namespace AnalysisManager_Ape_PlugIn
         public string ErrorMessage => mErrorMessage;
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
         public ApeAMBase(IJobParams jobParams, IMgrParams mgrParams)
         {
             mJobParams = jobParams;

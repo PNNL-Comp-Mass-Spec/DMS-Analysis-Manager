@@ -51,6 +51,11 @@ namespace AnalysisManager_Mage_PlugIn
 
         public string WorkingDir => WorkingDirPath;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="mgrParams"></param>
         public MageAMPipelineBase(IJobParams jobParams, IMgrParams mgrParams)
         {
             JobParams = jobParams;

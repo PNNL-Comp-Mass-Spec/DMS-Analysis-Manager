@@ -35,6 +35,10 @@ namespace DTASpectraFileGen
 
         public string DataPath { get; set; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="DataPath"></param>
         public ConcatToolWrapper(string DataPath)
         {
             this.DataPath = DataPath;

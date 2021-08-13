@@ -55,7 +55,10 @@ namespace AnalysisManager_AScore_PlugIn
 
         public string FastaFilePath { get; set; }
 
-        // constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="connectionString"></param>
         public MageAScoreModule(string connectionString)
         {
             mConnectionString = connectionString;
@@ -278,7 +281,12 @@ namespace AnalysisManager_AScore_PlugIn
             }
         }
 
-        // Build and run Mage pipeline to extract contents of job
+        /// <summary>
+        /// Build and run Mage pipeline to extract contents of job
+        /// </summary>
+        /// <param name="currentJob"></param>
+        /// <param name="extractionParams"></param>
+        /// <param name="extractedResultsFileName"></param>
         private void ExtractResultsForJob(BaseModule currentJob, ExtractionType extractionParams, string extractedResultsFileName)
         {
             // search job result directories for list of results files to process and accumulate into buffer module
@@ -303,8 +311,15 @@ namespace AnalysisManager_AScore_PlugIn
             peFileContents.RunRoot(null);
         }
 
-
-        // look for "_dta.zip" file in job results directory and copy it to working directory and unzip it
+        /// <summary>
+        /// Look for "_dta.zip" file in job results directory and copy it to working directory and unzip it
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsDirectoryPath"></param>
+        /// <param name="jobNumber"></param>
+        /// <param name="toolName"></param>
+        /// <param name="connectionString"></param>
+        /// <returns>Full path to the _dta.txt file in the working directory</returns>
         private string CopyDTAResults(string datasetName, string resultsDirectoryPath, int jobNumber, string toolName, string connectionString)
         {
             string dtaZipPathLocal;

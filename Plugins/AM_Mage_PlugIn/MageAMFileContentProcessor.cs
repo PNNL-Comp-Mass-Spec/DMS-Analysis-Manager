@@ -12,22 +12,31 @@ namespace AnalysisManager_Mage_PlugIn
     {
         // Ignore Spelling: Mage
 
-        // Specific set of allowed file names.
-        // If not null, processing will be restricted to only files in list
-        // (derived from FileNameList property)
+        /// <summary>
+        /// Specific set of allowed file names.
+        /// </summary>
+        /// <remarks>
+        /// If not null, processing will be restricted to only files in list (as tracked by property FileNameList)
+        /// </remarks>
         private HashSet<string> _fileNameSet;
 
         public MageAMFileProcessingPipelines FilePipeline { get; }
 
-        // Name of the table in SQLite database that receives the results
-        // (if blank, table name will be constructed from source file name)
+        /// <summary>
+        /// Name of the table in SQLite database that receives the results
+        /// </summary>
+        /// <remarks>If blank, table name will be constructed from source file name</remarks>
         public string DBTableName { get; set; }
 
-        // Name of the operation to be performed on the file contents
+        /// <summary>
+        /// Name of the operation to be performed on the file contents
+        /// </summary>
         public string Operation { get; set; }
 
-        // Specific list of allowed file names.
-        // If not null, processing will be restricted to only files in list
+        /// <summary>
+        /// Specific list of allowed file names.
+        /// </summary>
+        /// <remarks>If not null, processing will be restricted to only files in list</remarks>
         public string FileNameList { get; set; }
 
         public MageAMFileContentProcessor()
@@ -38,7 +47,10 @@ namespace AnalysisManager_Mage_PlugIn
             OutputFileName = "ignore";
             Operation = "SimpleImport";
         }
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="filePipeline"></param>
         public MageAMFileContentProcessor(MageAMFileProcessingPipelines filePipeline)
         {
             SourceDirectoryColumnName = "Directory";

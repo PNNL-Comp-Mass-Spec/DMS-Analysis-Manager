@@ -43,7 +43,9 @@ namespace DTASpectraFileGen
 
         protected bool mAbortRequested;
 
-        // The following is a value between 0 and 100
+        /// <summary>
+        /// Progress (value between 0 and 100)
+        /// </summary>
         protected float mProgress;
 
         public IStatusFile StatusTools

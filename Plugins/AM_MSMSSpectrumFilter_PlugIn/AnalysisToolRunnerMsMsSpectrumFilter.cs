@@ -42,7 +42,9 @@ namespace MSMSSpectrumFilterAM
 
         private ProcessStatus mFilterStatus;
 
-
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public AnalysisToolRunnerMsMsSpectrumFilter()
         {
             // Initialize MsMsSpectrumFilterDLL.dll
