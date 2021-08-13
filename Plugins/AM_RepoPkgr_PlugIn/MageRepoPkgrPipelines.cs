@@ -161,10 +161,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private SimpleSink GetDataPackageItemList(string queryTemplateName, string filter = "")
         {
             var result = new SimpleSink();
-            var cnStr = QueryDefs.GetCnStr(queryTemplateName);
+            var connectionString = QueryDefs.GetCnStr(queryTemplateName);
             var sqlText = QueryDefs.GetQueryTemplate(queryTemplateName).Sql(DataPkgId, filter);
 
-            if (string.IsNullOrWhiteSpace(cnStr))
+            if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new Exception("Query template not found in GetDataPackageItemList: " + queryTemplateName);
             }
@@ -181,9 +181,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 SQLText = sqlText
             };
 
-            var pl = ProcessingPipeline.Assemble("GetDataPackageItems", sqlReader, result);
-            ConnectEventHandlersToPipeline(pl);
-            pl.RunRoot(null);
+            var pipeline = ProcessingPipeline.Assemble("GetDataPackageItems", sqlReader, result);
+            ConnectEventHandlersToPipeline(pipeline);
+            pipeline.RunRoot(null);
+
             return result;
         }
 

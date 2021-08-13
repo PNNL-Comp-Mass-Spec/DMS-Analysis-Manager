@@ -161,9 +161,9 @@ namespace AnalysisManagerMODPlusPlugin
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            var fiFastaFile = new FileInfo(fastaFilePath);
+            var fastaFile = new FileInfo(fastaFilePath);
 
-            if (!fiFastaFile.Exists)
+            if (!fastaFile.Exists)
             {
                 // FASTA file not found
                 LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
@@ -176,11 +176,11 @@ namespace AnalysisManagerMODPlusPlugin
 
             foreach (var decoyPrefix in decoyPrefixes)
             {
-                var fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
+                var fractionDecoy = GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out var proteinCount);
 
                 if (proteinCount == 0)
                 {
-                    LogError("No proteins found in " + fiFastaFile.Name);
+                    LogError("No proteins found in " + fastaFile.Name);
                     return false;
                 }
 

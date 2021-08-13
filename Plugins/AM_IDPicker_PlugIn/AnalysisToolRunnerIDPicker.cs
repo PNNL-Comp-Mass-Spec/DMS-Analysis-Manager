@@ -1412,7 +1412,7 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        private void CmdRunner_ConsoleErrorEvent(string NewText, Exception ex)
+        private void CmdRunner_ConsoleErrorEvent(string newText, Exception ex)
         {
             if (mCmdRunnerErrors == null)
                 return;
@@ -1420,9 +1420,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // Split NewText on newline characters
             var newLineChars = new[] { '\r', '\n' };
 
-            var splitLine = NewText.Split(newLineChars, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var item in splitLine)
+            foreach (var item in newText.Split(newLineChars, StringSplitOptions.RemoveEmptyEntries))
             {
                 var item2 = item.Trim(newLineChars);
 

@@ -382,17 +382,16 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 writer.WriteLine("[Files]");
 
                 var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
-                foreach (var TmpFile_loopVariable in Files)
+                foreach (var datasetFile in Files)
                 {
-                    var TmpFile = TmpFile_loopVariable;
-                    if (!string.IsNullOrWhiteSpace(alignmentDataset) && TmpFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (!string.IsNullOrWhiteSpace(alignmentDataset) && datasetFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         // Append an asterisk to this dataset's path to indicate that it is the base dataset to which the others will be aligned
-                        writer.WriteLine(TmpFile + "*");
+                        writer.WriteLine(datasetFile + "*");
                     }
                     else
                     {
-                        writer.WriteLine(TmpFile);
+                        writer.WriteLine(datasetFile);
                     }
                 }
 
