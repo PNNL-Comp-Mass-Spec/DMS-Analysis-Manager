@@ -11,7 +11,7 @@ namespace AnalysisManager_Cyclops_PlugIn
     /// </summary>
     public class AnalysisResourcesCyclops : AnalysisResources
     {
-        // Ignore Spelling: filetype, workflows
+        // Ignore Spelling: fasta, filetype, na, resourcer, workflow, workflows
 
         /// <summary>
         /// Retrieve required files
@@ -89,11 +89,11 @@ namespace AnalysisManager_Cyclops_PlugIn
                             mJobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");
                         }
 
-                        // Generate the path Fasta File
+                        // Generate the path FASTA File
                         var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         {
-                            mMessage = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
+                            mMessage = "Cyclops Resourcer failed to retrieve the path to the FASTA file to run ProteinProphet";
                             return resultCode;
                         }
                     }

@@ -39,7 +39,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 return result;
             }
 
-            // Retrieve Fasta file
+            // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;

@@ -143,15 +143,15 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (splitFasta && AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
                 {
-                    // Do not retrieve the fasta file
-                    // However, do contact DMS to lookup the name of the legacy fasta file that was used for this job
+                    // Do not retrieve the FASTA file
+                    // However, do contact DMS to lookup the name of the legacy FASTA file that was used for this job
                     mFastaFileName = LookupLegacyFastaFileName();
 
                     if (string.IsNullOrEmpty(mFastaFileName))
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
-                            LogError("Unable to determine the legacy fasta file name");
+                            LogError("Unable to determine the legacy FASTA file name");
                         }
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -160,7 +160,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
-                    // Retrieve the Fasta file
+                    // Retrieve the FASTA file
                     var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
                     if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         return resultCode;
@@ -213,7 +213,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {
-                LogError("Could not determine the legacy fasta file name (OrganismDBName in V_Analysis_Job) for job " + mJob);
+                LogError("Could not determine the legacy FASTA file name (OrganismDBName in V_Analysis_Job) for job " + mJob);
                 return string.Empty;
             }
 

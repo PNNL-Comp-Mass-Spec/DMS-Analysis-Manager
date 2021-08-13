@@ -45,7 +45,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 return result;
             }
 
-            // Retrieve Fasta file
+            // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
@@ -60,7 +60,7 @@ namespace AnalysisManagerOMSSAPlugIn
             var success = ConvertOMSSAFastaFile();
             if (!success)
             {
-                LogError("AnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format");
+                LogError("AnalysisResourcesOM.GetResources(), failed converting FASTA file to OMSSA format");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -111,7 +111,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             try
             {
-                // set up formatdb.exe to reference the organism DB file (fasta)
+                // set up formatdb.exe to reference the organism DB file (FASTA)
                 var OrgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 var LocalOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!mCmdRunner.RunProgram(progLoc, arguments, "FormatDb", true))
                 {
-                    LogError("Error running FormatDb for fasta file " + OrgDBName);
+                    LogError("Error running FormatDb for FASTA file " + OrgDBName);
                     return false;
                 }
             }

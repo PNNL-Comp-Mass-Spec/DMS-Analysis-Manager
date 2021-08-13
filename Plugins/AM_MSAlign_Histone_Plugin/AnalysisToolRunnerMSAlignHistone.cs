@@ -342,7 +342,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var oReader = new ProteinFileReader.FastaFileReader();
                 if (!oReader.OpenFile(strSourceFilePath))
                 {
-                    mMessage = "Error opening fasta file in CopyFastaCheckResidues";
+                    mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
                     return false;
                 }
 
@@ -550,7 +550,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Open the parameter file
                 using var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                // The first two parameters on the command line are Fasta File name and input file name
+                // The first two parameters on the command line are FASTA File name and input file name
                 commandLine += mInputPropertyValues.FastaFileName + " " + mInputPropertyValues.SpectrumFileName;
 
                 // Now append the parameters defined in the parameter file
@@ -675,9 +675,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Copy the .Fasta file into the MSInput folder
                 // MSAlign will crash if any non-standard residues are present (BJOUXZ)
-                // Thus, we will read the source file with a reader and create a new fasta file
+                // Thus, we will read the source file with a reader and create a new FASTA file
 
-                // Define the path to the fasta file
+                // Define the path to the FASTA file
                 var orgDbDir = mMgrParams.GetParam("OrgDbDir");
                 var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
@@ -685,8 +685,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!fastaFile.Exists)
                 {
-                    // Fasta file not found
-                    LogError("Fasta file not found: " + fastaFile.FullName);
+                    // FASTA file not found
+                    LogError("FASTA file not found: " + fastaFile.FullName);
                     return false;
                 }
 

@@ -40,7 +40,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             transferDirectoryName = Path.Combine(transferDirectoryName, mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
-            // Retrieve Fasta file (used by the PeptideToProteinMapper)
+            // Retrieve FASTA file (used by the PeptideToProteinMapper)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;

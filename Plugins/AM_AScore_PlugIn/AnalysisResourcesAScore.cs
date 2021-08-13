@@ -40,14 +40,14 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!RetrieveFastaFile(out _))
             {
-                LogWarning("Unable to retrieve the fasta file; AScore results will not have protein information");
+                LogWarning("Unable to retrieve the FASTA file; AScore results will not have protein information");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
-        /// Retrieve the fasta file (if defined)
+        /// Retrieve the FASTA file (if defined)
         /// </summary>
         private bool RetrieveFastaFile(out CloseOutType resultCode)
         {
@@ -55,7 +55,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             try
             {
-                // Retrieve the Fasta file
+                // Retrieve the FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;

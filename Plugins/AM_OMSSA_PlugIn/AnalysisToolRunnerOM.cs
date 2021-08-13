@@ -163,7 +163,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             try
             {
-                // set up formatdb.exe to reference the organism DB file (fasta)
+                // set up formatdb.exe to reference the organism DB file (FASTA)
 
                 LogMessage("Running OMSSA2PepXml");
 

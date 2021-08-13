@@ -19,14 +19,16 @@ using AnalysisManagerBase.StatusReporting;
 namespace AnalysisManagerSequestPlugin
 {
     /// <summary>
-    /// Subclass for Sequest-specific tasks:
+    /// Subclass for SEQUEST-specific tasks:
     /// 1) Distributes OrgDB files to cluster nodes if running on a cluster
-    /// 2) Uses ParamFileGenerator to create Sequest param file from database instead of copying it
+    /// 2) Uses ParamFileGenerator to create SEQUEST param file from database instead of copying it
     /// 3) Retrieves zipped DTA files
     /// 4) Retrieves _out.txt.tmp file (if it exists)
     /// </summary>
     public class AnalysisResourcesSeq : AnalysisResources
     {
+        // Ignore Spelling: deconcatenated, yyyy-MM-dd
+
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -48,7 +50,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Verifying that the Sequest parameter file " + mJobParams.GetParam("ParmFileName") + " exists in " + targetFolderPath);
+                    LogDebug("Verifying that the SEQUEST parameter file " + mJobParams.GetParam("ParmFileName") + " exists in " + targetFolderPath);
                 }
 
                 ArchiveSequestParamFile(sourceFilePath, targetFolderPath);
@@ -84,7 +86,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("Sequest parameter file not found in archive folder; copying to " + targetFilePath);
+                    LogDebug("SEQUEST parameter file not found in archive folder; copying to " + targetFilePath);
                 }
 
                 needToArchiveFile = true;
@@ -92,7 +94,7 @@ namespace AnalysisManagerSequestPlugin
             else
             {
                 // Read the files line-by-line and compare
-                // Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
+                // Since the first 2 lines of a SEQUEST parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
                 const bool ignoreWhitespace = true;
 
@@ -101,7 +103,7 @@ namespace AnalysisManagerSequestPlugin
                     if (mDebugLevel >= 1)
                     {
                         LogDebug(
-                            "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " +
+                            "SEQUEST parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " +
                             targetFilePath);
                     }
 
@@ -152,8 +154,8 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Look for file _out.txt.tmp in the transfer folder
-        /// Retrieves the file if it was found and if both JobParameters.xml file and the sequest param file match the
-        /// JobParameters.xml and sequest param file in the local working directory
+        /// Retrieves the file if it was found and if both JobParameters.xml file and the SEQUEST param file match the
+        /// JobParameters.xml and SEQUEST param file in the local working directory
         /// </summary>
         /// <returns>
         /// CLOSEOUT_SUCCESS if an existing file was found and copied,
@@ -212,7 +214,7 @@ namespace AnalysisManagerSequestPlugin
                     LogDebug(
                         AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + jobNum + " (file size = " +
                         (tempOutFile.Length / 1024.0).ToString("#,##0") +
-                        " KB); comparing JobParameters.xml file and Sequest parameter file to local copies");
+                        " KB); comparing JobParameters.xml file and SEQUEST parameter file to local copies");
                 }
 
                 // Compare the remote and local copies of the JobParameters file
@@ -227,12 +229,12 @@ namespace AnalysisManagerSequestPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                // Compare the remote and local copies of the Sequest Parameter file
+                // Compare the remote and local copies of the SEQUEST Parameter file
                 fileNameToCompare = mJobParams.GetParam("ParmFileName");
                 remoteFilePath = Path.Combine(sourceDirectory.FullName, fileNameToCompare + ".tmp");
                 localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
-                filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Sequest Parameter");
+                filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "SEQUEST Parameter");
                 if (!filesMatch)
                 {
                     // Files don't match; do not resume
@@ -246,7 +248,7 @@ namespace AnalysisManagerSequestPlugin
 
                     if (mDebugLevel >= 1)
                     {
-                        LogDebug("Copied " + tempOutFile.Name + " locally; will resume Sequest analysis");
+                        LogDebug("Copied " + tempOutFile.Name + " locally; will resume SEQUEST analysis");
                     }
 
                     // If the job succeeds, we should delete the _out.txt.tmp file from the transfer folder
@@ -336,7 +338,7 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Retrieves files necessary for performance of Sequest analysis
+        /// Retrieves files necessary for performance of SEQUEST analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
@@ -348,7 +350,7 @@ namespace AnalysisManagerSequestPlugin
                 return result;
             }
 
-            // Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
+            // Retrieve FASTA file (we'll distribute it to the cluster nodes later in this function)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
@@ -359,7 +361,7 @@ namespace AnalysisManagerSequestPlugin
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            // Make sure the Sequest parameter file is present in the parameter file storage path
+            // Make sure the SEQUEST parameter file is present in the parameter file storage path
             ArchiveSequestParamFile();
 
             // Look for an existing _out.txt.tmp file in the transfer folder on the storage server
@@ -377,7 +379,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            // The file will be de-concatenated by function AnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
+            // The file will be deconcatenated by function AnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
@@ -392,7 +394,7 @@ namespace AnalysisManagerSequestPlugin
                 var fastaFileName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
                 if (string.IsNullOrEmpty(fastaFileName))
                 {
-                    mMessage = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file";
+                    mMessage = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a FASTA file";
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -414,10 +416,10 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Verifies the fasta file required by the job is distributed to all the cluster nodes
+        /// Verifies the FASTA file required by the job is distributed to all the cluster nodes
         /// </summary>
-        /// <param name="fastaFileName">Fasta file name</param>
-        /// <param name="orgDbDirectoryPath">Fasta file location on analysis machine</param>
+        /// <param name="fastaFileName">FASTA file name</param>
+        /// <param name="orgDbDirectoryPath">FASTA file location on analysis machine</param>
         /// <returns>True if success, false if an error</returns>
         private bool VerifyDatabase(string fastaFileName, string orgDbDirectoryPath)
         {
@@ -447,7 +449,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // For each node, verify specified database file is present and matches file on host
-            // Allow up to 25% of the nodes to fail (they should just get skipped when the Sequest search occurs)
+            // Allow up to 25% of the nodes to fail (they should just get skipped when the SEQUEST search occurs)
 
             var nodeCountProcessed = 0;
             var nodeCountFailed = 0;
@@ -663,7 +665,7 @@ namespace AnalysisManagerSequestPlugin
         ///	present, copies database from master
         /// </summary>
         /// <param name="sourceFastaPath">Full path to the source file</param>
-        /// <param name="destPath">Fasta storage location on cluster node</param>
+        /// <param name="destPath">FASTA storage location on cluster node</param>
         /// <param name="fileAlreadyExists">Output parameter: true if the file already exists</param>
         /// <param name="notEnoughFreeSpace">Output parameter: true if the target node does not have enough space for the file</param>
         /// <returns>True if success, false if an error</returns>
