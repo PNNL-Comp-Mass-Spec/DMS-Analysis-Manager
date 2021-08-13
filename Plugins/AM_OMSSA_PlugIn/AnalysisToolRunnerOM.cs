@@ -21,7 +21,6 @@ namespace AnalysisManagerOMSSAPlugIn
         // Ignore Spelling: omx
 
         private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
-        private const float PROGRESS_PCT_PEPTIDE_HIT_START = 95;
         private const float PROGRESS_PCT_PEPTIDE_HIT_COMPLETE = 99;
 
         /// <summary>
@@ -97,6 +96,8 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Stop the job timer
             mStopTime = DateTime.UtcNow;
+
+            UpdateStatusFile(PROGRESS_PCT_PEPTIDE_HIT_COMPLETE);
 
             if (processingSuccess)
             {
