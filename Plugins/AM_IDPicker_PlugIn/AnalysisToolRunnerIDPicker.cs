@@ -1424,13 +1424,15 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 var item2 = item.Trim(newLineChars);
 
-                if (!string.IsNullOrEmpty(item2))
+                if (string.IsNullOrEmpty(item2))
                 {
-                    // Confirm that item does not contain any text in mCmdRunnerErrorsToIgnore
-                    if (!IgnoreError(item2))
-                    {
-                        mCmdRunnerErrors.Add(item2);
-                    }
+                    continue;
+                }
+
+                // Confirm that item does not contain any text in mCmdRunnerErrorsToIgnore
+                if (!IgnoreError(item2))
+                {
+                    mCmdRunnerErrors.Add(item2);
                 }
             }
         }
