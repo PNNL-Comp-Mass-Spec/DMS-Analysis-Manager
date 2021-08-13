@@ -1348,12 +1348,13 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var retryCount = 1;
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mFastaToolsCnStr, mMgrName);
 
             while (true)
             {
                 try
                 {
-                    mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(mFastaToolsCnStr)
+                    mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(connectionStringToUse)
                     {
                         DecoyProteinsUseXXX = decoyProteinsUseXXX
                     };
@@ -1392,7 +1393,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             mMessage += ex.Message;
                         }
                         LogError(mMessage, ex);
-                        LogDebugMessage("Connection string: " + mFastaToolsCnStr);
+                        LogDebugMessage("Connection string: " + connectionStringToUse);
                         LogDebugMessage("Current user: " + Environment.UserName);
 
                         if (ex.Message.IndexOf("The timeout period elapsed prior to obtaining a connection from the pool", StringComparison.OrdinalIgnoreCase) >= 0)

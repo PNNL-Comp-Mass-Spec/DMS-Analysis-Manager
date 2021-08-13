@@ -3,6 +3,7 @@ using Mage;
 using System;
 using System.IO;
 using System.Linq;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
@@ -183,11 +184,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
             if (string.IsNullOrWhiteSpace(sqlText))
             {
                 throw new Exception(string.Format(
-                                        "Could not determine the SQL for template {0} in GetDataPackageItemList",
-                                        queryTemplateName));
+                    "Could not determine the SQL for template {0} in GetDataPackageItemList", queryTemplateName));
             }
 
-            var sqlReader = new SQLReader(cnStr)
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+
+            var sqlReader = new SQLReader(connectionStringToUse)
             {
                 SQLText = sqlText
             };

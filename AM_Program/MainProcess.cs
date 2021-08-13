@@ -193,6 +193,7 @@ namespace AnalysisManagerProg
         private bool InitMgr()
         {
             var hostName = System.Net.Dns.GetHostName();
+            var applicationName = "AnalysisManager_" + hostName;
 
             CheckStopTrace("CreateDefaultFileLogger");
 
@@ -227,10 +228,12 @@ namespace AnalysisManagerProg
 
                 CheckStopTrace("CreateDefaultDbLogger");
 
-                ShowTrace("Instantiate a DbLogger using " + defaultDmsConnectionString);
+                var defaultDbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(defaultDmsConnectionString, applicationName);
+
+                ShowTrace("Instantiate a DbLogger using " + defaultDbLoggerConnectionString);
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                LogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                LogTools.CreateDbLogger(defaultDbLoggerConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Get the manager settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
@@ -313,10 +316,12 @@ namespace AnalysisManagerProg
             {
                 var logCnStr = mMgrParams.GetParam("ConnectionString");
 
+                var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, applicationName);
+
                 CheckStopTrace("CreateDbLogger");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                LogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                LogTools.CreateDbLogger(dbLoggerConnectionString, "Analysis Tool Manager: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Make the initial log entry

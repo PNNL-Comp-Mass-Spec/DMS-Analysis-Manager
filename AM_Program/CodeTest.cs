@@ -917,7 +917,9 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(mFastaToolsCnStr);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mFastaToolsCnStr, "AnalysisManager_TestProteinDBExport");
+
+                mFastaTools = new OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS(connectionStringToUse);
                 RegisterEvents(mFastaTools);
 
                 mFastaTools.FileGenerationStarted += FileGenerationStarted;
@@ -1116,10 +1118,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test database logging
         /// </summary>
-        /// <param name="connStr">ODBC-style connection string</param>
-        public void TestDatabaseLogging(string connStr)
+        /// <param name="connectionString">SQL Server style connection string</param>
+        public void TestDatabaseLogging(string connectionString)
         {
-            LogTools.CreateDbLogger(connStr, "CodeTest");
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "AnalysisManager_CodeTest");
+
+            LogTools.CreateDbLogger(connectionStringToUse, "CodeTest");
 
             LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
 
@@ -1138,10 +1142,11 @@ namespace AnalysisManagerProg
             {
                 EchoMessagesToFileLogger = true
             };
-            sqlServerLogger.ChangeConnectionInfo("CodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
+
+            sqlServerLogger.ChangeConnectionInfo("CodeTest2", connectionStringToUse, "PostLogEntry", "type", "message", "postedBy");
             sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
 
-            var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connStr);
+            var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connectionStringToUse);
             var odbcLogger = new ODBCDatabaseLogger
             {
                 EchoMessagesToFileLogger = true

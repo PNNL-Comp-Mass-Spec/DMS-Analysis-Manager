@@ -89,6 +89,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // do operations for repository specified in job parameters
             var targetRepository = mJobParams.GetJobParameter("Repository", "");
             var success = false;
+
             switch (targetRepository)
             {
                 case "PeptideAtlas":
@@ -253,8 +254,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var queryDefs = new QueryDefinitions();
             RegisterEvents(queryDefs);
 
-            queryDefs.SetCnStr(QueryDefinitions.TagName.Main, mMgrParams.GetParam("ConnectionString"));
-            queryDefs.SetCnStr(QueryDefinitions.TagName.Broker, mMgrParams.GetParam("BrokerConnectionString"));
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+            var brokerConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+            var brokerConnectionStringToUse= DbToolsFactory.AddApplicationNameToConnectionString(brokerConnectionString, mMgrName);
+
+            queryDefs.SetCnStr(QueryDefinitions.TagName.Main, connectionStringToUse);
+            queryDefs.SetCnStr(QueryDefinitions.TagName.Broker, brokerConnectionStringToUse);
+
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", string.Empty);
 
             mRepoPackager = new MageRepoPkgrPipelines(dataPackageID, mMgrName, queryDefs);
 
