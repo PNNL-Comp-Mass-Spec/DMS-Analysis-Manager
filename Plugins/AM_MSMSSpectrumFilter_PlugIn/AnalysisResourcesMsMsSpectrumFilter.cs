@@ -25,7 +25,7 @@ namespace MSMSSpectrumFilterAM
         // Ignore Spelling: Dta
 
         /// <summary>
-        /// Retrieves files necessary for performance of Sequest analysis
+        /// Retrieves files necessary for performance of SEQUEST analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()

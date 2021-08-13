@@ -374,7 +374,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 var oReader = new ProteinFileReader.FastaFileReader();
                 if (!oReader.OpenFile(sourceFilePath))
                 {
-                    mMessage = "Error opening fasta file in CopyFastaCheckResidues";
+                    mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
                     return false;
                 }
 
@@ -805,9 +805,9 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Copy the .Fasta file into the MSInput folder
                 // MSAlign will crash if any non-standard residues are present (BJOUXZ)
-                // Thus, we will read the source file with a reader and create a new fasta file
+                // Thus, we will read the source file with a reader and create a new FASTA file
 
-                // Define the path to the fasta file
+                // Define the path to the FASTA file
                 var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
                 var fastaFilePath = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
@@ -815,8 +815,8 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (!fastaFile.Exists)
                 {
-                    // Fasta file not found
-                    LogError("Fasta file not found: " + fastaFile.FullName);
+                    // FASTA file not found
+                    LogError("FASTA file not found: " + fastaFile.FullName);
                     return false;
                 }
 

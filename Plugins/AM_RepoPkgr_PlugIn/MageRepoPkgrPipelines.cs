@@ -13,6 +13,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class MageRepoPkgrPipelines
     {
+        // Ignore Spelling: mage, pre, repo
+
         /// <summary>
         /// Data package that supplies items for repo cache (must be set by client before use)
         /// </summary>
@@ -252,19 +254,19 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         private void HandlePipelineUpdate(object sender, MageStatusEventArgs args)
         {
-            //	todo Log pipeline event message?
+            //	ToDo: Log pipeline event message?
             Console.WriteLine(args.Message);
         }
 
         private void HandlePipelineWarning(object sender, MageStatusEventArgs args)
         {
-            //	todo Log pipeline event message?
+            //	ToDo: Log pipeline event message?
             Console.WriteLine("Warning: " + args.Message);
         }
 
         private void HandlePipelineCompletion(object sender, MageStatusEventArgs args)
         {
-            //	todo Log pipeline event message?
+            //	ToDo: Log pipeline event message?
             Console.WriteLine(args.Message);
         }
     }

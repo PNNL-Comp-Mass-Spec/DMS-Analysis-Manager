@@ -10,6 +10,8 @@ namespace AnalysisManagerProSightQuantPlugIn
     /// </summary>
     public class AnalysisResourcesProSightQuant : AnalysisResources
     {
+        // Ignore Spelling: Bruker, Quant
+
         /// <summary>
         /// ProSight PC results file name
         /// </summary>

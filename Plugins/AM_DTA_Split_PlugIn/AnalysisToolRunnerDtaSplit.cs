@@ -41,7 +41,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         }
 
         /// <summary>
-        /// Runs InSpecT tool
+        /// Runs DTA splitter tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()

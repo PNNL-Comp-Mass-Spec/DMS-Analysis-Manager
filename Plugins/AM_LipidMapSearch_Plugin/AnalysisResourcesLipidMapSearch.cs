@@ -12,7 +12,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisResourcesLipidMapSearch : AnalysisResources
     {
-        // Ignore Spelling: dmsarch, Lipidomics, ParmFile, Pos
+        // Ignore Spelling: centroided, dmsarch, Lipidomics, Parm, ParmFile, Pos
 
         /// <summary>
         /// DeconTools peaks file suffix

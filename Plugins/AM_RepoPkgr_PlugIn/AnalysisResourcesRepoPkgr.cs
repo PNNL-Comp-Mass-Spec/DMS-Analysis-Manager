@@ -14,6 +14,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class AnalysisResourcesRepoPkgr : AnalysisResources
     {
+        // Ignore Spelling: repo
 
         /// <summary>
         /// Packed job parameter tracking the FASTA files used by the dataset
@@ -388,7 +389,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                                                        orgDbNameGenerated);
                 }
 
-                // Store the names of the generated fasta files
+                // Store the names of the generated FASTA files
                 // This is a tab separated list of filenames
                 StorePackedJobParameterList(generatedOrgDBNames, FASTA_FILES_FOR_DATA_PACKAGE);
 

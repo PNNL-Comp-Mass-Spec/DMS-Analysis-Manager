@@ -10,6 +10,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMFileContentProcessor : FileContentProcessor
     {
+        // Ignore Spelling: Mage
 
         // Specific set of allowed file names.
         // If not null, processing will be restricted to only files in list
@@ -113,7 +114,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Populate (or clear) set of permissable file names
+        /// Populate (or clear) set of permissible file names
         /// </summary>
         private void InitializeFileNameSet()
         {

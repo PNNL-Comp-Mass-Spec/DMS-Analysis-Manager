@@ -23,7 +23,7 @@ namespace AnalysisManagerFormularityPlugin
     /// </summary>
     public class AnalysisResourcesFormularity : AnalysisResources
     {
-        // Ignore Spelling: cia, ParmFile
+        // Ignore Spelling: cia, Formularity, ParmFile
 
         public const string JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE = "CalibrationPeaksFile";
 

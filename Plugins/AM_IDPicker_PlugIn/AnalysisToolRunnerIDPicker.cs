@@ -154,7 +154,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
-                // Define the path to the fasta file
+                // Define the path to the FASTA file
                 var orgDbDir = mMgrParams.GetParam("OrgDbDir");
                 var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
@@ -162,9 +162,9 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (!skipIDPicker && !fastaFile.Exists)
                 {
-                    // Fasta file not found
-                    LogError("Fasta file not found: " + fastaFile.FullName);
-                    mMessage = "Fasta file not found: " + fastaFile.Name;
+                    // FASTA file not found
+                    LogError("FASTA file not found: " + fastaFile.FullName);
+                    mMessage = "FASTA file not found: " + fastaFile.Name;
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -173,7 +173,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!skipIDPicker && splitFasta)
                 {
                     skipIDPicker = true;
-                    LogWarning("SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker", true);
+                    LogWarning("SplitFasta jobs typically have FASTA files too large for IDPQonvert; skipping IDPicker", true);
                 }
 
                 // Store the version of IDPicker and PeptideListToXML in the database
@@ -320,13 +320,13 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (string.IsNullOrEmpty(decoyPrefix))
             {
-                // Look for decoy proteins in the Fasta file
+                // Look for decoy proteins in the FASTA file
                 success = DetermineDecoyProteinPrefix(fastaFilePath, out decoyPrefix);
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("Error looking for decoy proteins in the Fasta file");
+                        LogError("Error looking for decoy proteins in the FASTA file");
                     }
                     criticalError = true;
                     return false;
@@ -503,7 +503,7 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool CreatePepXMLFile(string fastaFilePath, string synFilePath, PeptideHitResultTypes phrpResultType, string phrpBaseName)
         {
             // PepXML file creation should generally be done in less than 10 minutes
-            // However, for huge fasta files, conversion could take several hours
+            // However, for huge FASTA files, conversion could take several hours
             const int maxRuntimeMinutes = 480;
 
             bool success;
@@ -578,7 +578,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Looking for decoy proteins in the fasta file");
+                    LogDebug("Looking for decoy proteins in the FASTA file");
                 }
 
                 var reversedProteinPrefixes = new SortedSet<string>
@@ -599,7 +599,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (!fastaFileReader.OpenFile(fastaFilePath))
                 {
-                    LogError("Error reading fasta file with ProteinFileReader");
+                    LogError("Error reading FASTA file with ProteinFileReader");
                     return false;
                 }
 

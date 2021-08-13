@@ -15,6 +15,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     /// </summary>
     public class AnalysisResourcesMSXMLBruker : AnalysisResources
     {
+        // Ignore Spelling: Bruker
 
         /// <summary>
         /// Retrieves files necessary for creating the .mzXML file

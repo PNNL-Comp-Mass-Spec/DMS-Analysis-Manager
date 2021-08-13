@@ -94,10 +94,10 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (mDebugLevel >= 3)
                 {
-                    LogMessage("Indexing Fasta file to create .trie file");
+                    LogMessage("Indexing FASTA file to create .trie file");
                 }
 
-                // Index the fasta file to create the .trie file
+                // Index the FASTA file to create the .trie file
                 var result = indexedDBCreator.CreateIndexedDbFiles(ref mMgrParams, ref mJobParams, mDebugLevel, mJob, inspectDir, orgDbDir);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {

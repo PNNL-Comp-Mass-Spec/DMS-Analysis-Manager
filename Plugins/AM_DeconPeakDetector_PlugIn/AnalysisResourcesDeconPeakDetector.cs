@@ -16,7 +16,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
     /// </summary>
     public class AnalysisResourcesDeconPeakDetector : AnalysisResources
     {
-        // Ignore Spelling: ParmFile
+        // Ignore Spelling: decon, ParmFile
 
         /// <summary>
         /// Retrieve required files

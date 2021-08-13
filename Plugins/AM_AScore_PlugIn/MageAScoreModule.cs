@@ -23,8 +23,7 @@ namespace AnalysisManager_AScore_PlugIn
     /// </summary>
     public class MageAScoreModule : ContentFilter
     {
-        // Ignore Spelling: dta, InputColumnPos, cid, etd, hcd, msgfdb
-
+        // Ignore Spelling: cid, dta, etd, hcd, InputColumnPos, Mage, msgfdb, msgfplus, sequest, xtandem
 
         /// <summary>
         /// Base name for AScore output files

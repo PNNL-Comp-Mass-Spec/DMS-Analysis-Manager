@@ -14,7 +14,7 @@ using AnalysisManagerBase.JobConfig;
 namespace AnalysisManagerMasicPlugin
 {
     /// <summary>
-    /// Derived class for performing MASIC analysis on Finnigan datasets
+    /// Derived class for performing MASIC analysis on Thermo datasets
     /// </summary>
     public class AnalysisToolRunnerMASICFinnigan : AnalysisToolRunnerMASICBase
     {

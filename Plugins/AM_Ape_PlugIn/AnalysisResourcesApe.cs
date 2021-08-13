@@ -10,7 +10,7 @@ namespace AnalysisManager_Ape_PlugIn
     /// </summary>
     public class AnalysisResourcesApe : AnalysisResources
     {
-        // Ignore Spelling: QRollup, Improv, Workflows
+        // Ignore Spelling: QRollup, Improv, workflow, Workflows
 
         /// <summary>
         /// Retrieve required files

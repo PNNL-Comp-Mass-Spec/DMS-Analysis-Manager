@@ -19,6 +19,8 @@ namespace AnalysisManagerMODPlusPlugin
     /// </summary>
     public class AnalysisResourcesMODPlus : AnalysisResources
     {
+        // Ignore Spelling: na
+
         internal const string MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###";
         internal const int MINIMUM_PERCENT_DECOY = 25;
 
@@ -50,7 +52,7 @@ namespace AnalysisManagerMODPlusPlugin
                     return result;
                 }
 
-                currentTask = "Retrieve Fasta and param file";
+                currentTask = "Retrieve FASTA and param file";
                 if (!RetrieveFastaAndParamFile())
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -86,13 +88,13 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (string.IsNullOrEmpty(proteinCollections))
                 {
-                    LogError("Job parameter ProteinCollectionList not found; unable to check for decoy fasta file");
+                    LogError("Job parameter ProteinCollectionList not found; unable to check for decoy FASTA file");
                     return false;
                 }
 
                 if (string.IsNullOrEmpty(proteinOptions))
                 {
-                    LogError("Job parameter ProteinOptions not found; unable to check for decoy fasta file");
+                    LogError("Job parameter ProteinOptions not found; unable to check for decoy FASTA file");
                     return false;
                 }
 
@@ -100,7 +102,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (Global.IsMatch(proteinCollections, "na"))
                 {
-                    // Legacy fasta file
+                    // Legacy FASTA file
                     // Need to open it with a reader and look for entries that start with Reversed_ or XXX_ or XXX.
                     checkLegacyFastaForDecoy = true;
                 }
@@ -113,7 +115,7 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                // Retrieve the Fasta file
+                // Retrieve the FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
@@ -163,8 +165,8 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (!fiFastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                // FASTA file not found
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 
@@ -196,16 +198,16 @@ namespace AnalysisManagerMODPlusPlugin
                 }
             }
 
-            var addonMsg = "choose a DMS-generated decoy protein collection or a legacy fasta file with protein names that start with " +
+            var addonMsg = "choose a DMS-generated decoy protein collection or a legacy FASTA file with protein names that start with " +
                            string.Join(" or ", decoyPrefixes);
 
             if (Math.Abs(maxPercentReverse - 0) < float.Epsilon)
             {
-                LogError("Legacy fasta file " + fiFastaFile.Name + " does not have any decoy (reverse) proteins; " + addonMsg);
+                LogError("Legacy FASTA file " + fastaFile.Name + " does not have any decoy (reverse) proteins; " + addonMsg);
                 return false;
             }
 
-            LogError("Fewer than " + MINIMUM_PERCENT_DECOY + "% of the proteins in legacy fasta file " + fiFastaFile.Name +
+            LogError("Fewer than " + MINIMUM_PERCENT_DECOY + "% of the proteins in legacy FASTA file " + fastaFile.Name +
                      " are decoy (reverse) proteins (" + maxPercentReverse.ToString("0") + "%); " + addonMsg);
             return false;
         }

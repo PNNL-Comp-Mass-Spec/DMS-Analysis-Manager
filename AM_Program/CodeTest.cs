@@ -31,8 +31,11 @@ namespace AnalysisManagerProg
     public class CodeTest : LoggerBase
     {
         // ReSharper disable CommentTypo
-        // Ignore Spelling: perf, dta, Inj, mgf, dmsarch, Geobacter, bemidjiensis, Bem, lovelyi, metallireducens, sp, filetype, Micrococcus, luteus, nr
-        // Ignore Spelling: const, bool, Qonvert, msgfspecprob, pek, Archaea, Sprot, Trembl, yyyy, dd, hh, ss, tt, Mam, gimli, Rar, Pos
+
+        // Ignore Spelling: Archaea, Bem, bemidjiensis, bool, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
+        // Ignore Spelling: hh, Inj, lovelyi, luteus, Mam, metallireducens, mgf, Micrococcus, msgfspecprob, na, nr,
+        // Ignore Spelling: pek, perf, Pos, proteinseqs, Qonvert, Rar, sp, Sprot, ss, svc-dms, Trembl, tt, yyyy
+
         // ReSharper restore CommentTypo
 
         private OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS mFastaTools;
@@ -591,12 +594,12 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Archive a Sequest parameter file by copying to \\gigasax\dms_parameter_Files\Sequest
+        /// Archive a SEQUEST parameter file by copying to \\gigasax\dms_parameter_Files\SEQUEST
         /// </summary>
         public void TestArchiveFileStart()
         {
             const string paramFilePath = @"D:\Temp\sequest_N14_NE.params";
-            const string targetFolderPath = @"\\gigasax\dms_parameter_Files\Sequest";
+            const string targetFolderPath = @"\\gigasax\dms_parameter_Files\SEQUEST";
 
             TestArchiveFile(paramFilePath, targetFolderPath);
 
@@ -636,7 +639,7 @@ namespace AnalysisManagerProg
                 else
                 {
                     // Read the files line-by-line and compare
-                    // Since the first 2 lines of a Sequest parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
+                    // Since the first 2 lines of a SEQUEST parameter file don't matter, and since the 3rd line can vary from computer to computer, we start the comparison at the 4th line
 
                     if (!Global.TextFilesMatch(sourceFilePath, targetFilePath, 4, 0, true, lineIgnoreRegExSpecs))
                     {

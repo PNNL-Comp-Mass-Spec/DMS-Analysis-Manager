@@ -17,6 +17,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     /// </summary>
     public class AnalysisResourcesMSAlignHistone : AnalysisResources
     {
+        // Ignore Spelling: Histone
+
         /// <summary>
         /// MSDeconv .msalign filename
         /// </summary>
@@ -55,7 +57,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
-            // Retrieve Fasta file
+            // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;

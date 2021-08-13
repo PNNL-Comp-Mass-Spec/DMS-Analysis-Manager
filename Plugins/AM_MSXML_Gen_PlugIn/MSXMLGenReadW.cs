@@ -15,7 +15,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public class MSXMLGenReadW : MSXmlGen
     {
-        // Ignore Spelling: centroiding
+        // Ignore Spelling: centroiding, readw
 
         protected override string ProgramName => "ReAdW";
 

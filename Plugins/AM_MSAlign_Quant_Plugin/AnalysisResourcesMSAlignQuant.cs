@@ -11,6 +11,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     /// </summary>
     public class AnalysisResourcesMSAlignQuant : AnalysisResources
     {
+        // Ignore Spelling: Bruker, Quant
+
         /// <summary>
         /// Job parameter tracking the input file name for MSAlign Quant
         /// </summary>

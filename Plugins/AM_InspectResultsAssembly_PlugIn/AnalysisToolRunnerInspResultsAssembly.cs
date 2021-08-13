@@ -26,7 +26,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// </summary>
     public class AnalysisToolRunnerInspResultsAssembly : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: InspResults, Pvalue, trie
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: fasta, InspResults, Pvalue, trie
 
         private const string PVALUE_MINLENGTH5_SCRIPT = "PValue_MinLength5.py";
 
@@ -1257,7 +1258,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     LogWarning(
                         "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " +
-                        "Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
+                        "Will assume the FASTA file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
                     shuffledDBUsed = false;
                 }
             }

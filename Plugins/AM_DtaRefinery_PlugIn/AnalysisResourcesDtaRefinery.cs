@@ -14,6 +14,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// </summary>
     public class AnalysisResourcesDtaRefinery : AnalysisResources
     {
+        // Ignore Spelling: centroided, xtandem
+
         internal const string XTANDEM_DEFAULT_INPUT_FILE = "xtandem_default_input.xml";
         internal const string XTANDEM_TAXONOMY_LIST_FILE = "xtandem_taxonomy_list.xml";
         internal const string DTA_REFINERY_INPUT_FILE = "DtaRefinery_input.xml";
@@ -40,12 +42,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return result;
             }
 
-            // Retrieve Fasta file
+            // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
-
-            // This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
             LogMessage("Getting param file");
 

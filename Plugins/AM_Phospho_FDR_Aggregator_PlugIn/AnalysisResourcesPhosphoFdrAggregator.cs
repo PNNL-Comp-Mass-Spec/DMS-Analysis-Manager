@@ -13,7 +13,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// </summary>
     public class AnalysisResourcesPhosphoFdrAggregator : AnalysisResources
     {
-        // Ignore Spelling: nocopy, xxx_ascore
+        // Ignore Spelling: aggregator, nocopy, phospho, sequest, xxx_ascore
 
         /// <summary>
         /// Retrieve required files

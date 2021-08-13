@@ -17,6 +17,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
     /// </summary>
     public class AnalysisToolRunnerRepoPkgr : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: gzip, mage, pre, repo
 
         protected const int PROGRESS_PCT_FASTA_FILES_COPIED = 10;
         protected const int PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED = 25;
@@ -163,7 +164,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             if (mIncludeSequestResults)
             {
-                // find any sequest jobs in data package and copy their first hits files to appropriate cache subdirectory
+                // Find any SEQUEST jobs in data package and copy their first hits files to appropriate cache subdirectory
                 mRepoPackager.GetItemsToRepoPkg("DataPkgJobsQueryTemplate", "SEQUEST", "*_fht.txt", "SEQUEST_Results", "Job");
                 dataPkgJobCountMatch = mRepoPackager.DataPackageItems.Rows.Count;
                 var dataPkgFileCountMatch = mRepoPackager.AssociatedFiles.Rows.Count;
@@ -215,13 +216,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             mProgress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
             mStatusTools.UpdateAndWrite(mProgress);
 
-            // todo Do some logging on the above pipeline runs using pipeline intermediate results (mRepoPackager.DataPackageItems; mRepoPackager.AssociatedFiles; mRepoPackager.ManifestForCopy;)?
+            // ToDo: Do some logging on the above pipeline runs using pipeline intermediate results (mRepoPackager.DataPackageItems; mRepoPackager.AssociatedFiles; mRepoPackager.ManifestForCopy;)?
 
             return true;
         }
 
         /// <summary>
-        /// SetCnStr the report option flags from job parameters
+        /// Set the report option flags from job parameters
         /// </summary>
         private void SetOptions()
         {
@@ -234,7 +235,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         }
 
         /// <summary>
-        /// SetCnStr the path for the repo cache directory
+        /// Set the path for the repo cache directory
         /// </summary>
         private void SetOutputDirectoryPath()
         {
@@ -711,12 +712,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var reMatch = reArchiveFileId.Match(orgDbName);
 
                 if (!reMatch.Success)
-                    return orgDbName;		// Likely used a legacy fasta file
+                    return orgDbName;		// Likely used a legacy FASTA file
 
                 var fileID = int.Parse(reMatch.Groups[1].Value);
 
                 var sqlQuery = "SELECT FileName FROM V_Archived_Output_File_Protein_Collections WHERE Archived_File_ID = " + fileID;
                 const short retryCount = 3;
+
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {

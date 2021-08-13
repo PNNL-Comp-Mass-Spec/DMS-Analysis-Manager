@@ -34,7 +34,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         private DateTime mLastConsoleOutputParse;
 
         /// <summary>
-        /// Processes data usingthe Metabolite Detector
+        /// Processes data using the Metabolite Detector
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
@@ -66,7 +66,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Initialize classwide variables
+                // Initialize class-wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 var processingError = false;
