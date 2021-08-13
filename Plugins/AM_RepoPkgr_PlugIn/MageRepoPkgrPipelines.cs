@@ -18,7 +18,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Data package that supplies items for repo cache (must be set by client before use)
         /// </summary>
-        public string DataPkgId { get; set; }
+        public string DataPkgId { get; }
+
+        public string ManagerName { get; }
 
         /// <summary>
         /// Path to root directory of repo cache (must be set by client before use)
@@ -28,7 +30,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// object containing definitions of database queries to use (must be set by client before use)
         /// </summary>
-        public QueryDefinitions QueryDefs { get; set; }
+        public QueryDefinitions QueryDefs { get; }
 
         // objects that retain intermediate results from latest pipeline run
 
@@ -52,9 +54,18 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         private bool EnableMetadataFile { get; }
 
-
-        public MageRepoPkgrPipelines()
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="dataPackageId"></param>
+        /// <param name="managerName"></param>
+        /// <param name="queryDefs"></param>
+        public MageRepoPkgrPipelines(string dataPackageId, string managerName, QueryDefinitions queryDefs)
         {
+            DataPkgId = dataPackageId;
+            ManagerName = managerName;
+            QueryDefs = queryDefs;
+
             EnableMetadataFile = true;
         }
 

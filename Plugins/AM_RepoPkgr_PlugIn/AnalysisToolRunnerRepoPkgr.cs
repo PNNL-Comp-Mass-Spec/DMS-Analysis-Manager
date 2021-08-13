@@ -256,11 +256,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             queryDefs.SetCnStr(QueryDefinitions.TagName.Main, mMgrParams.GetParam("ConnectionString"));
             queryDefs.SetCnStr(QueryDefinitions.TagName.Broker, mMgrParams.GetParam("BrokerConnectionString"));
 
-            mRepoPackager = new MageRepoPkgrPipelines
-            {
-                QueryDefs = queryDefs,
-                DataPkgId = mJobParams.GetJobParameter("DataPackageID", "")
-            };
+            mRepoPackager = new MageRepoPkgrPipelines(dataPackageID, mMgrName, queryDefs);
+
             if (!string.IsNullOrEmpty(outputDirectoryPath))
             {
                 mRepoPackager.OutputResultsDirectoryPath = outputDirectoryPath;
