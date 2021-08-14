@@ -113,7 +113,8 @@ namespace AnalysisManager_Ape_PlugIn
             var mdidList = string.Empty;
             var mdidCount = 0;
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
+            var applicationName = string.Format("{0}_APE", mMgrParams.ManagerName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);

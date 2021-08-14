@@ -187,7 +187,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     "Could not determine the SQL for template {0} in GetDataPackageItemList", queryTemplateName));
             }
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+            var applicationName = string.Format("{0}_RepoPkgr", ManagerName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var sqlReader = new SQLReader(connectionStringToUse)
             {

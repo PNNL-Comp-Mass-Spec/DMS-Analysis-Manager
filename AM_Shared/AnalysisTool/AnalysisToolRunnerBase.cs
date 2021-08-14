@@ -1784,7 +1784,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 return currentDebugLevel;
             }
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, managerName);
+            var applicationName = string.Format("{0}_GetDebugLevel", managerName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var sqlQuery =
                 "SELECT ParameterName, ParameterValue " +
@@ -2301,7 +2302,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+            var applicationName = string.Format("{0}_GetDataPkgDatasetInfo", mMgrName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
@@ -2332,7 +2334,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 return new List<DataPackageJobInfo>();
             }
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+            var applicationName = string.Format("{0}_GetDataPkgPSMJobInfo", mMgrName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);

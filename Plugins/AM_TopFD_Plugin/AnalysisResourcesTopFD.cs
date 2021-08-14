@@ -168,7 +168,8 @@ namespace AnalysisManagerTopFDPlugIn
                 // Data Source=gigasax;Initial Catalog=DMS_Pipeline
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-                var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+                var applicationName = string.Format("{0}_TopFD", mMgrName);
+                var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
 
                 // Part 1: Find other TopFD jobs for this dataset
                 var jobStepsQuery = "SELECT Job, Tool_Version, Output_Folder " +
@@ -257,7 +258,7 @@ namespace AnalysisManagerTopFDPlugIn
                 // Data Source=gigasax;Initial Catalog=DMS5
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, applicationName);
 
                 // Part 2: Determine the settings files for the jobs in jobCandidates
                 var settingsFileQuery = "SELECT Job, SettingsFileName " +

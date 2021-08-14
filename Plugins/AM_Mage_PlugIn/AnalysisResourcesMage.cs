@@ -60,7 +60,8 @@ namespace AnalysisManager_Mage_PlugIn
 
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+            var applicationName = string.Format("{0}_Mage", mMgrName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);

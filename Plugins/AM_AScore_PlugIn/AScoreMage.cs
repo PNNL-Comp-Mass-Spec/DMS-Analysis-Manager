@@ -197,7 +197,8 @@ namespace AnalysisManager_AScore_PlugIn
         {
             var connectionString = mMgrParams.RequireMgrParam("ConnectionString");
 
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
+            var applicationName = string.Format("{0}_AScore", mMgrParams.ManagerName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
 
             var ascoreModule = new MageAScoreModule(connectionStringToUse);
 

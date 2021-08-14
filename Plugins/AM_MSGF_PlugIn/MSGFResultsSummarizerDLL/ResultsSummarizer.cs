@@ -262,7 +262,8 @@ namespace MSGFResultsSummarizer
             mJob = job;
             mWorkDir = sourceDirectoryPath;
 
-            mConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "MSGFResultsSummarizer_" + datasetName);
+            var applicationName = "MSGFResultsSummarizer_" + datasetName;
+            mConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
             mDebugLevel = debugLevel;
             mTraceMode = traceMode;
 
