@@ -10,6 +10,8 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMGetViperResults : ApeAMBase
     {
+        // Ignore Spelling: ini, mtuser, uid, workflow
+
         /// <summary>
         /// Constructor
         /// </summary>

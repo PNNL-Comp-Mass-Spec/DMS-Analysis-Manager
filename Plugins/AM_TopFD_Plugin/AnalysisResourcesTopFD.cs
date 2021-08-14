@@ -21,6 +21,8 @@ namespace AnalysisManagerTopFDPlugIn
     /// </summary>
     public class AnalysisResourcesTopFD : AnalysisResources
     {
+        // Ignore Spelling: desc
+
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
 
@@ -172,12 +174,13 @@ namespace AnalysisManagerTopFDPlugIn
                 var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
 
                 // Part 1: Find other TopFD jobs for this dataset
-                var jobStepsQuery = "SELECT Job, Tool_Version, Output_Folder " +
-                                    "FROM V_Job_Steps_History_Export " +
-                                    "WHERE Tool = 'TopFD' AND " +
-                                    "      Dataset_ID = " + datasetID + " AND " +
-                                    "      State = 5 " +
-                                    "ORDER BY Job Desc";
+                var jobStepsQuery =
+                    "SELECT Job, Tool_Version, Output_Folder " +
+                    "FROM V_Job_Steps_History_Export " +
+                    "WHERE Tool = 'TopFD' AND " +
+                    "      Dataset_ID = " + datasetID + " AND " +
+                    "      State = 5 " +
+                    "ORDER BY Job Desc";
 
                 var dbToolsDMSPipeline = DbToolsFactory.GetDBTools(brokerDbConnectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbToolsDMSPipeline);
