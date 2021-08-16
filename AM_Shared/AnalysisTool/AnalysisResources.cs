@@ -3190,14 +3190,12 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var sqlQuery = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" + legacyFastaName + "')";
 
-                // Results, as a list of columns (first row only if multiple rows)
-
-                var applicationName = string.Format("{0}_GetLegacyFastaSize", mMgrName);
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, applicationName);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
+                // Obtain results, as a list of columns (first row only if multiple rows)
                 var success = Global.GetQueryResultsTopRow(dbTools, sqlQuery, out var legacyDbSize);
 
                 if (!success || legacyDbSize == null || legacyDbSize.Count == 0)
