@@ -1784,8 +1784,16 @@ namespace AnalysisManagerBase.AnalysisTool
                 return currentDebugLevel;
             }
 
-            var applicationName = string.Format("{0}_GetDebugLevel", managerName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            string connectionStringToUse;
+            if (recursionLevel == 0)
+            {
+                var applicationName = string.Format("{0}_GetDebugLevel", managerName);
+                connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            }
+            else
+            {
+                connectionStringToUse = connectionString;
+            }
 
             var sqlQuery =
                 "SELECT ParameterName, ParameterValue " +
@@ -1808,16 +1816,14 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (Global.IsMatch(paramName, "DebugLevel"))
                 {
-                    var debugLevel = short.Parse(paramValue);
-                    return debugLevel;
+                    return short.Parse(paramValue);
                 }
 
                 if (Global.IsMatch(paramName, "MgrSettingGroupName"))
                 {
                     // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
-                    var debugLevel = GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callingFunction);
-                    return debugLevel;
+                    return GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callingFunction);
                 }
             }
 
