@@ -60,3 +60,4 @@ cloc*.pl
 CachedLibs/
 **/.vs/
 *.pdb
+/AM_Common/System.Threading.Channels.dll
