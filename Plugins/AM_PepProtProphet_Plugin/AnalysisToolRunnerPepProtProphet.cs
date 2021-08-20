@@ -415,7 +415,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!moveSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var zipSuccess = ZipPepXmlFiles(dataPackageInfo);
+                var zipSuccess = ZipPepXmlAndPinFiles(dataPackageInfo);
 
                 return zipSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2437,6 +2437,59 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private bool UpdatePinFileStripDataset(FileInfo sourcePinFile)
+        {
+            const string TRASH_EXTENSION = ".trash2";
+
+            mJobParams.AddResultFileExtensionToSkip(TRASH_EXTENSION);
+
+            try
+            {
+                if (!sourcePinFile.Exists)
+                {
+                    LogError("File not found: " + sourcePinFile.FullName);
+                    return false;
+                }
+
+                var updatedPinFile = new FileInfo(sourcePinFile.FullName + ".updated");
+
+                using (var reader = new StreamReader(new FileStream(sourcePinFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedPinFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    var linesRead = 0;
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        linesRead++;
+
+                        if (linesRead <= 2 || dataLine == null)
+                        {
+                            // This is the header line, the first line, or an empty line
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        var lineParts = dataLine.Split('\t');
+                        if (lineParts.Length > 1)
+                            lineParts[0] = string.Empty;
+
+                        writer.WriteLine(string.Join("\t", lineParts));
+                    }
+                }
+
+                var finalPath = sourcePinFile.FullName;
+                sourcePinFile.MoveTo(sourcePinFile.FullName + TRASH_EXTENSION);
+
+                updatedPinFile.MoveTo(finalPath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ValidatePINFile for " + sourcePinFile.Name, ex);
+                return false;
+            }
+        }
         private bool ValidateFastaFile()
         {
             // Define the path to the FASTA file
@@ -2458,21 +2511,29 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return false;
         }
 
-        private bool ZipPepXmlFiles(DataPackageInfo dataPackageInfo)
+        /// <summary>
+        /// Zip each .pepXML file
+        /// Also store the .pin files in the zip files
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ZipPepXmlAndPinFiles(DataPackageInfo dataPackageInfo)
         {
             try
             {
-                // Zip each .pepXML file
-                // Also store the .pin files in the zip files
-
                 var successCount = 0;
 
                 foreach (var dataset in dataPackageInfo.Datasets)
                 {
-                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, dataset.Value + PEPXML_EXTENSION));
+                    var datasetName = dataset.Value;
 
-                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, dataset.Value, pepXmlFile);
-                    if (!zipSuccess)
+                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
+                    var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PIN_EXTENSION));
+
+                    var pinFileUpdated = UpdatePinFileStripDataset(pinFile);
+
+                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile);
+                    if (!zipSuccess || !pinFileUpdated)
                     {
                         continue;
                     }
