@@ -2283,9 +2283,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         var dataLine = reader.ReadLine();
                         linesRead++;
 
-                        if (linesRead <= 2 || dataLine == null)
+                        if (linesRead <= 11 || dataLine == null)
                         {
-                            // This is the header line, the first line, or an empty line
+                            // This is the header line, the first 10 results, or an empty line
                             writer.WriteLine(dataLine);
                             continue;
                         }
