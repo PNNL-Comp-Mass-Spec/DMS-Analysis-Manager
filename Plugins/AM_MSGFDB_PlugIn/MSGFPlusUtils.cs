@@ -1074,7 +1074,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ignorePeptideToProteinMapperErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
-                var options = new ProteinCoverageSummarizer.ProteinCoverageSummarizerOptions()
+                var options = new ProteinCoverageSummarizer.ProteinCoverageSummarizerOptions
                 {
                     IgnoreILDifferences = false,
                     MatchPeptidePrefixAndSuffixToProtein = false,
