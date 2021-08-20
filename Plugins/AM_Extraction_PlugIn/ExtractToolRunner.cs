@@ -737,7 +737,8 @@ namespace AnalysisManagerExtractionPlugin
                                 "Protein",
                                 "SpecEValue"
                             };
-                            columnMap = Global.ParseHeaderLine(dataLine, headerNames);
+
+                            Global.ParseHeaderLine(columnMap, dataLine, headerNames);
 
                             foreach (var headerName in headerNames)
                             {

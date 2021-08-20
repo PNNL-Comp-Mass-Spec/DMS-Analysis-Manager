@@ -511,14 +511,30 @@ namespace AnalysisManagerBase
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> expectedHeaderNames)
         {
+            var columnMap = new Dictionary<string, int>();
+            ParseHeaderLine(columnMap, headerLine, expectedHeaderNames);
+            return columnMap;
+        }
+
+        /// <summary>
+        /// Parses the headers in headerLine to look for the names specified in headerNames
+        /// </summary>
+        /// <param name="columnMap">
+        /// Mapping from column identifier to the index of the column in the header line; this dictionary will be cleared then populated
+        /// </param>
+        /// <param name="headerLine">Tab delimited list of headers</param>
+        /// <param name="expectedHeaderNames">Expected header column names</param>
+        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
+        /// <returns>Dictionary with the header names and 0-based column index</returns>
+        public static bool ParseHeaderLine(Dictionary<string, int> columnMap, string headerLine, List<string> expectedHeaderNames)
+        {
             var columnNamesByIdentifier = new Dictionary<string, SortedSet<string>>();
             foreach (var headerName in expectedHeaderNames)
             {
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, headerName);
             }
 
-            var columnMap = DataTableUtils.GetColumnMappingFromHeaderLine(headerLine, columnNamesByIdentifier);
-            return columnMap;
+            return DataTableUtils.GetColumnMappingFromHeaderLine(columnMap, headerLine, columnNamesByIdentifier);
         }
 
         /// <summary>

@@ -971,7 +971,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // This dictionary maps column name to column index
-                Dictionary<string, int> columnMap = null;
+                var columnMap = new Dictionary<string, int>();
 
                 var requiredColumns = new List<string> {
                     "ThresholdValue",
@@ -996,9 +996,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        if (columnMap == null)
+                        if (columnMap.Count == 0)
                         {
-                            columnMap = Global.ParseHeaderLine(dataLine, requiredColumns);
+                            Global.ParseHeaderLine(columnMap, dataLine, requiredColumns);
                             continue;
                         }
 
