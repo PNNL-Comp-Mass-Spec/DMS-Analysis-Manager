@@ -620,11 +620,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Initialize the Philosopher workspace (creates a hidden directory named .meta)
         /// </summary>
         /// <param name="experimentGroupNames"></param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
-            IReadOnlyCollection<string> experimentGroupNames,
+            SortedSet<string> experimentGroupNames,
             out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
@@ -806,7 +806,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Initialize the Philosopher workspace (creates a hidden directory named .meta)
             // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
 
-            var experimentGroupNames = datasetIDsByExperimentGroup.Keys.ToList();
+            var experimentGroupNames = new SortedSet<string>();
+            foreach (var item in datasetIDsByExperimentGroup.Keys)
+            {
+                experimentGroupNames.Add(item);
+            }
 
             var initResult = InitializePhilosopherWorkspace(experimentGroupNames, out experimentGroupWorkingDirectories);
             if (initResult != CloseOutType.CLOSEOUT_SUCCESS)
