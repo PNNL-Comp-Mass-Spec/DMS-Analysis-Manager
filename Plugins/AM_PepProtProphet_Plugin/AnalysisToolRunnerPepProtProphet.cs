@@ -58,18 +58,26 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const string PROTEIN_PROPHET_CONSOLE_OUTPUT = "ProteinProphet_ConsoleOutput.txt";
 
         /// <summary>
-        /// Reserve 15 GB when running Crystal-C with Java
+        /// Reserve 14 GB when running Crystal-C with Java
         /// </summary>
-        public const int CRYSTALC_MEMORY_SIZE_GB = 15;
+        public const int CRYSTALC_MEMORY_SIZE_GB = 14;
 
         /// <summary>
-        /// Reserve 15 GB when running IonQuant with Java
+        /// Reserve 4 GB when running IonQuant with Java
         /// </summary>
-        public const int ION_QUANT_MEMORY_SIZE_GB = 15;
+        public const int ION_QUANT_MEMORY_SIZE_GB = 4;
 
         // ReSharper restore IdentifierTypo
 
-        private const string PEPXML_EXTENSION = ".pepXML";
+        /// <summary>
+        /// Extension for peptide XML files
+        /// </summary>
+        public const string PEPXML_EXTENSION = ".pepXML";
+
+        /// <summary>
+        /// Extension for pin files (tab-delimited text files created by MSFragger)
+        /// </summary>
+        public const string PIN_EXTENSION = ".pin";
 
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
