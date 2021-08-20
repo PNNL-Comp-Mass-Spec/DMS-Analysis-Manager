@@ -41,20 +41,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper restore CommentTypo
 
         private const string JAVA_CONSOLE_OUTPUT = "Java_ConsoleOutput.txt";
-
-        private const string PHILOSOPHER_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
-        private const string PHILOSOPHER_CONSOLE_OUTPUT_COMBINED = "Philosopher_ConsoleOutput_Combined.txt";
+        private const string JAVA_CONSOLE_OUTPUT_COMBINED = "Java_ConsoleOutput_Combined.txt";
 
         private const string PERCOLATOR_CONSOLE_OUTPUT = "Percolator_ConsoleOutput.txt";
         private const string PERCOLATOR_CONSOLE_OUTPUT_COMBINED = "Percolator_ConsoleOutput_Combined.txt";
 
-        // ReSharper disable IdentifierTypo
+        private const string PHILOSOPHER_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
+        private const string PHILOSOPHER_CONSOLE_OUTPUT_COMBINED = "Philosopher_ConsoleOutput_Combined.txt";
 
-        private const string ABACUS_PROPHET_CONSOLE_OUTPUT = "Abacus_ConsoleOutput.txt";
-        private const string FREEQUANT_PROPHET_CONSOLE_OUTPUT = "FreeQuant_ConsoleOutput.txt";
-        private const string LABELQUANT_PROPHET_CONSOLE_OUTPUT = "LabelQuant_ConsoleOutput.txt";
-        private const string PEPTIDE_PROPHET_CONSOLE_OUTPUT = "PeptideProphet_ConsoleOutput.txt";
-        private const string PROTEIN_PROPHET_CONSOLE_OUTPUT = "ProteinProphet_ConsoleOutput.txt";
+        private const string PTM_SHEPHERD_CONSOLE_OUTPUT = "PTMShepherd_ConsoleOutput.txt";
 
         /// <summary>
         /// Reserve 14 GB when running Crystal-C with Java
@@ -65,8 +60,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Reserve 4 GB when running IonQuant with Java
         /// </summary>
         public const int ION_QUANT_MEMORY_SIZE_GB = 4;
-
-        // ReSharper restore IdentifierTypo
 
         /// <summary>
         /// Extension for peptide XML files
@@ -217,6 +210,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 UpdateSummaryFile();
 
                 mCmdRunner = null;
+                mCmdRunnerMode = CmdRunnerModes.Undefined;
 
                 // Make sure objects are released
                 Global.IdleLoop(0.5);
@@ -454,9 +448,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             FileSystemInfo fragPipeLibDirectory,
             FileSystemInfo experimentGroupDirectory, string datasetName)
         {
-            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
-
             // ReSharper disable StringLiteralTypo
 
             var arguments = string.Format(
@@ -472,9 +463,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ReSharper restore StringLiteralTypo
 
+            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+            mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
+
             LogDebug(options.JavaProgLoc + " " + arguments);
 
-            var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Java", true);
+            var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+            UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             if (processingSuccess)
             {
@@ -962,9 +959,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Running Abacus", 2);
 
-                mCmdRunner.WorkDir = mWorkDir;
-                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "Abacus_ConsoleOutput.txt");
-
                 var arguments = new StringBuilder();
 
                 // When Match Between Runs or Open Search is not in use:
@@ -1083,11 +1077,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // ReSharper restore StringLiteralTypo
 
                         mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-                        mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "CrystalC_ConsoleOutput.txt");
+                        mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                        mCmdRunnerMode = CmdRunnerModes.CrystalC;
 
                         LogDebug(options.JavaProgLoc + " " + arguments);
 
                         var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                        UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                         if (!processingSuccess)
                         {
@@ -1578,9 +1575,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool RunPercolator(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
         {
-            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
-
             // ReSharper disable StringLiteralTypo
 
             var targetPsmFile = string.Format("{0}_percolator_target_psms.tsv", datasetName);
@@ -1603,6 +1597,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 new(Path.Combine(mCmdRunner.WorkDir, decoyPsmFile))
             };
 
+            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
+            mCmdRunnerMode = CmdRunnerModes.Percolator;
+
             LogDebug(mPercolatorProgLoc + " " + arguments);
 
             var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
@@ -1610,6 +1608,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
             }
+
+            UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
             if (processingSuccess)
             {
@@ -1628,20 +1628,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Run philosopher using the specified arguments
+        /// </summary>
+        /// <param name="toolType"></param>
+        /// <param name="arguments"></param>
+        /// <param name="currentTask"></param>
+        /// <param name="workingDirectoryPath"></param>
+        /// <returns></returns>
         private bool RunPhilosopher(PhilosopherToolType toolType, string arguments, string currentTask, string workingDirectoryPath = "")
         {
             try
             {
                 mCurrentPhilosopherTool = toolType;
 
-                if (string.IsNullOrWhiteSpace(workingDirectoryPath))
-                    mCmdRunner.WorkDir = mWorkDir;
-                else
-                    mCmdRunner.WorkDir = workingDirectoryPath;
-
+                mCmdRunner.WorkDir = string.IsNullOrWhiteSpace(workingDirectoryPath) ? mWorkDir : workingDirectoryPath;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT);
-
-                // Run philosopher using the specified arguments
+                mCmdRunnerMode = CmdRunnerModes.Philosopher;
 
                 LogDebug(mPhilosopherProgLoc + " " + arguments);
 
@@ -1812,7 +1815,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore CommentTypo
 
                 mCmdRunner.WorkDir = mWorkDir;
-                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "PTMShepherd_ConsoleOutput.txt");
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PTM_SHEPHERD_CONSOLE_OUTPUT);
+                mCmdRunnerMode = CmdRunnerModes.PtmShepherd;
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
 
@@ -1981,7 +1985,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath)
+        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName)
         {
             try
             {
@@ -1992,7 +1996,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return;
                 }
 
-                var combinedFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED);
+                var combinedFilePath = Path.Combine(mWorkDir, combinedFileName);
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(combinedFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
@@ -2010,8 +2014,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in UpdateCombinedPhilosopherConsoleOutputFile", ex);
+                LogError("Error in UpdateCombinedConsoleOutputFile for " + combinedFileName, ex);
             }
+        }
+
+        private void UpdateCombinedJavaConsoleOutputFile(string consoleOutputFilepath)
+        {
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, JAVA_CONSOLE_OUTPUT_COMBINED);
+        }
+
+        private void UpdateCombinedPercolatorConsoleOutputFile(string consoleOutputFilepath)
+        {
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PERCOLATOR_CONSOLE_OUTPUT_COMBINED);
+        }
+
+        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath)
+        {
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED);
         }
 
         /// <summary>
@@ -2084,11 +2103,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper enable CommentTypo
 
                     mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "RewritePepXml_ConsoleOutput.txt");
+                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                     if (!processingSuccess)
                     {
@@ -2200,11 +2222,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         libDirectory.FullName, pepXmlFile.FullName, datasetFile.FullName);
 
                     mCmdRunner.WorkDir = workingDirectory.FullName;
-                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, "RewritePepXml_ConsoleOutput.txt");
+                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                     if (!processingSuccess)
                     {
@@ -2401,5 +2426,4 @@ namespace AnalysisManagerPepProtProphetPlugIn
             LogErrorNoMessageUpdate(message);
         }
     }
-
 }
