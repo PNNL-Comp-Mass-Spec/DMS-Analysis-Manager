@@ -156,6 +156,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Retrieve the zipped pepXML files
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <remarks>
+        /// Each _pepXML.zip file will also have a .pin file
+        /// </remarks>
         private CloseOutType GetPepXMLFiles(DataPackageInfo dataPackageInfo)
         {
             // The ToolName job parameter holds the name of the job script we are executing
@@ -170,7 +177,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             foreach (var item in dataPackageInfo.Datasets)
             {
                 var fileToRetrieve = item.Value + "_pepXML.zip";
-                var unzipRequired = true;
+                const bool unzipRequired = true;
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired))
@@ -179,6 +186,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
             }
+
+            mJobParams.AddResultFileExtensionToSkip(AnalysisToolRunnerPepProtProphet.PEPXML_EXTENSION);
+            mJobParams.AddResultFileExtensionToSkip(AnalysisToolRunnerPepProtProphet.PIN_EXTENSION);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
