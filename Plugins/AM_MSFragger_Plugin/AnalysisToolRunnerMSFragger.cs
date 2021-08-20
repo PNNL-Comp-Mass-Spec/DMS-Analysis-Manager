@@ -776,7 +776,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                         LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
                     }
 
-
                     if (!pinFile.Exists)
                     {
                         LogError(string.Format("MSFragger did not create a .pin file{0}", optionalDatasetInfo));
