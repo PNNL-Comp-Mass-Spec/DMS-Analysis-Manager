@@ -107,11 +107,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             Initializing = 1,
             ProcessingStarted = 2,
             CrystalCComplete = 5,
-            PeptideProphetComplete = 15,
+            PeptideProphetOrPercolatorComplete = 15,
             ProteinProphetComplete = 30,
             DBAnnotationComplete = 45,
             ResultsFilterComplete = 60,
-            LabelQuantComplete = 75,
+            FreeQuantOrLabelQuantComplete = 75,
             ReportGenerated = 85,
             AbacusComplete = 87,
             IonQuantComplete = 90,
@@ -238,7 +238,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var philosopherExe = new FileInfo(mPhilosopherProgLoc);
 
-                var moveFilesSuccess = OrganizePepXmlFiles(
+                var moveFilesSuccess = OrganizePepXmlAndPinFiles(
                     out var dataPackageInfo,
                     out var datasetIDsByExperimentGroup,
                     out var experimentGroupWorkingDirectories);
@@ -311,7 +311,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!psmValidationSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                mProgress = (int)ProgressPercentValues.PeptideProphetComplete;
+                mProgress = (int)ProgressPercentValues.PeptideProphetOrPercolatorComplete;
 
                 if (options.OpenSearch)
                 {
@@ -356,6 +356,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories);
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
+
+                    mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
                 if (options.ReporterIonMode != ReporterIonModes.Disabled)
@@ -364,7 +366,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (!labelQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
-                    mProgress = (int)ProgressPercentValues.LabelQuantComplete;
+                    mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
                 var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories);
@@ -482,7 +484,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private bool CreateCrystalcParamFile(DirectoryInfo experimentGroupDirectory, string datasetName, out FileInfo fileInfo)
+        private bool CreateCrystalCParamFile(FileSystemInfo experimentGroupDirectory, string datasetName, out FileInfo crystalcParamFile)
         {
             throw new NotImplementedException();
         }
@@ -784,15 +786,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Organize .pepXML files and populate several dictionaries
+        /// Organize .pepXML and .pin files and populate several dictionaries
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">
         /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
         /// </param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
-        private CloseOutType OrganizePepXmlFiles(
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        private CloseOutType OrganizePepXmlAndPinFiles(
             out DataPackageInfo dataPackageInfo,
             out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
@@ -2368,7 +2370,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, dataset.Value + PEPXML_EXTENSION));
 
-                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlFile(this, dataset.Value, pepXmlFile);
+                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, dataset.Value, pepXmlFile);
                     if (!zipSuccess)
                     {
                         continue;
