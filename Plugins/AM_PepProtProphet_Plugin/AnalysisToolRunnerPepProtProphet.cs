@@ -486,7 +486,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool CreateCrystalCParamFile(FileSystemInfo experimentGroupDirectory, string datasetName, out FileInfo crystalcParamFile)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var paramFileName = string.Format("crystalc-0-{0}.pepXML.params", datasetName);
+                crystalcParamFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, paramFileName));
+
+                using var writer = new StreamWriter(new FileStream(crystalcParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine("# Crystal-C (Version: 2019.08)");
+                writer.WriteLine();
+                writer.WriteLine("thread = 4");
+                writer.WriteLine("fasta = {0}", mFastaFilePath);
+                writer.WriteLine("raw_file_location = {0}", mWorkDir);
+                writer.WriteLine("raw_file_extension = mzML");
+                writer.WriteLine("output_location = {0}", experimentGroupDirectory.FullName);
+                writer.WriteLine();
+                writer.WriteLine("precursor_charge = 1 6             # precursor charge range for detecting chimeric spectra");
+                writer.WriteLine("isotope_number = 3                 # number of theoretical isotope peaks");
+                writer.WriteLine("precursor_mass = 20                # precursor mass tolerance (unit: ppm)");
+                writer.WriteLine("precursor_isolation_window = 0.7   # precursor isolation window");
+                writer.WriteLine("correct_isotope_error = false      # correct isotope error by updating precursor neutral mass with the monoisotopic mass");
+                writer.WriteLine();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateCrystalCParamFile", ex);
+                crystalcParamFile = new FileInfo("NonExistentFile.params");
+                return false;
+            }
         }
 
         /// <summary>
@@ -1169,8 +1198,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         // Create the Crystal-C parameter file for this dataset
 
-                        // ReSharper disable once IdentifierTypo
-                        if (!CreateCrystalcParamFile(experimentGroupDirectory, datasetName, out var crystalcParamFile))
+                        if (!CreateCrystalCParamFile(experimentGroupDirectory, datasetName, out var crystalcParamFile))
                             return false;
 
                         // ReSharper disable CommentTypo
