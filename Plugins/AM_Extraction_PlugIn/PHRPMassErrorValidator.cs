@@ -15,16 +15,27 @@ namespace AnalysisManagerExtractionPlugin
 
         private readonly int mDebugLevel;
 
-        // This is a value between 0 and 100
+        /// <summary>
+        /// Error threshold percentage (Value between 0 and 100)
+        /// </summary>
+        /// <remarks>
+        /// If more than this percent of the data has a mass error larger than the threshold,
+        /// and if the count is greater than <see cref="mErrorThresholdCount"/>, ValidatePHRPResultMassErrors returns false
+        /// </remarks>
         private const double mErrorThresholdPercent = 5;
 
-        public string ErrorMessage { get; private set; } = string.Empty;
+        /// <summary>
+        /// Error count threshold
+        /// </summary>
+        /// <remarks>
+        /// Used by <see cref="ValidatePHRPResultMassErrors"/> when determining whether too many results have a large mass error
+        /// </remarks>
+        private const double mErrorThresholdCount = 25;
 
         /// <summary>
-        /// Value between 0 and 100
-        /// If more than this percent of the data has a mass error larger than the threshold, ValidatePHRPResultMassErrors returns false
+        /// Error message
         /// </summary>
-        public double ErrorThresholdPercent => mErrorThresholdPercent;
+        public string ErrorMessage { get; private set; } = string.Empty;
 
         /// <summary>
         /// Constructor
@@ -308,7 +319,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var warningMessage = string.Format("{0} ({1} / {2})", ErrorMessage, errorCount, psmCount);
 
-                if (percentInvalid <= mErrorThresholdPercent)
+                if (percentInvalid <= mErrorThresholdPercent || errorCount <= mErrorThresholdCount)
                 {
                     OnWarningEvent(warningMessage + "; this value is within tolerance");
 
