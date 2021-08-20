@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
@@ -179,11 +180,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             foreach (var item in dataPackageInfo.Datasets)
             {
-                var fileToRetrieve = item.Value + "_pepXML.zip";
+                var datasetName = item.Value;
+
+                var fileToRetrieve = datasetName + "_pepXML.zip";
                 const bool unzipRequired = true;
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired))
+                {
+                    // Errors were reported in function call, so just return
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // Assure that the first column of the .pin file includes the dataset name, scan number, and charge
+                // To reduce file size, AnalysisToolRunnerPepProtProphet removes this information prior to creating the updated _pepXML.zip file
+                var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + AnalysisToolRunnerPepProtProphet.PIN_EXTENSION));
+
+                if (!ValidatePINFile(datasetName, pinFile))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -194,6 +207,143 @@ namespace AnalysisManagerPepProtProphetPlugIn
             mJobParams.AddResultFileExtensionToSkip(AnalysisToolRunnerPepProtProphet.PIN_EXTENSION);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool ValidatePINFile(string datasetName, FileInfo sourcePinFile)
+        {
+            const string TRASH_EXTENSION = ".trash1";
+
+            mJobParams.AddResultFileExtensionToSkip(TRASH_EXTENSION);
+
+            try
+            {
+                if (!sourcePinFile.Exists)
+                {
+                    LogError("File not found: " + sourcePinFile.FullName);
+                    return false;
+                }
+
+                var updatedPinFile = new FileInfo(sourcePinFile.FullName + ".updated");
+
+                var scanNumberIndex = -1;
+
+                // Keys in this dictionary are column index values, Values are charge state
+                var columnIndexToChargeMap = new Dictionary<int, int>();
+
+                var headerNames = new List<string>
+                {
+                    "SpecId",
+                    "Label",
+                    "ScanNr",
+                    "ExpMass",
+                    "retentiontime",
+                    "rank",
+                    "mass_diff_score",
+                    "log10_evalue",
+                    "hyperscore",
+                    "delta_hyperscore",
+                    "matched_ion_num",
+                    "peptide_length",
+                    "ntt",
+                    "nmc",
+                    "charge_1",
+                    "charge_2",
+                    "charge_3",
+                    "charge_4",
+                    "charge_5",
+                    "charge_6",
+                    "charge_7",
+                    "Peptide",
+                    "Proteins"
+                };
+
+                var fileUpdated = false;
+
+                using (var reader = new StreamReader(new FileStream(sourcePinFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedPinFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        if (scanNumberIndex < 0)
+                        {
+                            // This is the header line
+                            writer.WriteLine(dataLine);
+
+                            var columnMap = Global.ParseHeaderLine(dataLine, headerNames);
+
+                            scanNumberIndex = columnMap["ScanNr"];
+                            if (scanNumberIndex < 0)
+                            {
+                                LogError(string.Format("{0} column not found in {1}", "columnMap", sourcePinFile.FullName));
+                                return false;
+                            }
+
+                            for (var chargeState = 1; chargeState <= 7; chargeState++)
+                            {
+                                var chargeColumn = string.Format("charge_{0}", chargeState);
+
+                                var columnIndex = columnMap[chargeColumn];
+                                if (columnIndex >= 0)
+                                {
+                                    columnIndexToChargeMap.Add(columnIndex, chargeState);
+                                }
+                            }
+
+                            continue;
+                        }
+
+                        var lineParts = dataLine.Split('\t');
+                        if (lineParts.Length > 1 && string.IsNullOrWhiteSpace(lineParts[0]))
+                        {
+                            var scanNumber = lineParts[scanNumberIndex];
+
+                            // Examine the charge columns to find the first column with a 1
+                            var chargeState = 0;
+
+                            foreach (var item in columnIndexToChargeMap)
+                            {
+                                var chargeFlag = lineParts[item.Key];
+                                if (!int.TryParse(chargeFlag, out var value) || value <= 0)
+                                {
+                                    continue;
+                                }
+
+                                chargeState = item.Value;
+                                break;
+                            }
+
+                            lineParts[0] = string.Format("{0}.{1}.{1}.{2}_1", datasetName, scanNumber, chargeState);
+
+                            fileUpdated = true;
+                        }
+
+                        writer.WriteLine(string.Join("\t", lineParts));
+                    }
+                }
+
+                if (!fileUpdated)
+                    return true;
+
+                var finalPath = sourcePinFile.FullName;
+                sourcePinFile.MoveTo(sourcePinFile.FullName + TRASH_EXTENSION);
+
+                updatedPinFile.MoveTo(finalPath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ValidatePINFile for " + sourcePinFile.Name, ex);
+                return false;
+            }
         }
 
         /// <summary>
