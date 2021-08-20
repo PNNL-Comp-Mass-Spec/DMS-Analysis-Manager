@@ -18,6 +18,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
     /// <summary>
     /// Retrieve resources for the PepProtProphet plugin
     /// </summary>
+    /// <remarks>
+    /// This plugin is used to post-process MSFragger results
+    /// </remarks>
     public class AnalysisResourcesPepProtProphet : AnalysisResources
     {
         // Ignore Spelling: resourcer
@@ -60,7 +63,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.OpenSearch)
                 {
                     // Make sure the machine has enough free memory to run Crystal-C
-                    currentTask = "ValidateFreeMemorySize";
+                    currentTask = "Validate free memory for Crystal-C";
 
                     if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
                     {
@@ -71,10 +74,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.RunIonQuant)
                 {
                     // Make sure the machine has enough free memory to run IonQuant
-                    // Setting MSFraggerJavaMemorySize is stored in the settings file for the job
-                    currentTask = "ValidateFreeMemorySize";
 
-                    if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
+                    currentTask = "Validate free memory for IonQuant";
+
+                    if (!ValidateFreeMemorySizeGB("IonQuant", AnalysisToolRunnerPepProtProphet.ION_QUANT_MEMORY_SIZE_GB))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
