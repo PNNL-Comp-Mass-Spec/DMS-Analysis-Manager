@@ -460,9 +460,10 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Set up and execute a program runner to run anal_moda.jar or tda_plus.jar
-                var arguments = " -Xmx" + javaMemorySize + "M" +
-                                " -jar " + Path.Combine(modXProgram.DirectoryName, modxFilterJarName) +
-                                " -i " + resultsFilePath;
+                var arguments =
+                    " -Xmx" + javaMemorySize + "M" +
+                    " -jar " + Global.PossiblyQuotePath(Path.Combine(modXProgram.DirectoryName, modxFilterJarName)) +
+                    " -i " + resultsFilePath;
 
                 if (!isModPlus)
                 {
@@ -1143,10 +1144,11 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Set up and execute a program runner to run the MzidMerger
 
-                var arguments = " -inDir " + PossiblyQuotePath(mWorkDir) +
-                                " -filter " + PossiblyQuotePath(mzidFilenameMatchSpec) +
-                                " -keepOnlyBestResults" +
-                                " -out " + PossiblyQuotePath(combinedMzidFileName);
+                var arguments =
+                    " -inDir " + PossiblyQuotePath(mWorkDir) +
+                    " -filter " + PossiblyQuotePath(mzidFilenameMatchSpec) +
+                    " -keepOnlyBestResults" +
+                    " -out " + PossiblyQuotePath(combinedMzidFileName);
 
                 if (mDebugLevel >= 1)
                 {

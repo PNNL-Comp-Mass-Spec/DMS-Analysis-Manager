@@ -154,14 +154,15 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                var arguments = psmResultsFile.FullName +
-                                " /O:" + psmResultsFile.DirectoryName +
-                                " /M:" + modDefsFileName +
-                                " /T:" + AnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME +
-                                " /N:" + paramFileName +
-                                " /SynPvalue:0.2" +
-                                " /SynProb:0.05" +
-                                " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
+                var arguments = 
+                    psmResultsFile.FullName +
+                    " /O:" + psmResultsFile.DirectoryName +
+                    " /M:" + modDefsFileName +
+                    " /T:" + AnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME +
+                    " /N:" + paramFileName +
+                    " /SynPvalue:0.2" +
+                    " /SynProb:0.05" +
+                    " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
 
                 var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
                 if (!skipProteinMods)

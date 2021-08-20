@@ -324,9 +324,9 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Example Console output
             // ----------------------------------------------------
 
-            // MSFragger version MSFragger-3.2
-            // Batmass-IO version 1.22.1
-            // timsdata library version timsdata-2-7-0
+            // MSFragger version MSFragger-3.3
+            // Batmass-IO version 1.23.4
+            // timsdata library version timsdata-2-8-7-1
             // (c) University of Michigan
             // RawFileReader reading tool. Copyright (c) 2016 by Thermo Fisher Scientific, Inc. All rights reserved.
             // System OS: Windows 10, Architecture: AMD64
@@ -671,6 +671,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
+                // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
+
                 var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
                 if (javaMemorySizeMB < 2000)
                     javaMemorySizeMB = 2000;
@@ -731,7 +733,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var successCount = 0;
 
-                // Validate that MSFragger created a .pepXML file and a .tsv file for each dataset
+                // Validate that MSFragger created a .pepXML file, a .tsv file, and a .pin file for each dataset
                 // Zip each .pepXML file
                 foreach (var item in dataPackageInfo.Datasets)
                 {

@@ -30,14 +30,14 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "August 17, 2021";
+        public const string PROGRAM_DATE = "August 19, 2021";
 
         private static bool mTraceMode;
 
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        /// <returns> Returns 0 if no error, error code if an error</returns>
+        /// <returns>Returns 0 if no error, error code if an error</returns>
         public static int Main(string[] args)
         {
             try

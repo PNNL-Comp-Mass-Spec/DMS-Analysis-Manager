@@ -408,6 +408,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
 
+            // Setting MSGFDBJavaMemorySize is stored in the settings file for this job
+
             var javaMemorySizeMB = mJobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
             if (javaMemorySizeMB < 512)
                 javaMemorySizeMB = 512;

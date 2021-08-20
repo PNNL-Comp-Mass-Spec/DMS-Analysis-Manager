@@ -188,7 +188,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 else
                 {
-                    // Run MS-GF+ (includes indexing the fasta file)
+                    // Run MS-GF+ (includes indexing the FASTA file)
                     result = RunMSGFPlus(javaProgLoc, msXmlFileExtension, out msgfPlusResults);
                 }
 
@@ -365,7 +365,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         }
 
         /// <summary>
-        /// Index the Fasta file (if needed) then run MS-GF+
+        /// Index the FASTA file (if needed) then run MS-GF+
         /// </summary>
         /// <param name="javaProgLoc">Path to Java</param>
         /// <param name="msXmlFileExtension">.mzXML or .mzML</param>
@@ -401,7 +401,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mMSGFPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
-            // Note: if the fasta file is over 50 MB in size, only use the first 50 MB
+            // Note: if the FASTA file is over 50 MB in size, only use the first 50 MB
 
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetJobParameter("MzRefParamFile", string.Empty));
@@ -410,7 +410,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             const int maxFastaFileSizeMB = 50;
 
-            // Initialize the fasta file; truncating it if it is over 50 MB in size
+            // Initialize the FASTA file; truncating it if it is over 50 MB in size
             var result = mMSGFPlusUtils.InitializeFastaFile(
                 javaExePath, msgfplusJarFilePath,
                 out _, out var fastaFileIsDecoy, out var fastaFilePath,
@@ -476,20 +476,23 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             LogMessage("Running MS-GF+");
 
+            // Setting MzRefMSGFPlusJavaMemorySize is stored in the settings file for this job
+
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
-            // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
+            // The amount of memory required depends on both the FASTA file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             var javaMemorySize = mJobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
             // Set up and execute a program runner to run MS-GF+
-            var arguments = " -Xmx" + javaMemorySize + "M" +
-                            " -jar " + msgfplusJarFilePath +
-                            " -s " + mDatasetName + msXmlFileExtension +
-                            " -o " + msgfPlusResults.Name +
-                            " -d " + PossiblyQuotePath(fastaFilePath) +
-                            " -conf " + finalParamFile.Name;
+            var arguments =
+                " -Xmx" + javaMemorySize + "M" +
+                " -jar " + msgfplusJarFilePath +
+                " -s " + mDatasetName + msXmlFileExtension +
+                " -o " + msgfPlusResults.Name +
+                " -d " + PossiblyQuotePath(fastaFilePath) +
+                " -conf " + finalParamFile.Name;
 
             // Make sure the machine has enough free memory to run MS-GF+
             var logFreeMemoryOnSuccess = mDebugLevel >= 1;

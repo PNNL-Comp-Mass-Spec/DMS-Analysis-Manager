@@ -584,7 +584,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <returns>Dictionary where keys are dataset names and values are DirectoryInfo instances</returns>
         private Dictionary<int, DirectoryInfo> InitializePeptideProphetWorkspaceDirectories(
             DataPackageInfo dataPackageInfo,
@@ -734,7 +734,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         private bool MoveResultsIntoSubdirectories(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -1059,7 +1059,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var arguments = new StringBuilder();
 
-
                 // When Match Between Runs or Open Search is not in use:
                 // --razor --picked --reprint --tag XXX_ --protein
 
@@ -1213,8 +1212,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create a db.bin file in the .meta subdirectory of the working directory and in any experiment directories
         /// </summary>
-        /// <param name="experimentGroupWorkingDirectories"></param>
-        /// <returns></returns>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         private bool RunDatabaseAnnotation(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             try
@@ -1332,10 +1330,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     matchBetweenRunsFlag = 0;
 
                 // ReSharper disable StringLiteralTypo
+                // ReSharper disable CommentTypo
+
+                // Run IonQuant, example command line:
+                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
+
+                // ReSharper restore CommentTypo
 
                 var arguments = new StringBuilder();
-
-                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
 
                 arguments.AppendFormat(
                     "{0} -Xmx{1}G -Dlibs.bruker.dir=\"{2}\" -Dlibs.thermo.dir=\"{3}\" -cp \"{4};{5}\" ionquant.IonQuant",
@@ -1407,13 +1409,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Isobaric Quantification (LabelQuant)
         /// </summary>
-        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <remarks>
         /// Results will appear in the.tsv files created by the Report step (ion.tsv, peptide.tsv, protein.tsv, and psm.tsv),
         /// in columns corresponding to labels in the AliasNames.txt file
         /// </remarks>
-        private bool RunLabelQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunLabelQuant(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
         {
             try
             {
@@ -2106,7 +2108,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
         /// <remarks>
@@ -2150,6 +2152,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable once StringLiteralTypo
                     arguments.AppendFormat("-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1}", libDirectory.FullName, pepXmlFile.FullName);
 
+                    // Append the .mzML files
                     foreach (var datasetId in item.Value)
                     {
                         var datasetFile = new FileInfo(Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles[datasetId]));
@@ -2210,7 +2213,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
         /// <remarks>
+        /// <para>
         /// This method is called when Peptide Prophet was run separately against each dataset (<seealso cref="UpdateMsMsRunSummaryInCombinedPepXmlFiles"/>)
+        /// </para>
+        /// <para>
+        /// This corresponds to FragPipe step "Rewrite pepxml"
+        /// </para>
         /// </remarks>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
@@ -2339,6 +2347,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 // Zip each .pepXML file
+                // Also store the .pin files in the zip files
+
                 var successCount = 0;
 
                 foreach (var dataset in dataPackageInfo.Datasets)

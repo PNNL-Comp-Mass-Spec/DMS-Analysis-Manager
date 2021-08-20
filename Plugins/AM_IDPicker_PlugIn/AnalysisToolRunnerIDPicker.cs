@@ -949,7 +949,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// Run idpAssemble to organizes the search results into a hierarchy
         /// </summary>
         /// <param name="phrpBaseName"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if an error</returns>
         private bool RunAssemble(string phrpBaseName)
         {
             const int maxRuntimeMinutes = 90;
