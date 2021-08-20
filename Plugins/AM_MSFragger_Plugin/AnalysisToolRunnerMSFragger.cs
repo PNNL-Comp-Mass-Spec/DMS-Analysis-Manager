@@ -33,8 +33,6 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private const string MSFRAGGER_CONSOLE_OUTPUT = "MSFragger_ConsoleOutput.txt";
 
-        private const string MSFRAGGER_JAR_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.3\MSFragger-3.3.jar";
-
         private const string PEPXML_EXTENSION = ".pepXML";
 
         public const float PROGRESS_PCT_INITIALIZING = 1;
@@ -89,7 +87,14 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 // Determine the path to MSFragger
-                mMSFraggerProgLoc = DetermineProgramLocation("MSFraggerProgLoc", MSFRAGGER_JAR_RELATIVE_PATH);
+
+                // ReSharper disable once CommentTypo
+                // Construct the relative path to the .jar file, for example:
+                // fragpipe\tools\MSFragger-3.3\MSFragger-3.3.jar
+
+                var jarFileRelativePath = Path.Combine(FragPipeLibFinder.MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH, FragPipeLibFinder.MSFRAGGER_JAR_NAME);
+
+                mMSFraggerProgLoc = DetermineProgramLocation("MSFraggerProgLoc", jarFileRelativePath);
 
                 if (string.IsNullOrWhiteSpace(mMSFraggerProgLoc))
                 {

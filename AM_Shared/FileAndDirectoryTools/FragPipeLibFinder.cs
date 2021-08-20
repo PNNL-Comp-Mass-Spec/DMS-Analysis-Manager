@@ -16,6 +16,31 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
         /// <summary>
+        /// Relative path to the directory with the MSFragger .jar file
+        /// </summary>
+        public const string MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.3";
+
+        /// <summary>
+        /// Name of the batmass-io .jar file
+        /// </summary>
+        private const string BATMASS_JAR_NAME = "batmass-io-1.23.4.jar";
+
+        /// <summary>
+        /// Name of the Crystal-C .jar file
+        /// </summary>
+        private const string CRYSTALC_JAR_NAME = "original-crystalc-1.4.2.jar";
+
+        /// <summary>
+        /// Name of the grppr .jar file
+        /// </summary>
+        private const string GRPPR_JAR_NAME = "grppr-0.3.23.jar";
+
+        /// <summary>
+        /// Name of the MSFragger .jar file
+        /// </summary>
+        public const string MSFRAGGER_JAR_NAME = "MSFragger-3.3.jar";
+
+        /// <summary>
         /// Relative path to philosopher.exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
         public const string PHILOSOPHER_RELATIVE_PATH = @"fragpipe\tools\philosopher\philosopher.exe";
@@ -87,11 +112,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the FragPipe tools directory
         /// </summary>
         /// <param name="toolsDirectory"></param>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\
+        /// </remarks>
         /// <returns>True if found, otherwise false</returns>
         private bool FindFragPipeToolsDirectory(out DirectoryInfo toolsDirectory)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\
-
             if (mFragPipeToolsDirectory != null)
             {
                 toolsDirectory = mFragPipeToolsDirectory;
@@ -141,7 +167,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "batmass-io-1.23.4.jar"));
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, BATMASS_JAR_NAME));
             if (jarFile.Exists)
                 return true;
 
@@ -180,7 +206,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileCrystalC(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar
+            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -188,7 +214,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "original-crystalc-1.3.2.jar"));
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, CRYSTALC_JAR_NAME));
             if (jarFile.Exists)
                 return true;
 
@@ -235,7 +261,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "grppr-0.3.23.jar"));
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, GRPPR_JAR_NAME));
             if (jarFile.Exists)
                 return true;
 
@@ -272,13 +298,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="vendorName">Vendor name: either bruker or thermo</param>
         /// <param name="vendorLibDirectory">Output: directory info, if found</param>
+        /// <remarks>
+        /// Typically at
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker
+        /// and
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
+        /// </remarks>
         /// <returns>True if found, otherwise false</returns>
         public bool FindVendorLibDirectory(string vendorName, out DirectoryInfo vendorLibDirectory)
         {
-            // Typically at:
-            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\bruker
-            // and
-            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo
+            // Look for the FragPipe tools directory, e.g.
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -286,21 +316,27 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            var msFraggerExtDirectory = new DirectoryInfo(Path.Combine(toolsDirectory.FullName, "MSFragger-3.2", "ext"));
+            // Look for the MSFragger external library directory, e.g.
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\
+
+            var msfraggerDirectoryName = Path.GetFileName(MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH);
+
+            var msFraggerExtDirectory = new DirectoryInfo(Path.Combine(toolsDirectory.FullName, msfraggerDirectoryName, "ext"));
 
             if (!msFraggerExtDirectory.Exists)
             {
-                OnErrorEvent("MSFragger directory not found: " + msFraggerExtDirectory.FullName);
+                OnErrorEvent("MSFragger external library directory not found: " + msFraggerExtDirectory.FullName);
                 vendorLibDirectory = null;
                 return false;
             }
 
+            // Append the vendor name
             vendorLibDirectory = new DirectoryInfo(Path.Combine(msFraggerExtDirectory.FullName, vendorName));
 
             if (vendorLibDirectory.Exists)
                 return true;
 
-            OnErrorEvent("Vendor lib directory not found: " + vendorLibDirectory.FullName);
+            OnErrorEvent("MSFragger vendor lib directory not found: " + vendorLibDirectory.FullName);
             return false;
         }
     }
