@@ -815,8 +815,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory)
         {
             var arguments =
-                " -mzid:" + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -tsv:" + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -mzid:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -tsv:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
                 " -unroll" +
                 " -showDecoy";
 
@@ -840,8 +840,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var arguments =
                 " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc +
                 " edu.ucsd.msjava.ui.MzIDToTsv" +
-                " -i " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -o " + AnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -i " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -o " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
                 " -showQValue 1" +
                 " -showDecoy 1" +
                 " -unroll 1";
