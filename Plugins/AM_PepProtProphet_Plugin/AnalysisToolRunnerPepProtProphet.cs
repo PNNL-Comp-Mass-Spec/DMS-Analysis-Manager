@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
@@ -28,8 +27,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
-        // Ignore Spelling: fasta, filelist, Flammagenitus, fragpipe, freequant, Insilicos, itraq, java, labelquant,
+        // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, dir, expectscore
+        // Ignore Spelling: fasta, filelist, fragpipe, freequant, itraq, java, labelquant,
         // Ignore Spelling: mapmods, masswidth, maxppmdiff, minprob, multidir
         // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, protxml, psm, psms, --ptw, prot
         // Ignore Spelling: razorbin, specdir, tdc, tmt, --tol, Xmx
@@ -120,6 +119,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
             ProcessingComplete = 99
         }
 
+        private enum CmdRunnerModes
+        {
+            Undefined = 0,
+            Philosopher = 1,
+            CrystalC = 2,
+            Percolator = 3,
+            PercolatorOutputToPepXml = 4,
+            PtmShepherd = 5,
+            RewritePepXml = 6
+        }
+
         private bool mToolVersionWritten;
 
         private string mFastaFilePath;
@@ -131,13 +141,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private string mPhilosopherProgLoc;
         private string mTmtIntegratorProgLoc;
 
-        private string mConsoleOutputErrorMsg;
+        private ConsoleOutputFileParser mConsoleOutputFileParser;
 
         private PhilosopherToolType mCurrentPhilosopherTool;
 
         private DateTime mLastConsoleOutputParse;
 
         private RunDosProgram mCmdRunner;
+
+        private CmdRunnerModes mCmdRunnerMode;
 
         /// <summary>
         /// Runs peptide and protein prophet using Philosopher
@@ -181,7 +193,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Store the Philosopher version info in the database after the first line is written to file Philosopher_ConsoleOutput.txt
                 mPhilosopherVersion = string.Empty;
 
-                mConsoleOutputErrorMsg = string.Empty;
+                mConsoleOutputFileParser = new ConsoleOutputFileParser(mDebugLevel);
+                RegisterEvents(mConsoleOutputFileParser);
+
+                mConsoleOutputFileParser.ErrorNoMessageUpdateEvent += ConsoleOutputFileParser_ErrorNoMessageUpdateEvent;
 
                 mCurrentPhilosopherTool = PhilosopherToolType.Undefined;
 
@@ -732,7 +747,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (string.IsNullOrWhiteSpace(mPhilosopherVersion))
                 {
-                    ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT));
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT));
                 }
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
@@ -939,230 +954,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             var moveSuccess = MoveResultsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-        }
-
-        /// <summary>
-        /// Parse the Philosopher console output file to determine the Philosopher version and to track the search progress
-        /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
-        private void ParsePhilosopherConsoleOutputFile(string consoleOutputFilePath)
-        {
-            // ReSharper disable CommentTypo
-
-            // ----------------------------------------------------
-            // Example Console output when initializing the workspace
-            // ----------------------------------------------------
-
-            // INFO[17:45:51] Executing Workspace  v3.4.13
-            // INFO[17:45:51] Removing workspace
-            // INFO[17:45:51] Done
-
-            // ----------------------------------------------------
-            // Example Console output when running Peptide Prophet
-            // ----------------------------------------------------
-
-            // INFO[11:01:05] Executing PeptideProphet  v3.4.13
-            //  file 1: C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pepXML
-            //  processed altogether 6982 results
-            // INFO: Results written to file: C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml
-            // ...
-            // INFO: Processing standard MixtureModel ...
-            //  PeptideProphet  (TPP v5.2.1-dev Flammagenitus, Build 201906281613-exported (Windows_NT-x86_64)) AKeller@ISB
-            // ...
-            // INFO[11:01:25] Done
-
-            // ----------------------------------------------------
-            // Example Console output when running Protein Prophet
-            // ----------------------------------------------------
-
-            // INFO[11:05:08] Executing ProteinProphet  v3.4.13
-            // ProteinProphet (C++) by Insilicos LLC and LabKey Software, after the original Perl by A. Keller (TPP v5.2.1-dev Flammagenitus, Build 201906281613-exported (Windows_NT-x86_64))
-            //  (no FPKM) (using degen pep info)
-            // Reading in C:/DMS_WorkDir/interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml...
-            // ...
-            // Finished.
-            // INFO[11:05:12] Done
-
-            // ----------------------------------------------------
-            // Example Console output when running Filter
-            // ----------------------------------------------------
-
-            // INFO[11:07:13] Executing Filter  v3.4.13
-            // INFO[11:07:13] Processing peptide identification files
-            // ...
-            // INFO[11:07:16] Saving
-            // INFO[11:07:16] Done
-
-            // ----------------------------------------------------
-            // Example Console output when running FreeQuant
-            // ----------------------------------------------------
-            // ToDo: add functionality for this
-
-            // ----------------------------------------------------
-            // Example Console output when running LabelQuant
-            // ----------------------------------------------------
-            // ToDo: add functionality for this
-
-            // ----------------------------------------------------
-            // Example Console output when running Abacus
-            // ----------------------------------------------------
-            // ToDo: add functionality for this
-
-            // ReSharper restore CommentTypo
-
-            try
-            {
-                if (!File.Exists(consoleOutputFilePath))
-                {
-                    if (mDebugLevel >= 4)
-                    {
-                        LogDebug("Console output file not found: " + consoleOutputFilePath);
-                    }
-
-                    return;
-                }
-
-                var versionMatcher = new Regex(@"INFO.+Executing [^ ]+ +(?<Version>v[^ ]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-                if (mDebugLevel >= 4)
-                {
-                    LogDebug("Parsing file " + consoleOutputFilePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors here
-                if (mDebugLevel >= 2)
-                {
-                    LogErrorNoMessageUpdate("Error parsing the Philosopher console output file (" + consoleOutputFilePath + "): " + ex.Message);
-                }
-            }
-        }
-
-        [Obsolete("Old method")]
-        private void ParseConsoleOutputFile()
-        {
-            const string BUILD_AND_VERSION = "Current Philosopher build and version";
-
-            var mConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT);
-
-            if (string.IsNullOrWhiteSpace(mConsoleOutputFilePath))
-                return;
-
-            // Example Console output
-            //
-            // INFO[18:17:06] Current Philosopher build and version         build=201904051529 version=20190405
-            // WARN[18:17:08] There is a new version of Philosopher available for download: https://github.com/prvst/philosopher/releases
-
-            // INFO[18:25:51] Executing Workspace 20190405
-            // INFO[18:25:52] Creating workspace
-            // INFO[18:25:52] Done
-
-            var processingSteps = new SortedList<string, int>
-            {
-                {"Starting", 0},
-                {"Current Philosopher build", 1},
-                {"Executing Workspace", 2},
-                {"Executing Database", 3},
-                {"Executing PeptideProphet", 10},
-                {"Executing ProteinProphet", 50},
-                {"Computing degenerate peptides", 60},
-                {"Computing probabilities", 70},
-                {"Calculating sensitivity", 80},
-                {"Executing Filter", 90},
-                {"Executing Report", 95},
-                {"Plotting mass distribution", 98},
-            };
-
-            // Peptide prophet iterations status:
-            // Iterations: .........10.........20.....
-
-            try
-            {
-                if (!File.Exists(mConsoleOutputFilePath))
-                {
-                    if (mDebugLevel >= 4)
-                    {
-                        LogDebug("Console output file not found: " + mConsoleOutputFilePath);
-                    }
-
-                    return;
-                }
-
-                if (mDebugLevel >= 4)
-                {
-                    LogDebug("Parsing file " + mConsoleOutputFilePath);
-                }
-
-                mConsoleOutputErrorMsg = string.Empty;
-                var currentProgress = 0;
-
-                using (var reader = new StreamReader(new FileStream(mConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        linesRead++;
-
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (linesRead <= 5)
-                        {
-                            // The first line has the path to the Philosopher .exe file and the command line arguments
-                            // The second line is dashes
-                            // The third line will have the version when philosopher is run with the "version" switch
-
-                            var versionTextStartIndex = dataLine.IndexOf(BUILD_AND_VERSION, StringComparison.OrdinalIgnoreCase);
-
-                            if (string.IsNullOrEmpty(mPhilosopherVersion) &&
-                                versionTextStartIndex >= 0)
-                            {
-                                if (mDebugLevel >= 2)
-                                {
-                                    LogDebug(dataLine);
-                                }
-
-                                mPhilosopherVersion = dataLine.Substring(versionTextStartIndex + BUILD_AND_VERSION.Length).Trim();
-                            }
-                        }
-                        else
-                        {
-                            foreach (var processingStep in processingSteps)
-                            {
-                                if (dataLine.IndexOf(processingStep.Key, StringComparison.OrdinalIgnoreCase) < 0)
-                                    continue;
-
-                                currentProgress = processingStep.Value;
-                            }
-
-                            // Future:
-                            /*
-                            if (linesRead > 12 &&
-                                dataLineLCase.Contains("error") &&
-                                string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                            {
-                                mConsoleOutputErrorMsg = "Error running Philosopher: " + dataLine;
-                            }
-                            */
-                        }
-                    }
-                }
-
-                if (currentProgress > mProgress)
-                {
-                    mProgress = currentProgress;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors here
-                if (mDebugLevel >= 2)
-                {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + mConsoleOutputFilePath + "): " + ex.Message);
-                }
-            }
         }
 
         private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
@@ -1815,6 +1606,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             LogDebug(mPercolatorProgLoc + " " + arguments);
 
             var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
+            if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+            {
+                LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+            }
 
             if (processingSuccess)
             {
@@ -1854,9 +1649,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
 
-                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
-                    LogError(mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
                 UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
@@ -2564,16 +2359,47 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT));
+            switch (mCmdRunnerMode)
+            {
+                case CmdRunnerModes.CrystalC:
+                case CmdRunnerModes.PercolatorOutputToPepXml:
+                case CmdRunnerModes.RewritePepXml:
+                    mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
 
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mPhilosopherVersion))
+                case CmdRunnerModes.Percolator:
+                    mConsoleOutputFileParser.ParsePercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
+
+                case CmdRunnerModes.Philosopher:
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
+
+                case CmdRunnerModes.PtmShepherd:
+                    mConsoleOutputFileParser.ParsePtmShepherdConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
+
+                case CmdRunnerModes.Undefined:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            if (!mToolVersionWritten && mCmdRunnerMode == CmdRunnerModes.Philosopher && !string.IsNullOrWhiteSpace(mPhilosopherVersion))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
             }
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
-            LogProgress("Philosopher");
+            LogProgress(mCmdRunnerMode.ToString());
+        }
+
+        private void ConsoleOutputFileParser_ErrorNoMessageUpdateEvent(string message)
+        {
+            LogErrorNoMessageUpdate(message);
         }
     }
+
 }
