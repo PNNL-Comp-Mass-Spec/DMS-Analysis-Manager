@@ -1888,6 +1888,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var arguments = new StringBuilder();
 
+                // Note that each time we call philosopher.exe with the filter command, we use the same, shared razor.bin file
                 var razorBinFilePath = Path.Combine(experimentGroupWorkingDirectories.Values.First().FullName, @".meta\razor.bin");
 
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
@@ -1895,13 +1896,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     arguments.Clear();
 
                     // Closed search, without match between runs:
-                    // --sequential --razor --picked --prot 0.01
+                    // --sequential --razor --picked --prot 0.01 --tag XXX_
 
                     // Closed search, with match between runs enabled:
-                    // --sequential --razor --prot 0.01
+                    // --sequential --razor --prot 0.01 --tag XXX_
 
                     // Open search:
-                    // --sequential --razor --prot 0.01 --mapmods
+                    // --sequential --razor --prot 0.01 --mapmods --tag XXX_
 
                     arguments.Append("filter --sequential --razor");
 

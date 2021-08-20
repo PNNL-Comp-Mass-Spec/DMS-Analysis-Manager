@@ -154,7 +154,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                var arguments = 
+                var arguments =
                     psmResultsFile.FullName +
                     " /O:" + psmResultsFile.DirectoryName +
                     " /M:" + modDefsFileName +
