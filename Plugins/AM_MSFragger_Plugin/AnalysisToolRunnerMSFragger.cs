@@ -843,9 +843,13 @@ namespace AnalysisManagerMSFraggerPlugIn
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
+                    var lineNumber = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+                        lineNumber++;
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             writer.WriteLine();
@@ -864,6 +868,31 @@ namespace AnalysisManagerMSFraggerPlugIn
                             writer.WriteLine("num_threads = " + numThreadsToUse);
                             threadsDefined = true;
                             continue;
+                        }
+
+                        if (dataLine.Trim().StartsWith("output_format"))
+                        {
+                            var setting = new PRISM.AppSettings.KeyValueParamFileLine(lineNumber, dataLine);
+
+                            const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
+
+                            if (!setting.ParamValue.Equals(REQUIRED_OUTPUT_FORMAT, StringComparison.OrdinalIgnoreCase))
+                            {
+                                // Auto-change the output format to tsv_pepxml_pin
+
+                                var updatedLine = string.Format(
+                                    "output_format = {0}    #{1}",
+                                    REQUIRED_OUTPUT_FORMAT,
+                                    "File format of output files; Percolator uses .pin files");
+
+                                writer.WriteLine(updatedLine);
+
+                                LogWarning(string.Format(
+                                    "Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files",
+                                    setting.ParamValue, REQUIRED_OUTPUT_FORMAT));
+
+                                continue;
+                            }
                         }
 
                         writer.WriteLine(dataLine);
