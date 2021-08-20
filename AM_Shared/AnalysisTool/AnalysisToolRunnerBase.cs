@@ -202,6 +202,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public string Dataset => mDatasetName;
 
         /// <summary>
+        /// Log file debug level
+        /// </summary>
+        public int DebugLevel => mDebugLevel;
+
+        /// <summary>
         /// Evaluation code to be reported to the DMS_Pipeline DB
         /// </summary>
         public int EvalCode => mEvalCode;
