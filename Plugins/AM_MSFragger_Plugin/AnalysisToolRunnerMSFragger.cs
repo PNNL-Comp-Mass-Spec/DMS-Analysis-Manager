@@ -35,6 +35,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private const string PEPXML_EXTENSION = ".pepXML";
 
+        private const string PIN_EXTENSION = ".pin";
+
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
         private enum ProgressPercentValues
@@ -61,6 +63,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         private DateTime mLastConsoleOutputParse;
 
         private RunDosProgram mCmdRunner;
+
+        private static DotNetZipTools mZipTool;
 
         /// <summary>
         /// Runs MSFragger tool
@@ -741,11 +745,12 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
                     var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
+                    var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".pin"));
 
                     string optionalDatasetInfo;
                     if (dataPackageInfo.Datasets.Count > 0)
                     {
-                        optionalDatasetInfo = "for dataset " + datasetName;
+                        optionalDatasetInfo = " for dataset " + datasetName;
                     }
                     else
                     {
@@ -763,12 +768,18 @@ namespace AnalysisManagerMSFraggerPlugIn
                         LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
                     }
 
+
+                    if (!pinFile.Exists)
+                    {
+                        LogError(string.Format("MSFragger did not create a .pin file{0}", optionalDatasetInfo));
+                    }
+
                     if (pepXmlFile.Length == 0)
                     {
                         LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
                     }
 
-                    var zipSuccess = ZipPepXmlFile(this, datasetName, pepXmlFile);
+                    var zipSuccess = ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile);
 
                     if (zipSuccess)
                         successCount++;
@@ -925,8 +936,10 @@ namespace AnalysisManagerMSFraggerPlugIn
             return true;
         }
 
-        public static bool ZipPepXmlFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
+        public static bool ZipPepXmlAndPinFiles(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
         {
+            mZipTool ??= new DotNetZipTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
+
             var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
             if (!zipSuccess)
             {
@@ -951,7 +964,21 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             zipFile.MoveTo(newZipFilePath);
 
-            return true;
+            // Add the .pin file to the zip file
+
+            var pinFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, PIN_EXTENSION));
+            if (!pinFile.Exists)
+            {
+                toolRunner.LogError(".pin file not found; cannot add: " + pinFile.Name);
+                return false;
+            }
+
+            var success = mZipTool.AddToZipFile(zipFile.FullName, pinFile);
+            if (success)
+                return true;
+
+            toolRunner.LogError(string.Format("Error adding {0} to {1}", pinFile.Name, zipFile.FullName));
+            return false;
         }
 
         /// <summary>
