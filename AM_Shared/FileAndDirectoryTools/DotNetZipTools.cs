@@ -58,6 +58,39 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             mWorkDir = workDir;
         }
 
+        /// <summary>
+        /// Add a file to an existing .zip file
+        /// </summary>
+        /// <param name="zipFilePath"></param>
+        /// <param name="fileToAdd"></param>
+        /// <returns>True if successful, false if an error</returns>
+        public bool AddToZipFile(string zipFilePath, FileInfo fileToAdd)
+        {
+            try
+            {
+                if (DebugLevel >= 3)
+                {
+                    OnStatusEvent(string.Format("Adding {0} to .zip file {1}", fileToAdd.Name, zipFilePath));
+                }
+
+                // Ionic.Zip.ZipFile
+                using var zipper = new ZipFile(zipFilePath)
+                {
+                    UseZip64WhenSaving = Zip64Option.AsNecessary
+                };
+
+                zipper.AddFile(fileToAdd.FullName, string.Empty);
+                zipper.Save();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error adding file to existing zip file " + zipFilePath, ex);
+                return false;
+            }
+        }
+
         private void DeleteFile(FileSystemInfo targetFile)
         {
             try
