@@ -441,14 +441,30 @@ namespace AnalysisManagerTopPICPlugIn
                                 LogDebug("TopPIC version: " + dataLine);
                             }
 
+                            mTopPICVersionText = dataLine;
+
                             var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
                             var match = versionMatcher.Match(dataLine);
-                            if (match.Success)
+                            if (!match.Success)
                             {
-                                mTopPICVersion = new Version(match.Value);
+                                continue;
                             }
 
-                            mTopPICVersionText = dataLine;
+                            mTopPICVersion = new Version(match.Value);
+
+                            // ReSharper disable once InvertIf
+                            if (mTopPICVersion.Equals(new Version(1, 4, 13)))
+                            {
+                                // Examine the date of the executable
+                                // The beta version released 2021-08-20 has updated code, but the version is unchanged
+
+                                var exeInfo = new FileInfo(mTopPICProgLoc);
+                                if (exeInfo.LastWriteTime > new DateTime(2021, 8, 19))
+                                {
+                                    mTopPICVersion = new Version(1, 4, 13, 1);
+                                    mTopPICVersionText = "TopPIC 1.4.13.1 beta";
+                                }
+                            }
                         }
                     }
                     else
