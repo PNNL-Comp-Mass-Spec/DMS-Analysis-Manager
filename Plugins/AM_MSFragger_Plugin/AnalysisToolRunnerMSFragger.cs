@@ -28,6 +28,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Batmass, centroided, cp, Da, deisotoping, fragpipe, java, pepindex, postprocessing, timsdata, Xmx
+        // Ignore Spelling: \batmass-io, \fragpipe, \tools
 
         // ReSharper restore CommentTypo
 
@@ -261,6 +262,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                         return false;
                     }
 
+                    // ReSharper disable CommentTypo
+
+                    // Run CheckCentroid, example command line:
+                    // java -Xmx4G -cp "C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-16.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" com.dmtavt.fragpipe.util.CheckCentroid DatasetName.mzML 4
+
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format(
                         "java -Xmx4G -cp \"{0};{1}\" com.dmtavt.fragpipe.util.CheckCentroid {2} {3}",
@@ -268,6 +274,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                         jarFileBatmassIO.FullName,
                         mzMLFile.FullName,
                         threadCount);
+
+                    // ReSharper restore CommentTypo
 
                     LogDebug(javaProgLoc + " " + arguments);
 

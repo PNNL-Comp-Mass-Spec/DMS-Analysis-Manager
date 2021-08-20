@@ -29,7 +29,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, degen, dev, dir, expectscore
-        // Ignore Spelling: filelist, Flammagenitus, fragpipe, freequant, Insilicos, itraq, java, labelquant, mapmods, masswidth, maxppmdiff, minprob, multidir
+        // Ignore Spelling: fasta, filelist, Flammagenitus, fragpipe, freequant, Insilicos, itraq, java, labelquant,
+        // Ignore Spelling: mapmods, masswidth, maxppmdiff, minprob, multidir
         // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, protxml, psm, psms, --ptw, prot
         // Ignore Spelling: razorbin, specdir, tdc, tmt, --tol, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
@@ -1161,7 +1162,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // ReSharper disable CommentTypo
 
                         // Run Crystal-C for this dataset; example command line:
-                        // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.3.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
+                        // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
 
                         // ReSharper restore CommentTypo
 
@@ -1301,11 +1302,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
                 // ReSharper disable IdentifierTypo
 
-                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\bruker
+                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
                     return false;
 
-                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo
+                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -1858,7 +1859,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
                 // ReSharper disable StringLiteralTypo
 
-                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo
+                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -1886,7 +1887,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // Run PTMShepherd, example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.2\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
 
                 var arguments = string.Format("{0} -Dbatmass.io.libs.thermo.dir=\"{1}\" -cp \"{2};{3};{4}\" edu.umich.andykong.ptmshepherd.PTMShepherd {5}",
                     options.JavaProgLoc,
