@@ -411,6 +411,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.PtmShepherdComplete;
                 }
 
+                var moveSuccess = MoveResultsOutOfSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
+                if (!moveSuccess)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
                 var zipSuccess = ZipPepXmlFiles(dataPackageInfo);
 
                 return zipSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
@@ -769,6 +773,25 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private bool MoveFile(string sourceDirectoryPath, string fileName, string targetDirectoryPath)
+        {
+            try
+            {
+                var sourceFile = new FileInfo(Path.Combine(sourceDirectoryPath, fileName));
+
+                var targetPath = Path.Combine(targetDirectoryPath, sourceFile.Name);
+
+                sourceFile.MoveTo(targetPath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Error in MoveFile for {0}", fileName), ex);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Move results into subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
         /// </summary>
@@ -779,6 +802,42 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, true);
+        }
+
+        /// <summary>
+        /// Move results out of subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        private bool MoveResultsOutOfSubdirectories(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, false);
+        }
+
+        /// <summary>
+        /// Move results into or out of subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="sourceIsWorkDirectory">
+        /// When true, the source directory is the working directory
+        /// When false, the working directory is the target directory
+        /// </param>
+        /// <remarks>
+        /// If datasetIDsByExperimentGroup only has one item, no files are moved
+        /// </remarks>
+        private bool MoveResultsToFromSubdirectories(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            bool sourceIsWorkDirectory)
         {
             try
             {
@@ -797,11 +856,25 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                        var sourceFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
+                        string sourceDirectoryPath;
+                        string targetDirectoryPath;
 
-                        var targetPath = Path.Combine(experimentWorkingDirectory.FullName, sourceFile.Name);
+                        if (sourceIsWorkDirectory)
+                        {
+                            sourceDirectoryPath = mWorkDir;
+                            targetDirectoryPath = experimentWorkingDirectory.FullName;
+                        }
+                        else
+                        {
+                            sourceDirectoryPath = experimentWorkingDirectory.FullName;
+                            targetDirectoryPath = mWorkDir;
+                        }
 
-                        sourceFile.MoveTo(targetPath);
+                        var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
+                        var pinSuccess = MoveFile(sourceDirectoryPath, datasetName + PIN_EXTENSION, targetDirectoryPath);
+
+                        if (!pepXmlSuccess || !pinSuccess)
+                            return false;
                     }
                 }
 
@@ -862,7 +935,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            // Since we have multiple experiment groups, move the pepXML files into subdirectories
+            // Since we have multiple experiment groups, move the pepXML and .pin files into subdirectories
             var moveSuccess = MoveResultsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
