@@ -6,3 +6,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("General", "RCS1118:Mark local variable as const.", Justification = "Leave as-is to match other methods", Scope = "member", Target = "~M:AnalysisManagerPepProtProphetPlugIn.AnalysisToolRunnerPepProtProphet.RunReportGeneration(System.Collections.Generic.IReadOnlyDictionary{System.String,System.IO.DirectoryInfo})~System.Boolean")]
+[assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parentheses not needed", Scope = "member", Target = "~M:AnalysisManagerPepProtProphetPlugIn.AnalysisToolRunnerPepProtProphet.ExecuteWorkflow~AnalysisManagerBase.JobConfig.CloseOutType")]
