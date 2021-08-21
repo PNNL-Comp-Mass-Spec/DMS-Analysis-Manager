@@ -1229,7 +1229,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable once StringLiteralTypo
-                    var arguments = string.Format("freequant --ptw 0.4 --tol 10 --isolated --dir {0}", mWorkDir);
+                    var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkDir);
 
                     var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "annotate the database", experimentGroupDirectory.FullName);
 
