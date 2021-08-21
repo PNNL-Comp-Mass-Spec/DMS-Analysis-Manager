@@ -1223,6 +1223,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe freequant --ptw 0.4 --tol 10 --dir C:\DMS_WorkDir
 
                 // ReSharper restore CommentTypo
+
                 var successCount = 0;
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
@@ -1311,7 +1312,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 arguments.Append(" --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000");
                 arguments.Append(" --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1");
                 arguments.Append(" --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1");
-
                 if (experimentGroupWorkingDirectories.Count <= 1)
                 {
                     arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkDir);
@@ -1386,6 +1386,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // ReSharper restore StringLiteralTypo
+
+                // ToDo: Run IonQuant
 
                 return true;
             }
@@ -1648,6 +1650,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         var percolatorToPepXMLSuccess = ConvertPercolatorOutputToPepXML(options, fragPipeLibDirectory, experimentGroupDirectory, datasetName);
                         if (!percolatorToPepXMLSuccess)
                             continue;
+
+                        // Delete the percolator PSM files, since we no longer need them
+
+                        // Example names:
+                        // DatasetName_percolator_target_psms.tsv or
+                        // DatasetName_percolator_decoy_psms.tsv
 
                         foreach (var psmFile in percolatorPsmFiles)
                         {
@@ -2076,6 +2084,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.0.0.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
 
                 // ReSharper restore CommentTypo
+
+                // ToDo: Create file tmt-integrator-conf.yml
+
+                // ToDo: Implement running TMTIntegrator
+
                 return true;
             }
             catch (Exception ex)
