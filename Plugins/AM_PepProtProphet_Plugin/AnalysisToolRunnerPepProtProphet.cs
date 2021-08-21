@@ -456,46 +456,67 @@ namespace AnalysisManagerPepProtProphetPlugIn
             FileSystemInfo fragPipeLibDirectory,
             FileSystemInfo experimentGroupDirectory, string datasetName)
         {
-            // ReSharper disable StringLiteralTypo
-
-            var arguments = string.Format(
-                "-cp {0}/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML " +
-                "{1}.pin " +
-                "{1} " +
-                "{1}_percolator_target_psms.tsv " +
-                "{1}_percolator_decoy_psms.tsv " +
-                "interact-{0} " +
-                "DDA",
-                fragPipeLibDirectory.FullName,
-                datasetName);
-
-            // ReSharper restore StringLiteralTypo
-
-            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
-            mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
-
-            LogDebug(options.JavaProgLoc + " " + arguments);
-
-            var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
-
-            UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
-
-            if (processingSuccess)
+            try
             {
-                return true;
-            }
+                // ReSharper disable StringLiteralTypo
+                // ReSharper disable CommentTypo
 
-            if (mCmdRunner.ExitCode != 0)
-            {
-                LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
-            }
-            else
-            {
-                LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
-            }
+                // Example command line:
+                // java -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML DatasetName.pin DatasetName DatasetName_percolator_target_psms.tsv DatasetName_percolator_decoy_psms.tsv interact-DatasetName DDA
 
-            return false;
+                var targetPsmFile = GetPercolatorFileName(datasetName, false);
+                var decoyPsmFile = GetPercolatorFileName(datasetName, true);
+                var pinFile = string.Format("{0}.pin", datasetName);
+
+                var arguments = string.Format(
+                    "-cp {0}/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML " +
+                    "{1} " +               // DatasetName.pin
+                    "{2} " +               // DatasetName
+                    "{3} " +               // DatasetName_percolator_target_psms.tsv
+                    "{4} " +               // DatasetName_percolator_decoy_psms.tsv
+                    "interact-{1} " +      // interact-DatasetName
+                    "DDA",
+                    fragPipeLibDirectory.FullName,
+                    pinFile,
+                    datasetName,
+                    targetPsmFile,
+                    decoyPsmFile);
+
+                // ReSharper restore CommentTypo
+                // ReSharper restore StringLiteralTypo
+
+                mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
+
+                LogDebug(options.JavaProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                var currentStep = "PercolatorOutputToPepXML for " + datasetName;
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                if (processingSuccess)
+                {
+                    return true;
+                }
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ConvertPercolatorOutputToPepXML", ex);
+                return false;
+            }
         }
 
         /// <summary>
