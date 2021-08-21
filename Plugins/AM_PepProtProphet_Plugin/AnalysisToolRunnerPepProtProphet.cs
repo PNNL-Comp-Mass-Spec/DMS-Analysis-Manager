@@ -1447,6 +1447,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var experimentGroup = item.Key;
                     var aliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup)));
 
+                    if (!aliasFile.Exists)
+                    {
+                        LogError(string.Format(
+                            "{0} alias file not found: {1}; cannot run LabelQuant",
+                            reporterIonType, aliasFile.Name));
+
+                        continue;
+                    }
+
                     // ReSharper disable StringLiteralTypo
 
                     var arguments = string.Format(
