@@ -1328,29 +1328,61 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
                 else
                 {
-                    foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                    // Option 1: append each psm.tsv file and each .pepXML file
+                    //
+                    // for each (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                    // {
+                    //    arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
+                    // }
+                    //
+                    // arguments.AppendFormat(" --multidir . --specdir {0}", mWorkDir);
+                    //
+                    // for each (var item in datasetIDsByExperimentGroup)
+                    // {
+                    //    var experimentGroupName = item.Key;
+                    //    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    //
+                    //    for each (var datasetId in item.Value)
+                    //    {
+                    //        var datasetName = dataPackageInfo.Datasets[datasetId];
+                    //
+                    //        arguments.AppendFormat(@" {0}\{1}.pepXML ", experimentWorkingDirectory.Name, datasetName);
+                    //    }
+                    // }
+
+
+                    // Option 2:
+                    // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
+
+                    var fileListFile = new FileInfo(Path.Combine(mWorkDir, "filelist_ionquant.txt"));
+
+                    using (var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
-                    }
+                        // Header line
+                        writer.WriteLine("flag{0}value", '\t');
 
-                    // ToDo: Switch to using filelist_ionquant.txt
-
-                    //  --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
-
-                    arguments.AppendFormat(" --multidir . --specdir {0}", mWorkDir);
-
-                    foreach (var item in datasetIDsByExperimentGroup)
-                    {
-                        var experimentGroupName = item.Key;
-                        var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
-
-                        foreach (var datasetId in item.Value)
+                        foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
                         {
-                            var datasetName = dataPackageInfo.Datasets[datasetId];
+                            writer.WriteLine(@"--psm{0}{1}\psm.tsv", '\t', experimentGroupWorkingDirectory.Name);
+                        }
 
-                            arguments.AppendFormat(@" {0}\{1}.pepXML ", experimentWorkingDirectory.Name, datasetName);
+                        writer.WriteLine("--specdir{0}{1}", '\t', mWorkDir);
+
+                        foreach (var item in datasetIDsByExperimentGroup)
+                        {
+                           var experimentGroupName = item.Key;
+                           var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+
+                           foreach (var datasetId in item.Value)
+                           {
+                               var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                               writer.WriteLine(@"--pepxml{0}{1}\{2}.pepXML", '\t', experimentWorkingDirectory.Name, datasetName);
+                           }
                         }
                     }
+
+                    arguments.AppendFormat("--multidir . --filelist {0}", fileListFile.FullName);
                 }
 
                 // ReSharper restore StringLiteralTypo
