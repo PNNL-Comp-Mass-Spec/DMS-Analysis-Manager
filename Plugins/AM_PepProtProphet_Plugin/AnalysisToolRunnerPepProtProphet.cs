@@ -531,6 +531,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool CreateCrystalCParamFile(FileSystemInfo experimentGroupDirectory, string datasetName, out FileInfo crystalcParamFile)
         {
+            // Future: Possibly customize this
+            const int CRYSTALC_THREAD_COUNT = 4;
+
             try
             {
                 var paramFileName = string.Format("crystalc-0-{0}.pepXML.params", datasetName);
@@ -540,7 +543,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 writer.WriteLine("# Crystal-C (Version: 2019.08)");
                 writer.WriteLine();
-                writer.WriteLine("thread = 4");
+                writer.WriteLine("thread = {0}", CRYSTALC_THREAD_COUNT);
                 writer.WriteLine("fasta = {0}", mFastaFilePath);
                 writer.WriteLine("raw_file_location = {0}", mWorkDir);
                 writer.WriteLine("raw_file_extension = mzML");
@@ -1253,8 +1256,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore IdentifierTypo
                 // ReSharper restore CommentTypo
 
-                // ToDo: Customize this
-                var threadCount = 4;
+                // Future: Possibly customize this
+                const int ION_QUANT_THREAD_COUNT= 4;
 
                 int matchBetweenRunsFlag;
                 if (options.MatchBetweenRuns)
@@ -1281,7 +1284,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     jarFileIonQuant.FullName,
                     jarFileBatmassIO.FullName);
 
-                arguments.AppendFormat(" --threads {0} --ionmobility 0 --mbr {1}", threadCount, matchBetweenRunsFlag);
+                arguments.AppendFormat(" --threads {0} --ionmobility 0 --mbr {1}", ION_QUANT_THREAD_COUNT, matchBetweenRunsFlag);
 
                 arguments.Append(" --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000");
                 arguments.Append(" --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1");
@@ -1604,19 +1607,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool RunPercolator(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
         {
+            // Future: possibly adjust this
+            const int PERCOLATOR_THREAD_COUNT = 4;
+
             // ReSharper disable StringLiteralTypo
 
             var targetPsmFile = string.Format("{0}_percolator_target_psms.tsv", datasetName);
             var decoyPsmFile = string.Format("{0}_percolator_decoy_psms.tsv", datasetName);
 
             var arguments = string.Format(
-                "--only-psms --no-terminate --post-processing-tdc --num-threads 4 " +
+                "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
                 "--results-psms {1} " +
                 "--decoy-results-psms {2} " +
-                "{0}.pin",
-                datasetName,
+                "{3}",
+                PERCOLATOR_THREAD_COUNT,
                 targetPsmFile,
-                decoyPsmFile);
+                decoyPsmFile,
+                pinFile);
 
             // ReSharper restore StringLiteralTypo
 
