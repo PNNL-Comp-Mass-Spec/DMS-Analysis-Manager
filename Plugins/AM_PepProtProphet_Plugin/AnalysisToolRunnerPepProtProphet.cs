@@ -1002,12 +1002,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Running Abacus", 2);
 
+                // Example command line:
+                // philosopher.exe abacus --razor --picked --reprint --tag XXX_ --protein ExperimentGroupA ExperimentGroupB
+
                 var arguments = new StringBuilder();
 
                 // When Match Between Runs or Open Search is not in use:
                 // --razor --picked --reprint --tag XXX_ --protein
 
-                // Otherwise, exclude --picked, giving:
+                // Otherwise, remove --picked, giving:
                 // --razor --reprint --tag XXX_ --protein
 
                 arguments.Append("abacus --razor");
@@ -1211,7 +1214,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Running FreeQuant", 2);
 
+                // ReSharper disable CommentTypo
+
                 // Run FreeQuant inside each experiment group working directory, referencing the job's working directory using --dir
+
+                // Example command line:
+                // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe freequant --ptw 0.4 --tol 10 --dir C:\DMS_WorkDir
+
+                // ReSharper restore CommentTypo
                 var successCount = 0;
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
@@ -1280,7 +1290,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Run IonQuant, example command line:
-                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
+                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
 
                 // ReSharper restore CommentTypo
 
@@ -1367,6 +1377,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 LogDebug(string.Format("Running LabelQuant for Isobaric Quantification using {0} reporter ions", options.ReporterIonMode), 2);
+
+                // ReSharper disable CommentTypo
+
+                // Example command:
+                // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe labelquant --tol 20 --level 2 --plex 10 --annot C:\DMS_WorkDir\ExperimentGroupA_annotation.txt --brand tmt --dir C:\DMS_WorkDir
+
+                // ReSharper restore CommentTypo
 
                 var successCount = 0;
 
@@ -1622,7 +1639,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             const int PERCOLATOR_THREAD_COUNT = 4;
 
             // ReSharper disable StringLiteralTypo
+            // ReSharper disable CommentTypo
 
+            // Example command line:
+            // percolator-v3-05.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
 
             var targetPsmFile = GetPercolatorFileName(datasetName, false);
             var decoyPsmFile = GetPercolatorFileName(datasetName, true);
@@ -1638,6 +1658,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 decoyPsmFile,
                 pinFile);
 
+            // ReSharper restore CommentTypo
             // ReSharper restore StringLiteralTypo
 
             percolatorPsmFiles = new List<FileInfo>
@@ -2005,6 +2026,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Running TMT-Integrator", 2);
 
+                // ReSharper disable CommentTypo
+
+                // Example command line:
+                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.0.0.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
+
+                // ReSharper restore CommentTypo
                 return true;
             }
             catch (Exception ex)
