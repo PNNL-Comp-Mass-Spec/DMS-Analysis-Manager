@@ -1130,7 +1130,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
-                        UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                        var currentStep = "Crystal-C for " + pepXmlFile.Name;
+                        UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                         if (!processingSuccess)
                         {
@@ -1679,7 +1680,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
             }
 
-            UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+            UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, datasetName);
 
             if (processingSuccess)
             {
@@ -1727,7 +1728,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
-                UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                var currentStep = GetCurrentPhilosopherToolDescription();
+
+                UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                 if (!processingSuccess)
                 {
@@ -2062,7 +2065,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName)
+        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName, string currentStep)
         {
             try
             {
@@ -2078,6 +2081,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(combinedFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
 
+                writer.WriteLine();
+                writer.WriteLine();
+                writer.WriteLine("### {0} ### ", currentStep);
                 writer.WriteLine();
 
                 while (!reader.EndOfStream)
@@ -2095,19 +2101,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private void UpdateCombinedJavaConsoleOutputFile(string consoleOutputFilepath)
+        private void UpdateCombinedJavaConsoleOutputFile(string consoleOutputFilepath, string currentStep)
         {
-            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, JAVA_CONSOLE_OUTPUT_COMBINED);
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, JAVA_CONSOLE_OUTPUT_COMBINED, currentStep);
         }
 
-        private void UpdateCombinedPercolatorConsoleOutputFile(string consoleOutputFilepath)
+        private void UpdateCombinedPercolatorConsoleOutputFile(string consoleOutputFilepath, string currentStep)
         {
-            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PERCOLATOR_CONSOLE_OUTPUT_COMBINED);
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PERCOLATOR_CONSOLE_OUTPUT_COMBINED, currentStep);
         }
 
-        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath)
+        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep)
         {
-            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED);
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep);
         }
 
         /// <summary>
@@ -2154,6 +2160,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     peptideProphetPepXmlFiles.Add(pepXmlFile);
 
+                    var currentStep = string.Format(@"RewritePepxml for {0}\interact.pep.xml", experimentGroupDirectory.Name);
+
                     arguments.Clear();
 
                     // ReSharper disable once StringLiteralTypo
@@ -2187,7 +2195,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
-                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                     if (!processingSuccess)
                     {
@@ -2278,6 +2286,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     peptideProphetPepXmlFiles.Add(pepXmlFile);
 
+                    var currentStep = string.Format(@"RewritePepxml for {0}\{1}", workingDirectory.Parent.Name, pepXmlFile.Name);
+
                     var datasetFile = new FileInfo(Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles[datasetId]));
                     if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                     {
@@ -2306,7 +2316,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
-                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                     if (!processingSuccess)
                     {
