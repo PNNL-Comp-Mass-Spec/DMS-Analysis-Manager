@@ -668,6 +668,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
+        /// Get a file named DatasetName_percolator_target_psms.tsv or DatasetName_percolator_decoy_psms.tsv
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="isDecoy"></param>
+        private string GetPercolatorFileName(string datasetName, bool isDecoy)
+        {
+            // ReSharper disable once StringLiteralTypo
+            return string.Format("{0}_percolator_{1}_psms.tsv", datasetName, isDecoy ? "decoy" : "target");
+        }
+
+        /// <summary>
         /// Create the temporary directories used by Peptide Prophet
         /// </summary>
         /// <param name="dataPackageInfo"></param>
@@ -1612,8 +1623,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ReSharper disable StringLiteralTypo
 
-            var targetPsmFile = string.Format("{0}_percolator_target_psms.tsv", datasetName);
-            var decoyPsmFile = string.Format("{0}_percolator_decoy_psms.tsv", datasetName);
+
+            var targetPsmFile = GetPercolatorFileName(datasetName, false);
+            var decoyPsmFile = GetPercolatorFileName(datasetName, true);
+            var pinFile = string.Format("{0}.pin", datasetName);
 
             var arguments = string.Format(
                 "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
