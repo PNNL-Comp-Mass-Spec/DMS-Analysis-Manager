@@ -590,15 +590,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             return mCurrentPhilosopherTool switch
             {
-                PhilosopherToolType.Undefined => "Philosopher: Undefined",
-                PhilosopherToolType.WorkspaceManager => "Philosopher: Workspace Manager",
-                PhilosopherToolType.PeptideProphet => "Philosopher: Peptide Prophet",
-                PhilosopherToolType.ProteinProphet => "Philosopher: Protein Prophet",
-                PhilosopherToolType.AnnotateDatabase => "Philosopher: Annotate Database",
-                PhilosopherToolType.ResultsFilter => "Philosopher: Results Filter",
-                PhilosopherToolType.FreeQuant => "Philosopher: FreeQuant",
-                PhilosopherToolType.LabelQuant => "Philosopher: LabelQuant",
-                PhilosopherToolType.GenerateReport => "Philosopher: Generate Report",
+                PhilosopherToolType.Undefined => "Undefined",
+                PhilosopherToolType.WorkspaceManager => "Workspace Manager",
+                PhilosopherToolType.PeptideProphet => "Peptide Prophet",
+                PhilosopherToolType.ProteinProphet => "Protein Prophet",
+                PhilosopherToolType.AnnotateDatabase => "Annotate Database",
+                PhilosopherToolType.ResultsFilter => "Results Filter",
+                PhilosopherToolType.FreeQuant => "FreeQuant",
+                PhilosopherToolType.LabelQuant => "LabelQuant",
+                PhilosopherToolType.GenerateReport => "Generate Report",
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -1361,12 +1361,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var reporterIonType = options.ReporterIonMode switch
                 {
-                    ReporterIonModes.Itraq4 => "itraq",
-                    ReporterIonModes.Itraq8 => "itraq",
-                    ReporterIonModes.Tmt6 => "tmt",
-                    ReporterIonModes.Tmt10 => "tmt",
-                    ReporterIonModes.Tmt11 => "tmt",
-                    ReporterIonModes.Tmt16 => "tmt",
+                    ReporterIonModes.Itraq4 => "iTraq",
+                    ReporterIonModes.Itraq8 => "iTraq",
+                    ReporterIonModes.Tmt6 => "TMT",
+                    ReporterIonModes.Tmt10 => "TMT",
+                    ReporterIonModes.Tmt11 => "TMT",
+                    ReporterIonModes.Tmt16 => "TMT",
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
@@ -1392,7 +1392,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         "labelquant --tol 20 --level 2 --plex {0} --annot {1} --brand {2} --dir {3}",
                         plex,
                         aliasFile.FullName,
-                        reporterIonType,
+                        reporterIonType.ToLower(),
                         mWorkDir);
 
                     // ReSharper restore StringLiteralTypo
