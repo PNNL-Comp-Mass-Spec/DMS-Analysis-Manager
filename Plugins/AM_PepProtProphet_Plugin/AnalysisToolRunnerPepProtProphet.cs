@@ -145,6 +145,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private CmdRunnerModes mCmdRunnerMode;
 
         /// <summary>
+        /// Constructor
+        /// </summary>
+        public AnalysisToolRunnerPepProtProphet()
+        {
+            mProgress = (int)ProgressPercentValues.Undefined;
+        }
+
+        /// <summary>
         /// Runs peptide and protein prophet using Philosopher
         /// Optionally also runs other post-processing tools
         /// </summary>
