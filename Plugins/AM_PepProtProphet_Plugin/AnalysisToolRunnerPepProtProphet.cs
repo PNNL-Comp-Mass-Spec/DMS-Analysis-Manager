@@ -62,6 +62,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public const int ION_QUANT_MEMORY_SIZE_GB = 4;
 
         /// <summary>
+        /// Reserve 14 GB when running TMT-Integrator
+        /// </summary>
+        public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 14;
+
+        /// <summary>
         /// Extension for peptide XML files
         /// </summary>
         public const string PEPXML_EXTENSION = ".pepXML";
@@ -120,7 +125,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             Percolator = 3,
             PercolatorOutputToPepXml = 4,
             PtmShepherd = 5,
-            RewritePepXml = 6
+            RewritePepXml = 6,
+            IonQuant = 7
         }
 
         private bool mToolVersionWritten;
@@ -412,7 +418,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
-                    var tmtIntegratorSuccess = RunTmtIntegrator(options.ReporterIonMode);
+                    var tmtIntegratorSuccess = RunTmtIntegrator(experimentGroupWorkingDirectories, options);
                     if (!tmtIntegratorSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -421,7 +427,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.OpenSearch && options.RunPTMShepherd)
                 {
-                    var ptmShepherdSuccess = RunPTMShepherd(options);
+                    var ptmShepherdSuccess = RunPTMShepherd(experimentGroupWorkingDirectories, options);
                     if (!ptmShepherdSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -1260,6 +1266,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
                 // ReSharper disable IdentifierTypo
 
+                // Run IonQuant, example command line:
+                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
+
                 // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
                     return false;
@@ -1280,21 +1289,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore CommentTypo
 
                 // Future: Possibly customize this
-                const int ION_QUANT_THREAD_COUNT= 4;
+                const int ION_QUANT_THREAD_COUNT = 4;
 
-                int matchBetweenRunsFlag;
-                if (options.MatchBetweenRuns)
-                    matchBetweenRunsFlag = 1;
-                else
-                    matchBetweenRunsFlag = 0;
+                var matchBetweenRunsFlag = options.MatchBetweenRuns ? 1 : 0;
 
                 // ReSharper disable StringLiteralTypo
-                // ReSharper disable CommentTypo
-
-                // Run IonQuant, example command line:
-                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
-
-                // ReSharper restore CommentTypo
 
                 var arguments = new StringBuilder();
 
@@ -1312,6 +1311,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 arguments.Append(" --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000");
                 arguments.Append(" --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1");
                 arguments.Append(" --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1");
+
                 if (experimentGroupWorkingDirectories.Count <= 1)
                 {
                     arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkDir);
@@ -1350,7 +1350,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     //    }
                     // }
 
-
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
 
@@ -1370,15 +1369,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         foreach (var item in datasetIDsByExperimentGroup)
                         {
-                           var experimentGroupName = item.Key;
-                           var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                            var experimentGroupName = item.Key;
+                            var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
-                           foreach (var datasetId in item.Value)
-                           {
-                               var datasetName = dataPackageInfo.Datasets[datasetId];
+                            foreach (var datasetId in item.Value)
+                            {
+                                var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                               writer.WriteLine(@"--pepxml{0}{1}\{2}.pepXML", '\t', experimentWorkingDirectory.Name, datasetName);
-                           }
+                                writer.WriteLine(@"--pepxml{0}{1}\{2}.pepXML", '\t', experimentWorkingDirectory.Name, datasetName);
+                            }
                         }
                     }
 
@@ -1387,9 +1386,32 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore StringLiteralTypo
 
-                // ToDo: Run IonQuant
+                mCmdRunner.WorkDir = mWorkDir;
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                mCmdRunnerMode = CmdRunnerModes.IonQuant;
 
-                return true;
+                LogDebug(options.JavaProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                var currentStep = "IonQuant";
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                if (processingSuccess)
+                {
+                    return true;
+                }
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("Java returned a non-zero exit code while running IonQuant: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to Java failed while runningIonQuant (but exit code is 0)");
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -1887,12 +1909,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunPTMShepherd(MSFraggerOptions options)
+        private bool RunPTMShepherd(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
         {
             try
             {
+                LogDebug("Running PTMShepherd", 2);
+
                 // ReSharper disable CommentTypo
                 // ReSharper disable StringLiteralTypo
+
+                // Run PTMShepherd, example command line:
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
 
                 // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
@@ -1917,12 +1944,62 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 using (var writer = new StreamWriter(new FileStream(ptmShepherdConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine("TBD");
-                    writer.WriteLine("TBD");
-                }
+                    writer.WriteLine(@"database = " + mFastaFilePath);
 
-                // Run PTMShepherd, example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
+                    foreach (var experimentGroup in experimentGroupWorkingDirectories)
+                    {
+                        // dataset = ExperimentGroupA C:\FragPipe_Test3\Results\ExperimentGroupA\psm.tsv WorkingDirectoryPath");
+
+                        writer.WriteLine("dataset = {0} {1} {2}",
+                            experimentGroup.Key,
+                            Path.Combine(experimentGroup.Value.FullName, "psm.tsv"),
+                            mWorkDir);
+                    }
+
+                    writer.WriteLine();
+                    writer.WriteLine("annotation-common = false");
+                    writer.WriteLine("annotation-custom = false");
+                    writer.WriteLine("annotation-glyco = false");
+                    writer.WriteLine("annotation_file = unimod");
+                    writer.WriteLine("annotation_tol = 0.01");
+                    writer.WriteLine("cap_y_ions = ");
+                    writer.WriteLine("compare_betweenRuns = false");
+                    writer.WriteLine("diag_ions = ");
+                    writer.WriteLine("glyco_mode = false");
+                    writer.WriteLine("histo_bindivs = 5000");
+                    writer.WriteLine("histo_normalizeTo = psms");
+                    writer.WriteLine("histo_smoothbins = 2");
+                    writer.WriteLine("iontype_a = 0");
+                    writer.WriteLine("iontype_b = 1");
+                    writer.WriteLine("iontype_c = 0");
+                    writer.WriteLine("iontype_x = 0");
+                    writer.WriteLine("iontype_y = 1");
+                    writer.WriteLine("iontype_z = 0");
+                    writer.WriteLine("isotope_error = 0");
+                    writer.WriteLine("isotope_states = ");
+                    writer.WriteLine("localization_allowed_res = all");
+                    writer.WriteLine("localization_background = 4");
+                    writer.WriteLine("mass_offsets = 0");
+                    writer.WriteLine("normalization-psms = true");
+                    writer.WriteLine("normalization-scans = false");
+                    writer.WriteLine("output_extended = false");
+                    writer.WriteLine("peakpicking_mass_units = 0");
+                    writer.WriteLine("peakpicking_minPsm = 10");
+                    writer.WriteLine("peakpicking_promRatio = 0.3");
+                    writer.WriteLine("peakpicking_topN = 500");
+                    writer.WriteLine("peakpicking_width = 0.002");
+                    writer.WriteLine("precursor_mass_units = 0");
+                    writer.WriteLine("precursor_tol = 0.01");
+                    writer.WriteLine("remainder_masses = ");
+                    writer.WriteLine("run-shepherd = true");
+                    writer.WriteLine("spectra_condPeaks = 100");
+                    writer.WriteLine("spectra_condRatio = 0.01");
+                    writer.WriteLine("spectra_maxfragcharge = 2");
+                    writer.WriteLine("spectra_ppmtol = 20");
+                    writer.WriteLine("threads = 4");
+                    writer.WriteLine("varmod_masses = ");
+
+                }
 
                 var arguments = string.Format("{0} -Dbatmass.io.libs.thermo.dir=\"{1}\" -cp \"{2};{3};{4}\" edu.umich.andykong.ptmshepherd.PTMShepherd {5}",
                     options.JavaProgLoc,
@@ -2072,7 +2149,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunTmtIntegrator(ReporterIonModes reporterIonMode)
+        private bool RunTmtIntegrator(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
         {
             try
             {
@@ -2085,9 +2162,83 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                // ToDo: Create file tmt-integrator-conf.yml
+                var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
-                // ToDo: Implement running TMTIntegrator
+
+                var arguments = new StringBuilder();
+                arguments.AppendFormat("java -Xmx{0}G -cp \"{1}\" TMTIntegrator {2}");
+
+                foreach (var experimentGroup in experimentGroupWorkingDirectories)
+                {
+                    // Create the TMT-Integrator config file
+                    var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkDir, "tmt-integrator-conf.yml"));
+
+                    using (var writer = new StreamWriter(new FileStream(tmtIntegratorConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        // ReSharper disable StringLiteralTypo
+
+                        writer.WriteLine("tmtintegrator:");
+                        writer.WriteLine("  min_site_prob: -1");
+                        writer.WriteLine("  mod_tag: none");
+                        writer.WriteLine("  min_purity: 0.5");
+                        writer.WriteLine("  memory: 16");
+                        writer.WriteLine("  ref_tag: Bridge");
+                        writer.WriteLine("  max_pep_prob_thres: 0.9");
+                        writer.WriteLine("  unique_gene: 0");
+                        writer.WriteLine("  min_pep_prob: 0.9");
+                        writer.WriteLine("  psm_norm: false");
+                        writer.WriteLine("  outlier_removal: true");
+                        writer.WriteLine("  output: {0}", Path.Combine(experimentGroup.Value.FullName, "tmt-report"));
+                        writer.WriteLine("  path: {0}", mTmtIntegratorProgLoc);
+                        writer.WriteLine("  channel_num: {0}", plex);
+                        writer.WriteLine("  ms1_int: true");
+                        writer.WriteLine("  add_Ref: 1");
+                        writer.WriteLine("  min_percent: 0.05");
+                        writer.WriteLine("  protein_database: {0}", mFastaFilePath);
+                        writer.WriteLine("  groupby: 0");
+                        writer.WriteLine("  top3_pep: true");
+                        writer.WriteLine("  min_ntt: 0");
+                        writer.WriteLine("  aggregation_method: 0");
+                        writer.WriteLine("  allow_overlabel: true");
+                        writer.WriteLine("  allow_unlabeled: false");
+                        writer.WriteLine("  print_RefInt: false");
+                        writer.WriteLine("  prot_exclude: none");
+                        writer.WriteLine("  unique_pep: false");
+                        writer.WriteLine("  best_psm: true");
+                        writer.WriteLine("  prot_norm: 1");
+
+                        // ReSharper restore StringLiteralTypo
+                    }
+
+
+                    mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                    mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
+
+                    LogDebug(options.JavaProgLoc + " " + arguments);
+
+                    var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                    var currentStep = "PercolatorOutputToPepXML for " + datasetName;
+                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                    if (processingSuccess)
+                    {
+                        return true;
+                    }
+
+                    if (mCmdRunner.ExitCode != 0)
+                    {
+                        LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
+                    }
+
+                    return false;
+
+                }
 
                 return true;
             }
@@ -2528,6 +2679,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             switch (mCmdRunnerMode)
             {
                 case CmdRunnerModes.CrystalC:
+                case CmdRunnerModes.IonQuant:
                 case CmdRunnerModes.PercolatorOutputToPepXml:
                 case CmdRunnerModes.RewritePepXml:
                     mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
