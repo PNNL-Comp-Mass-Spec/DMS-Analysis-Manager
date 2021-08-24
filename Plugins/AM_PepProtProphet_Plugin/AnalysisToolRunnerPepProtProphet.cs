@@ -1665,7 +1665,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                        var percolatorSuccess = RunPercolator(experimentGroupDirectory, datasetName, out var percolatorPsmFiles);
+                        var percolatorSuccess = RunPercolatorOnDataset(experimentGroupDirectory, datasetName, out var percolatorPsmFiles);
                         if (!percolatorSuccess)
                             continue;
 
@@ -1705,69 +1705,78 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunPercolator(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
+        private bool RunPercolatorOnDataset(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
         {
             // Future: possibly adjust this
             const int PERCOLATOR_THREAD_COUNT = 4;
 
-            // ReSharper disable StringLiteralTypo
-            // ReSharper disable CommentTypo
+            percolatorPsmFiles = new List<FileInfo>();
 
-            // Example command line:
-            // percolator-v3-05.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
-
-            var targetPsmFile = GetPercolatorFileName(datasetName, false);
-            var decoyPsmFile = GetPercolatorFileName(datasetName, true);
-            var pinFile = string.Format("{0}.pin", datasetName);
-
-            var arguments = string.Format(
-                "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
-                "--results-psms {1} " +
-                "--decoy-results-psms {2} " +
-                "{3}",
-                PERCOLATOR_THREAD_COUNT,
-                targetPsmFile,
-                decoyPsmFile,
-                pinFile);
-
-            // ReSharper restore CommentTypo
-            // ReSharper restore StringLiteralTypo
-
-            percolatorPsmFiles = new List<FileInfo>
+            try
             {
-                new(Path.Combine(mCmdRunner.WorkDir, targetPsmFile)),
-                new(Path.Combine(mCmdRunner.WorkDir, decoyPsmFile))
-            };
+                LogDebug("Running Percolator on " + datasetName, 2);
 
-            mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
-            mCmdRunnerMode = CmdRunnerModes.Percolator;
+                // ReSharper disable StringLiteralTypo
+                // ReSharper disable CommentTypo
 
-            LogDebug(mPercolatorProgLoc + " " + arguments);
+                // Example command line:
+                // percolator-v3-05.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
 
-            var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
-            if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
-            {
-                LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                var targetPsmFile = GetPercolatorFileName(datasetName, false);
+                var decoyPsmFile = GetPercolatorFileName(datasetName, true);
+                var pinFile = string.Format("{0}.pin", datasetName);
+
+                var arguments = string.Format(
+                    "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
+                    "--results-psms {1} " +
+                    "--decoy-results-psms {2} " +
+                    "{3}",
+                    PERCOLATOR_THREAD_COUNT,
+                    targetPsmFile,
+                    decoyPsmFile,
+                    pinFile);
+
+                // ReSharper restore CommentTypo
+                // ReSharper restore StringLiteralTypo
+
+                percolatorPsmFiles.Add(new FileInfo(Path.Combine(mCmdRunner.WorkDir, targetPsmFile)));
+                percolatorPsmFiles.Add(new FileInfo(Path.Combine(mCmdRunner.WorkDir, decoyPsmFile)));
+
+                mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
+                mCmdRunnerMode = CmdRunnerModes.Percolator;
+
+                LogDebug(mPercolatorProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
+                UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, datasetName);
+
+                if (processingSuccess)
+                {
+                    return true;
+                }
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("Percolator returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to Percolator failed (but exit code is 0)");
+                }
+
+                return false;
             }
-
-            UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, datasetName);
-
-            if (processingSuccess)
+            catch (Exception ex)
             {
-                return true;
+                LogError("Error in RunPercolatorOnDataset", ex);
+                return false;
             }
-
-            if (mCmdRunner.ExitCode != 0)
-            {
-                LogWarning("Percolator returned a non-zero exit code: " + mCmdRunner.ExitCode);
-            }
-            else
-            {
-                LogWarning("Call to Percolator failed (but exit code is 0)");
-            }
-
-            return false;
         }
 
         /// <summary>
