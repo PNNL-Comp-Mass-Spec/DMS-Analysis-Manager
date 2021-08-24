@@ -51,11 +51,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     return result;
                 }
+                
+                currentTask = "Get DataPackageID";
 
-                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
-                var optionsLoaded = LoadMSFraggerOptions(paramFilePath, out var options);
+                var datasetCount = GetDatasetCount();
+
+                var optionsLoaded = LoadMSFraggerOptions(paramFilePath, datasetCount, out var options);
                 if (!optionsLoaded)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -84,9 +88,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                currentTask = "Get DataPackageID";
 
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
@@ -107,6 +109,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
+
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
@@ -158,6 +162,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private int GetDatasetCount()
+        {
+            var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets);
+
+            return dataPackageDefined ? dataPackageDatasets.Count : 1;
         }
 
         /// <summary>
@@ -350,12 +361,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <param name="paramFilePath"></param>
+        /// <param name="datasetCount"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <returns>True if success, false if an error</returns>
-        private bool LoadMSFraggerOptions(string paramFilePath, out MSFraggerOptions options)
+        private bool LoadMSFraggerOptions(string paramFilePath, int datasetCount, out MSFraggerOptions options)
         {
-            options = new MSFraggerOptions(mJobParams, null, 1);
+            options = new MSFraggerOptions(mJobParams, null, datasetCount);
             RegisterEvents(options);
 
             try
