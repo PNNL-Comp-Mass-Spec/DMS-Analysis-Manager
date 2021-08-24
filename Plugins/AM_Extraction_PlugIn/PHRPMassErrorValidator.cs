@@ -235,7 +235,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
         {
-            OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
+            OnErrorEvent(string.Format("  ... large error example: {0:f2} Da for {1}", massErrorEntry.Key, massErrorEntry.Value));
         }
 
         private SearchEngineParameters LoadSearchEngineParameters(ReaderFactory phrpReader, string searchEngineParamFilePath, PeptideHitResultTypes resultType)
