@@ -47,7 +47,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
             PhilosopherVersion = string.Empty;
         }
 
-        public void ParseJavaConsoleOutputFile(string consoleOutputFilePath)
+        /// <summary>
+        /// Parse the Java console output file
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="cmdRunnerMode"></param>
+        public void ParseJavaConsoleOutputFile(
+            string consoleOutputFilePath,
+            AnalysisToolRunnerPepProtProphet.CmdRunnerModes cmdRunnerMode)
         {
             // ----------------------------------------------------
             // Example Console output
@@ -215,10 +222,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     OnErrorNoMessageUpdate("Error parsing the Philosopher console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
-        }
-
-        public void ParsePtmShepherdConsoleOutputFile(string consoleOutputFilePath)
-        {
         }
 
         [Obsolete("Old method, superseded by ParsePhilosopherConsoleOutputFile and ParsePercolatorConsoleOutputFile")]

@@ -2506,7 +2506,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML
 
                     // ReSharper restore CommentTypo
-
                     // ReSharper disable once StringLiteralTypo
 
                     var arguments = string.Format(
@@ -2681,8 +2680,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 case CmdRunnerModes.CrystalC:
                 case CmdRunnerModes.IonQuant:
                 case CmdRunnerModes.PercolatorOutputToPepXml:
+                case CmdRunnerModes.PtmShepherd:
                 case CmdRunnerModes.RewritePepXml:
-                    mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCmdRunnerMode);
                     break;
 
                 case CmdRunnerModes.Percolator:
@@ -2690,11 +2690,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     break;
 
                 case CmdRunnerModes.Philosopher:
-                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
-                    break;
-
-                case CmdRunnerModes.PtmShepherd:
-                    mConsoleOutputFileParser.ParsePtmShepherdConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, GetCurrentPhilosopherToolDescription());
                     break;
 
                 case CmdRunnerModes.Undefined:
