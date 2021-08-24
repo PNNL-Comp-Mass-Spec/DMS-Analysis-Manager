@@ -1082,6 +1082,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
                 // ReSharper disable IdentifierTypo
 
+                // Run Crystal-C for this dataset; example command line:
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
+
                 // Find the thermo lib directory
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
@@ -1098,8 +1101,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindJarFileGrppr(out var jarFileGrppr))
                     return false;
 
-                // ReSharper restore IdentifierTypo
                 // ReSharper restore CommentTypo
+                // ReSharper restore IdentifierTypo
 
                 var datasetCount = datasetIDsByExperimentGroup.Sum(item => item.Value.Count);
                 var successCount = 0;
@@ -1125,13 +1128,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         if (!CreateCrystalCParamFile(experimentGroupDirectory, datasetName, out var crystalcParamFile))
                             return false;
-
-                        // ReSharper disable CommentTypo
-
-                        // Run Crystal-C for this dataset; example command line:
-                        // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
-
-                        // ReSharper restore CommentTypo
 
                         arguments.Clear();
 
@@ -2360,6 +2356,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
+                LogDebug("Rewriting .pepXML files", 2);
+
+                // ReSharper disable CommentTypo
+
+                // Example command:
+                // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\CHI_IXN\interact.pep.xml C:\DMS_WorkDir\Dataset1.mzML C:\DMS_WorkDir\Dataset2.mzML
+
+                // ReSharper enable CommentTypo
+
                 if (!options.LibraryFinder.FindFragPipeLibDirectory(out var libDirectory))
                     return false;
 
@@ -2399,13 +2404,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         arguments.AppendFormat(" {0}", datasetFile.FullName);
                     }
-
-                    // ReSharper disable CommentTypo
-
-                    // Example command:
-                    // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\CHI_IXN\interact.pep.xml C:\DMS_WorkDir\Dataset1.mzML C:\DMS_WorkDir\Dataset2.mzML
-
-                    // ReSharper enable CommentTypo
 
                     mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
@@ -2477,6 +2475,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
+                LogDebug("Rewriting .pepXML files", 2);
+
+                // Example command line:
+                // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML
+
                 if (!options.LibraryFinder.FindFragPipeLibDirectory(out var libDirectory))
                     return false;
 
@@ -2515,12 +2518,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         continue;
                     }
 
-                    // ReSharper disable CommentTypo
-
-                    // Example command:
-                    // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML
-
-                    // ReSharper restore CommentTypo
                     // ReSharper disable once StringLiteralTypo
 
                     var arguments = string.Format(
