@@ -1477,10 +1477,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
-                foreach (var item in experimentGroupWorkingDirectories)
+                foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-                    var experimentGroup = item.Key;
-                    var aliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup)));
+                    var aliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
 
                     if (!aliasFile.Exists)
                     {
