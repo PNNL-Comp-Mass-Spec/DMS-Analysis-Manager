@@ -564,8 +564,8 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Retrieve files ScanStats.txt and ScanStatsEx.txt for the dataset
         /// </summary>
-        /// <param name="dataPkgDataset"></param>
         /// <remarks>The calling method should have already called OverrideCurrentDatasetInfo</remarks>
+        /// <param name="dataPkgDataset"></param>
         private CloseOutType GetScanStatsFiles(DataPackageDatasetInfo dataPkgDataset)
         {
             try

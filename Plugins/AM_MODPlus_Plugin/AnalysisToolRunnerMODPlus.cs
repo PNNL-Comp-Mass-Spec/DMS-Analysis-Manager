@@ -543,10 +543,10 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Add a node given a simple xpath expression, for example "search/database" or "search/parameters/fragment_ion_tol"
         /// </summary>
+        /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
         /// <param name="doc"></param>
         /// <param name="xpath"></param>
         /// <param name="attributes"></param>
-        /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
         private void MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
         {
             MakeXPath(doc, doc, xpath, attributes);
@@ -751,10 +751,10 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Split the .mgf file into multiple parts
         /// </summary>
+        /// <remarks>Uses a round-robin splitting</remarks>
         /// <param name="fiMgfFile"></param>
         /// <param name="threadCount"></param>
         /// <returns>List of newly created .mgf files</returns>
-        /// <remarks>Uses a round-robin splitting</remarks>
         private List<FileInfo> SplitMGFFiles(FileSystemInfo fiMgfFile, int threadCount)
         {
             if (mDebugLevel >= 1)

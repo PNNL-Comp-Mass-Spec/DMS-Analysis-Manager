@@ -299,8 +299,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Number of cores in use by the externally spawned process (0 if no external process running)
         /// </summary>
-        /// <returns>Number of cores in use; -1 if an error</returns>
         /// <remarks>Obtaining this value takes a minimum of 1 second since we sample the performance counters</remarks>
+        /// <returns>Number of cores in use; -1 if an error</returns>
         public float GetCoreUsage()
         {
             if (mProgRunner == null)
@@ -345,11 +345,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>Ignores the result code reported by the program</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Ignores the result code reported by the program</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName)
         {
             const bool useResCode = false;
@@ -359,12 +359,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>Ignores the result code reported by the program</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example: /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">Whether or not to use the result code to determine success or failure of program execution</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Ignores the result code reported by the program</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode)
         {
             const int maxRuntimeSeconds = 0;
@@ -374,13 +374,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
+        /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">If true, returns False if the ProgRunner ExitCode is non-zero</param>
         /// <param name="maxRuntimeSeconds">If a positive number, program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 milliseconds

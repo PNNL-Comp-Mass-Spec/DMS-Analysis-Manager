@@ -574,10 +574,10 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Finds specified integer value in a sequest.log file
         /// </summary>
+        /// <remarks>If -1 returned, error message is in module variable mErrMsg</remarks>
         /// <param name="InpFileStr">A string containing the contents of the sequest.log file</param>
         /// <param name="RegexStr">Regular expression match string to uniquely identify the line containing the count of interest</param>
         /// <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
-        /// <remarks>If -1 returned, error message is in module variable mErrMsg</remarks>
         private int GetIntegerFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
             try

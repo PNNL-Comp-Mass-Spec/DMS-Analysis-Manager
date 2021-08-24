@@ -32,11 +32,11 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Send the message using NMS connection objects
         /// </summary>
-        /// <param name="messageContainer"></param>
         /// <remarks>
         /// If connection does not exist, make it
         /// If connection objects don't work, erase them and make another set
         /// </remarks>
+        /// <param name="messageContainer"></param>
         public void SendMessage(MessageContainer messageContainer)
         {
             if (isDisposed)

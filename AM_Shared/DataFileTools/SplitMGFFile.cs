@@ -55,10 +55,10 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Splits a Mascot Generic File (mgf file) into splitCount parts
         /// </summary>
+        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         /// <param name="mgfFilePath">.mgf file path</param>
         /// <param name="splitCount">Number of parts; minimum is 2</param>
         /// <returns>True if success, False is an error</returns>
-        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount)
         {
             return SplitMgfFile(mgfFilePath, splitCount, "_Part");
@@ -67,11 +67,11 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Splits a Mascot Generic File (mgf file) into splitCount parts
         /// </summary>
+        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         /// <param name="mgfFilePath">.mgf file path</param>
         /// <param name="splitCount">Number of parts; minimum is 2</param>
         /// <param name="fileSuffix">Text to append to each split file (just before the file extension)</param>
         /// <returns>List of split files if success; empty list if an error</returns>
-        /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount, string fileSuffix)
         {
             try

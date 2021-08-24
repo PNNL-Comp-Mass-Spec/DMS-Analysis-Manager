@@ -121,14 +121,14 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Looks up job information for the given data package
         /// </summary>
-        /// <param name="dbTools">Instance of IDbTools</param>
-        /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dataPackageJobs">Jobs associated with the given data package</param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         /// <remarks>
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
+        /// <param name="dbTools">Instance of IDbTools</param>
+        /// <param name="dataPackageID">Data Package ID</param>
+        /// <param name="dataPackageJobs">Jobs associated with the given data package</param>
+        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         public static bool LoadDataPackageJobInfo(
             IDBTools dbTools,
             int dataPackageID,
@@ -246,12 +246,12 @@ namespace AnalysisManagerBase.JobConfig
         /// The analysis job must have completed successfully, since the parameters
         /// are retrieved from tables T_Jobs_History, T_Job_Steps_History, and T_Job_Parameters_History
         /// </summary>
+        /// <remarks>This procedure is used by AnalysisToolRunnerPRIDEConverter</remarks>
         /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
         /// <param name="errorMsg"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This procedure is used by AnalysisToolRunnerPRIDEConverter</remarks>
         private static bool LookupJobParametersFromHistory(
             IDBTools dbTools,
             int jobNumber,
@@ -448,11 +448,11 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the data package
         /// </summary>
+        /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
         /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or SEQUEST)</returns>
-        /// <remarks>Alternatively use the overloaded version that includes additionalJobs</remarks>
         // ReSharper disable once UnusedMember.Global
         public static List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             IDBTools dbTools,
@@ -465,12 +465,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the data package; non-peptide hit jobs are returned via additionalJobs
         /// </summary>
+        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or SEQUEST)</returns>
-        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         public static List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             IDBTools dbTools,
             int dataPackageID,

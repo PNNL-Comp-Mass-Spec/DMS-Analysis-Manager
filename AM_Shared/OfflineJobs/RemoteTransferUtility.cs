@@ -223,6 +223,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Copy files from the remote host to a local directory
         /// </summary>
+        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFiles">Dictionary where keys are source file names (no wildcards), and values are true if the file is required, false if optional</param>
         /// <param name="localDirectoryPath">Local target directory</param>
@@ -232,7 +233,6 @@ namespace AnalysisManagerBase.OfflineJobs
         /// True on success, false if an error
         /// Returns False if any files were missing, even if warnIfMissing is false
         /// </returns>
-        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesFromRemote(
             string sourceDirectoryPath,
             IReadOnlyDictionary<string, bool> sourceFiles,
@@ -253,11 +253,11 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Copy a single file from a local directory to the remote host
         /// </summary>
+        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
-        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath, bool useLockFile = false)
         {
             try
@@ -285,13 +285,13 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Copy files from a local directory to the remote host
         /// </summary>
+        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
-        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesToRemote(
             string sourceDirectoryPath,
             IEnumerable<string> sourceFileNames,
@@ -312,9 +312,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Create a new task info file for the current job on the remote host
         /// </summary>
+        /// <remarks>Created in RemoteTaskQueuePath</remarks>
         /// <param name="remoteTimestamp">Output: Remote info file path</param>
         /// <param name="infoFilePathRemote">Output: Remote info file path</param>
-        /// <remarks>Created in RemoteTaskQueuePath</remarks>
         /// <returns>True on success, false on an error</returns>
         public bool CreateJobTaskInfoFile(string remoteTimestamp, out string infoFilePathRemote)
         {
@@ -404,8 +404,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the base status file name, of the form JobX_StepY_TimeStamp
         /// </summary>
-        /// <returns>Status filename</returns>
         /// <remarks>Uses the RemoteTimestamp job parameter</remarks>
+        /// <returns>Status filename</returns>
         private string GetBaseStatusFilename()
         {
             var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
@@ -508,12 +508,12 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Retrieve a listing of files in the remoteDirectoryPath directory on the remote host
         /// </summary>
+        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="fileMatchSpec">Filename to find, or files to find if wildcards are used</param>
         /// <param name="recurse">True to </param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>List of matching files (full paths)</returns>
-        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public Dictionary<string, SftpFile> GetRemoteFileListing(
             string remoteDirectoryPath,
             string fileMatchSpec,
@@ -533,9 +533,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the XML string that should be stored as job parameter RemoteInfo
         /// </summary>
+        /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
         /// <param name="useDefaultManagerRemoteInfo"></param>
         /// <returns>String with XML</returns>
-        /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
         private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
         {
             if (useDefaultManagerRemoteInfo)
@@ -561,9 +561,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the default XML string that will be used for jobs staged by this manager
         /// </summary>
+        /// <remarks>The RemoteInfo generated here is passed to RequestStepTaskXML when checking for an available job</remarks>
         /// <param name="mgrParams">Manager parameters</param>
         /// <returns>String with XML</returns>
-        /// <remarks>The RemoteInfo generated here is passed to RequestStepTaskXML when checking for an available job</remarks>
         public static string GetRemoteInfoXml(IMgrParams mgrParams)
         {
             var settings = new List<KeyValuePair<string, string>>
@@ -629,9 +629,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file from the remote TaskQueue directory
         /// </summary>
+        /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for a .jobstatus file </remarks>
         /// <param name="jobStatusFilePathLocal"></param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for a .jobstatus file </remarks>
         public bool RetrieveJobStatusFile(out string jobStatusFilePathLocal)
         {
             if (IsParameterUpdateRequired(false))
@@ -656,10 +656,10 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Retrieve the given status file from the remote TaskQueue directory
         /// </summary>
+        /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for desired file </remarks>
         /// <param name="statusFileName"></param>
         /// <param name="statusFilePathLocal">Output: full path to the status file on the local drive</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for desired file </remarks>
         public bool RetrieveStatusFile(string statusFileName, out string statusFilePathLocal)
         {
             statusFilePathLocal = string.Empty;
@@ -837,14 +837,14 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Update cached parameters using MgrParams and JobParams
         /// In addition, loads the private key information from RemoteHostPrivateKeyFile and RemoteHostPassphraseFile
         /// </summary>
-        /// <param name="useDefaultManagerRemoteInfo">
-        /// When true, use default manager remote info params
-        /// When false, override remote settings using the RemoteInfo parameter in the StepParameters section for the job
-        /// </param>
         /// <remarks>
         /// Throws an exception if any parameters are missing or empty
         /// Also throws an exception if there is an error reading the private key information
         /// </remarks>
+        /// <param name="useDefaultManagerRemoteInfo">
+        /// When true, use default manager remote info params
+        /// When false, override remote settings using the RemoteInfo parameter in the StepParameters section for the job
+        /// </param>
         public void UpdateParameters(bool useDefaultManagerRemoteInfo)
         {
             WorkDir = MgrParams.GetParam("WorkDir");

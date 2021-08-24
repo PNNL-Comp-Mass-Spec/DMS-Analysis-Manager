@@ -1675,8 +1675,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Enable offline mode
         /// </summary>
-        /// <param name="runningLinux">Set to True if running Linux</param>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        /// <param name="runningLinux">Set to True if running Linux</param>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
             Global.EnableOfflineMode(runningLinux);
@@ -1729,8 +1729,8 @@ namespace AnalysisManagerProg
         /// Extract the value for the given setting from AnalysisManagerProg.exe.config
         /// If the setting name is MgrCnfgDbConnectStr or DefaultDMSConnString, first checks file AnalysisManagerProg.exe.db.config
         /// </summary>
-        /// <returns>Setting value if found, otherwise an empty string</returns>
         /// <remarks>Uses a simple text reader in case the file has malformed XML</remarks>
+        /// <returns>Setting value if found, otherwise an empty string</returns>
         private string GetXmlConfigFileSetting(string settingName)
         {
             if (string.IsNullOrWhiteSpace(settingName))
@@ -1979,8 +1979,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Loads the initial settings from application config file AnalysisManagerProg.exe.config
         /// </summary>
-        /// <returns>String dictionary containing initial settings if successful; null on error</returns>
         /// <remarks>This method is public because CodeTest uses it</remarks>
+        /// <returns>String dictionary containing initial settings if successful; null on error</returns>
         public Dictionary<string, string> LoadMgrSettingsFromFile()
         {
             // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
@@ -2849,9 +2849,9 @@ namespace AnalysisManagerProg
         /// Confirms that the drive with the working directory has sufficient free space
         /// Confirms that the remote share for storing results is accessible and has sufficient free space
         /// </summary>
+        /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
         /// <param name="toolResourcer"></param>
         /// <param name="errorMessage"></param>
-        /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
         private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage)
         {
             const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 10;

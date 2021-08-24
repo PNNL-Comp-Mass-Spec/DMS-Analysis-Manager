@@ -15,10 +15,10 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Clones a database, optionally skipping tables in list tablesToSkip
         /// </summary>
+        /// <remarks>If the target database already exists, missing tables (and data) will be appended to the file</remarks>
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
         /// <returns>True if success, false if a problem</returns>
-        /// <remarks>If the target database already exists, missing tables (and data) will be appended to the file</remarks>
         public bool CloneDB(string sourceDBPath, string targetDBPath)
         {
             const bool appendToExistingDB = true;

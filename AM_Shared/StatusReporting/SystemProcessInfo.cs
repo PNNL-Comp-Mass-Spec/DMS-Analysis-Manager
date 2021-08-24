@@ -125,11 +125,11 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Returns the CPU usage
         /// </summary>
-        /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
         /// For CPU usage of a single application use Global.ProcessInfo.GetCoreUsageByProcessID()
         /// </remarks>
+        /// <returns>Value between 0 and 100</returns>
         public float GetCPUUtilization()
         {
             if (Global.LinuxOS)

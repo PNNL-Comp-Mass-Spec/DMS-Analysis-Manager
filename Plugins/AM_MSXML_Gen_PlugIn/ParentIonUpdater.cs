@@ -102,15 +102,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Update the parent ion m/z and charge values in dtaFilePath using parent ion info in mgfFilePath
         /// Optionally replace the original _dta.txt file (dtaFilePath) with the updated version
         /// </summary>
+        /// <remarks>
+        /// Could be used to update a _dta.txt file created using DeconMSn with the parent ion information
+        /// from a .mgf file created by RawConverter.
+        /// </remarks>
         /// <param name="dtaFilePath">_dta.txt file to update</param>
         /// <param name="mgfFilePath">.mgf file with parent ion m/z and charge values to use when updating the _dta.txt file (e.g. from RawConverter)</param>
         /// <param name="removeUnmatchedSpectra">When true, remove spectra from _dta.txt that are not in the .mgf file</param>
         /// <param name="replaceDtaFile">When true, replace the original _dta.txt file with the updated one</param>
         /// <returns>Path to the updated mzML file</returns>
-        /// <remarks>
-        /// Could be used to update a _dta.txt file created using DeconMSn with the parent ion information
-        /// from a .mgf file created by RawConverter.
-        /// </remarks>
         [Obsolete("Unused")]
         private string UpdateDtaParentIonInfoUsingMGF(string dtaFilePath, string mgfFilePath, bool removeUnmatchedSpectra, bool replaceDtaFile)
         {

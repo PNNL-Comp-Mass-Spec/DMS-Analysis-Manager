@@ -1,4 +1,4 @@
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Matt Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
@@ -362,9 +362,9 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
-        /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/ReporterIons.cs#L15
         /// </remarks>
+        /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
             return reporterIonMassMode switch
@@ -657,8 +657,8 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Validate that required options are defined in the MASIC parameter file
         /// </summary>
-        /// <param name="parameterFilePath"></param>
         /// <remarks>Also reads ReporterIonMassMode and ReporterIonObservationRateTopNPct</remarks>
+        /// <param name="parameterFilePath"></param>
         protected bool ValidateParameterFile(string parameterFilePath)
         {
             if (string.IsNullOrWhiteSpace(parameterFilePath))

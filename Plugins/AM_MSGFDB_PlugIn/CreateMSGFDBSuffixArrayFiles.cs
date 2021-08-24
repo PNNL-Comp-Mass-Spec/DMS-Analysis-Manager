@@ -257,6 +257,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Copies the suffix array files for the specified FASTA file to the remote MSGFPlus_Index_File share
         /// </summary>
+        /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         /// <param name="fastaFile"></param>
         /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
@@ -267,7 +268,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// This option is used by the MSGFPlusIndexFileCopier program when switch /X is provided
         /// </param>
         /// <param name="errorMessage"></param>
-        /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         public static bool CopyIndexFilesToRemote(FileInfo fastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
                                                   bool createIndexFileForExistingFiles, out string errorMessage)
         {
@@ -837,8 +837,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Creates a lock file
         /// </summary>
-        /// <returns>True if success; false if failure</returns>
         /// <remarks>Returns false if the lock file already exists</remarks>
+        /// <returns>True if success; false if failure</returns>
         private bool CreateLockFile(string lockFilePath)
         {
             try

@@ -182,10 +182,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Retrieve the zipped pepXML files
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
         /// <remarks>
         /// Each _pepXML.zip file will also have a .pin file
         /// </remarks>
+        /// <param name="dataPackageInfo"></param>
         private CloseOutType GetPepXMLFiles(DataPackageInfo dataPackageInfo)
         {
             // The ToolName job parameter holds the name of the job script we are executing
@@ -368,10 +368,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
+        /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <param name="paramFilePath"></param>
         /// <param name="datasetCount"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
-        /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <returns>True if success, false if an error</returns>
         private bool LoadMSFraggerOptions(string paramFilePath, int datasetCount, out MSFraggerOptions options)
         {

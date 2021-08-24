@@ -111,10 +111,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the FragPipe tools directory
         /// </summary>
-        /// <param name="toolsDirectory"></param>
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\
         /// </remarks>
+        /// <param name="toolsDirectory"></param>
         /// <returns>True if found, otherwise false</returns>
         private bool FindFragPipeToolsDirectory(out DirectoryInfo toolsDirectory)
         {
@@ -296,14 +296,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the vendor lib directory
         /// </summary>
-        /// <param name="vendorName">Vendor name: either bruker or thermo</param>
-        /// <param name="vendorLibDirectory">Output: directory info, if found</param>
         /// <remarks>
         /// Typically at
         /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker
         /// and
         /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
         /// </remarks>
+        /// <param name="vendorName">Vendor name: either bruker or thermo</param>
+        /// <param name="vendorLibDirectory">Output: directory info, if found</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindVendorLibDirectory(string vendorName, out DirectoryInfo vendorLibDirectory)
         {

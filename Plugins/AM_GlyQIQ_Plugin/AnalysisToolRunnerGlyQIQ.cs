@@ -314,10 +314,10 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Examine the GlyQ-IQ results in the given file to count the number of PSMs and unique number of glycans
         /// Post the results to DMS using jobNumber
         /// </summary>
+        /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (mMgrParams)</remarks>
         /// <param name="fiResultsFile"></param>
         /// <param name="jobNumber"></param>
         /// <param name="dmsConnectionStringOverride">Optional: DMS5 connection string</param>
-        /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (mMgrParams)</remarks>
         public bool ExamineFilteredResults(FileInfo fiResultsFile, int jobNumber, string dmsConnectionStringOverride)
         {
             try

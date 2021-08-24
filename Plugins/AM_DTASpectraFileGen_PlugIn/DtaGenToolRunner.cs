@@ -403,7 +403,7 @@ namespace DTASpectraFileGen
             bool success;
             if (eDtaGeneratorType == DTAGeneratorConstants.MGFtoDTA)
             {
-                // MGFtoDTA Dll
+                // MGFtoDTA DLL
                 success = StoreToolVersionInfoDLL(spectraGen.DtaToolNameLoc);
             }
             else
@@ -629,8 +629,8 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Deletes .raw files from working directory
         /// </summary>
-        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks>Overridden for other types of input files</remarks>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         private CloseOutType DeleteDataFile()
         {
             // Deletes the .raw file from the working directory
@@ -1064,7 +1064,7 @@ namespace DTASpectraFileGen
                 {
                     // DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
 
-                    // Lookup the version of the DeconTools Backend (in the DeconTools folder)
+                    // Lookup the version of the DeconTools backend (in the DeconTools folder)
                     // In addition, add it to toolFiles
                     dllPath = Path.Combine(dtaGenerator.DirectoryName, "DeconTools.Backend.dll");
                     toolFiles.Add(new FileInfo(dllPath));

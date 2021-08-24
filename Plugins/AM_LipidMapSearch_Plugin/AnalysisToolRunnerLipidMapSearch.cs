@@ -258,13 +258,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Downloads the latest version of the LipidMaps database
         /// </summary>
-        /// <param name="diLipidMapsDBFolder">the directory to store the Lipid Maps DB file</param>
-        /// <param name="strNewestLipidMapsDBFileName">The name of the newest Lipid Maps DB in the Lipid Maps DB folder</param>
-        /// <returns>The filename of the latest version of the database</returns>
         /// <remarks>
         /// If the newly downloaded LipidMaps.txt file has a hash that matches the computed hash for strNewestLipidMapsDBFileName,
         /// then we update the time stamp on the HashCheckFile instead of copying the downloaded data back to the server
         /// </remarks>
+        /// <param name="diLipidMapsDBFolder">the directory to store the Lipid Maps DB file</param>
+        /// <param name="strNewestLipidMapsDBFileName">The name of the newest Lipid Maps DB in the Lipid Maps DB folder</param>
+        /// <returns>The filename of the latest version of the database</returns>
         private string DownloadNewLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, string strNewestLipidMapsDBFileName)
         {
             var lockFileFound = false;

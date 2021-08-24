@@ -31,9 +31,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor for appending a new line to the parameter file
         /// </summary>
+        /// <remarks>If the line has a parameter, use the constructor that takes a MSGFPlusParameter object instead</remarks>
         /// <param name="paramFileLine"></param>
         /// <param name="isAdditionalLine">Set this to True if this is an additional parameter line (or blank line or comment line) that needs to be appended</param>
-        /// <remarks>If the line has a parameter, use the constructor that takes a MSGFPlusParameter object instead</remarks>
         public MSGFPlusKeyValueParamFileLine(
             KeyValueParamFileLine paramFileLine,
             bool isAdditionalLine = false) : base(paramFileLine)

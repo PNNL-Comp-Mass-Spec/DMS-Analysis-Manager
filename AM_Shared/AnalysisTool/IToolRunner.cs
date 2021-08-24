@@ -89,32 +89,32 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Perform any required post processing after retrieving remote results
         /// </summary>
-        /// <returns>CloseoutType enum representing completion status</returns>
         /// <remarks>
         /// Actual post-processing of remote results should only be required if the remote host running the job
         /// could not perform a step that requires database access or Windows share access
         /// </remarks>
+        /// <returns>CloseoutType enum representing completion status</returns>
         CloseOutType PostProcessRemoteResults();
 
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
+        /// <remarks>Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer</remarks>
         /// <param name="transferDirectoryPathOverride">Optional: specific transfer folder path to use; if empty, uses job param transferDirectoryPath</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks>Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer</remarks>
         bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "");
 
         /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
-        /// <param name="transferUtility">Transfer utility</param>
-        /// <param name="verifyCopied">Log warnings and an error if any files are missing.  When false, logs debug messages instead</param>
-        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
-        /// <returns>True on success, otherwise false</returns>
         /// <remarks>
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
+        /// <param name="transferUtility">Transfer utility</param>
+        /// <param name="verifyCopied">Log warnings and an error if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
+        /// <returns>True on success, otherwise false</returns>
         bool RetrieveRemoteResults(RemoteTransferUtility transferUtility, bool verifyCopied, out List<string> retrievedFilePaths);
 
         /// <summary>

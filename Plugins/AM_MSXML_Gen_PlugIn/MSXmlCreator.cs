@@ -60,8 +60,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Convert a .mzML file to .mzXML
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>This is used by class MSGFRunner in the MSGF Plugin</remarks>
+        /// <returns>True if success, false if an error</returns>
         public bool ConvertMzMLToMzXML()
         {
             // mzXML filename is dataset plus .mzXML
@@ -145,8 +145,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Generate the mzXML
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>This is used by class MSGFRunner in the MSGF Plugin</remarks>
+        /// <returns>True if success, false if an error</returns>
         public bool CreateMZXMLFile()
         {
             // Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
@@ -285,8 +285,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Update the current dataset name
         /// </summary>
-        /// <param name="datasetName"></param>
         /// <remarks>Used by AnalysisToolRunnerPRIDEConverter.vb and AnalysisToolRunnerRepoPkgr.cs</remarks>
+        /// <param name="datasetName"></param>
         public void UpdateDatasetName(string datasetName)
         {
             mDatasetName = datasetName;

@@ -137,9 +137,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update the comment for this parameter
         /// </summary>
+        /// <remarks>This comment is the text to be included on the same line as this parameter's Key=Value definition the param file</remarks>
         /// <param name="comment"></param>
         /// <param name="whitespaceBeforeComment"></param>
-        /// <remarks>This comment is the text to be included on the same line as this parameter's Key=Value definition the param file</remarks>
         public void UpdateComment(string comment, string whitespaceBeforeComment)
         {
             Comment = comment ?? string.Empty;
@@ -160,16 +160,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update the value for this parameter
         /// </summary>
+        /// <remarks>
+        /// If value ends with an exclamation mark, the exclamation mark will be removed and ValueLocked will be set to true
+        /// This method will return True in this case, since the value was likely changed (but cannot be changed again)
+        /// </remarks>
         /// <param name="value"></param>
         /// <param name="callerName"></param>
         /// <returns>
         /// True if the value was updated or the value is locked, but the new value is the same
         /// False if the value is locked and the new value is different
         /// </returns>
-        /// <remarks>
-        /// If value ends with an exclamation mark, the exclamation mark will be removed and ValueLocked will be set to true
-        /// This method will return True in this case, since the value was likely changed (but cannot be changed again)
-        /// </remarks>
         public bool UpdateValue(string value, [CallerMemberName] string callerName = "")
         {
             if (ValueLocked)

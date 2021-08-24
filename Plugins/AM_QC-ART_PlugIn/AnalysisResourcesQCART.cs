@@ -419,15 +419,15 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Extract the SCX fraction number from the dataset name, which must itself be in a canonical format
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <returns>Fraction number on success; 0 if an error</returns>
         /// <remarks>
         /// Supported format #1, based on TEDDY_DISCOVERY_SET_34_23_20Oct15_Frodo_15-08-15    and
         ///                               TEDDY_DISCOVERY_SET_32_10rr_13Oct15_Frodo_15-08-15  and
         ///                               TEDDY_DISCOVERY_SET_54_15-rr_01May16_Frodo_16-03-33
-        ///   Look for "_SET_\d+_\d+_" or "_SET_\d+_\d+[a-z-]+_"
-        ///   SCX fraction is the second number
+        /// Look for "_SET_\d+_\d+_" or "_SET_\d+_\d+[a-z-]+_"
+        /// SCX fraction is the second number
         /// </remarks>
+        /// <param name="datasetName"></param>
+        /// <returns>Fraction number on success; 0 if an error</returns>
         private static int ExtractFractionFromDatasetName(string datasetName)
         {
             // RegEx to extract the fraction number
@@ -446,12 +446,12 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Look for existing baseline results
         /// </summary>
+        /// <remarks>Also uses mProjectName and baselineDatasets</remarks>
         /// <param name="paramFilePath">Parameter file path</param>
         /// <param name="baselineMetadataKey">Baseline metadata file unique key</param>
         /// <param name="baselineMetadataFilePath">Output: baseline metadata file path (remote path in the cache folder)</param>
         /// <param name="criticalError">Output: true if a critical error occurred and the job should be aborted</param>
         /// <returns>True if existing results were found and successfully copied locally; otherwise false</returns>
-        /// <remarks>Also uses mProjectName and baselineDatasets</remarks>
         private bool FindBaselineResults(
             string paramFilePath,
             string baselineMetadataKey,

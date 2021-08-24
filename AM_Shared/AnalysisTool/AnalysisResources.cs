@@ -957,9 +957,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copy files in the working directory to a remote host, skipping files in filesToIgnore
         /// </summary>
+        /// <remarks>This method is called by step tools that override CopyResourcesToRemote</remarks>
         /// <param name="transferUtility">file transfer utility</param>
         /// <param name="filesToIgnore">Names of files to ignore</param>
-        /// <remarks>This method is called by step tools that override CopyResourcesToRemote</remarks>
         /// <returns>True if success, otherwise false</returns>
         protected bool CopyWorkDirFilesToRemote(RemoteTransferUtility transferUtility, SortedSet<string> filesToIgnore)
         {
@@ -1097,8 +1097,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Add a filename extension to not move to the results directory
         /// </summary>
-        /// <param name="extension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+        /// <param name="extension"></param>
         public void AddResultFileExtensionToSkip(string extension)
         {
             if (string.IsNullOrWhiteSpace(extension))
@@ -1110,8 +1110,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Add a filename to not move to the results directory
         /// </summary>
-        /// <param name="sourceFilename"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in mResultFilesToSkip</remarks>
+        /// <param name="sourceFilename"></param>
         public void AddResultFileToSkip(string sourceFilename)
         {
             if (string.IsNullOrWhiteSpace(sourceFilename))
@@ -1170,11 +1170,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Look for a lock file named dataFilePath + ".lock"
         /// If found, and if less than maxWaitTimeMinutes old, waits for it to be deleted by another process or to age
         /// </summary>
-        /// <param name="dataFilePath">Data file path</param>
-        /// <param name="dataFileDescription">User friendly description of the data file, e.g. LipidMapsDB</param>
-        /// <param name="statusTools">Status Tools object</param>
-        /// <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
-        /// <param name="logIntervalMinutes"></param>
         /// <remarks>
         /// Typical steps for using lock files to assure that only one manager is creating a specific file
         /// 1. Call CheckForLockFile() to check for a lock file; wait for it to age
@@ -1183,6 +1178,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// 4. Do the work and create the data file, including copying to the central location
         /// 5. Delete the lock file by calling DeleteLockFile() or by deleting the file path returned by CreateLockFile()
         /// </remarks>
+        /// <param name="dataFilePath">Data file path</param>
+        /// <param name="dataFileDescription">User friendly description of the data file, e.g. LipidMapsDB</param>
+        /// <param name="statusTools">Status Tools object</param>
+        /// <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
+        /// <param name="logIntervalMinutes"></param>
         public static void CheckForLockFile(
             string dataFilePath,
             string dataFileDescription,
@@ -1266,10 +1266,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create a new lock file named dataFilePath + ".lock"
         /// </summary>
+        /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         /// <param name="dataFilePath">Data file path</param>
         /// <param name="taskDescription">Description of current task; will be written the lock file, followed by " at yyyy-MM-dd hh:mm:ss tt"</param>
         /// <returns>Full path to the lock file</returns>
-        /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
             var lockFilePath = dataFilePath + Global.LOCK_FILE_EXTENSION;
@@ -1284,11 +1284,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies specified file from storage server to local working directory
         /// </summary>
+        /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         /// <param name="sourceFileName">Name of file to copy</param>
         /// <param name="sourceDirectoryPath">Path to directory where input file is located</param>
         /// <param name="targetDirectoryPath">Destination directory for file copy</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         protected bool CopyFileToWorkDir(string sourceFileName, string sourceDirectoryPath, string targetDirectoryPath)
         {
             return mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, targetDirectoryPath);
@@ -1297,12 +1297,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies specified file from storage server to local working directory
         /// </summary>
+        /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         /// <param name="sourceFileName">Name of file to copy</param>
         /// <param name="sourceDirectoryPath">Path to directory where input file is located</param>
         /// <param name="targetDirectoryPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>If the file was found in MyEMSL, sourceDirectoryPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceDirectoryPath, string targetDirectoryPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
             return mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, targetDirectoryPath, logMsgTypeIfNotFound);
@@ -1685,6 +1685,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         /// <param name="datasetName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
@@ -1695,7 +1696,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="assumeUnpurged">When true, this function returns the path to the dataset directory on the storage server</param>
         /// <param name="directoryNotFoundMessage"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         public string FindValidDirectory(
             string datasetName, string fileNameToFind, string directoryNameToFind,
             int maxAttempts, bool logDirectoryNotFound,
@@ -1717,8 +1717,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
-        /// <returns>True if success, false if a problem</returns>
         /// <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
+        /// <returns>True if success, false if a problem</returns>
         protected bool GenerateScanStatsFiles()
         {
             const bool deleteRawDataFile = true;
@@ -1728,9 +1728,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
+        /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
         /// <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
         /// <returns>True if success, false if a problem</returns>
-        /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
         protected bool GenerateScanStatsFiles(bool deleteRawDataFile)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
@@ -1881,7 +1881,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Lookups up the storage path for a given data package
+        /// Looks up the storage path for a given data package
         /// </summary>
         /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
         /// <param name="dataPackageID">Data Package ID</param>
@@ -1961,10 +1961,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Examine the FASTA file to determine the fraction of the proteins that are decoy (reverse) proteins
         /// </summary>
+        /// <remarks>Decoy proteins start with Reversed_</remarks>
         /// <param name="fastaFile">FASTA file to examine</param>
         /// <param name="proteinCount">Output parameter: total protein count</param>
         /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-        /// <remarks>Decoy proteins start with Reversed_</remarks>
         public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, out int proteinCount)
         {
             var decoyProteinPrefix = GetDefaultDecoyPrefixes().First();
@@ -1974,11 +1974,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Examine the FASTA file to determine the fraction of the proteins that are decoy (reverse) proteins
         /// </summary>
+        /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
         /// <param name="fastaFile">FASTA file to examine</param>
         /// <param name="decoyProteinPrefix"></param>
         /// <param name="proteinCount">Output parameter: total protein count</param>
         /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-        /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
         public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, string decoyProteinPrefix, out int proteinCount)
         {
             // Look for protein names that look like:
@@ -2273,10 +2273,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Get the MSXML Cache directory path that is appropriate for this job
         /// </summary>
+        /// <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
         /// <param name="cacheDirectoryPathBase"></param>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage"></param>
-        /// <remarks>Uses job parameter OutputFolderName, which should be something like MSXML_Gen_1_120_275966</remarks>
         public static string GetMSXmlCacheFolderPath(string cacheDirectoryPathBase, IJobParams jobParams, out string errorMessage)
         {
             // Lookup the output directory name; e.g. MSXML_Gen_1_120_275966
@@ -2304,12 +2304,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Get the path to the cache directory; used for retrieving cached .mzML files that are stored in ToolName_Version directories
         /// </summary>
+        /// <remarks>Uses job parameter DatasetStoragePath to determine the Year_Quarter string to append to the end of the path</remarks>
         /// <param name="cacheDirectoryPathBase">Cache directory base, e.g. \\Proto-11\MSXML_Cache</param>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="msXmlToolNameVersionDirectory">ToolName_Version directory, e.g. MSXML_Gen_1_93</param>
         /// <param name="errorMessage">Output parameter: error message</param>
         /// <returns>Path to the cache folder; empty string if an error</returns>
-        /// <remarks>Uses job parameter DatasetStoragePath to determine the Year_Quarter string to append to the end of the path</remarks>
         public static string GetMSXmlCacheFolderPath(
             string cacheDirectoryPathBase,
             IJobParams jobParams,
@@ -2364,20 +2364,18 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the .mzML or .mzXML file associated with this job's dataset (based on Job Parameter MSXMLOutputType)
         /// </summary>
-        /// <returns>CLOSEOUT_SUCCESS or CLOSEOUT_FAILED</returns>
         /// <remarks>
         /// If MSXMLOutputType is not defined, attempts to retrieve a .mzML file
         /// If the .mzML file is not found, the calling method will re-create it (for some plugins)
         /// </remarks>
+        /// <returns>Closeout code</returns>
         protected CloseOutType GetMsXmlFile()
         {
             var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
 
-            var result = string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase) ?
+            return string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase) ?
                 GetMzXMLFile() :
                 GetMzMLFile();
-
-            return result;
         }
 
         /// <summary>
@@ -2403,11 +2401,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the .mzXML file for this dataset
         /// </summary>
-        /// <returns>Closeout code</returns>
         /// <remarks>
         /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen directory for this dataset
         /// Instead, use FindAndRetrieveMiscFiles
         /// </remarks>
+        /// <returns>Closeout code</returns>
         protected CloseOutType GetMzXMLFile()
         {
             LogMessage("Getting mzXML file");
@@ -2527,11 +2525,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the _mgf.zip file for this dataset and extract the .mgf file
         /// </summary>
-        /// <returns>Closeout code</returns>
         /// <remarks>
         /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen directory for this dataset
         /// Instead, use FindAndRetrieveMiscFiles
         /// </remarks>
+        /// <returns>Closeout code</returns>
         protected CloseOutType GetZippedMgfFile()
         {
             LogMessage("Getting _mgf.zip file");
@@ -2741,10 +2739,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Get the name of the split FASTA file to use for this job
         /// </summary>
+        /// <remarks>Returns an empty string if an error</remarks>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage">Output parameter: error message</param>
         /// <returns>The name of the split FASTA file to use</returns>
-        /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
         {
             return GetSplitFastaFileName(jobParams, out errorMessage, out _);
@@ -2753,11 +2751,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Get the name of the split FASTA file to use for this job
         /// </summary>
+        /// <remarks>Returns an empty string if an error</remarks>
         /// <param name="jobParams"></param>
         /// <param name="errorMessage">Output parameter: error message</param>
         /// <param name="numberOfClonedSteps">Output parameter: total number of cloned steps</param>
         /// <returns>The name of the split FASTA file to use</returns>
-        /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage, out int numberOfClonedSteps)
         {
             numberOfClonedSteps = 0;
@@ -3009,7 +3007,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Looks up dataset information for a data package
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
-        /// <returns>True if a data package is defined and it has datasets associated with it</returns>
+        /// <returns>True if a data package is defined and it has datasets associated with it, otherwise false</returns>
         protected bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             // Gigasax.DMS_Pipeline
@@ -3034,12 +3032,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Looks up dataset information for the data package associated with this analysis job
         /// </summary>
-        /// <param name="dataPackageJobs"></param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         /// <remarks>
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
+        /// <param name="dataPackageJobs"></param>
+        /// <returns>True if a data package is defined and it has analysis jobs associated with it, otherwise false</returns>
         private bool LoadDataPackageJobInfo(out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
             // Gigasax.DMS_Pipeline
@@ -3089,10 +3087,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the information for the specified analysis job
         /// </summary>
+        /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
         /// <param name="jobNumber">Job number</param>
         /// <param name="jobInfo">Output parameter: Job Info</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
         protected bool LookupJobInfo(int jobNumber, out DataPackageJobInfo jobInfo)
         {
             var sqlStr = new StringBuilder();
@@ -3146,14 +3144,16 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Estimate the amount of disk space required for the FASTA file associated with this analysis job
         /// Includes the expected disk usage of index files
         /// </summary>
+        /// <remarks>
+        /// Uses both mJobParams and mMgrParams
+        /// </remarks>
         /// <param name="proteinCollectionInfo">Collection info object</param>
         /// <param name="legacyFastaName">
         /// Output: the FASTA file name
         /// For split FASTA searches, will be the original FASTA file if running extraction,
         /// or if running MS-GF+ (or similar), the split FASTA file corresponding to this job step</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
-        /// <returns>Space required, in MB</returns>
-        /// <remarks>Uses both mJobParams and mMgrParams; returns 0 if a problem (e.g. the legacy FASTA file is not listed in V_Organism_DB_File_Export)</remarks>
+        /// <returns>Space required, in MB, or 0 if a problem (e.g. the legacy FASTA file is not listed in V_Organism_DB_File_Export)</returns>
         public double LookupLegacyDBDiskSpaceRequiredMB(
             ProteinCollectionInfo proteinCollectionInfo,
             out string legacyFastaName,
@@ -3380,8 +3380,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Override current job information, including dataset name, dataset ID, storage paths, Organism Name, Protein Collection, and protein options
         /// </summary>
-        /// <param name="dataPkgJob"></param>
         /// <remarks> Does not override the job number</remarks>
+        /// <param name="dataPkgJob"></param>
         public bool OverrideCurrentDatasetAndJobInfo(DataPackageJobInfo dataPkgJob)
         {
             var aggregationJob = false;
@@ -3574,6 +3574,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Purge old FASTA files and related index files in the orgDb directory
         /// </summary>
+        /// <remarks>
+        /// This method works best on local drives (including on Linux)
+        /// It will also work on a remote Windows share if the directory has file MaxDirSize.txt
+        /// If file MaxDirSize.txt does exist, freeSpaceThresholdPercent, requiredFreeSpaceMB, and maxDirectorySizeGB are ignored
+        /// </remarks>
         /// <param name="orgDbDirectoryPath">Organism database directory with FASTA files and related index files; supports Windows shares and Linux paths</param>
         /// <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
         /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given FASTA file (in megabytes)</param>
@@ -3583,11 +3588,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// For split FASTA jobs, should not include the split count and segment number, e.g. should not include _25x_07 or _25x_08
         /// </param>
         /// <param name="preview">When true, preview the files that would be deleted</param>
-        /// <remarks>
-        /// This method works best on local drives (including on Linux)
-        /// It will also work on a remote Windows share if the directory has file MaxDirSize.txt
-        /// If file MaxDirSize.txt does exist, freeSpaceThresholdPercent, requiredFreeSpaceMB, and maxDirectorySizeGB are ignored
-        /// </remarks>
         protected void PurgeFastaFilesIfLowFreeSpace(
             string orgDbDirectoryPath,
             int freeSpaceThresholdPercent,
@@ -3875,12 +3875,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Use the space usage threshold defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
         /// </summary>
+        /// <remarks>Minimum allowed value for maxDirectorySizeGB is 10; will exit the method if 0</remarks>
         /// <param name="orgDbDirectory">Local FASTA file storage directory</param>
         /// <param name="maxDirectorySizeGB">The maximum amount of space that files can occupy (in gigabytes)</param>
         /// <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="preview">When true, preview the files that would be deleted</param>
-        /// <remarks>Minimum allowed value for maxDirectorySizeGB is 10; will exit the method if 0</remarks>
         /// <returns>True if maxDirectorySizeGB is positive, otherwise false</returns>
         public static bool PurgeFastaFilesUsingSpaceUsedThreshold(
             DirectoryInfo orgDbDirectory,
@@ -4189,6 +4189,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the files specified by the file processing options parameter
         /// </summary>
+        /// <remarks>
+        /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
+        /// However, PrideMzXML is dormant as of September 2013
+        /// </remarks>
         /// <param name="fileSpecList">
         /// File processing options, examples:
         /// sequest:_syn.txt:nocopy,sequest:_fht.txt:nocopy,sequest:_dta.zip:nocopy,sequest:_syn_ModSummary.txt:nocopy,masic_finnigan:_ScanStatsEx.txt:nocopy
@@ -4200,10 +4204,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="dataPackageJobs"></param>
         /// <returns>True if success, false if a problem</returns>
-        /// <remarks>
-        /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
-        /// However, PrideMzXML is dormant as of September 2013
-        /// </remarks>
         protected bool RetrieveAggregateFiles(
             List<string> fileSpecList,
             DataPackageFileRetrievalModeConstants fileRetrievalMode,
@@ -4524,11 +4524,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode, bool previewMode = false)
         {
             const int maxLegacyFASTASizeGB = 100;
@@ -4538,6 +4538,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="maxLegacyFASTASizeGB">
@@ -4547,7 +4548,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to True as of April 2019)</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(
             string orgDbDirectoryPath,
             out CloseOutType resultCode,
@@ -4944,8 +4944,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create (or update) the .LastUsed file for the given FASTA file
         /// </summary>
-        /// <param name="fastaFile"></param>
         /// <remarks>The LastUsed file simply has the current date/time on the first line</remarks>
+        /// <param name="fastaFile"></param>
         private void UpdateLastUsedFile(FileInfo fastaFile)
         {
             FileSyncUtils.UpdateLastUsedFile(fastaFile);
@@ -5186,13 +5186,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Validates that sufficient free memory is available to run Java
         /// </summary>
-        /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-        /// <param name="logFreeMemoryOnSuccess">If True, post a log entry if sufficient memory is, in fact, available</param>
-        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         /// <remarks>
         /// Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
+        /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
+        /// <param name="logFreeMemoryOnSuccess">If True, post a log entry if sufficient memory is, in fact, available</param>
+        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         protected bool ValidateFreeMemorySize(string memorySizeJobParamName, bool logFreeMemoryOnSuccess = true)
         {
             // Lookup parameter memorySizeJobParamName; assume 2000 MB if not defined

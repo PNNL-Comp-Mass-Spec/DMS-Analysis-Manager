@@ -411,11 +411,11 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
+        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
         {
             var exeInfo = string.Empty;
@@ -481,10 +481,10 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         public bool StoreDotNETToolVersionInfo(string progLoc, bool saveToolVersionTextFile = true)
         {
             return StoreDotNETToolVersionInfo(progLoc, new List<string>(), saveToolVersionTextFile);
@@ -493,11 +493,11 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         public bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs, bool saveToolVersionTextFile = true)
         {
             var toolVersionInfo = string.Empty;
@@ -610,11 +610,11 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Uses Reflection to determine the version info for an assembly already loaded in memory
         /// </summary>
+        /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
         /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         public bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
             try

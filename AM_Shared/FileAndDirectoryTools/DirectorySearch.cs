@@ -92,14 +92,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
+        /// <remarks>When assumeUnpurged is true, this function returns the expected path
+        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server
         /// (and thus do not search MyEMSL or the archive for the file)
         /// </param>
         /// <returns>The full path to the dataset file or directory</returns>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path
-        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         public string FindDatasetFileOrDirectory(out bool isDirectory, bool assumeUnpurged)
         {
             return FindDatasetFileOrDirectory(DEFAULT_MAX_RETRY_COUNT, out isDirectory, assumeUnpurged: assumeUnpurged);
@@ -111,6 +111,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
+        /// <remarks>When assumeUnpurged is true, this function returns the expected path
+        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         /// <param name="maxAttempts">Maximum number of attempts to look for the directory</param>
         /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
         /// <param name="assumeUnpurged">
@@ -118,8 +120,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// (and thus do not search MyEMSL or the archive for the file)
         /// </param>
         /// <returns>The full path to the dataset file or directory</returns>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path
-        /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         public string FindDatasetFileOrDirectory(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
@@ -391,11 +391,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         public string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir)
         {
             const string directoryNameToFind = "";
@@ -408,12 +408,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         private string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir, bool assumeUnpurged)
         {
             const string directoryNameToFind = "";
@@ -429,12 +429,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>Although fileNameToFind and directoryNameToFind could both be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="directoryNameToFind">Optional: Name of a directory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
         /// <returns>Path to the maxRetryCount appropriate dataset directory</returns>
-        /// <remarks>Although fileNameToFind and directoryNameToFind could both be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         public string FindValidDirectory(string dsName, string fileNameToFind, string directoryNameToFind, int maxRetryCount)
         {
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, maxRetryCount,
@@ -446,6 +446,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
@@ -453,7 +454,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         public string FindValidDirectory(
             string dsName, string fileNameToFind, string directoryNameToFind,
             int maxRetryCount, bool logDirectoryNotFound, bool retrievingInstrumentDataDir)
@@ -468,6 +468,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no directory is deemed valid, returns the dataset directory path
         /// </summary>
+        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         /// <param name="datasetName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
@@ -478,7 +479,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
         /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>The path returned will be "\\MyEMSL" if the best directory is in MyEMSL</remarks>
         public string FindValidDirectory(
             string datasetName,
             string fileNameToFind,
@@ -659,13 +659,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Determines whether the directory specified by pathToCheck is appropriate for retrieving dataset files
         /// </summary>
+        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subdirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="recurse">True to look for fileNameToFind in all subdirectories of a dataset; false to only look in the primary dataset directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         private bool FindValidDirectoryMyEMSL(string dataset, string fileNameToFind, string subdirectoryName, bool logDirectoryNotFound, bool recurse)
         {
             if (string.IsNullOrEmpty(fileNameToFind))
@@ -717,13 +717,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Determines whether the directory specified by pathToCheck is appropriate for retrieving dataset files
         /// </summary>
+        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         /// <param name="pathToCheck">Path to examine</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
         private bool FindValidDirectoryUNC(string pathToCheck, string fileNameToFind, string directoryNameToFind, int maxAttempts, bool logDirectoryNotFound)
         {
             // First check whether this directory exists

@@ -163,10 +163,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copy the file, optionally overwriting
         /// </summary>
+        /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
-        /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         // ReSharper disable once UnusedMember.Global
         public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite)
         {
@@ -390,8 +390,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create the directory (if it does not yet exist)
         /// </summary>
-        /// <param name="directoryPath">Directory to create</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
+        /// <param name="directoryPath">Directory to create</param>
         public void CreateDirectoryWithRetry(string directoryPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
@@ -523,9 +523,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Check for the existence of a directory, retrying if an error
         /// </summary>
+        /// <remarks>Checks up to 3 times, waiting 15 seconds between attempts</remarks>
         /// <param name="directoryPath">Directory to check</param>
         /// <returns>True if the directory exists, otherwise false</returns>
-        /// <remarks>Checks up to 3 times, waiting 15 seconds between attempts</remarks>
         public bool DirectoryExistsWithRetry(string directoryPath)
         {
             const bool increaseHoldoffOnEachRetry = false;

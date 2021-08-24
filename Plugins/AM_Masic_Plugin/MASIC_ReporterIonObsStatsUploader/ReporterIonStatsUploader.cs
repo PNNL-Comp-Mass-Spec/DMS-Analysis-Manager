@@ -28,7 +28,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// </summary>
         /// <param name="inputFile"></param>
         /// <param name="masicParameterFilePath"></param>
-        /// <returns></returns>
         private bool FindParameterFile(FileInfo inputFile, out string masicParameterFilePath)
         {
             masicParameterFilePath = string.Empty;
@@ -121,7 +120,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Get the error message (returns the base class error message)
         /// </summary>
-        /// <returns></returns>
         public override string GetErrorMessage()
         {
             return GetBaseClassErrorMessage();
@@ -149,7 +147,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// </summary>
         /// <param name="inputFile"></param>
         /// <param name="jobNumber"></param>
-        /// <returns></returns>
         private bool GetJobNumber(FileInfo inputFile, out int jobNumber)
         {
             jobNumber = 0;
@@ -200,10 +197,9 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
-        /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
-        /// <returns></returns>
         /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/ReporterIons.cs#L15
         /// </remarks>
+        /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         public static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
             switch (reporterIonMassMode)
@@ -258,7 +254,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <param name="outputDirectoryPath"></param>
         /// <param name="parameterFilePath"></param>
         /// <param name="resetErrorCode"></param>
-        /// <returns></returns>
         public override bool ProcessFile(string inputFilePath, string outputDirectoryPath, string parameterFilePath, bool resetErrorCode)
         {
             try
@@ -305,7 +300,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <param name="parameterFilePath"></param>
         /// <param name="reporterIonName"></param>
         /// <param name="reporterIonObservationRateTopNPct"></param>
-        /// <returns></returns>
         protected bool ReadMASICParameterFile(
             string parameterFilePath,
             out string reporterIonName,

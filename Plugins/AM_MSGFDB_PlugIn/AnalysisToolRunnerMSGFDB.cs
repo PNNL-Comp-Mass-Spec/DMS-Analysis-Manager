@@ -1,4 +1,4 @@
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Created 07/29/2011
@@ -1054,9 +1054,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Convert the .mzid file to a TSV file and create the PeptideToProtein map file (Dataset_msgfplus_PepToProtMap.txt)
         /// </summary>
+        /// <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
         /// <param name="resultsFileName"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
         private CloseOutType PostProcessMSGFPlusResults(string resultsFileName)
         {
             var currentTask = "Starting";

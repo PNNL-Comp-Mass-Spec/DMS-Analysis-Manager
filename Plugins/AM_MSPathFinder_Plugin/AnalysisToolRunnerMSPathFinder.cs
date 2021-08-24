@@ -601,10 +601,10 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Validates that the modification definition text
         /// </summary>
+        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         /// <param name="mod">Modification definition</param>
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
-        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         [Obsolete("No longer used")]
         private bool ParseMSPathFinderValidateMod(string mod, out string modClean)
         {

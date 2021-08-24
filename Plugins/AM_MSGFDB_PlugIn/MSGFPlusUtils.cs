@@ -319,14 +319,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the parameter if using the MSGFDB syntax yet should be using the MS-GF+ syntax
         /// Also make updates from older parameter names to newer names (e.g. MinNumPeaksPerSpectrum instead of MinNumPeaks)
         /// </summary>
-        /// <param name="msgfPlusParameters">Standard MS-GF+ parameters</param>
-        /// <param name="paramFileLine">MS-GF+ parameter file line</param>
-        /// <param name="replacementParameter">New MS-GF+ parameter</param>
-        /// <returns>True if a replacement parameter is defined, otherwise false</returns>
         /// <remarks>
         /// If the parameter does need to be replaced, the value in paramInfo will be changed to an empty string
         /// and the new parameter will be returned via replacementParameter
         /// </remarks>
+        /// <param name="msgfPlusParameters">Standard MS-GF+ parameters</param>
+        /// <param name="paramFileLine">MS-GF+ parameter file line</param>
+        /// <param name="replacementParameter">New MS-GF+ parameter</param>
+        /// <returns>True if a replacement parameter is defined, otherwise false</returns>
         private bool AdjustParametersForMSGFPlus(
             IEnumerable<MSGFPlusParameter> msgfPlusParameters,
             MSGFPlusKeyValueParamFileLine paramFileLine,
@@ -1376,8 +1376,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Returns the number of cores
         /// </summary>
-        /// <returns>The number of cores on this computer</returns>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        /// <returns>The number of cores on this computer</returns>
         public int GetCoreCount()
         {
             return Global.GetCoreCount();
@@ -2004,8 +2004,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
-        /// <returns>Percent Complete (value between 0 and 96)</returns>
         /// <remarks>MSGFPlus version is available via the MSGFPlusVersion property</remarks>
+        /// <returns>Percent Complete (value between 0 and 96)</returns>
         public float ParseMSGFPlusConsoleOutputFile(string workingDirectory)
         {
             var consoleOutputFilePath = "??";
@@ -3128,10 +3128,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Validates that the modification definition text
         /// </summary>
+        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         /// <param name="modDefLine">Modification definition</param>
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
-        /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         private bool ParseMSGFPlusValidateMod(string modDefLine, out string modClean)
         {
             modClean = string.Empty;
@@ -3305,9 +3305,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// If the data line is of the form "pool-1-thread-7: Task 7 completed"
         /// extract out the task number that completed
         /// </summary>
+        /// <remarks>This type of status line was removed in January 2017</remarks>
         /// <param name="dataLine"></param>
         /// <param name="completedTasks"></param>
-        /// <remarks>This type of status line was removed in January 2017</remarks>
         private void UpdateCompletedTasks(string dataLine, ISet<int> completedTasks)
         {
             var reMatch = reTaskComplete.Match(dataLine);

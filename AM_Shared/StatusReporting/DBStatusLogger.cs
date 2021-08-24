@@ -215,12 +215,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Send status information to the database
         /// </summary>
-        /// <param name="statusInfo"></param>
-        /// <param name="forceLogToDB"></param>
         /// <remarks>
         /// This method is only used if manager parameter LogStatusToBrokerDB is true
         /// Typically LogStatusToBrokerDB is false, and the manager instead reports status via LogStatusToMessageQueue
         /// </remarks>
+        /// <param name="statusInfo"></param>
+        /// <param name="forceLogToDB"></param>
         public void LogStatus(StatusInfo statusInfo, bool forceLogToDB)
         {
             try

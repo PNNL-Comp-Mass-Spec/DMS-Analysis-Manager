@@ -564,6 +564,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies a file (typically a mzXML or mzML file) to a server cache directory
         /// Will store the file in the subdirectory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
+        /// <remarks>
+        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
+        /// If those parameters are not defined, copies the file anyway
+        /// </remarks>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
@@ -573,10 +577,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>
-        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
-        /// If those parameters are not defined, copies the file anyway
-        /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
             string subDirectoryInTarget,
@@ -593,6 +593,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies a file (typically a mzXML or mzML file) to a server cache directory
         /// Will store the file in the directory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
+        /// <remarks>
+        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
+        /// If those parameters are not defined, copies the file anyway
+        /// </remarks>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-11\MSXML_Cache</param>
         /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
@@ -603,10 +607,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>
-        /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
-        /// If those parameters are not defined, copies the file anyway
-        /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
             string subDirectoryInTarget, string
@@ -718,15 +718,15 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies the .mzXML file to the generic MSXML_Cache directory, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
+        /// <remarks>
+        /// Contrast with CopyMSXmlToCache in AnalysisToolRunnerMSXMLGen, where the target directory is
+        /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
+        /// </remarks>
         /// <param name="sourceFilePath"></param>
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>
-        /// Contrast with CopyMSXmlToCache in AnalysisToolRunnerMSXMLGen, where the target directory is
-        /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
-        /// </remarks>
         protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
         {
             try
@@ -1016,12 +1016,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
-        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override (target share on the remote server)</param>
-        /// <returns>True if success, otherwise false</returns>
         /// <remarks>
         /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
         /// Step tools can override this method if custom steps are required prior to packaging and transferring the results
         /// </remarks>
+        /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override (target share on the remote server)</param>
+        /// <returns>True if success, otherwise false</returns>
         public virtual bool CopyResultsToTransferDirectory(string transferDirectoryPathOverride = "")
         {
             var subdirectoriesToSkip = new SortedSet<string>();
@@ -1031,13 +1031,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
+        /// <remarks>
+        /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
+        /// </remarks>
         /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
         /// <param name="subdirectoriesToSkip">Full paths of subdirectories that should not be moved</param>
         /// <param name="transferDirectoryPathOverride">Optional: transfer directory path override (target share on the remote server)</param>
         /// <returns>True if success, otherwise false</returns>
-        /// <remarks>
-        /// Uses MakeResultsDirectory, MoveResultFiles, and CopyResultsFolderToServer
-        /// </remarks>
         public bool CopyResultsToTransferDirectory(
             bool includeSubdirectories,
             SortedSet<string> subdirectoriesToSkip,
@@ -1172,9 +1172,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
+        /// <remarks>Raises exception if error occurs</remarks>
         /// <param name="FileNamePath">Full path to file for deletion</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Raises exception if error occurs</remarks>
         public bool DeleteFileWithRetries(string FileNamePath)
         {
             return DeleteFileWithRetries(FileNamePath, mDebugLevel, 3);
@@ -1183,10 +1183,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
+        /// <remarks>Raises exception if error occurs</remarks>
         /// <param name="FileNamePath">Full path to file for deletion</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Raises exception if error occurs</remarks>
         public static bool DeleteFileWithRetries(string FileNamePath, int debugLevel)
         {
             return DeleteFileWithRetries(FileNamePath, debugLevel, 3);
@@ -1195,11 +1195,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Makes multiple tries to delete specified file
         /// </summary>
+        /// <remarks>Raises exception if error occurs</remarks>
         /// <param name="fileNamePath">Full path to file for deletion</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="maxRetryCount">Maximum number of deletion attempts</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Raises exception if error occurs</remarks>
         public static bool DeleteFileWithRetries(string fileNamePath, int debugLevel, int maxRetryCount)
         {
             var retryCount = 0;
@@ -1280,8 +1280,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Delete any instrument data files in the working directory
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>Files to delete are determined via Job Parameter RawDataType</remarks>
+        /// <returns>True if success, false if an error</returns>
         protected bool DeleteRawDataFiles()
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
@@ -1476,6 +1476,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
+        /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="programNameOrRelativePath">
         /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
@@ -1483,7 +1484,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </para>
         /// </param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
-        /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
         protected string DetermineProgramLocation(string progLocManagerParamName, string programNameOrRelativePath)
         {
             return DetermineProgramLocation(progLocManagerParamName, programNameOrRelativePath, out _);
@@ -1492,6 +1492,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
+        /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="programNameOrRelativePath">
         /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
@@ -1500,7 +1501,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </param>
         /// <param name="specificStepToolVersion">Output: value of job parameter StepToolName_Version if defined, otherwise an empty string</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
-        /// <remarks>If the program is not found, mMessage will be updated with the error message</remarks>
         protected string DetermineProgramLocation(string progLocManagerParamName, string programNameOrRelativePath, out string specificStepToolVersion)
         {
             var progLoc = DetermineProgramLocation(
@@ -1628,9 +1628,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the dictionary for the packed job parameter
         /// </summary>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
         {
             var jobParameters = new Dictionary<string, string>();
@@ -1662,9 +1662,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the dictionary for the packed job parameter
         /// </summary>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         public Dictionary<int, string> ExtractPackedJobParameterDictionaryIntegerKey(string packedJobParameterName)
         {
             var jobParameters = new Dictionary<int, string>();
@@ -1702,9 +1702,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the list of values for the packed job parameter
         /// </summary>
+        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
         protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
         {
             var packedJobParams = mJobParams.GetJobParameter(packedJobParameterName, string.Empty);
@@ -1941,8 +1941,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Determines the directory that contains R.exe and Rcmd.exe (queries the registry)
         /// </summary>
-        /// <returns>Directory path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
         /// <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
+        /// <returns>Directory path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
         public string GetRPathFromWindowsRegistry()
         {
             const string RCORE_SUBKEY = @"SOFTWARE\R-core";
@@ -2184,9 +2184,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// GZip the given file
         /// </summary>
+        /// <remarks>Deletes the original file after creating the .gz file</remarks>
         /// <param name="fileToCompress">File to compress</param>
         /// <returns>FileInfo object of the new .gz file or null if an error</returns>
-        /// <remarks>Deletes the original file after creating the .gz file</remarks>
         public FileInfo GZipFile(FileInfo fileToCompress)
         {
             return GZipFile(fileToCompress, true);
@@ -2232,10 +2232,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Parse a thread count text value to determine the number of threads (cores) to use
         /// </summary>
+        /// <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
         /// <param name="threadCountText">Can be "0" or "all" for all threads, or a number of threads, or "90%"</param>
         /// <param name="maxThreadsToAllow">Maximum number of cores to use (0 for all)</param>
         /// <returns>The core count to use</returns>
-        /// <remarks>Core count will be a minimum of 1 and a maximum of Environment.ProcessorCount</remarks>
         public static int ParseThreadCount(string threadCountText, int maxThreadsToAllow)
         {
             var rePercentage = new Regex("([0-9.]+)%");
@@ -2323,10 +2323,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with this analysis job; non-peptide hit jobs are returned via additionalJobs
         /// </summary>
+        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         /// <param name="additionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MS-GF+ or Sequest)</returns>
-        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         protected List<DataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             out List<DataPackageJobInfo> additionalJobs,
             out string errorMsg)
@@ -2433,8 +2433,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Logs current progress to the log file at a given interval (track progress with mProgress)
         /// </summary>
-        /// <param name="toolName"></param>
         /// <remarks>Longer log intervals when mDebugLevel is 0 or 1; shorter intervals for 5</remarks>
+        /// <param name="toolName"></param>
         protected void LogProgress(string toolName)
         {
             int logIntervalMinutes;
@@ -2466,9 +2466,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Logs mProgress to the log file at interval logIntervalMinutes (track progress with mProgress)
         /// </summary>
+        /// <remarks>Calls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
         /// <param name="toolName"></param>
         /// <param name="logIntervalMinutes"></param>
-        /// <remarks>Calls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
         protected void LogProgress(string toolName, int logIntervalMinutes)
         {
             const int CONSOLE_PROGRESS_INTERVAL_MINUTES = 1;
@@ -2865,8 +2865,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Adds manager assembly data to job summary file
         /// </summary>
-        /// <param name="outputDirectory">Path to summary file</param>
         /// <remarks>Skipped if the debug level is less than 4</remarks>
+        /// <param name="outputDirectory">Path to summary file</param>
         protected void OutputSummary(string outputDirectory)
         {
             if (mDebugLevel < 4)
@@ -2901,12 +2901,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Perform any required post processing after retrieving remote results
         /// </summary>
-        /// <returns>CloseoutType enum representing completion status</returns>
         /// <remarks>
         /// Actual post-processing of remote results should only be required if the remote host running the job
         /// could not perform a step that requires database access or Windows share access.
         /// Override this method as required for specific step tools (however, still call base.PostProcessRemoteResults)
         /// </remarks>
+        /// <returns>CloseoutType enum representing completion status</returns>
         public virtual CloseOutType PostProcessRemoteResults()
         {
             var toolJobDescription = string.Format("remote tool {0}, job {1}", StepToolName, Job);
@@ -3248,8 +3248,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Deletes files in specified directory that have been previously flagged as not wanted in results directory
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>List of files to delete is tracked via mJobParams.ServerFilesToDelete; must store full file paths in ServerFilesToDelete</remarks>
+        /// <returns>True if success, false if an error</returns>
         public bool RemoveNonResultServerFiles()
         {
             var currentFile = "??";
@@ -3288,10 +3288,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Replace an updated file
         /// </summary>
+        /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
         /// <param name="originalFile"></param>
         /// <param name="updatedFile"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
         protected bool ReplaceUpdatedFile(FileInfo originalFile, FileInfo updatedFile)
         {
             try
@@ -3329,15 +3329,15 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
-        /// <param name="transferUtility">Remote transfer utility</param>
-        /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
-        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
-        /// <returns>True on success, otherwise false</returns>
         /// <remarks>
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
         /// <exception cref="NotImplementedException"></exception>
+        /// <param name="transferUtility">Remote transfer utility</param>
+        /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
+        /// <returns>True on success, otherwise false</returns>
         public virtual bool RetrieveRemoteResults(
             RemoteTransferUtility transferUtility,
             bool verifyCopied,
@@ -3484,11 +3484,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
+        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         public bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> toolFiles, bool saveToolVersionTextFile = true)
         {
             return mToolVersionUtilities.SetStepTaskToolVersion(toolVersionInfo, toolFiles, saveToolVersionTextFile);
@@ -3497,10 +3497,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         protected bool StoreDotNETToolVersionInfo(string progLoc, bool saveToolVersionTextFile)
         {
             return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, saveToolVersionTextFile);
@@ -3509,11 +3509,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         /// <param name="progLoc">Path to the primary .exe or .DLL</param>
         /// <param name="additionalDLLs">Additional .NET DLLs to examine (either simply names or full paths)</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
         protected bool StoreDotNETToolVersionInfo(string progLoc, IReadOnlyCollection<string> additionalDLLs, bool saveToolVersionTextFile)
         {
             return mToolVersionUtilities.StoreDotNETToolVersionInfo(progLoc, additionalDLLs, saveToolVersionTextFile);
@@ -3522,11 +3522,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Uses Reflection to determine the version info for an assembly already loaded in memory
         /// </summary>
+        /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
         /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
             return mToolVersionUtilities.StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, assemblyName, includeRevision);
@@ -3574,11 +3574,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
+        /// <remarks>Will retry failed copies up to 3 times</remarks>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, string fileNameFilterSpec)
         {
             var fileNameFilterSpecs = new List<string> { fileNameFilterSpec };
@@ -3592,11 +3592,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
+        /// <remarks>Will retry failed copies up to 3 times</remarks>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs)
         {
             var fileNameExclusionSpecs = new List<string>();
@@ -3609,12 +3609,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
+        /// <remarks>Will retry failed copies up to 3 times</remarks>
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Will retry failed copies up to 3 times</remarks>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs, List<string> fileNameExclusionSpecs)
         {
             const int maxRetryCount = 3;
@@ -3890,11 +3890,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update the CPU usage by monitoring a process by name
         /// </summary>
+        /// <remarks>This method is used by AnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
         /// <param name="processName">Process name, for example chrome (do not include .exe)</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
         /// <param name="defaultProcessID">Process ID to use if not match for processName</param>
         /// <returns>Actual CPU usage; -1 if an error</returns>
-        /// <remarks>This method is used by AnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
         protected float UpdateCpuUsageByProcessName(string processName, int secondsBetweenUpdates, int defaultProcessID)
         {
             try
@@ -3937,10 +3937,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Cache the new core usage value
         /// Note: call ResetProgRunnerCpuUsage just before calling CmdRunner.RunProgram()
         /// </summary>
+        /// <remarks>This method is used by this class and by AnalysisToolRunnerMODPlus</remarks>
         /// <param name="processID">ProcessID of the externally running process</param>
         /// <param name="coreUsage">Number of cores in use by the process; -1 if unknown</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
-        /// <remarks>This method is used by this class and by AnalysisToolRunnerMODPlus</remarks>
         protected void UpdateProgRunnerCpuUsage(int processID, float coreUsage, int secondsBetweenUpdates)
         {
             // Cache the core usage values for the last 5 minutes
@@ -3987,9 +3987,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Then, when handling the LoopWaiting event from the cmdRunner instance
         /// call this method every secondsBetweenUpdates seconds (typically 30)
         /// </summary>
+        /// <remarks>Public because used by DtaGenThermoRaw</remarks>
         /// <param name="cmdRunner">RunDosProgram instance used to run an external process</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
-        /// <remarks>Public because used by DtaGenThermoRaw</remarks>
         public void UpdateProgRunnerCpuUsage(RunDosProgram cmdRunner, int secondsBetweenUpdates)
         {
             try
@@ -4053,9 +4053,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update mMessage, which is logged in the pipeline job steps table when the job step finishes
         /// </summary>
+        /// <remarks>Text in mMessage will be stored in the Completion_Message column in the database</remarks>
         /// <param name="statusMessage">New status message</param>
         /// <param name="appendToExisting">True to append to mMessage; false to overwrite it</param>
-        /// <remarks>Text in mMessage will be stored in the Completion_Message column in the database</remarks>
         protected void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
         {
             if (appendToExisting)
@@ -4192,8 +4192,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Compress a file using SharpZipLib
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>IonicZip is faster, so we typically use function ZipFile</remarks>
+        /// <returns>True if success, false if an error</returns>
         [Obsolete("Use ZipFile, which uses DotNetZip")]
         public bool ZipFileSharpZipLib(string sourceFilePath)
         {
@@ -4258,10 +4258,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Zip a file
         /// </summary>
+        /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
         /// <param name="fileToCompress"></param>
         /// <param name="fileDescription"></param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
         public bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
         {
             try

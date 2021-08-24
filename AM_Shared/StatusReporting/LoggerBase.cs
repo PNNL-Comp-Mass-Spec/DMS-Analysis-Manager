@@ -18,6 +18,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
         /// </summary>
+        /// <remarks>The message is shown in dark gray in the console.</remarks>
         /// <param name="statusMessage">Status message</param>
         /// <param name="logFileDebugLevel">
         /// Log level for whether to log to disk:
@@ -26,7 +27,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// 2 to log if mDebugLevel is >= 2
         /// 10 to not log to disk
         /// </param>
-        /// <remarks>The message is shown in dark gray in the console.</remarks>
         public void LogDebug(string statusMessage, int logFileDebugLevel = 0)
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
@@ -36,9 +36,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Log an error message, optionally logging to the database in addition to the log file
         /// </summary>
+        /// <remarks>The error is shown in red in the console</remarks>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
-        /// <remarks>The error is shown in red in the console</remarks>
         public virtual void LogError(string errorMessage, bool logToDb = false)
         {
             ConsoleMsgUtils.ShowErrorCustom(errorMessage, false);
@@ -66,10 +66,10 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Log an error message and exception
         /// </summary>
+        /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
         /// <param name="ex">Exception to log (allowed to be nothing)</param>
         /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
-        /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
         protected virtual void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
             LogTools.LogError(errorMessage, ex, logToDatabase);
@@ -96,8 +96,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Display a warning message at the console and write to the log file
         /// </summary>
-        /// <param name="warningMessage">Warning message</param>
         /// <remarks>The warning is shown in yellow in the console.</remarks>
+        /// <param name="warningMessage">Warning message</param>
         protected void LogWarning(string warningMessage)
         {
             LogTools.LogWarning(warningMessage);

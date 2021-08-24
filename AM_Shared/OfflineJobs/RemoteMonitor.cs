@@ -154,8 +154,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Delete WorkDir files on the remote host and archive status files
         /// </summary>
-        /// <returns>True on success, otherwise failure</returns>
         /// <remarks>Will use the cached status file names if GetRemoteJobStatus was previously called</remarks>
+        /// <returns>True on success, otherwise failure</returns>
         public bool DeleteRemoteJobFiles()
         {
             try

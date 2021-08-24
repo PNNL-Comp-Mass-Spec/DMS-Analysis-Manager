@@ -228,8 +228,8 @@ namespace AnalysisManagerNOMSIPlugin
         /// <summary>
         /// Parse the NOMSI console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
         /// <remarks>Not used at present</remarks>
+        /// <param name="strConsoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // Example Console output

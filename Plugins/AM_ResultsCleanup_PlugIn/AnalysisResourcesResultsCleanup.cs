@@ -19,8 +19,8 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <summary>
         /// Obtains resources necessary for performing analysis results cleanup
         /// </summary>
-        /// <returns>CloseOutType indicating success or failure</returns>
         /// <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
+        /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

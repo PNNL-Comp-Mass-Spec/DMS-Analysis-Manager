@@ -225,9 +225,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Determine the number of MS1 and MS2 (or higher) spectra in a dataset
         /// </summary>
+        /// <remarks>At present only supports Thermo .Raw files and .UIMF files</remarks>
         /// <param name="countMs1"></param>
         /// <param name="countMSn"></param>
-        /// <remarks>At present only supports Thermo .Raw files and .UIMF files</remarks>
         private bool ExamineDatasetScanTypes(out int countMs1, out int countMSn)
         {
             countMs1 = 0;

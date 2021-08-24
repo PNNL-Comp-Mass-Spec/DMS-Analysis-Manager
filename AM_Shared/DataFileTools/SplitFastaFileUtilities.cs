@@ -397,10 +397,10 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Validate that the split FASTA file exists
         /// </summary>
+        /// <remarks>If the split file is not found, will automatically split the original file and update DMS with the split file information</remarks>
         /// <param name="baseFastaName">Original (non-split) filename, e.g. RefSoil_2013-11-07.fasta</param>
         /// <param name="splitFastaName">Split FASTA filename, e.g. RefSoil_2013-11-07_10x_05.fasta</param>
         /// <returns>True if the split FASTA file is defined in DMS</returns>
-        /// <remarks>If the split file is not found, will automatically split the original file and update DMS with the split file information</remarks>
         public bool ValidateSplitFastaFile(string baseFastaName, string splitFastaName)
         {
             var currentTask = "Initializing";

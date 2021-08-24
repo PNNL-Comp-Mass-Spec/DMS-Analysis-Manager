@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -323,13 +323,13 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Configure the Broker DB logging settings
         /// </summary>
-        /// <param name="logStatusToBrokerDB"></param>
-        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
-        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
         /// <remarks>
         /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure UpdateManagerAndTaskStatus
         /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
         /// </remarks>
+        /// <param name="logStatusToBrokerDB"></param>
+        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
+        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
             if (Global.OfflineMode)
@@ -366,12 +366,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Configure the Message Queue logging settings
         /// </summary>
-        /// <param name="logStatusToMessageQueue"></param>
-        /// <param name="msgQueueURI"></param>
-        /// <param name="messageQueueTopicMgrStatus"></param>
         /// <remarks>
         /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
         /// </remarks>
+        /// <param name="logStatusToMessageQueue"></param>
+        /// <param name="msgQueueURI"></param>
+        /// <param name="messageQueueTopicMgrStatus"></param>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
             if (Global.OfflineMode)
@@ -570,8 +570,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Returns the number of cores
         /// </summary>
-        /// <returns>The number of cores on this computer</returns>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        /// <returns>The number of cores on this computer</returns>
         public int GetCoreCount()
         {
             return Global.GetCoreCount();
@@ -580,11 +580,11 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Returns the CPU usage
         /// </summary>
-        /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
         /// For CPU usage of a single application use Global.ProcessInfo.GetCoreUsageByProcessID()
         /// </remarks>
+        /// <returns>Value between 0 and 100</returns>
         private float GetCPUUtilization()
         {
             return Global.ProcessInfo.GetCPUUtilization();
@@ -688,8 +688,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Send status information to the database
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         private void LogStatusToBrokerDatabase(bool forceLogToBrokerDB)
         {
             if (mBrokerDBLogger == null)
@@ -858,13 +858,13 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
         /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <param name ="usePerformanceCounters">
         /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
         /// This can lead to PerfLib warnings and errors in the Windows Event Log;
         /// thus this should be set to false if simply reporting that the manager is idle
         /// </param>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(bool forceLogToBrokerDB, bool usePerformanceCounters = true)
         {
             var lastUpdate = DateTime.MinValue;
@@ -911,6 +911,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message queue and/or broker DB
         /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         /// <param name="lastUpdate"></param>
         /// <param name="processId"></param>
         /// <param name="cpuUtilization"></param>
@@ -925,7 +926,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// This can lead to PerfLib warnings and errors in the Windows Event Log;
         /// thus this should be set to false if simply reporting that the manager is idle
         /// </param>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(
             DateTime lastUpdate,
             int processId,
@@ -956,6 +956,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message queue (and optionally directly to the Broker DB)
         /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         /// <param name="status">Status info</param>
         /// <param name="lastUpdate">Last update time (UTC)</param>
         /// <param name="processId">Manager process ID</param>
@@ -967,7 +968,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
         /// Otherwise, mBrokerDBLogger only logs the status periodically
         /// Typically false</param>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         private void WriteStatusFile(
             StatusFile status,
             DateTime lastUpdate,
@@ -1519,12 +1519,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Update the status of a remotely running job
         /// </summary>
+        /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
         /// <param name="status">Status info</param>
         /// <param name="lastUpdate">Last update time (UTC)</param>
         /// <param name="processId">Manager process ID</param>
         /// <param name="cpuUtilization">CPU utilization</param>
         /// <param name="freeMemoryMB">Free memory in MB</param>
-        /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
         public void UpdateRemoteStatus(StatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
         {
             var runTimeHours = (float)lastUpdate.Subtract(status.TaskStartTime).TotalHours;

@@ -1,4 +1,4 @@
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Created 08/07/2018
@@ -993,11 +993,11 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Validate the results files and zip the html subdirectories
         /// </summary>
-        /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// TopPIC 1.1 created tab-delimited text files ending with "_ms2.OUTPUT_TABLE" and "_ms2.FORM_OUTPUT_TABLE"
         /// TopPIC 1.2 creates .csv files ending with "_ms2_toppic_prsm.csv" and "_ms2_toppic_proteoform.csv"
         /// </remarks>
+        /// <returns>True if success, false if an error</returns>
         private bool ValidateAndZipResults(out bool noValidResults)
         {
             noValidResults = false;
@@ -1346,10 +1346,10 @@ namespace AnalysisManagerTopPICPlugIn
         /// <summary>
         /// Validates the modification definition text
         /// </summary>
+        /// <remarks>A valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         /// <param name="mod">Modification definition</param>
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
-        /// <remarks>A valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         private bool ValidateMod(string mod, out string modClean)
         {
             modClean = string.Empty;

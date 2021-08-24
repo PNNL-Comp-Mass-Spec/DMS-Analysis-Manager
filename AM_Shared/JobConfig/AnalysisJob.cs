@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -238,8 +238,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Add a fileName extension to not move to the results directory
         /// </summary>
-        /// <param name="fileExtension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
+        /// <param name="fileExtension"></param>
         public void AddResultFileExtensionToSkip(string fileExtension)
         {
             if (string.IsNullOrWhiteSpace(fileExtension))
@@ -418,13 +418,13 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="name">Key name for parameter</param>
-        /// <param name="valueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         /// <remarks>
         /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
         /// the calling procedure must handle this exception
         /// </remarks>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public bool GetJobParameter(string name, bool valueIfMissing)
         {
             string value;
@@ -1488,13 +1488,13 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Saves job Parameters to an XML File in the working directory
         /// </summary>
-        /// <param name="workDir">Full path to work directory</param>
-        /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
-        /// <param name="jobNum">Job number</param>
         /// <remarks>
         /// While saving the job parameters, several StepParameters items are skipped to avoid storing duplicate information in the parameter file
         /// Additionally, each StepParameters section will have attribute "step" added to it, for example step="1" or step="2"
         /// </remarks>
+        /// <param name="workDir">Full path to work directory</param>
+        /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
+        /// <param name="jobNum">Job number</param>
         private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
         {
             var xmlParameterFilePath = string.Empty;
@@ -1666,12 +1666,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Create a new lock file at the given path
         /// </summary>
-        /// <param name="lockFilePath">Full path to the .lock file</param>
-        /// <returns>Full path to the lock file; empty string if a problem</returns>
         /// <remarks>
         /// An exception will be thrown if the lock file already exists, or if another manager overwrites the lock file
         /// This method is similar to CreateRemoteLockFile in RemoteTransferUtility
         /// </remarks>
+        /// <param name="lockFilePath">Full path to the .lock file</param>
+        /// <returns>Full path to the lock file; empty string if a problem</returns>
         private void CreateLocalLockFile(string lockFilePath)
         {
             var lockFileContents = new List<string>
@@ -1808,12 +1808,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Determine the most recent time that a file in a directory was changed, or that the directory itself was changed
         /// </summary>
-        /// <param name="directory"></param>
-        /// <param name="recurse"></param>
-        /// <returns>UTC time of last change to files in the directory or the directory itself</returns>
         /// <remarks>
         /// If the directory has no files, the returned file info will be for a
         /// non-existent file named Placeholder.txt, with the date of the directory's last write time</remarks>
+        /// <param name="directory"></param>
+        /// <param name="recurse"></param>
+        /// <returns>UTC time of last change to files in the directory or the directory itself</returns>
         private DateTime GetDirectoryLastWriteTime(DirectoryInfo directory, bool recurse = false)
         {
             var newestDateUtc = DateTime.MinValue;
@@ -1892,12 +1892,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Communicates with database to perform job closeOut
         /// </summary>
+        /// <remarks>evalCode and EvalMsg not presently used</remarks>
         /// <param name="compCode">Integer version of enum CloseOutType specifying the completion code</param>
         /// <param name="compMsg">Comment to insert in database</param>
         /// <param name="evalCode">Integer results evaluation code</param>
         /// <param name="evalMsg">Message describing evaluation results</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
             if (Global.OfflineMode)

@@ -92,9 +92,9 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <remarks>Call LoadSettings after instantiating this class</remarks>
         /// <param name="mgrDirectoryPath"></param>
         /// <param name="traceMode"></param>
-        /// <remarks>Call LoadSettings after instantiating this class</remarks>
         public AnalysisMgrSettings(
             string mgrDirectoryPath,
             bool traceMode)

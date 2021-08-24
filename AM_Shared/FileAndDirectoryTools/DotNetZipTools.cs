@@ -310,9 +310,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Compress the file using GZipStream (as implemented in PRISM.dll)
         /// </summary>
+        /// <remarks>The .gz file created by PRISM.dll will include header information (filename and timestamp of the original file)</remarks>
         /// <param name="fileToGZip">File to compress</param>
         /// <param name="gzipFilePath"></param>
-        /// <remarks>The .gz file created by PRISM.dll will include header information (filename and timestamp of the original file)</remarks>
         private bool GZipUsingGZipStream(FileInfo fileToGZip, string gzipFilePath)
         {
             try
@@ -370,12 +370,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Update Message with stats on the most recent zip file created
         /// </summary>
+        /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
         /// <param name="fileOrFolderZippedOrUnzipped"></param>
         /// <param name="startTime"></param>
         /// <param name="endTime"></param>
         /// <param name="fileWasZipped"></param>
         /// <param name="zipProgramName"></param>
-        /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
         private void ReportZipStats(
             FileSystemInfo fileOrFolderZippedOrUnzipped,
             DateTime startTime,

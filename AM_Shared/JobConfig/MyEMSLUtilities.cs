@@ -215,12 +215,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Look for the given file (optionally in a given subdirectory) for the given dataset
         /// </summary>
+        /// <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         /// <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subdirectoryName">Directory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
         /// <param name="datasetName">Dataset name filter</param>
         /// <param name="recurse">True to search all directories; false to only search the root directory (or only subdirectoryName)</param>
         /// <returns>List of matching files</returns>
-        /// <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
         public List<DatasetDirectoryOrFileInfo> FindFiles(string fileName, string subdirectoryName, string datasetName, bool recurse)
         {
             // Make sure the dataset name is being tracked by mMyEMSLDatasetListInfo
@@ -284,10 +284,10 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieve queued files from MyEMSL
         /// </summary>
+        /// <remarks>Returns True if the download queue is empty</remarks>
         /// <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destinationFilePathOverride)</param>
         /// <param name="directoryLayout">Directory Layout (ignored for files defined in destinationFilePathOverride)</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>Returns True if the download queue is empty</remarks>
         public bool ProcessMyEMSLDownloadQueue(string downloadDirectoryPath, Downloader.DownloadLayout directoryLayout)
         {
             if (mMyEMSLDatasetListInfo.FilesToDownload.Count == 0)

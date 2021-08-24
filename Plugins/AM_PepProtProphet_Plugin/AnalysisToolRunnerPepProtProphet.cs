@@ -621,12 +621,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Get appropriate path of the working directory for the given experiment
         /// </summary>
-        /// <param name="experimentGroupName"></param>
-        /// <param name="experimentGroupCount"></param>
         /// <remarks>
         /// <para>If all of the datasets belong to the same experiment, return the job's working directory</para>
         /// <para>Otherwise, return a subdirectory below the working directory, based on the experiment's name</para>
         /// </remarks>
+        /// <param name="experimentGroupName"></param>
+        /// <param name="experimentGroupCount"></param>
         private string GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
         {
             return experimentGroupCount <= 1 ? mWorkDir : Path.Combine(mWorkDir, experimentGroupName);
@@ -635,8 +635,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Group the datasets in dataPackageInfo by experiment group name
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
         /// <remarks>Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__</remarks>
+        /// <param name="dataPackageInfo"></param>
         /// <returns>Dictionary where keys are experiment group name and values are dataset ID</returns>
         public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperimentGroup(DataPackageInfo dataPackageInfo)
         {
@@ -747,9 +747,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Initialize the Philosopher workspace (creates a hidden directory named .meta)
         /// </summary>
+        /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <param name="experimentGroupNames"></param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
             SortedSet<string> experimentGroupNames,
@@ -832,11 +832,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
+        /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <param name="philosopherExe"></param>
         /// <param name="datasetCount"></param>
         /// <param name="paramFilePath"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
-        /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <returns>True if success, false if an error</returns>
         private bool LoadMSFraggerOptions(FileInfo philosopherExe, int datasetCount, string paramFilePath, out MSFraggerOptions options)
         {
@@ -908,6 +908,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Move results into or out of subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
         /// </summary>
+        /// <remarks>
+        /// If datasetIDsByExperimentGroup only has one item, no files are moved
+        /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
@@ -915,9 +918,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// When true, the source directory is the working directory
         /// When false, the working directory is the target directory
         /// </param>
-        /// <remarks>
-        /// If datasetIDsByExperimentGroup only has one item, no files are moved
-        /// </remarks>
         private bool MoveResultsToFromSubdirectories(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -1443,12 +1443,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Isobaric Quantification (LabelQuant)
         /// </summary>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <param name="options"></param>
         /// <remarks>
         /// Results will appear in the.tsv files created by the Report step (ion.tsv, peptide.tsv, protein.tsv, and psm.tsv),
         /// in columns corresponding to labels in the AliasNames.txt file
         /// </remarks>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="options"></param>
         private bool RunLabelQuant(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
         {
             try
@@ -2347,15 +2347,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Update the msms_run_summary element in pepXML files created by Peptide Prophet to adjust the path to the parent .mzML files
         /// </summary>
+        /// <remarks>
+        /// This method is called when peptide prophet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
+        /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
+        /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
-        /// <remarks>
-        /// This method is called when peptide prophet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
-        /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
-        /// </remarks>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
             DataPackageInfo dataPackageInfo,
@@ -2456,10 +2456,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Update the msms_run_summary element in pepXML files created by Peptide Prophet to adjust the path to the parent .mzML file
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="workspaceDirectoryByDatasetId"></param>
-        /// <param name="options"></param>
-        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
         /// <remarks>
         /// <para>
         /// This method is called when Peptide Prophet was run separately against each dataset (<seealso cref="UpdateMsMsRunSummaryInCombinedPepXmlFiles"/>)
@@ -2468,6 +2464,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// This corresponds to FragPipe step "Rewrite pepxml"
         /// </para>
         /// </remarks>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="workspaceDirectoryByDatasetId"></param>
+        /// <param name="options"></param>
+        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
             DataPackageInfo dataPackageInfo,

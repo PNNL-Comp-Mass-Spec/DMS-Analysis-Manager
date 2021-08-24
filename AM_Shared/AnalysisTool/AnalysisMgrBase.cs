@@ -108,10 +108,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Log stats related to copying a file
         /// </summary>
+        /// <remarks>Only writes to the log if the copy time exceeds logThresholdSeconds</remarks>
         /// <param name="startTimeUtc">Time the copy started (or the time that CopyFileUsingLocks was called)</param>
         /// <param name="destinationFilePath">Destination file path (used to determine the file size)</param>
         /// <param name="logThresholdSeconds">Threshold for logging the file copy details</param>
-        /// <remarks>Only writes to the log if the copy time exceeds logThresholdSeconds</remarks>
         protected void LogCopyStats(DateTime startTimeUtc, string destinationFilePath, int logThresholdSeconds = 10)
         {
             var elapsedSeconds = DateTime.UtcNow.Subtract(startTimeUtc).TotalSeconds;
@@ -138,8 +138,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Log an error to the database and the local log file
         /// </summary>
-        /// <param name="errorMessage">Error message</param>
         /// <remarks>Does not update mMessage</remarks>
+        /// <param name="errorMessage">Error message</param>
         protected void LogErrorToDatabase(string errorMessage)
         {
             base.LogError(errorMessage, logToDb: true);
@@ -326,9 +326,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update progress and re-write the analysis status file
         /// </summary>
+        /// <remarks>This does not display a message at console (intentionally)</remarks>
         /// <param name="progressMessage"></param>
         /// <param name="percentComplete"></param>
-        /// <remarks>This does not display a message at console (intentionally)</remarks>
         protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             mStatusTools.CurrentOperation = progressMessage;

@@ -62,9 +62,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
+        /// <remarks>Will list DatasetID as 0 in the output file</remarks>
         /// <param name="inputFilePath">Dataset file</param>
         /// <param name="outputDirectoryPath">Output directory</param>
-        /// <remarks>Will list DatasetID as 0 in the output file</remarks>
         // ReSharper disable once UnusedMember.Global
         public bool GenerateScanStatsFiles(string inputFilePath, string outputDirectoryPath)
         {

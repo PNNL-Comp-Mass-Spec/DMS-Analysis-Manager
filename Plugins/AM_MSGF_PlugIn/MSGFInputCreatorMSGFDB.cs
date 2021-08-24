@@ -39,12 +39,12 @@ namespace AnalysisManagerMSGFPlugin
         /// Reads a MODa or MODPlus FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
         /// using the Probability values for the MSGF score
         /// </summary>
-        /// <param name="sourceFilePath"></param>
-        /// <param name="resultType"></param>
         /// <remarks>
         /// Note that higher probability values are better.
         /// Also, note that Probability is actually just a score between 0 and 1; not a true probability
         /// </remarks>
+        /// <param name="sourceFilePath"></param>
+        /// <param name="resultType"></param>
         [Obsolete("This function does not appear to be used anywhere")]
         public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, PeptideHitResultTypes resultType)
         {

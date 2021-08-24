@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -53,9 +53,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
         /// </summary>
+        /// <remarks>Returns empty string if key isn't found</remarks>
         /// <param name="itemKey">Key name for item</param>
         /// <returns>String value associated with specified key</returns>
-        /// <remarks>Returns empty string if key isn't found</remarks>
         string GetParam(string itemKey);
 
         /// <summary>

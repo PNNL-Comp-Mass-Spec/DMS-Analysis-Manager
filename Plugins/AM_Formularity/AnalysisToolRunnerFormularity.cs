@@ -447,8 +447,8 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Parse the Formularity console output file to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
         /// <remarks>Not used at present</remarks>
+        /// <param name="consoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             ParseConsoleOutputFile(consoleOutputFilePath, out _, out _, out _);
@@ -457,11 +457,11 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Parse the Formularity console output file to track the search progress
         /// </summary>
+        /// <remarks>Not used at present</remarks>
         /// <param name="consoleOutputFilePath"></param>
         /// <param name="fileCountNoPeaks">Output: will be non-zero if Formularity reports "no data points found" for a given file</param>
         /// <param name="nothingToAlign">Output: set to true if Formularity reports "Nothing to align" (meaning non of the input files had peaks)</param>
         /// <param name="calibrationFailed">Output: set to true if calibration failed</param>
-        /// <remarks>Not used at present</remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath, out int fileCountNoPeaks, out bool nothingToAlign, out bool calibrationFailed)
         {
             // Example Console output

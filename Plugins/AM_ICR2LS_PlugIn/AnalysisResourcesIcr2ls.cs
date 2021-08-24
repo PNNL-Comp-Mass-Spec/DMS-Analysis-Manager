@@ -189,11 +189,6 @@ namespace AnalysisManagerICR2LSPlugIn
         /// Look for file .pek.tmp in the transfer folder
         /// Retrieves the file if it is found
         /// </summary>
-        /// <returns>
-        /// CLOSEOUT_SUCCESS if an existing file was found and copied,
-        /// CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and
-        /// CLOSEOUT_FAILURE if an error
-        /// </returns>
         /// <remarks>
         /// Does not validate that the ICR-2LS param file matches (in contrast, AnalysisResourcesSeq.vb does valid the param file).
         /// This is done on purpose to allow us to update the param file mid job.
@@ -201,6 +196,11 @@ namespace AnalysisManagerICR2LSPlugIn
         /// will use a different one; this is OK and allows us to adjust the settings mid-job.
         /// To prevent this behavior, delete the .pek.tmp file from the transfer folder
         /// </remarks>
+        /// <returns>
+        /// CLOSEOUT_SUCCESS if an existing file was found and copied,
+        /// CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and
+        /// CLOSEOUT_FAILURE if an error
+        /// </returns>
         private CloseOutType RetrieveExistingTempPEKFile()
         {
             try

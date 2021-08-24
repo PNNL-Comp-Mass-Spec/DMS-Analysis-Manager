@@ -56,7 +56,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Get the program version
         /// </summary>
-        /// <returns></returns>
         public static string GetAppVersion()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
@@ -88,7 +87,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Validate the options
         /// </summary>
-        /// <returns></returns>
         public bool ValidateArgs(out string errorMessage)
         {
             if (string.IsNullOrWhiteSpace(ReporterIonObsRateFilePath))

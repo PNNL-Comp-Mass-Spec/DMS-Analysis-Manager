@@ -519,9 +519,9 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Lookup dataset name using dataset ID
         /// </summary>
+        /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
         /// <param name="datasetID"></param>
         /// <param name="datasetName">Output: dataset name, if found</param>
-        /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
         private bool LookupDatasetNameByID(int datasetID, out string datasetName)
         {
             datasetName = string.Empty;
@@ -564,11 +564,11 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
         /// </summary>
+        /// <remarks>True if success, false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="totalSpectra">Output: number of spectra in the dataset</param>
         /// <param name="totalMSnSpectra">Output: number of MS/MS spectra in the dataset</param>
         /// <param name="warnIfNotFound">When true, if the dataset is not found, show a warning message</param>
-        /// <remarks>True if success, false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
         private bool LookupScanStats(string datasetName, out int totalSpectra, out int totalMSnSpectra, bool warnIfNotFound = true)
         {
             totalSpectra = 0;
@@ -950,10 +950,10 @@ namespace MSGFResultsSummarizer
         /// Search normalizedPeptidesByCleanSequence for an entry that either exactly matches normalizedPeptide
         /// or nearly matches normalizedPeptide
         /// </summary>
+        /// <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
         /// <param name="normalizedPeptidesByCleanSequence">Existing tracked normalized peptides; key is clean sequence, value is a list of normalized peptide info structs</param>
         /// <param name="newNormalizedPeptide">New normalized peptide</param>
         /// <returns>The Sequence ID of a matching normalized peptide, or -1 if no match</returns>
-        /// <remarks>A near match is one where the position of each modified residue is the same or just one residue apart</remarks>
         public static int FindNormalizedSequence(
             IReadOnlyDictionary<string, List<NormalizedPeptideInfo>> normalizedPeptidesByCleanSequence,
             NormalizedPeptideInfo newNormalizedPeptide)
@@ -1160,9 +1160,9 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Process this dataset's synopsis file to determine the PSM stats
         /// </summary>
+        /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
         /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
         public bool ProcessPSMResults(string synopsisFileNameFromPHRP = "")
         {
             DatasetScanStatsLookupError = false;

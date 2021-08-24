@@ -1,4 +1,4 @@
-using PRISM;
+﻿using PRISM;
 using PRISM.Logging;
 using PRISMWin;
 using System;
@@ -176,8 +176,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// If TraceStopPoint matches currentTraceLocation, exit the application immediately
         /// </summary>
-        /// <param name="currentTraceLocation"></param>
         /// <remarks>If TraceMode is true, will show the current trace point name if not a match</remarks>
+        /// <param name="currentTraceLocation"></param>
         public static void CheckStopTrace(string currentTraceLocation)
         {
             CheckStopTrace(TraceStopPoint, currentTraceLocation, TraceMode);
@@ -186,10 +186,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// If traceStopPoint matches currentTraceLocation, exit the application immediately
         /// </summary>
+        /// <remarks>If traceModeEnabled is true, will show the current trace point name if not a match</remarks>
         /// <param name="traceStopPoint"></param>
         /// <param name="currentTraceLocation"></param>
         /// <param name="traceModeEnabled"></param>
-        /// <remarks>If traceModeEnabled is true, will show the current trace point name if not a match</remarks>
         public static void CheckStopTrace(string traceStopPoint, string currentTraceLocation, bool traceModeEnabled)
         {
             if (string.IsNullOrEmpty(traceStopPoint))
@@ -268,8 +268,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Enable offline mode
         /// </summary>
-        /// <param name="runningLinux">Set to True if running Linux</param>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        /// <param name="runningLinux">Set to True if running Linux</param>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
             OfflineMode = true;
@@ -370,16 +370,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Run a query against a SQL Server database
         /// </summary>
-        /// <param name="dbTools">Instance of IDBTools</param>
-        /// <param name="sqlQuery">Query to run</param>
-        /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <remarks>
         /// Null values are converted to empty strings
         /// Numbers are converted to their string equivalent
         /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
         /// </remarks>
+        /// <param name="dbTools">Instance of IDBTools</param>
+        /// <param name="sqlQuery">Query to run</param>
+        /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <param name="callingFunction">Name of the calling function (for logging purposes)</param>
         /// <returns>True if success, false if an error</returns>
         public static bool GetQueryResultsTopRow(
             IDBTools dbTools,
@@ -458,9 +458,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compare two strings (not case sensitive)
         /// </summary>
+        /// <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
         /// <param name="text1"></param>
         /// <param name="text2"></param>
-        /// <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
         /// <returns>True if they match; false if not</returns>
         public static bool IsMatch(string text1, string text2)
         {
@@ -470,10 +470,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compare two strings (not case sensitive)
         /// </summary>
+        /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
         /// <param name="text1"></param>
         /// <param name="text2"></param>
         /// <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
-        /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
         /// <returns>True if they match; false if not</returns>
         public static bool IsMatch(string text1, string text2, bool treatNullAsEmptyString)
         {
@@ -505,9 +505,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
+        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
         /// <param name="headerLine">Tab delimited list of headers</param>
         /// <param name="expectedHeaderNames">Expected header column names</param>
-        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> expectedHeaderNames)
         {
@@ -519,12 +519,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
+        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
         /// <param name="columnMap">
         /// Mapping from column identifier to the index of the column in the header line; this dictionary will be cleared then populated
         /// </param>
         /// <param name="headerLine">Tab delimited list of headers</param>
         /// <param name="expectedHeaderNames">Expected header column names</param>
-        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         public static bool ParseHeaderLine(Dictionary<string, int> columnMap, string headerLine, List<string> expectedHeaderNames)
         {
@@ -758,9 +758,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compares two files, byte-by-byte
         /// </summary>
+        /// <remarks>See also TextFilesMatch</remarks>
         /// <param name="filePath1">Path to the first file</param>
         /// <param name="filePath2">Path to the second file</param>
-        /// <remarks>See also TextFilesMatch</remarks>
         /// <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
         public static bool FilesMatch(string filePath1, string filePath2)
         {
@@ -887,8 +887,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
-        /// <param name="targetDirectory"></param>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
+        /// <param name="targetDirectory"></param>
         /// <returns>Free space, in MB</returns>
         private static double GetFreeDiskSpaceWindows(DirectoryInfo targetDirectory)
         {
@@ -1192,12 +1192,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Check the free space on the drive with the given directory
         /// </summary>
+        /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         /// <param name="directoryDescription"></param>
         /// <param name="directoryPath"></param>
         /// <param name="minFreeSpaceMB"></param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logToDatabase"></param>
-        /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
         public static bool ValidateFreeDiskSpace(
             string directoryDescription,

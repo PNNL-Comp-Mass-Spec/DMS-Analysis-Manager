@@ -134,12 +134,12 @@ namespace AnalysisManagerBase.JobConfig
         /// that has the CacheInfo file for the mzML file used by a given job
         /// Look for the cache info file in that directory, then use that to find the location of the actual .mzML.gz file
         /// </summary>
+        /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
         /// <param name="datasetName"></param>
         /// <param name="job"></param>
         /// <param name="stepToolFilter">step tool to filter on; if an empty string, returns the input directory for the primary step tool for the job</param>
         /// <param name="workDirInfo"></param>
         /// <returns>Path to the .mzML or .mzML.gz file; empty string if not found</returns>
-        /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
         private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, FileSystemInfo workDirInfo)
         {
             if (Global.OfflineMode)
@@ -1661,6 +1661,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieve the .mzXML files for the jobs in instrumentDataToRetrieve
         /// </summary>
+        /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         /// <param name="instrumentDataToRetrieve">
         /// The keys in this dictionary are JobInfo entries
         /// The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any).
@@ -1668,7 +1669,6 @@ namespace AnalysisManagerBase.JobConfig
         /// </param>
         /// <param name="retrievalOptions">File retrieval options</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         public bool RetrieveDataPackageMzXMLFiles(
             Dictionary<DataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
             DataPackageRetrievalOptionsType retrievalOptions)
