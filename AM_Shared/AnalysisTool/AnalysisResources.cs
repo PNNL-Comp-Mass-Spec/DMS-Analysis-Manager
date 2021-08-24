@@ -1348,8 +1348,8 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var retryCount = 1;
-            var applicationName = string.Format("{0}_CreateFASTA", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mFastaToolsCnStr, applicationName);
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mFastaToolsCnStr, mMgrName);
 
             while (true)
             {
@@ -1475,9 +1475,8 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
-                var applicationName2 = string.Format("{0}_CreateSplitFASTA", mMgrName);
-                var dmsConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, applicationName2);
-                var proteinSeqsDBConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, applicationName2);
+                var dmsConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+                var proteinSeqsDBConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, mMgrName);
 
                 // Lookup the MSGFPlus Index Folder path
                 var msgfPlusIndexFilesDirPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
@@ -1895,8 +1894,7 @@ namespace AnalysisManagerBase.AnalysisTool
             sqlStr.Append("From V_DMS_Data_Packages ");
             sqlStr.Append("Where ID = " + dataPackageID);
 
-            var applicationName = string.Format("{0}_GetDataPackageStorage", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: false);
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
@@ -3025,8 +3023,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var applicationName = string.Format("{0}_GetDataPkgDatasetInfo", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
@@ -3056,8 +3053,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var applicationName = string.Format("{0}_GetDataPkgJobInfo", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
@@ -3116,8 +3112,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Gigasax.DMS5
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
-            var applicationName = string.Format("{0}_GetJobInfo", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
@@ -4509,8 +4504,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
 
-            var applicationName = string.Format("{0}_GetDataPkgPHRPFiles", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
