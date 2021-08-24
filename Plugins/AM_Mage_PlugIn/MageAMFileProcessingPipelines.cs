@@ -80,7 +80,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Import the contents of files in the given source directory that pass the given name filter
         /// into the results SQLite database.
-        /// /// </summary>
+        /// </summary>
         /// <param name="inputDirectoryPath">Path to directory containing files to be imported</param>
         /// <param name="fileNameList">List of specific file names that will be imported (ignored if blank)</param>
         /// <param name="importMode">Valid modes: CopyAndImport, SimpleImport, AddDatasetIDToImport, IMPROVClusterImport</param>

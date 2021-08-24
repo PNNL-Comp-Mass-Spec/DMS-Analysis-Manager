@@ -1,4 +1,4 @@
-//*********************************************************************************************************
+﻿//*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
@@ -3333,11 +3333,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
-        /// <exception cref="NotImplementedException"></exception>
         /// <param name="transferUtility">Remote transfer utility</param>
         /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
         /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual bool RetrieveRemoteResults(
             RemoteTransferUtility transferUtility,
             bool verifyCopied,

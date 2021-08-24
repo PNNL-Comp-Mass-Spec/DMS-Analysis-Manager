@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -1019,8 +1019,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
         /// Plugins should also copy FASTA files if appropriate
         /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
         /// <returns>True if success, false if an error</returns>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual bool CopyResourcesToRemote(RemoteTransferUtility transferUtility)
         {
             throw new NotImplementedException("Plugin " + StepToolName + " must implement CopyResourcesToRemote to allow for remote processing");
