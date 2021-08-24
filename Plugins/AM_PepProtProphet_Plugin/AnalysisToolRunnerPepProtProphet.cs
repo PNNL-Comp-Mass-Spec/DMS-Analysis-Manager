@@ -683,6 +683,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // ReSharper disable once StringLiteralTypo
             return string.Format("{0}_percolator_{1}_psms.tsv", datasetName, isDecoy ? "decoy" : "target");
         }
+        
+        private byte GetReporterIonChannelCount(ReporterIonModes reporterIonMode)
+        {
+            return reporterIonMode switch
+            {
+                ReporterIonModes.Itraq4 => 4,
+                ReporterIonModes.Itraq8 => 8,
+                ReporterIonModes.Tmt6 => 6,
+                ReporterIonModes.Tmt10 => 10,
+                ReporterIonModes.Tmt11 => 11,
+                ReporterIonModes.Tmt16 => 16,
+                ReporterIonModes.Disabled => 0,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+        }
 
         /// <summary>
         /// Create the temporary directories used by Peptide Prophet
@@ -1455,16 +1470,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                var plex = options.ReporterIonMode switch
-                {
-                    ReporterIonModes.Itraq4 => 4,
-                    ReporterIonModes.Itraq8 => 8,
-                    ReporterIonModes.Tmt6 => 6,
-                    ReporterIonModes.Tmt10 => 10,
-                    ReporterIonModes.Tmt11 => 11,
-                    ReporterIonModes.Tmt16 => 16,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
                 foreach (var item in experimentGroupWorkingDirectories)
                 {
