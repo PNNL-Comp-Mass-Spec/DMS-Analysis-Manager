@@ -88,7 +88,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
+                if (options.ReporterIonMode != ReporterIonModes.Disabled && options.DatasetCount > 1)
+                {
+                    currentTask = "Validate free memory for TMT-Integrator";
 
+                    if (!ValidateFreeMemorySizeGB("TMT-Integrator", AnalysisToolRunnerPepProtProphet.TMT_INTEGRATOR_MEMORY_SIZE_GB))
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
 
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
