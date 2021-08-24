@@ -692,7 +692,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // ReSharper disable once StringLiteralTypo
             return string.Format("{0}_percolator_{1}_psms.tsv", datasetName, isDecoy ? "decoy" : "target");
         }
-        
+
         private byte GetReporterIonChannelCount(ReporterIonModes reporterIonMode)
         {
             return reporterIonMode switch
@@ -2187,83 +2187,81 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
-
                 var arguments = new StringBuilder();
-                arguments.AppendFormat("java -Xmx{0}G -cp \"{1}\" TMTIntegrator {2}");
+                arguments.AppendFormat("java -Xmx{0}G -cp \"{1}\" TMTIntegrator", TMT_INTEGRATOR_MEMORY_SIZE_GB, mTmtIntegratorProgLoc);
+
+                // Create the TMT-Integrator config file
+                var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkDir, "tmt-integrator-conf.yml"));
+
+                using (var writer = new StreamWriter(new FileStream(tmtIntegratorConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    // ReSharper disable StringLiteralTypo
+
+                    writer.WriteLine("tmtintegrator:");
+                    writer.WriteLine("  min_site_prob: -1");
+                    writer.WriteLine("  mod_tag: none");
+                    writer.WriteLine("  min_purity: 0.5");
+                    writer.WriteLine("  memory: 16");
+                    writer.WriteLine("  ref_tag: Bridge");
+                    writer.WriteLine("  max_pep_prob_thres: 0.9");
+                    writer.WriteLine("  unique_gene: 0");
+                    writer.WriteLine("  min_pep_prob: 0.9");
+                    writer.WriteLine("  psm_norm: false");
+                    writer.WriteLine("  outlier_removal: true");
+                    writer.WriteLine("  output: {0}", Path.Combine(mWorkDir, "tmt-report"));
+                    writer.WriteLine("  path: {0}", mTmtIntegratorProgLoc);
+                    writer.WriteLine("  channel_num: {0}", plex);
+                    writer.WriteLine("  ms1_int: true");
+                    writer.WriteLine("  add_Ref: 1");
+                    writer.WriteLine("  min_percent: 0.05");
+                    writer.WriteLine("  protein_database: {0}", mFastaFilePath);
+                    writer.WriteLine("  groupby: 0");
+                    writer.WriteLine("  top3_pep: true");
+                    writer.WriteLine("  min_ntt: 0");
+                    writer.WriteLine("  aggregation_method: 0");
+                    writer.WriteLine("  allow_overlabel: true");
+                    writer.WriteLine("  allow_unlabeled: false");
+                    writer.WriteLine("  print_RefInt: false");
+                    writer.WriteLine("  prot_exclude: none");
+                    writer.WriteLine("  unique_pep: false");
+                    writer.WriteLine("  best_psm: true");
+                    writer.WriteLine("  prot_norm: 1");
+
+                    // ReSharper restore StringLiteralTypo
+                }
 
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-                    // Create the TMT-Integrator config file
-                    var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkDir, "tmt-integrator-conf.yml"));
 
-                    using (var writer = new StreamWriter(new FileStream(tmtIntegratorConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // ReSharper disable StringLiteralTypo
-
-                        writer.WriteLine("tmtintegrator:");
-                        writer.WriteLine("  min_site_prob: -1");
-                        writer.WriteLine("  mod_tag: none");
-                        writer.WriteLine("  min_purity: 0.5");
-                        writer.WriteLine("  memory: 16");
-                        writer.WriteLine("  ref_tag: Bridge");
-                        writer.WriteLine("  max_pep_prob_thres: 0.9");
-                        writer.WriteLine("  unique_gene: 0");
-                        writer.WriteLine("  min_pep_prob: 0.9");
-                        writer.WriteLine("  psm_norm: false");
-                        writer.WriteLine("  outlier_removal: true");
-                        writer.WriteLine("  output: {0}", Path.Combine(experimentGroup.Value.FullName, "tmt-report"));
-                        writer.WriteLine("  path: {0}", mTmtIntegratorProgLoc);
-                        writer.WriteLine("  channel_num: {0}", plex);
-                        writer.WriteLine("  ms1_int: true");
-                        writer.WriteLine("  add_Ref: 1");
-                        writer.WriteLine("  min_percent: 0.05");
-                        writer.WriteLine("  protein_database: {0}", mFastaFilePath);
-                        writer.WriteLine("  groupby: 0");
-                        writer.WriteLine("  top3_pep: true");
-                        writer.WriteLine("  min_ntt: 0");
-                        writer.WriteLine("  aggregation_method: 0");
-                        writer.WriteLine("  allow_overlabel: true");
-                        writer.WriteLine("  allow_unlabeled: false");
-                        writer.WriteLine("  print_RefInt: false");
-                        writer.WriteLine("  prot_exclude: none");
-                        writer.WriteLine("  unique_pep: false");
-                        writer.WriteLine("  best_psm: true");
-                        writer.WriteLine("  prot_norm: 1");
-
-                        // ReSharper restore StringLiteralTypo
-                    }
-
-
-                    mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
+                    mCmdRunner.WorkDir = experimentGroup.Value.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
                     mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
 
-                    LogDebug(options.JavaProgLoc + " " + arguments);
-
-                    var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
-
-                    var currentStep = "PercolatorOutputToPepXML for " + datasetName;
-                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
-
-                    if (processingSuccess)
-                    {
-                        return true;
-                    }
-
-                    if (mCmdRunner.ExitCode != 0)
-                    {
-                        LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
-                    }
-                    else
-                    {
-                        LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
-                    }
-
-                    return false;
-
+                    arguments.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
                 }
 
-                return true;
+                LogDebug(options.JavaProgLoc + " " + arguments);
+
+                var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                var currentStep = "TMT-Integrator";
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                if (processingSuccess)
+                {
+                    return true;
+                }
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
