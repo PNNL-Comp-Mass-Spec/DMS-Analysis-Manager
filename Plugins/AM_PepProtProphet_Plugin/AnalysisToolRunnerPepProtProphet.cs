@@ -28,10 +28,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, dir, expectscore
-        // Ignore Spelling: fasta, filelist, fragpipe, freequant, itraq, java, labelquant,
+        // Ignore Spelling: fasta, filelist, fragpipe, freequant, glyco, groupby, itraq, java, labelquant,
         // Ignore Spelling: mapmods, masswidth, maxppmdiff, minprob, multidir
         // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, protxml, psm, psms, --ptw, prot
-        // Ignore Spelling: razorbin, specdir, tdc, tmt, --tol, Xmx
+        // Ignore Spelling: razorbin, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
 
         // IonQuant command line arguments
@@ -84,6 +84,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
+        /// <summary>
+        /// Philosopher tool type
+        /// </summary>
         private enum PhilosopherToolType
         {
             Undefined = 0,
@@ -98,6 +101,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             Abacus = 9
         }
 
+        /// <summary>
+        /// Progress percent values
+        /// </summary>
         private enum ProgressPercentValues
         {
             Undefined = 0,
@@ -117,7 +123,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             ProcessingComplete = 99
         }
 
-        private enum CmdRunnerModes
+        /// <summary>
+        /// Command runner modes
+        /// </summary>
+        public enum CmdRunnerModes
         {
             Undefined = 0,
             Philosopher = 1,
@@ -1448,7 +1457,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper disable CommentTypo
 
-                // Example command:
+                // Example command line:
                 // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe labelquant --tol 20 --level 2 --plex 10 --annot C:\DMS_WorkDir\ExperimentGroupA_annotation.txt --brand tmt --dir C:\DMS_WorkDir
 
                 // ReSharper restore CommentTypo
@@ -1788,7 +1797,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="arguments"></param>
         /// <param name="currentTask"></param>
         /// <param name="workingDirectoryPath"></param>
-        /// <returns></returns>
+        /// <returns>True if successful, false if error</returns>
         private bool RunPhilosopher(PhilosopherToolType toolType, string arguments, string currentTask, string workingDirectoryPath = "")
         {
             try

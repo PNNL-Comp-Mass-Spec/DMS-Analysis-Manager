@@ -23,6 +23,8 @@ namespace DTASpectraFileGen
     /// </summary>
     public class DtaGenToolRunner : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: backend, Bruker, centroided, dta, pre
+
         public const string CDTA_FILE_SUFFIX = AnalysisResources.CDTA_EXTENSION;
 
         private const int CENTROID_CDTA_PROGRESS_START = 70;

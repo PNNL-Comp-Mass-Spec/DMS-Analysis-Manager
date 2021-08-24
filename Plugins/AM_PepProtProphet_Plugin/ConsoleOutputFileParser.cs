@@ -89,6 +89,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Parse the Percolator console output file
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
         public void ParsePercolatorConsoleOutputFile(string consoleOutputFilePath)
         {
             // ----------------------------------------------------

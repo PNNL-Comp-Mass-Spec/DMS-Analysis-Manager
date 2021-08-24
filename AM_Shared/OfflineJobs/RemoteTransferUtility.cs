@@ -19,7 +19,7 @@ namespace AnalysisManagerBase.OfflineJobs
     /// </summary>
     public class RemoteTransferUtility : RemoteUpdateUtility
     {
-        // Ignore Spelling: passphrase, scp, sftp, SFtpFile, Dirs, yyyyMMdd_HHmm
+        // Ignore Spelling: Dirs, passphrase, scp, sftp, SFtpFile, svc-dms, yyyyMMdd_HHmm, wildcards
 
         /// <summary>
         /// Step parameter RemoteInfo
