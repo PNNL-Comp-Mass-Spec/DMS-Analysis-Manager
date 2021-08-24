@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using PRISM;
 
@@ -76,7 +75,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent("Parsing file " + consoleOutputFilePath);
+                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFilePath, cmdRunnerMode));
                 }
             }
             catch (Exception ex)
@@ -132,7 +131,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the Philosopher console output file to determine the Philosopher version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        public void ParsePhilosopherConsoleOutputFile(string consoleOutputFilePath)
+        /// <param name="currentPhilosopherTool"></param>
+        public void ParsePhilosopherConsoleOutputFile(
+            string consoleOutputFilePath,
+            string currentPhilosopherTool)
         {
             // ReSharper disable CommentTypo
 
@@ -215,7 +217,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent("Parsing file " + consoleOutputFilePath);
+                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFilePath, currentPhilosopherTool));
                 }
             }
             catch (Exception ex)

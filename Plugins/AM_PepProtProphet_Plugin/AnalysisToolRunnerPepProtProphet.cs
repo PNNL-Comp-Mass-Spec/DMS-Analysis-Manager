@@ -817,7 +817,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (string.IsNullOrWhiteSpace(mPhilosopherVersion))
                 {
-                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT));
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT), GetCurrentPhilosopherToolDescription());
                 }
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
@@ -1069,7 +1069,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     arguments.AppendFormat(" {0}", experimentGroupDirectory.Name);
                 }
 
-                return RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "running abacus");
+                return RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "run abacus");
             }
             catch (Exception ex)
             {
@@ -1258,7 +1258,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkDir);
 
-                    var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "annotate the database", experimentGroupDirectory.FullName);
+                    var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "run FreeQuant", experimentGroupDirectory.FullName);
 
                     if (success)
                         successCount++;
@@ -1502,7 +1502,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper restore StringLiteralTypo
 
-                    var success = RunPhilosopher(PhilosopherToolType.LabelQuant, arguments, "annotate the database", item.Value.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.LabelQuant,
+                        arguments,
+                        "run LabelQuant",
+                        experimentGroup.Value.FullName);
 
                     if (success)
                         successCount++;
