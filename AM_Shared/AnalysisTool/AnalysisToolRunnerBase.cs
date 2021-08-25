@@ -456,9 +456,10 @@ namespace AnalysisManagerBase.AnalysisTool
                 return;
             }
 
-            var failedResultsDirectoryPath = mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath") ?
-                                                                     "FailedResultsDirectoryPath" :
-                                                                     "FailedResultsFolderPath");
+            var failedResultsDirectoryPath =
+                mMgrParams.GetParam(mMgrParams.HasParam("FailedResultsDirectoryPath")
+                ? "FailedResultsDirectoryPath"
+                : "FailedResultsFolderPath");
 
             if (string.IsNullOrWhiteSpace(failedResultsDirectoryPath))
             {

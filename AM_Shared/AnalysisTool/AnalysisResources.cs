@@ -2373,9 +2373,9 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
 
-            return string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase) ?
-                GetMzXMLFile() :
-                GetMzMLFile();
+            return string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase)
+                ? GetMzXMLFile()
+                : GetMzMLFile();
         }
 
         /// <summary>
