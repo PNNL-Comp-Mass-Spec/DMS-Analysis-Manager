@@ -16,6 +16,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using PRISM.AppSettings;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
@@ -195,6 +196,13 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             return coreCount;
+        }
+
+        private string GetComment(KeyValueParamFileLine setting, string defaultComment)
+        {
+            return string.IsNullOrWhiteSpace(setting.Comment)
+                ? defaultComment
+                : setting.Comment;
         }
 
         private Regex GetRegEx(string matchPattern, bool ignoreCase = true)
@@ -865,21 +873,33 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                         if (dataLine.Trim().StartsWith("database_name"))
                         {
-                            writer.WriteLine("database_name = " + mLocalFASTAFilePath);
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, "# FASTA File (should include decoy proteins)");
+
+                            writer.WriteLine("database_name = {0}     {1}",
+                                mLocalFASTAFilePath,
+                                comment);
+
                             fastaFileDefined = true;
                             continue;
                         }
 
                         if (dataLine.Trim().StartsWith("num_threads"))
                         {
-                            writer.WriteLine("num_threads = " + numThreadsToUse);
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, "# Number of CPU threads to use (0=poll CPU to set num threads)");
+
+                            writer.WriteLine("num_threads = {0}      {1}",
+                                numThreadsToUse,
+                                comment);
+
                             threadsDefined = true;
                             continue;
                         }
 
                         if (dataLine.Trim().StartsWith("output_format"))
                         {
-                            var setting = new PRISM.AppSettings.KeyValueParamFileLine(lineNumber, dataLine);
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
 
                             const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
 
@@ -887,10 +907,12 @@ namespace AnalysisManagerMSFraggerPlugIn
                             {
                                 // Auto-change the output format to tsv_pepxml_pin
 
+                                var comment = GetComment(setting, "# File format of output files; Percolator uses .pin files");
+
                                 var updatedLine = string.Format(
-                                    "output_format = {0}    #{1}",
+                                    "output_format = {0}    # {1}",
                                     REQUIRED_OUTPUT_FORMAT,
-                                    "File format of output files; Percolator uses .pin files");
+                                    comment);
 
                                 writer.WriteLine(updatedLine);
 
