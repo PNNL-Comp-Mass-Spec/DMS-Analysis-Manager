@@ -841,6 +841,12 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <param name="paramFilePath"></param>
         private CloseOutType UpdateMSFraggerParameterFile(out string paramFilePath)
         {
+            const string FASTA_FILE_COMMENT = "FASTA File (should include decoy proteins)";
+            const string FILE_FORMAT_COMMENT = "File format of output files; Percolator uses .pin files";
+            const string THREAD_COUNT_COMMENT = "Number of CPU threads to use (0=poll CPU to set num threads)";
+
+            const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
+
             paramFilePath = string.Empty;
 
             try
@@ -851,6 +857,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var fastaFileDefined = false;
                 var threadsDefined = false;
+                var outputFormatDefined = false;
 
                 var numThreadsToUse = GetNumThreadsToUse();
 
@@ -872,12 +879,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                         if (dataLine.Trim().StartsWith("database_name"))
                         {
-                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
-                            var comment = GetComment(setting, "# FASTA File (should include decoy proteins)");
+                            if (fastaFileDefined)
+                                continue;
 
-                            writer.WriteLine("database_name = {0}     {1}",
-                                mLocalFASTAFilePath,
-                                comment);
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, FASTA_FILE_COMMENT);
+
+                            WriteParameterFileSetting(writer, "database_name", mLocalFASTAFilePath, comment);
 
                             fastaFileDefined = true;
                             continue;
@@ -885,12 +893,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                         if (dataLine.Trim().StartsWith("num_threads"))
                         {
-                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
-                            var comment = GetComment(setting, "# Number of CPU threads to use (0=poll CPU to set num threads)");
+                            if (threadsDefined)
+                                continue;
 
-                            writer.WriteLine("num_threads = {0}      {1}",
-                                numThreadsToUse,
-                                comment);
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, THREAD_COUNT_COMMENT);
+
+                            WriteParameterFileSetting(writer, "num_threads", numThreadsToUse.ToString(), comment);
 
                             threadsDefined = true;
                             continue;
@@ -898,29 +907,28 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                         if (dataLine.Trim().StartsWith("output_format"))
                         {
+                            if (outputFormatDefined)
+                                continue;
+
                             var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, FILE_FORMAT_COMMENT);
 
-                            const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
-
-                            if (!setting.ParamValue.Equals(REQUIRED_OUTPUT_FORMAT, StringComparison.OrdinalIgnoreCase))
+                            if (setting.ParamValue.Equals(REQUIRED_OUTPUT_FORMAT, StringComparison.OrdinalIgnoreCase))
+                            {
+                                writer.WriteLine(dataLine);
+                            }
+                            else
                             {
                                 // Auto-change the output format to tsv_pepxml_pin
-
-                                var comment = GetComment(setting, "# File format of output files; Percolator uses .pin files");
-
-                                var updatedLine = string.Format(
-                                    "output_format = {0}    # {1}",
-                                    REQUIRED_OUTPUT_FORMAT,
-                                    comment);
-
-                                writer.WriteLine(updatedLine);
+                                WriteParameterFileSetting(writer, "output_format", REQUIRED_OUTPUT_FORMAT, comment);
 
                                 LogWarning(string.Format(
                                     "Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files",
                                     setting.ParamValue, REQUIRED_OUTPUT_FORMAT));
-
-                                continue;
                             }
+
+                            outputFormatDefined = true;
+                            continue;
                         }
 
                         writer.WriteLine(dataLine);
@@ -928,12 +936,17 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (!fastaFileDefined)
                     {
-                        writer.WriteLine("database_name = " + mLocalFASTAFilePath);
+                        WriteParameterFileSetting(writer, "database_name", mLocalFASTAFilePath, FASTA_FILE_COMMENT);
                     }
 
                     if (!threadsDefined)
                     {
-                        writer.WriteLine("num_threads = " + numThreadsToUse);
+                        WriteParameterFileSetting(writer, "num_threads", numThreadsToUse.ToString(), THREAD_COUNT_COMMENT);
+                    }
+
+                    if (!outputFormatDefined)
+                    {
+                        WriteParameterFileSetting(writer, "output_format", REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
                     }
                 }
 
@@ -991,6 +1004,17 @@ namespace AnalysisManagerMSFraggerPlugIn
             mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;
+        }
+
+        private void WriteParameterFileSetting(TextWriter writer, string paramName, string paramValue, string comment)
+        {
+            if (!comment.Trim().StartsWith("#"))
+            {
+                comment = "# " + comment.Trim();
+            }
+
+            var parameterNameAndValue = string.Format("{0} = {1}", paramName, paramValue);
+            writer.WriteLine("{0,-38} {1}", parameterNameAndValue, comment);
         }
 
         public static bool ZipPepXmlAndPinFiles(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile)
