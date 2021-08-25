@@ -2024,7 +2024,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("spectra_ppmtol = 20");
                     writer.WriteLine("threads = 4");
                     writer.WriteLine("varmod_masses = ");
-
                 }
 
                 var arguments = string.Format("{0} -Dbatmass.io.libs.thermo.dir=\"{1}\" -cp \"{2};{3};{4}\" edu.umich.andykong.ptmshepherd.PTMShepherd {5}",
@@ -2235,7 +2234,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-
                     mCmdRunner.WorkDir = experimentGroup.Value.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
                     mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
