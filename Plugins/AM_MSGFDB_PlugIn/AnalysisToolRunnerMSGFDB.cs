@@ -955,36 +955,36 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                 return;
 
+            mMSGFPlusRunTimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
+
             if (!mMSGFPlusComplete)
             {
                 mMSGFPlusComplete = true;
                 mMSGFPlusCompletionTime = DateTime.UtcNow;
-                mMSGFPlusRunTimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
+                return;
             }
-            else
-            {
-                // Wait a minimum of 5 minutes for Java to finish
-                // Wait longer for jobs that have been running longer
-                var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
 
-                if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
-                    return;
+            // Wait a minimum of 5 minutes for Java to finish
+            // Wait longer for jobs that have been running longer
+            var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
 
-                // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
-                // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
-                // However, it is also possible that Java frozen and thus the process should be aborted
+            if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
+                return;
 
-                var warningMessage = "MS-GF+ has been stuck at " +
-                                     MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for " + waitTimeMinutes + " minutes; " +
-                                     "aborting since Java appears frozen";
+            // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
+            // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
+            // However, it is also possible that Java frozen and thus the process should be aborted
 
-                LogWarning(warningMessage);
+            var warningMessage = string.Format(
+                "MS-GF+ has been stuck at {0}% complete for {1} minutes (after running for {2:F0} minutes); aborting since Java appears frozen",
+                MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE, waitTimeMinutes, mMSGFPlusRunTimeMinutes);
 
-                // Bump up mMSGFPlusCompletionTime by one hour
-                // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
-                mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
-                mCmdRunner.AbortProgramNow();
-            }
+            LogWarning(warningMessage);
+
+            // Bump up mMSGFPlusCompletionTime by one hour
+            // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+            mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+            mCmdRunner.AbortProgramNow();
         }
 
         /// <summary>
