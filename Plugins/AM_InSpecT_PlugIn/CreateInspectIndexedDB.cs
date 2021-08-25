@@ -18,7 +18,7 @@ namespace AnalysisManagerInSpecTPlugIn
     public class CreateInspectIndexedDB
     {
         /// <summary>
-        /// Convert .Fasta file to indexed DB files
+        /// Convert FASTA file to indexed DB files
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int debugLevel, int jobNum, string inspectDir, string orgDbDir)

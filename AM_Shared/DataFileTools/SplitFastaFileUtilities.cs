@@ -149,7 +149,7 @@ namespace AnalysisManagerBase.DataFileTools
                         WaitingForLockFile = false;
                     }
 
-                    // Try to create a lock file so that the calling procedure can create the required .Fasta file (or validate that it now exists)
+                    // Try to create a lock file so that the calling procedure can create the required FASTA file (or validate that it now exists)
                     creatingLockFile = true;
 
                     // Try to create the lock file
@@ -509,8 +509,8 @@ namespace AnalysisManagerBase.DataFileTools
 
                 lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mManagerName);
 
-                // Check again for the existence of the desired .Fasta file
-                // It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
+                // Check again for the existence of the desired FASTA file
+                // It's possible another process created the FASTA file while this process was waiting for the other process's lock file to disappear
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
                 var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);

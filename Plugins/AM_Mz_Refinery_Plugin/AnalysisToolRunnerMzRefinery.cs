@@ -403,7 +403,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Get the FASTA file and index it if necessary
             // Note: if the FASTA file is over 50 MB in size, only use the first 50 MB
 
-            // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+            // Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetJobParameter("MzRefParamFile", string.Empty));
             var javaExePath = javaProgLoc;
             var msgfplusJarFilePath = mMSGFPlusProgLoc;

@@ -252,7 +252,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 msgfPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
                 // Get the FASTA file and index it if necessary
-                // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+                // Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
                 var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"

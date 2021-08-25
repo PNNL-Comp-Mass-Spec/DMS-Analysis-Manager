@@ -1615,7 +1615,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (mDebugLevel >= 1)
             {
-                // Log the name of the .Fasta file we're using
+                // Log the name of the FASTA file we're using
                 LogDebugMessage("FASTA generation complete, using database: " + mFastaFileName, null);
 
                 if (mDebugLevel >= 2 && !previewMode)

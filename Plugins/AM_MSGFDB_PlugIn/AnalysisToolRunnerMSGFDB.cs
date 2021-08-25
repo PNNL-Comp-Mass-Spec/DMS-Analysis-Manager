@@ -297,7 +297,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mMSGFPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
-            // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+            // Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
             var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
             var javaExePath = javaProgLoc;
             var msgfPlusJarFilePath = mMSGFPlusProgLoc;

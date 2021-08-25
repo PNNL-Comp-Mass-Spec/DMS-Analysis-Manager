@@ -39,7 +39,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return result;
             }
 
-            // Retrieve Fasta file
+            // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
@@ -112,7 +112,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            // set up taxonomy file to reference the organism DB file (fasta)
+            // set up taxonomy file to reference the organism DB file (FASTA)
             success = MakeTaxonomyFile();
             if (!success)
             {
@@ -133,7 +133,7 @@ namespace AnalysisManagerXTandemPlugIn
 
         protected bool MakeTaxonomyFile()
         {
-            // set up taxonomy file to reference the organsim DB file (fasta)
+            // set up taxonomy file to reference the organism DB file (FASTA)
 
             var workingDir = mMgrParams.GetParam("WorkDir");
             var orgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");

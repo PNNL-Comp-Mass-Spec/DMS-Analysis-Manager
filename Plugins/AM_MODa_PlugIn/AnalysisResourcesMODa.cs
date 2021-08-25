@@ -53,7 +53,7 @@ namespace AnalysisManagerMODaPlugIn
             if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
-            // Retrieve Fasta file
+            // Retrieve the FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;

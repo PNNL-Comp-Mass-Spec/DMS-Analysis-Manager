@@ -91,7 +91,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             var filteredResultsAreEmpty = false;
 
-            // We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
+            // We no longer need to index the FASTA file (since we're no longer using PValue.py with the -a switch or Summary.py
 
             try
             {

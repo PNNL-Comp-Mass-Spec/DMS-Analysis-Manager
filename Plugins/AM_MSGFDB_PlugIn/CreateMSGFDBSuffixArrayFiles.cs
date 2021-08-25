@@ -365,7 +365,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Convert .Fasta file to indexed DB files compatible with MSGFPlus
+        /// Convert the FASTA file to indexed DB files compatible with MSGFPlus
         /// Will copy the files from msgfPlusIndexFilesDirPathBase if they exist
         /// </summary>
         /// <param name="logFileDir"></param>
@@ -669,7 +669,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Determine the amount of ram to reserve for BuildSA
-                // Examine the size of the .Fasta file to determine how much ram to reserve
+                // Examine the size of the FASTA file to determine how much ram to reserve
                 int javaMemorySizeMB;
 
                 var fastaFileSizeMB = Global.BytesToMB(fiFastaFile.Length);

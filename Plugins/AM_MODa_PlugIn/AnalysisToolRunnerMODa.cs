@@ -174,7 +174,7 @@ namespace AnalysisManagerMODaPlugIn
 
             var spectrumFileName = mDatasetName + ".mgf";
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
@@ -380,7 +380,7 @@ namespace AnalysisManagerMODaPlugIn
                             {
                                 mConsoleOutputErrorMsg = "Error running MODa:";
                             }
-                            mConsoleOutputErrorMsg += "; Fasta file not found";
+                            mConsoleOutputErrorMsg += "; FASTA file not found";
                             continue;
                         }
 

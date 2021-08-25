@@ -1138,7 +1138,7 @@ namespace AnalysisManagerTopPICPlugIn
         {
             fastaFileIsDecoy = false;
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
@@ -1148,8 +1148,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             if (!fastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 

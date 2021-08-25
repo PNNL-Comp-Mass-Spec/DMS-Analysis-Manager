@@ -672,7 +672,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             {
                 var sourceDirectory = new DirectoryInfo(mWorkDir);
 
-                // Copy the .Fasta file into the MSInput folder
+                // Copy the FASTA file into the MSInput folder
                 // MSAlign will crash if any non-standard residues are present (BJOUXZ)
                 // Thus, we will read the source file with a reader and create a new FASTA file
 

@@ -2844,7 +2844,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (tdaSetting > 0)
                 {
-                    // Make sure the .Fasta file is not a Decoy FASTA
+                    // Make sure the FASTA file is not a Decoy FASTA
                     if (fastaFileIsDecoy)
                     {
                         OnErrorEvent("Parameter file / decoy protein collection conflict: " +
