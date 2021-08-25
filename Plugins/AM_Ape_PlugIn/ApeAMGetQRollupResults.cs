@@ -9,6 +9,9 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMGetQRollupResults : ApeAMBase
     {
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: mtuser, uid
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -65,6 +68,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
+            // ReSharper disable StringLiteralTypo
             var paramList = new List<string>
             {
                 apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;",
@@ -73,6 +77,8 @@ namespace AnalysisManager_Ape_PlugIn
             };
 
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
+
+            // ReSharper restore StringLiteralTypo
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var QIDList = GetQIDList();

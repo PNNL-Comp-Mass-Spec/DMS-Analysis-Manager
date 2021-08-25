@@ -25,12 +25,12 @@ namespace AnalysisManagerQCARTPlugin
     /// </summary>
     public class AnalysisToolRunnerQCART : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
+
         #region "Constants and Enums"
 
         private const float PROGRESS_PCT_STARTING = 5;
         private const float PROGRESS_PCT_COMPLETE = 99;
-
-        // private const string QCART_CONSOLE_OUTPUT = "QCART_ConsoleOutput.txt";
 
         private const string STORE_QCART_RESULTS = "StoreQCARTResults";
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerQCARTPlugin
                     LogDebug("AnalysisToolRunnerQCART.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables
+                // Initialize class wide variables
                 // (these are not used by this plugin)
                 // mLastConsoleOutputParse = DateTime.UtcNow;
                 // mLastProgressWriteTime = DateTime.UtcNow;

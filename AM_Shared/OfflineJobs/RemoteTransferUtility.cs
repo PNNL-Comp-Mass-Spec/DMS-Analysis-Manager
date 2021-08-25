@@ -514,6 +514,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <param name="recurse">True to </param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>List of matching files (full paths)</returns>
+        // ReSharper disable once UnusedMember.Global
         public Dictionary<string, SftpFile> GetRemoteFileListing(
             string remoteDirectoryPath,
             string fileMatchSpec,

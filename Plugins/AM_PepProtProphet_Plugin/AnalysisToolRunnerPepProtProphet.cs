@@ -506,6 +506,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
 
+                // Start the program and wait for it to finish
+                // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
                 var currentStep = "PercolatorOutputToPepXML for " + datasetName;
@@ -1762,6 +1764,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 LogDebug(mPercolatorProgLoc + " " + arguments);
 
+                // Start the program and wait for it to finish
+                // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
@@ -1823,7 +1827,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var currentStep = GetCurrentPhilosopherToolDescription();
-
                 UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                 if (!processingSuccess)

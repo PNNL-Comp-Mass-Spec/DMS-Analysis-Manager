@@ -28,6 +28,8 @@ namespace MSMSSpectrumFilterAM
     /// </summary>
     public class AnalysisToolRunnerMsMsSpectrumFilter : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: dta, msg, pre
+
         private const int MAX_RUNTIME_HOURS = 5;
 
         private readonly clsMsMsSpectrumFilter mMsMsSpectrumFilter;
@@ -145,7 +147,8 @@ namespace MSMSSpectrumFilterAM
                 var filteredCDTA = new FileInfo(filteredCDTAPath);
                 var originalCDTA = new FileInfo(originalCDTAPath);
 
-                // If the file sizes do not agree within 10 bytes, the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
+                // If the file sizes do not agree within 10 bytes, the files likely do not match
+                // (unless we have a Unicode vs. non-Unicode issue, which shouldn't be the case)
                 if (Math.Abs(filteredCDTA.Length - originalCDTA.Length) > 10)
                 {
                     if (mDebugLevel >= 2)
@@ -673,14 +676,18 @@ namespace MSMSSpectrumFilterAM
 
             // Source directory exist?
             if (!VerifyDirExists(mWorkDir))
+            {
+                // Error msg handled by VerifyDirExists
                 return false;
-            // Error msg handled by VerifyDirExists
+            }
 
             // Settings file exist?
             var SettingsNamePath = Path.Combine(mWorkDir, mSettingsFileName);
             if (!VerifyFileExists(SettingsNamePath))
+            {
+                // Error msg handled by VerifyFileExists
                 return false;
-            // Error msg handled by VerifyFileExists
+            }
 
             // If we got here, everything's OK
             return true;

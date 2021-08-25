@@ -10,6 +10,7 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMGetViperResults : ApeAMBase
     {
+        // ReSharper disable once CommentTypo
         // Ignore Spelling: ini, mtuser, uid, workflow
 
         /// <summary>
@@ -64,6 +65,7 @@ namespace AnalysisManager_Ape_PlugIn
                 "1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint"
             };
 
+            // ReSharper disable once StringLiteralTypo
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
