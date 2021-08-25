@@ -41,7 +41,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// run the Ape pipeline(s) listed in "ApeOperations" parameter
         /// </summary>
-        protected bool RunApeGetResources()
+        private bool RunApeGetResources()
         {
             var success = false;
 

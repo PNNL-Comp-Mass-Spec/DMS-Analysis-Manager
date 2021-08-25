@@ -28,31 +28,31 @@ namespace AnalysisManagerMODPlusPlugin
 
         #region "Constants and Enums"
 
-        protected const string MODPlus_CONSOLE_OUTPUT = "MODPlus_ConsoleOutput.txt";
-        protected const string MODPlus_JAR_NAME = "modp_pnnl.jar";
-        protected const string TDA_PLUS_JAR_NAME = "tda_plus.jar";
+        private const string MODPlus_CONSOLE_OUTPUT = "MODPlus_ConsoleOutput.txt";
+        private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
+        private const string TDA_PLUS_JAR_NAME = "tda_plus.jar";
 
-        protected const int PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
-        protected const int PROGRESS_PCT_SPLITTING_MGF = 3;
-        protected const int PROGRESS_PCT_MODPLUS_STARTING = 5;
-        protected const int PROGRESS_PCT_MODPLUS_COMPLETE = 95;
-        protected const int PROGRESS_PCT_COMPUTING_FDR = 96;
+        private const int PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
+        private const int PROGRESS_PCT_SPLITTING_MGF = 3;
+        private const int PROGRESS_PCT_MODPLUS_STARTING = 5;
+        private const int PROGRESS_PCT_MODPLUS_COMPLETE = 95;
+        private const int PROGRESS_PCT_COMPUTING_FDR = 96;
 
         #endregion
 
         #region "Module Variables"
 
-        protected bool mToolVersionWritten;
-        protected string mMODPlusVersion;
+        private bool mToolVersionWritten;
+        private string mMODPlusVersion;
 
-        protected string mMODPlusProgLoc;
-        protected string mConsoleOutputErrorMsg;
+        private string mMODPlusProgLoc;
+        private string mConsoleOutputErrorMsg;
 
         /// <summary>
         /// Dictionary of ModPlus instances
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-        protected Dictionary<int, MODPlusRunner> mMODPlusRunners;
+        private Dictionary<int, MODPlusRunner> mMODPlusRunners;
 
         #endregion
 
@@ -732,7 +732,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        protected void PushReader(SortedList<double, List<MODPlusResultsReader>> lstNextAvailableScan, MODPlusResultsReader reader)
+        private void PushReader(SortedList<double, List<MODPlusResultsReader>> lstNextAvailableScan, MODPlusResultsReader reader)
         {
             if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
             {
@@ -796,7 +796,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         /// <param name="javaProgLoc">Path to java.exe</param>
         /// <param name="paramFileList">Output: Dictionary where key is the thread number and value is the parameter file path</param>
-        protected bool StartMODPlus(string javaProgLoc, out Dictionary<int, string> paramFileList)
+        private bool StartMODPlus(string javaProgLoc, out Dictionary<int, string> paramFileList)
         {
             var currentTask = "Initializing";
 
@@ -1097,7 +1097,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {

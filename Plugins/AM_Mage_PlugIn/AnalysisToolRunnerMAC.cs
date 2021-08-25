@@ -16,7 +16,7 @@ namespace AnalysisManager_Mage_PlugIn
     {
         protected const string MAGE_LOG_FILE_NAME = "Mage_Log.txt";
 
-        protected const float ProgressPctMacDone = 95;
+        private const int ProgressPctMacDone = 95;
 
         /// <summary>
         /// Primary entry point for running MAC tool
@@ -123,7 +123,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             string toolVersionInfo;
 

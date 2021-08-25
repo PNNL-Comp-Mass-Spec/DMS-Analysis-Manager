@@ -18,8 +18,8 @@ namespace GlyQResultsSummarizer
 
         public const string DMS_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
 
-        protected static string mGlyQResultsFilePath;
-        protected static int mJob;
+        private static string mGlyQResultsFilePath;
+        private static int mJob;
 
         static int Main(string[] args)
         {

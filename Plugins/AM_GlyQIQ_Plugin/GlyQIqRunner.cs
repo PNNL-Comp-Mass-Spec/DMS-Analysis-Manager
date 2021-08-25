@@ -68,22 +68,22 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Member Variables"
 
-        protected string mBatchFilePath;
-        protected string mConsoleOutputFilePath;
-        protected int mCore;
+        private string mBatchFilePath;
+        private string mConsoleOutputFilePath;
+        private int mCore;
 
-        protected double mProgress;
+        private double mProgress;
 
         /// <summary>
         /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
-        protected Dictionary<string, bool> mTargets;
+        private Dictionary<string, bool> mTargets;
 
-        protected GlyQIqRunnerStatusCodes mStatus;
+        private GlyQIqRunnerStatusCodes mStatus;
 
-        protected readonly string mWorkingDirectory;
+        private readonly string mWorkingDirectory;
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -107,7 +107,7 @@ namespace AnalysisManagerGlyQIQPlugin
             mCmdRunner?.AbortProgramNow();
         }
 
-        protected void CacheTargets()
+        private void CacheTargets()
         {
             var fiBatchFile = new FileInfo(mBatchFilePath);
             if (!fiBatchFile.Exists)

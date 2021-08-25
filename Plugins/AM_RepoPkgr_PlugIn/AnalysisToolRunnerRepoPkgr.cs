@@ -19,11 +19,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
     {
         // Ignore Spelling: gzip, mage, pre, repo
 
-        protected const int PROGRESS_PCT_FASTA_FILES_COPIED = 10;
-        protected const int PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED = 25;
-        protected const int PROGRESS_PCT_SEQUEST_RESULTS_COPIED = 40;
-        protected const int PROGRESS_PCT_MZID_RESULTS_COPIED = 50;
-        protected const int PROGRESS_PCT_INSTRUMENT_DATA_COPIED = 95;
+        private const int PROGRESS_PCT_FASTA_FILES_COPIED = 10;
+        private const int PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED = 25;
+        private const int PROGRESS_PCT_SEQUEST_RESULTS_COPIED = 40;
+        private const int PROGRESS_PCT_MZID_RESULTS_COPIED = 50;
+        private const int PROGRESS_PCT_INSTRUMENT_DATA_COPIED = 95;
 
         public const string WARNING_INSTRUMENT_DATA_MISSING = "WarningInstrumentDataMissing";
 
@@ -284,7 +284,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <param name="dctDatasetRawDataTypes">Dictionary with dataset names and the raw data type of the instrument data file</param>
         /// <param name="datasetFilePathLocal">Output parameter: Path to the locally cached dataset file</param>
         /// <returns>The full path to the locally created MzXML file</returns>
-        protected string CreateMzXMLFileIfMissing(
+        private string CreateMzXMLFileIfMissing(
             MSXMLCreator msXmlCreator,
             string datasetName,
             AnalysisResults analysisResults,
@@ -462,7 +462,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
         }
 
-        protected bool ProcessDataset(
+        private bool ProcessDataset(
             AnalysisResults analysisResults,
             MSXMLCreator msXmlCreator,
             string datasetName,
@@ -624,13 +624,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
             return false;
         }
 
-        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, ref string destPath)
+        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, ref string destPath)
         {
             const bool IsDirectory = false;
             return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsDirectory, ref destPath);
         }
 
-        protected bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, bool isDirectory, ref string destPath)
+        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, AnalysisResults analysisResults, bool isDirectory, ref string destPath)
         {
             var sourceFilePath = string.Empty;
 

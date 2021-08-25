@@ -24,19 +24,19 @@ namespace AnalysisManagerMODPlusPlugin
 
         public bool SpectrumAvailable => mSpectrumAvailable;
 
-        protected double mCurrentScanChargeCombo;
+        private double mCurrentScanChargeCombo;
 
-        protected List<string> mCurrentScanData;
+        private List<string> mCurrentScanData;
 
-        protected string mSavedLine;
+        private string mSavedLine;
 
-        protected bool mSpectrumAvailable;
+        private bool mSpectrumAvailable;
 
-        protected readonly Regex mExtractChargeAndScan;
+        private readonly Regex mExtractChargeAndScan;
 
-        protected readonly StreamReader mReader;
+        private readonly StreamReader mReader;
 
-        protected readonly FileInfo mResultFile;
+        private readonly FileInfo mResultFile;
 
         /// <summary>
         /// Constructor

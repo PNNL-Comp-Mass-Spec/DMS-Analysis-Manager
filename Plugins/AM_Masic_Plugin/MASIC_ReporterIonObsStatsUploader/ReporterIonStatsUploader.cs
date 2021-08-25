@@ -300,7 +300,7 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <param name="parameterFilePath"></param>
         /// <param name="reporterIonName"></param>
         /// <param name="reporterIonObservationRateTopNPct"></param>
-        protected bool ReadMASICParameterFile(
+        private bool ReadMASICParameterFile(
             string parameterFilePath,
             out string reporterIonName,
             out int reporterIonObservationRateTopNPct)

@@ -520,7 +520,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="message"></param>
         /// <param name="ex">Exception (allowed to be nothing)</param>
-        protected void OnErrorEvent(string message, Exception ex)
+        private void OnErrorEvent(string message, Exception ex)
         {
             ErrorEvent?.Invoke(message, ex);
         }
@@ -529,14 +529,14 @@ namespace AnalysisManager_AScore_PlugIn
         /// Report a warning
         /// </summary>
         /// <param name="message"></param>
-        protected void OnWarningEvent(string message)
+        private void OnWarningEvent(string message)
         {
             WarningEvent?.Invoke(message);
         }
 
         /// <summary>Use this method to chain events between classes</summary>
         /// <param name="sourceClass"></param>
-        protected void RegisterEvents(IEventNotifier sourceClass)
+        private void RegisterEvents(IEventNotifier sourceClass)
         {
             sourceClass.ErrorEvent += OnErrorEvent;
             sourceClass.WarningEvent += OnWarningEvent;

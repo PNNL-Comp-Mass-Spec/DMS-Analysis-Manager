@@ -14,11 +14,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     {
         // Ignore Spelling: Aggregator
 
-        protected const int PROGRESS_PCT_MULTIALIGN_START = 1;
-        protected const int PROGRESS_PCT_MULTIALIGN_DONE = 99;
+        private const int PROGRESS_PCT_MULTIALIGN_START = 1;
+        private const int PROGRESS_PCT_MULTIALIGN_DONE = 99;
 
-        protected string mCurrentMultiAlignTask = string.Empty;
-        protected DateTime mLastStatusUpdateTime;
+        private string mCurrentMultiAlignTask = string.Empty;
+        private DateTime mLastStatusUpdateTime;
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -159,7 +159,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Run the MultiAlign pipeline(s) listed in "MultiAlignOperations" parameter
         /// </summary>
-        protected bool RunMultiAlign(string sMultiAlignConsolePath)
+        private bool RunMultiAlign(string sMultiAlignConsolePath)
         {
             bool bSuccess;
 
@@ -191,7 +191,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+        private bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
             var toolVersionInfo = string.Empty;
 

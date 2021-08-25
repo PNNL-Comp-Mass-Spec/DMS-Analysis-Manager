@@ -76,7 +76,7 @@ namespace AnalysisManager_AScore_PlugIn
         ///// <summary>
         ///// run the AScore pipeline(s) listed in "AScoreOperations" parameter
         ///// </summary>
-        //protected bool RunAScoreGetResources()
+        //private bool RunAScoreGetResources()
         //{
         //    bool success = false;
 
@@ -187,7 +187,7 @@ namespace AnalysisManager_AScore_PlugIn
         //    return success;
         //}
 
-        //protected string GetDatasetID(string DatasetName)
+        //private string GetDatasetID(string DatasetName)
         //{
         //    int DatasetID;
 

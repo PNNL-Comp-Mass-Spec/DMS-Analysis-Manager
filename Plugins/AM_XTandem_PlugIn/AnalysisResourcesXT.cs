@@ -131,7 +131,7 @@ namespace AnalysisManagerXTandemPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool MakeTaxonomyFile()
+        private bool MakeTaxonomyFile()
         {
             // set up taxonomy file to reference the organism DB file (FASTA)
 
@@ -173,7 +173,7 @@ namespace AnalysisManagerXTandemPlugIn
             return true;
         }
 
-        protected bool MakeInputFile()
+        private bool MakeInputFile()
         {
             var result = true;
 
@@ -242,7 +242,7 @@ namespace AnalysisManagerXTandemPlugIn
             return Path.GetFileNameWithoutExtension(ParameterFileName) + MOD_DEFS_FILE_SUFFIX;
         }
 
-        protected bool ValidateDTATextFileSize(string workDir, string inputFileName)
+        private bool ValidateDTATextFileSize(string workDir, string inputFileName)
         {
             const int FILE_SIZE_THRESHOLD = int.MaxValue;
 

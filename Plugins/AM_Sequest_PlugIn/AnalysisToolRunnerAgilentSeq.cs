@@ -8,7 +8,7 @@ namespace AnalysisManagerSequestPlugin
     {
         // Ignore Spelling: cdf, mgf
 
-        protected CloseOutType DeleteDataFile()
+        private CloseOutType DeleteDataFile()
         {
             // Deletes the data files (.mgf and .cdf) from the working directory
 

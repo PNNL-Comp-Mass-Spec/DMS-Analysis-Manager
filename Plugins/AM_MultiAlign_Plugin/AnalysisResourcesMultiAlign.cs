@@ -101,7 +101,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool BuildMultiAlignInputTextFile(string strInputFileExtension)
+        private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
         {
             const string INPUT_FILENAME = "input.txt";
 

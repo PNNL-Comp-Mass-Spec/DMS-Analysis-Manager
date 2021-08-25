@@ -38,7 +38,7 @@ namespace AnalysisManagerSequestPlugin
             SetOption(Global.AnalysisResourceOptions.OrgDbRequired, true);
         }
 
-        protected void ArchiveSequestParamFile()
+        private void ArchiveSequestParamFile()
         {
             var sourceFilePath = "";
             var targetFolderPath = "";
@@ -162,7 +162,7 @@ namespace AnalysisManagerSequestPlugin
         /// CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and
         /// CLOSEOUT_FAILURE if an error
         /// </returns>
-        protected CloseOutType CheckForExistingConcatenatedOutFile()
+        private CloseOutType CheckForExistingConcatenatedOutFile()
         {
             try
             {
@@ -306,7 +306,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool CompareRemoteAndLocalFilesForResume(string remoteFilePath, string localFilePath, string fileDescription)
+        private bool CompareRemoteAndLocalFilesForResume(string remoteFilePath, string localFilePath, string fileDescription)
         {
             if (!File.Exists(remoteFilePath))
             {

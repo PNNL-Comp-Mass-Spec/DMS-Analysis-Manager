@@ -55,7 +55,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Job parameters
         /// </summary>
-        protected IJobParams JobParams { get; }
+        private IJobParams JobParams { get; }
 
         public string OutputFileName => mOutputFileName;
 

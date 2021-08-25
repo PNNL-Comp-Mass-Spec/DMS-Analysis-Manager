@@ -22,8 +22,8 @@ namespace AnalysisManagerDtaSplitPlugIn
     {
         // Ignore Spelling: pre
 
-        protected Regex r_FileSeparator;
-        protected Regex r_DTAFirstLine;        // Presently not used
+        private Regex r_FileSeparator;
+        private Regex r_DTAFirstLine;        // Presently not used
 
         /// <summary>
         /// Constructor
@@ -395,7 +395,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var dtaSplitDLL = Path.Combine(Global.GetAppDirectoryPath(), "AnalysisManagerDtaSplitPlugIn.dll");
             var success = StoreDotNETToolVersionInfo(dtaSplitDLL, true);

@@ -116,7 +116,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Retrieves inspect and inspect log and error files
         /// </summary>
         /// <returns>True if success, false if an error</returns>
-        protected bool RetrieveMultiInspectResultFiles()
+        private bool RetrieveMultiInspectResultFiles()
         {
             int numOfResultFiles;
             var transferDirectoryName = Path.Combine(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), DatasetName);

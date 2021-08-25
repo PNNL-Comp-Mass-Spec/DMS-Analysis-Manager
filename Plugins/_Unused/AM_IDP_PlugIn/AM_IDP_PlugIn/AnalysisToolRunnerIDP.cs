@@ -13,8 +13,8 @@ namespace AnalysisManager_IDP_PlugIn
     /// </summary>
     public class AnalysisToolRunnerIDP : AnalysisToolRunnerBase
     {
-        protected const float PROGRESS_PCT_IDP_START = 5;
-        protected const float PROGRESS_PCT_IDP_DONE = 95;
+        private const float PROGRESS_PCT_IDP_START = 5;
+        private const float PROGRESS_PCT_IDP_DONE = 95;
 
         public override IJobParams.CloseOutType RunTool()
         {
@@ -150,7 +150,7 @@ namespace AnalysisManager_IDP_PlugIn
             return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        private void CopyFailedResultsToArchiveFolder()
         {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 
@@ -203,7 +203,7 @@ namespace AnalysisManager_IDP_PlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
 
             string strToolVersionInfo = string.Empty;

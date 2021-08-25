@@ -29,31 +29,50 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         #region "Constants and Enums"
 
-        protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
-        protected const string MSAlign_Report_CONSOLE_OUTPUT = "MSAlign_Report_ConsoleOutput.txt";
-        protected const string MSAlign_JAR_NAME = "MsAlignPipeline.jar";
-        // XML file created by MsAlignPipeline.jar; detailed results
-        protected const string OUTPUT_FILE_EXTENSION_PTM_SEARCH = "PTM_SEARCH_RESULT";
-        // XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with the top hit for each spectrum
-        protected const string OUTPUT_FILE_EXTENSION_TOP_RESULT = "TOP_RESULT";
-        // XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with E-Values assigned
-        protected const string OUTPUT_FILE_EXTENSION_E_VALUE_RESULT = "E_VALUE_RESULT";
-        // XML file created by MsAlignPipeline.jar; new version of the E_VALUE_RESULT file with Species_ID assigned
-        protected const string OUTPUT_FILE_EXTENSION_OUTPUT_RESULT = "OUTPUT_RESULT";
-
-        // Tab-delimited text file created by MsAlignPipeline.jar; same content as the OUTPUT_RESULT file
-        protected const string RESULT_TABLE_FILE_EXTENSION = "OUTPUT_TABLE";
-        // This DMS plugin will rename the DatasetName.OUTPUT_TABLE file to DatasetName_MSAlign_ResultTable.txt
-        protected const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
+        private const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
+        private const string MSAlign_Report_CONSOLE_OUTPUT = "MSAlign_Report_ConsoleOutput.txt";
+        private const string MSAlign_JAR_NAME = "MsAlignPipeline.jar";
 
         private const int PROGRESS_PCT_STARTING = 1;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
-        // XML file created by MsAlignPipeline.jar; we do not keep this file
-        protected const string OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED = "FAST_FILTER_COMBINED";
+        /// <summary>
+        /// XML file created by MsAlignPipeline.jar; detailed results
+        /// </summary>
+        private const string OUTPUT_FILE_EXTENSION_PTM_SEARCH = "PTM_SEARCH_RESULT";
 
-        // Note that newer versions are assumed to have higher enum values
-        protected enum MSAlignVersionType
+        /// <summary>
+        /// XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with the top hit for each spectrum
+        /// </summary>
+        private const string OUTPUT_FILE_EXTENSION_TOP_RESULT = "TOP_RESULT";
+
+        /// <summary>
+        /// XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with E-Values assigned
+        /// </summary>
+        private const string OUTPUT_FILE_EXTENSION_E_VALUE_RESULT = "E_VALUE_RESULT";
+
+        /// <summary>
+        /// XML file created by MsAlignPipeline.jar; new version of the E_VALUE_RESULT file with Species_ID assigned
+        /// </summary>
+        private const string OUTPUT_FILE_EXTENSION_OUTPUT_RESULT = "OUTPUT_RESULT";
+
+        /// <summary>
+        /// Tab-delimited text file created by MsAlignPipeline.jar; same content as the OUTPUT_RESULT file
+        /// </summary>
+        private const string RESULT_TABLE_FILE_EXTENSION = "OUTPUT_TABLE";
+
+        /// <summary>
+        /// This DMS plugin will rename the DatasetName.OUTPUT_TABLE file to DatasetName_MSAlign_ResultTable.txt
+        /// </summary>
+        private const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
+
+        // XML file created by MsAlignPipeline.jar; we do not keep this file
+        // private string OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED = "FAST_FILTER_COMBINED";
+
+        /// <summary>
+        /// Note that newer versions are assumed to have higher enum values
+        /// </summary>
+        private enum MSAlignVersionType
         {
             v0pt9 = 0
         }
@@ -62,7 +81,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         #region "Structures"
 
-        protected struct InputPropertyValues
+        private struct InputPropertyValues
         {
             public string FastaFileName;
             public string SpectrumFileName;
@@ -78,14 +97,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         #region "Module Variables"
 
-        protected bool mToolVersionWritten;
-        protected string mMSAlignVersion;
+        private bool mToolVersionWritten;
+        private string mMSAlignVersion;
 
-        protected string mMSAlignProgLoc;
-        protected string mConsoleOutputErrorMsg;
+        private string mMSAlignProgLoc;
+        private string mConsoleOutputErrorMsg;
 
-        protected string mMSAlignWorkFolderPath;
-        protected InputPropertyValues mInputPropertyValues;
+        private string mMSAlignWorkFolderPath;
+        private InputPropertyValues mInputPropertyValues;
 
         #endregion
 
@@ -180,12 +199,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogMessage("Running MSAlign_Histone");
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
-                var intJavaMemorySize = mJobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
-                if (intJavaMemorySize < 512)
-                    intJavaMemorySize = 512;
+                var javaMemorySize = mJobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+                if (javaMemorySize < 512)
+                    javaMemorySize = 512;
 
                 // Set up and execute a program runner to run MSAlign_Histone
-                var arguments = " -Xmx" + intJavaMemorySize + "M" +
+                var arguments = " -Xmx" + javaMemorySize + "M" +
                                 " -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " +
                                 strMSAlignCmdLineOptions;
 
@@ -256,7 +275,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         // Create the HTML and XML files
                         // Need to call MsAlignPipeline.jar again, but this time with a different classpath
 
-                        var reportGenerated = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize);
+                        var reportGenerated = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, javaMemorySize);
                         if (!reportGenerated)
                             processingSuccess = false;
 
@@ -328,7 +347,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
         }
 
-        protected bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
+        private bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
         {
             const int RESIDUES_PER_LINE = 60;
 
@@ -498,7 +517,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool CreateMSAlignCommandLine(string paramFilePath, out string commandLine)
+        private bool CreateMSAlignCommandLine(string paramFilePath, out string commandLine)
         {
             // MSAlign_Histone syntax
             //
@@ -648,7 +667,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected Dictionary<string, string> GetExpectedMSAlignResultFiles(string strDatasetName)
+        private Dictionary<string, string> GetExpectedMSAlignResultFiles(string strDatasetName)
         {
             // Keys in this dictionary are the expected file name
             // Values are the new name to rename the file to
@@ -666,7 +685,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return dctResultFiles;
         }
 
-        protected bool InitializeInputFolder(string strMSAlignWorkFolderPath)
+        private bool InitializeInputFolder(string strMSAlignWorkFolderPath)
         {
             try
             {
@@ -719,7 +738,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
+        private bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
         {
             bool blnSuccess;
 
@@ -891,7 +910,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {
@@ -916,7 +935,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
         }
 
-        protected bool MoveMSAlignResultFiles()
+        private bool MoveMSAlignResultFiles()
         {
             var strEValueResultFilePath = string.Empty;
             var strFinalResultFilePath = string.Empty;
@@ -983,7 +1002,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool ValidateResultFiles()
+        private bool ValidateResultFiles()
         {
             var processingError = false;
 
@@ -1019,7 +1038,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return !processingError;
         }
 
-        protected bool ValidateResultTableFile(string strSourceFilePath)
+        private bool ValidateResultTableFile(string strSourceFilePath)
         {
             try
             {
@@ -1105,7 +1124,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool ZipMSAlignResultFolder(string strFolderName)
+        private bool ZipMSAlignResultFolder(string strFolderName)
         {
             try
             {

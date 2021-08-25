@@ -34,16 +34,16 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Constants and Enums"
 
-        protected const int PROGRESS_PCT_STARTING = 1;
-        protected const int PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
+        private const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
 
         #endregion
 
         #region "Structures"
 
-        protected struct PSMStats
+        private struct PSMStats
         {
             public int TotalPSMs;
             public int UniquePeptideCount;
@@ -61,15 +61,15 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Module Variables"
 
-        protected int mCoreCount;
+        private int mCoreCount;
 
-        protected int mSpectraSearched;
+        private int mSpectraSearched;
 
         /// <summary>
         /// Dictionary of GlyQIqRunner instances
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-        protected Dictionary<int, GlyQIqRunner> mGlyQRunners;
+        private Dictionary<int, GlyQIqRunner> mGlyQRunners;
 
         private XRawFileIO mThermoFileReader;
 
@@ -305,7 +305,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        protected bool ExamineFilteredResults(FileInfo fiResultsFile)
+        private bool ExamineFilteredResults(FileInfo fiResultsFile)
         {
             return ExamineFilteredResults(fiResultsFile, mJob, string.Empty);
         }
@@ -492,7 +492,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        protected bool PostJobResults(int jobNumber, PSMStats udtPSMStats, string dmsConnectionStringOverride)
+        private bool PostJobResults(int jobNumber, PSMStats udtPSMStats, string dmsConnectionStringOverride)
         {
             const int MAX_RETRY_COUNT = 3;
 
@@ -564,7 +564,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        protected void PruneConsoleOutputFiles(FileInfo fiConsoleOutputFile, DirectoryInfo diTargetFolder)
+        private void PruneConsoleOutputFiles(FileInfo fiConsoleOutputFile, DirectoryInfo diTargetFolder)
         {
             if (fiConsoleOutputFile.Directory == null)
                 return;
@@ -644,7 +644,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        protected bool RunGlyQIQ()
+        private bool RunGlyQIQ()
         {
             var currentTask = "Initializing";
 
@@ -826,7 +826,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
             {

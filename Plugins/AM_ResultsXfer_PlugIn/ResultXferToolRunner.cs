@@ -248,7 +248,7 @@ namespace AnalysisManagerResultsXferPlugin
         /// <param name="sourceDirectoryPath"></param>
         /// <param name="targetDirectoryPath"></param>
         /// <param name="overwriteExisting"></param>
-        protected bool MoveFilesLocally(string sourceDirectoryPath, string targetDirectoryPath, bool overwriteExisting)
+        private bool MoveFilesLocally(string sourceDirectoryPath, string targetDirectoryPath, bool overwriteExisting)
         {
             var success = true;
             var errorCount = 0;
@@ -566,7 +566,7 @@ namespace AnalysisManagerResultsXferPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
             var appFolderPath = Global.GetAppDirectoryPath();

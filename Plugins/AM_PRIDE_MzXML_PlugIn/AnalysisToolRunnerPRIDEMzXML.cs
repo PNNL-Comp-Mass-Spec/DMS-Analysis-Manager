@@ -119,7 +119,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var progLoc = mMgrParams.GetParam("MSDataFileTrimmerProgLoc");
             var success = StoreDotNETToolVersionInfo(progLoc, true);

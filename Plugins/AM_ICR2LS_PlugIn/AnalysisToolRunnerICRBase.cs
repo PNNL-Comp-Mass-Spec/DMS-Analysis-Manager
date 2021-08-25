@@ -23,18 +23,18 @@ namespace AnalysisManagerICR2LSPlugIn
 
         // ReSharper restore CommentTypo
 
-        protected const string ICR2LS_STATE_UNKNOWN = "unknown";
-        protected const string ICR2LS_STATE_IDLE = "idle";
-        protected const string ICR2LS_STATE_PROCESSING = "processing";
-        protected const string ICR2LS_STATE_KILLED = "killed";
-        protected const string ICR2LS_STATE_ERROR = "error";
-        protected const string ICR2LS_STATE_FINISHED = "finished";
-        protected const string ICR2LS_STATE_GENERATING = "generating";
-        protected const string ICR2LS_STATE_TICGENERATION = "ticgeneration";
-        protected const string ICR2LS_STATE_LCQTICGENERATION = "lcqticgeneration";
-        protected const string ICR2LS_STATE_QTOFPEKGENERATION = "qtofpekgeneration";
-        protected const string ICR2LS_STATE_MMTOFPEKGENERATION = "mmtofpekgeneration";
-        protected const string ICR2LS_STATE_LTQFTPEKGENERATION = "ltqftpekgeneration";
+        private const string ICR2LS_STATE_UNKNOWN = "unknown";
+        private const string ICR2LS_STATE_IDLE = "idle";
+        private const string ICR2LS_STATE_PROCESSING = "processing";
+        private const string ICR2LS_STATE_KILLED = "killed";
+        private const string ICR2LS_STATE_ERROR = "error";
+        private const string ICR2LS_STATE_FINISHED = "finished";
+        private const string ICR2LS_STATE_GENERATING = "generating";
+        private const string ICR2LS_STATE_TICGENERATION = "ticgeneration";
+        private const string ICR2LS_STATE_LCQTICGENERATION = "lcqticgeneration";
+        private const string ICR2LS_STATE_QTOFPEKGENERATION = "qtofpekgeneration";
+        private const string ICR2LS_STATE_MMTOFPEKGENERATION = "mmtofpekgeneration";
+        private const string ICR2LS_STATE_LTQFTPEKGENERATION = "ltqftpekgeneration";
 
         public const string PEK_TEMP_FILE = ".pek.tmp";
 

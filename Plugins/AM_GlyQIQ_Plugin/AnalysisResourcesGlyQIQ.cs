@@ -25,7 +25,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Locks folder name
         /// </summary>
-        protected const string LOCKS_FOLDER_NAME = "LocksFolder";
+        private const string LOCKS_FOLDER_NAME = "LocksFolder";
 
         /// <summary>
         /// Job parameter tracking GlyQ-IQ core count usage
@@ -52,7 +52,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// </summary>
         public const string ALIGNMENT_PARAMETERS_FILENAME = "AlignmentParameters.xml";
 
-        protected struct GlyQIQParams
+        private struct GlyQIQParams
         {
             public Dictionary<int, DirectoryInfo> WorkingParameterFolders;
             public string FactorsName;

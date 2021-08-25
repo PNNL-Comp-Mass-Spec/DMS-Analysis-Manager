@@ -90,7 +90,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool CacheDataPackageInfo(Dictionary<int, DataPackageJobInfo> dctDataPackageJobs)
+        private bool CacheDataPackageInfo(Dictionary<int, DataPackageJobInfo> dctDataPackageJobs)
         {
             try
             {

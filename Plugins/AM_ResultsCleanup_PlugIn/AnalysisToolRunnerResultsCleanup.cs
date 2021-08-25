@@ -336,7 +336,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var toolVersionInfo = string.Empty;
             var appDirectoryPath = Global.GetAppDirectoryPath();

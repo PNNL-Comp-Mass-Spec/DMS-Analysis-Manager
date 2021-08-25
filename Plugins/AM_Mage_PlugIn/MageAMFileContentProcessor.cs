@@ -106,7 +106,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// Convert comma-delimited list of item into a trimmed hash set
         /// </summary>
         /// <param name="delimitedList"></param>
-        protected HashSet<string> ConvertListToSet(string delimitedList)
+        private HashSet<string> ConvertListToSet(string delimitedList)
         {
             var set = new HashSet<string>();
             var items = delimitedList.Split(',');

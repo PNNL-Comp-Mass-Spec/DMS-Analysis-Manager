@@ -27,7 +27,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private readonly string mPeptideProphetRunnerLocation;
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Even used to report progress

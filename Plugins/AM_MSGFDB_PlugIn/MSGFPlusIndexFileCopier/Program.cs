@@ -8,12 +8,12 @@ namespace MSGFPlusIndexFileCopier
 {
     class Program
     {
-        protected const string PROGRAM_DATE = "September 22, 2018";
-        protected const string DEFAULT_REMOTE_SHARE = @"\\proto-7\MSGFPlus_Index_Files\Other";
+        private const string PROGRAM_DATE = "August 25, 2021";
+        private const string DEFAULT_REMOTE_SHARE = @"\\proto-7\MSGFPlus_Index_Files\Other";
 
-        protected static string mFastaFilePath;
-        protected static string mRemoteIndexFolderPath;
-        protected static bool mCreateIndexFileForExistingFiles;
+        private static string mFastaFilePath;
+        private static string mRemoteIndexFolderPath;
+        private static bool mCreateIndexFileForExistingFiles;
 
         static int Main()
         {

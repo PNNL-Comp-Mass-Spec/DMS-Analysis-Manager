@@ -37,26 +37,28 @@ namespace AnalysisManagerSequestPlugin
         #region "Constants"
 
         public const string CONCATENATED_OUT_TEMP_FILE = "_out.txt.tmp";
-        protected const int MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK = 500;
+        private const int MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK = 500;
         private const string REGEX_FILE_SEPARATOR = @"^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$";
 
         #endregion
 
         #region "Member variables"
 
-        protected int mDtaCountAddon;
+        private int mDtaCountAddon;
 
         protected int mTotalOutFileCount;
         protected string mTempConcatenatedOutFilePath = string.Empty;
         protected SortedSet<string> mOutFileNamesAppended = new(StringComparer.OrdinalIgnoreCase);
 
-        // Out file search times (in seconds) for recently created .out files
+        /// <summary>
+        /// Out file search times (in seconds) for recently created .out files
+        /// </summary>
         protected Queue<float> mRecentOutFileSearchTimes = new(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
 
-        protected Regex mOutFileNameRegEx = new(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
+        private Regex mOutFileNameRegEx = new(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        protected Regex mOutFileSearchTimeRegEx = new(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
+        private Regex mOutFileSearchTimeRegEx = new(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         protected long mOutFileHandlerInUse;
@@ -284,7 +286,7 @@ namespace AnalysisManagerSequestPlugin
         /// Calculates status information for progress file by counting the number of .out files
         /// </summary>
         /// <param name="updateDTACount">Set to True to update mDtaCount</param>
-        protected void CalculateNewStatus(bool updateDTACount)
+        private void CalculateNewStatus(bool updateDTACount)
         {
             if (updateDTACount)
             {
@@ -306,7 +308,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool CheckForExistingConcatenatedOutFile()
+        private bool CheckForExistingConcatenatedOutFile()
         {
             try
             {
@@ -362,7 +364,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected SortedSet<string> ConstructDTASkipList(string concatenatedTempFilePath)
+        private SortedSet<string> ConstructDTASkipList(string concatenatedTempFilePath)
         {
             var dtaFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -810,7 +812,7 @@ namespace AnalysisManagerSequestPlugin
         /// Make sure at least one .DTA file exists
         /// Also makes sure at least one of the .DTA files has data
         /// </summary>
-        protected bool ValidateDTAFiles()
+        private bool ValidateDTAFiles()
         {
             var dataFound = false;
             var filesChecked = 0;
@@ -880,7 +882,7 @@ namespace AnalysisManagerSequestPlugin
         /// Counts the number of DTA files analyzed by each process
         /// </summary>
         /// <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
-        protected bool ValidateSequestNodeCount(string logFilePath)
+        private bool ValidateSequestNodeCount(string logFilePath)
         {
             return ValidateSequestNodeCount(logFilePath, logToConsole: false);
         }
@@ -893,7 +895,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="logFilePath">Path to the sequest.log file to parse</param>
         /// <param name="logToConsole">If true, displays the various status messages at the console</param>
         /// <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
-        protected bool ValidateSequestNodeCount(string logFilePath, bool logToConsole)
+        private bool ValidateSequestNodeCount(string logFilePath, bool logToConsole)
         {
             const int ERROR_CODE_A = 2;
             const int ERROR_CODE_B = 4;
@@ -1265,7 +1267,7 @@ namespace AnalysisManagerSequestPlugin
             return "s";
         }
 
-        protected float ComputeMedian(List<float> values)
+        private float ComputeMedian(List<float> values)
         {
             var sortedValues = (from item in values orderby item select item).ToList();
 

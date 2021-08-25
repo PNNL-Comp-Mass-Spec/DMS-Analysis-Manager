@@ -18,18 +18,18 @@ namespace AnalysisManager_AScore_PlugIn
     {
         // Ignore Spelling: const, Mage, msgfdb, msgfplus, ParmFile
 
-        protected string mResultsDBFileName = string.Empty;
-        protected string mWorkingDir;
+        private string mResultsDBFileName = string.Empty;
+        private string mWorkingDir;
 
-        protected JobParameters mJobParams;
-        protected ManagerParameters mMgrParams;
+        private JobParameters mJobParams;
+        private ManagerParameters mMgrParams;
 
-        protected string mSearchType = string.Empty;
-        protected string mParamFilename = string.Empty;
-        protected string mFastaFilePath = string.Empty;
-        protected string mErrorMessage = string.Empty;
+        private string mSearchType = string.Empty;
+        private string mParamFilename = string.Empty;
+        private string mFastaFilePath = string.Empty;
+        private string mErrorMessage = string.Empty;
 
-        protected DotNetZipTools mDotNetZipTools;
+        private DotNetZipTools mDotNetZipTools;
 
         public static DatasetListInfo mMyEMSLDatasetInfo;
 
@@ -360,7 +360,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// make a set of parameters for the extraction pipeline modules using the job parameters
         /// </summary>
-        protected ExtractionType GetExtractionParametersFromJobParameters()
+        private ExtractionType GetExtractionParametersFromJobParameters()
         {
             var extractionParams = new ExtractionType();
 

@@ -11,8 +11,8 @@ namespace AnalysisManagerMSDeconvPlugIn
 {
     public class RenumberMzXMLScans
     {
-        protected const string XML_ELEMENT_SCAN = "scan";
-        protected const string XML_ELEMENT_PRECURSOR_MZ = "precursorMz";
+        private const string XML_ELEMENT_SCAN = "scan";
+        private const string XML_ELEMENT_PRECURSOR_MZ = "precursorMz";
 
         private Dictionary<int, int> mScanNumMap;
         private int mNextScanNumber;
@@ -84,7 +84,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        protected bool IndexMzXmlFile(string filePath)
+        private bool IndexMzXmlFile(string filePath)
         {
             try
             {
@@ -213,7 +213,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             return true;
         }
 
-        protected void WriteShallowNode(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteShallowNode(XmlTextReader reader, XmlTextWriter writer)
         {
             switch (reader.NodeType)
             {
@@ -265,7 +265,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        protected void WriteUpdatedScan(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteUpdatedScan(XmlTextReader reader, XmlTextWriter writer)
         {
             writer.WriteStartElement(XML_ELEMENT_SCAN);
 
@@ -299,7 +299,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        protected void WriteUpdatedPrecursorMz(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteUpdatedPrecursorMz(XmlTextReader reader, XmlTextWriter writer)
         {
             writer.WriteStartElement(XML_ELEMENT_PRECURSOR_MZ);
 

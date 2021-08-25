@@ -24,21 +24,21 @@ namespace AnalysisManagerMSDeconvPlugIn
     {
         // Ignore Spelling: centroided, Deconv, mgf, msalign, Xmx
 
-        protected const string MSDECONV_CONSOLE_OUTPUT = "MSDeconv_ConsoleOutput.txt";
-        protected const string MSDECONV_JAR_NAME = "MsDeconvConsole.jar";
+        private const string MSDECONV_CONSOLE_OUTPUT = "MSDeconv_ConsoleOutput.txt";
+        private const string MSDECONV_JAR_NAME = "MsDeconvConsole.jar";
 
-        protected const int PROGRESS_PCT_STARTING = 1;
-        protected const int PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
-        protected bool mToolVersionWritten;
+        private bool mToolVersionWritten;
 
         // Populate this with a tool version reported to the console
-        protected string mMSDeconvVersion;
+        private string mMSDeconvVersion;
 
-        protected string mMSDeconvProgLoc;
-        protected string mConsoleOutputErrorMsg;
+        private string mMSDeconvProgLoc;
+        private string mConsoleOutputErrorMsg;
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs MSDeconv tool
@@ -474,7 +474,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {

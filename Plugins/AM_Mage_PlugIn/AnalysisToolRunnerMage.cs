@@ -117,7 +117,7 @@ namespace AnalysisManager_Mage_PlugIn
             return toolFiles;
         }
 
-        protected bool ValidateFactors(FileInfo resultsDB, out string errorMessage, out string exceptionDetail)
+        private bool ValidateFactors(FileInfo resultsDB, out string errorMessage, out string exceptionDetail)
         {
             const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
 
@@ -341,7 +341,7 @@ namespace AnalysisManager_Mage_PlugIn
             return true;
         }
 
-        protected bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
+        private bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
         {
             // If the Mage Operations list contains "ExtractFromJobs", make sure that table "t_results" was created
             // If it wasn't, no matching jobs were found and we should fail out this job step

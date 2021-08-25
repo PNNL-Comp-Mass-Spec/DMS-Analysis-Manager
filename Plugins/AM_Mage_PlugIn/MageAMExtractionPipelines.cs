@@ -24,7 +24,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// The parameters for the slated extraction
         /// </summary>
-        protected ExtractionType ExtractionParams;
+        private ExtractionType ExtractionParams;
 
         /// <summary>
         /// Constructor
@@ -50,7 +50,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Get the parameters for the extraction pipeline modules from the job parameters
         /// </summary>
-        protected void GetExtractionParametersFromJobParameters()
+        private void GetExtractionParametersFromJobParameters()
         {
             ExtractionParams = new ExtractionType();
 
@@ -78,7 +78,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// Build pipeline to perform extraction operation against jobs in jobList
         /// </summary>
         /// <param name="jobList">List of jobs to perform extraction from</param>
-        protected void ExtractFromJobsList(BaseModule jobList)
+        private void ExtractFromJobsList(BaseModule jobList)
         {
             if (jobList is SimpleSink jobsToProcess)
             {

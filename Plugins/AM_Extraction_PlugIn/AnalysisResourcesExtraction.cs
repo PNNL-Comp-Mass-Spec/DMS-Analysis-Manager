@@ -50,10 +50,10 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         public const string JOB_PARAM_SKIP_PHRP = "SkipPHRP";
 
-        protected bool mRetrieveOrganismDB;
+        private bool mRetrieveOrganismDB;
 
         // Keys are the original file name, values are the new name
-        protected Dictionary<string, string> mPendingFileRenames;
+        private Dictionary<string, string> mPendingFileRenames;
 
         /// <summary>
         /// Initialize options
@@ -1305,7 +1305,7 @@ namespace AnalysisManagerExtractionPlugin
         /// (including the search engine parameter file, _ModDefs.txt and MassCorrectionTags.txt)
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
-        protected internal CloseOutType RetrieveMiscFiles(string resultTypeName)
+        private CloseOutType RetrieveMiscFiles(string resultTypeName)
         {
             var paramFileName = mJobParams.GetParam("ParmFileName");
             var modDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
@@ -1446,7 +1446,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        protected void RetrieveToolVersionFile(string resultTypeName)
+        private void RetrieveToolVersionFile(string resultTypeName)
         {
             try
             {

@@ -21,22 +21,22 @@ namespace AnalysisManagerPBFGenerator
     {
         #region "Constants and Enums"
 
-        protected const string PBF_GEN_CONSOLE_OUTPUT = "PBFGen_ConsoleOutput.txt";
+        private const string PBF_GEN_CONSOLE_OUTPUT = "PBFGen_ConsoleOutput.txt";
 
-        protected const int PROGRESS_PCT_STARTING = 1;
-        protected const int PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         #endregion
 
         #region "Module Variables"
 
-        protected string mConsoleOutputErrorMsg;
+        private string mConsoleOutputErrorMsg;
         private long mInstrumentFileSizeBytes;
-        protected string mResultsFilePath;
+        private string mResultsFilePath;
 
-        protected string mPbfFormatVersion;
+        private string mPbfFormatVersion;
 
-        protected DirectoryInfo mMSXmlCacheFolder;
+        private DirectoryInfo mMSXmlCacheFolder;
 
         #endregion
 
@@ -248,7 +248,7 @@ namespace AnalysisManagerPBFGenerator
         /// Furthermore, it looks like all of the data in the .raw file is cached in memory and the .PBF file is not created until the very end
         ///  and thus this progress estimation is useless
         /// </summary>
-        protected float EstimatePBFProgress()
+        private float EstimatePBFProgress()
         {
             try
             {
@@ -346,7 +346,7 @@ namespace AnalysisManagerPBFGenerator
             }
         }
 
-        protected bool StartPBFFileCreation(string progLoc)
+        private bool StartPBFFileCreation(string progLoc)
         {
             mConsoleOutputErrorMsg = string.Empty;
 
@@ -455,7 +455,7 @@ namespace AnalysisManagerPBFGenerator
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>
             {

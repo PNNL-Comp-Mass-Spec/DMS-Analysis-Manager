@@ -128,7 +128,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string featureFinderProgLoc)
+        private bool StoreToolVersionInfo(string featureFinderProgLoc)
         {
             var toolVersionInfo = string.Empty;
 

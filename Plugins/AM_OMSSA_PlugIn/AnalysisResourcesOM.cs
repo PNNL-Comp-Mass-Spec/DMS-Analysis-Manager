@@ -21,7 +21,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
         internal const string OMSSA_DEFAULT_INPUT_FILE = "OMSSA_default_input.xml";
         internal const string OMSSA_INPUT_FILE = "OMSSA_input.xml";
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Initialize options
@@ -107,7 +107,7 @@ namespace AnalysisManagerOMSSAPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool ConvertOMSSAFastaFile()
+        private bool ConvertOMSSAFastaFile()
         {
             try
             {
@@ -160,7 +160,7 @@ namespace AnalysisManagerOMSSAPlugIn
             return true;
         }
 
-        protected bool ConvertDtaToXml()
+        private bool ConvertDtaToXml()
         {
             var blnSuccess = false;
 
@@ -204,7 +204,7 @@ namespace AnalysisManagerOMSSAPlugIn
             return blnSuccess;
         }
 
-        protected bool MakeInputFile(out string errorMessage)
+        private bool MakeInputFile(out string errorMessage)
         {
             var OmssaDefaultInput = Path.Combine(mWorkDir, OMSSA_DEFAULT_INPUT_FILE);
             var OmssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);

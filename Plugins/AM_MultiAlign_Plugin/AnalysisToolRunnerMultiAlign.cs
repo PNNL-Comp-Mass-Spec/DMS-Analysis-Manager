@@ -20,10 +20,10 @@ namespace AnalysisManagerMultiAlignPlugIn
     {
         // Ignore Spelling: ParmFile
 
-        protected const int PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
-        protected const int PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
+        private const int PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
+        private const int PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs MultiAlign tool
@@ -136,7 +136,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
-        protected CloseOutType RenameLogFile()
+        private CloseOutType RenameLogFile()
         {
             const string LogExtension = "-log.txt";
             var NewFilename = mDatasetName + LogExtension;
@@ -180,7 +180,7 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+        private bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
             var strToolVersionInfo = string.Empty;
 

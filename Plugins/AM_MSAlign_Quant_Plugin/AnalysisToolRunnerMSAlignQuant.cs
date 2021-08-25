@@ -20,25 +20,25 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         #region "Module Variables"
 
-        protected const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";
-        protected const string TARGETED_WORKFLOWS_CONSOLE_OUTPUT = "TargetedWorkflow_ConsoleOutput.txt";
-        protected const int PROGRESS_PCT_CREATING_PARAMETERS = 5;
+        private const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";
+        private const string TARGETED_WORKFLOWS_CONSOLE_OUTPUT = "TargetedWorkflow_ConsoleOutput.txt";
+        private const int PROGRESS_PCT_CREATING_PARAMETERS = 5;
 
-        protected const int PROGRESS_TARGETED_WORKFLOWS_STARTING = 10;
-        protected const int PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC = 11;
-        protected const int PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED = 15;
-        protected const int PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED = 15;
-        protected const int PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE = 95;
+        private const int PROGRESS_TARGETED_WORKFLOWS_STARTING = 10;
+        private const int PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC = 11;
+        private const int PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED = 15;
+        private const int PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED = 15;
+        private const int PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE = 95;
 
-        protected const int PROGRESS_TARGETED_WORKFLOWS_COMPLETE = 98;
-        protected const int PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_TARGETED_WORKFLOWS_COMPLETE = 98;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
-        protected string mConsoleOutputErrorMsg;
+        private string mConsoleOutputErrorMsg;
 
-        protected string mTargetedWorkflowsProgLoc;
-        protected Dictionary<string, int> mConsoleOutputProgressMap;
+        private string mTargetedWorkflowsProgLoc;
+        private Dictionary<string, int> mConsoleOutputProgressMap;
 
-        protected RunDosProgram mCmdRunner;
+        private RunDosProgram mCmdRunner;
 
         #endregion
 
@@ -251,7 +251,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// Creates the targeted quant params XML file
         /// </summary>
         /// <returns>The full path to the file, if successful. Otherwise, an empty string</returns>
-        protected string CreateTargetedQuantParamFile()
+        private string CreateTargetedQuantParamFile()
         {
             string targetedQuantParamFilePath;
 
@@ -364,7 +364,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// Parse the TargetedWorkflowsConsole console output file to track progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        protected void ParseConsoleOutputFile(string consoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
@@ -493,7 +493,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
+        private bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
         {
             var additionalDLLs = new List<string>
             {
@@ -522,7 +522,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        protected void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             UpdateStatusFile();
 

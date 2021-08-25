@@ -25,9 +25,8 @@ namespace AnalysisManagerXTandemPlugIn
 
         #region "Module Variables"
 
-        protected const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";
+        private const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";
 
-        protected RunDosProgram mCmdRunner;
         private const int PROGRESS_PCT_XTANDEM_STARTING = 1;
         private const int PROGRESS_PCT_XTANDEM_LOADING_SPECTRA = 5;
         private const int PROGRESS_PCT_XTANDEM_COMPUTING_MODELS = 10;
@@ -39,10 +38,15 @@ namespace AnalysisManagerXTandemPlugIn
         private const int PROGRESS_PCT_XTANDEM_CREATING_REPORT = 95;
         private const int PROGRESS_PCT_XTANDEM_COMPLETE = 99;
 
-        protected bool mToolVersionWritten;
-        protected string mXTandemVersion = string.Empty;
-        // This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
-        protected int mXTandemResultsCount;
+        private RunDosProgram mCmdRunner;
+
+        private bool mToolVersionWritten;
+        private string mXTandemVersion = string.Empty;
+
+        /// <summary>
+        /// This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
+        /// </summary>
+        private int mXTandemResultsCount;
 
         #endregion
 
@@ -208,7 +212,7 @@ namespace AnalysisManagerXTandemPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             if (mDebugLevel >= 2)
             {
@@ -233,7 +237,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
         }
 
-        protected string DetermineXTandemProgramLocation(string progLoc)
+        private string DetermineXTandemProgramLocation(string progLoc)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
             var strXTandemStepToolVersion = mJobParams.GetParam("XTandem_Version");

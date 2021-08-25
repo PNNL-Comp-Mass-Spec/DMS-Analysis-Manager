@@ -24,25 +24,25 @@ namespace AnalysisManagerNOMSIPlugin
     {
         #region "Constants and Enums"
 
-        protected const int PROGRESS_PCT_STARTING = 5;
-        protected const int PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 5;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput_scan";
-        protected const string COMPRESSED_NOMSI_RESULTS_BASE = "NOMSI_Results_scan";
+        private const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput_scan";
+        private const string COMPRESSED_NOMSI_RESULTS_BASE = "NOMSI_Results_scan";
 
         #endregion
 
         #region "Module Variables"
 
-        protected string mCurrentConsoleOutputFile;
-        protected string mConsoleOutputErrorMsg;
-        protected bool mNoPeaksFound;
+        private string mCurrentConsoleOutputFile;
+        private string mConsoleOutputErrorMsg;
+        private bool mNoPeaksFound;
 
-        protected DateTime mLastConsoleOutputParse;
-        protected DateTime mLastProgressWriteTime;
+        private DateTime mLastConsoleOutputParse;
+        private DateTime mLastProgressWriteTime;
 
-        protected int mTotalSpectra;
-        protected int mSpectraProcessed;
+        private int mTotalSpectra;
+        private int mSpectraProcessed;
 
         #endregion
 
@@ -584,7 +584,7 @@ namespace AnalysisManagerNOMSIPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string progLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
             var success = StoreDotNETToolVersionInfo(progLoc, true);
 

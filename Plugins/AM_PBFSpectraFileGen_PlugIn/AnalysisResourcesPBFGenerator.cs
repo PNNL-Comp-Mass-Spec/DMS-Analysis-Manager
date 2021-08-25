@@ -34,7 +34,7 @@ namespace AnalysisManagerPBFGenerator
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool RetrieveInstrumentData()
+        private bool RetrieveInstrumentData()
         {
             var currentTask = "Initializing";
 

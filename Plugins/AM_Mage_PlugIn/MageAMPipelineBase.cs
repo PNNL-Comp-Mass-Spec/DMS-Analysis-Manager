@@ -13,19 +13,19 @@ namespace AnalysisManager_Mage_PlugIn
 {
     public class MageAMPipelineBase : EventNotifier
     {
-        protected readonly Regex mProcessingResults = new(@"Extracting results for job (\d+)", RegexOptions.Compiled);
+        private readonly Regex mProcessingResults = new(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
-        protected int mLastProgressJob;
+        private int mLastProgressJob;
 
-        protected DateTime mLastProgressTime = DateTime.UtcNow;
+        private DateTime mLastProgressTime = DateTime.UtcNow;
 
         protected string ResultsDBFileName { get; }
 
         protected string WorkingDirPath { get; }
 
-        protected IJobParams JobParams { get; }
+        private IJobParams JobParams { get; }
 
-        protected IMgrParams MgrParams { get; }
+        private IMgrParams MgrParams { get; }
 
         /// <summary>
         /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
@@ -47,7 +47,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// Jobs that have been processed
         /// </summary>
         /// <remarks>Updated by HandlePipelineUpdate</remarks>
-        protected SortedSet<int> JobsProcessed { get; }
+        private SortedSet<int> JobsProcessed { get; }
 
         public string WorkingDir => WorkingDirPath;
 

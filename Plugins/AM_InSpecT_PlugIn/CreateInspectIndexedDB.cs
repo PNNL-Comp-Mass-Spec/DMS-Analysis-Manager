@@ -244,7 +244,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Creates a lock file
         /// </summary>
         /// <returns>True if success; false if failure</returns>
-        protected bool CreateLockFile(string lockFilePath)
+        private bool CreateLockFile(string lockFilePath)
         {
             try
             {

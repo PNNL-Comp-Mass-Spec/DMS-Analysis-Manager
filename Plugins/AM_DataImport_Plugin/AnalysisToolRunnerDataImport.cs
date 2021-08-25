@@ -23,7 +23,7 @@ namespace AnalysisManagerDataImportPlugIn
 
         #region "Module Variables"
 
-        protected List<FileInfo> mSourceFiles;
+        private List<FileInfo> mSourceFiles;
 
         #endregion
 
@@ -96,7 +96,7 @@ namespace AnalysisManagerDataImportPlugIn
         /// Move the files from the source directory to a new subdirectory below the source directory
         /// </summary>
         /// <remarks>The name of the new subdirectory comes from mResultsDirectoryName</remarks>
-        protected bool MoveImportedFiles()
+        private bool MoveImportedFiles()
         {
             var targetDirectoryPath = "??";
             var targetFilePath = "??";
@@ -150,7 +150,7 @@ namespace AnalysisManagerDataImportPlugIn
         /// <summary>
         /// Import files from the source share to the analysis job folder
         /// </summary>
-        protected bool PerformDataImport()
+        private bool PerformDataImport()
         {
             const string MATCH_ALL_FILES = "*";
 
@@ -261,7 +261,7 @@ namespace AnalysisManagerDataImportPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;
             var strAppFolderPath = Global.GetAppDirectoryPath();

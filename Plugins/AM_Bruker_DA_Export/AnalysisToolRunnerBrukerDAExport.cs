@@ -365,7 +365,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <summary>
         /// Determine the location of Bruker's DataAnalysis.exe program
         /// </summary>
-        protected string FindDataAnalysisProgram()
+        private string FindDataAnalysisProgram()
         {
             try
             {
@@ -577,7 +577,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;
 
