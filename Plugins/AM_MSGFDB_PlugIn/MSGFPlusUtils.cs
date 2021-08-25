@@ -3072,8 +3072,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 const int retryCount = 2;
 
-                var applicationName = string.Format("{0}_MSGFPlusUtils", mMgrParams.ManagerName);
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrParams.ManagerName);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbTools);

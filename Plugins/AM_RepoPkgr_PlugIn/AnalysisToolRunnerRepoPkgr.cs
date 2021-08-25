@@ -257,9 +257,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var connectionString = mMgrParams.GetParam("ConnectionString");
             var brokerConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var applicationName = string.Format("{0}_RepoPkgr", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
-            var brokerConnectionStringToUse= DbToolsFactory.AddApplicationNameToConnectionString(brokerConnectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
+            var brokerConnectionStringToUse= DbToolsFactory.AddApplicationNameToConnectionString(brokerConnectionString, mMgrName);
 
             queryDefs.SetCnStr(QueryDefinitions.TagName.Main, connectionStringToUse);
             queryDefs.SetCnStr(QueryDefinitions.TagName.Broker, brokerConnectionStringToUse);
@@ -731,8 +730,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     return orgDbName;
                 }
 
-                var applicationName = string.Format("{0}_RepoPkgr", mMgrName);
-                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, applicationName);
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, mMgrName);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);

@@ -323,8 +323,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
-            var applicationName = string.Format("{0}_SMAQC", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             var success = false;
 

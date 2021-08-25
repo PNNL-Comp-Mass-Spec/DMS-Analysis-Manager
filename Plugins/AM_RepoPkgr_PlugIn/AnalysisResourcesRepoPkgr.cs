@@ -49,8 +49,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-            var applicationName = string.Format("{0}_RepoPkgr", mMgrName);
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, applicationName);
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
 
             var dataPkgId = mJobParams.GetJobParameter("DataPackageID", -1);
 

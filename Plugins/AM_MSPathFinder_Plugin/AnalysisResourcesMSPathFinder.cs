@@ -186,8 +186,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     // Gigasax.DMS_Pipeline
                     var dmsConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
-                    var applicationName = string.Format("{0}_MSPathFinder", mMgrName);
-                    var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, applicationName);
+                    var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
                     var sql = " SELECT Input_Folder_Name " +
                               " FROM T_Job_Steps" +
