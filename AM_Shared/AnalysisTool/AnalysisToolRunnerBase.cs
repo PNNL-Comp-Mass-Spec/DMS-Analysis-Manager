@@ -1594,7 +1594,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Check whether the settings file specifies that a specific version of the step tool be used
 
             string programDirectoryPath;
-            string programName;
+            string exeNameOrRelativePath;
 
             if (!string.IsNullOrWhiteSpace(stepToolVersion))
             {
@@ -1611,25 +1611,25 @@ namespace AnalysisManagerBase.AnalysisTool
                 LogTools.LogMessage("Using specific version of " + stepToolName + ": " + programDirectoryPath);
 
                 // When using a specific version, remove any relative path information in programNameOrRelativePath
-                programName = Path.GetFileName(programNameOrRelativePath);
+                exeNameOrRelativePath = Path.GetFileName(programNameOrRelativePath);
             }
             else
             {
                 programDirectoryPath = defaultProgramDirectory;
-                programName = programNameOrRelativePath;
+                exeNameOrRelativePath = programNameOrRelativePath;
             }
 
             // Define the path to the .Exe or .jar file, then verify that it exists
-            var programPath = Path.Combine(programDirectoryPath, programName);
+            var programPath = Path.Combine(programDirectoryPath, exeNameOrRelativePath);
 
-            if (!File.Exists(programPath))
+            if (File.Exists(programPath))
             {
-                errorMessage = "Cannot find " + stepToolName + " program file " + programName;
-                LogTools.LogError(errorMessage + " at " + programDirectoryPath);
-                return string.Empty;
+                return programPath;
             }
 
-            return programPath;
+            errorMessage = "Cannot find " + stepToolName + " program file " + exeNameOrRelativePath;
+            LogTools.LogError(errorMessage + " at " + programDirectoryPath);
+            return string.Empty;
         }
 
         /// <summary>
