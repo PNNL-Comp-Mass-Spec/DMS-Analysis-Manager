@@ -19,7 +19,11 @@ namespace AnalysisManagerMODaPlugIn
     /// </summary>
     public class AnalysisToolRunnerMODa : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Hanyang, moda, MODa, msms, ParmFile, Xmx
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: datasest, fasta, Hanyang, moda, MODa, msms, ParmFile, Xmx
+
+        // ReSharper restore CommentTypo
 
         #region "Constants and Enums"
 
@@ -272,6 +276,8 @@ namespace AnalysisManagerMODaPlugIn
         }
 
         // ReSharper disable CommentTypo
+
+        // MODa console output shows datasest instead of dataset
 
         // Example Console output
         //
@@ -574,8 +580,8 @@ namespace AnalysisManagerMODaPlugIn
 
         private bool UpdateParameterFile(string paramFileName, string spectrumFileName, string fastaFilePath)
         {
-            const string SPEC_FILE_PATH = "spectra"; // "Spectra"
-            const string FASTA_FILE_PATH = "fasta"; // "Fasta"
+            const string SPEC_FILE_PATH = "spectra";
+            const string FASTA_FILE_PATH = "fasta";
 
             var specFileDefined = false;
             var fastaFileDefined = false;

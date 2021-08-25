@@ -77,7 +77,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Initialize classwide variables
+                // Initialize class-wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 var processingSuccess = ConvertToAgilentDotD();

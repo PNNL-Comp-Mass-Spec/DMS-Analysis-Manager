@@ -1554,14 +1554,20 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
-        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="stepToolName">
+        /// The name of the step tool, e.g. LCMSFeatureFinder
+        /// </param>
+        /// <param name="progLocManagerParamName">
+        /// The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc
+        /// </param>
         /// <param name="programNameOrRelativePath">
         /// <para>The name of the program file (.exe or .jar), e.g. LCMSFeatureFinder.exe</para>
-        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe
-        /// </para>
+        /// <para>also supports relative paths, e.g. bin\MaxQuantCmd.exe</para>
         /// </param>
-        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subdirectory located below the default program directory)</param>
+        /// <param name="stepToolVersion">
+        /// Typically an empty string, but can be a specific step tool version to use
+        /// (specifically, the name of a subdirectory located below the default program directory)
+        /// </param>
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>

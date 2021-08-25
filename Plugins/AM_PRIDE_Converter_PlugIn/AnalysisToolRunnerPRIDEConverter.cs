@@ -19,7 +19,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 {
     // ReSharper disable CommentTypo
 
-    // Ignore Spelling: acetylated, Bio, bool, const, Cv, dynode, electrospray, fourier, Frac, gzip, msg, msgf, msgfplus, musculus
+    // Ignore Spelling: acetylated, Bio, bool, const, Cv, dynode, electrospray, fasta, fourier, Frac, gzip, msg, msgf, msgfplus, musculus
     // Ignore Spelling: na, proteome, ProteomeXchange, proteomics, pubmed, Px, reportfile, roc, sapiens, sourcefile, spectrafile
     // Ignore Spelling: udt, Unimod, Unmarshaller, Xmx, Xpath, XpathPos, xtandem, yyyy-MM-dd
     // Ignore Spelling: amaZon, Deca, Exactive, Lumos, Orbitrap, SolariX, Velos
@@ -2836,7 +2836,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 WritePXMods(writer, paramsWithCVs);
 
                 // Could write additional terms here
-                // WritePXHeader(writer, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), templateParameters)
+                // WritePXHeader(writer, "additional", GetCVString("", "", "Patient", "Cancer patient 1"), templateParameters)
 
                 // If this is a re-submission or re-analysis, use these:
                 // WritePXHeader(writer, "resubmission_px", "PXD00001", templateParameters)
