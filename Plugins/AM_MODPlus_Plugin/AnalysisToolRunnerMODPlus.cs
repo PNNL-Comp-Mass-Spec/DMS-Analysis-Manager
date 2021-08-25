@@ -394,7 +394,7 @@ namespace AnalysisManagerMODPlusPlugin
                 AddXMLElement(doc, "/search/dataset", defaultAttributes);
             }
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var databaseNodes = doc.SelectNodes("/search/database");
 
             if (databaseNodes?.Count > 0)
@@ -524,7 +524,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         private bool InitializeFastaFile()
         {
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
@@ -532,8 +532,8 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (!fiFastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fiFastaFile.Name, "Fasta file not found: " + fiFastaFile.FullName);
+                // FASTA file not found
+                LogError("FASTA file not found: " + fiFastaFile.Name, "FASTA file not found: " + fiFastaFile.FullName);
                 return false;
             }
 
@@ -872,7 +872,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Lookup job parameters";
 
-                // Define the path to the fasta file
+                // Define the path to the FASTA file
                 // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
                 var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
                 var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");

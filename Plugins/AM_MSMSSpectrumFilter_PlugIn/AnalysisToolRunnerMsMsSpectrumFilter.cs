@@ -266,7 +266,7 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual int CountDtaFiles(string dtaTextFilePath)
         {
-            // Returns the number of dta files in the _dta.txt file
+            // Returns the number of DTA files in the _dta.txt file
 
             // This RegEx matches text of the form:
             // =================================== "File.ScanStart.ScanEnd.Charge.dta" ==================================
@@ -751,7 +751,7 @@ namespace MSMSSpectrumFilterAM
             // Verify at least one .dta file has been created
             if (CountDtaFiles(dtaTextFilePath) < 1)
             {
-                mErrMsg = "No dta files remain after filtering";
+                mErrMsg = "No DTA files remain after filtering";
                 return false;
             }
 
@@ -777,7 +777,7 @@ namespace MSMSSpectrumFilterAM
         /// <returns>CloseOutType enum indicating success or failure</returns>
         protected virtual CloseOutType ZipConcatenatedDtaFile()
         {
-            // Zips the concatenated dta file
+            // Zips the concatenated DTA file
             var dtaFileName = mDatasetName + "_dta.txt";
             var dtaFilePath = Path.Combine(mWorkDir, dtaFileName);
 
@@ -788,7 +788,7 @@ namespace MSMSSpectrumFilterAM
             }
             else
             {
-                LogError("Unable to find concatenated dta file");
+                LogError("Unable to find concatenated DTA file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -797,14 +797,14 @@ namespace MSMSSpectrumFilterAM
             {
                 if (!ZipFile(dtaFilePath, false))
                 {
-                    var msg = "Error zipping concat dta file, job " + mJob + ", step " + mJobParams.GetParam("Step");
+                    var msg = "Error zipping concatenated DTA file, job " + mJob + ", step " + mJobParams.GetParam("Step");
                     LogError(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                var msg = "Exception zipping concat dta file, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message;
+                var msg = "Exception zipping concatenated DTA file, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

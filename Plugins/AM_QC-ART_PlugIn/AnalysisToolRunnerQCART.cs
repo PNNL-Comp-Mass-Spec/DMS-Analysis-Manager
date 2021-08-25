@@ -100,7 +100,7 @@ namespace AnalysisManagerQCARTPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Retrieve the baseline dataset names and corresponding Masic job numbers
+                // Retrieve the baseline dataset names and corresponding MASIC job numbers
                 var datasetNamesAndJobs = GetPackedDatasetNamesAndJobs();
                 if (datasetNamesAndJobs.Count == 0)
                 {
@@ -180,7 +180,7 @@ namespace AnalysisManagerQCARTPlugin
         /// Converts the QCDM to xml to be used by database
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
-        /// <param name="masicJob">Masic job for the dataset</param>
+        /// <param name="masicJob">MASIC job for the dataset</param>
         /// <param name="qcartValue">QC-ART value</param>
         private string ConstructXmlForDbPosting(string datasetName, int masicJob, double qcartValue)
         {
@@ -334,9 +334,9 @@ namespace AnalysisManagerQCARTPlugin
         }
 
         /// <summary>
-        /// Retrieve the baseline dataset names and corresponding Masic jobs that were stored by AnalysisResourcesQCART
+        /// Retrieve the baseline dataset names and corresponding MASIC jobs that were stored by AnalysisResourcesQCART
         /// </summary>
-        /// <returns>Dictionary of dataset names and Masic jobs</returns>
+        /// <returns>Dictionary of dataset names and MASIC jobs</returns>
         private Dictionary<string, int> GetPackedDatasetNamesAndJobs()
         {
             var datasetNamesAndJobsText = ExtractPackedJobParameterDictionary(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);

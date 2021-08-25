@@ -22,7 +22,7 @@ using AnalysisManagerBase.JobConfig;
 namespace AnalysisManagerSequestPlugin
 {
     /// <summary>
-    /// Overrides Sequest tool runner to provide cluster-specific methods
+    /// Overrides SEQUEST tool runner to provide cluster-specific methods
     /// </summary>
     public class AnalysisToolRunnerSeqCluster : AnalysisToolRunnerSeqBase
     {
@@ -114,7 +114,7 @@ namespace AnalysisManagerSequestPlugin
         private DateTime mSequestSearchStartTime;
         private DateTime mSequestSearchEndTime;
 
-        private readonly Regex mActiveNodeRegEx = new(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
+        private readonly Regex mActiveNodeRegEx = new(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+SEQUEST.+slave.*",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         #endregion
@@ -127,7 +127,7 @@ namespace AnalysisManagerSequestPlugin
         /// <returns>CloseOutType enum indicating success or failure</returns>
         protected override CloseOutType MakeOUTFiles()
         {
-            // Creates Sequest .out files from DTA files
+            // Creates SEQUEST .out files from DTA files
 
             int dtaCountRemaining;
             var processingError = false;
@@ -167,7 +167,7 @@ namespace AnalysisManagerSequestPlugin
             var ProgLoc = mMgrParams.GetParam("SeqProgLoc");
             if (!File.Exists(ProgLoc))
             {
-                mMessage = "Sequest .Exe not found";
+                mMessage = "SEQUEST .Exe not found";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage + " at " + ProgLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -179,7 +179,7 @@ namespace AnalysisManagerSequestPlugin
 
             var workDir = new DirectoryInfo(mWorkDir);
 
-            if (workDir.GetFiles("sequest*.log*").Length > 0)
+            if (workDir.GetFiles("SEQUEST*.log*").Length > 0)
             {
                 // Parse any sequest.log files present in the work directory to determine the number of spectra already processed
                 UpdateSequestNodeProcessingStats(true);
@@ -208,14 +208,14 @@ namespace AnalysisManagerSequestPlugin
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                // Define the arguments to pass to the Sequest .Exe
+                // Define the arguments to pass to the SEQUEST .Exe
                 var arguments = " -P" + mJobParams.GetParam("parmFileName") + " *.dta";
                 if (mDebugLevel >= 1)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "  " + ProgLoc + " " + arguments);
                 }
 
-                // Run Sequest to generate OUT files
+                // Run SEQUEST to generate OUT files
                 mLastSequestStartTime = DateTime.UtcNow;
                 var success = mCmdRunner.RunProgram(ProgLoc, arguments, "Seq", true);
 
@@ -267,19 +267,19 @@ namespace AnalysisManagerSequestPlugin
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + outFileCount + ") is equivalent to the original DTA count (" + mDtaCount +
-                                "); we'll consider this a successful job despite the Sequest CmdRunner error");
+                                "); we'll consider this a successful job despite the SEQUEST CmdRunner error");
                         }
                         else if (outFileCount > mDtaCount)
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + outFileCount + ") is greater than the original DTA count (" + mDtaCount +
-                                "); we'll consider this a successful job despite the Sequest CmdRunner error");
+                                "); we'll consider this a successful job despite the SEQUEST CmdRunner error");
                         }
                         else if (outFileCount >= (int)(mDtaCount * 0.999))
                         {
                             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + outFileCount + ") is within 0.1% of the original DTA count (" + mDtaCount +
-                                "); we'll consider this a successful job despite the Sequest CmdRunner error");
+                                "); we'll consider this a successful job despite the SEQUEST CmdRunner error");
                         }
                         else
                         {
@@ -381,7 +381,7 @@ namespace AnalysisManagerSequestPlugin
         private DateTime mLastStatusUpdate = DateTime.MinValue;
 
         /// <summary>
-        /// Provides a wait loop while Sequest is running
+        /// Provides a wait loop while SEQUEST is running
         /// </summary>
         private void CmdRunner_LoopWaiting()
         {
@@ -412,7 +412,7 @@ namespace AnalysisManagerSequestPlugin
                 UpdateStatusRunning(mProgress, mDtaCount);
             }
 
-            LogProgress("Sequest");
+            LogProgress("SEQUEST");
 
             if (mResetPVM)
             {
@@ -429,13 +429,13 @@ namespace AnalysisManagerSequestPlugin
         }
 
         /// <summary>
-        /// Reads sequest.log file after Sequest finishes and adds cluster statistics info to summary file
+        /// Reads sequest.log file after SEQUEST finishes and adds cluster statistics info to summary file
         /// </summary>
         private void AddClusterStatsToSummaryFile()
         {
             // Write the statistics to the summary file
             mSummaryFile.Add(Environment.NewLine + "Cluster node count: ".PadRight(24) + mSequestNodeProcessingStats.NumNodeMachines);
-            mSummaryFile.Add("Sequest process count: ".PadRight(24) + mSequestNodeProcessingStats.NumSlaveProcesses);
+            mSummaryFile.Add("SEQUEST process count: ".PadRight(24) + mSequestNodeProcessingStats.NumSlaveProcesses);
             mSummaryFile.Add("Searched file count: ".PadRight(24) + mSequestNodeProcessingStats.SearchedFileCount.ToString("#,##0"));
             mSummaryFile.Add("Total search time: ".PadRight(24) + mSequestNodeProcessingStats.TotalSearchTimeSeconds.ToString("#,##0") + " secs");
             mSummaryFile.Add("Average search time: ".PadRight(24) + mSequestNodeProcessingStats.AvgSearchTime.ToString("##0.000") + " secs/spectrum");
@@ -483,10 +483,10 @@ namespace AnalysisManagerSequestPlugin
                                 // Just a handful of DTA files remain; assume they're corrupt
                                 var workDir = new DirectoryInfo(mWorkDir);
 
-                                LogWarning("Sequest is stalled, and " + dtaCountRemaining + " .DTA file" + CheckForPlurality(dtaCountRemaining) + " remain; " +
+                                LogWarning("SEQUEST is stalled, and " + dtaCountRemaining + " .DTA file" + CheckForPlurality(dtaCountRemaining) + " remain; " +
                                            "assuming they are corrupt and deleting them");
 
-                                mEvalMessage = "Sequest is stalled, but only " + dtaCountRemaining + " .DTA file" +
+                                mEvalMessage = "SEQUEST is stalled, but only " + dtaCountRemaining + " .DTA file" +
                                                 CheckForPlurality(dtaCountRemaining) + " remain";
 
                                 foreach (var dtaFile in workDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList())
@@ -496,12 +496,12 @@ namespace AnalysisManagerSequestPlugin
                             }
                             else
                             {
-                                // Too many DTAs remain unprocessed and Sequest is stalled
+                                // Too many DTAs remain unprocessed and SEQUEST is stalled
                                 // Abort the job
 
                                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                                    "Sequest is stalled, and " + dtaCountRemaining + " .DTA files remain; aborting processing");
-                                mMessage = "Sequest is stalled and too many .DTA files are unprocessed";
+                                    "SEQUEST is stalled, and " + dtaCountRemaining + " .DTA files remain; aborting processing");
+                                mMessage = "SEQUEST is stalled and too many .DTA files are unprocessed";
                                 mAbortSinceSequestIsStalled = true;
                             }
 
@@ -510,11 +510,11 @@ namespace AnalysisManagerSequestPlugin
                     }
                     else
                     {
-                        // Sequest appears stalled
+                        // SEQUEST appears stalled
                         // Reset PVM, then wait another 30 minutes
 
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                            "Sequest has not created a new .out file in the last " + SEQUEST_STALLED_WAIT_TIME_MINUTES +
+                            "SEQUEST has not created a new .out file in the last " + SEQUEST_STALLED_WAIT_TIME_MINUTES +
                             " minutes; will Reset PVM then wait another " + SEQUEST_STALLED_WAIT_TIME_MINUTES + " minutes");
 
                         resetPVM = true;
@@ -1285,7 +1285,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 var workDir = new DirectoryInfo(mWorkDir);
 
-                foreach (var sequestLogFile in workDir.GetFiles("sequest*.log*"))
+                foreach (var sequestLogFile in workDir.GetFiles("SEQUEST*.log*"))
                 {
                     UpdateSequestNodeProcessingStatsOneFile(sequestLogFile.FullName);
                 }
@@ -1304,7 +1304,7 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 2)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                        "Sequest log file not found, cannot update Node Processing Stats");
+                        "SEQUEST log file not found, cannot update Node Processing Stats");
                     return;
                 }
             }
@@ -1331,7 +1331,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                var Msg = "UpdateNodeStats: Exception reading sequest log file: " + ex.Message;
+                var Msg = "UpdateNodeStats: Exception reading SEQUEST log file: " + ex.Message;
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
                 return;
             }
@@ -1339,7 +1339,7 @@ namespace AnalysisManagerSequestPlugin
             var fileContents = sbContents.ToString();
 
             // Node machine count
-            var NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the sequest task on\\s+\\d+\\s+node");
+            var NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the SEQUEST task on\\s+\\d+\\s+node");
             if (NumNodeMachines == 0)
             {
                 const string Msg = "UpdateNodeStats: node machine count line not found";
@@ -1356,7 +1356,7 @@ namespace AnalysisManagerSequestPlugin
                 mSequestNodeProcessingStats.NumNodeMachines = NumNodeMachines;
             }
 
-            // Sequest process count
+            // SEQUEST process count
             var NumSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\\s+\\d+\\s+slave processes");
             if (NumSlaveProcesses == 0)
             {
@@ -1511,7 +1511,7 @@ namespace AnalysisManagerSequestPlugin
                 if (mDebugLevel >= 4 || DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
-                        " ... " + nodeCountCurrent + " / " + mSequestNodesSpawned + " Sequest nodes are active; median processing time = " +
+                        " ... " + nodeCountCurrent + " / " + mSequestNodesSpawned + " SEQUEST nodes are active; median processing time = " +
                         ComputeMedianProcessingTime().ToString("0.0") + " seconds/spectrum; " + mProgress.ToString("0.0") + "% complete");
                     mLastActiveNodeLogTime = DateTime.UtcNow;
                 }

@@ -135,7 +135,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                // Retrieve the Fasta file
+                // Retrieve the FASTA file
                 var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;

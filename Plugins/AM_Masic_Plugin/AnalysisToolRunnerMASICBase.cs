@@ -245,13 +245,13 @@ namespace AnalysisManagerMasicPlugin
 
                 if (!string.IsNullOrEmpty(mErrorMessage))
                 {
-                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + mErrorMessage);
+                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC Error message: " + mErrorMessage);
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = mErrorMessage;
                 }
                 else
                 {
-                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
+                    LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC Error message is blank");
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = "Unknown error running MASIC";
                 }

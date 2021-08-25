@@ -114,7 +114,7 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
             }
 
-            // Add ini filename if defined
+            // Add INI filename if defined
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDIniFilename")))
             {
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";

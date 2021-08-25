@@ -108,7 +108,7 @@ namespace DTASpectraFileGen
             }
             else
             {
-                // Verify at least one dta file was created
+                // Verify at least one DTA file was created
                 if (!VerifyDtaCreation())
                 {
                     mResults = ProcessResults.SF_NO_FILES_CREATED;

@@ -193,7 +193,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         {
             fastaFileIsDecoy = false;
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
@@ -201,8 +201,8 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (!fastaFile.Exists)
             {
-                // Fasta file not found
-                LogError("Fasta file not found: " + fastaFile.Name, "Fasta file not found: " + fastaFile.FullName);
+                // FASTA file not found
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 
@@ -556,7 +556,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <summary>
         /// Read the MSPathFinder parameter file and validate the static and dynamic mods
         /// </summary>
-        /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
+        /// <param name="fastaFileIsDecoy">True if the FASTA file has had forward and reverse index files created</param>
         /// <param name="parameterFileName">Output: MSPathFinder parameter file name</param>
         /// <param name="tdaEnabled"></param>
         /// <returns>Options string if success; empty string if an error</returns>
@@ -742,7 +742,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             var pbfFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION);
             var featureFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MS1FT_EXTENSION);
 
-            // Define the path to the fasta file
+            // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 

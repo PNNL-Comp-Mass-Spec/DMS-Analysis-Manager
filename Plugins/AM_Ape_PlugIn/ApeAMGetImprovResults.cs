@@ -130,7 +130,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             var sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
-                          "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
+                          "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'SEQUEST%'";
 
             var jobList = string.Empty;
             var jobCount = 0;
