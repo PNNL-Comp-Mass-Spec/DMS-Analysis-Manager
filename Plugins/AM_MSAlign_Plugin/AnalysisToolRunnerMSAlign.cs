@@ -30,8 +30,8 @@ namespace AnalysisManagerMSAlignPlugIn
         private const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
         private const string MSAlign_JAR_NAME = "MSAlign.jar";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
         private const string RESULT_TABLE_NAME_LEGACY = "result_table.txt";

@@ -11,8 +11,8 @@ namespace AnalysisManager_Ape_PlugIn
     /// </summary>
     public class AnalysisToolRunnerApe : AnalysisToolRunnerBase
     {
-        private const float PROGRESS_PCT_APE_START = 1;
-        private const float PROGRESS_PCT_APE_DONE = 99;
+        private const int PROGRESS_PCT_APE_START = 1;
+        private const int PROGRESS_PCT_APE_DONE = 99;
 
         private string mCurrentApeTask = string.Empty;
 

@@ -32,10 +32,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         protected const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
         protected const string MSAlign_Report_CONSOLE_OUTPUT = "MSAlign_Report_ConsoleOutput.txt";
         protected const string MSAlign_JAR_NAME = "MsAlignPipeline.jar";
-
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
-
         // XML file created by MsAlignPipeline.jar; detailed results
         protected const string OUTPUT_FILE_EXTENSION_PTM_SEARCH = "PTM_SEARCH_RESULT";
         // XML file created by MsAlignPipeline.jar; filtered version of the PTM_SEARCH_RESULT file with the top hit for each spectrum
@@ -49,6 +45,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         protected const string RESULT_TABLE_FILE_EXTENSION = "OUTPUT_TABLE";
         // This DMS plugin will rename the DatasetName.OUTPUT_TABLE file to DatasetName_MSAlign_ResultTable.txt
         protected const string RESULT_TABLE_NAME_SUFFIX = "_MSAlign_ResultTable.txt";
+
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         // XML file created by MsAlignPipeline.jar; we do not keep this file
         protected const string OUTPUT_FILE_EXTENSION_FAST_FILTER_COMBINED = "FAST_FILTER_COMBINED";

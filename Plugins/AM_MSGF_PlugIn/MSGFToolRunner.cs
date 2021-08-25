@@ -30,13 +30,13 @@ namespace AnalysisManagerMSGFPlugin
         // ReSharper disable once CommentTypo
         // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, Glu, Lys, MODa, modp, msgfdb, Parm, Pre, Xmx
 
-        private const float PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
-        private const float PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;
-        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 6;
-        private const float PROGRESS_PCT_MZXML_CREATED = 10;
-        private const float PROGRESS_PCT_MSGF_START = PROGRESS_PCT_MZXML_CREATED;
-        private const float PROGRESS_PCT_MSGF_COMPLETE = 95;
-        private const float PROGRESS_PCT_MSGF_POST_PROCESSING = 97;
+        private const int PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
+        private const int PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;
+        private const int PROGRESS_PCT_MSXML_GEN_RUNNING = 6;
+        private const int PROGRESS_PCT_MZXML_CREATED = 10;
+        private const int PROGRESS_PCT_MSGF_START = PROGRESS_PCT_MZXML_CREATED;
+        private const int PROGRESS_PCT_MSGF_COMPLETE = 95;
+        private const int PROGRESS_PCT_MSGF_POST_PROCESSING = 97;
 
         public const string MSGF_RESULT_COLUMN_SpectrumFile = "#SpectrumFile";
         public const string MSGF_RESULT_COLUMN_Title = "Title";

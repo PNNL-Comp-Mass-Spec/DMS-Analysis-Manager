@@ -22,9 +22,9 @@ namespace AnalysisManagerPBFGenerator
         #region "Constants and Enums"
 
         protected const string PBF_GEN_CONSOLE_OUTPUT = "PBFGen_ConsoleOutput.txt";
-        protected const float PROGRESS_PCT_STARTING = 1;
 
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        protected const int PROGRESS_PCT_STARTING = 1;
+        protected const int PROGRESS_PCT_COMPLETE = 99;
 
         #endregion
 

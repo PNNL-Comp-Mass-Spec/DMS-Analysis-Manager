@@ -24,8 +24,8 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
         private const string THERMO_DATA_EXPORTER_CONSOLE_OUTPUT = "ThermoDataExporter_ConsoleOutput.txt";
         private const string THERMO_DATA_EXPORTER_EXE_NAME = "ThermoPeakDataExporter.exe";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private string mConsoleOutputErrorMsg;
 

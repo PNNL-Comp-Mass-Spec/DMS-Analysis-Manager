@@ -14,8 +14,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     {
         // Ignore Spelling: Aggregator
 
-        protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
-        protected const float PROGRESS_PCT_MULTIALIGN_DONE = 99;
+        protected const int PROGRESS_PCT_MULTIALIGN_START = 1;
+        protected const int PROGRESS_PCT_MULTIALIGN_DONE = 99;
 
         protected string mCurrentMultiAlignTask = string.Empty;
         protected DateTime mLastStatusUpdateTime;

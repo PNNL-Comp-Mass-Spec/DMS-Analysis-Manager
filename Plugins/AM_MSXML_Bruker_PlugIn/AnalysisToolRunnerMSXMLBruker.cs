@@ -21,7 +21,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
     {
         // Ignore Spelling: Bruker, CompassXport, gzip
 
-        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
+        private const int PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
         private const string COMPASS_XPORT = "CompassXport.exe";
 

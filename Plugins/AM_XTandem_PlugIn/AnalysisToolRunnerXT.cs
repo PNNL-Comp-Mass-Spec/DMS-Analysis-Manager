@@ -27,18 +27,17 @@ namespace AnalysisManagerXTandemPlugIn
 
         protected const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";
 
-        protected const float PROGRESS_PCT_XTANDEM_STARTING = 1;
-        protected const float PROGRESS_PCT_XTANDEM_LOADING_SPECTRA = 5;
-        protected const float PROGRESS_PCT_XTANDEM_COMPUTING_MODELS = 10;
-        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT = 50;
-        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE = 50;
-        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE = 70;
-        protected const float PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING = 85;
-        protected const float PROGRESS_PCT_XTANDEM_MERGING_RESULTS = 90;
-        protected const float PROGRESS_PCT_XTANDEM_CREATING_REPORT = 95;
-        protected const float PROGRESS_PCT_XTANDEM_COMPLETE = 99;
-
         protected RunDosProgram mCmdRunner;
+        private const int PROGRESS_PCT_XTANDEM_STARTING = 1;
+        private const int PROGRESS_PCT_XTANDEM_LOADING_SPECTRA = 5;
+        private const int PROGRESS_PCT_XTANDEM_COMPUTING_MODELS = 10;
+        private const int PROGRESS_PCT_XTANDEM_REFINEMENT = 50;
+        private const int PROGRESS_PCT_XTANDEM_REFINEMENT_PARTIAL_CLEAVAGE = 50;
+        private const int PROGRESS_PCT_XTANDEM_REFINEMENT_UNANTICIPATED_CLEAVAGE = 70;
+        private const int PROGRESS_PCT_XTANDEM_REFINEMENT_FINISHING = 85;
+        private const int PROGRESS_PCT_XTANDEM_MERGING_RESULTS = 90;
+        private const int PROGRESS_PCT_XTANDEM_CREATING_REPORT = 95;
+        private const int PROGRESS_PCT_XTANDEM_COMPLETE = 99;
 
         protected bool mToolVersionWritten;
         protected string mXTandemVersion = string.Empty;

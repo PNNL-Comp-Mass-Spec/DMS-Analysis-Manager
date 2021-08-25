@@ -30,8 +30,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         private const string FILE_SUFFIX_ASCORE_RESULTS = "_ascore.txt";
         private const string FILE_SUFFIX_SYN_PLUS_ASCORE = "_plus_ascore.txt";
 
-        private const float PROGRESS_PCT_PHOSPHO_FDR_RUNNING = 5;
-        private const float PROGRESS_PCT_PHOSPHO_FDR_COMPLETE = 99;
+        private const int PROGRESS_PCT_PHOSPHO_FDR_RUNNING = 5;
+        private const int PROGRESS_PCT_PHOSPHO_FDR_COMPLETE = 99;
 
         private enum DatasetTypeConstants
         {

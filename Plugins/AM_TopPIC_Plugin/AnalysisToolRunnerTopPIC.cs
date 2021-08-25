@@ -29,8 +29,8 @@ namespace AnalysisManagerTopPICPlugIn
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
         private const string TOPPIC_EXE_NAME = "toppic.exe";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2.OUTPUT_TABLE";
         private const string PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_prsm.csv";

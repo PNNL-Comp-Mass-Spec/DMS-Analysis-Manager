@@ -51,10 +51,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Percent complete to report when the tool starts
         /// </summary>
-        public const float PROGRESS_PCT_TOOL_RUNNER_STARTING = 20;
+        public const int PROGRESS_PCT_TOOL_RUNNER_STARTING = 20;
 
-        private const float PROGRESS_PCT_SAVING_RESULTS = 95;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_SAVING_RESULTS = 95;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string FILE_EXTENSION_PSEUDO_MSGF = ".msgf";
         private const string FILE_EXTENSION_MSGF_REPORT_XML = ".msgf-report.xml";

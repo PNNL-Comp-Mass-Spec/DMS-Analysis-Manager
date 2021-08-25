@@ -29,8 +29,8 @@ namespace AnalysisManagerQCARTPlugin
 
         #region "Constants and Enums"
 
-        private const float PROGRESS_PCT_STARTING = 5;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 5;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string STORE_QCART_RESULTS = "StoreQCARTResults";
 

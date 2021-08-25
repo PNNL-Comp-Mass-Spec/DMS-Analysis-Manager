@@ -27,8 +27,8 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         private const string DECON_PEAK_DETECTOR_CONSOLE_OUTPUT = "DeconPeakDetector_ConsoleOutput.txt";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         #endregion
 

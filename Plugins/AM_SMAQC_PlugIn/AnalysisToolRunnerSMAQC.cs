@@ -21,14 +21,14 @@ namespace AnalysisManagerSMAQCPlugIn
         #region "Module Variables"
 
         private const string SMAQC_CONSOLE_OUTPUT = "SMAQC_ConsoleOutput.txt";
-        private const float PROGRESS_PCT_SMAQC_STARTING = 1;
-        private const float PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES = 5;
-        private const float PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES = 10;
-        private const float PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS = 15;
-        private const float PROGRESS_PCT_SMAQC_SAVING_RESULTS = 88;
-        private const float PROGRESS_PCT_SMAQC_COMPLETE = 90;
-        private const float PROGRESS_PCT_RUNNING_LLRC = 95;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_SMAQC_STARTING = 1;
+        private const int PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES = 5;
+        private const int PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES = 10;
+        private const int PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS = 15;
+        private const int PROGRESS_PCT_SMAQC_SAVING_RESULTS = 88;
+        private const int PROGRESS_PCT_SMAQC_COMPLETE = 90;
+        private const int PROGRESS_PCT_RUNNING_LLRC = 95;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string STORE_SMAQC_RESULTS_SP_NAME = "StoreSMAQCResults";
 

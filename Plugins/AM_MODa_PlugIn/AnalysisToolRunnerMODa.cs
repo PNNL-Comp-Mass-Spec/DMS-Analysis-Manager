@@ -26,8 +26,8 @@ namespace AnalysisManagerMODaPlugIn
         private const string MODa_CONSOLE_OUTPUT = "MODa_ConsoleOutput.txt";
         private const string MODa_JAR_NAME = "moda.jar";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string MODA_RESULTS_FILE_SUFFIX = "_moda.txt";
 

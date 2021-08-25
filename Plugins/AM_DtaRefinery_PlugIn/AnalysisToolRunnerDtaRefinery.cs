@@ -24,7 +24,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         #region "Module Variables"
 
-        private const float PROGRESS_PCT_DTA_REFINERY_RUNNING = 5;
+        private const int PROGRESS_PCT_DTA_REFINERY_RUNNING = 5;
 
         private bool mXTandemHasFinished;
 

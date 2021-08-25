@@ -32,11 +32,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         // ReSharper restore CommentTypo
 
-        private const float PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
+        private const int PROGRESS_PCT_MzREFINERY_COMPLETE = 97;
 
-        private const float PROGRESS_PCT_PLOTS_GENERATED = 98;
+        private const int PROGRESS_PCT_PLOTS_GENERATED = 98;
 
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string MZ_REFINERY_CONSOLE_OUTPUT = "MSConvert_MzRefinery_ConsoleOutput.txt";
 

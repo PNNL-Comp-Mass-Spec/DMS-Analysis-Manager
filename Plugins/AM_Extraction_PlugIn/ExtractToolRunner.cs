@@ -33,24 +33,24 @@ namespace AnalysisManagerExtractionPlugin
         // Ignore Spelling: ascore, fdr, moda, MODa, modp, msgfdb, mspath, nal
         // Ignore Spelling: parm, Phrp, Prot, tda, toppic, tryptic, tsv, Txt, Utils, xmx
 
-        public const float PROGRESS_EXTRACTION_START = 3;
+        public const int PROGRESS_EXTRACTION_START = 3;
 
         /// <summary>
         /// SEQUEST jobs have an extract extraction step, where progress will be between 0% and 33% complete
         /// MSGFPlus_SplitFasta jobs will call ConvertMZIDToTSV for each .mzid file, during which progress will update from 3% to 33%
         /// </summary>
-        private const float PROGRESS_EXTRACTION_DONE = 33;
+        private const int PROGRESS_EXTRACTION_DONE = 33;
 
         /// <summary>
         /// For all tools, progress will be between 33% and 66% complete while PHRP is running
         /// For SEQUEST, we also run Peptide Prophet, during which progress will be between 66% and 100%
         /// For SplitFasta MS-GF+ jobs, we merge .mzid files, during which progress will be between 66% and 100%
         /// </summary>
-        private const float PROGRESS_PHRP_DONE = 66;
+        private const int PROGRESS_PHRP_DONE = 66;
 
-        private const float PROGRESS_PEPTIDE_PROPHET_OR_MZID_MERGE_DONE = 90;
+        private const int PROGRESS_PEPTIDE_PROPHET_OR_MZID_MERGE_DONE = 90;
 
-        private const float PROGRESS_COMPLETE = 100;
+        private const int PROGRESS_COMPLETE = 100;
 
         public const string INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX = "_inspect_unfiltered.txt";
 

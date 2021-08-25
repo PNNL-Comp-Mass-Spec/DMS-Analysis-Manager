@@ -17,8 +17,8 @@ namespace AnalysisManager_AScore_PlugIn
     {
         // Ignore Spelling: Mage
 
-        private const float PROGRESS_PCT_ASCORE_START = 1;
-        private const float PROGRESS_PCT_ASCORE_DONE = 99;
+        private const int PROGRESS_PCT_ASCORE_START = 1;
+        private const int PROGRESS_PCT_ASCORE_DONE = 99;
 
         private string mCurrentAScoreTask = string.Empty;
 

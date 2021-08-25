@@ -38,9 +38,9 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Percent complete to report when the tool starts
         /// </summary>
-        public const float PROGRESS_PCT_TOOL_RUNNER_STARTING = 5;
+        public const int PROGRESS_PCT_TOOL_RUNNER_STARTING = 5;
 
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         internal const string PROTEIN_DESCRIPTION_REGEX = ">[^ ]+ +(.*)";
 

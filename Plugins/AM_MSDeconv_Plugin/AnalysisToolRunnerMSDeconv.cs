@@ -27,8 +27,8 @@ namespace AnalysisManagerMSDeconvPlugIn
         protected const string MSDECONV_CONSOLE_OUTPUT = "MSDeconv_ConsoleOutput.txt";
         protected const string MSDECONV_JAR_NAME = "MsDeconvConsole.jar";
 
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        protected const int PROGRESS_PCT_STARTING = 1;
+        protected const int PROGRESS_PCT_COMPLETE = 99;
 
         protected bool mToolVersionWritten;
 

@@ -28,8 +28,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         // ReSharper restore CommentTypo
 
-        private const float PROGRESS_PCT_STARTING = 5;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 5;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string DATA_EXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
 

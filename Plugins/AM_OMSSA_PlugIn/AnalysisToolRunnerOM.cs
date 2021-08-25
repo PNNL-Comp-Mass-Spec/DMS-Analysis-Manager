@@ -20,8 +20,8 @@ namespace AnalysisManagerOMSSAPlugIn
     {
         // Ignore Spelling: omx
 
-        private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
-        private const float PROGRESS_PCT_PEPTIDE_HIT_COMPLETE = 99;
+        private const int PROGRESS_PCT_OMSSA_RUNNING = 5;
+        private const int PROGRESS_PCT_PEPTIDE_HIT_COMPLETE = 99;
 
         /// <summary>
         /// Runs OMSSA tool

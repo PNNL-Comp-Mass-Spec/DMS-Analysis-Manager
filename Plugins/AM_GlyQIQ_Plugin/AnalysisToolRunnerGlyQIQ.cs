@@ -34,8 +34,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Constants and Enums"
 
-        protected const float PROGRESS_PCT_STARTING = 1;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        protected const int PROGRESS_PCT_STARTING = 1;
+        protected const int PROGRESS_PCT_COMPLETE = 99;
 
         protected const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
 

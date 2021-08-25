@@ -34,47 +34,47 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Progress value for MS-GF+ starting
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_STARTING = 1;
+        public const int PROGRESS_PCT_MSGFPLUS_STARTING = 1;
 
         /// <summary>
         /// Progress value for MS-GF+ loading the FASTA file
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE = 2;
+        public const int PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE = 2;
 
         /// <summary>
         /// Progress value for MS-GF+ reading the spectra file
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_READING_SPECTRA = 3;
+        public const int PROGRESS_PCT_MSGFPLUS_READING_SPECTRA = 3;
 
         /// <summary>
         /// Progress value for MS-GF+ spawning worker threads
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED = 4;
+        public const int PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED = 4;
 
         /// <summary>
         /// Progress value for MS-GF+ computing FDRs
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS = 95;
+        public const int PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS = 95;
 
         /// <summary>
         /// Progress value for MS-GF+ having completed
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_COMPLETE = 96;
+        public const int PROGRESS_PCT_MSGFPLUS_COMPLETE = 96;
 
         /// <summary>
         /// Progress value for conversion of the .mzid file to .tsv
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV = 97;
+        public const int PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV = 97;
 
         /// <summary>
         /// Progress value for mapping peptides to proteins
         /// </summary>
-        public const float PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS = 98;
+        public const int PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS = 98;
 
         /// <summary>
         /// Progress value for all processing being completed
         /// </summary>
-        public const float PROGRESS_PCT_COMPLETE = 99;
+        public const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string MZIDToTSV_CONSOLE_OUTPUT_FILE = "MzIDToTsv_ConsoleOutput.txt";
 

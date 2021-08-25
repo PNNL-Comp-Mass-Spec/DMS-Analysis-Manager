@@ -20,8 +20,8 @@ namespace AnalysisManagerMultiAlignPlugIn
     {
         // Ignore Spelling: ParmFile
 
-        protected const float PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
-        protected const float PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
+        protected const int PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
+        protected const int PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
 
         protected RunDosProgram mCmdRunner;
 

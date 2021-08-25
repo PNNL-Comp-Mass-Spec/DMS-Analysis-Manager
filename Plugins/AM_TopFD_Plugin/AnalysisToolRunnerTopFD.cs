@@ -39,8 +39,8 @@ namespace AnalysisManagerTopFDPlugIn
         private const string TOPFD_CONSOLE_OUTPUT = "TopFD_ConsoleOutput.txt";
         public const string TOPFD_EXE_NAME = "topfd.exe";
 
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         #endregion
 

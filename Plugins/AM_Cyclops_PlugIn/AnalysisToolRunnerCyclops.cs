@@ -13,9 +13,8 @@ namespace AnalysisManager_Cyclops_PlugIn
     /// </summary>
     public class AnalysisToolRunnerCyclops : AnalysisToolRunnerBase
     {
-
-        private const float PROGRESS_PCT_CYCLOPS_START = 5;
-        private const float PROGRESS_PCT_CYCLOPS_DONE = 95;
+        private const int PROGRESS_PCT_CYCLOPS_START = 5;
+        private const int PROGRESS_PCT_CYCLOPS_DONE = 95;
 
         private const string INITIALIZING_LOG_FILE = "Initializing the Cyclops Controller";
 

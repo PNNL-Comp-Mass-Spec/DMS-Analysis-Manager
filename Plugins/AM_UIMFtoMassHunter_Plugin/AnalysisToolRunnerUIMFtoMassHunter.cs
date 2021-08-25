@@ -21,8 +21,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     {
         #region "Constants and Enums"
 
-        private const float PROGRESS_PCT_STARTING = 5;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_STARTING = 5;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string UIMF_CONVERTER_CONSOLE_OUTPUT = "UIMFtoMassHunter_ConsoleOutput.txt";
 

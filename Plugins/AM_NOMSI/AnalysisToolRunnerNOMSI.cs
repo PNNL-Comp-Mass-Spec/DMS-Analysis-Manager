@@ -24,8 +24,8 @@ namespace AnalysisManagerNOMSIPlugin
     {
         #region "Constants and Enums"
 
-        protected const float PROGRESS_PCT_STARTING = 5;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        protected const int PROGRESS_PCT_STARTING = 5;
+        protected const int PROGRESS_PCT_COMPLETE = 99;
 
         protected const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput_scan";
         protected const string COMPRESSED_NOMSI_RESULTS_BASE = "NOMSI_Results_scan";

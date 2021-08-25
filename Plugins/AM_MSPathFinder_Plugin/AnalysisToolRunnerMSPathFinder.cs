@@ -28,15 +28,15 @@ namespace AnalysisManagerMSPathFinderPlugin
         #region "Constants and Enums"
 
         private const string MSPATHFINDER_CONSOLE_OUTPUT = "MSPathFinder_ConsoleOutput.txt";
-        private const float PROGRESS_PCT_STARTING = 1;
-        private const float PROGRESS_PCT_GENERATING_SEQUENCE_TAGS = 2;
-        private const float PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB = 3;
-        private const float PROGRESS_PCT_SEARCHING_TARGET_DB = 7;
+        private const int PROGRESS_PCT_STARTING = 1;
+        private const int PROGRESS_PCT_GENERATING_SEQUENCE_TAGS = 2;
+        private const int PROGRESS_PCT_TAG_BASED_SEARCHING_TARGET_DB = 3;
+        private const int PROGRESS_PCT_SEARCHING_TARGET_DB = 7;
         private const int PROGRESS_PCT_CALCULATING_TARGET_EVALUES = 40;
-        private const float PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB = 50;
-        private const float PROGRESS_PCT_SEARCHING_DECOY_DB = 54;
-        private const float PROGRESS_PCT_CALCULATING_DECOY_EVALUES = 85;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_TAG_BASED_SEARCHING_DECOY_DB = 50;
+        private const int PROGRESS_PCT_SEARCHING_DECOY_DB = 54;
+        private const int PROGRESS_PCT_CALCULATING_DECOY_EVALUES = 85;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private enum MSPathFinderSearchStage
         {

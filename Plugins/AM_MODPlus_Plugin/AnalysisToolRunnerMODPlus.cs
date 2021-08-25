@@ -32,11 +32,11 @@ namespace AnalysisManagerMODPlusPlugin
         protected const string MODPlus_JAR_NAME = "modp_pnnl.jar";
         protected const string TDA_PLUS_JAR_NAME = "tda_plus.jar";
 
-        protected const float PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
-        protected const float PROGRESS_PCT_SPLITTING_MGF = 3;
-        protected const float PROGRESS_PCT_MODPLUS_STARTING = 5;
-        protected const float PROGRESS_PCT_MODPLUS_COMPLETE = 95;
-        protected const float PROGRESS_PCT_COMPUTING_FDR = 96;
+        protected const int PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
+        protected const int PROGRESS_PCT_SPLITTING_MGF = 3;
+        protected const int PROGRESS_PCT_MODPLUS_STARTING = 5;
+        protected const int PROGRESS_PCT_MODPLUS_COMPLETE = 95;
+        protected const int PROGRESS_PCT_COMPUTING_FDR = 96;
 
         #endregion
 

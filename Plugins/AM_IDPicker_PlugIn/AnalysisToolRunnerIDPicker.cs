@@ -44,14 +44,14 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private const string PEPTIDE_LIST_TO_XML_EXE = "PeptideListToXML.exe";
 
-        private const float PROGRESS_PCT_IDPicker_STARTING = 1;
-        private const float PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES = 5;
-        private const float PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE = 10;
-        private const float PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert = 20;
-        private const float PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble = 60;
-        private const float PROGRESS_PCT_IDPicker_RUNNING_IDPReport = 70;
-        private const float PROGRESS_PCT_IDPicker_COMPLETE = 95;
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_IDPicker_STARTING = 1;
+        private const int PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES = 5;
+        private const int PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE = 10;
+        private const int PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert = 20;
+        private const int PROGRESS_PCT_IDPicker_RUNNING_IDPAssemble = 60;
+        private const int PROGRESS_PCT_IDPicker_RUNNING_IDPReport = 70;
+        private const int PROGRESS_PCT_IDPicker_COMPLETE = 95;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private string mIDPickerProgramDirectory = string.Empty;
         private string mIDPickerParamFileNameLocal = string.Empty;

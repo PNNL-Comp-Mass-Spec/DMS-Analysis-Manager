@@ -22,7 +22,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     {
         // Ignore Spelling: gzip, mgf, msconvert, readw, Reindex
 
-        private const float PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
+        private const int PROGRESS_PCT_MSXML_GEN_RUNNING = 5;
 
         private string mMSXmlGeneratorAppPath = string.Empty;
 

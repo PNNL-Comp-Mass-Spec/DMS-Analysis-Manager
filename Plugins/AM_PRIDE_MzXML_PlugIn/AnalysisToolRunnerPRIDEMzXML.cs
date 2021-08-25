@@ -19,7 +19,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     {
         #region "Module Variables"
 
-        private const float PROGRESS_PCT_PRIDE_MZXML_RUNNING = 5;
+        private const int PROGRESS_PCT_PRIDE_MZXML_RUNNING = 5;
 
         private RunDosProgram mCmdRunner;
 

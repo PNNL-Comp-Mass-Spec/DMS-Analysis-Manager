@@ -19,11 +19,11 @@ namespace AnalysisManagerFormularityPlugin
 
         #region "Constants and Enums"
 
-        private const float PROGRESS_PCT_STARTING_FORMULARITY = 5;
-        private const float PROGRESS_PCT_FINISHED_FORMULARITY = 95;
-        private const float PROGRESS_PCT_FINISHED_NOMSI = 97;
+        private const int PROGRESS_PCT_STARTING_FORMULARITY = 5;
+        private const int PROGRESS_PCT_FINISHED_FORMULARITY = 95;
+        private const int PROGRESS_PCT_FINISHED_NOMSI = 97;
 
-        private const float PROGRESS_PCT_COMPLETE = 99;
+        private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string FORMULARITY_CONSOLE_OUTPUT_FILE = "Formularity_ConsoleOutput.txt";
 

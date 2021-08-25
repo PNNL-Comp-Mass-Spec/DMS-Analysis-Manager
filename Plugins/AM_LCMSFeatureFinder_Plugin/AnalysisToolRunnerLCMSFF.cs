@@ -21,8 +21,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     {
         // Ignore Spelling: Ini
 
-        private const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
-        private const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
+        private const int PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
+        private const int PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
 
         private RunDosProgram mCmdRunner;
 
