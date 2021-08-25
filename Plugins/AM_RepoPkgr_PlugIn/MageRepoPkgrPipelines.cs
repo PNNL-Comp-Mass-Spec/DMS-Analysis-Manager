@@ -154,7 +154,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             if (metadata.Rows.Count == 0)
                 return;
 
-            var subdirectories = outputSubdirectoryName.Split(new[] { Path.DirectorySeparatorChar });
+            var subdirectories = outputSubdirectoryName.Split(Path.DirectorySeparatorChar);
             var metadataDirectoryPath = Path.Combine(OutputResultsDirectoryPath, outputSubdirectoryName);
             var metadataFileName = string.Format("{0}_metadata.txt", subdirectories.Last());
 
