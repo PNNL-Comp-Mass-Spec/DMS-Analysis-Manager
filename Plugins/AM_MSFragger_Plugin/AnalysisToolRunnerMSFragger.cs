@@ -224,10 +224,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 };
                 RegisterEvents(cmdRunner);
 
-                if (dataPackageInfo.DatasetFiles.Count > 1)
-                    LogMessage("Verifying that the .mzML files are centroided");
-                else
-                    LogMessage("Verifying that the .mzML file is centroided");
+                LogMessage(string.Format(
+                    "Verifying that the .mzML {0} centroided",
+                    dataPackageInfo.DatasetFiles.Count == 1 ? "file is" : "files are"));
 
                 // Set up and execute a program runner to run CheckCentroid
 
