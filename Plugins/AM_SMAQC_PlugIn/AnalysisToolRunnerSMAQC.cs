@@ -541,7 +541,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                var sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING;
+                var effectiveProgress = (float)PROGRESS_PCT_SMAQC_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
@@ -570,30 +570,30 @@ namespace AnalysisManagerSMAQCPlugIn
                         // Update progress if the line starts with one of the expected phrases
                         if (dataLineNoTimestamp.StartsWith("Searching for Text Files", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES)
+                            if (effectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES;
+                                effectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES;
                             }
                         }
                         else if (dataLineNoTimestamp.StartsWith("Parsing and Inserting Data", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES)
+                            if (effectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES;
+                                effectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES;
                             }
                         }
                         else if (dataLineNoTimestamp.StartsWith("Now running Measurements", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS)
+                            if (effectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS;
+                                effectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS;
                             }
                         }
                         else if (dataLineNoTimestamp.StartsWith("Saving Scan Results", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS)
+                            if (effectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS;
+                                effectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS;
                             }
                         }
                         else if (dataLineNoTimestamp.StartsWith("Scan output has been saved", StringComparison.OrdinalIgnoreCase))
@@ -614,9 +614,9 @@ namespace AnalysisManagerSMAQCPlugIn
                     }
                 }
 
-                if (mProgress < sngEffectiveProgress)
+                if (mProgress < effectiveProgress)
                 {
-                    mProgress = sngEffectiveProgress;
+                    mProgress = effectiveProgress;
                 }
             }
             catch (Exception ex)
