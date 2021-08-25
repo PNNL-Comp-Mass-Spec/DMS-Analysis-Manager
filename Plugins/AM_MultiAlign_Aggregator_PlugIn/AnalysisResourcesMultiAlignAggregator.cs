@@ -8,6 +8,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
     /// </summary>
     public class AnalysisResourcesMultiAlignAggregator : AnalysisResources
     {
+        // Ignore Spelling: Aggregator
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

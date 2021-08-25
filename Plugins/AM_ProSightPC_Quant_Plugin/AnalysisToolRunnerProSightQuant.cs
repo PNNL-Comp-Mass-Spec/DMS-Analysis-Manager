@@ -14,6 +14,8 @@ namespace AnalysisManagerProSightQuantPlugIn
     /// </summary>
     public class AnalysisToolRunnerProSightQuant : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: quant, quantitation
+
         #region "Module Variables"
 
         private const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";

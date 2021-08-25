@@ -18,6 +18,8 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// </summary>
     public class AnalysisResourcesMultiAlign : AnalysisResources
     {
+        // Ignore Spelling: isos, nocopy
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

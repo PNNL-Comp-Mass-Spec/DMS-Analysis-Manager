@@ -11,7 +11,7 @@ namespace AnalysisManager_Mage_PlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMage : AnalysisToolRunnerMAC
     {
-        // Ignore Spelling: iTraq, plex
+        // Ignore Spelling: iTraq, mage, plex
 
         public const string T_ALIAS_FILE = "t_alias.txt";
         public const string T_ALIAS_TABLE = "T_alias";
