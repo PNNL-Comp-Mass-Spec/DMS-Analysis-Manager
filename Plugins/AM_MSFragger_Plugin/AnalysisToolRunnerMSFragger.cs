@@ -1063,7 +1063,9 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             var success = mZipTool.AddToZipFile(zipFile.FullName, pinFile);
             if (success)
+            {
                 return true;
+            }
 
             toolRunner.LogError(string.Format("Error adding {0} to {1}", pinFile.Name, zipFile.FullName));
             return false;

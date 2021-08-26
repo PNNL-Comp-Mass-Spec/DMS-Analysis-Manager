@@ -51,7 +51,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     return result;
                 }
-                
+
                 currentTask = "Get DataPackageID";
 
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
