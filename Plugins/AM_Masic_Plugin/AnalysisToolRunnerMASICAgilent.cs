@@ -60,9 +60,9 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 foundFiles = Directory.GetFiles(mWorkDir, "*.cdf");
-                foreach (var MyFile in foundFiles)
+                foreach (var targetFile in foundFiles)
                 {
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(targetFile);
                 }
             }
             catch (Exception ex)
@@ -75,9 +75,9 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 foundFiles = Directory.GetFiles(mWorkDir, "*.mgf");
-                foreach (var MyFile in foundFiles)
+                foreach (var targetFile in foundFiles)
                 {
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(targetFile);
                 }
             }
             catch (Exception ex)

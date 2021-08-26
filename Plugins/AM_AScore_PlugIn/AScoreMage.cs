@@ -85,9 +85,9 @@ namespace AnalysisManager_AScore_PlugIn
             var fastaFileName = jobParams.GetParam("PeptideSearch", "generatedFastaName");
             if (!string.IsNullOrEmpty(fastaFileName))
             {
-                var FastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);
+                var fastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);
 
-                var fastaFile = new FileInfo(FastaFilePath);
+                var fastaFile = new FileInfo(fastaFilePath);
 
                 if (fastaFile.Exists)
                     mFastaFilePath = fastaFile.FullName;

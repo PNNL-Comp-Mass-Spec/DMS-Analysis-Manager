@@ -490,29 +490,29 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <summary>
         /// Starts ICR-2LS by running the .Exe at the command line
         /// </summary>
-        /// <param name="DSNamePath"></param>
-        /// <param name="ParamFilePath"></param>
-        /// <param name="ResultsFileNamePath"></param>
-        /// <param name="eICR2LSMode"></param>
+        /// <param name="datasetNamePath"></param>
+        /// <param name="paramFilePath"></param>
+        /// <param name="resultsFileNamePath"></param>
+        /// <param name="icr2lsMode"></param>
         /// <returns>True if successfully started; otherwise false</returns>
-        protected bool StartICR2LS(string DSNamePath, string ParamFilePath, string ResultsFileNamePath, ICR2LSProcessingModeConstants eICR2LSMode)
+        protected bool StartICR2LS(string datasetNamePath, string paramFilePath, string resultsFileNamePath, ICR2LSProcessingModeConstants icr2lsMode)
         {
-            return StartICR2LS(DSNamePath, ParamFilePath, ResultsFileNamePath, eICR2LSMode, true, false, 0, 0);
+            return StartICR2LS(datasetNamePath, paramFilePath, resultsFileNamePath, icr2lsMode, true, false, 0, 0);
         }
 
         /// <summary>
-        /// Run ICR-2LS on the file (or 0.ser folder) specified by DSNamePath
+        /// Run ICR-2LS on the file (or 0.ser folder) specified by datasetNamePath
         /// </summary>
         /// <param name="instrumentFilePath"></param>
         /// <param name="paramFilePath"></param>
         /// <param name="resultsFileNamePath"></param>
-        /// <param name="eICR2LSMode"></param>
+        /// <param name="icr2lsMode"></param>
         /// <param name="useAllScans"></param>
         /// <param name="skipMS2"></param>
         /// <param name="minScan"></param>
         /// <param name="maxScan"></param>
         protected bool StartICR2LS(string instrumentFilePath, string paramFilePath, string resultsFileNamePath,
-            ICR2LSProcessingModeConstants eICR2LSMode, bool useAllScans, bool skipMS2, int minScan, int maxScan)
+            ICR2LSProcessingModeConstants icr2lsMode, bool useAllScans, bool skipMS2, int minScan, int maxScan)
         {
             const int MONITOR_INTERVAL_SECONDS = 4;
 
@@ -577,7 +577,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             string arguments;
 
-            switch (eICR2LSMode)
+            switch (icr2lsMode)
             {
                 case ICR2LSProcessingModeConstants.SerFolderPEK:
                 case ICR2LSProcessingModeConstants.SerFolderTIC:
@@ -606,7 +606,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     break;
             }
 
-            switch (eICR2LSMode)
+            switch (icr2lsMode)
             {
                 case ICR2LSProcessingModeConstants.LTQFTPEK:
                     arguments += " /M:PEK /T:1";
@@ -630,7 +630,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     break;
                 default:
                     // Unknown mode
-                    LogError("Unknown ICR2LS processing Mode: " + eICR2LSMode);
+                    LogError("Unknown ICR2LS processing Mode: " + icr2lsMode);
                     return false;
             }
 

@@ -19,9 +19,9 @@ namespace AnalysisManagerICR2LSPlugIn
         public override CloseOutType RunTool()
         {
             // Start with base class method to get settings information
-            var ResCode = base.RunTool();
-            if (ResCode != CloseOutType.CLOSEOUT_SUCCESS)
-                return ResCode;
+            var resultCode = base.RunTool();
+            if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                return resultCode;
 
             // Store the ICR2LS version info in the database
             if (!StoreToolVersionInfo())
@@ -45,29 +45,29 @@ namespace AnalysisManagerICR2LSPlugIn
             // Add handling of settings file info here if it becomes necessary in the future
 
             // Get scan settings from settings file
-            var MinScan = mJobParams.GetJobParameter("scanstart", 0);
-            var MaxScan = mJobParams.GetJobParameter("ScanStop", 0);
+            var minScan = mJobParams.GetJobParameter("scanStart", 0);
+            var maxScan = mJobParams.GetJobParameter("ScanStop", 0);
 
             // Determine whether or not we should be processing MS2 spectra
-            var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
+            var skipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
 
             // ReSharper disable once ArrangeRedundantParentheses
-            var useAllScans = (MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000;
+            var useAllScans = (minScan == 0 && maxScan == 0) || minScan > maxScan || maxScan > 500000;
 
             // Assemble the data file name and path
-            var DSNamePath = Path.Combine(mWorkDir, mDatasetName + ".raw");
-            if (!File.Exists(DSNamePath))
+            var datasetNamePath = Path.Combine(mWorkDir, mDatasetName + ".raw");
+            if (!File.Exists(datasetNamePath))
             {
-                mMessage = "Raw file not found: " + DSNamePath;
+                mMessage = "Raw file not found: " + datasetNamePath;
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Assemble the output file name and path
-            var OutFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
+            var outFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
 
-            var success = StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
-                MinScan, MaxScan);
+            var success = StartICR2LS(datasetNamePath, paramFilePath, outFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, skipMS2,
+                minScan, maxScan);
 
             if (success)
             {
@@ -79,7 +79,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             else
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error running ICR-2LS on file " + DSNamePath);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error running ICR-2LS on file " + datasetNamePath);
 
                 // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                 if (VerifyPEKFileExists(mWorkDir, mDatasetName))
@@ -124,12 +124,12 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 // Allow extra time for ICR2LS to release file locks
                 Global.IdleLoop(5);
-                var FoundFiles = Directory.GetFiles(mWorkDir, "*.raw");
-                foreach (var MyFile in FoundFiles)
+                var foundFiles = Directory.GetFiles(mWorkDir, "*.raw");
+                foreach (var targetFile in foundFiles)
                 {
                     // Add the file to .FilesToDelete just in case the deletion fails
-                    mJobParams.AddResultFileToSkip(MyFile);
-                    DeleteFileWithRetries(MyFile);
+                    mJobParams.AddResultFileToSkip(targetFile);
+                    DeleteFileWithRetries(targetFile);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

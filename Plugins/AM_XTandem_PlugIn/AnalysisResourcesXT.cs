@@ -237,9 +237,9 @@ namespace AnalysisManagerXTandemPlugIn
             return result;
         }
 
-        internal static string ConstructModificationDefinitionsFilename(string ParameterFileName)
+        internal static string ConstructModificationDefinitionsFilename(string parameterFileName)
         {
-            return Path.GetFileNameWithoutExtension(ParameterFileName) + MOD_DEFS_FILE_SUFFIX;
+            return Path.GetFileNameWithoutExtension(parameterFileName) + MOD_DEFS_FILE_SUFFIX;
         }
 
         private bool ValidateDTATextFileSize(string workDir, string inputFileName)

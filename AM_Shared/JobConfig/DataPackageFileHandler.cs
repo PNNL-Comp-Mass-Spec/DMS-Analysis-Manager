@@ -943,28 +943,28 @@ namespace AnalysisManagerBase.JobConfig
                 }
             }
 
-            var SearchUsedMzML = false;
+            var searchUsedMzML = false;
             if (!string.IsNullOrEmpty(mzIDFileToInspect))
             {
                 if (cachedJobMetadata.TryGetValue(dataPkgJob.Job, out var jobMetadata))
                 {
-                    SearchUsedMzML = jobMetadata.SearchUsedMzML;
+                    searchUsedMzML = jobMetadata.SearchUsedMzML;
                 }
                 else
                 {
                     // Examine the .mzid file to determine whether a .mzML file was used
-                    SearchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
+                    searchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
 
                     var newMetadata = new DataPackageJobMetadata
                     {
-                        SearchUsedMzML = SearchUsedMzML
+                        SearchUsedMzML = searchUsedMzML
                     };
 
                     cachedJobMetadata.Add(dataPkgJob.Job, newMetadata);
                 }
             }
 
-            if (SearchUsedMzML)
+            if (searchUsedMzML)
             {
                 var stepToolFilter = string.Empty;
                 if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
@@ -1844,12 +1844,12 @@ namespace AnalysisManagerBase.JobConfig
                     if (!Global.TryGetValueInt(dataList, jobColIndex, out var job))
                         continue;
 
-                    if (!Global.TryGetValue(dataList, mzMlUsedColIndex, out var SearchUsedMzML))
+                    if (!Global.TryGetValue(dataList, mzMlUsedColIndex, out var searchUsedMzML))
                         continue;
 
                     var jobMetadata = new DataPackageJobMetadata
                     {
-                        SearchUsedMzML = bool.Parse(SearchUsedMzML)
+                        SearchUsedMzML = bool.Parse(searchUsedMzML)
                     };
 
                     cachedJobMetadata.Add(job, jobMetadata);

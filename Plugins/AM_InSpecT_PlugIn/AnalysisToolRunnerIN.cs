@@ -248,7 +248,7 @@ namespace AnalysisManagerInSpecTPlugIn
         }
 
         // Unused method
-        // private int ExtractScanCountValueFromMzXML(string mzxmlfilename)
+        // private int ExtractScanCountValueFromMzXML(string mzXmlFileName)
         // {
         //    int scanCount = 0;
         //
@@ -257,7 +257,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //        var mzxmlFile = new MSDataFileReader.MzXMLFileReader();
         //
         //        // Open the file
-        //        mzxmlFile.OpenFile(mzxmlfilename);
+        //        mzxmlFile.OpenFile(mzXmlFileName);
         //
         //        // Read the first spectrum (required to determine the ScanCount)
         //        MSDataFileReader.SpectrumInfo spectrumInfo;
@@ -362,7 +362,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// Run InSpecT
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        private CloseOutType RunInSpecT(string InspectDir)
+        private CloseOutType RunInSpecT(string inspectDir)
         {
             var success = false;
 
@@ -373,7 +373,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mCmdRunner = new RunDosProgram(InspectDir, mDebugLevel);
+            mCmdRunner = new RunDosProgram(inspectDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -383,7 +383,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // verify that program file exists
-            var progLoc = Path.Combine(InspectDir, INSPECT_EXE_NAME);
+            var progLoc = Path.Combine(inspectDir, INSPECT_EXE_NAME);
             if (!File.Exists(progLoc))
             {
                 LogError("Cannot find Inspect program file: " + progLoc);

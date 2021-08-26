@@ -187,11 +187,11 @@ namespace AnalysisManager_AScore_PlugIn
         //    return success;
         //}
 
-        //private string GetDatasetID(string DatasetName)
+        //private string GetDatasetID(string datasetName)
         //{
         //    int DatasetID;
 
-        //    if ( mJobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
+        //    if ( mJobParams.DatasetInfoList.TryGetValue(datasetName, out DatasetID) )
         //        return DatasetID.ToString(CultureInfo.InvariantCulture);
 
         //    return string.Empty;

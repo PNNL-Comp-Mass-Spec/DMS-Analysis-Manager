@@ -16,15 +16,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-            var SearchType = mJobParams.GetParam("MultiAlignSearchType");
+            var searchType = mJobParams.GetParam("MultiAlignSearchType");
 
-            if (string.IsNullOrEmpty(SearchType))
+            if (string.IsNullOrEmpty(searchType))
             {
                 mMessage = "Parameter MultiAlignSearchType must be \"_LCMSFeatures.txt\" or \"_isos.csv\"";
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            mJobParams.AddResultFileExtensionToSkip(SearchType);
+            mJobParams.AddResultFileExtensionToSkip(searchType);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

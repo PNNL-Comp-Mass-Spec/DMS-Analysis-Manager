@@ -69,13 +69,14 @@ namespace AnalysisManager_Ape_PlugIn
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
-            var MDIDList = GetMDIDList();
-            if (string.IsNullOrEmpty(MDIDList))
+
+            var mdidList = GetMDIDList();
+            if (string.IsNullOrEmpty(mdidList))
             {
                 return false;
             }
 
-            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)SqlServerToSqlLiteConversionMode.ViperResults, dotnetConnString, MDIDList, apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)SqlServerToSqlLiteConversionMode.ViperResults, dotnetConnString, mdidList, apeDatabase, mHandle);
 
             return success;
         }

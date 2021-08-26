@@ -81,13 +81,13 @@ namespace AnalysisManager_Ape_PlugIn
             // ReSharper restore StringLiteralTypo
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
-            var QIDList = GetQIDList();
-            if (string.IsNullOrEmpty(QIDList))
+            var qidList = GetQIDList();
+            if (string.IsNullOrEmpty(qidList))
             {
                 return false;
             }
 
-            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)SqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, QIDList, apeDatabase, mHandle);
+            Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)SqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, qidList, apeDatabase, mHandle);
 
             return success;
         }

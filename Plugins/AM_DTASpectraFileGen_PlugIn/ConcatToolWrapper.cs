@@ -38,10 +38,10 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="DataPath"></param>
-        public ConcatToolWrapper(string DataPath)
+        /// <param name="dataPath"></param>
+        public ConcatToolWrapper(string dataPath)
         {
-            this.DataPath = DataPath;
+            DataPath = dataPath;
             ErrMsg = "";
         }
 

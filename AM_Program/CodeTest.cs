@@ -879,8 +879,8 @@ namespace AnalysisManagerProg
                 //var jobNum = "12345";
                 //var debugLevel = (short)(mMgrSettings.GetParam("DebugLevel", 1));
 
-                //var JavaProgLoc = @"C:\DMS_Programs\Java\jre8\bin\java.exe";
-                //var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFPlus\MSGFPlus.jar";
+                //var javaProgLoc = @"C:\DMS_Programs\Java\jre8\bin\java.exe";
+                //var msgfDbProgLoc = @"C:\DMS_Programs\MSGFPlus\MSGFPlus.jar";
                 //bool fastaFileIsDecoy;
                 //string fastaFilePath;
 
@@ -1578,10 +1578,10 @@ namespace AnalysisManagerProg
             mFastaTimer.Start();
         }
 
-        private void FileGenerationCompleted(string FullOutputPath)
+        private void FileGenerationCompleted(string fullOutputPath)
         {
             // Get the name of the FASTA file that was generated
-            mFastaFileName = Path.GetFileName(FullOutputPath);
+            mFastaFileName = Path.GetFileName(fullOutputPath);
 
             // Stop the FASTA generation timer so no false error occurs
             mFastaTimer?.Stop();

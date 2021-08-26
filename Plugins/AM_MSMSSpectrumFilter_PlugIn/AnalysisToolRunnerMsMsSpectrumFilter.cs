@@ -682,8 +682,8 @@ namespace MSMSSpectrumFilterAM
             }
 
             // Settings file exist?
-            var SettingsNamePath = Path.Combine(mWorkDir, mSettingsFileName);
-            if (!VerifyFileExists(SettingsNamePath))
+            var settingsNamePath = Path.Combine(mWorkDir, mSettingsFileName);
+            if (!VerifyFileExists(settingsNamePath))
             {
                 // Error msg handled by VerifyFileExists
                 return false;
@@ -740,16 +740,16 @@ namespace MSMSSpectrumFilterAM
             }
         }
 
-        protected virtual bool VerifyDirExists(string TestDir)
+        protected virtual bool VerifyDirExists(string testDirectory)
         {
             // Verifies that the specified directory exists
-            if (Directory.Exists(TestDir))
+            if (Directory.Exists(testDirectory))
             {
                 mErrMsg = "";
                 return true;
             }
 
-            mErrMsg = "Directory " + TestDir + " not found";
+            mErrMsg = "Directory " + testDirectory + " not found";
             return false;
         }
 
@@ -765,16 +765,16 @@ namespace MSMSSpectrumFilterAM
             return true;
         }
 
-        protected virtual bool VerifyFileExists(string TestFile)
+        protected virtual bool VerifyFileExists(string testFile)
         {
             // Verifies specified file exists
-            if (File.Exists(TestFile))
+            if (File.Exists(testFile))
             {
                 mErrMsg = "";
                 return true;
             }
 
-            mErrMsg = "File " + TestFile + " not found";
+            mErrMsg = "File " + testFile + " not found";
             return false;
         }
 

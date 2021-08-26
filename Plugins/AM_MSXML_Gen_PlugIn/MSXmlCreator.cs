@@ -310,12 +310,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for mMSXmlGen.ProgRunnerStarting event
         /// </summary>
-        /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-        private void MSXmlGenReadW_ProgRunnerStarting(string CommandLine)
+        /// <param name="commandLine">The command being executed (program path plus command line arguments)</param>
+        private void MSXmlGenReadW_ProgRunnerStarting(string commandLine)
         {
             if (mDebugLevel >= 1)
             {
-                OnStatusEvent(CommandLine);
+                OnStatusEvent(commandLine);
             }
         }
     }

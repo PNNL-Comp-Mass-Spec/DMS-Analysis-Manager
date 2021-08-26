@@ -65,13 +65,13 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Note that MultiAlign will append ".db3" to this filename
-            var MultiAlignDatabaseName = mDatasetName;
+            var multiAlignDatabaseName = mDatasetName;
 
             // Set up and execute a program runner to run MultiAlign
             var arguments = " input.txt" +
                             " " + Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName")) +
                             " " + mWorkDir +
-                            " " + MultiAlignDatabaseName;
+                            " " + multiAlignDatabaseName;
 
             if (mDebugLevel >= 1)
             {
@@ -139,22 +139,22 @@ namespace AnalysisManagerMultiAlignPlugIn
         private CloseOutType RenameLogFile()
         {
             const string LogExtension = "-log.txt";
-            var NewFilename = mDatasetName + LogExtension;
+            var newFilename = mDatasetName + LogExtension;
 
             // This is what MultiAlign is currently naming the log file
-            var LogNameFilter = mDatasetName + ".db3-log*.txt";
+            var logNameFilter = mDatasetName + ".db3-log*.txt";
             try
             {
                 // Get the log file name.  There should only be one log file
-                var Files = Directory.GetFiles(mWorkDir, LogNameFilter);
+                var matchingFiles = Directory.GetFiles(mWorkDir, logNameFilter);
 
                 // Go through each log file found.  Again, there should only be one log file
-                foreach (var TmpFile in Files)
+                foreach (var targetFile in matchingFiles)
                 {
                     // Check to see if the log file exists.  If so, only rename one of them
-                    if (!File.Exists(NewFilename))
+                    if (!File.Exists(newFilename))
                     {
-                        File.Move(TmpFile, NewFilename);
+                        File.Move(targetFile, newFilename);
                     }
                 }
             }

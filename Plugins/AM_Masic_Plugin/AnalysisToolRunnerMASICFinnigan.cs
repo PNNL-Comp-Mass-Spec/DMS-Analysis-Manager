@@ -123,10 +123,10 @@ namespace AnalysisManagerMasicPlugin
         {
             try
             {
-                var FoundFiles = Directory.GetFiles(mWorkDir, "*.raw");
-                foreach (var MyFile in FoundFiles)
+                var foundFiles = Directory.GetFiles(mWorkDir, "*.raw");
+                foreach (var targetFile in foundFiles)
                 {
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(targetFile);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

@@ -61,10 +61,10 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 // Verify that program files exist
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
                 // Note that we need to run MSDeconv with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-                var JavaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(JavaProgLoc))
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -120,7 +120,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var processingSuccess = StartMSDeconv(JavaProgLoc, outputFormat);
+                var processingSuccess = StartMSDeconv(javaProgLoc, outputFormat);
 
                 if (!processingSuccess)
                 {
@@ -200,7 +200,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        // Example Console output:
+        // Example Console output (yes, there are some typos in here):
         //
         // MS-Deconv 0.8.0.7199 2012-01-16
         // ********* parameters begin **********
@@ -407,7 +407,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private bool StartMSDeconv(string JavaProgLoc, string outputFormat)
+        private bool StartMSDeconv(string javaProgLoc, string outputFormat)
         {
             // Store the MSDeconv version info in the database after the first line is written to file MSDeconv_ConsoleOutput.txt
             mToolVersionWritten = false;
@@ -437,7 +437,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 arguments += " -l";
             }
 
-            LogDebug(JavaProgLoc + " " + arguments);
+            LogDebug(javaProgLoc + " " + arguments);
 
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -452,7 +452,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var success = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSDeconv", true);
+            var success = mCmdRunner.RunProgram(javaProgLoc, arguments, "MSDeconv", true);
 
             if (!mToolVersionWritten)
             {

@@ -478,11 +478,11 @@ namespace AnalysisManagerMSGFPlugin
             return true;
         }
 
-        private bool CreateEmptySeqToProteinMapFile(string FileName)
+        private bool CreateEmptySeqToProteinMapFile(string fileName)
         {
             try
             {
-                var filePath = Path.Combine(mWorkDir, FileName);
+                var filePath = Path.Combine(mWorkDir, fileName);
                 using var writer = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read));
 
                 writer.WriteLine("Unique_Seq_ID\tCleavage_State\tTerminus_State\tProtein_Name\tProtein_Expectation_Value_Log(e)\tProtein_Intensity_Log(I)");

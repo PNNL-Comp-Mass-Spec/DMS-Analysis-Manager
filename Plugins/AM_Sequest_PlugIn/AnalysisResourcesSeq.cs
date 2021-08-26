@@ -542,16 +542,16 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Reads the list of nodes from the hosts config file
         /// </summary>
-        /// <param name="HostFilePath">Name of hosts file on cluster head node</param>
+        /// <param name="hostFilePath">Name of hosts file on cluster head node</param>
         /// <returns>returns a string collection containing IP addresses for each node</returns>
-        private List<string> GetHostList(string HostFilePath)
+        private List<string> GetHostList(string hostFilePath)
         {
             var nodes = new List<string>();
             string[] separators = { " " };
 
             try
             {
-                using var reader = new StreamReader(new FileStream(HostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+                using var reader = new StreamReader(new FileStream(hostFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                 while (!reader.EndOfStream)
                 {
@@ -576,7 +576,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading cluster config file '" + HostFilePath + "': " + ex.Message);
+                LogError("Error reading cluster config file '" + hostFilePath + "': " + ex.Message);
                 return null;
             }
 

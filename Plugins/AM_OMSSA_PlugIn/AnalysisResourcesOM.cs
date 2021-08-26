@@ -112,8 +112,8 @@ namespace AnalysisManagerOMSSAPlugIn
             try
             {
                 // set up formatdb.exe to reference the organism DB file (FASTA)
-                var OrgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
-                var LocalOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
+                var organismDbName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
                 LogMessage("Running formatdb.exe");
 
@@ -137,7 +137,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 // Set up and execute a program runner to run FormatDb.exe
                 // formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
-                var arguments = " -i" + Path.Combine(LocalOrgDBFolder, OrgDBName) +
+                var arguments = " -i" + Path.Combine(localOrgDBFolder, organismDbName) +
                                 " -p T" +
                                 " -o T";
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!mCmdRunner.RunProgram(progLoc, arguments, "FormatDb", true))
                 {
-                    LogError("Error running FormatDb for FASTA file " + OrgDBName);
+                    LogError("Error running FormatDb for FASTA file " + organismDbName);
                     return false;
                 }
             }
@@ -206,23 +206,23 @@ namespace AnalysisManagerOMSSAPlugIn
 
         private bool MakeInputFile(out string errorMessage)
         {
-            var OmssaDefaultInput = Path.Combine(mWorkDir, OMSSA_DEFAULT_INPUT_FILE);
-            var OmssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);
-            var ParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
+            var omssaDefaultInput = Path.Combine(mWorkDir, OMSSA_DEFAULT_INPUT_FILE);
+            var omssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);
+            var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
-            var SearchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
-            var MSInfilename = Path.Combine(mWorkDir, DatasetName + ".xml");
-            var MSOmxOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.omx");
-            var MSOmxLargeOutFilename = Path.Combine(mWorkDir, DatasetName + "_om_large.omx");
+            var searchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var msInFileName = Path.Combine(mWorkDir, DatasetName + ".xml");
+            var msOmxOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.omx");
+            var msOmxLargeOutFilename = Path.Combine(mWorkDir, DatasetName + "_om_large.omx");
             mJobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
-            var MSCsvOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.csv");
+            var msCsvOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.csv");
 
             XmlNode mostRecentComment = null;
 
             try
             {
-                var templateFile = new FileInfo(OmssaDefaultInput);
-                var fileToMerge = new FileInfo(ParamFilePath);
+                var templateFile = new FileInfo(omssaDefaultInput);
+                var fileToMerge = new FileInfo(paramFilePath);
 
                 if (!templateFile.Exists)
                 {
@@ -237,7 +237,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
 
                 // Construct the name of the new .XML file
-                var outputFilePath = OmssaInput;
+                var outputFilePath = omssaInput;
 
                 // Open the template XML file
                 var xmlTemplate = new XmlDocument {
@@ -468,7 +468,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     // Everything is fine; update these nodes
                     // Note: File type 2 means a dtaxml file
-                    fileNameNodes.Item(0).InnerXml = MSInfilename;
+                    fileNameNodes.Item(0).InnerXml = msInFileName;
                     fileTypeNodes.Item(0).InnerXml = "2";
                 }
                 catch (Exception ex)
@@ -495,7 +495,7 @@ namespace AnalysisManagerOMSSAPlugIn
                     }
 
                     // Everything is fine; update node
-                    fileNameNodes.Item(0).InnerXml = SearchSettings;
+                    fileNameNodes.Item(0).InnerXml = searchSettings;
                 }
                 catch (Exception ex)
                 {
@@ -540,13 +540,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     // Everything is fine; update these nodes
                     // Note: File type 3 means an XML file
-                    fileNameNodes.Item(0).InnerXml = MSOmxOutFilename;
+                    fileNameNodes.Item(0).InnerXml = msOmxOutFilename;
                     fileTypeNodes.Item(0).InnerXml = "3";
 
                     if (fileNameNodes.Count > 1)
                     {
                         // Note: File type 3 means a xml file
-                        fileNameNodes.Item(1).InnerXml = MSOmxLargeOutFilename;
+                        fileNameNodes.Item(1).InnerXml = msOmxLargeOutFilename;
                         fileTypeNodes.Item(1).InnerXml = "3";
                     }
                     else
@@ -558,7 +558,7 @@ namespace AnalysisManagerOMSSAPlugIn
                     if (fileNameNodes.Count > 2)
                     {
                         // Note: File type 4 means a CSV file
-                        fileNameNodes.Item(2).InnerXml = MSCsvOutFilename;
+                        fileNameNodes.Item(2).InnerXml = msCsvOutFilename;
                         fileTypeNodes.Item(2).InnerXml = "4";
                     }
                     else

@@ -1174,23 +1174,23 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
         /// <remarks>Raises exception if error occurs</remarks>
-        /// <param name="FileNamePath">Full path to file for deletion</param>
+        /// <param name="fileNamePath">Full path to file for deletion</param>
         /// <returns>True if success, false if an error</returns>
-        public bool DeleteFileWithRetries(string FileNamePath)
+        public bool DeleteFileWithRetries(string fileNamePath)
         {
-            return DeleteFileWithRetries(FileNamePath, mDebugLevel, 3);
+            return DeleteFileWithRetries(fileNamePath, mDebugLevel, 3);
         }
 
         /// <summary>
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
         /// <remarks>Raises exception if error occurs</remarks>
-        /// <param name="FileNamePath">Full path to file for deletion</param>
+        /// <param name="fileNamePath">Full path to file for deletion</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <returns>True if success, false if an error</returns>
-        public static bool DeleteFileWithRetries(string FileNamePath, int debugLevel)
+        public static bool DeleteFileWithRetries(string fileNamePath, int debugLevel)
         {
-            return DeleteFileWithRetries(FileNamePath, debugLevel, 3);
+            return DeleteFileWithRetries(fileNamePath, debugLevel, 3);
         }
 
         /// <summary>

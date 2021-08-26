@@ -223,24 +223,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Generated FASTA parameter name
         /// </summary>
-        /// <param name="Job"></param>
-        public static string GetGeneratedFastaParamNameForJob(int Job)
+        /// <param name="job"></param>
+        public static string GetGeneratedFastaParamNameForJob(int job)
         {
-            return "Job" + Job + "_GeneratedFasta";
+            return "Job" + job + "_GeneratedFasta";
         }
 
         /// <summary>
         /// MSGF report template filename
         /// </summary>
-        /// <param name="JobParams"></param>
-        /// <param name="WarnIfJobParamMissing"></param>
-        public static string GetMSGFReportTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
+        /// <param name="jobParams"></param>
+        /// <param name="warnIfJobParamMissing"></param>
+        public static string GetMSGFReportTemplateFilename(IJobParams jobParams, bool warnIfJobParamMissing)
         {
-            var templateFileName = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
+            var templateFileName = jobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
 
             if (string.IsNullOrEmpty(templateFileName))
             {
-                if (WarnIfJobParamMissing)
+                if (warnIfJobParamMissing)
                 {
                     LogTools.LogWarning(
                         "Job parameter " + JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME + " is empty; will assume " + templateFileName);
@@ -354,7 +354,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var templateFileName = GetMSGFReportTemplateFilename(mJobParams, WarnIfJobParamMissing: true);
+                var templateFileName = GetMSGFReportTemplateFilename(mJobParams, warnIfJobParamMissing: true);
 
                 // First look for the template file in the data package directory
                 var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);

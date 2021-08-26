@@ -52,9 +52,9 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 // Start with base class method to get settings information
-                var ResCode = base.RunTool();
-                if (ResCode != CloseOutType.CLOSEOUT_SUCCESS)
-                    return ResCode;
+                var resultCode = base.RunTool();
+                if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                    return resultCode;
 
                 // Store the ICR2LS version info in the database
                 currentTask = "StoreToolVersionInfo";
@@ -82,21 +82,21 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Add handling of settings file info here if it becomes necessary in the future
 
                 // Get scan settings from settings file
-                var MinScan = mJobParams.GetJobParameter("ScanStart", 0);
-                var MaxScan = mJobParams.GetJobParameter("ScanStop", 0);
+                var minScan = mJobParams.GetJobParameter("ScanStart", 0);
+                var maxScan = mJobParams.GetJobParameter("ScanStop", 0);
 
                 // Determine whether or not we should be processing MS2 spectra
-                var SkipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
+                var skipMS2 = !mJobParams.GetJobParameter("ProcessMS2", false);
 
                 // ReSharper disable once ArrangeRedundantParentheses
-                var useAllScans = (MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000;
+                var useAllScans = (minScan == 0 && maxScan == 0) || minScan > maxScan || maxScan > 500000;
 
                 // Assemble the dataset path
                 var datasetDirectoryPath = Path.Combine(mWorkDir, mDatasetName);
                 var rawDataTypeName = mJobParams.GetParam("RawDataType");
 
                 // Assemble the output file name and path
-                var OutFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
+                var outFileNamePath = Path.Combine(mWorkDir, mDatasetName + ".pek");
 
                 // Determine the location of the ser file (or fid file)
                 // It could be in a "0.ser" folder, a ser file inside a .D folder, or a fid file inside a .D folder
@@ -173,8 +173,8 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     currentTask = "StartICR2LS for " + serFileOrFolderPath;
                     success = StartICR2LS(
-                        serFileOrFolderPath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans,
-                        SkipMS2, MinScan,MaxScan);
+                        serFileOrFolderPath, paramFilePath, outFileNamePath, eICR2LSMode, useAllScans,
+                        skipMS2, minScan, maxScan);
 
                     if (!success)
                     {
@@ -194,7 +194,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     currentTask = "StartICR2LS for zipped s-folders in " + datasetDirectoryPath;
 
                     eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK;
-                    success = StartICR2LS(datasetDirectoryPath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
+                    success = StartICR2LS(datasetDirectoryPath, paramFilePath, outFileNamePath, eICR2LSMode, useAllScans, skipMS2, minScan, maxScan);
 
                     if (!success)
                     {
@@ -249,10 +249,10 @@ namespace AnalysisManagerICR2LSPlugIn
         protected override CloseOutType DeleteDataFile()
         {
             // Deletes the dataset directory containing s-folders from the working directory
-            var RetryCount = 0;
-            var ErrMsg = string.Empty;
+            var retryCount = 0;
+            var errorMsg = string.Empty;
 
-            while (RetryCount < 3)
+            while (retryCount < 3)
             {
                 try
                 {
@@ -269,10 +269,10 @@ namespace AnalysisManagerICR2LSPlugIn
                     // If problem is locked file, retry
                     if (mDebugLevel > 0)
                     {
-                        LogError("Error deleting data file, attempt #" + RetryCount);
+                        LogError("Error deleting data file, attempt #" + retryCount);
                     }
-                    ErrMsg = ex.Message;
-                    RetryCount++;
+                    errorMsg = ex.Message;
+                    retryCount++;
                 }
                 catch (Exception ex)
                 {
@@ -282,7 +282,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // If we got to here, we've exceeded the max retry limit
-            LogError("Unable to delete raw data file after multiple tries: " + ErrMsg);
+            LogError("Unable to delete raw data file after multiple tries: " + errorMsg);
             return CloseOutType.CLOSEOUT_FAILED;
         }
 

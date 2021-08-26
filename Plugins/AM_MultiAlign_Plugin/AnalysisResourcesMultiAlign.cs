@@ -107,20 +107,20 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             const string INPUT_FILENAME = "input.txt";
 
-            var TargetFilePath = Path.Combine(mWorkDir, INPUT_FILENAME);
-            var DatasetFilePath = Path.Combine(mWorkDir, DatasetName + inputFileExtension);
+            var targetFilePath = Path.Combine(mWorkDir, INPUT_FILENAME);
+            var datasetFilePath = Path.Combine(mWorkDir, DatasetName + inputFileExtension);
 
             var success = true;
 
             // Create the MA input file
             try
             {
-                using var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                 writer.WriteLine("[Files]");
 
                 //..\SARC_MS_Final\663878_Sarc_MS_13_24Aug10_Cheetah_10-08-02_0000_LCMSFeatures.txt
-                writer.WriteLine(DatasetFilePath);
+                writer.WriteLine(datasetFilePath);
 
                 writer.WriteLine("[Database]");
 
@@ -132,7 +132,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError("AnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file " +
+                LogError("AnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error creating the input .txt file " +
                          "(" + INPUT_FILENAME + "): " + ex.Message);
                 success = false;
             }

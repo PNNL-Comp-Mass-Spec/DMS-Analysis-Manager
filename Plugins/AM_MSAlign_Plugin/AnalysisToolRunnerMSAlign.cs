@@ -98,10 +98,10 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Verify that program files exist
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
                 // Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-                var JavaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(JavaProgLoc))
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -175,7 +175,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     arguments = " -Xmx" + javaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
                 }
 
-                LogDebug(JavaProgLoc + " " + arguments);
+                LogDebug(javaProgLoc + " " + arguments);
 
                 mCmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(mCmdRunner);
@@ -200,7 +200,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
-                var processingSuccess = mCmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign", true);
+                var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments, "MSAlign", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -805,8 +805,8 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Thus, we will read the source file with a reader and create a new FASTA file
 
                 // Define the path to the FASTA file
-                var OrgDbDir = mMgrParams.GetParam("OrgDbDir");
-                var fastaFilePath = Path.Combine(OrgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var organismDbDirectory = mMgrParams.GetParam("OrgDbDir");
+                var fastaFilePath = Path.Combine(organismDbDirectory, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fastaFile = new FileInfo(fastaFilePath);
 

@@ -131,10 +131,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Verify that program files exist
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
                 // Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
-                var JavaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(JavaProgLoc))
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -205,10 +205,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Set up and execute a program runner to run MSAlign_Histone
                 var arguments = " -Xmx" + javaMemorySize + "M" +
-                                " -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " +
+                                @" -classpath jar\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " +
                                 msalignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + arguments);
+                LogDebug(javaProgLoc + " " + arguments);
 
                 var cmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
@@ -223,7 +223,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 mProgress = PROGRESS_PCT_STARTING;
 
-                var processingSuccess = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
+                var processingSuccess = cmdRunner.RunProgram(javaProgLoc, arguments, "MSAlign_Histone", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -275,7 +275,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         // Create the HTML and XML files
                         // Need to call MsAlignPipeline.jar again, but this time with a different classpath
 
-                        var reportGenerated = MakeReportFiles(JavaProgLoc, msalignCmdLineOptions, javaMemorySize);
+                        var reportGenerated = MakeReportFiles(javaProgLoc, msalignCmdLineOptions, javaMemorySize);
                         if (!reportGenerated)
                             processingSuccess = false;
 
@@ -738,7 +738,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        private bool MakeReportFiles(string JavaProgLoc, string msalignCmdLineOptions, int javaMemorySize)
+        private bool MakeReportFiles(string javaProgLoc, string msalignCmdLineOptions, int javaMemorySize)
         {
             bool success;
 
@@ -748,10 +748,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Set up and execute a program runner to run MSAlign_Histone
                 var arguments = " -Xmx" + javaMemorySize + "M" +
-                                " -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
+                                @" -classpath jar\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
                                 msalignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + arguments);
+                LogDebug(javaProgLoc + " " + arguments);
 
                 var cmdRunner = new RunDosProgram(mMSAlignWorkFolderPath, mDebugLevel);
                 RegisterEvents(cmdRunner);
@@ -764,7 +764,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSAlign_Report_CONSOLE_OUTPUT);
 
-                success = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
+                success = cmdRunner.RunProgram(javaProgLoc, arguments, "MSAlign_Histone", true);
 
                 if (!success)
                 {

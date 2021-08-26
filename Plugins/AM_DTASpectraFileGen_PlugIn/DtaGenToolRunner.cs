@@ -310,9 +310,9 @@ namespace DTASpectraFileGen
             try
             {
                 var dtaFiles = Directory.GetFiles(mWorkDir, "*.dta");
-                foreach (var TmpFile in dtaFiles)
+                foreach (var targetFile in dtaFiles)
                 {
-                    DeleteFileWithRetries(TmpFile);
+                    DeleteFileWithRetries(targetFile);
                 }
             }
             catch (Exception ex)
@@ -323,13 +323,13 @@ namespace DTASpectraFileGen
 
             // Delete unzipped concatenated dta files
             var cdtaFiles = Directory.GetFiles(mWorkDir, "*" + CDTA_FILE_SUFFIX);
-            foreach (var TmpFile in cdtaFiles)
+            foreach (var cdtaFile in cdtaFiles)
             {
                 try
                 {
-                    if (Path.GetFileName(TmpFile.ToLower()) != "lcq_dta.txt")
+                    if (Path.GetFileName(cdtaFile.ToLower()) != "lcq_dta.txt")
                     {
-                        DeleteFileWithRetries(TmpFile);
+                        DeleteFileWithRetries(cdtaFile);
                     }
                 }
                 catch (Exception ex)
@@ -593,11 +593,11 @@ namespace DTASpectraFileGen
                 LogMessage("Concatenating spectra files, job " + mJob + ", step " + mStepNum);
             }
 
-            var ConcatTools = new ConcatToolWrapper(workDir.FullName);
+            var concatTools = new ConcatToolWrapper(workDir.FullName);
 
-            if (!ConcatTools.ConcatenateFiles(ConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, mDatasetName))
+            if (!concatTools.ConcatenateFiles(ConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, mDatasetName))
             {
-                LogError("Error packaging results: " + ConcatTools.ErrMsg);
+                LogError("Error packaging results: " + concatTools.ErrMsg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -620,10 +620,8 @@ namespace DTASpectraFileGen
 
         private string GetMSConvertAppPath()
         {
-            var ProteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
-            var progLoc = Path.Combine(ProteoWizardDir, DtaGenThermoRaw.MSCONVERT_FILENAME);
-
-            return progLoc;
+            var proteoWizardDir = mMgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
+            return Path.Combine(proteoWizardDir, DtaGenThermoRaw.MSCONVERT_FILENAME);
         }
 
         /// <summary>
@@ -649,13 +647,13 @@ namespace DTASpectraFileGen
                 filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_MZML_EXTENSION));
                 filesToDelete.AddRange(Directory.GetFiles(mWorkDir, "*" + AnalysisResources.DOT_MGF_EXTENSION));
 
-                foreach (var MyFile in filesToDelete)
+                foreach (var targetFile in filesToDelete)
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogMessage("DtaGenToolRunner.DeleteDataFile, deleting file " + MyFile);
+                        LogMessage("DtaGenToolRunner.DeleteDataFile, deleting file " + targetFile);
                     }
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(targetFile);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

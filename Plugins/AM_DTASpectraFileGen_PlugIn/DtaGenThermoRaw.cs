@@ -485,27 +485,27 @@ namespace DTASpectraFileGen
                     // Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
                     // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
-                    var LocScanStart = scanStart;
-                    int LocScanStop;
+                    var locScanStart = scanStart;
+                    int locScanStop;
 
                     if (mRunningExtractMSn && mMgrParams.GetParam("UseDTALooping", false))
                     {
-                        if (scanStop > (LocScanStart + LOOPING_CHUNK_SIZE))
+                        if (scanStop > (locScanStart + LOOPING_CHUNK_SIZE))
                         {
-                            LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE;
+                            locScanStop = locScanStart + LOOPING_CHUNK_SIZE;
                         }
                         else
                         {
-                            LocScanStop = scanStop;
+                            locScanStop = scanStop;
                         }
                     }
                     else
                     {
-                        LocScanStop = scanStop;
+                        locScanStop = scanStop;
                     }
 
                     // Loop until no more .dta files are created or ScanStop is reached
-                    while (LocScanStart <= scanStop)
+                    while (locScanStart <= scanStop)
                     {
                         // Check for abort
                         if (mAbortRequested)
@@ -525,8 +525,8 @@ namespace DTASpectraFileGen
                             arguments += " -C" + locCharge;
                         }
 
-                        arguments += " -F" + LocScanStart +
-                                     " -L" + LocScanStop;
+                        arguments += " -F" + locScanStart +
+                                     " -L" + locScanStop;
 
                         // For ExtractMSn, -S means the number of allowed different intermediate scans for grouping (default=1), for example -S1
                         // For DeconMSn, -S means the type of spectra to process, for example -SALL or -SCID
@@ -592,11 +592,11 @@ namespace DTASpectraFileGen
                         }
 
                         // Update loopy parameters
-                        LocScanStart = LocScanStop + 1;
-                        LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE;
-                        if (LocScanStop > scanStop)
+                        locScanStart = locScanStop + 1;
+                        locScanStop = locScanStart + LOOPING_CHUNK_SIZE;
+                        if (locScanStop > scanStop)
                         {
-                            LocScanStop = scanStop;
+                            locScanStop = scanStop;
                         }
                     }
                 }
@@ -657,8 +657,8 @@ namespace DTASpectraFileGen
 
         protected virtual void MonitorProgress()
         {
-            var FileList = Directory.GetFiles(mWorkDir, "*.dta");
-            mSpectraFileCount = FileList.GetLength(0);
+            var foundFiles = Directory.GetFiles(mWorkDir, "*.dta");
+            mSpectraFileCount = foundFiles.GetLength(0);
         }
 
         private void UpdateDeconMSnProgress(string progressFilePath)
@@ -732,9 +732,9 @@ namespace DTASpectraFileGen
             {
                 // Verify at least one .dta file has been created
                 // Returns the number of dta files in the working directory
-                var FileList = Directory.GetFiles(mWorkDir, "*.dta");
+                var foundFiles = Directory.GetFiles(mWorkDir, "*.dta");
 
-                if (FileList.GetLength(0) < 1)
+                if (foundFiles.GetLength(0) < 1)
                 {
                     LogError("No dta files created");
                     return false;
@@ -743,9 +743,9 @@ namespace DTASpectraFileGen
             else
             {
                 // Verify that the _dta.txt file was created
-                var FileList = Directory.GetFiles(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION);
+                var foundFiles = Directory.GetFiles(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION);
 
-                if (FileList.GetLength(0) == 0)
+                if (foundFiles.GetLength(0) == 0)
                 {
                     LogError("_dta.txt file was not created");
                     return false;

@@ -314,13 +314,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     var root = template.DocumentElement;
 
-                    var XTandemExePath = Path.Combine(dtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
+                    var xtandemExePath = Path.Combine(dtaRefineryDirectory, @"aux_xtandem_module\tandem_5digit_precision.exe");
 
                     if (root != null)
                     {
                         var exeParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']");
                         if (exeParam != null)
-                            exeParam.InnerXml = XTandemExePath;
+                            exeParam.InnerXml = xtandemExePath;
 
                         var inputParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']");
                         if (inputParam != null)

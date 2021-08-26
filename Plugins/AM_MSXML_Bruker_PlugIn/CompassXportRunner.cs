@@ -39,7 +39,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
         public event ProgRunnerStartingEventHandler ProgRunnerStarting;
 
-        public delegate void ProgRunnerStartingEventHandler(string CommandLine);
+        public delegate void ProgRunnerStartingEventHandler(string commandLine);
 
         public event LoopWaitingEventHandler LoopWaiting;
 

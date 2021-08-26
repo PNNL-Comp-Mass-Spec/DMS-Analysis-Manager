@@ -316,14 +316,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Copies a file with retries in case of failure
         /// </summary>
         /// <remarks>Logs copy errors</remarks>
-        /// <param name="SrcFilePath">Full path to source file</param>
-        /// <param name="DestFilePath">Full path to destination file</param>
+        /// <param name="sourceFilePath">Full path to source file</param>
+        /// <param name="destinationFilePath">Full path to destination file</param>
         /// <param name="Overwrite">True to overwrite existing destination file</param>
         /// <returns>True if success, false if an error</returns>
-        public bool CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite)
+        public bool CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool Overwrite)
         {
             const int maxCopyAttempts = 3;
-            return CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, maxCopyAttempts);
+            return CopyFileWithRetry(sourceFilePath, destinationFilePath, Overwrite, maxCopyAttempts);
         }
 
         /// <summary>

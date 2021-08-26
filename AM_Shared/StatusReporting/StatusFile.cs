@@ -769,11 +769,11 @@ namespace AnalysisManagerBase.StatusReporting
             ProgRunnerCoreUsageHistory = coreUsageHistory;
         }
 
-        private void StoreRecentJobInfo(string JobInfo)
+        private void StoreRecentJobInfo(string jobInfo)
         {
-            if (!string.IsNullOrEmpty(JobInfo))
+            if (!string.IsNullOrEmpty(jobInfo))
             {
-                MostRecentJobInfo = JobInfo;
+                MostRecentJobInfo = jobInfo;
             }
         }
 

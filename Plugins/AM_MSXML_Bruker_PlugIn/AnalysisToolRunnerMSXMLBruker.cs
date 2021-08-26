@@ -150,29 +150,30 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Typically CompassXport.exe
 
             var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");
-            // Typically mzXML or mzML
-            var CentroidMSXML = Convert.ToBoolean(mJobParams.GetParam("CentroidMSXML"));
 
-            string CompassXportProgramPath;
+            // Typically mzXML or mzML
+            var centroidMSXML = Convert.ToBoolean(mJobParams.GetParam("CentroidMSXML"));
+
+            string compassXportProgramPath;
 
             // Initialize the Results File output parameter to a dummy name for now
             resultsFile = new FileInfo(Path.Combine(mWorkDir, "NonExistent_Placeholder_File.tmp"));
 
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
-                CompassXportProgramPath = mMgrParams.GetParam("CompassXportLoc");
+                compassXportProgramPath = mMgrParams.GetParam("CompassXportLoc");
 
-                if (string.IsNullOrEmpty(CompassXportProgramPath))
+                if (string.IsNullOrEmpty(compassXportProgramPath))
                 {
                     mMessage = "Manager parameter CompassXportLoc is not defined in the Manager Control DB";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!File.Exists(CompassXportProgramPath))
+                if (!File.Exists(compassXportProgramPath))
                 {
                     mMessage = "CompassXport program not found";
-                    LogError(mMessage + " at " + CompassXportProgramPath);
+                    LogError(mMessage + " at " + compassXportProgramPath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -193,7 +194,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "." + CompassXportRunner.GetMsXmlOutputTypeByID(eOutputType)));
 
             // Instantiate the processing class
-            mCompassXportRunner = new CompassXportRunner(mWorkDir, CompassXportProgramPath, mDatasetName, eOutputType, CentroidMSXML);
+            mCompassXportRunner = new CompassXportRunner(mWorkDir, compassXportProgramPath, mDatasetName, eOutputType, centroidMSXML);
             RegisterEvents(mCompassXportRunner);
 
             mCompassXportRunner.LoopWaiting += CompassXportRunner_LoopWaiting;

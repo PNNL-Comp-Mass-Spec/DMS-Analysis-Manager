@@ -92,9 +92,9 @@ namespace AnalysisManagerInSpecTPlugIn
                 LogMessage("Processing parallelized Inspect segment " + parallelZipNum);
             }
 
-            var DtaResultFolderName = FileSearch.FindDataFile(dtaResultFileName);
+            var dtaResultDirectoryName = FileSearch.FindDataFile(dtaResultFileName);
 
-            if (string.IsNullOrEmpty(DtaResultFolderName))
+            if (string.IsNullOrEmpty(dtaResultDirectoryName))
             {
                 // No folder found containing the zipped DTA files (error will have already been logged)
                 if (mDebugLevel >= 3)
@@ -104,7 +104,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 return false;
             }
 
-            if (DtaResultFolderName.StartsWith(MYEMSL_PATH_FLAG))
+            if (dtaResultDirectoryName.StartsWith(MYEMSL_PATH_FLAG))
             {
                 if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
@@ -121,12 +121,12 @@ namespace AnalysisManagerInSpecTPlugIn
             else
             {
                 // Copy the file
-                if (!CopyFileToWorkDir(dtaResultFileName, DtaResultFolderName, mWorkDir))
+                if (!CopyFileToWorkDir(dtaResultFileName, dtaResultDirectoryName, mWorkDir))
                 {
                     // Error copying file (error will have already been logged)
                     if (mDebugLevel >= 3)
                     {
-                        LogError("CopyFileToWorkDir returned False for " + dtaResultFileName + " using directory " + DtaResultFolderName);
+                        LogError("CopyFileToWorkDir returned False for " + dtaResultFileName + " using directory " + dtaResultDirectoryName);
                     }
                     return false;
                 }

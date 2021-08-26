@@ -57,16 +57,16 @@ namespace DTASpectraFileGen
             return mStatus;
         }
 
-        private bool VerifyMGFFileExists(string WorkDir, string DSName)
+        private bool VerifyMGFFileExists(string workDir, string datasetName)
         {
             // Verifies a .mgf file exists in specified directory
-            if (File.Exists(Path.Combine(WorkDir, DSName + AnalysisResources.DOT_MGF_EXTENSION)))
+            if (File.Exists(Path.Combine(workDir, datasetName + AnalysisResources.DOT_MGF_EXTENSION)))
             {
                 mErrMsg = "";
                 return true;
             }
 
-            mErrMsg = "Data file " + DSName + ".mgf not found in working directory";
+            mErrMsg = "Data file " + datasetName + ".mgf not found in working directory";
             return false;
         }
 

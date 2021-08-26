@@ -419,8 +419,8 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Extract the results from a SMAQC results file
         /// </summary>
-        /// <param name="ResultsFilePath"></param>
-        private List<KeyValuePair<string, string>> LoadSMAQCResults(string ResultsFilePath)
+        /// <param name="resultsFilePath"></param>
+        private List<KeyValuePair<string, string>> LoadSMAQCResults(string resultsFilePath)
         {
             // Typical file contents:
 
@@ -440,22 +440,22 @@ namespace AnalysisManagerSMAQCPlugIn
             // The measurements are returned via this list
             var results = new List<KeyValuePair<string, string>>();
 
-            if (!File.Exists(ResultsFilePath))
+            if (!File.Exists(resultsFilePath))
             {
                 mMessage = "SMAQC Results file not found";
-                LogDebug(mMessage + ": " + ResultsFilePath);
+                LogDebug(mMessage + ": " + resultsFilePath);
                 return results;
             }
 
             if (mDebugLevel >= 2)
             {
-                LogDebug("Parsing SMAQC Results file " + ResultsFilePath);
+                LogDebug("Parsing SMAQC Results file " + resultsFilePath);
             }
 
             var measurementsFound = false;
             var headersFound = false;
 
-            using var reader = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            using var reader = new StreamReader(new FileStream(resultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             while (!reader.EndOfStream)
             {
@@ -629,14 +629,14 @@ namespace AnalysisManagerSMAQCPlugIn
             }
         }
 
-        private bool PostSMAQCResultsToDB(string xmlresults)
+        private bool PostSMAQCResultsToDB(string xmlResults)
         {
             // Note that mDatasetID gets populated by LookupInstrumentIDFromDB
 
-            return PostSMAQCResultsToDB(mDatasetID, xmlresults);
+            return PostSMAQCResultsToDB(mDatasetID, xmlResults);
         }
 
-        private bool PostSMAQCResultsToDB(int datasetID, string xmlresults)
+        private bool PostSMAQCResultsToDB(int datasetID, string xmlResults)
         {
             const int MAX_RETRY_COUNT = 3;
 
@@ -649,19 +649,19 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug("Posting SMAQC Results to the database (using Dataset ID " + datasetID + ")");
                 }
 
-                // We need to remove the encoding line from xmlresults before posting to the DB
+                // We need to remove the encoding line from xmlResults before posting to the DB
                 // This line will look like this:
                 //   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-                var startIndex = xmlresults.IndexOf("?>", StringComparison.Ordinal);
-                string xmlresultsClean;
+                var startIndex = xmlResults.IndexOf("?>", StringComparison.Ordinal);
+                string xmlResultsClean;
                 if (startIndex > 0)
                 {
-                    xmlresultsClean = xmlresults.Substring(startIndex + 2).Trim();
+                    xmlResultsClean = xmlResults.Substring(startIndex + 2).Trim();
                 }
                 else
                 {
-                    xmlresultsClean = xmlresults;
+                    xmlResultsClean = xmlResults;
                 }
 
                 // Call stored procedure StoreSMAQCResults in DMS5
@@ -672,7 +672,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
                 dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlresultsClean;
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlResultsClean;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
@@ -701,14 +701,14 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Read the SMAQC results files, convert to XML, and post to DMS
         /// </summary>
-        /// <param name="ResultsFilePath">Path to the SMAQC results file</param>
-        private bool ReadAndStoreSMAQCResults(string ResultsFilePath)
+        /// <param name="resultsFilePath">Path to the SMAQC results file</param>
+        private bool ReadAndStoreSMAQCResults(string resultsFilePath)
         {
             var success = false;
 
             try
             {
-                var results = LoadSMAQCResults(ResultsFilePath);
+                var results = LoadSMAQCResults(resultsFilePath);
 
                 if (results.Count == 0)
                 {

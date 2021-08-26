@@ -707,10 +707,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Event handler for msXmlGen.ProgRunnerStarting event
         /// </summary>
-        /// <param name="CommandLine">The command being executed (program path plus command line arguments)</param>
-        private void MSXmlGen_ProgRunnerStarting(string CommandLine)
+        /// <param name="commandLine">The command being executed (program path plus command line arguments)</param>
+        private void MSXmlGen_ProgRunnerStarting(string commandLine)
         {
-            LogDebug(CommandLine);
+            LogDebug(commandLine);
         }
     }
 }

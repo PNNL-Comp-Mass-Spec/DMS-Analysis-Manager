@@ -453,21 +453,21 @@ namespace AnalysisManagerSequestPlugin
 
             for (var processorIndex = 0; processorIndex <= processorsToUse - 1; processorIndex++)
             {
-                var DumStr = Path.Combine(mWorkDir, "FileList" + processorIndex + ".txt");
-                mJobParams.AddResultFileToSkip(DumStr);
+                var fileListFile = Path.Combine(mWorkDir, "FileList" + processorIndex + ".txt");
+                mJobParams.AddResultFileToSkip(fileListFile);
 
                 progRunners[processorIndex] = new ProgRunner
                 {
                     Name = "Seq" + processorIndex,
                     CreateNoWindow = Convert.ToBoolean(mMgrParams.GetParam("CreateNoWindow")),
                     Program = mMgrParams.GetParam("SeqProgLoc"),
-                    Arguments = arguments + DumStr,
+                    Arguments = arguments + fileListFile,
                     WorkDir = mWorkDir
                 };
 
-                dtaWriters[processorIndex] = new StreamWriter(DumStr, false);
+                dtaWriters[processorIndex] = new StreamWriter(fileListFile, false);
                 LogDebug(
-                    mMgrParams.GetParam("SeqProgLoc") + arguments + DumStr);
+                    mMgrParams.GetParam("SeqProgLoc") + arguments + fileListFile);
             }
 
             // Break up file list into lists for each processor
@@ -613,11 +613,11 @@ namespace AnalysisManagerSequestPlugin
         /// Concatenates any .out files that still remain in the working directory
         /// If running on the SEQUEST Cluster, the majority of the files should have already been appended to _out.txt.tmp
         /// </summary>
-        /// <param name="WorkDir">Working directory</param>
-        /// <param name="DSName">Dataset name</param>
-        /// <param name="JobNum">Job number</param>
+        /// <param name="workDirPath">Working directory path</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="job">Job number</param>
         /// <returns>True if success, false if an error</returns>
-        protected virtual bool ConcatOutFiles(string WorkDir, string DSName, int JobNum)
+        protected virtual bool ConcatOutFiles(string workDirPath, string datasetName, int job)
         {
             const int MAX_RETRY_ATTEMPTS = 5;
             const int MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
@@ -670,7 +670,7 @@ namespace AnalysisManagerSequestPlugin
                         mTempConcatenatedOutFilePath = Path.Combine(mWorkDir, mDatasetName + "_out.txt.tmp");
                     }
 
-                    var workDir = new DirectoryInfo(WorkDir);
+                    var workDir = new DirectoryInfo(workDirPath);
 
                     using (var writer = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                     {
@@ -1296,18 +1296,18 @@ namespace AnalysisManagerSequestPlugin
         /// <summary>
         /// Zips the concatenated .out file
         /// </summary>
-        /// <param name="WorkDir">Working directory</param>
-        /// <param name="JobNum">Job number</param>
+        /// <param name="workDir">Working directory</param>
+        /// <param name="jobNum">Job number</param>
         /// <returns>True if success, false if an error</returns>
-        protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
+        protected virtual bool ZipConcatOutFile(string workDir, int jobNum)
         {
-            var OutFileName = mDatasetName + "_out.txt";
-            var OutFilePath = Path.Combine(WorkDir, OutFileName);
+            var outFileName = mDatasetName + "_out.txt";
+            var outFilePath = Path.Combine(workDir, outFileName);
 
             LogMessage("Zipping concatenated output file, job " + mJob + ", step " + mJobParams.GetParam("Step"));
 
             // Verify file exists
-            if (!File.Exists(OutFilePath))
+            if (!File.Exists(outFilePath))
             {
                 mMessage = "Unable to find concatenated .out file";
                 LogError(mMessage);
@@ -1317,24 +1317,24 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 // Zip the file
-                if (!ZipFile(OutFilePath, false))
+                if (!ZipFile(outFilePath, false))
                 {
                     mMessage = "Error zipping concatenated out file";
-                    var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step");
-                    LogError(Msg);
+                    var msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step");
+                    LogError(msg);
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 mMessage = "Exception zipping concatenated out file";
-                var Msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
+                var msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
                              Global.GetExceptionStackTrace(ex);
-                LogError(Msg);
+                LogError(msg);
                 return false;
             }
 
-            mJobParams.AddResultFileToSkip(OutFileName);
+            mJobParams.AddResultFileToSkip(outFileName);
 
             if (mDebugLevel >= 1)
             {

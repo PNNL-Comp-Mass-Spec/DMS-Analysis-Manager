@@ -147,11 +147,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
 
-            var MultiAlignResultFilename = mJobParams.GetJobParam("ResultsBaseName");
+            var multiAlignResultFilename = mJobParams.GetJobParam("ResultsBaseName");
 
-            if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
+            if (string.IsNullOrWhiteSpace(multiAlignResultFilename))
             {
-                MultiAlignResultFilename = mJobParams.RequireJobParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
+                multiAlignResultFilename = mJobParams.RequireJobParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
             }
 
             // Set up and execute a program runner to run MultiAlign
@@ -362,27 +362,27 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         {
             const string INPUT_FILENAME = "input.txt";
 
-            var TargetFilePath = Path.Combine(mWorkingDir, INPUT_FILENAME);
+            var targetFilePath = Path.Combine(mWorkingDir, INPUT_FILENAME);
 
             // Create the MultiAlign input file
 
             try
             {
-                var Files = Directory.GetFiles(mWorkingDir, "*" + inputFileExtension);
+                var foundFiles = Directory.GetFiles(mWorkingDir, "*" + inputFileExtension);
 
-                if (Files.Length == 0)
+                if (foundFiles.Length == 0)
                 {
                     mMessage = "Did not find any files of type " + inputFileExtension + " in directory " + mWorkingDir;
                     OnErrorEvent(mMessage);
                     return false;
                 }
 
-                using var writer = new StreamWriter(new FileStream(TargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                 writer.WriteLine("[Files]");
 
                 var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
-                foreach (var datasetFile in Files)
+                foreach (var datasetFile in foundFiles)
                 {
                     if (!string.IsNullOrWhiteSpace(alignmentDataset) && datasetFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
                     {

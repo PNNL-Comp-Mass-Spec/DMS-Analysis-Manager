@@ -123,12 +123,12 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var success = UpdateFeatureFinderIniFile(lcmsFeatureFinderIniFileName);
             if (!success)
             {
-                var Msg = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + lcmsFeatureFinderIniFileName;
+                var message = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + lcmsFeatureFinderIniFileName;
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    mMessage = Msg;
+                    mMessage = message;
                 }
-                LogError(Msg);
+                LogError(message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

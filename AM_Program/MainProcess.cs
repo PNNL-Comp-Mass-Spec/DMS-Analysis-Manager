@@ -2743,12 +2743,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Updates status file to indicate that the manager is closing
         /// </summary>
-        /// <param name="ManagerCloseMessage"></param>
-        private void UpdateClose(string ManagerCloseMessage)
+        /// <param name="managerCloseMessage"></param>
+        private void UpdateClose(string managerCloseMessage)
         {
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
 
-            mStatusTools.UpdateClose(ManagerCloseMessage, recentErrorMessages, mMostRecentJobInfo, true);
+            mStatusTools.UpdateClose(managerCloseMessage, recentErrorMessages, mMostRecentJobInfo, true);
         }
 
         /// <summary>
