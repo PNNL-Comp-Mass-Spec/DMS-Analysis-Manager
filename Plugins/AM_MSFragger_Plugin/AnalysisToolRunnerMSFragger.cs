@@ -144,6 +144,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
+
                 var success = CopyResultsToTransferDirectory();
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -796,7 +798,12 @@ namespace AnalysisManagerMSFraggerPlugIn
                     var zipSuccess = ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile);
 
                     if (zipSuccess)
+                    {
+                        mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
+                        mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
+
                         successCount++;
+                    }
                 }
 
                 mStatusTools.UpdateAndWrite(mProgress);
