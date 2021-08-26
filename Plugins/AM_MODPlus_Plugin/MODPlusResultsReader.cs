@@ -26,7 +26,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         private double mCurrentScanChargeCombo;
 
-        private List<string> mCurrentScanData;
+        private readonly List<string> mCurrentScanData;
 
         private string mSavedLine;
 

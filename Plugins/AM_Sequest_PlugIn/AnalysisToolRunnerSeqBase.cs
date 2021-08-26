@@ -55,10 +55,10 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         protected Queue<float> mRecentOutFileSearchTimes = new(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
 
-        private Regex mOutFileNameRegEx = new(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
+        private readonly Regex mOutFileNameRegEx = new(@"^(?<rootname>.+)\.(?<startscan>\d+)\.(?<endscan>\d+)\.(?<cs>\d+)\.(?<extension>\S{3})",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-        private Regex mOutFileSearchTimeRegEx = new(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
+        private readonly Regex mOutFileSearchTimeRegEx = new(@"\d+/\d+/\d+, \d+\:\d+ [A-Z]+, (?<time>[0-9.]+) sec",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         protected long mOutFileHandlerInUse;

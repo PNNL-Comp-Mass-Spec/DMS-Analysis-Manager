@@ -68,16 +68,16 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Member Variables"
 
-        private string mBatchFilePath;
+        private readonly string mBatchFilePath;
         private string mConsoleOutputFilePath;
-        private int mCore;
+        private readonly int mCore;
 
         private double mProgress;
 
         /// <summary>
         /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
-        private Dictionary<string, bool> mTargets;
+        private readonly Dictionary<string, bool> mTargets;
 
         private GlyQIqRunnerStatusCodes mStatus;
 

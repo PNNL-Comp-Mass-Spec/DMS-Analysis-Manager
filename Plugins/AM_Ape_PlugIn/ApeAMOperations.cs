@@ -8,9 +8,9 @@ namespace AnalysisManager_Ape_PlugIn
 {
     public class ApeAMOperations : EventNotifier
     {
-        private IJobParams mJobParams;
+        private readonly IJobParams mJobParams;
 
-        private IMgrParams mMgrParams;
+        private readonly IMgrParams mMgrParams;
 
         private DateTime mLastProgressTime = DateTime.UtcNow;
 

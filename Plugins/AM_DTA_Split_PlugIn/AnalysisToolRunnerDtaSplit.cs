@@ -22,7 +22,7 @@ namespace AnalysisManagerDtaSplitPlugIn
     {
         // Ignore Spelling: pre
 
-        private Regex r_FileSeparator;
+        private readonly Regex r_FileSeparator;
         private Regex r_DTAFirstLine;        // Presently not used
 
         /// <summary>
