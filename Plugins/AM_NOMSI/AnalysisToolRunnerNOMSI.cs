@@ -188,7 +188,7 @@ namespace AnalysisManagerNOMSIPlugin
             var userName = currentUser.Name;
             var lastSlashIndex = userName.LastIndexOf('\\');
             if (lastSlashIndex >= 0)
-                userName = userName.Substring(lastSlashIndex + 1);
+                return userName.Substring(lastSlashIndex + 1);
 
             return userName;
         }
