@@ -174,32 +174,44 @@ namespace AnalysisManagerBase.DataFileTools
                 DatasetExperimentGroup.Add(item.Key, item.Value);
             }
 
+            var hasDataPackage = DataPackageID > 0;
+
             // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
             foreach (var datasetId in Datasets.Keys)
             {
                 AddKeyIfMissing("Experiments", Experiments, datasetId);
                 AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId);
                 AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId);
-                AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId);
-                AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId);
+                AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
+                AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
             }
         }
 
-        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, int> targetDictionary, int datasetId)
+        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, int> targetDictionary, int datasetId, bool warnIfMissing = true)
         {
             if (targetDictionary.ContainsKey(datasetId))
                 return;
 
-            OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId));
+            if (warnIfMissing)
+            {
+                OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}",
+                    DataPackageID, dictionaryName, datasetId));
+            }
+
             targetDictionary.Add(datasetId, 0);
         }
 
-        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, string> targetDictionary, int datasetId)
+        private void AddKeyIfMissing(string dictionaryName, IDictionary<int, string> targetDictionary, int datasetId, bool warnIfMissing = true)
         {
             if (targetDictionary.ContainsKey(datasetId))
                 return;
 
-            OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId));
+            if (warnIfMissing)
+            {
+                OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}",
+                    DataPackageID, dictionaryName, datasetId));
+            }
+
             targetDictionary.Add(datasetId, string.Empty);
         }
 
