@@ -55,7 +55,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            if (!FileSearch.RetrieveDtaFiles())
+            if (!FileSearchTool.RetrieveDtaFiles())
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

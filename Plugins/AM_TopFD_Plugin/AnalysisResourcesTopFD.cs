@@ -72,7 +72,7 @@ namespace AnalysisManagerTopFDPlugIn
                                "will assume: " + topFdParmFileStoragePath);
                 }
 
-                if (!FileSearch.RetrieveFile(topFdParamFile, topFdParmFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(topFdParamFile, topFdParmFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }

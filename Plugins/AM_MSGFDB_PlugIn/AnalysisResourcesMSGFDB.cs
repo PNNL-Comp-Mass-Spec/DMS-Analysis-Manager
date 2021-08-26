@@ -332,7 +332,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Retrieve the _DTA.txt or .mgf file
             // Note that if the file was found in MyEMSL, RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-            if (FileSearch.RetrieveDtaFiles())
+            if (FileSearchTool.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             AppendSharedResultDirectoriesToComment();
@@ -365,7 +365,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
-            var success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
+            var success = FileSearchTool.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
 
             if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
@@ -383,7 +383,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!scanTypeColumnFound)
                 {
                     // We also have to retrieve the _ScanStatsEx.txt file
-                    success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
+                    success = FileSearchTool.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
 
                     if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {

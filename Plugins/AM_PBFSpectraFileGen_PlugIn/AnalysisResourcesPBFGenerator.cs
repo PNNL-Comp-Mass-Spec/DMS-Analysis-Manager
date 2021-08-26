@@ -56,7 +56,7 @@ namespace AnalysisManagerPBFGenerator
                 currentTask = "Retrieve instrument data";
 
                 // Retrieve the instrument data file
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {

@@ -52,7 +52,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve FASTA file
@@ -63,7 +63,7 @@ namespace AnalysisManagerMSAlignPlugIn
             // Retrieve the MSAlign file
             LogMessage("Getting data files");
             var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

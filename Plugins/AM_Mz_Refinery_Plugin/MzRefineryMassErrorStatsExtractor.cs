@@ -26,7 +26,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Mass error info; populated by ParsePPMErrorCharterOutput
         /// </summary>
-        public MassErrorInfo MassErrorInfo { get; }
+        public MassErrorInfo MassErrorStats { get; }
 
         /// <summary>
         /// Constructor
@@ -42,8 +42,8 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             ErrorMessage = string.Empty;
 
-            MassErrorInfo = new MassErrorInfo();
-            MassErrorInfo.Clear();
+            MassErrorStats = new MassErrorInfo();
+            MassErrorStats.Clear();
         }
 
         private string ConstructXML()
@@ -54,12 +54,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 builder.Append("<DTARef_MassErrorStats>");
 
-                builder.AppendFormat("<Dataset>{0}</Dataset>", MassErrorInfo.DatasetName);
-                builder.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", MassErrorInfo.PSMJob);
+                builder.AppendFormat("<Dataset>{0}</Dataset>", MassErrorStats.DatasetName);
+                builder.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", MassErrorStats.PSMJob);
 
                 builder.Append("<Measurements>");
-                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM", MassErrorInfo.MassErrorPPM);
-                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM_Refined", MassErrorInfo.MassErrorPPMRefined);
+                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM", MassErrorStats.MassErrorPPM);
+                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM_Refined", MassErrorStats.MassErrorPPMRefined);
                 builder.Append("</Measurements>");
 
                 builder.Append("</DTARef_MassErrorStats>");
@@ -99,9 +99,9 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                MassErrorInfo.Clear();
-                MassErrorInfo.DatasetName = datasetName;
-                MassErrorInfo.PSMJob = psmJob;
+                MassErrorStats.Clear();
+                MassErrorStats.DatasetName = datasetName;
+                MassErrorStats.PSMJob = psmJob;
 
                 var sourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
                 if (!sourceFile.Exists)
@@ -130,24 +130,24 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                         if (double.TryParse(dataValues.First(), out var massError))
                         {
-                            MassErrorInfo.MassErrorPPM = massError;
+                            MassErrorStats.MassErrorPPM = massError;
                         }
 
                         if (dataValues.Count > 1 && double.TryParse(dataValues.Last(), out massError))
                         {
-                            MassErrorInfo.MassErrorPPMRefined = massError;
+                            MassErrorStats.MassErrorPPMRefined = massError;
                         }
                     }
                 }
 
-                if (Math.Abs(MassErrorInfo.MassErrorPPM - double.MinValue) < float.Epsilon)
+                if (Math.Abs(MassErrorStats.MassErrorPPM - double.MinValue) < float.Epsilon)
                 {
                     // Did not find 'MedianMassErrorPPM' in the PPM Error Charter output
                     ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the PPM Error Charter output";
                     return false;
                 }
 
-                if (Math.Abs(MassErrorInfo.MassErrorPPMRefined - double.MinValue) < float.Epsilon)
+                if (Math.Abs(MassErrorStats.MassErrorPPMRefined - double.MinValue) < float.Epsilon)
                 {
                     // Did not find 'MedianMassErrorPPM' with two values in the PPM Error Charter output
                     ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' with two values in the PPM Error Charter output";

@@ -53,7 +53,7 @@ namespace AnalysisManagerOMSSAPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Convert the .fasta file to OMSSA format using formatdb.exe
@@ -67,7 +67,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
             //         mJobParams.GetParam("SettingsFileName"), _
-            if (!FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -75,7 +75,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            if (!FileSearch.RetrieveDtaFiles())
+            if (!FileSearchTool.RetrieveDtaFiles())
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

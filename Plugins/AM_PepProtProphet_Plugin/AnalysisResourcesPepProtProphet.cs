@@ -105,7 +105,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 currentTask = "RetrieveParamFile " + paramFileName;
 
                 // Retrieve param file
-                if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
                 // Retrieve FASTA file
@@ -205,7 +205,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 const bool unzipRequired = true;
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

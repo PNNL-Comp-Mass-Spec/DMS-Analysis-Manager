@@ -10,23 +10,23 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     internal class MessageSender
     {
-        private readonly string topicName;
-        private readonly string brokerUri;
+        private readonly string mTopicName;
+        private readonly string mBrokerUri;
 
-        private readonly string processorName;
-        private IConnection connection;
-        private ISession session;
+        private readonly string mProcessorName;
+        private IConnection mConnection;
+        private ISession mSession;
 
-        private IMessageProducer producer;
-        private bool isDisposed;
+        private IMessageProducer mProducer;
+        private bool mIsDisposed;
 
-        private bool hasConnection;
+        private bool mHasConnection;
 
         public MessageSender(string brokerUri, string topicName, string processorName)
         {
-            this.topicName = topicName;
-            this.brokerUri = brokerUri;
-            this.processorName = processorName;
+            mTopicName = topicName;
+            mBrokerUri = brokerUri;
+            mProcessorName = processorName;
         }
 
         /// <summary>
@@ -39,30 +39,30 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="messageContainer"></param>
         public void SendMessage(MessageContainer messageContainer)
         {
-            if (isDisposed)
+            if (mIsDisposed)
             {
                 return;
             }
 
-            if (!hasConnection)
+            if (!mHasConnection)
             {
                 CreateConnection();
             }
 
-            if (!hasConnection)
+            if (!mHasConnection)
             {
                 return;
             }
 
             try
             {
-                var textMessage = session.CreateTextMessage(messageContainer.Message);
+                var textMessage = mSession.CreateTextMessage(messageContainer.Message);
                 textMessage.NMSTimeToLive = TimeSpan.FromMinutes(60);
                 textMessage.NMSDeliveryMode = MsgDeliveryMode.NonPersistent;
                 textMessage.Properties.SetString("ProcessorName",
-                                                 string.IsNullOrWhiteSpace(messageContainer.ManagerName) ? processorName : messageContainer.ManagerName);
+                                                 string.IsNullOrWhiteSpace(messageContainer.ManagerName) ? mProcessorName : messageContainer.ManagerName);
 
-                producer.Send(textMessage);
+                mProducer.Send(textMessage);
             }
             catch (Exception ex)
             {
@@ -80,7 +80,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="timeoutSeconds"></param>
         private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
-            if (hasConnection)
+            if (mHasConnection)
             {
                 return;
             }
@@ -103,19 +103,19 @@ namespace AnalysisManagerBase.StatusReporting
             {
                 try
                 {
-                    var connectionFactory = new Apache.NMS.ActiveMQ.ConnectionFactory(brokerUri, processorName)
+                    var connectionFactory = new Apache.NMS.ActiveMQ.ConnectionFactory(mBrokerUri, mProcessorName)
                     {
                         AcknowledgementMode = AcknowledgementMode.AutoAcknowledge
                     };
 
-                    connection = connectionFactory.CreateConnection();
-                    connection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
-                    connection.Start();
+                    mConnection = connectionFactory.CreateConnection();
+                    mConnection.RequestTimeout = new TimeSpan(0, 0, timeoutSeconds);
+                    mConnection.Start();
 
-                    session = connection.CreateSession();
+                    mSession = mConnection.CreateSession();
 
-                    producer = session.CreateProducer(new Apache.NMS.ActiveMQ.Commands.ActiveMQTopic(topicName));
-                    hasConnection = true;
+                    mProducer = mSession.CreateProducer(new Apache.NMS.ActiveMQ.Commands.ActiveMQTopic(mTopicName));
+                    mHasConnection = true;
 
                     return;
                 }
@@ -150,10 +150,10 @@ namespace AnalysisManagerBase.StatusReporting
         {
             try
             {
-                if (hasConnection)
+                if (mHasConnection)
                 {
-                    connection?.Close();
-                    hasConnection = false;
+                    mConnection?.Close();
+                    mHasConnection = false;
                 }
             }
             catch (Exception)
@@ -164,9 +164,9 @@ namespace AnalysisManagerBase.StatusReporting
 
         public void Dispose()
         {
-            if (!isDisposed)
+            if (!mIsDisposed)
             {
-                isDisposed = true;
+                mIsDisposed = true;
                 try
                 {
                     DestroyConnection();

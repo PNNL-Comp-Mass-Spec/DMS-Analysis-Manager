@@ -57,7 +57,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                    if (FileSearch.RetrieveSpectra(rawDataTypeName))
+                    if (FileSearchTool.RetrieveSpectra(rawDataTypeName))
                     {
                         if (!base.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                         {
@@ -165,7 +165,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             // Retrieve the MSAlign results for this job
             var msAlignResultsTableFile = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(msAlignResultsTableFile, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(msAlignResultsTableFile, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -187,7 +187,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             // Retrieve the TopPIC results for this job
             var topPICResultsFile = DatasetName + TOPPIC_RESULT_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(topPICResultsFile, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(topPICResultsFile, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -221,7 +221,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            if (FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+            if (FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             return CloseOutType.CLOSEOUT_NO_PARAM_FILE;

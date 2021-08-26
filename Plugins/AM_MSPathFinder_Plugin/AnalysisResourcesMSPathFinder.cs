@@ -250,7 +250,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             {
                 var fileToGet = DatasetName + DOT_MS1FT_EXTENSION;
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

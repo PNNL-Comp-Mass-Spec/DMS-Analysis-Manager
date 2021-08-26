@@ -383,7 +383,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (matchingFiles.Count > 0)
                 {
                     // Template file found in the data package; copy it locally
-                    if (!FileSearch.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
+                    if (!FileSearchTool.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
                     {
                         return false;
                     }
@@ -401,7 +401,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (string.IsNullOrEmpty(paramFileStoragePath))
                         paramFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
 
-                    if (!FileSearch.RetrieveFile(templateFileName, paramFileStoragePath))
+                    if (!FileSearchTool.RetrieveFile(templateFileName, paramFileStoragePath))
                     {
                         return false;
                     }
@@ -470,7 +470,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (matchingFiles.Count > 0)
                     {
                         // Template file found in the data package; copy it locally
-                        if (!FileSearch.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
+                        if (!FileSearchTool.RetrieveFile(matchingFiles[0].Name, matchingFiles[0].DirectoryName))
                         {
                             return false;
                         }
@@ -504,7 +504,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     LogWarning(string.Format("Retrieving {0} from {1}", templateFileName, paramFileStoragePath));
 
-                    if (!FileSearch.RetrieveFile(templateFileName, paramFileStoragePath, 1))
+                    if (!FileSearchTool.RetrieveFile(templateFileName, paramFileStoragePath, 1))
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {

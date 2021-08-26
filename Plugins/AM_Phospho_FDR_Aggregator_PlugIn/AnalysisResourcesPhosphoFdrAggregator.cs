@@ -148,7 +148,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return true;
             }
 
-            var success = FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), 2, BaseLogger.LogLevels.DEBUG);
+            var success = FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH), 2, BaseLogger.LogLevels.DEBUG);
 
             if (!success)
             {
@@ -156,7 +156,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
                 var paramFileFolder = mJobParams.GetJobParameter("ParamFileStoragePath", @"\\gigasax\DMS_Parameter_Files\AScore");
-                success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2);
+                success = FileSearchTool.RetrieveFile(paramFileName, paramFileFolder, 2);
             }
 
             if (success)

@@ -588,7 +588,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetSEQUESTFiles()
         {
             // Get the concatenated .out file
-            if (!FileSearch.RetrieveOutFiles(false))
+            if (!FileSearchTool.RetrieveOutFiles(false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
@@ -610,7 +610,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetXTandemFiles()
         {
             var fileToGet = DatasetName + "_xt.zip";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_XT_FILES;
@@ -624,7 +624,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // However, we need to obtain the "input.xml" file and "default_input.xml" files now
             fileToGet = "input.xml";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -646,7 +646,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // This file contains the p-value filtered results
             var fileToGet = DatasetName + "_inspect.zip";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
@@ -655,7 +655,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // This file contains top hit for each scan (no filters)
             fileToGet = DatasetName + "_inspect_fht.zip";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
@@ -664,7 +664,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Get the peptide to protein mapping file
             fileToGet = DatasetName + "_inspect_PepToProtMap.txt";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call
 
@@ -701,7 +701,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Look for the file in the various directories
             // A message will be logged if the file is not found
-            var sourceDirPath = FileSearch.FindDataFile(msmsFile, true, true);
+            var sourceDirPath = FileSearchTool.FindDataFile(msmsFile, true, true);
 
             if (string.IsNullOrWhiteSpace(sourceDirPath))
             {
@@ -709,7 +709,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(msmsFile, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(msmsFile, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -717,7 +717,7 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileToSkip(msmsFile);
 
             const string peptidesFile = "peptides.txt";
-            if (!FileSearch.FindAndRetrieveMiscFiles(peptidesFile, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(peptidesFile, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -777,7 +777,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetMODaFiles()
         {
             var fileToGet = DatasetName + "_moda.zip";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -786,7 +786,7 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileExtensionToSkip("_moda.txt");
 
             fileToGet = DatasetName + "_mgf_IndexToScanMap.txt";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -800,7 +800,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetMODPlusFiles()
         {
             var fileToGet = DatasetName + "_modp.zip";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -863,7 +863,7 @@ namespace AnalysisManagerExtractionPlugin
                 // or for split FASTA, DatasetName_msgfplus_Part1.mzid.gz
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
-                var sourceDir = FileSearch.FindDataFile(fileToFind, true, false);
+                var sourceDir = FileSearchTool.FindDataFile(fileToFind, true, false);
                 string mzidSuffix;
                 if (!string.IsNullOrEmpty(sourceDir))
                 {
@@ -874,7 +874,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // File not found; look for DatasetName_msgfdb.mzid.gz or DatasetName_msgfdb_Part1.mzid.gz
                     var fileToGetAlternative = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, DatasetName + "_msgfdb.txt");
-                    var mzidSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, true, false);
+                    var mzidSourceDirAlt = FileSearchTool.FindDataFile(fileToGetAlternative, true, false);
 
                     if (!string.IsNullOrEmpty(mzidSourceDirAlt))
                     {
@@ -885,7 +885,7 @@ namespace AnalysisManagerExtractionPlugin
                     else
                     {
                         // File not found; look for a .zip file
-                        var zipSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
+                        var zipSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
                         if (!string.IsNullOrEmpty(zipSourceDir))
                         {
                             // Running MS-GF+ with zipped results
@@ -895,7 +895,7 @@ namespace AnalysisManagerExtractionPlugin
                         else
                         {
                             // File not found; try _msgfdb
-                            var zipSourceDirAlt = FileSearch.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
+                            var zipSourceDirAlt = FileSearchTool.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
                             if (!string.IsNullOrEmpty(zipSourceDirAlt))
                             {
                                 // File Found
@@ -948,11 +948,11 @@ namespace AnalysisManagerExtractionPlugin
                         var tsvFile = baseName + ".tsv";
                         currentStep = "Retrieving " + tsvFile;
 
-                        var tsvSourceDir = FileSearch.FindDataFile(tsvFile, false, false);
+                        var tsvSourceDir = FileSearchTool.FindDataFile(tsvFile, false, false);
                         if (string.IsNullOrEmpty(tsvSourceDir))
                         {
                             var fileToGetAlternative = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, DatasetName + "_msgfdb.txt");
-                            var tsvSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, false, false);
+                            var tsvSourceDirAlt = FileSearchTool.FindDataFile(fileToGetAlternative, false, false);
                             if (!string.IsNullOrEmpty(tsvSourceDirAlt))
                             {
                                 tsvFile = fileToGetAlternative;
@@ -999,7 +999,7 @@ namespace AnalysisManagerExtractionPlugin
                         var mzidFile = baseName + mzidSuffix;
                         currentStep = "Retrieving " + mzidFile;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true,
+                        if (!FileSearchTool.FindAndRetrieveMiscFiles(mzidFile, unzip: true,
                                                                  searchArchivedDatasetDir: true, logFileNotFound: true))
                         {
                             // Errors were reported in method call, so just return
@@ -1021,7 +1021,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
                         // This file is not critical, so pass false to logFileNotFound
-                        FileSearch.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
+                        FileSearchTool.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
                                                             searchArchivedDatasetDir: true, logFileNotFound: false);
                     }
 
@@ -1047,7 +1047,7 @@ namespace AnalysisManagerExtractionPlugin
                     var pepToProtMapFileName = baseName + "_PepToProtMap.txt";
                     currentStep = "Retrieving " + pepToProtMapFileName;
 
-                    if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFileName, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
+                    if (!FileSearchTool.FindAndRetrievePHRPDataFile(ref pepToProtMapFileName, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
                     {
                         // Errors were reported in method call
 
@@ -1055,7 +1055,7 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             // If PHRP has already finished, separate PepToProtMap.txt files will not exist for each job step
 
-                            var pepToProtMapSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
+                            var pepToProtMapSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
                             if (!string.IsNullOrEmpty(pepToProtMapSourceDir))
                             {
                                 ignorePepToProtMapErrors = true;
@@ -1103,7 +1103,7 @@ namespace AnalysisManagerExtractionPlugin
                         var consoleOutputFile = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
                         currentStep = "Retrieving " + consoleOutputFile;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false,
+                        if (!FileSearchTool.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false,
                                                                  searchArchivedDatasetDir: true, logFileNotFound: false))
                         {
                             // This is not an important error; ignore it
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerExtractionPlugin
                 // and whether the timestamp of the PHRP result files
                 // is newer than the .mzid.gz file(s)
 
-                var phrpResultsSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_fht.txt", false, false);
+                var phrpResultsSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus_fht.txt", false, false);
                 if (string.IsNullOrWhiteSpace(phrpResultsSourceDir))
                 {
                     // PHRP has not been run yet (which will typically be the case)
@@ -1210,7 +1210,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetMSAlignFiles()
         {
             var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1226,7 +1226,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             var fileToGet = DatasetName + "_IcTsv.zip";
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1243,7 +1243,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             var fileToGet = DatasetName + "_TopPIC_PrSMs.txt";
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1260,7 +1260,7 @@ namespace AnalysisManagerExtractionPlugin
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-            if (FileSearch.RetrieveDtaFiles())
+            if (FileSearchTool.RetrieveDtaFiles())
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
@@ -1338,14 +1338,14 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // MSPathFinder should have already created the ModDefs file during the previous step
                     // Retrieve it from the transfer directory now
-                    FileSearch.FindAndRetrieveMiscFiles(modDefsFilename, false);
+                    FileSearchTool.FindAndRetrieveMiscFiles(modDefsFilename, false);
                     modDefsFile.Refresh();
                 }
 
                 if (resultTypeName.Equals(RESULT_TYPE_XTANDEM))
                 {
                     // Retrieve the taxonomy.xml file (PHRPReader uses for it)
-                    FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
+                    FileSearchTool.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
                 if (!modDefsFile.Exists && !resultTypeName.Equals(RESULT_TYPE_MSALIGN) && !resultTypeName.Equals(RESULT_TYPE_TOPPIC))
@@ -1364,7 +1364,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, we need to keep the file
                 // Otherwise, we can skip it
-                var remoteModDefsDirectory = FileSearch.FindDataFile(modDefsFilename,
+                var remoteModDefsDirectory = FileSearchTool.FindDataFile(modDefsFilename,
                                                                      searchArchivedDatasetDir: false,
                                                                      logFileNotFound: logModFilesFileNotFound);
                 if (string.IsNullOrEmpty(remoteModDefsDirectory))
@@ -1462,7 +1462,7 @@ namespace AnalysisManagerExtractionPlugin
                 var toolVersionUtility = new ToolVersionUtilities(mMgrParams, mJobParams, mJob, DatasetName, StepToolName, mDebugLevel, mWorkDir);
                 RegisterEvents(toolVersionUtility);
 
-                toolVersionUtility.RetrieveToolVersionInfoFile(FileSearch, resultType);
+                toolVersionUtility.RetrieveToolVersionInfoFile(FileSearchTool, resultType);
             }
             catch (Exception ex)
             {

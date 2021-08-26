@@ -69,7 +69,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             else
             {
                 // Get input data file
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     LogError("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -120,7 +120,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // ParamFileStoragePath has the parameter file storage path for the current step tool
             var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
-            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

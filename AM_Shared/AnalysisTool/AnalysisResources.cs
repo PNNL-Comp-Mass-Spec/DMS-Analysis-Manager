@@ -655,11 +655,11 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 mDatasetName = value;
 
-                if (DirectorySearch != null)
-                    DirectorySearch.DatasetName = mDatasetName;
+                if (DirectorySearchTool != null)
+                    DirectorySearchTool.DatasetName = mDatasetName;
 
-                if (FileSearch != null)
-                    FileSearch.DatasetName = mDatasetName;
+                if (FileSearchTool != null)
+                    FileSearchTool.DatasetName = mDatasetName;
             }
         }
 
@@ -672,12 +672,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Directory search utility
         /// </summary>
-        public DirectorySearch DirectorySearch { get; private set; }
+        public DirectorySearch DirectorySearchTool { get; private set; }
 
         /// <summary>
         /// File search utility
         /// </summary>
-        public FileSearch FileSearch { get; private set; }
+        public FileSearch FileSearchTool { get; private set; }
 
         /// <summary>
         /// Job Parameters
@@ -698,16 +698,16 @@ namespace AnalysisManagerBase.AnalysisTool
             set
             {
                 mMyEMSLSearchDisabled = value;
-                if (DirectorySearch != null)
+                if (DirectorySearchTool != null)
                 {
-                    if (mMyEMSLSearchDisabled && !DirectorySearch.MyEMSLSearchDisabled)
-                        DirectorySearch.MyEMSLSearchDisabled = true;
+                    if (mMyEMSLSearchDisabled && !DirectorySearchTool.MyEMSLSearchDisabled)
+                        DirectorySearchTool.MyEMSLSearchDisabled = true;
                 }
 
-                if (FileSearch != null)
+                if (FileSearchTool != null)
                 {
-                    if (mMyEMSLSearchDisabled && !FileSearch.MyEMSLSearchDisabled)
-                        FileSearch.MyEMSLSearchDisabled = true;
+                    if (mMyEMSLSearchDisabled && !FileSearchTool.MyEMSLSearchDisabled)
+                        FileSearchTool.MyEMSLSearchDisabled = true;
                 }
             }
         }
@@ -715,7 +715,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// MyEMSL utilities
         /// </summary>
-        public MyEMSLUtilities MyEMSLUtilities => mMyEMSLUtilities;
+        public MyEMSLUtilities MyEMSLUtils => mMyEMSLUtilities;
 
         /// <summary>
         /// Explanation of what happened to last operation this class performed
@@ -835,21 +835,21 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var myEmslAvailable = mMgrParams.GetParam("MyEmslAvailable", true);
 
-            DirectorySearch = new DirectorySearch(
+            DirectorySearchTool = new DirectorySearch(
                 mFileCopyUtilities, mJobParams, mMyEMSLUtilities,
                 mDatasetName, mDebugLevel, mAuroraAvailable);
 
-            RegisterEvents(DirectorySearch);
+            RegisterEvents(DirectorySearchTool);
 
-            DirectorySearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
+            DirectorySearchTool.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
 
-            FileSearch = new FileSearch(
-                mFileCopyUtilities, DirectorySearch, mMyEMSLUtilities,
+            FileSearchTool = new FileSearch(
+                mFileCopyUtilities, DirectorySearchTool, mMyEMSLUtilities,
                 mMgrParams, mJobParams, mDatasetName, mDebugLevel, mWorkDir, mAuroraAvailable);
 
-            RegisterEvents(FileSearch);
+            RegisterEvents(FileSearchTool);
 
-            FileSearch.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
+            FileSearchTool.MyEMSLSearchDisabled = mMyEMSLSearchDisabled || !myEmslAvailable;
         }
 
         /// <summary>
@@ -1059,7 +1059,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!mMyEMSLSearchDisabled && myEmslAvailable)
             {
-                if (!MyEMSLUtilities.CertificateFileExists(out var errorMessage))
+                if (!MyEMSLUtils.CertificateFileExists(out var errorMessage))
                 {
                     LogError(errorMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1702,7 +1702,7 @@ namespace AnalysisManagerBase.AnalysisTool
             bool retrievingInstrumentDataDir, out bool validDirectoryFound,
             bool assumeUnpurged, out string directoryNotFoundMessage)
         {
-            var directoryPath = DirectorySearch.FindValidDirectory(
+            var directoryPath = DirectorySearchTool.FindValidDirectory(
                 datasetName, fileNameToFind, directoryNameToFind, maxAttempts, logDirectoryNotFound,
                 retrievingInstrumentDataDir, assumeUnpurged, out validDirectoryFound, out directoryNotFoundMessage);
 
@@ -1772,7 +1772,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!File.Exists(inputFilePath))
             {
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     var extraMsg = mMessage;
                     mMessage = "Error retrieving spectra file";
@@ -2388,7 +2388,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             const bool unzipFile = true;
 
-            var success = FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
+            var success = FileSearchTool.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
 
             if (!success)
             {
@@ -2413,13 +2413,13 @@ namespace AnalysisManagerBase.AnalysisTool
             // Note that capitalization matters for the extension; it must be .mzXML
             var fileToGet = mDatasetName + DOT_MZXML_EXTENSION;
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Look for a .mzXML file in the cache instead
 
                 const bool unzipFile = true;
 
-                var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
+                var success = FileSearchTool.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
 
                 if (!success)
                 {
@@ -2444,7 +2444,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             LogMessage("Getting PBF file");
 
-            var success = FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
+            var success = FileSearchTool.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
 
             if (!success)
             {
@@ -2536,7 +2536,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var fileToGet = mDatasetName + MGF_ZIPPED_EXTENSION;
 
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -3000,7 +3000,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         protected bool GUnzipFile(string gzipFilePath)
         {
-            return FileSearch.GUnzipFile(gzipFilePath);
+            return FileSearchTool.GUnzipFile(gzipFilePath);
         }
 
         /// <summary>
@@ -4338,7 +4338,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             }
                             else
                             {
-                                sourceDirectoryPath = FileSearch.FindDataFile(sourceFileName);
+                                sourceDirectoryPath = FileSearchTool.FindDataFile(sourceFileName);
 
                                 if (string.IsNullOrEmpty(sourceDirectoryPath))
                                 {
@@ -4359,7 +4359,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                                     if (!string.IsNullOrEmpty(alternateSourceFileName))
                                     {
-                                        sourceDirectoryPath = FileSearch.FindDataFile(alternateSourceFileName);
+                                        sourceDirectoryPath = FileSearchTool.FindDataFile(alternateSourceFileName);
                                         if (!string.IsNullOrEmpty(sourceDirectoryPath))
                                         {
                                             sourceFileName = alternateSourceFileName;
@@ -4374,7 +4374,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                 {
                                     // Look for a mzML.gz file instead
 
-                                    var retrieved = FileSearch.RetrieveCachedMSXMLFile(
+                                    var retrieved = FileSearchTool.RetrieveCachedMSXMLFile(
                                         DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile,
                                         out var errorMessage, out _, out _);
 
@@ -4938,7 +4938,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, otherwise false</returns>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {
-            return FileSearch.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName);
+            return FileSearchTool.UnzipFileStart(zipFilePath, outputDirectoryPath, callingFunctionName);
         }
 
         /// <summary>

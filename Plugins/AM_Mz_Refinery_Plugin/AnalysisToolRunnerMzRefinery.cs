@@ -1551,8 +1551,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (success)
             {
                 var msg = string.Format("Median mass error changed from {0:F2} ppm to {1:F2} ppm",
-                                        massErrorExtractor.MassErrorInfo.MassErrorPPM,
-                                        massErrorExtractor.MassErrorInfo.MassErrorPPMRefined);
+                                        massErrorExtractor.MassErrorStats.MassErrorPPM,
+                                        massErrorExtractor.MassErrorStats.MassErrorPPMRefined);
 
                 mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
 

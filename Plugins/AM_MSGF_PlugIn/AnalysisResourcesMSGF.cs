@@ -171,7 +171,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
                 var paramFile = mJobParams.GetParam("ParmFileName");
-                if (!FileSearch.FindAndRetrieveMiscFiles(paramFile, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFile, false))
                 {
                     // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -180,7 +180,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Also copy the _ProteinMods.txt file
                 var proteinModsFile = ReaderFactory.GetPHRPProteinModsFileName(resultType, DatasetName);
-                if (!FileSearch.FindAndRetrieveMiscFiles(proteinModsFile, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(proteinModsFile, false))
                 {
                     // Ignore this error; we don't really need this file
                 }
@@ -196,7 +196,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!string.IsNullOrEmpty(synopsisFile))
             {
-                var synopsisFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref synopsisFile, "");
+                var synopsisFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref synopsisFile, "");
                 if (!synopsisFileFound)
                 {
                     // Errors were reported in method call, so just return
@@ -213,7 +213,7 @@ namespace AnalysisManagerMSGFPlugin
             var firstHitsFile = ReaderFactory.GetPHRPFirstHitsFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(firstHitsFile))
             {
-                var firstHitsFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref firstHitsFile, synFilePath);
+                var firstHitsFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref firstHitsFile, synFilePath);
                 if (!firstHitsFileFound)
                 {
                     // Errors were reported in method call, so just return
@@ -227,7 +227,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!string.IsNullOrEmpty(resultToSeqMapFile))
             {
-                resultToSeqMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref resultToSeqMapFile, synFilePath);
+                resultToSeqMapFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref resultToSeqMapFile, synFilePath);
                 if (!resultToSeqMapFileFound)
                 {
                     // Errors were reported in method call, so just return
@@ -244,7 +244,7 @@ namespace AnalysisManagerMSGFPlugin
             bool seqToProteinMapFileFound;
             if (!string.IsNullOrEmpty(seqToProteinMapFile))
             {
-                seqToProteinMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqToProteinMapFile, synFilePath);
+                seqToProteinMapFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref seqToProteinMapFile, synFilePath);
                 if (!seqToProteinMapFileFound)
                 {
                     // Errors were reported in method call, so just return
@@ -263,7 +263,7 @@ namespace AnalysisManagerMSGFPlugin
                 // We're passing a dummy syn file name to FileSearch.FindAndRetrievePHRPDataFile
                 // because there are a few jobs that have file _msgfplus_fht.txt (created by the November 2016 version of the DataExtractor tool)
                 // but also have file msgfdb_PepToProtMapMTS.txt (created by an older version of the MSGFPlus tool)
-                var pepToProteinMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref pepToProteinMapFile, "Dataset_msgfdb.txt");
+                var pepToProteinMapFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref pepToProteinMapFile, "Dataset_msgfdb.txt");
                 if (!pepToProteinMapFileFound)
                 {
                     if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
@@ -295,7 +295,7 @@ namespace AnalysisManagerMSGFPlugin
             // Note that MSGFResultsSummarizer will use this file to determine if a dynamic reporter ion search was performed (e.g. dynamic TMT)
 
             var modSummaryFile = ReaderFactory.GetPHRPModSummaryFileName(resultType, DatasetName);
-            var modSummaryFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
+            var modSummaryFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref modSummaryFile, synFilePath);
             if (!modSummaryFileFound)
             {
                 // _ModSummary.txt file not found
@@ -308,7 +308,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
 
-                    if (FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(modDefsFile, false))
                     {
                         // Rename the file to end in _ModSummary.txt
                         mPendingFileRenames.Add(modDefsFile, modSummaryFile);
@@ -374,7 +374,7 @@ namespace AnalysisManagerMSGFPlugin
             var seqInfoFile = ReaderFactory.GetPHRPSeqInfoFileName(resultType, DatasetName);
             if (!string.IsNullOrEmpty(seqInfoFile))
             {
-                var seqInfoFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath);
+                var seqInfoFileFound = FileSearchTool.FindAndRetrievePHRPDataFile(ref seqInfoFile, synFilePath);
                 if (!seqInfoFileFound)
                 {
                     LogWarning("SeqInfo file not found (" + seqInfoFile + "); modifications will be inferred using the ModSummary.txt file");
@@ -384,7 +384,7 @@ namespace AnalysisManagerMSGFPlugin
             if (mgfInstrumentData)
             {
                 var fileToFind = DatasetName + DOT_MGF_EXTENSION;
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, false))
                 {
                     mMessage = "Instrument data not found: " + fileToFind;
                     LogError("AnalysisResourcesMSGF.GetResources: " + mMessage);
@@ -396,7 +396,7 @@ namespace AnalysisManagerMSGFPlugin
             else if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // See if a .mzXML file already exists for this dataset
-                var mzXmlFileRetrieved = FileSearch.RetrieveMZXmlFile(false, out var mzXMLFilePath);
+                var mzXmlFileRetrieved = FileSearchTool.RetrieveMZXmlFile(false, out var mzXMLFilePath);
 
                 // Make sure we don't move the .mzXML file into the results folder
                 mJobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
@@ -426,7 +426,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // .mzXML file not found
                     // Retrieve the .Raw file so that we can make the .mzXML file prior to running MSGF
-                    if (FileSearch.RetrieveSpectra(rawDataTypeName))
+                    if (FileSearchTool.RetrieveSpectra(rawDataTypeName))
                     {
                         mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         // Raw file

@@ -40,13 +40,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection");
 
-            if (!FileSearch.RetrieveFile(peakDetectorParamFileName, paramFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(peakDetectorParamFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Retrieve the instrument data file
-            if (!FileSearch.RetrieveSpectra(rawDataType))
+            if (!FileSearchTool.RetrieveSpectra(rawDataType))
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {

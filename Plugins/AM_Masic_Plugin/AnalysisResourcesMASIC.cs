@@ -52,7 +52,7 @@ namespace AnalysisManagerMasicPlugin
                     break;
             }
 
-            if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
+            if (!FileSearchTool.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
             {
                 LogDebug("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -93,7 +93,7 @@ namespace AnalysisManagerMasicPlugin
             mJobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

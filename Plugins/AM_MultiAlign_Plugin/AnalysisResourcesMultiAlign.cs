@@ -55,7 +55,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
             var fileToGet = DatasetName + inputFileExtension;
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;

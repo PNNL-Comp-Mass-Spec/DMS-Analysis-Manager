@@ -50,7 +50,7 @@ namespace AnalysisManagerMODaPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve the FASTA file
@@ -61,7 +61,7 @@ namespace AnalysisManagerMODaPlugIn
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-            if (!FileSearch.RetrieveDtaFiles())
+            if (!FileSearchTool.RetrieveDtaFiles())
             {
                 var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
                 if (string.IsNullOrEmpty(sharedResultsFolders))

@@ -35,7 +35,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         private CloseOutType GetDatasetFile(string rawDataTypeName)
         {
-            if (mResourceClass.FileSearch.RetrieveSpectra(rawDataTypeName))
+            if (mResourceClass.FileSearchTool.RetrieveSpectra(rawDataTypeName))
             {
                 // Raw file
                 mResourceClass.AddResultFileExtensionToSkip(AnalysisResources.DOT_RAW_EXTENSION);
@@ -320,13 +320,13 @@ namespace AnalysisManagerBase.DataFileTools
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    if (mResourceClass.MyEMSLUtilities.FilesToDownload.Count == 0)
+                    if (mResourceClass.MyEMSLUtils.FilesToDownload.Count == 0)
                     {
                         break;
                     }
 
                     currentTask = "ProcessMyEMSLDownloadQueue";
-                    if (mResourceClass.MyEMSLUtilities.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                    if (mResourceClass.MyEMSLUtils.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         break;
                     }

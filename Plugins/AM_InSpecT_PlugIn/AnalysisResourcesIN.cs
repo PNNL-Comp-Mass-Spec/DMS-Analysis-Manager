@@ -92,7 +92,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 LogMessage("Processing parallelized Inspect segment " + parallelZipNum);
             }
 
-            var dtaResultDirectoryName = FileSearch.FindDataFile(dtaResultFileName);
+            var dtaResultDirectoryName = FileSearchTool.FindDataFile(dtaResultFileName);
 
             if (string.IsNullOrEmpty(dtaResultDirectoryName))
             {

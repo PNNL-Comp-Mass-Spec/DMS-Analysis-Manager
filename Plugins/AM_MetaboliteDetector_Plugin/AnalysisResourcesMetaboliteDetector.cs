@@ -42,7 +42,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 var paramFileName = mJobParams.GetParam("ParmFileName");
                 var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-                var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
+                var success = FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

@@ -31,7 +31,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var paramFileName = mJobParams.GetParam("ParmFileName");
             var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -124,7 +124,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug("Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
 
-                return FileSearch.RetrieveScanAndSICStatsFiles(
+                return FileSearchTool.RetrieveScanAndSICStatsFiles(
                     retrieveSICStatsFile: true,
                     createStoragePathInfoOnly: createStoragePathInfoFile,
                     retrieveScanStatsFile: true,
@@ -138,7 +138,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Retrieving the MASIC files from " + masicResultsDirectoryName);
             }
 
-            var serverPath = DirectorySearch.FindValidDirectory(DatasetName, "", masicResultsDirectoryName, 2);
+            var serverPath = DirectorySearchTool.FindValidDirectory(DatasetName, "", masicResultsDirectoryName, 2);
 
             if (string.IsNullOrEmpty(serverPath))
             {
@@ -150,7 +150,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 {
                     var bestMasicResultsDirectoryPath = Path.Combine(MYEMSL_PATH_FLAG, masicResultsDirectoryName);
 
-                    return FileSearch.RetrieveScanAndSICStatsFiles(
+                    return FileSearchTool.RetrieveScanAndSICStatsFiles(
                         bestMasicResultsDirectoryPath,
                         retrieveSICStatsFile: true,
                         createStoragePathInfoOnly: createStoragePathInfoFile,
@@ -178,7 +178,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     }
                     else
                     {
-                        return FileSearch.RetrieveScanAndSICStatsFiles(
+                        return FileSearchTool.RetrieveScanAndSICStatsFiles(
                             masicResultsDirectory.FullName,
                             retrieveSICStatsFile: true,
                             createStoragePathInfoOnly: createStoragePathInfoFile,
@@ -196,7 +196,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool RetrievePHRPFiles()
         {
             var fileNamesToGet = new List<string>();
-            PeptideHitResultTypes PeptideHitResultTypes;
+            PeptideHitResultTypes resultType;
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
@@ -214,15 +214,15 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (inputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PeptideHitResultTypes.XTandem;
+                resultType = PeptideHitResultTypes.XTandem;
             }
             else if (inputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PeptideHitResultTypes.Sequest;
+                resultType = PeptideHitResultTypes.Sequest;
             }
             else if (inputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
-                PeptideHitResultTypes = PeptideHitResultTypes.MSGFPlus;
+                resultType = PeptideHitResultTypes.MSGFPlus;
             }
             else
             {
@@ -237,10 +237,10 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Retrieving the PHRP files");
             }
 
-            var msgfplusSynopsisFile = ReaderFactory.GetPHRPSynopsisFileName(PeptideHitResultTypes, DatasetName);
+            var msgfplusSynopsisFile = ReaderFactory.GetPHRPSynopsisFileName(resultType, DatasetName);
             var synFileToFind = msgfplusSynopsisFile;
 
-            var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
+            var success = FileSearchTool.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
             if (!success)
             {
                 // Errors were reported in method call, so just return
@@ -254,10 +254,10 @@ namespace AnalysisManagerSMAQCPlugIn
                 msgfplusSynopsisFile = synFileToFind;
             }
 
-            fileNamesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, DatasetName));
-            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, DatasetName));
-            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, DatasetName));
-            fileNamesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(resultType, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(resultType, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(resultType, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(resultType, DatasetName));
             fileNamesToGet.Add(ReaderFactory.GetMSGFFileName(msgfplusSynopsisFile));
 
             foreach (var phrpFile in fileNamesToGet)
@@ -272,7 +272,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     fileToGet = phrpFile;
                 }
 
-                success = FileSearch.FindAndRetrieveMiscFiles(fileToGet, unzip: false);
+                success = FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, unzip: false);
 
                 if (!success)
                 {

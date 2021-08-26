@@ -49,7 +49,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+            if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
             {
                 LogDebug("DtaGenResources.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;

@@ -456,7 +456,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Retrieve the _peaks.txt file
 
                 var fileToFind = DatasetName + "_peaks.txt";
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false, false, out var sourceFolderPath))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, false, false, out var sourceFolderPath))
                 {
                     mMessage = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted";
                     return false;
@@ -474,7 +474,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Retrieve the instrument data file
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {

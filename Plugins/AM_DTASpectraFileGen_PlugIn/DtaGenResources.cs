@@ -64,7 +64,7 @@ namespace DTASpectraFileGen
             if (mgfInstrumentData)
             {
                 var fileToFind = DatasetName + DOT_MGF_EXTENSION;
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, false))
                 {
                     LogError("Instrument data not found: " + fileToFind);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -75,7 +75,7 @@ namespace DTASpectraFileGen
             else
             {
                 // Get input data file
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -103,7 +103,7 @@ namespace DTASpectraFileGen
                     var directoryNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + CDTA_ZIPPED_EXTENSION;
 
-                    var existingDtDirectory = DirectorySearch.FindValidDirectory(DatasetName,
+                    var existingDtDirectory = DirectorySearchTool.FindValidDirectory(DatasetName,
                         fileToFind,
                         directoryNameToFind,
                         maxAttempts: 1,
@@ -189,7 +189,7 @@ namespace DTASpectraFileGen
                     return false;
                 }
 
-                if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
                     return false;
                 }

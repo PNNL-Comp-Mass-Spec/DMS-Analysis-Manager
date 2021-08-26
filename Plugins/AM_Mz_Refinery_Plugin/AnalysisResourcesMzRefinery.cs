@@ -112,7 +112,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         "will assume: " + mzRefineryParmFileStoragePath);
                 }
 
-                if (!FileSearch.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -140,7 +140,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL, RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
 
-            if (FileSearch.RetrieveDtaFiles())
+            if (FileSearchTool.RetrieveDtaFiles())
             {
                 mJobParams.AddResultFileToSkip(DatasetName + CDTA_ZIPPED_EXTENSION);
                 mJobParams.AddResultFileToSkip(DatasetName + CDTA_EXTENSION);

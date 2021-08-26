@@ -48,7 +48,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // Retrieve Decon2LS _scans.csv file for this dataset
             // The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
             var fileToGet = DatasetName + SCANS_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -56,7 +56,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve Decon2LS _isos.csv files for this dataset
             fileToGet = DatasetName + ISOS_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -97,7 +97,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 }
 
                 // IMS data; need to get the .UIMF file
-                if (!FileSearch.RetrieveSpectra(rawDataType))
+                if (!FileSearchTool.RetrieveSpectra(rawDataType))
                 {
                     LogDebug("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;

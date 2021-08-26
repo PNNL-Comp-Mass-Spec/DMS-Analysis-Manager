@@ -74,7 +74,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 currentTask = "RetrieveParamFile " + paramFileName;
 
                 // Retrieve param file
-                if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
                 var success = GetExistingToolParametersFile(workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
@@ -570,7 +570,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         {
             try
             {
-                var success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: true);
+                var success = FileSearchTool.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: true);
 
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {

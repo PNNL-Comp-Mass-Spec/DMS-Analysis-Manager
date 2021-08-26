@@ -89,7 +89,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
             }
 
-            if (!FileSearch.RetrieveFile(paramFileName, proMexParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(paramFileName, proMexParmFileStoragePath))
             {
                 if (proMexScript)
                 {

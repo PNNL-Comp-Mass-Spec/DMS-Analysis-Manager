@@ -41,7 +41,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             const bool unzipFile = true;
 
-            var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
+            var success = FileSearchTool.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
 
             if (!success)
             {

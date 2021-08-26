@@ -70,7 +70,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     LogDebug("AnalysisResourcesMASIC.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;

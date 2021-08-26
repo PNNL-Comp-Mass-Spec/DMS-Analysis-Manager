@@ -60,7 +60,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         "will assume: " + exportScriptStoragePath);
                 }
 
-                if (!FileSearch.RetrieveFile(exportScriptName, exportScriptStoragePath))
+                if (!FileSearchTool.RetrieveFile(exportScriptName, exportScriptStoragePath))
                 {
                     // Errors should have already been logged
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -81,7 +81,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                             currentTask = "Retrieve spectra: " + rawDataType;
 
-                            if (!FileSearch.RetrieveSpectra(rawDataType))
+                            if (!FileSearchTool.RetrieveSpectra(rawDataType))
                             {
                                 LogError("AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;

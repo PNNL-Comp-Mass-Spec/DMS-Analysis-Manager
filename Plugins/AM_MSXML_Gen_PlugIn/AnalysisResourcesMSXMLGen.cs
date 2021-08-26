@@ -117,7 +117,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             {
                                 // Retrieve the .D directory
                                 currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
-                                var dotDSuccess = FileSearch.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
+                                var dotDSuccess = FileSearchTool.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
                                 if (!dotDSuccess)
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
@@ -191,7 +191,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
 
                     // Retrieve param file
-                    if (!FileSearch.RetrieveFile(mzMLRefParamFile, mJobParams.GetParam("ParmFileStoragePath")))
+                    if (!FileSearchTool.RetrieveFile(mzMLRefParamFile, mJobParams.GetParam("ParmFileStoragePath")))
                     {
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
@@ -233,7 +233,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         private CloseOutType GetDatasetFile(string rawDataTypeName)
         {
-            if (FileSearch.RetrieveSpectra(rawDataTypeName))
+            if (FileSearchTool.RetrieveSpectra(rawDataTypeName))
             {
                 // Raw file
                 mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);

@@ -68,7 +68,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MSGF+, etc.)
                 var paramFileName = mJobParams.GetParam("ParmFileName");
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(paramFileName, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFileName, false))
                 {
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
@@ -185,7 +185,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             if (directoryToCheck.Exists)
             {
-                synopsisFileName = FileSearch.FindMaxQuantSynopsisFile(directoryToCheck.FullName, out fileCountFound);
+                synopsisFileName = FileSearchTool.FindMaxQuantSynopsisFile(directoryToCheck.FullName, out fileCountFound);
                 return;
             }
 
@@ -277,7 +277,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var toolVersionUtility = new ToolVersionUtilities(mMgrParams, mJobParams, mJob, DatasetName, StepToolName, mDebugLevel, mWorkDir);
             RegisterEvents(toolVersionUtility);
 
-            var toolVersionFileFound = toolVersionUtility.RetrieveToolVersionInfoFile(FileSearch, resultType);
+            var toolVersionFileFound = toolVersionUtility.RetrieveToolVersionInfoFile(FileSearchTool, resultType);
 
             if (!toolVersionFileFound)
             {
@@ -295,7 +295,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 var fileRequired = kvEntry.Value;
 
                 // Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
-                var success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
+                var success = FileSearchTool.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
 
                 if (!success)
                 {
@@ -336,7 +336,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 foreach (var fileName in XTandemSynFileReader.GetAdditionalSearchEngineParamFileNames(Path.Combine(mWorkDir, searchEngineParamFileName)))
                 {
-                    if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false))
+                    if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false))
                     {
                         // File not found
                         returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -523,7 +523,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="datasetName"></param>
         private bool RetrieveMASICFiles(string datasetName)
         {
-            if (!FileSearch.RetrieveScanStatsFiles(false))
+            if (!FileSearchTool.RetrieveScanStatsFiles(false))
             {
                 // _ScanStats.txt file not found
                 // If processing a .Raw file or .UIMF file, we can create the file using the MSFileInfoScanner

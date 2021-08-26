@@ -52,7 +52,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Retrieve the Inspect Input Params file
-            if (!FileSearch.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferDirectoryName))
+            if (!FileSearchTool.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferDirectoryName))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -63,7 +63,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 // This is not a parallelized job
                 // Retrieve the zipped Inspect result file
-                if (!FileSearch.RetrieveFile(zippedResultName, transferDirectoryName))
+                if (!FileSearchTool.RetrieveFile(zippedResultName, transferDirectoryName))
                 {
                     if (mDebugLevel >= 3)
                     {
@@ -86,7 +86,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 // Retrieve the Inspect search log file
-                if (!FileSearch.RetrieveFile(searchLogResultName, transferDirectoryName))
+                if (!FileSearchTool.RetrieveFile(searchLogResultName, transferDirectoryName))
                 {
                     if (mDebugLevel >= 3)
                     {

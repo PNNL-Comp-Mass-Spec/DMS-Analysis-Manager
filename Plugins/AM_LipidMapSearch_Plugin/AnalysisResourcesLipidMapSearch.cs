@@ -36,12 +36,12 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             var paramFileName = mJobParams.GetParam("ParmFileName");
             var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            if (!FileSearch.RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc"))
+            if (!FileSearchTool.RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc"))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -237,7 +237,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     // Raw file still not found; try MyEMSL
 
-                    var datasetDirectoryPath = DirectorySearch.FindValidDirectory(datasetName, fileToFind, retrievingInstrumentDataDir: false);
+                    var datasetDirectoryPath = DirectorySearchTool.FindValidDirectory(datasetName, fileToFind, retrievingInstrumentDataDir: false);
                     if (datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download

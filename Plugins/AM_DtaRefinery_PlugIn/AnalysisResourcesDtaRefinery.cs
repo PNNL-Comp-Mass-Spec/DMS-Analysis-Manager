@@ -70,24 +70,24 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
-            if (!FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), dtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            if (!FileSearch.RetrieveDtaFiles())
+            if (!FileSearchTool.RetrieveDtaFiles())
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -167,7 +167,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             try
             {
                 var deconMSnLogFileName = DatasetName + "_DeconMSn_log.txt";
-                var sourceFolderPath = FileSearch.FindDataFile(deconMSnLogFileName);
+                var sourceFolderPath = FileSearchTool.FindDataFile(deconMSnLogFileName);
 
                 if (string.IsNullOrWhiteSpace(sourceFolderPath))
                 {
@@ -194,7 +194,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
 
                 var deconMSnProfileFileName = DatasetName + "_profile.txt";
-                sourceFolderPath = FileSearch.FindDataFile(deconMSnProfileFileName);
+                sourceFolderPath = FileSearchTool.FindDataFile(deconMSnProfileFileName);
 
                 if (string.IsNullOrWhiteSpace(sourceFolderPath))
                 {

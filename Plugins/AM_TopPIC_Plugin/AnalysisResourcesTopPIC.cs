@@ -57,7 +57,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Retrieve param file
             var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
 
-            if (!FileSearch.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve the FASTA file
@@ -69,7 +69,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Find the _ms2.msalign file
             var ms2MSAlignFile = DatasetName + MSALIGN_FILE_SUFFIX;
-            var success = FileSearch.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out var sourceDirPath);
+            var success = FileSearchTool.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out var sourceDirPath);
             if (!success)
             {
                 // Errors were reported in method call, so just return
@@ -108,7 +108,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 var fileIsRequired = !fileName.Equals(htmlFileName);
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileName, false, true, fileIsRequired))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, fileIsRequired))
                 {
                     if (fileIsRequired)
                     {

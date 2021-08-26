@@ -53,7 +53,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (!FileSearch.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
+                if (!FileSearchTool.RetrieveSpectra(rawDataTypeName, createStoragePathInfoOnly))
                 {
                     LogDebug("AnalysisResourcesThermoPeakDataExporter.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;

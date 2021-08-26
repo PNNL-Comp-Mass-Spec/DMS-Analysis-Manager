@@ -56,7 +56,7 @@ namespace AnalysisManagerFormularityPlugin
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-                if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -143,7 +143,7 @@ namespace AnalysisManagerFormularityPlugin
                         currentTask = "Retrieve the ThermoPeakDataExporter .tsv file";
                         var tsvFileName = DatasetName + ".tsv";
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(tsvFileName, false))
+                        if (!FileSearchTool.FindAndRetrieveMiscFiles(tsvFileName, false))
                         {
                             // Errors should have already been logged
                             return CloseOutType.CLOSEOUT_FAILED;
@@ -168,7 +168,7 @@ namespace AnalysisManagerFormularityPlugin
                             currentTask = "Retrieve the DeconTools _peaks.zip file";
                             var peaksFileName = DatasetName + "_peaks.zip";
 
-                            if (!FileSearch.FindAndRetrieveMiscFiles(peaksFileName, false))
+                            if (!FileSearchTool.FindAndRetrieveMiscFiles(peaksFileName, false))
                             {
                                 // Errors should have already been logged
                                 return CloseOutType.CLOSEOUT_FAILED;
@@ -187,7 +187,7 @@ namespace AnalysisManagerFormularityPlugin
                             currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
                             var scansFileName = DatasetName + "_scans.zip";
 
-                            if (!FileSearch.FindAndRetrieveMiscFiles(scansFileName, false))
+                            if (!FileSearchTool.FindAndRetrieveMiscFiles(scansFileName, false))
                             {
                                 // Errors should have already been logged
                                 return CloseOutType.CLOSEOUT_FAILED;

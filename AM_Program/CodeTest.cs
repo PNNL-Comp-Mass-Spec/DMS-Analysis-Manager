@@ -1450,7 +1450,7 @@ namespace AnalysisManagerProg
 
             resourceTester.Setup("CodeTest", mMgrSettings, jobParams, statusTools, myEMSLUtilities);
 
-            var success = resourceTester.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
+            var success = resourceTester.FileSearchTool.RetrieveBrukerMALDIImagingFolders(true);
 
             // success = resourceTester.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
 

@@ -27,7 +27,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Retrieve param file
-            if (!FileSearch.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -45,7 +45,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Get input data file
-            if (!FileSearch.RetrieveSpectra(mJobParams.GetParam("RawDataType")))
+            if (!FileSearchTool.RetrieveSpectra(mJobParams.GetParam("RawDataType")))
             {
                 LogDebug("AnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;

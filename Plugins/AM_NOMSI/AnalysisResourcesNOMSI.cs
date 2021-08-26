@@ -42,7 +42,7 @@ namespace AnalysisManagerNOMSIPlugin
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-                if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -64,7 +64,7 @@ namespace AnalysisManagerNOMSIPlugin
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-                if (!FileSearch.RetrieveFile(targetsFileName, paramFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(targetsFileName, paramFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -73,7 +73,7 @@ namespace AnalysisManagerNOMSIPlugin
                 currentTask = "Retrieve the Bruker_Data_Analysis _scans.zip file";
                 var fileToGet = DatasetName + "_scans.zip";
 
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
                 {
                     // Errors should have already been logged
                     return CloseOutType.CLOSEOUT_FAILED;
