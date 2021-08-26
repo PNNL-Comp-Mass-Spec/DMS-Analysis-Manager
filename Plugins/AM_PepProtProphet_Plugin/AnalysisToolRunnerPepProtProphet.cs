@@ -2190,7 +2190,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
                 var arguments = new StringBuilder();
-                arguments.AppendFormat("java -Xmx{0}G -cp \"{1}\" TMTIntegrator", TMT_INTEGRATOR_MEMORY_SIZE_GB, mTmtIntegratorProgLoc);
+                arguments.AppendFormat("-Xmx{0}G -cp \"{1}\" TMTIntegrator", TMT_INTEGRATOR_MEMORY_SIZE_GB, mTmtIntegratorProgLoc);
 
                 // Create the TMT-Integrator config file
                 var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkDir, "tmt-integrator-conf.yml"));

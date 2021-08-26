@@ -276,7 +276,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format(
-                        "java -Xmx4G -cp \"{0};{1}\" com.dmtavt.fragpipe.util.CheckCentroid {2} {3}",
+                        "-Xmx4G -cp \"{0};{1}\" com.dmtavt.fragpipe.util.CheckCentroid {2} {3}",
                         jarFileFragPipe.FullName,
                         jarFileBatmassIO.FullName,
                         mzMLFile.FullName,
