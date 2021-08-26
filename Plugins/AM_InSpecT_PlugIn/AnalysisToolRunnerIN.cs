@@ -314,12 +314,12 @@ namespace AnalysisManagerInSpecTPlugIn
                     return true;
                 }
 
-                var fi = new FileInfo(errorFilename);
-                if (fi.Length == 0)
+                var errorFile = new FileInfo(errorFilename);
+                if (errorFile.Length == 0)
                 {
                     // Error file is 0 bytes, which means no errors occurred
                     // Delete the file
-                    File.Delete(errorFilename);
+                    errorFile.Delete();
                     return true;
                 }
 

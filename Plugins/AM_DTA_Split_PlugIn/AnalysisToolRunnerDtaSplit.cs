@@ -143,7 +143,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     }
                 }
 
-                var fi = new FileInfo(sourceFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
 
                 if (segmentCountToCreate == 1)
                 {
@@ -154,7 +154,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     {
                         var destFileName = GetNewSplitDTAFileName(1);
 
-                        fi.MoveTo(destFileName);
+                        sourceFile.MoveTo(destFileName);
                     }
                     catch (Exception ex)
                     {
@@ -165,7 +165,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                var lineEndCharCount = LineEndCharacterCount(fi);
+                var lineEndCharCount = LineEndCharacterCount(sourceFile);
 
                 var targetSpectraPerSegment = (int)Math.Ceiling(spectraCountExpected / (float)segmentCountToCreate);
                 if (targetSpectraPerSegment < 1)

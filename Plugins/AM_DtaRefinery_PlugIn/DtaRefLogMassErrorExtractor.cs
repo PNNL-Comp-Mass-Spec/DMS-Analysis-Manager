@@ -50,21 +50,21 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private string ConstructXML(MassErrorInfo massErrorInfo)
         {
-            var xml = new StringBuilder();
+            var builder = new StringBuilder();
 
             try
             {
-                xml.Append("<DTARef_MassErrorStats>");
+                builder.Append("<DTARef_MassErrorStats>");
 
-                xml.AppendFormat("<Dataset>{0}</Dataset>", massErrorInfo.DatasetName);
-                xml.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", massErrorInfo.PSMJob);
+                builder.AppendFormat("<Dataset>{0}</Dataset>", massErrorInfo.DatasetName);
+                builder.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", massErrorInfo.PSMJob);
 
-                xml.Append("<Measurements>");
-                xml.AppendFormat("<Measurement Name=\"MassErrorPPM\">{0}</Measurement>", massErrorInfo.MassErrorPPM);
-                xml.AppendFormat("<Measurement Name=\"MassErrorPPM_Refined\">{0}</Measurement>", massErrorInfo.MassErrorPPMRefined);
-                xml.Append("</Measurements>");
+                builder.Append("<Measurements>");
+                builder.AppendFormat("<Measurement Name=\"MassErrorPPM\">{0}</Measurement>", massErrorInfo.MassErrorPPM);
+                builder.AppendFormat("<Measurement Name=\"MassErrorPPM_Refined\">{0}</Measurement>", massErrorInfo.MassErrorPPMRefined);
+                builder.Append("</Measurements>");
 
-                xml.Append("</DTARef_MassErrorStats>");
+                builder.Append("</DTARef_MassErrorStats>");
             }
             catch (Exception ex)
             {
@@ -73,7 +73,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return string.Empty;
             }
 
-            return xml.ToString();
+            return builder.ToString();
         }
 
         /// <summary>
