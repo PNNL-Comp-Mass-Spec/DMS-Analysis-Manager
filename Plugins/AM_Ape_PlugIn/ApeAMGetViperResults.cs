@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using AnalysisManagerBase.JobConfig;
 using PRISMDatabaseUtils;
 
@@ -99,21 +100,21 @@ namespace AnalysisManager_Ape_PlugIn
                 return string.Empty;
             }
 
-            var sqlText =
-                "SELECT DISTINCT R.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs J " +
-                "INNER JOIN V_MTS_PM_Results_List_Report R on R.Job = J.Job " +
-                "WHERE J.Data_Package_ID = " + dataPackageID + " AND R.Task_Database = '" + apeMTSDatabaseName + "'";
+            var sqlText = new StringBuilder();
+            sqlText.Append("SELECT DISTINCT R.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs J ");
+            sqlText.Append("INNER JOIN V_MTS_PM_Results_List_Report R on R.Job = J.Job ");
+            sqlText.AppendFormat("WHERE J.Data_Package_ID = {0} AND R.Task_Database = '{1}'", dataPackageID, apeMTSDatabaseName);
 
             // Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
-                sqlText = sqlText + " AND R.MD_State = " + GetJobParam("ApeMDState");
+                sqlText.AppendFormat(" AND R.MD_State = {0}", GetJobParam("ApeMDState"));
             }
 
             // Add ini filename if defined
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDIniFilename")))
             {
-                sqlText = sqlText + " AND R.Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
+                sqlText.AppendFormat(" AND R.Ini_File_Name = '{0}'", GetJobParam("ApeMDIniFilename"));
             }
 
             var mdidList = string.Empty;
@@ -125,7 +126,7 @@ namespace AnalysisManager_Ape_PlugIn
             RegisterEvents(dbTools);
 
             // Get the matching MD_IDs for this data package
-            var success = dbTools.GetQueryResults(sqlText, out var results);
+            var success = dbTools.GetQueryResults(sqlText.ToString(), out var results);
             if (success)
             {
                 foreach (var result in results.SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))
