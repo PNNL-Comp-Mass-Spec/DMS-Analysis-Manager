@@ -254,8 +254,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             }
             catch (Exception ex)
             {
-                if (sourceFilePath == null)
-                    sourceFilePath = "??";
+                sourceFilePath ??= "??";
                 LogError("Error in SplitCattedDtaFileIntoSegments reading file: " + sourceFilePath + "; " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -302,8 +301,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             }
             catch (Exception ex)
             {
-                if (sourceFilePath == null)
-                    sourceFilePath = "??";
+                sourceFilePath ??= "??";
                 LogError("Error counting the number of spectra in '" + sourceFilePath + "'; " + ex.Message, ex);
                 spectraCount = 0;
             }
@@ -336,8 +334,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             }
             catch (Exception ex)
             {
-                if (fileName == null)
-                    fileName = "??";
+                fileName ??= "??";
                 LogError("Error in CreateNewSplitDTAFile creating file: " + fileName + "; " + ex.Message, ex);
             }
 
