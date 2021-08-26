@@ -444,14 +444,14 @@ namespace AnalysisManagerMSFraggerPlugIn
             const int MAIN_SEARCH_START = 50;
             const int MAIN_SEARCH_DONE = (int)ProgressPercentValues.MSFraggerComplete;
 
-            var processingSteps = new SortedList<Regex, int>
+            var processingSteps = new SortedList<int, Regex>
             {
-                { GetRegEx("^JVM started"), (int)ProgressPercentValues.StartingMSFragger},
-                { GetRegEx(@"^\*+FIRST SEARCH\*+"), FIRST_SEARCH_START},
-                { GetRegEx(@"^\*+FIRST SEARCH DONE"), FIRST_SEARCH_DONE},
-                { GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+"), FIRST_SEARCH_DONE + 1},
-                { GetRegEx(@"^\*+MAIN SEARCH\*+"), MAIN_SEARCH_START},
-                { GetRegEx(@"^\*+MAIN SEARCH DONE"), MAIN_SEARCH_DONE}
+                { (int)ProgressPercentValues.StartingMSFragger, GetRegEx("^JVM started") },
+                { FIRST_SEARCH_START                          , GetRegEx(@"^\*+FIRST SEARCH\*+") },
+                { FIRST_SEARCH_DONE                           , GetRegEx(@"^\*+FIRST SEARCH DONE") },
+                { FIRST_SEARCH_DONE + 1                       , GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+") },
+                { MAIN_SEARCH_START                           , GetRegEx(@"^\*+MAIN SEARCH\*+") },
+                { MAIN_SEARCH_DONE                            , GetRegEx(@"^\*+MAIN SEARCH DONE") }
             };
 
             var slabProgressRanges = new Dictionary<int, int>
@@ -463,7 +463,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Use a linked list to keep track of the progress values
             // This makes lookup of the next progress value easier
             var progressValues = new LinkedList<int>();
-            foreach (var item in (from progressValue in processingSteps.Values orderby progressValue select progressValue))
+            foreach (var item in (from progressValue in processingSteps.Keys orderby progressValue select progressValue))
             {
                 progressValues.AddLast(item);
             }
@@ -541,10 +541,10 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     foreach (var processingStep in processingSteps)
                     {
-                        if (!processingStep.Key.IsMatch(dataLine))
+                        if (!processingStep.Value.IsMatch(dataLine))
                             continue;
 
-                        currentProgress = processingStep.Value;
+                        currentProgress = processingStep.Key;
                     }
 
                     // Check whether the line starts with the text error
