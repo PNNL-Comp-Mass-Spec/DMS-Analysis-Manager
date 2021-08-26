@@ -584,7 +584,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var processSlab = slabProgressRanges.Any(item => currentProgress >= item.Key && currentProgress < item.Value);
 
-                if (processSlab)
+                if (processSlab && totalSlices > 0)
                 {
                     float currentProgressOnSlice;
                     float nextProgressOnSlice;
@@ -620,7 +620,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     effectiveProgressOverall = currentProgress;
                 }
 
-                mProgress = effectiveProgressOverall;
+                if (!float.IsNaN(effectiveProgressOverall))
+                    mProgress = effectiveProgressOverall;
             }
             catch (Exception ex)
             {
