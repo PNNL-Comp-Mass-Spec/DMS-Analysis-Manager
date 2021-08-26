@@ -349,7 +349,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 foreach (var analysisJob in dataPackagePeptideHitJobs)
                 {
-                    var dictionaryKey = string.Format("{0}_{1}_{2}", 
+                    var dictionaryKey = string.Format("{0}_{1}_{2}",
                         analysisJob.LegacyFastaFileName, analysisJob.ProteinCollectionList, analysisJob.ProteinOptions);
 
                     if (orgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var orgDbNameGenerated))
