@@ -22,17 +22,11 @@ namespace AnalysisManagerNOMSIPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerNOMSI : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         private const int PROGRESS_PCT_STARTING = 5;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string NOMSI_CONSOLE_OUTPUT_BASE = "NOMSI_ConsoleOutput_scan";
         private const string COMPRESSED_NOMSI_RESULTS_BASE = "NOMSI_Results_scan";
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mCurrentConsoleOutputFile;
         private string mConsoleOutputErrorMsg;
@@ -41,10 +35,6 @@ namespace AnalysisManagerNOMSIPlugin
         private DateTime mLastConsoleOutputParse;
 
         private int mTotalSpectra;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Processes data using NOMSI
@@ -646,10 +636,6 @@ namespace AnalysisManagerNOMSIPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_LoopWaiting()
         {
             // Synchronize the stored Debug level with the value stored in the database
@@ -668,7 +654,5 @@ namespace AnalysisManagerNOMSIPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

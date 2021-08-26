@@ -32,16 +32,10 @@ namespace AnalysisManagerGlyQIQPlugin
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         private const int PROGRESS_PCT_STARTING = 1;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
-
-        #endregion
-
-        #region "Structures"
 
         private struct PSMStats
         {
@@ -57,10 +51,6 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        #endregion
-
-        #region "Module Variables"
-
         private int mCoreCount;
 
         private int mSpectraSearched;
@@ -74,10 +64,6 @@ namespace AnalysisManagerGlyQIQPlugin
         private XRawFileIO mThermoFileReader;
 
         private IDBTools mStoredProcedureExecutor;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs GlyQ-IQ
@@ -840,10 +826,6 @@ namespace AnalysisManagerGlyQIQPlugin
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void ExecuteSP_DBErrorEvent(string errorMessage, Exception ex)
         {
             if (Message.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||
@@ -866,7 +848,5 @@ namespace AnalysisManagerGlyQIQPlugin
 
             LogProgress("GlyQIQ");
         }
-
-        #endregion
     }
 }

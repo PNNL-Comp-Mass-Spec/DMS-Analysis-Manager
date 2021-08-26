@@ -16,8 +16,6 @@ namespace TestApePlugIn
             mParms = parms;
         }
 
-        #region IJobParams Properties
-
         public Dictionary<string, int> DatasetInfoList => new Dictionary<string, int>();
 
         public SortedSet<string> ResultFilesToKeep => new SortedSet<string>();
@@ -29,10 +27,6 @@ namespace TestApePlugIn
         public SortedSet<string> ServerFilesToDelete => new SortedSet<string>();
 
         public bool TaskClosed { get; set; }
-
-        #endregion
-
-        #region IJobParams Members
 
         public bool AddAdditionalParameter(string ParamSection, string ParamName, string ParamValue)
         {
@@ -252,7 +246,6 @@ namespace TestApePlugIn
             throw new NotImplementedException();
         }
 
-
         public DBTask.RequestTaskResult RequestTask()
         {
             throw new NotImplementedException();
@@ -268,6 +261,5 @@ namespace TestApePlugIn
         public void SetParam(string Section, string KeyName, string Value) {
             SetParam(KeyName, Value);
         }
-        #endregion
     }
 }

@@ -18,8 +18,6 @@ namespace AnalysisManagerSMAQCPlugIn
     {
         // Ignore Spelling: mscorlib, ParmFile, utf
 
-        #region "Module Variables"
-
         private const string SMAQC_CONSOLE_OUTPUT = "SMAQC_ConsoleOutput.txt";
         private const int PROGRESS_PCT_SMAQC_STARTING = 1;
         private const int PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES = 5;
@@ -37,11 +35,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private string mConsoleOutputErrorMsg;
         private int mDatasetID;
 
-        #endregion
-
         private RunDosProgram mCmdRunner;
-
-        #region "Methods"
 
         /// <summary>
         /// Runs SMAQC tool
@@ -792,10 +786,6 @@ namespace AnalysisManagerSMAQCPlugIn
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -814,7 +804,5 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogProgress("SMAQC");
             }
         }
-
-        #endregion
     }
 }

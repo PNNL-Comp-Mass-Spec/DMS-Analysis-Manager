@@ -17,8 +17,6 @@ namespace AnalysisManagerFormularityPlugin
     {
         // Ignore Spelling: calibrant, cia, Formularity, href, html, nomsi, png, Pre
 
-        #region "Constants and Enums"
-
         private const int PROGRESS_PCT_STARTING_FORMULARITY = 5;
         private const int PROGRESS_PCT_FINISHED_FORMULARITY = 95;
         private const int PROGRESS_PCT_FINISHED_NOMSI = 97;
@@ -29,18 +27,10 @@ namespace AnalysisManagerFormularityPlugin
 
         private const string INDEX_HTML = "index.html";
 
-        #endregion
-
-        #region "Module Variables"
-
         private string mConsoleOutputFile;
         private string mConsoleOutputErrorMsg;
 
         private DateTime mLastConsoleOutputParse;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Processes data using Formularity
@@ -1043,10 +1033,6 @@ namespace AnalysisManagerFormularityPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_LoopWaiting()
         {
             // Synchronize the stored Debug level with the value stored in the database
@@ -1065,7 +1051,5 @@ namespace AnalysisManagerFormularityPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

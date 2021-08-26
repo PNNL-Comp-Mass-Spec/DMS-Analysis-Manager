@@ -10,8 +10,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     {
         // Ignore Spelling: ProteomeXchange
 
-        #region "Properties"
-
         /// <summary>
         /// ProteomeXchange file type
         /// </summary>
@@ -21,8 +19,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Mapping from this file to parent files
         /// </summary>
         public List<int> FileMappings { get; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

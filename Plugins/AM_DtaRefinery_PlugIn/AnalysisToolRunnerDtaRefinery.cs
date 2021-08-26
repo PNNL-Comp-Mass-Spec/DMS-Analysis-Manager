@@ -22,17 +22,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
     {
         // Ignore Spelling: Orbitrap
 
-        #region "Module Variables"
-
         private const int PROGRESS_PCT_DTA_REFINERY_RUNNING = 5;
 
         private bool mXTandemHasFinished;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs DTA_Refinery tool
@@ -507,7 +501,5 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogProgress("DtaRefinery");
             }
         }
-
-        #endregion
     }
 }

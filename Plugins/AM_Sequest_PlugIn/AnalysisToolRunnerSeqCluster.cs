@@ -28,17 +28,11 @@ namespace AnalysisManagerSequestPlugin
     {
         // Ignore Spelling: CmdRunner, dta, ParmFile, ps, yyyyMMdd_HHmm
 
-        #region "Constants"
-
         private const int TEMP_FILE_COPY_INTERVAL_SECONDS = 300;
         private const int OUT_FILE_APPEND_INTERVAL_SECONDS = 30;
         private const int OUT_FILE_APPEND_HOLDOFF_SECONDS = 30;
         private const int STALE_NODE_THRESHOLD_MINUTES = 5;
         private const int MAX_NODE_RESPAWN_ATTEMPTS = 6;
-
-        #endregion
-
-        #region "Structures"
 
         private struct SequestNodeProcessingStats
         {
@@ -57,10 +51,6 @@ namespace AnalysisManagerSequestPlugin
                 AvgSearchTime = 0;
             }
         }
-
-        #endregion
-
-        #region "Module Variables"
 
         private FileSystemWatcher mOutFileWatcher;
         private Timer mOutFileAppenderTimer;
@@ -116,10 +106,6 @@ namespace AnalysisManagerSequestPlugin
 
         private readonly Regex mActiveNodeRegEx = new(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+SEQUEST.+slave.*",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Modifies MakeOUTFiles to remove multiple processes used on non-clustered machines
@@ -1574,7 +1560,5 @@ namespace AnalysisManagerSequestPlugin
             LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                 "UtilityRunner task " + mUtilityRunnerTaskName + " has timed out; " + mUtilityRunner.MaxRuntimeSeconds + " seconds has elapsed");
         }
-
-        #endregion
     }
 }

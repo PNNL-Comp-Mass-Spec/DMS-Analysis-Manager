@@ -144,6 +144,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // ToDo: Confirm that it is safe to skip file Dataset_uncalibrated.mgf
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 var success = CopyResultsToTransferDirectory();

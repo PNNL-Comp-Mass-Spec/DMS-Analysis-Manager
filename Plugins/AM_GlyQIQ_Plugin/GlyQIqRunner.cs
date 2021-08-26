@@ -15,8 +15,6 @@ namespace AnalysisManagerGlyQIQPlugin
 
         public const string GLYQ_IQ_CONSOLE_OUTPUT_PREFIX = "GlyQ-IQ_ConsoleOutput_Core";
 
-        #region "Enums"
-
         public enum GlyQIqRunnerStatusCodes
         {
             NotStarted = 0,
@@ -25,17 +23,9 @@ namespace AnalysisManagerGlyQIQPlugin
             Failure = 3
         }
 
-        #endregion
-
-        #region "Events"
-
         public event CmdRunnerWaitingEventHandler CmdRunnerWaiting;
 
         public delegate void CmdRunnerWaitingEventHandler();
-
-        #endregion
-
-        #region "Properties"
 
         public string BatchFilePath { get; }
 
@@ -64,18 +54,12 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        #endregion
-
-        #region "Member Variables"
-
         /// <summary>
         /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
         private readonly Dictionary<string, bool> mTargets;
 
         private readonly string mWorkingDirectory;
-
-        #endregion
 
         public GlyQIqRunner(string workingDirectory, int processingCore, string batchFilePathToUse)
         {

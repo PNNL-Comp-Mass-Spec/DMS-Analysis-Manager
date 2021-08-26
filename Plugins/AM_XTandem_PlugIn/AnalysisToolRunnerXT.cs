@@ -23,8 +23,6 @@ namespace AnalysisManagerXTandemPlugIn
     {
         // Ignore Spelling: xt
 
-        #region "Module Variables"
-
         private const string XTANDEM_CONSOLE_OUTPUT = "XTandem_ConsoleOutput.txt";
 
         private const int PROGRESS_PCT_XTANDEM_STARTING = 1;
@@ -47,10 +45,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// This is initially set to -1; it will be updated to the value reported by "Valid models" in the X!Tandem Console Output file
         /// </summary>
         private int mXTandemResultsCount;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs XTandem tool
@@ -442,7 +436,5 @@ namespace AnalysisManagerXTandemPlugIn
                 LogProgress("XTandem");
             }
         }
-
-        #endregion
     }
 }

@@ -5,7 +5,6 @@ using AnalysisManagerBase;
 namespace TestMultiAlignPlugIn {
 
     class StatusFileStub : IStatusFile {
-        #region IStatusFile Members
 
         public string RemoteMgrName { get; set; }
 
@@ -215,7 +214,6 @@ namespace TestMultiAlignPlugIn {
             throw new NotImplementedException();
         }
 
-        #endregion
     }
 
 }

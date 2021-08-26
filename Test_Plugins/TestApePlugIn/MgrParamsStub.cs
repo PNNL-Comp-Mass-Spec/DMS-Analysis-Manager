@@ -19,15 +19,9 @@ namespace TestApePlugIn
             }
         }
 
-        #region IMgrParams Properties
-
         public string ErrMsg => string.Empty;
 
         public string ManagerName { get; }
-
-        #endregion
-
-        #region IMgrParams Members
 
         public void AckManagerUpdateRequired()
         {
@@ -80,7 +74,6 @@ namespace TestApePlugIn
             throw new NotImplementedException();
         }
 
-        #endregion
     }
 
 }

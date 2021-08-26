@@ -5,7 +5,6 @@ using AnalysisManagerBase;
 namespace TestAScorePlugIn {
 
     class StatusFileStub : IStatusFile {
-        #region IStatusFile Members
 
         public string RemoteMgrName { get; set; }
 
@@ -215,7 +214,6 @@ namespace TestAScorePlugIn {
             throw new NotImplementedException();
         }
 
-        #endregion
     }
 
 }

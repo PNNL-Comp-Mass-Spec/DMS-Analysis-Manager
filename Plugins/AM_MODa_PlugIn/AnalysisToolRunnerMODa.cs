@@ -25,8 +25,6 @@ namespace AnalysisManagerMODaPlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         private const string MODa_CONSOLE_OUTPUT = "MODa_ConsoleOutput.txt";
         private const string MODa_JAR_NAME = "moda.jar";
 
@@ -34,10 +32,6 @@ namespace AnalysisManagerMODaPlugIn
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string MODA_RESULTS_FILE_SUFFIX = "_moda.txt";
-
-        #endregion
-
-        #region "Module Variables"
 
         private bool mToolVersionWritten;
         private string mMODaVersion;
@@ -48,10 +42,6 @@ namespace AnalysisManagerMODaPlugIn
         private string mMODaResultsFilePath;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MODa tool
@@ -669,10 +659,6 @@ namespace AnalysisManagerMODaPlugIn
             return true;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -700,7 +686,5 @@ namespace AnalysisManagerMODaPlugIn
                 LogProgress("MODa");
             }
         }
-
-        #endregion
     }
 }

@@ -35,16 +35,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </remarks>
     public class AnalysisToolRunnerPRIDEConverter : AnalysisToolRunnerBase
     {
-        #region "Constants"
-
         private const string DOT_MGF = AnalysisResources.DOT_MGF_EXTENSION;
         private const string DOT_MZID_GZ = ".mzid.gz";
         private const string DOT_MZML = AnalysisResources.DOT_MZML_EXTENSION;
         private const string DOT_MZML_GZ = AnalysisResources.DOT_MZML_EXTENSION + AnalysisResources.DOT_GZ_EXTENSION;
-
-        #endregion
-
-        #region "Module Variables"
 
         private const string PRIDEConverter_CONSOLE_OUTPUT = "PRIDEConverter_ConsoleOutput.txt";
 
@@ -233,10 +227,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         private RunDosProgram mCmdRunner;
 
-        #endregion
-
-        #region "Structures and Enums"
-
         [Obsolete("No longer used")]
         private struct FilterThresholds
         {
@@ -315,10 +305,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             InputSpectraData = 7,
             AnalysisData = 8
         }
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs PRIDEConverter tool
@@ -5398,10 +5384,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             writer.WriteEndElement();
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -5439,7 +5421,5 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             AddToListIfNew(mPreviousDatasetFilesToDelete, Path.Combine(e.DownloadDirectoryPath, e.ArchivedFile.Filename));
         }
-
-        #endregion
     }
 }

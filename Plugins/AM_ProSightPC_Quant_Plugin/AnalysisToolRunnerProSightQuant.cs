@@ -16,8 +16,6 @@ namespace AnalysisManagerProSightQuantPlugIn
     {
         // Ignore Spelling: quant, quantitation
 
-        #region "Module Variables"
-
         private const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";
         private const string TARGETED_WORKFLOWS_CONSOLE_OUTPUT = "TargetedWorkflow_ConsoleOutput.txt";
         private const int PROGRESS_PCT_CREATING_PARAMETERS = 5;
@@ -36,10 +34,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         private Dictionary<string, int> mConsoleOutputProgressMap;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs TargetedWorkFlowConsole tool
@@ -473,10 +467,6 @@ namespace AnalysisManagerProSightQuantPlugIn
             writer.WriteEndElement();
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -495,7 +485,5 @@ namespace AnalysisManagerProSightQuantPlugIn
                 LogProgress("ProSightQuant");
             }
         }
-
-        #endregion
     }
 }

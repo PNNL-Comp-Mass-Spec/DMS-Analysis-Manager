@@ -27,8 +27,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         private const string MSAlign_CONSOLE_OUTPUT = "MSAlign_ConsoleOutput.txt";
         private const string MSAlign_Report_CONSOLE_OUTPUT = "MSAlign_Report_ConsoleOutput.txt";
         private const string MSAlign_JAR_NAME = "MsAlignPipeline.jar";
@@ -77,10 +75,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             v0pt9 = 0
         }
 
-        #endregion
-
-        #region "Structures"
-
         private struct InputPropertyValues
         {
             public string FastaFileName;
@@ -93,10 +87,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
         }
 
-        #endregion
-
-        #region "Module Variables"
-
         private bool mToolVersionWritten;
         private string mMSAlignVersion;
 
@@ -105,10 +95,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         private string mMSAlignWorkFolderPath;
         private InputPropertyValues mInputPropertyValues;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSAlign tool
@@ -1166,10 +1152,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -1193,7 +1175,5 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogProgress("MSAlign Histone");
             }
         }
-
-        #endregion
     }
 }

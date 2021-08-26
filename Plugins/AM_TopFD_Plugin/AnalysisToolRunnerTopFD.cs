@@ -23,8 +23,6 @@ namespace AnalysisManagerTopFDPlugIn
     {
         // Ignore Spelling: Aragorn, centroided, cv, html, Orbitrap, sn
 
-        #region "Constants"
-
         /// <summary>
         /// .feature file created by TopFD
         /// </summary>
@@ -41,10 +39,6 @@ namespace AnalysisManagerTopFDPlugIn
 
         private const int PROGRESS_PCT_STARTING = 1;
         private const int PROGRESS_PCT_COMPLETE = 99;
-
-        #endregion
-
-        #region "Module Variables"
 
         private bool mToolVersionWritten;
 
@@ -69,10 +63,6 @@ namespace AnalysisManagerTopFDPlugIn
         private bool mMzMLInstrumentIdAdjustmentRequired;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs TopFD tool
@@ -881,10 +871,6 @@ namespace AnalysisManagerTopFDPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -910,7 +896,5 @@ namespace AnalysisManagerTopFDPlugIn
 
             LogProgress("TopFD");
         }
-
-        #endregion
     }
 }

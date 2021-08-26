@@ -9,8 +9,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     {
         // Ignore Spelling: ProteomeXchange
 
-        #region "Structures and Enums"
-
         /// <summary>
         /// ProteomeXChange file type
         /// </summary>
@@ -48,10 +46,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             Peak = 5
         }
 
-        #endregion
-
-        #region "Auto-properties"
-
         /// <summary>
         /// File ID
         /// </summary>
@@ -67,10 +61,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         public string MD5Hash { get; set; }
 
-        #endregion
-
-        #region "Properties"
-
         /// <summary>
         /// Filename
         /// </summary>
@@ -80,8 +70,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Job Info
         /// </summary>
         public DataPackageJobInfo JobInfo { get; private set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

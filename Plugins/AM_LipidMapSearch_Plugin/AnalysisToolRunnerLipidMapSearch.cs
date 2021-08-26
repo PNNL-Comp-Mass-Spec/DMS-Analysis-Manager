@@ -18,8 +18,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     {
         // Ignore Spelling: hashcheck, ParmFile, pn, rn, rp, yyyy-MM-dd
 
-        #region "Module Variables"
-
         private const string LIPID_MAPS_DB_FILENAME_PREFIX = "LipidMapsDB_";
         private const int LIPID_MAPS_STALE_DB_AGE_DAYS = 5;
 
@@ -50,10 +48,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         private string mLipidMapsDBFilename = string.Empty;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs LipidMapSearch tool
@@ -865,10 +859,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -887,7 +877,5 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 LogProgress("LipidMapSearch");
             }
         }
-
-        #endregion
     }
 }

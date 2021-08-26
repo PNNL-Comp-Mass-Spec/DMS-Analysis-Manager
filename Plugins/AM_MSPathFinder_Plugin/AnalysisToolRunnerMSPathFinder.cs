@@ -25,8 +25,6 @@ namespace AnalysisManagerMSPathFinderPlugin
     {
         // Ignore Spelling: Acetyl, Dehydro, Frag, Ic, Parm, Samwise, tda
 
-        #region "Constants and Enums"
-
         private const string MSPATHFINDER_CONSOLE_OUTPUT = "MSPathFinder_ConsoleOutput.txt";
         private const int PROGRESS_PCT_STARTING = 1;
         private const int PROGRESS_PCT_GENERATING_SEQUENCE_TAGS = 2;
@@ -51,19 +49,11 @@ namespace AnalysisManagerMSPathFinderPlugin
             Complete = 8
         }
 
-        #endregion
-
-        #region "Module Variables"
-
         private string mConsoleOutputErrorMsg;
         private int mFilteredPromexFeatures;
         private int mUnfilteredPromexFeatures;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSPathFinder
@@ -852,10 +842,6 @@ namespace AnalysisManagerMSPathFinderPlugin
             return StoreDotNETToolVersionInfo(progLoc, additionalDLLs, true);
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -879,8 +865,5 @@ namespace AnalysisManagerMSPathFinderPlugin
                 LogProgress("MSPathFinder");
             }
         }
-
-        #endregion
-
     }
 }

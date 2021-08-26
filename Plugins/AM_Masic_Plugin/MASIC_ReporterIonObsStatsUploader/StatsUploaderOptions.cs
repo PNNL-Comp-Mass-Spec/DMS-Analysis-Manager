@@ -11,8 +11,6 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// </summary>
         public const string PROGRAM_DATE = "2020-07-31";
 
-        #region "Properties"
-
         /// <summary>
         /// Database connections string
         /// </summary>
@@ -42,8 +40,6 @@ namespace MASIC_ReporterIonObsStatsUploader
             ArgPosition = 1, HelpShowsDefault = false, IsInputFilePath = true,
             HelpText = "Reporter ion observation rate file path")]
         public string ReporterIonObsRateFilePath { get; set; }
-
-        #endregion
 
         /// <summary>
         /// Constructor

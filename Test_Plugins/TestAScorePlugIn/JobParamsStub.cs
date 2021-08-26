@@ -15,8 +15,6 @@ namespace TestAScorePlugIn
             mParms = parms;
         }
 
-        #region IJobParams Properties
-
         public Dictionary<string, int> DatasetInfoList => new Dictionary<string, int>();
 
         public SortedSet<string> ResultFilesToKeep => new SortedSet<String>();
@@ -28,10 +26,6 @@ namespace TestAScorePlugIn
         public SortedSet<string> ServerFilesToDelete => new SortedSet<String>();
 
         public bool TaskClosed { get; set; }
-
-        #endregion
-
-        #region IJobParams Members
 
         public bool AddAdditionalParameter(string ParamSection, string ParamName, string ParamValue)
         {
@@ -251,7 +245,6 @@ namespace TestAScorePlugIn
             throw new NotImplementedException();
         }
 
-
         public DBTask.RequestTaskResult RequestTask()
         {
             throw new NotImplementedException();
@@ -267,6 +260,5 @@ namespace TestAScorePlugIn
         public void SetParam(string Section, string KeyName, string Value) {
             SetParam(KeyName, Value);
         }
-        #endregion
     }
 }

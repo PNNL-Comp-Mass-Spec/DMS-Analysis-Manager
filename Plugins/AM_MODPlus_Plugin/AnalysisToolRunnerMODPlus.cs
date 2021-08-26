@@ -26,17 +26,11 @@ namespace AnalysisManagerMODPlusPlugin
     {
         // Ignore Spelling: Da, hmsn, mgf, mzml, mzxml, msms, outfile, xpath
 
-        #region "Constants and Enums"
-
         private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
 
         private const int PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
         private const int PROGRESS_PCT_MODPLUS_STARTING = 5;
         private const int PROGRESS_PCT_MODPLUS_COMPLETE = 95;
-
-        #endregion
-
-        #region "Module Variables"
 
         private bool mToolVersionWritten;
         private string mMODPlusVersion;
@@ -48,10 +42,6 @@ namespace AnalysisManagerMODPlusPlugin
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
         private Dictionary<int, MODPlusRunner> mMODPlusRunners;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MODPlus
@@ -1119,10 +1109,6 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void MSConvert_CmdRunner_LoopWaiting()
         {
             var processIDs = new List<int> { 0 };
@@ -1142,7 +1128,5 @@ namespace AnalysisManagerMODPlusPlugin
 
             LogProgress("MODPlus");
         }
-
-        #endregion
     }
 }

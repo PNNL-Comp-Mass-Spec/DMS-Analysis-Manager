@@ -21,13 +21,7 @@ namespace AnalysisManagerDataImportPlugIn
     {
         // Ignore Spelling: yyyy-MM-dd_HH-mm-ss
 
-        #region "Module Variables"
-
         private List<FileInfo> mSourceFiles;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs DataImport tool
@@ -292,7 +286,5 @@ namespace AnalysisManagerDataImportPlugIn
                 return false;
             }
         }
-
-        #endregion
     }
 }

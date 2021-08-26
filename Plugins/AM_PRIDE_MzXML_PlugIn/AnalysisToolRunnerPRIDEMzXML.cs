@@ -17,15 +17,9 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     /// </summary>
     public class AnalysisToolRunnerPRIDEMzXML : AnalysisToolRunnerBase
     {
-        #region "Module Variables"
-
         private const int PROGRESS_PCT_PRIDE_MZXML_RUNNING = 5;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs MSDataFileTrimmer tool
@@ -136,7 +130,5 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             LogProgress("PrideMzXML");
         }
-
-        #endregion
     }
 }

@@ -19,16 +19,10 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     /// </summary>
     public class AnalysisToolRunnerUIMFtoMassHunter : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         private const int PROGRESS_PCT_STARTING = 5;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string UIMF_CONVERTER_CONSOLE_OUTPUT = "UIMFtoMassHunter_ConsoleOutput.txt";
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mConsoleOutputFile;
         private string mConsoleOutputErrorMsg;
@@ -36,10 +30,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
         private string mUIMFConverterProgLoc;
 
         private DateTime mLastConsoleOutputParse;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Converts .UIMF files to Agilent .D folders
@@ -294,9 +284,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             return success;
         }
-        #endregion
-
-        #region "Event Handlers"
 
         private void CmdRunner_LoopWaiting()
         {
@@ -316,7 +303,5 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 }
             }
         }
-
-        #endregion
     }
 }

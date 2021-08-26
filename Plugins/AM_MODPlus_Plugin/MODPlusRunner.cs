@@ -15,8 +15,6 @@ namespace AnalysisManagerMODPlusPlugin
 
         public const string RESULTS_FILE_SUFFIX = "_modp.txt";
 
-        #region "Enums"
-
         public enum MODPlusRunnerStatusCodes
         {
             NotStarted = 0,
@@ -25,17 +23,9 @@ namespace AnalysisManagerMODPlusPlugin
             Failure = 3
         }
 
-        #endregion
-
-        #region "Events"
-
         public event CmdRunnerWaitingEventHandler CmdRunnerWaiting;
 
         public delegate void CmdRunnerWaitingEventHandler(List<int> processIDs, float coreUsageCurrent, int secondsBetweenUpdates);
-
-        #endregion
-
-        #region "Properties"
 
         public bool CommandLineArgsLogged { get; set; }
 
@@ -90,9 +80,6 @@ namespace AnalysisManagerMODPlusPlugin
 
         public int Thread { get; }
 
-        #endregion
-        #region "Member Variables"
-
         private int mJavaMemorySizeMB;
 
         private readonly string mDatasetName;
@@ -102,8 +89,6 @@ namespace AnalysisManagerMODPlusPlugin
         private readonly string mJavaProgLog;
 
         private readonly string mModPlusJarFilePath;
-
-        #endregion
 
         /// <summary>
         /// Constructor

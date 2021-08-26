@@ -19,16 +19,10 @@ namespace AnalysisManagerPBFGenerator
     /// </summary>
     public class AnalysisToolRunnerPBFGenerator : AnalysisToolRunnerBase
     {
-        #region "Constants and Enums"
-
         private const string PBF_GEN_CONSOLE_OUTPUT = "PBFGen_ConsoleOutput.txt";
 
         private const int PROGRESS_PCT_STARTING = 1;
         private const int PROGRESS_PCT_COMPLETE = 99;
-
-        #endregion
-
-        #region "Module Variables"
 
         private string mConsoleOutputErrorMsg;
         private long mInstrumentFileSizeBytes;
@@ -37,10 +31,6 @@ namespace AnalysisManagerPBFGenerator
         private string mPbfFormatVersion;
 
         private DirectoryInfo mMSXmlCacheFolder;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Generates a PBF file for the dataset
@@ -467,10 +457,6 @@ namespace AnalysisManagerPBFGenerator
             return success;
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -490,7 +476,5 @@ namespace AnalysisManagerPBFGenerator
                 LogProgress("PBFGenerator");
             }
         }
-
-        #endregion
     }
 }

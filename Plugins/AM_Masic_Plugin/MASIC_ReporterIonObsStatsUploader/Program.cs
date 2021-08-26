@@ -114,8 +114,6 @@ namespace MASIC_ReporterIonObsStatsUploader
             }
         }
 
-        #region "Event handlers"
-
         private static void Processor_DebugEvent(string message)
         {
             ConsoleMsgUtils.ShowDebugCustom(message, emptyLinesBeforeMessage: 0);
@@ -140,6 +138,5 @@ namespace MASIC_ReporterIonObsStatsUploader
             ConsoleMsgUtils.ShowWarning(message);
         }
 
-        #endregion
     }
 }

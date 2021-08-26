@@ -14,14 +14,10 @@ namespace MASIC_ReporterIonObsStatsUploader
 
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
 
-        #region "Properties"
-
         /// <summary>
         /// Processing options
         /// </summary>
         private readonly StatsUploaderOptions Options;
-
-        #endregion
 
         /// <summary>
         /// Look for an XML file with key 'ReporterIonMassMode' in section 'MasicExportOptions'
@@ -616,8 +612,6 @@ namespace MASIC_ReporterIonObsStatsUploader
             }
         }
 
-        #region "Event Handlers"
-
         private void ProcedureExecutor_DebugEvent(string message)
         {
             OnDebugEvent(message);
@@ -643,8 +637,6 @@ namespace MASIC_ReporterIonObsStatsUploader
 
             OnErrorEvent(message);
         }
-
-        #endregion
 
     }
 }

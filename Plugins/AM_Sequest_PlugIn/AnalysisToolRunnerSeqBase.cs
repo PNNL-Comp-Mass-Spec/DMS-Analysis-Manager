@@ -34,15 +34,9 @@ namespace AnalysisManagerSequestPlugin
 
         // ReSharper restore CommentTypo
 
-        #region "Constants"
-
         public const string CONCATENATED_OUT_TEMP_FILE = "_out.txt.tmp";
         private const int MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK = 500;
         private const string REGEX_FILE_SEPARATOR = @"^\s*[=]{5,}\s*\""(?<filename>.+)""\s*[=]{5,}\s*$";
-
-        #endregion
-
-        #region "Member variables"
 
         private int mDtaCountAddon;
 
@@ -62,10 +56,6 @@ namespace AnalysisManagerSequestPlugin
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         protected long mOutFileHandlerInUse;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs the analysis tool
@@ -1343,7 +1333,5 @@ namespace AnalysisManagerSequestPlugin
 
             return true;
         }
-
-        #endregion
     }
 }

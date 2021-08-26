@@ -24,8 +24,6 @@ namespace AnalysisManagerTopPICPlugIn
     {
         // Ignore Spelling: cmd, Csv, html, json, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
 
-        #region "Constants and Enums"
-
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
         private const string TOPPIC_EXE_NAME = "toppic.exe";
 
@@ -41,10 +39,6 @@ namespace AnalysisManagerTopPICPlugIn
         private const string PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_proteoform.csv";
         private const string PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL = "_ms2_toppic_proteoform.tsv";
         private const string PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL = "_TopPIC_Proteoforms.txt";
-
-        #endregion
-
-        #region "Module Variables"
 
         private bool mToolVersionWritten;
 
@@ -67,10 +61,6 @@ namespace AnalysisManagerTopPICPlugIn
         private DateTime mLastConsoleOutputParse;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs TopPIC tool
@@ -1522,10 +1512,6 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
@@ -1551,7 +1537,5 @@ namespace AnalysisManagerTopPICPlugIn
 
             LogProgress("TopPIC");
         }
-
-        #endregion
     }
 }

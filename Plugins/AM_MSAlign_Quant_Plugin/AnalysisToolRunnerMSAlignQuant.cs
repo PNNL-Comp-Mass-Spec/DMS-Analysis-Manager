@@ -18,8 +18,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
     {
         // Ignore Spelling: Acetylation, Da, Phosphorylation, Pyroglutomate, quant, quantitation
 
-        #region "Module Variables"
-
         private const string TARGETED_QUANT_XML_FILE_NAME = "TargetedWorkflowParams.xml";
         private const string TARGETED_WORKFLOWS_CONSOLE_OUTPUT = "TargetedWorkflow_ConsoleOutput.txt";
         private const int PROGRESS_PCT_CREATING_PARAMETERS = 5;
@@ -38,10 +36,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         private Dictionary<string, int> mConsoleOutputProgressMap;
 
         private RunDosProgram mCmdRunner;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Runs TargetedWorkFlowConsole tool
@@ -512,10 +506,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             writer.WriteEndElement();
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
 
         /// <summary>
@@ -534,7 +524,5 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogProgress("MSAlign Quant");
             }
         }
-
-        #endregion
     }
 }

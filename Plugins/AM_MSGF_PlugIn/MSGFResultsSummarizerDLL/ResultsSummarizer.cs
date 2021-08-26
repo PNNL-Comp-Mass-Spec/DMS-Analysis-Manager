@@ -37,8 +37,6 @@ namespace MSGFResultsSummarizer
 
         // ReSharper restore CommentTypo
 
-        #region "Constants and Enums"
-
         public const double DEFAULT_MSGF_THRESHOLD = 1E-10;        // 1E-10
         public const double DEFAULT_EVALUE_THRESHOLD = 0.0001;     // 1E-4   (only used when MSGF Scores are not available)
         public const double DEFAULT_FDR_THRESHOLD = 0.01;          // 1% FDR
@@ -57,10 +55,6 @@ namespace MSGFResultsSummarizer
             TMT6plex = 3,
             TMT16plex = 4
         }
-
-        #endregion
-
-        #region "Member variables"
 
         private string mErrorMessage = string.Empty;
         private readonly short mDebugLevel;
@@ -96,10 +90,6 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <remarks>This is auto-determined in ProcessPSMResults</remarks>
         private string mMSGFSynopsisFileName = string.Empty;
-
-        #endregion
-
-        #region "Properties"
 
         /// <summary>
         /// Dataset name
@@ -222,8 +212,6 @@ namespace MSGFResultsSummarizer
         public int AcetylPeptidesMSGF => mMSGFBasedCounts?.AcetylPeptides ?? 0;
 
         public int AcetylPeptidesFDR => mFDRBasedCounts?.AcetylPeptides ?? 0;
-
-        #endregion
 
         /// <summary>
         /// Constructor

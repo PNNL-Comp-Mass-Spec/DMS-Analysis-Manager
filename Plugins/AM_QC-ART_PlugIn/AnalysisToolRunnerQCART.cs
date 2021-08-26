@@ -27,26 +27,16 @@ namespace AnalysisManagerQCARTPlugin
     {
         // Ignore Spelling: yyyy-MM-dd hh:mm:ss tt
 
-        #region "Constants and Enums"
-
         private const int PROGRESS_PCT_STARTING = 5;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private const string STORE_QCART_RESULTS = "StoreQCARTResults";
-
-        #endregion
-
-        #region "Module Variables"
 
         // private string mConsoleOutputFile;
         // private string mConsoleOutputErrorMsg;
 
         // private DateTime mLastConsoleOutputParse;
         // private DateTime mLastProgressWriteTime;
-
-        #endregion
-
-        #region "Methods"
 
         /// <summary>
         /// Processes data using QC-ART
@@ -706,10 +696,6 @@ namespace AnalysisManagerQCARTPlugin
             }
         }
 
-        #endregion
-
-        #region "Event Handlers"
-
         private void CmdRunner_LoopWaiting()
         {
             // Synchronize the stored Debug level with the value stored in the database
@@ -732,7 +718,5 @@ namespace AnalysisManagerQCARTPlugin
                 */
             }
         }
-
-        #endregion
     }
 }
