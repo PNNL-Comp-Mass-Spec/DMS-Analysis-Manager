@@ -107,7 +107,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var missingInstrumentDataCount = 0;
 
-            // Combine the two job lists provided to this function to determine the master list of jobs to process
+            // Combine the two job lists provided to this method to determine the master list of jobs to process
             var jobsToProcess = dataPackagePeptideHitJobs.ToList();
             jobsToProcess.AddRange(additionalJobs.ToList());
 

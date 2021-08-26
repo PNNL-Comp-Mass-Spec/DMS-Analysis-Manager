@@ -688,7 +688,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Send status information to the database
         /// </summary>
-        /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+        /// <remarks>this method is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         private void LogStatusToBrokerDatabase(bool forceLogToBrokerDB)
         {

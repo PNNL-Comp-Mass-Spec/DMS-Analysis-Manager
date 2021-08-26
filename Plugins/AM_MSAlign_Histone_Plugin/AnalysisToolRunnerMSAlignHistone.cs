@@ -162,7 +162,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 mMSAlignWorkFolderPath = string.Empty;
 
                 // Copy the MS Align program files and associated files to the work directory
-                // Note that this function will update mMSAlignWorkFolderPath
+                // Note that this method will update mMSAlignWorkFolderPath
                 if (!CopyMSAlignProgramFiles(mMSAlignProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

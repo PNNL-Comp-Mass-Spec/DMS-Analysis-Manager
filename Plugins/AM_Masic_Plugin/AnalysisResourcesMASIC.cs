@@ -83,7 +83,7 @@ namespace AnalysisManagerMasicPlugin
             mJobParams.AddResultFileExtensionToSkip("_StoragePathInfo.txt");
 
             // We'll add the following extensions to FilesToDeleteExt
-            // Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files
+            // Note, though, that the DeleteDataFile method will delete the .Raw or .mgf/.cdf files
             mJobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
             mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
             mJobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);

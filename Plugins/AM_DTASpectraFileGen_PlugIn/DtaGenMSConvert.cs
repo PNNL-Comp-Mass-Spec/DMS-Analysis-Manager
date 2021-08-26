@@ -92,7 +92,7 @@ namespace DTASpectraFileGen
 
         /// <summary>
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-        /// This function is called by MakeDTAFilesThreaded
+        /// this method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         private bool ConvertMGFtoDTA()
@@ -132,7 +132,7 @@ namespace DTASpectraFileGen
 
         /// <summary>
         /// Create .mgf file using MSConvert
-        /// This function is called by MakeDTAFilesThreaded
+        /// this method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <param name="rawDataType">Raw data file type</param>
         /// <returns>True if success, false if an error</returns>

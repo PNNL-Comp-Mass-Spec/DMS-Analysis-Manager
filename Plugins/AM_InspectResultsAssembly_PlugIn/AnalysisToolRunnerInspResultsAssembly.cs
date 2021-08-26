@@ -325,7 +325,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                var DatasetName = mDatasetName;
+                var datasetName = mDatasetName;
 
                 var writer = CreateNewExportFile(Path.Combine(mWorkDir, combinedFileName));
                 if (writer == null)
@@ -339,14 +339,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     switch (resFileType)
                     {
                         case ResultFileType.INSPECT_RESULT:
-                            inspectResultsFile = DatasetName + "_" + fileNameCounter + ORIGINAL_INSPECT_FILE_SUFFIX;
+                            inspectResultsFile = datasetName + "_" + fileNameCounter + ORIGINAL_INSPECT_FILE_SUFFIX;
                             filesContainHeaderLine = true;
                             addSegmentNumberToEachLine = false;
                             addBlankLineBetweenFiles = false;
 
                             break;
                         case ResultFileType.INSPECT_ERROR:
-                            inspectResultsFile = DatasetName + "_" + fileNameCounter + "_error.txt";
+                            inspectResultsFile = datasetName + "_" + fileNameCounter + "_error.txt";
                             filesContainHeaderLine = false;
                             addSegmentNumberToEachLine = true;
                             addBlankLineBetweenFiles = false;
@@ -1289,7 +1289,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 // Zip up the _inspect_filtered.txt file into _inspect.zip
                 // Rename to _inspect.txt before zipping
-                // Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
+                // Do not delete the _inspect.txt file after zipping since it is used in method CreatePeptideToProteinMapping
                 success = RenameAndZipInspectFile(Path.Combine(mWorkDir, mDatasetName + FILTERED_INSPECT_FILE_SUFFIX),
                     Path.Combine(mWorkDir, mDatasetName + "_inspect.zip"), false);
 

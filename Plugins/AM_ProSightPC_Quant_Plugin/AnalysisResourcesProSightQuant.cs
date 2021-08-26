@@ -79,7 +79,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             const string proSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
             if (!FileSearch.FindAndRetrieveMiscFiles(proSightPCResultsFile, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(proSightPCResultsFile);

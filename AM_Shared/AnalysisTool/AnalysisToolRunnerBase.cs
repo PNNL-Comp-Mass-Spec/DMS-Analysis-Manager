@@ -606,7 +606,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
-        /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
+        /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this method)</param>
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
@@ -989,14 +989,14 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 catch (Exception ex)
                 {
-                    // Continue copying files; we'll fail the results at the end of this function
+                    // Continue copying files; we'll fail the results at the end of this method
                     LogError(" CopyResultsFolderToServer: error copying " + fileToCopy.Name + " to " + targetPath, ex);
                     errorEncountered = true;
                     failedFileCount++;
                 }
             }
 
-            // Recursively call this function for each subdirectory
+            // Recursively call this method for each subdirectory
             // If any of the subdirectories have an error, we'll continue copying, but will set errorEncountered to True
             var success = true;
 
@@ -1635,7 +1635,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the dictionary for the packed job parameter
         /// </summary>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
+        /// <remarks>Data will have been stored by method AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
         protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
@@ -1669,7 +1669,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the dictionary for the packed job parameter
         /// </summary>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
+        /// <remarks>Data will have been stored by method AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
         public Dictionary<int, string> ExtractPackedJobParameterDictionaryIntegerKey(string packedJobParameterName)
@@ -1709,7 +1709,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the list of values for the packed job parameter
         /// </summary>
-        /// <remarks>Data will have been stored by function AnalysisResources.StorePackedJobParameterDictionary</remarks>
+        /// <remarks>Data will have been stored by method AnalysisResources.StorePackedJobParameterDictionary</remarks>
         /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
         protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
@@ -1730,7 +1730,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="updateIntervalSeconds">
         /// The minimum number of seconds between updates
-        /// If fewer than updateIntervalSeconds have elapsed since the last call to this function, no update will occur
+        /// If fewer than updateIntervalSeconds have elapsed since the last call to this method, no update will occur
         /// </param>
         /// <returns>Debug level</returns>
         protected bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds)
@@ -1948,7 +1948,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Determines the directory that contains R.exe and Rcmd.exe (queries the registry)
         /// </summary>
-        /// <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
+        /// <remarks>this method is public because it is used by the Cyclops test harness program</remarks>
         /// <returns>Directory path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
         public string GetRPathFromWindowsRegistry()
         {
@@ -2991,7 +2991,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (!string.Equals(cacheDirectoryPath, @"\\proto-2\past\PurgeTest", StringComparison.OrdinalIgnoreCase))
                 {
-                    Console.WriteLine(@"This function cannot be used with a \\Proto-x\ server");
+                    Console.WriteLine(@"this method cannot be used with a \\Proto-x\ server");
                     return;
                 }
             }
@@ -3899,7 +3899,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>This method is used by AnalysisToolRunnerDtaRefinery to monitor X!Tandem and DTA_Refinery</remarks>
         /// <param name="processName">Process name, for example chrome (do not include .exe)</param>
-        /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+        /// <param name="secondsBetweenUpdates">Seconds between which this method is nominally called</param>
         /// <param name="defaultProcessID">Process ID to use if not match for processName</param>
         /// <returns>Actual CPU usage; -1 if an error</returns>
         protected float UpdateCpuUsageByProcessName(string processName, int secondsBetweenUpdates, int defaultProcessID)
@@ -3947,7 +3947,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>This method is used by this class and by AnalysisToolRunnerMODPlus</remarks>
         /// <param name="processID">ProcessID of the externally running process</param>
         /// <param name="coreUsage">Number of cores in use by the process; -1 if unknown</param>
-        /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+        /// <param name="secondsBetweenUpdates">Seconds between which this method is nominally called</param>
         protected void UpdateProgRunnerCpuUsage(int processID, float coreUsage, int secondsBetweenUpdates)
         {
             // Cache the core usage values for the last 5 minutes
@@ -3996,7 +3996,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>Public because used by DtaGenThermoRaw</remarks>
         /// <param name="cmdRunner">RunDosProgram instance used to run an external process</param>
-        /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
+        /// <param name="secondsBetweenUpdates">Seconds between which this method is nominally called</param>
         public void UpdateProgRunnerCpuUsage(RunDosProgram cmdRunner, int secondsBetweenUpdates)
         {
             try
@@ -4199,7 +4199,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Compress a file using SharpZipLib
         /// </summary>
-        /// <remarks>IonicZip is faster, so we typically use function ZipFile</remarks>
+        /// <remarks>IonicZip is faster, so we typically use method ZipFile</remarks>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("Use ZipFile, which uses DotNetZip")]
         public bool ZipFileSharpZipLib(string sourceFilePath)

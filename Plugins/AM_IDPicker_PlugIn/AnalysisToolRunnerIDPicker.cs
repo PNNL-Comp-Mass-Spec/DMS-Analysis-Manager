@@ -179,7 +179,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Store the version of IDPicker and PeptideListToXML in the database
                 // Alternatively, if skipIDPicker is true, just store the version of PeptideListToXML
 
-                // This function updates mPeptideListToXMLExePath and mIDPickerProgramDirectory
+                // this method updates mPeptideListToXMLExePath and mIDPickerProgramDirectory
                 if (!StoreToolVersionInfo(progLocQonvert, skipIDPicker))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");

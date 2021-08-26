@@ -302,7 +302,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // File not found; is it required?
                     if (fileRequired)
                     {
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         returnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
@@ -478,7 +478,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!CopyFileToWorkDir(idPickerParamFileName, idPickerParamFilePath, mWorkDir))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return false;
             }
 

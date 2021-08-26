@@ -1015,7 +1015,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Call this function to copy files from the working directory to a remote host for remote processing
+        /// Call this method to copy files from the working directory to a remote host for remote processing
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
         /// Plugins should also copy FASTA files if appropriate
         /// </summary>
@@ -1173,7 +1173,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>
         /// Typical steps for using lock files to assure that only one manager is creating a specific file
         /// 1. Call CheckForLockFile() to check for a lock file; wait for it to age
-        /// 2. Once CheckForLockFile() exits, check for the required data file; exit the function if the desired file is found
+        /// 2. Once CheckForLockFile() exits, check for the required data file; exit the method if the desired file is found
         /// 3. If the file was not found, create a new lock file by calling CreateLockFile()
         /// 4. Do the work and create the data file, including copying to the central location
         /// 5. Delete the lock file by calling DeleteLockFile() or by deleting the file path returned by CreateLockFile()
@@ -1693,7 +1693,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
         /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
-        /// <param name="assumeUnpurged">When true, this function returns the path to the dataset directory on the storage server</param>
+        /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
         /// <param name="directoryNotFoundMessage"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         public string FindValidDirectory(
@@ -2402,7 +2402,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Retrieve the .mzXML file for this dataset
         /// </summary>
         /// <remarks>
-        /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen directory for this dataset
+        /// Do not use RetrieveMZXmlFile since that method looks for any valid MSXML_Gen directory for this dataset
         /// Instead, use FindAndRetrieveMiscFiles
         /// </remarks>
         /// <returns>Closeout code</returns>
@@ -2526,7 +2526,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Retrieve the _mgf.zip file for this dataset and extract the .mgf file
         /// </summary>
         /// <remarks>
-        /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen directory for this dataset
+        /// Do not use RetrieveMZXmlFile since that method looks for any valid MSXML_Gen directory for this dataset
         /// Instead, use FindAndRetrieveMiscFiles
         /// </remarks>
         /// <returns>Closeout code</returns>
@@ -4190,7 +4190,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Retrieve the files specified by the file processing options parameter
         /// </summary>
         /// <remarks>
-        /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
+        /// this method is used by plugins PhosphoFDRAggregator and PRIDEMzXML
         /// However, PrideMzXML is dormant as of September 2013
         /// </remarks>
         /// <param name="fileSpecList">
@@ -4934,7 +4934,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outputDirectoryPath">Target directory for the extracted files</param>
-        /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
+        /// <param name="callingFunctionName">calling method name (used for debugging purposes)</param>
         /// <returns>True if success, otherwise false</returns>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {

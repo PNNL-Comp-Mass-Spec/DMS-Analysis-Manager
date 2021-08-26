@@ -124,7 +124,7 @@ namespace AnalysisManager_Ape_PlugIn
             LogMessage("Retrieving SQLite database: " + Path.Combine(stepInputDirectoryPath, "Results.db3"));
             if (!CopyFileToWorkDir("Results.db3", stepInputDirectoryPath, mWorkDir))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return false;
             }
 
@@ -146,7 +146,7 @@ namespace AnalysisManager_Ape_PlugIn
             // Now copy the Ape workflow file to the working directory
             if (!CopyFileToWorkDir(apeWorkflowFileName, apeWorkflowDirectory, mWorkDir))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return false;
             }
 
@@ -159,7 +159,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return false;
             }
 

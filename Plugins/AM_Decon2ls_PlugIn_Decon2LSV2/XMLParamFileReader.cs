@@ -88,7 +88,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (descendants.Count > 0)
                 {
-                    // Recursively call this function with the content
+                    // Recursively call this method with the content
                     CacheXMLParseSection(descendants, ref parameterDictionary);
                 }
                 else

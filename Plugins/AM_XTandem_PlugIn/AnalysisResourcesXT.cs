@@ -57,7 +57,7 @@ namespace AnalysisManagerXTandemPlugIn
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -82,7 +82,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (!ValidateDTATextFileSize(mWorkDir, DatasetName + "_dta.txt"))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

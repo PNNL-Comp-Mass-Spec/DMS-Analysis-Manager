@@ -77,7 +77,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     fileSpecList, DataPackageFileRetrievalModeConstants.Ascore,
                     callingMethodCanRegenerateMissingFile, out var dataPackageJobs))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

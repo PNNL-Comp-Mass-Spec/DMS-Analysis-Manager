@@ -92,7 +92,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path
+        /// <remarks>When assumeUnpurged is true, this method returns the expected path
         /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
         /// <param name="assumeUnpurged">
@@ -111,7 +111,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// For instruments with multiple data directories, returns the path to the first directory
         /// For instrument with multiple zipped data files, returns the dataset directory path
         /// </summary>
-        /// <remarks>When assumeUnpurged is true, this function returns the expected path
+        /// <remarks>When assumeUnpurged is true, this method returns the expected path
         /// to the instrument data file (or directory) on the storage server, even if the file/directory wasn't actually found</remarks>
         /// <param name="maxAttempts">Maximum number of attempts to look for the directory</param>
         /// <param name="isDirectory">Output variable: true if the path returned is a directory path; false if a file</param>
@@ -475,7 +475,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
-        /// <param name="assumeUnpurged">When true, this function returns the path to the dataset directory on the storage server</param>
+        /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
         /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
         /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
         /// <returns>Path to the most appropriate dataset directory</returns>

@@ -167,7 +167,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             var msAlignResultsTableFile = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(msAlignResultsTableFile, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(msAlignResultsTableFile);
@@ -189,7 +189,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             var topPICResultsFile = DatasetName + TOPPIC_RESULT_FILE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(topPICResultsFile, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(topPICResultsFile);

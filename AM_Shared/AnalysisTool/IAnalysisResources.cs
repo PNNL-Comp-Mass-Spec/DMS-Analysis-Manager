@@ -55,13 +55,13 @@ namespace AnalysisManagerBase.AnalysisTool
             MyEMSLUtilities myEMSLUtilities);
 
         /// <summary>
-        /// Main processing function for obtaining the required resources
+        /// Main processing method for obtaining the required resources
         /// </summary>
         /// <returns>Status value indicating success or failure</returns>
         CloseOutType GetResources();
 
         /// <summary>
-        /// Call this function to copy files from the working directory to a remote host for remote processing
+        /// Call this method to copy files from the working directory to a remote host for remote processing
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
         /// Plugins should also copy FASTA files if appropriate
         /// </summary>

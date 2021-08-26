@@ -45,7 +45,7 @@ namespace AnalysisManagerMSGFPlugin
         /// </remarks>
         /// <param name="sourceFilePath"></param>
         /// <param name="resultType"></param>
-        [Obsolete("This function does not appear to be used anywhere")]
+        [Obsolete("this method does not appear to be used anywhere")]
         public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, PeptideHitResultTypes resultType)
         {
             try

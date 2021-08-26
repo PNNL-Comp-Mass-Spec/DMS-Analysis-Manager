@@ -655,7 +655,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 // Match not found
-                // Recursively call this function with the subdirectories in this directory
+                // Recursively call this method with the subdirectories in this directory
 
                 foreach (var subDirectory in targetDirectory.GetDirectories())
                 {
@@ -1613,7 +1613,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// This is just a generic function to copy files to the working directory
+        /// This is just a generic method to copy files to the working directory
         /// </summary>
         /// <param name="fileName">Name of file to be copied</param>
         /// <param name="sourceDirectoryPath">Source directory that has the file</param>
@@ -1626,7 +1626,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// This is just a generic function to copy files to the working directory
+        /// This is just a generic method to copy files to the working directory
         /// </summary>
         /// <param name="fileName">Name of file to be copied</param>
         /// <param name="sourceDirectoryPath">Source directory that has the file</param>
@@ -2462,14 +2462,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     break;
 
                 default:
-                    // rawDataType is not recognized or not supported by this function
+                    // rawDataType is not recognized or not supported by this method
                     if (rawDataType == AnalysisResources.RawDataTypeConstants.Unknown)
                     {
                         OnErrorEvent("Invalid data type specified: " + rawDataType);
                     }
                     else
                     {
-                        OnErrorEvent("Data type " + rawDataType + " is not supported by the RetrieveSpectra function");
+                        OnErrorEvent("Data type " + rawDataType + " is not supported by the RetrieveSpectra method");
                     }
                     break;
             }
@@ -2857,7 +2857,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                                 // Stop trying to delete files; it's not worth continuing to try
                                 OnWarningEvent("Unable to delete all of the files in queue filesToDelete; " +
                                     "Queue Length = " + filesToDelete.Count + "; " +
-                                    "this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)");
+                                    "this warning can be safely ignored (method RetrieveBrukerMALDIImagingFolders)");
                                 break;
                             }
 
@@ -3052,7 +3052,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outputDirectoryPath">Target directory for the extracted files</param>
-        /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
+        /// <param name="callingFunctionName">calling method name (used for debugging purposes)</param>
         /// <returns>True if success, otherwise false</returns>
         public bool UnzipFileStart(string zipFilePath, string outputDirectoryPath, string callingFunctionName)
         {

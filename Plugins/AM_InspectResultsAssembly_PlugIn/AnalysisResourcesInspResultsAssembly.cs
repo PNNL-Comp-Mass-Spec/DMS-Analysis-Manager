@@ -54,7 +54,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Retrieve the Inspect Input Params file
             if (!FileSearch.RetrieveFile(AnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferDirectoryName))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -103,7 +103,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Retrieve multi inspect result files
                 if (!RetrieveMultiInspectResultFiles())
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
             }

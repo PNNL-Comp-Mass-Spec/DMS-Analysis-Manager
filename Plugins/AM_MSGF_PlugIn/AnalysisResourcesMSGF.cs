@@ -173,7 +173,7 @@ namespace AnalysisManagerMSGFPlugin
                 var paramFile = mJobParams.GetParam("ParmFileName");
                 if (!FileSearch.FindAndRetrieveMiscFiles(paramFile, false))
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
                 mJobParams.AddResultFileToSkip(paramFile);
@@ -199,7 +199,7 @@ namespace AnalysisManagerMSGFPlugin
                 var synopsisFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref synopsisFile, "");
                 if (!synopsisFileFound)
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
                 synFilePath = Path.Combine(mWorkDir, synopsisFile);
@@ -216,7 +216,7 @@ namespace AnalysisManagerMSGFPlugin
                 var firstHitsFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref firstHitsFile, synFilePath);
                 if (!firstHitsFileFound)
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
@@ -230,7 +230,7 @@ namespace AnalysisManagerMSGFPlugin
                 resultToSeqMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref resultToSeqMapFile, synFilePath);
                 if (!resultToSeqMapFileFound)
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
@@ -247,7 +247,7 @@ namespace AnalysisManagerMSGFPlugin
                 seqToProteinMapFileFound = FileSearch.FindAndRetrievePHRPDataFile(ref seqToProteinMapFile, synFilePath);
                 if (!seqToProteinMapFileFound)
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
@@ -276,7 +276,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
@@ -315,13 +315,13 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
                 else
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
             }
@@ -344,7 +344,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
@@ -365,7 +365,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }

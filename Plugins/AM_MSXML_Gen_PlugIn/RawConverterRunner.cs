@@ -35,7 +35,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         /// <summary>
         /// Create .mgf file using RawConverter
-        /// This function is called by MakeDTAFilesThreaded
+        /// this method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         public bool ConvertRawToMGF(string rawFilePath)

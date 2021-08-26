@@ -79,7 +79,7 @@ namespace AnalysisManagerMODaPlugIn
                     mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
                 }
 
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -91,14 +91,14 @@ namespace AnalysisManagerMODaPlugIn
             // If the _dta.txt file is over 2 GB in size, condense it
             if (!ValidateCDTAFileSize(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
             if (!ValidateCDTAFileRemoveSparseSpectra(mWorkDir, DatasetName + CDTA_EXTENSION))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

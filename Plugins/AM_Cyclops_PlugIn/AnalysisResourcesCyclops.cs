@@ -127,14 +127,14 @@ namespace AnalysisManager_Cyclops_PlugIn
                 // Now copy the Cyclops workflow file to the working directory
                 if (!CopyFileToWorkDir(cyclopsWorkflowFileName, cyclopsWorkflowDirectory, mWorkDir))
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), mWorkDir))
                 {
                     mMessage = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 

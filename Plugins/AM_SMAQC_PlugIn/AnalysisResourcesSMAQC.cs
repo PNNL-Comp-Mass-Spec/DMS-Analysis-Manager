@@ -68,7 +68,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool RetrieveLLRCFiles()
         {
             if (!AnalysisToolRunnerSMAQC.LLRC_ENABLED)
-                throw new Exception("LLRC is disabled -- do not call this function");
+                throw new Exception("LLRC is disabled -- do not call this method");
 
 #pragma warning disable 162
 
@@ -243,7 +243,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
             if (!success)
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return false;
             }
 
@@ -276,7 +276,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!success)
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return false;
                 }
 

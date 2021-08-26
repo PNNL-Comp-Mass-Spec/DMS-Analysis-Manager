@@ -19,7 +19,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <summary>
         /// Obtains resources necessary for performing analysis results cleanup
         /// </summary>
-        /// <remarks>No resources needed for performing results transfer. Function merely meets inheritance requirements</remarks>
+        /// <remarks>No resources needed for performing results transfer. This method merely meets inheritance requirements</remarks>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
         {

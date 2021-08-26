@@ -72,7 +72,7 @@ namespace AnalysisManagerTopPICPlugIn
             var success = FileSearch.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out var sourceDirPath);
             if (!success)
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -113,7 +113,7 @@ namespace AnalysisManagerTopPICPlugIn
                     if (fileIsRequired)
                     {
                         // This was a required file; abort
-                        // Errors were reported in function call, so just return
+                        // Errors were reported in method call, so just return
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 

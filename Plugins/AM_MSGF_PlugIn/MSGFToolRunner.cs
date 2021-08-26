@@ -1171,8 +1171,8 @@ namespace AnalysisManagerMSGFPlugin
             var mgfLookupErrorCount = 0;
 
             ///////////////////////////////////////////////////////
-            // Note: Do not put a Try/Catch block in this function
-            // Allow the calling function to catch any errors
+            // Note: Do not put a Try/Catch block in this method
+            // Allow the calling method to catch any errors
             ///////////////////////////////////////////////////////
 
             // Initialize the column mapping

@@ -1831,7 +1831,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (string.IsNullOrWhiteSpace(mResultsDirectoryName))
             {
-                // Ignore error; will be logged in function
+                // Ignore error; will be logged in method
                 return;
             }
 

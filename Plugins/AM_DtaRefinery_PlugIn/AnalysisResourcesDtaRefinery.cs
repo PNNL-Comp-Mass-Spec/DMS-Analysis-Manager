@@ -89,7 +89,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -107,14 +107,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // If the _dta.txt file is over 2 GB in size, condense it
             if (!ValidateCDTAFileSize(mWorkDir, Path.GetFileName(cdtaPath)))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve DeconMSn Log file and DeconMSn Profile File
             if (!RetrieveDeconMSnLogFiles())
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

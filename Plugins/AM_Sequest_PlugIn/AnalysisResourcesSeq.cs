@@ -350,7 +350,7 @@ namespace AnalysisManagerSequestPlugin
                 return result;
             }
 
-            // Retrieve FASTA file (we'll distribute it to the cluster nodes later in this function)
+            // Retrieve FASTA file (we'll distribute it to the cluster nodes later in this method)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
@@ -379,10 +379,10 @@ namespace AnalysisManagerSequestPlugin
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
-            // The file will be deconcatenated by function AnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
+            // The file will be deconcatenated by method AnalysisToolRunnerSeqBase.CheckForExistingConcatenatedOutFile
             if (!FileSearch.RetrieveDtaFiles())
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -400,7 +400,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!VerifyDatabase(fastaFileName, orgDbDirectoryPath))
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }

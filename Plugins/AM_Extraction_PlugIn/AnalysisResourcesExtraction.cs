@@ -590,7 +590,7 @@ namespace AnalysisManagerExtractionPlugin
             // Get the concatenated .out file
             if (!FileSearch.RetrieveOutFiles(false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
@@ -612,7 +612,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_xt.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_XT_FILES;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -626,7 +626,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = "input.xml";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -648,7 +648,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_inspect.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -657,7 +657,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = DatasetName + "_inspect_fht.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -666,7 +666,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = DatasetName + "_inspect_PepToProtMap.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call
+                // Errors were reported in method call
 
                 // See if IgnorePeptideToProteinMapError=True
                 if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
@@ -705,13 +705,13 @@ namespace AnalysisManagerExtractionPlugin
 
             if (string.IsNullOrWhiteSpace(sourceDirPath))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!FileSearch.FindAndRetrieveMiscFiles(msmsFile, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(msmsFile);
@@ -719,7 +719,7 @@ namespace AnalysisManagerExtractionPlugin
             const string peptidesFile = "peptides.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(peptidesFile, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(peptidesFile);
@@ -779,7 +779,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_moda.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -802,7 +802,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_modp.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -1002,7 +1002,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true,
                                                                  searchArchivedDatasetDir: true, logFileNotFound: true))
                         {
-                            // Errors were reported in function call, so just return
+                            // Errors were reported in method call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
                         mJobParams.AddResultFileToSkip(mzidFile);
@@ -1049,7 +1049,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFileName, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
                     {
-                        // Errors were reported in function call
+                        // Errors were reported in method call
 
                         if (splitFastaEnabled && !ignorePepToProtMapErrors)
                         {
@@ -1212,7 +1212,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
@@ -1228,7 +1228,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -1245,7 +1245,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                // Errors were reported in function call, so just return
+                // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -1279,7 +1279,7 @@ namespace AnalysisManagerExtractionPlugin
                 mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
-            // Errors were reported in function call, so just return
+            // Errors were reported in method call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
 

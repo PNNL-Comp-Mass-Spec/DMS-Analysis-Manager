@@ -164,7 +164,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 mMessage = Global.AppendToComment(mMessage, "shared results folder " + sharedResultsFolders);
             }
 
-            // Errors were reported in function call, so just return
+            // Errors were reported in method call, so just return
             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
 

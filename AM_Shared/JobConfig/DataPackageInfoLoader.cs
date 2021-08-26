@@ -261,7 +261,7 @@ namespace AnalysisManagerBase.JobConfig
             jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             errorMsg = string.Empty;
 
-            // Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs
+            // Throttle the calls to this method to avoid overloading the database for data packages with hundreds of jobs
             while (DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50)
             {
                 PRISM.ProgRunner.SleepMilliseconds(25);
@@ -402,7 +402,7 @@ namespace AnalysisManagerBase.JobConfig
             jobInfo.ProteinCollectionList = curRow["ProteinCollectionList"].CastDBVal<string>();
             jobInfo.ProteinOptions = curRow["ProteinOptions"].CastDBVal<string>();
 
-            // This will be updated later for SplitFasta jobs (using function LookupJobParametersFromHistory)
+            // This will be updated later for SplitFasta jobs (using method LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
 
             jobInfo.ServerStoragePath = curRow["ServerStoragePath"].CastDBVal<string>();

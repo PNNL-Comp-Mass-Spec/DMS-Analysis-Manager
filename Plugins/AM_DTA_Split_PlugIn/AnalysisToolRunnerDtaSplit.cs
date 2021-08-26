@@ -356,7 +356,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         }
 
         /// <summary>
-        /// This function reads the input file one byte at a time, looking for the first occurrence of character code 10 or 13 (aka CR or LF)
+        /// this method reads the input file one byte at a time, looking for the first occurrence of character code 10 or 13 (aka CR or LF)
         /// When found, the next byte is examined
         /// If the next byte is also character code 10 or 13, the line terminator is assumed to be 2 bytes; if not found, it is assumed to be one byte
         /// </summary>

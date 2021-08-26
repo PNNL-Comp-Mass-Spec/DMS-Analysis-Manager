@@ -34,7 +34,7 @@ namespace AnalysisManager_IDM_Plugin
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepInputFolderName")), mWorkDir))
                 {
-                    // Errors were reported in function call, so just return
+                    // Errors were reported in method call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

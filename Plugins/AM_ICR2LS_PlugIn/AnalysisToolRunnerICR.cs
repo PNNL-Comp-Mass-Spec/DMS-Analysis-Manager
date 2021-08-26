@@ -51,7 +51,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             try
             {
-                // Start with base class function to get settings information
+                // Start with base class method to get settings information
                 var ResCode = base.RunTool();
                 if (ResCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return ResCode;

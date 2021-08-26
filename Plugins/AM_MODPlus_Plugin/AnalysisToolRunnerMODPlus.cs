@@ -369,7 +369,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (datasetNodes?.Count > 0)
             {
-                // This value will get updated to the correct name later in this function
+                // This value will get updated to the correct name later in this method
                 var xmlAttributeCollection = datasetNodes[0].Attributes;
                 if (xmlAttributeCollection?["local_path"] == null)
                 {

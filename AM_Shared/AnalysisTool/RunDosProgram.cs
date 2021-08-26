@@ -278,7 +278,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Call this function to instruct this class to terminate the running program
+        /// Call this method to instruct this class to terminate the running program
         /// Will post an entry to the log
         /// </summary>
         public void AbortProgramNow()
@@ -287,7 +287,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Call this function to instruct this class to terminate the running program
+        /// Call this method to instruct this class to terminate the running program
         /// </summary>
         /// <param name="postLogEntry">True if an entry should be posted to the log</param>
         public void AbortProgramNow(bool postLogEntry)
@@ -399,7 +399,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 OnWarningEvent("Unix-style path on a Windows machine; program execution may fail: " + executablePath);
             }
 
-            // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this function
+            // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this method
             // Also necessary to avoid problems caching the console output
             mProgRunner = new ProgRunner
             {

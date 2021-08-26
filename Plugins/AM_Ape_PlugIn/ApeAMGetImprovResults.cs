@@ -92,7 +92,7 @@ namespace AnalysisManager_Ape_PlugIn
             return success;
         }
 
-        // Unused function
+        // Unused method
         // private string GetExperimentList()
         // {
         //    string connectionString = RequireMgrParam("ConnectionString");

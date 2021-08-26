@@ -101,7 +101,7 @@ namespace AnalysisManagerMODPlusPlugin
                     {
                         if (startScanFound)
                         {
-                            // This is the second time we've encountered ">>" in this function
+                            // This is the second time we've encountered ">>" in this method
                             // Cache the line so it can be used the next time ReadNextSpectrum is called
                             mSavedLine = dataLine;
                             mSpectrumAvailable = true;

@@ -194,7 +194,7 @@ namespace AnalysisManagerSequestPlugin
             if (!mOutFileNamesAppended.Contains(sourceOutFile.Name))
             {
                 // Note: do not put a Try/Catch block here
-                // Let the calling function catch any errors
+                // Let the calling method catch any errors
 
                 using (var reader = new StreamReader(new FileStream(sourceOutFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
@@ -422,7 +422,7 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Runs SEQUEST to make .out files
-        /// This function uses the standalone SEQUEST.exe program; it is not used by the SEQUEST clusters
+        /// this method uses the standalone SEQUEST.exe program; it is not used by the SEQUEST clusters
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         protected virtual CloseOutType MakeOUTFiles()

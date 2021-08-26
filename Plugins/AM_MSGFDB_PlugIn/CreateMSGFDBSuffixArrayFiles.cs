@@ -257,7 +257,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Copies the suffix array files for the specified FASTA file to the remote MSGFPlus_Index_File share
         /// </summary>
-        /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
+        /// <remarks>this method is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         /// <param name="fastaFile"></param>
         /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
@@ -1025,7 +1025,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFileIsDecoy"></param>
         /// <param name="outputNameBase"></param>
         /// <param name="directoryPathToSearch"></param>
-        /// <param name="filesToFind">List of files that should exist; calling function must have initialized it</param>
+        /// <param name="filesToFind">List of files that should exist; calling method must have initialized it</param>
         /// <param name="existingFileList">Output param: semicolon separated list of existing files</param>
         /// <param name="missingFiles">Output param: semicolon separated list of missing files</param>
         /// <returns>A list of the files that currently exist</returns>

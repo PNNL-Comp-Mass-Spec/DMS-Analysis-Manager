@@ -921,7 +921,7 @@ namespace AnalysisManagerProg
             var processID = Process.GetCurrentProcess().Id;
 
             // Note: The format of the following text is important; be careful about changing it
-            // In particular, function DetermineRecentErrorMessages in MainProcess looks for log entries
+            // In particular, method DetermineRecentErrorMessages in MainProcess looks for log entries
             //   matching RegEx: "^([^,]+),.+Started analysis job (\d+), Dataset (.+), Tool ([^,]+)"
 
             // Example log entries

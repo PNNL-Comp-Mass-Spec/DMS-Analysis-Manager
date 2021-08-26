@@ -36,7 +36,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
         private bool mIsParallelInspect;
 
-        private string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunTool
+        private string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in method RunTool
         private string mInspectSearchLogMostRecentEntry = string.Empty;
 
         private string mInspectConsoleOutputFilePath;
@@ -247,7 +247,7 @@ namespace AnalysisManagerInSpecTPlugIn
             return inputFilename;
         }
 
-        // Unused function
+        // Unused method
         // private int ExtractScanCountValueFromMzXML(string mzxmlfilename)
         // {
         //    int scanCount = 0;

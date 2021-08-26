@@ -982,7 +982,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             LogWarning(warningMessage);
 
             // Bump up mMSGFPlusCompletionTime by one hour
-            // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+            // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
             mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
             mCmdRunner.AbortProgramNow();
         }
@@ -1054,7 +1054,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Convert the .mzid file to a TSV file and create the PeptideToProtein map file (Dataset_msgfplus_PepToProtMap.txt)
         /// </summary>
-        /// <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
+        /// <remarks>Assumes that the calling method has verified that resultsFileName exists</remarks>
         /// <param name="resultsFileName"></param>
         /// <returns>True if success, false if an error</returns>
         private CloseOutType PostProcessMSGFPlusResults(string resultsFileName)

@@ -74,7 +74,7 @@ namespace DTASpectraFileGen
 
         /// <summary>
         /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-        /// This function is called by MakeDTAFilesThreaded
+        /// this method is called by MakeDTAFilesThreaded
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         public bool ConvertMGFtoDTA(AnalysisResources.RawDataTypeConstants rawDataType, string datasetName)
@@ -308,7 +308,7 @@ namespace DTASpectraFileGen
 
                 if (!autoNumberScans)
                 {
-                    // Nothing to update; exit this function
+                    // Nothing to update; exit this method
                     OnStatusEvent(
                         "Spectrum IDs in the mzML file were in the format StartScan.EndScan.Charge; no need to update the MGF file");
                     return true;

@@ -153,7 +153,7 @@ namespace AnalysisManagerMasicPlugin
 
         protected CloseOutType StartMASICAndWait(string inputFilePath, string outputFolderPath, string parameterFilePath)
         {
-            // Note that this function is normally called by RunMasic() in the subclass
+            // Note that this method is normally called by RunMasic() in the subclass
 
             var masicExePath = string.Empty;
 

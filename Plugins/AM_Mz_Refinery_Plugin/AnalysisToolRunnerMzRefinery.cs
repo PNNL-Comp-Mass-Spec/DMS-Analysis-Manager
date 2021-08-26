@@ -774,7 +774,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     LogWarning(warningMessage);
 
                     // Bump up mMSGFPlusCompletionTime by one hour
-                    // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+                    // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
                     mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
 
                     mCmdRunner.AbortProgramNow();

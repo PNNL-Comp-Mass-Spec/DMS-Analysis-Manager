@@ -173,7 +173,7 @@ namespace DTASpectraFileGen
         protected bool DeleteNonDosFiles()
         {
             // extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters.
-            // This function removes those files
+            // this method removes those files
 
             var workDir = new DirectoryInfo(mWorkDir);
 

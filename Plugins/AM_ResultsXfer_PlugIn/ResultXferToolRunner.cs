@@ -314,7 +314,7 @@ namespace AnalysisManagerResultsXferPlugin
                     }
                 }
 
-                // Recursively call this function for each subdirectory
+                // Recursively call this method for each subdirectory
                 foreach (var subdirectory in sourceDirectory.GetDirectories())
                 {
                     var subDirSuccess = MoveFilesLocally(subdirectory.FullName, Path.Combine(targetDirectory.FullName, subdirectory.Name),
