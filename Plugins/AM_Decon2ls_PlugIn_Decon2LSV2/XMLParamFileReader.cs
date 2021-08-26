@@ -60,7 +60,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
         private Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
         {
-            var dctSections = new Dictionary<string, Dictionary<string, string>>();
+            var sections = new Dictionary<string, Dictionary<string, string>>();
 
             // Read the entire XML file into a Linq to XML XDocument object
             // Note: For this to work, the project must have a reference to System.XML.Linq
@@ -69,18 +69,18 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var parameters = xParamFile.Elements();
 
             // Store the parameters
-            CacheXMLParseSection(parameters, ref dctSections);
+            CacheXMLParseSection(parameters, ref sections);
 
-            return dctSections;
+            return sections;
         }
 
         /// <summary>
-        /// Parses the XML elements in parameters, populating dctParameters
+        /// Parses the XML elements in parameters, populating parameters
         /// </summary>
         /// <param name="parameters">XML parameters to examine</param>
-        /// <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
+        /// <param name="parameterDictionary">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
         private void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
-                                            ref Dictionary<string, Dictionary<string, string>> dctParameters)
+                                            ref Dictionary<string, Dictionary<string, string>> parameterDictionary)
         {
             foreach (var parameter in parameters)
             {
@@ -89,7 +89,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (descendants.Count > 0)
                 {
                     // Recursively call this function with the content
-                    CacheXMLParseSection(descendants, ref dctParameters);
+                    CacheXMLParseSection(descendants, ref parameterDictionary);
                 }
                 else
                 {
@@ -101,15 +101,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     var paramName = parameter.Name.LocalName;
                     var paramValue = parameter.Value;
 
-                    if (!dctParameters.TryGetValue(section, out var dctSectionSettings))
+                    if (!parameterDictionary.TryGetValue(section, out var sectionSettings))
                     {
-                        dctSectionSettings = new Dictionary<string, string>();
-                        dctParameters.Add(section, dctSectionSettings);
+                        sectionSettings = new Dictionary<string, string>();
+                        parameterDictionary.Add(section, sectionSettings);
                     }
 
-                    if (!dctSectionSettings.ContainsKey(paramName))
+                    if (!sectionSettings.ContainsKey(paramName))
                     {
-                        dctSectionSettings.Add(paramName, paramValue);
+                        sectionSettings.Add(paramName, paramValue);
                     }
                 }
             }

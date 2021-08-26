@@ -492,107 +492,107 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return Path.Combine(mWorkDir, bestAScoreParamFileName);
         }
 
-        private bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref JobMetadataForAScore udtJobMetadata, List<string> fileSuffixesToCombine)
+        private bool DetermineInputFilePaths(DirectoryInfo jobFolder, ref JobMetadataForAScore jobMetadata, List<string> fileSuffixesToCombine)
         {
             var fhtFile = string.Empty;
             var synFile = string.Empty;
             var runningSequest = false;
 
-            if (udtJobMetadata.ToolName.StartsWith("sequest", StringComparison.OrdinalIgnoreCase))
+            if (jobMetadata.ToolName.StartsWith("sequest", StringComparison.OrdinalIgnoreCase))
             {
                 runningSequest = true;
-                fhtFile = udtJobMetadata.Dataset + "_fht.txt";
-                synFile = udtJobMetadata.Dataset + "_syn.txt";
-                udtJobMetadata.ToolNameForAScore = "sequest";
+                fhtFile = jobMetadata.Dataset + "_fht.txt";
+                synFile = jobMetadata.Dataset + "_syn.txt";
+                jobMetadata.ToolNameForAScore = "sequest";
             }
 
-            if (udtJobMetadata.ToolName.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
+            if (jobMetadata.ToolName.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
             {
-                fhtFile = udtJobMetadata.Dataset + "_xt_fht.txt";
-                synFile = udtJobMetadata.Dataset + "_xt_syn.txt";
-                udtJobMetadata.ToolNameForAScore = "xtandem";
+                fhtFile = jobMetadata.Dataset + "_xt_fht.txt";
+                synFile = jobMetadata.Dataset + "_xt_syn.txt";
+                jobMetadata.ToolNameForAScore = "xtandem";
             }
 
-            if (udtJobMetadata.ToolName.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
+            if (jobMetadata.ToolName.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
             {
-                fhtFile = udtJobMetadata.Dataset + "_msgfplus_fht.txt";
-                synFile = udtJobMetadata.Dataset + "_msgfplus_syn.txt";
-                udtJobMetadata.ToolNameForAScore = "msgfplus";
+                fhtFile = jobMetadata.Dataset + "_msgfplus_fht.txt";
+                synFile = jobMetadata.Dataset + "_msgfplus_syn.txt";
+                jobMetadata.ToolNameForAScore = "msgfplus";
             }
 
             if (string.IsNullOrWhiteSpace(fhtFile))
             {
-                mMessage = "Analysis tool " + udtJobMetadata.ToolName + " is not supported by the PhosphoFdrAggregator";
+                mMessage = "Analysis tool " + jobMetadata.ToolName + " is not supported by the PhosphoFdrAggregator";
                 return false;
             }
 
-            udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtFile);
-            udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile);
+            jobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtFile);
+            jobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile);
 
             bool success;
 
-            if (!File.Exists(udtJobMetadata.FirstHitsFilePath))
+            if (!File.Exists(jobMetadata.FirstHitsFilePath))
             {
-                var fhtFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt");
+                var fhtFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(jobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt");
                 if (File.Exists(fhtFileAlternate))
                 {
-                    udtJobMetadata.FirstHitsFilePath = fhtFileAlternate;
+                    jobMetadata.FirstHitsFilePath = fhtFileAlternate;
                     fhtFile = Path.GetFileName(fhtFileAlternate);
                 }
             }
 
-            if (!File.Exists(udtJobMetadata.SynopsisFilePath))
+            if (!File.Exists(jobMetadata.SynopsisFilePath))
             {
-                var synFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(udtJobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt");
+                var synFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(jobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt");
                 if (File.Exists(synFileAlternate))
                 {
-                    udtJobMetadata.SynopsisFilePath = synFileAlternate;
+                    jobMetadata.SynopsisFilePath = synFileAlternate;
                     synFile = Path.GetFileName(synFileAlternate);
                 }
             }
 
-            if (File.Exists(udtJobMetadata.FirstHitsFilePath))
+            if (File.Exists(jobMetadata.FirstHitsFilePath))
             {
-                CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, fhtFile);
+                CacheFileSuffix(fileSuffixesToCombine, jobMetadata.Dataset, fhtFile);
                 if (runningSequest)
                 {
-                    success = AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.FirstHitsFilePath, "fht");
+                    success = AddMSGFSpecProbValues(jobMetadata.Job, jobMetadata.FirstHitsFilePath, "fht");
                     if (!success)
                         return false;
                 }
             }
             else
             {
-                udtJobMetadata.FirstHitsFilePath = string.Empty;
+                jobMetadata.FirstHitsFilePath = string.Empty;
             }
 
-            if (File.Exists(udtJobMetadata.SynopsisFilePath))
+            if (File.Exists(jobMetadata.SynopsisFilePath))
             {
-                CacheFileSuffix(fileSuffixesToCombine, udtJobMetadata.Dataset, synFile);
+                CacheFileSuffix(fileSuffixesToCombine, jobMetadata.Dataset, synFile);
                 if (runningSequest)
                 {
-                    success = AddMSGFSpecProbValues(udtJobMetadata.Job, udtJobMetadata.SynopsisFilePath, "syn");
+                    success = AddMSGFSpecProbValues(jobMetadata.Job, jobMetadata.SynopsisFilePath, "syn");
                     if (!success)
                         return false;
                 }
             }
             else
             {
-                udtJobMetadata.SynopsisFilePath = string.Empty;
+                jobMetadata.SynopsisFilePath = string.Empty;
             }
 
-            if (string.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath) && string.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath))
+            if (string.IsNullOrWhiteSpace(jobMetadata.FirstHitsFilePath) && string.IsNullOrWhiteSpace(jobMetadata.SynopsisFilePath))
             {
-                LogWarning("Did not find a synopsis or first hits file for job " + udtJobMetadata.Job);
+                LogWarning("Did not find a synopsis or first hits file for job " + jobMetadata.Job);
                 return false;
             }
 
             return true;
         }
 
-        private string DetermineSpectrumFilePath(DirectoryInfo diJobFolder)
+        private string DetermineSpectrumFilePath(DirectoryInfo jobFolder)
         {
-            var dtaFiles = diJobFolder.GetFiles("*_dta.zip");
+            var dtaFiles = jobFolder.GetFiles("*_dta.zip");
             if (dtaFiles.Length > 0)
             {
                 var dtaFile = dtaFiles.First();
@@ -605,7 +605,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) + ".txt");
             }
 
-            var mzMLFiles = diJobFolder.GetFiles("*.mzML.gz");
+            var mzMLFiles = jobFolder.GetFiles("*.mzML.gz");
             if (mzMLFiles.Length > 0)
             {
                 var mzMLFile = mzMLFiles.First();
@@ -618,7 +618,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mzMLFile.Name));
             }
 
-            mMessage = "Folder " + diJobFolder.Name + " does not have a _dta.zip file or .mzML.gz file";
+            mMessage = "Folder " + jobFolder.Name + " does not have a _dta.zip file or .mzML.gz file";
             return string.Empty;
         }
 
@@ -686,16 +686,16 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <summary>
         /// Parse the ProMex console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -703,14 +703,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
                 var ascoreProgress = 0;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -730,10 +730,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                                 continue;
                             }
 
-                            var oMatch = reCheckProgress.Match(dataLine);
-                            if (oMatch.Success)
+                            var match = reCheckProgress.Match(dataLine);
+                            if (match.Success)
                             {
-                                int.TryParse(oMatch.Groups[1].ToString(), out ascoreProgress);
+                                int.TryParse(match.Groups[1].ToString(), out ascoreProgress);
                             }
                         }
                     }
@@ -755,7 +755,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -808,23 +808,23 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         continue;
                     }
 
-                    var udtJobMetadata = new JobMetadataForAScore {
+                    var jobMetadata = new JobMetadataForAScore {
                         Job = jobFolder.Key
                     };
 
-                    if (!jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), out var datasetName))
+                    if (!jobToDatasetMap.TryGetValue(jobMetadata.Job.ToString(), out var datasetName))
                     {
-                        mMessage = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
+                        mMessage = "Job " + jobMetadata.Job + " not found in packed job parameter " +
                                     AnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
                         LogError("Error in ProcessSynopsisFiles: " + mMessage);
                         jobCountSkippedUnknownJob++;
                         continue;
                     }
 
-                    udtJobMetadata.Dataset = datasetName;
+                    jobMetadata.Dataset = datasetName;
 
-                    var settingsFileName = jobToSettingsFileMap[udtJobMetadata.Job.ToString()];
-                    udtJobMetadata.ToolName = jobToToolMap[udtJobMetadata.Job.ToString()];
+                    var settingsFileName = jobToSettingsFileMap[jobMetadata.Job.ToString()];
+                    jobMetadata.ToolName = jobToToolMap[jobMetadata.Job.ToString()];
 
                     // Determine the AScore parameter file to use
                     var bestAScoreParamFilePath = DetermineAScoreParamFilePath(settingsFileName);
@@ -835,26 +835,26 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     }
 
                     // Find the spectrum file; should be _dta.zip or .mzML.gz
-                    udtJobMetadata.SpectrumFilePath = DetermineSpectrumFilePath(jobFolder.Value);
+                    jobMetadata.SpectrumFilePath = DetermineSpectrumFilePath(jobFolder.Value);
 
-                    if (string.IsNullOrWhiteSpace(udtJobMetadata.SpectrumFilePath))
+                    if (string.IsNullOrWhiteSpace(jobMetadata.SpectrumFilePath))
                     {
                         jobCountSkippedNoSpectrumFile++;
                         continue;
                     }
 
                     // Find any first hits and synopsis files
-                    var success = DetermineInputFilePaths(jobFolder.Value, ref udtJobMetadata, fileSuffixesToCombine);
+                    var success = DetermineInputFilePaths(jobFolder.Value, ref jobMetadata, fileSuffixesToCombine);
                     if (!success)
                     {
                         jobCountSkippedNoSynFile++;
                     }
                     else
                     {
-                        if (!string.IsNullOrWhiteSpace(udtJobMetadata.FirstHitsFilePath))
+                        if (!string.IsNullOrWhiteSpace(jobMetadata.FirstHitsFilePath))
                         {
                             // Analyze the first hits file with AScore
-                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRunTimes);
+                            success = RunAscore(progLoc, jobMetadata, jobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRunTimes);
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -862,10 +862,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             }
                         }
 
-                        if (!string.IsNullOrWhiteSpace(udtJobMetadata.SynopsisFilePath))
+                        if (!string.IsNullOrWhiteSpace(jobMetadata.SynopsisFilePath))
                         {
                             // Analyze the synopsis file with AScore
-                            success = RunAscore(progLoc, udtJobMetadata, udtJobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRunTimes);
+                            success = RunAscore(progLoc, jobMetadata, jobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRunTimes);
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -873,13 +873,13 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             }
                         }
 
-                        jobsProcessed.Add(udtJobMetadata);
+                        jobsProcessed.Add(jobMetadata);
                     }
 
                     // Delete the unzipped spectrum file
                     try
                     {
-                        File.Delete(udtJobMetadata.SpectrumFilePath);
+                        File.Delete(jobMetadata.SpectrumFilePath);
                     }
                     catch (Exception)
                     {
@@ -940,7 +940,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Runs AScore on the specified file
         /// </summary>
         /// <param name="progLoc"></param>
-        /// <param name="udtJobMetadata"></param>
+        /// <param name="jobMetadata"></param>
         /// <param name="inputFilePath"></param>
         /// <param name="ascoreParamFilePath"></param>
         /// <param name="fileTypeTag">Should be syn or fht; append to the AScore_ConsoleOutput file</param>
@@ -948,7 +948,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <returns>True if success, false if an error</returns>
         private bool RunAscore(
             string progLoc,
-            JobMetadataForAScore udtJobMetadata,
+            JobMetadataForAScore jobMetadata,
             string inputFilePath,
             string ascoreParamFilePath,
             string fileTypeTag,
@@ -958,19 +958,19 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             mConsoleOutputErrorMsg = string.Empty;
 
-            var fiSourceFile = new FileInfo(inputFilePath);
-            if (fiSourceFile.Directory == null)
+            var sourceFile = new FileInfo(inputFilePath);
+            if (sourceFile.Directory == null)
             {
-                LogError("Cannot determine the parent directory of " + fiSourceFile.FullName);
+                LogError("Cannot determine the parent directory of " + sourceFile.FullName);
                 return false;
             }
 
-            var currentWorkingDir = fiSourceFile.Directory.FullName;
-            var updatedInputFileName = Path.GetFileNameWithoutExtension(fiSourceFile.Name) + FILE_SUFFIX_SYN_PLUS_ASCORE;
+            var currentWorkingDir = sourceFile.Directory.FullName;
+            var updatedInputFileName = Path.GetFileNameWithoutExtension(sourceFile.Name) + FILE_SUFFIX_SYN_PLUS_ASCORE;
 
-            var arguments = " -T:" + udtJobMetadata.ToolNameForAScore +                     // Search engine name
+            var arguments = " -T:" + jobMetadata.ToolNameForAScore +                     // Search engine name
                             " -F:" + PossiblyQuotePath(inputFilePath) +                     // Input file path
-                            " -D:" + PossiblyQuotePath(udtJobMetadata.SpectrumFilePath) +   // DTA or mzML file path
+                            " -D:" + PossiblyQuotePath(jobMetadata.SpectrumFilePath) +   // DTA or mzML file path
                             " -P:" + PossiblyQuotePath(ascoreParamFilePath) +               // AScore parameter file
                             " -O:" + PossiblyQuotePath(currentWorkingDir) +                 // Output directory
                             " -U:" + PossiblyQuotePath(updatedInputFileName);               // Create an updated version of the input file,
@@ -998,12 +998,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(currentWorkingDir, ASCORE_CONSOLE_OUTPUT_PREFIX + "_" + fileTypeTag + ".txt");
 
-            var dtStartTime = DateTime.UtcNow;
+            var startTime = DateTime.UtcNow;
 
-            var blnSuccess = mCmdRunner.RunProgram(progLoc, arguments, "AScore", true);
+            var success = mCmdRunner.RunProgram(progLoc, arguments, "AScore", true);
 
-            var runtimeMinutes = DateTime.UtcNow.Subtract(dtStartTime).TotalMinutes;
-            processingRunTimes.Add(udtJobMetadata.Job + fileTypeTag, runtimeMinutes);
+            var runtimeMinutes = DateTime.UtcNow.Subtract(startTime).TotalMinutes;
+            processingRunTimes.Add(jobMetadata.Job + fileTypeTag, runtimeMinutes);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
@@ -1029,10 +1029,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
-                var msg = "Error running AScore for job " + udtJobMetadata.Job;
-                LogError(msg, msg + ", file " + fiSourceFile.Name + ", data package job " + udtJobMetadata.Job);
+                var msg = "Error running AScore for job " + jobMetadata.Job;
+                LogError(msg, msg + ", file " + sourceFile.Name + ", data package job " + jobMetadata.Job);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
@@ -1049,7 +1049,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             mStatusTools.UpdateAndWrite(mProgress);
             if (mDebugLevel >= 3)
             {
-                LogDebug("AScore search complete for data package job " + udtJobMetadata.Job);
+                LogDebug("AScore search complete for data package job " + jobMetadata.Job);
             }
 
             return true;

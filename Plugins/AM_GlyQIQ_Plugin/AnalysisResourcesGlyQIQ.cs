@@ -356,10 +356,10 @@ namespace AnalysisManagerGlyQIQPlugin
                 // There is no need to store the targets file in the job result folder
                 mJobParams.AddResultFileToSkip(sourceFileName);
 
-                var fiTargetsFile = new FileInfo(Path.Combine(mWorkDir, sourceFileName));
+                var targetsFile = new FileInfo(Path.Combine(mWorkDir, sourceFileName));
 
                 // Count the number of targets
-                mGlyQIQParams.NumTargets = CountTargets(fiTargetsFile.FullName);
+                mGlyQIQParams.NumTargets = CountTargets(targetsFile.FullName);
                 if (mGlyQIQParams.NumTargets < 1)
                 {
                     LogError("Targets file is empty: " + Path.Combine(sourceFolderPath, sourceFileName));
@@ -383,16 +383,16 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (mGlyQIQParams.WorkingParameterFolders.Count == 1)
                 {
                     // Running on just one core
-                    fiTargetsFile.MoveTo(Path.Combine(mGlyQIQParams.WorkingParameterFolders.First().Value.FullName, sourceFileName));
+                    targetsFile.MoveTo(Path.Combine(mGlyQIQParams.WorkingParameterFolders.First().Value.FullName, sourceFileName));
 
                     splitTargetFileInfo = new Dictionary<int, FileInfo> {
-                        { 1, fiTargetsFile}
+                        { 1, targetsFile}
                     };
                 }
                 else
                 {
                     // Split the targets file based on the number of cores
-                    splitTargetFileInfo = SplitTargetsFile(fiTargetsFile, mGlyQIQParams.NumTargets);
+                    splitTargetFileInfo = SplitTargetsFile(targetsFile, mGlyQIQParams.NumTargets);
                 }
 
                 // Retrieve the alignment parameters
@@ -499,34 +499,34 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Split the targets file
         /// </summary>
-        /// <param name="fiTargetsFile"></param>
+        /// <param name="targetsFile"></param>
         /// <param name="numTargets"></param>
         /// <returns>List of FileInfo objects for the newly created target files (key is core number, value is the Targets file path)</returns>
-        private Dictionary<int, FileInfo> SplitTargetsFile(FileSystemInfo fiTargetsFile, int numTargets)
+        private Dictionary<int, FileInfo> SplitTargetsFile(FileSystemInfo targetsFile, int numTargets)
         {
             try
             {
-                var lstOutputFiles = new Dictionary<int, FileInfo>();
+                var outputFiles = new Dictionary<int, FileInfo>();
 
-                using var reader = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                using var reader = new StreamReader(new FileStream(targetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                 // Read the header line
                 var headerLine = reader.ReadLine();
 
                 // Create the output files
-                var lstWriters = new List<StreamWriter>();
+                var writers = new List<StreamWriter>();
                 foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
                 {
                     var core = workingDirectory.Key;
 
                     var outputFilePath = Path.Combine(workingDirectory.Value.FullName,
-                        Path.GetFileNameWithoutExtension(fiTargetsFile.Name) + "_Part" + core + ".txt");
-                    lstWriters.Add(new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)));
-                    lstOutputFiles.Add(core, new FileInfo(outputFilePath));
+                        Path.GetFileNameWithoutExtension(targetsFile.Name) + "_Part" + core + ".txt");
+                    writers.Add(new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)));
+                    outputFiles.Add(core, new FileInfo(outputFilePath));
                 }
 
                 // Write the header line to each writer
-                foreach (var targetFileWriter in lstWriters)
+                foreach (var targetFileWriter in writers)
                 {
                     targetFileWriter.WriteLine(headerLine);
                 }
@@ -551,7 +551,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         outputFileIndex = outputFileIndexMax;
                     }
 
-                    lstWriters[outputFileIndex].WriteLine(lineIn);
+                    writers[outputFileIndex].WriteLine(lineIn);
 
                     targetsWritten++;
                     if (targetsWritten >= nextThreshold)
@@ -571,12 +571,12 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                foreach (var targetFileWriter in lstWriters)
+                foreach (var targetFileWriter in writers)
                 {
                     targetFileWriter.Close();
                 }
 
-                return lstOutputFiles;
+                return outputFiles;
             }
             catch (Exception ex)
             {

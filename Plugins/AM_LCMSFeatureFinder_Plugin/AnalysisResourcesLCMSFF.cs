@@ -47,49 +47,49 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve Decon2LS _scans.csv file for this dataset
             // The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
-            var strFileToGet = DatasetName + SCANS_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(strFileToGet, false))
+            var fileToGet = DatasetName + SCANS_FILE_SUFFIX;
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve Decon2LS _isos.csv files for this dataset
-            strFileToGet = DatasetName + ISOS_FILE_SUFFIX;
-            if (!FileSearch.FindAndRetrieveMiscFiles(strFileToGet, false))
+            fileToGet = DatasetName + ISOS_FILE_SUFFIX;
+            if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            mJobParams.AddResultFileToSkip(strFileToGet);
+            mJobParams.AddResultFileToSkip(fileToGet);
 
             // Retrieve the LCMSFeatureFinder .Ini file specified for this job
-            var strLCMSFFIniFileName = mJobParams.GetParam("LCMSFeatureFinderIniFile");
-            if (string.IsNullOrEmpty(strLCMSFFIniFileName))
+            var lcmsFeatureFinderIniFileName = mJobParams.GetParam("LCMSFeatureFinderIniFile");
+            if (string.IsNullOrEmpty(lcmsFeatureFinderIniFileName))
             {
                 LogError("LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
-            var strFFIniFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strFFIniFileStoragePath))
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
+            var lcmsFeatureFinderIniFileStorageDirectory = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(lcmsFeatureFinderIniFileStorageDirectory))
             {
-                strFFIniFileStoragePath = @"\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder";
+                lcmsFeatureFinderIniFileStorageDirectory = @"\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder";
                 LogWarning(
-                    "Parameter '" + strParamFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strFFIniFileStoragePath);
+                    "Parameter '" + paramFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + lcmsFeatureFinderIniFileStorageDirectory);
             }
 
-            if (!CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, mWorkDir))
+            if (!CopyFileToWorkDir(lcmsFeatureFinderIniFileName, lcmsFeatureFinderIniFileStorageDirectory, mWorkDir))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var strRawDataType = mJobParams.GetParam("RawDataType");
+            var rawDataType = mJobParams.GetParam("RawDataType");
 
-            if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
+            if (rawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
             {
                 if (mDebugLevel >= 2)
                 {
@@ -97,7 +97,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 }
 
                 // IMS data; need to get the .UIMF file
-                if (!FileSearch.RetrieveSpectra(strRawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataType))
                 {
                     LogDebug("AnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -120,10 +120,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // mJobParams.AddResultFileExtensionToSkip(".dta")  'DTA files
 
             // Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path
-            var success = UpdateFeatureFinderIniFile(strLCMSFFIniFileName);
+            var success = UpdateFeatureFinderIniFile(lcmsFeatureFinderIniFileName);
             if (!success)
             {
-                var Msg = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
+                var Msg = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + lcmsFeatureFinderIniFileName;
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = Msg;
@@ -135,23 +135,23 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private string GetValue(string strLine)
+        private string GetValue(string dataLine)
         {
-            var strValue = string.Empty;
+            var value = string.Empty;
 
-            if (!string.IsNullOrEmpty(strLine))
+            if (!string.IsNullOrEmpty(dataLine))
             {
-                var intEqualsIndex = strLine.IndexOf('=');
-                if (intEqualsIndex > 0 && intEqualsIndex < strLine.Length - 1)
+                var equalsIndex = dataLine.IndexOf('=');
+                if (equalsIndex > 0 && equalsIndex < dataLine.Length - 1)
                 {
-                    strValue = strLine.Substring(intEqualsIndex + 1);
+                    value = dataLine.Substring(equalsIndex + 1);
                 }
             }
 
-            return strValue;
+            return value;
         }
 
-        private bool UpdateFeatureFinderIniFile(string lcmsFFIniFileName)
+        private bool UpdateFeatureFinderIniFile(string lcmsFeatureFinderIniFileName)
         {
             const string INPUT_FILENAME_KEY = "InputFileName";
             const string OUTPUT_DIRECTORY_KEY = "OutputDirectory";
@@ -161,8 +161,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // In addition, look for an entry for DeconToolsFilterFileName;
             //  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-            var srcFilePath = Path.Combine(mWorkDir, lcmsFFIniFileName);
-            var targetFilePath = Path.Combine(mWorkDir, lcmsFFIniFileName + "_new");
+            var srcFilePath = Path.Combine(mWorkDir, lcmsFeatureFinderIniFileName);
+            var targetFilePath = Path.Combine(mWorkDir, lcmsFeatureFinderIniFileName + "_new");
             var isosFilePath = Path.Combine(mWorkDir, DatasetName + ISOS_FILE_SUFFIX);
 
             var inputFileDefined = false;
@@ -207,23 +207,23 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                 {
                                     // Copy the file defined by DeconToolsFilterFileName= to the working directory
 
-                                    var strValue = GetValue(dataLine);
+                                    var value = GetValue(dataLine);
 
-                                    if (!string.IsNullOrEmpty(strValue))
+                                    if (!string.IsNullOrEmpty(value))
                                     {
-                                        var file = new FileInfo(strValue);
+                                        var file = new FileInfo(value);
                                         if (!file.Exists)
                                         {
-                                            mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + lcmsFFIniFileName +
-                                                        " points to an invalid file: " + strValue;
+                                            mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + lcmsFeatureFinderIniFileName +
+                                                        " points to an invalid file: " + value;
                                             LogError(mMessage);
                                             result = false;
                                             break;
                                         }
 
                                         // Copy the file locally
-                                        var strTargetFilePath = Path.Combine(mWorkDir, file.Name);
-                                        file.CopyTo(strTargetFilePath);
+                                        var destinationPath = Path.Combine(mWorkDir, file.Name);
+                                        file.CopyTo(destinationPath);
                                     }
                                 }
 
@@ -244,7 +244,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     catch (Exception ex)
                     {
                         LogError("AnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
-                                 "(" + lcmsFFIniFileName + "): " + ex.Message);
+                                 "(" + lcmsFeatureFinderIniFileName + "): " + ex.Message);
                         result = false;
                     }
                 } // end using
@@ -263,7 +263,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             catch (Exception ex)
             {
                 LogError("AnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
-                         "(" + lcmsFFIniFileName + "): " + ex.Message);
+                         "(" + lcmsFeatureFinderIniFileName + "): " + ex.Message);
                 result = false;
             }
 

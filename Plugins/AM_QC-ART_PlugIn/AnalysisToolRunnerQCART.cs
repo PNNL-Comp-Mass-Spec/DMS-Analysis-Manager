@@ -220,7 +220,7 @@ namespace AnalysisManagerQCARTPlugin
 
         private bool CreateBaselineMetricsMetadataFile(
             Dictionary<string, int> datasetNamesAndJobs,
-            FileSystemInfo fiNewBaselineData)
+            FileSystemInfo newBaselineData)
         {
             try
             {
@@ -230,18 +230,18 @@ namespace AnalysisManagerQCARTPlugin
                 var baselineMetadataPathLocal = Path.Combine(mWorkDir, baselineMetadataFileName);
                 var baselineMetadataPathRemote = Path.Combine(cacheFolderPath, baselineMetadataFileName);
 
-                var dtCurrentTime = DateTime.Now;
+                var currentTime = DateTime.Now;
 
-                var baselineDataCacheName = baselineMetadataFileName + "_" + dtCurrentTime.ToString("yyyy-MM-dd_hhmm") + ".csv";
+                var baselineDataCacheName = baselineMetadataFileName + "_" + currentTime.ToString("yyyy-MM-dd_hhmm") + ".csv";
 
                 var baselineDataPathRemote = Path.Combine(cacheFolderPath, baselineDataCacheName);
 
-                mJobParams.AddResultFileToSkip(fiNewBaselineData.Name);
+                mJobParams.AddResultFileToSkip(newBaselineData.Name);
 
                 var projectName = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_PROJECT_NAME, string.Empty);
 
                 // Create the new metadata file
-                var baselineResultsTimestamp = dtCurrentTime.ToString("yyyy-MM-dd hh:mm:ss tt");
+                var baselineResultsTimestamp = currentTime.ToString("yyyy-MM-dd hh:mm:ss tt");
 
                 using (var writer = new XmlTextWriter(new FileStream(baselineMetadataPathLocal, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.UTF8))
                 {
@@ -290,7 +290,7 @@ namespace AnalysisManagerQCARTPlugin
                 try
                 {
                     // Copy the baseline data cache file to the remote path
-                    mFileTools.CopyFile(fiNewBaselineData.FullName, baselineDataPathRemote);
+                    mFileTools.CopyFile(newBaselineData.FullName, baselineDataPathRemote);
                 }
                 catch (Exception ex)
                 {
@@ -323,9 +323,9 @@ namespace AnalysisManagerQCARTPlugin
 
             try
             {
-                var fiLockFile = new FileInfo(lockFilePath);
-                if (fiLockFile.Exists)
-                    fiLockFile.Delete();
+                var lockFile = new FileInfo(lockFilePath);
+                if (lockFile.Exists)
+                    lockFile.Delete();
             }
             catch
             {
@@ -354,13 +354,13 @@ namespace AnalysisManagerQCARTPlugin
             return datasetNamesAndJobs;
         }
 
-        private bool LoadQCARTResults(FileSystemInfo fiResults, out double qcartValue)
+        private bool LoadQCARTResults(FileSystemInfo results, out double qcartValue)
         {
             qcartValue = 0;
             var validData = false;
             try
             {
-                using (var reader = new StreamReader(new FileStream(fiResults.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(results.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -411,7 +411,7 @@ namespace AnalysisManagerQCARTPlugin
 
         /*
          * Not used by this plugin
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -429,7 +429,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -447,18 +447,18 @@ namespace AnalysisManagerQCARTPlugin
             try
             {
                 // Load the QC-ART results for the target dataset
-                var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesQCART.QCART_RESULTS_FILE_SUFFIX));
+                var resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesQCART.QCART_RESULTS_FILE_SUFFIX));
 
-                if (!fiResultsFile.Exists)
+                if (!resultsFile.Exists)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("QC-ART results not found: " + fiResultsFile.Name);
+                        LogError("QC-ART results not found: " + resultsFile.Name);
                     }
                     return false;
                 }
 
-                var success = LoadQCARTResults(fiResultsFile, out var qcartValue);
+                var success = LoadQCARTResults(resultsFile, out var qcartValue);
                 if (!success)
                 {
                     return false;
@@ -479,16 +479,16 @@ namespace AnalysisManagerQCARTPlugin
                     return true;
                 }
 
-                var fiNewBaselineData = new FileInfo(Path.Combine(mWorkDir, AnalysisResourcesQCART.NEW_BASELINE_DATASETS_CACHE_FILE));
-                if (!fiNewBaselineData.Exists)
+                var newBaselineData = new FileInfo(Path.Combine(mWorkDir, AnalysisResourcesQCART.NEW_BASELINE_DATASETS_CACHE_FILE));
+                if (!newBaselineData.Exists)
                 {
                     mMessage = "QC-ART Processing error: new baseline data file not found";
-                    LogError(mMessage + ": " + fiNewBaselineData.Name);
+                    LogError(mMessage + ": " + newBaselineData.Name);
                 }
 
-                success = CreateBaselineMetricsMetadataFile(datasetNamesAndJobs, fiNewBaselineData);
+                success = CreateBaselineMetricsMetadataFile(datasetNamesAndJobs, newBaselineData);
                 if (success)
-                    mJobParams.AddResultFileToSkip(fiNewBaselineData.Name);
+                    mJobParams.AddResultFileToSkip(newBaselineData.Name);
 
                 return success;
             }
@@ -555,9 +555,9 @@ namespace AnalysisManagerQCARTPlugin
 
             // Parse the QCART_summary file to look for errors
             Thread.Sleep(250);
-            var fiLogSummaryFile = new FileInfo(Path.Combine(mWorkDir, "QCART_summary.txt"));
+            var logSummaryFile = new FileInfo(Path.Combine(mWorkDir, "QCART_summary.txt"));
 
-            ParseConsoleOutputFile(fiLogSummaryFile.FullName);
+            ParseConsoleOutputFile(logSummaryFile.FullName);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -589,22 +589,22 @@ namespace AnalysisManagerQCARTPlugin
         /*
          * Not used by this plugin
          *
-        private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
+        private void StoreConsoleErrorMessage(StreamReader inFile, string lineIn)
         {
             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 mConsoleOutputErrorMsg = "Error running QCART:";
             }
-            mConsoleOutputErrorMsg += "; " + strLineIn;
+            mConsoleOutputErrorMsg += "; " + lineIn;
 
-            while (!srInFile.EndOfStream)
+            while (!inFile.EndOfStream)
             {
                 // Store the remaining console output lines
-                strLineIn = srInFile.ReadLine();
+                lineIn = inFile.ReadLine();
 
-                if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("========"))
+                if (!string.IsNullOrWhiteSpace(lineIn) && !lineIn.StartsWith("========"))
                 {
-                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                    mConsoleOutputErrorMsg += "; " + lineIn;
                 }
 
             }
@@ -672,8 +672,8 @@ namespace AnalysisManagerQCARTPlugin
                 LogDebug("Determining tool version info");
             }
 
-            var fiProgram = new FileInfo(rProgLoc);
-            if (!fiProgram.Exists)
+            var program = new FileInfo(rProgLoc);
+            if (!program.Exists)
             {
                 try
                 {
@@ -687,12 +687,12 @@ namespace AnalysisManagerQCARTPlugin
                 }
             }
 
-            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
+            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, program.FullName);
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                fiProgram
+                program
             };
 
             try

@@ -209,11 +209,11 @@ namespace AnalysisManager_Mage_PlugIn
                     AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
             }
 
-            var lstMatchingFiles = (from item in filesInDirectory
+            var matchingFiles = (from item in filesInDirectory
                                     where string.Equals(item.Name, AnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
                                     select item).ToList();
 
-            if (lstMatchingFiles.Count == 0)
+            if (matchingFiles.Count == 0)
             {
                 var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
                 if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -234,7 +234,7 @@ namespace AnalysisManager_Mage_PlugIn
             else
             {
                 // Validate the T_alias.txt file to remove blank rows and remove extra columns
-                ValidateAliasFile(lstMatchingFiles.First());
+                ValidateAliasFile(matchingFiles.First());
             }
 
             OnDebugEvent("Importing data package files into SQLite, source directory " + inputDirectoryPath + ", import mode " + importMode);

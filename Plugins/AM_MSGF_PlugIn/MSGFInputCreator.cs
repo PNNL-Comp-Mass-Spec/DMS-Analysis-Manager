@@ -178,27 +178,27 @@ namespace AnalysisManagerMSGFPlugin
 
                 while (true)
                 {
-                    var spectrumFound = mgfReader.ReadNextSpectrum(out _, out var udtSpectrumHeaderInfo);
+                    var spectrumFound = mgfReader.ReadNextSpectrum(out _, out var spectrumHeaderInfo);
                     if (!spectrumFound)
                         break;
 
                     spectrumIndex++;
 
-                    if (udtSpectrumHeaderInfo.ParentIonChargeCount == 0)
+                    if (spectrumHeaderInfo.ParentIonChargeCount == 0)
                     {
-                        var scanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, 0);
+                        var scanAndCharge = ConstructMGFMappingCode(spectrumHeaderInfo.ScanNumberStart, 0);
                         mScanAndChargeToMGFIndex.Add(scanAndCharge, spectrumIndex);
                     }
                     else
                     {
-                        for (var chargeIndex = 0; chargeIndex <= udtSpectrumHeaderInfo.ParentIonChargeCount - 1; chargeIndex++)
+                        for (var chargeIndex = 0; chargeIndex <= spectrumHeaderInfo.ParentIonChargeCount - 1; chargeIndex++)
                         {
-                            var scanAndCharge = ConstructMGFMappingCode(udtSpectrumHeaderInfo.ScanNumberStart, udtSpectrumHeaderInfo.ParentIonCharges[chargeIndex]);
+                            var scanAndCharge = ConstructMGFMappingCode(spectrumHeaderInfo.ScanNumberStart, spectrumHeaderInfo.ParentIonCharges[chargeIndex]);
                             mScanAndChargeToMGFIndex.Add(scanAndCharge, spectrumIndex);
                         }
                     }
 
-                    mMGFIndexToScan.Add(spectrumIndex, udtSpectrumHeaderInfo.ScanNumberStart);
+                    mMGFIndexToScan.Add(spectrumIndex, spectrumHeaderInfo.ScanNumberStart);
                 }
             }
             catch (Exception ex)

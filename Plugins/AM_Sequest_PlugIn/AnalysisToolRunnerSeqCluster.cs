@@ -1310,7 +1310,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Read the sequest.log file
-            var sbContents = new StringBuilder();
+            var contents = new StringBuilder();
             var dtaCountSearched = 0;
 
             try
@@ -1326,7 +1326,7 @@ namespace AnalysisManagerSequestPlugin
                         dtaCountSearched++;
                     }
 
-                    sbContents.AppendLine(dataLine);
+                    contents.AppendLine(dataLine);
                 }
             }
             catch (Exception ex)
@@ -1336,7 +1336,7 @@ namespace AnalysisManagerSequestPlugin
                 return;
             }
 
-            var fileContents = sbContents.ToString();
+            var fileContents = contents.ToString();
 
             // Node machine count
             var NumNodeMachines = GetIntegerFromSeqLogFileString(fileContents, "starting the SEQUEST task on\\s+\\d+\\s+node");

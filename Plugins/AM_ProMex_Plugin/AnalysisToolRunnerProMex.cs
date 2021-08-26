@@ -77,11 +77,11 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     // Look for the results file
 
-                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MS1FT_EXTENSION));
+                    var resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MS1FT_EXTENSION));
 
-                    if (fiResultsFile.Exists)
+                    if (resultsFile.Exists)
                     {
-                        var postProcessSuccess = PostProcessProMexResults(fiResultsFile);
+                        var postProcessSuccess = PostProcessProMexResults(resultsFile);
                         if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -95,7 +95,7 @@ namespace AnalysisManagerProMexPlugIn
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
-                            mMessage = "ProMex results file not found: " + fiResultsFile.Name;
+                            mMessage = "ProMex results file not found: " + resultsFile.Name;
                         }
                         processingSuccess = false;
                     }
@@ -154,8 +154,8 @@ namespace AnalysisManagerProMexPlugIn
         /// <summary>
         /// Parse the ProMex console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -182,11 +182,11 @@ namespace AnalysisManagerProMexPlugIn
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -194,14 +194,14 @@ namespace AnalysisManagerProMexPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
                 float progressComplete = 0;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -231,10 +231,10 @@ namespace AnalysisManagerProMexPlugIn
                             continue;
                         }
 
-                        var oMatch = reCheckProgress.Match(dataLine);
-                        if (oMatch.Success)
+                        var match = reCheckProgress.Match(dataLine);
+                        if (match.Success)
                         {
-                            float.TryParse(oMatch.Groups[1].ToString(), out progressComplete);
+                            float.TryParse(match.Groups[1].ToString(), out progressComplete);
                         }
                     }
                 }
@@ -249,18 +249,18 @@ namespace AnalysisManagerProMexPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
-        private bool PostProcessProMexResults(FileSystemInfo fiResultsFile)
+        private bool PostProcessProMexResults(FileSystemInfo resultsFile)
         {
             // Make sure there are at least two features in the .ms1ft file
 
             try
             {
-                using (var resultsReader = new StreamReader(new FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var resultsReader = new StreamReader(new FileStream(resultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     var lineCount = 0;
                     while (!resultsReader.EndOfStream)
@@ -341,7 +341,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = mCmdRunner.RunProgram(progLoc, arguments, "ProMex", true);
+            var success = mCmdRunner.RunProgram(progLoc, arguments, "ProMex", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
@@ -362,7 +362,7 @@ namespace AnalysisManagerProMexPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running ProMex");
 
@@ -386,8 +386,8 @@ namespace AnalysisManagerProMexPlugIn
 
             if (proMexBruker)
             {
-                blnSuccess = StorePbfFileInCache();
-                if (!blnSuccess)
+                success = StorePbfFileInCache();
+                if (!success)
                 {
                     return false;
                 }
@@ -405,11 +405,11 @@ namespace AnalysisManagerProMexPlugIn
 
         private bool StorePbfFileInCache()
         {
-            var fiAutoGeneratedPbfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION));
+            var autoGeneratedPbfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION));
 
-            if (!fiAutoGeneratedPbfFile.Exists)
+            if (!autoGeneratedPbfFile.Exists)
             {
-                LogError("Auto-generated .PBF file not found; this is unexpected: " + fiAutoGeneratedPbfFile.Name);
+                LogError("Auto-generated .PBF file not found; this is unexpected: " + autoGeneratedPbfFile.Name);
                 return false;
             }
 
@@ -430,7 +430,7 @@ namespace AnalysisManagerProMexPlugIn
             mResultsDirectoryName = "PBF_Gen_1_193_000000";
 
             // Copy the .pbf file to the MSXML cache
-            var remoteCacheFilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, fiAutoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded: true);
+            var remoteCacheFilePath = CopyFileToServerCache(msXmlCacheFolder.FullName, autoGeneratedPbfFile.FullName, purgeOldFilesIfNeeded: true);
 
             // Restore the result folder name
             mResultsDirectoryName = resultFolderNameSaved;
@@ -439,19 +439,19 @@ namespace AnalysisManagerProMexPlugIn
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {
-                    LogError("CopyFileToServerCache returned false for " + fiAutoGeneratedPbfFile.Name);
+                    LogError("CopyFileToServerCache returned false for " + autoGeneratedPbfFile.Name);
                 }
                 return false;
             }
 
             // Create the _CacheInfo.txt file
-            var cacheInfoFilePath = fiAutoGeneratedPbfFile.FullName + "_CacheInfo.txt";
+            var cacheInfoFilePath = autoGeneratedPbfFile.FullName + "_CacheInfo.txt";
             using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 writer.WriteLine(remoteCacheFilePath);
             }
 
-            mJobParams.AddResultFileToSkip(fiAutoGeneratedPbfFile.Name);
+            mJobParams.AddResultFileToSkip(autoGeneratedPbfFile.Name);
 
             return true;
         }

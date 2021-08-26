@@ -411,23 +411,23 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             var dataLineLCase = dataLine.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
-                            foreach (var oItem in mConsoleOutputProgressMap)
+                            foreach (var item in mConsoleOutputProgressMap)
                             {
-                                if (dataLine.Contains(oItem.Key))
+                                if (dataLine.Contains(item.Key))
                                 {
-                                    if (effectiveProgress < oItem.Value)
+                                    if (effectiveProgress < item.Value)
                                     {
-                                        effectiveProgress = oItem.Value;
+                                        effectiveProgress = item.Value;
                                     }
                                 }
                             }
 
                             if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
-                                var oMatch = reSubProgress.Match(dataLine);
-                                if (oMatch.Success)
+                                var match = reSubProgress.Match(dataLine);
+                                if (match.Success)
                                 {
-                                    if (double.TryParse(oMatch.Groups[1].Value, out subProgressAddOn))
+                                    if (double.TryParse(match.Groups[1].Value, out subProgressAddOn))
                                     {
                                         subProgressAddOn /= 100;
                                     }

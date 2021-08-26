@@ -109,13 +109,13 @@ namespace TestAScorePlugIn
         public bool GetJobParameter(string Name, bool ValueIfMissing)
         {
 
-            string strValue;
+            string paramValue;
 
             try
             {
-                strValue = GetParam(Name);
+                paramValue = GetParam(Name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(paramValue))
                 {
                     return ValueIfMissing;
                 }
@@ -126,21 +126,21 @@ namespace TestAScorePlugIn
                 return ValueIfMissing;
             }
 
-            // Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToBoolean(strValue);
+            // Note: if paramValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToBoolean(paramValue);
 
         }
 
         public string GetJobParameter(string Name, string ValueIfMissing)
         {
 
-            string strValue;
+            string paramValue;
 
             try
             {
-                strValue = GetParam(Name);
+                paramValue = GetParam(Name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(paramValue))
                 {
                     return ValueIfMissing;
                 }
@@ -151,18 +151,18 @@ namespace TestAScorePlugIn
                 return ValueIfMissing;
             }
 
-            return strValue;
+            return paramValue;
         }
 
         public float GetJobParameter(string Name, float ValueIfMissing)
         {
-            string strValue;
+            string paramValue;
 
             try
             {
-                strValue = GetParam(Name);
+                paramValue = GetParam(Name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(paramValue))
                 {
                     return ValueIfMissing;
                 }
@@ -173,19 +173,19 @@ namespace TestAScorePlugIn
                 return ValueIfMissing;
             }
 
-            // Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToSingle(strValue);
+            // Note: if paramValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToSingle(paramValue);
         }
 
         public int GetJobParameter(string Name, int ValueIfMissing)
         {
-            string strValue;
+            string paramValue;
 
             try
             {
-                strValue = GetParam(Name);
+                paramValue = GetParam(Name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(paramValue))
                 {
                     return ValueIfMissing;
                 }
@@ -196,8 +196,8 @@ namespace TestAScorePlugIn
                 return ValueIfMissing;
             }
 
-            // Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToInt32(strValue);
+            // Note: if paramValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToInt32(paramValue);
 
         }
 

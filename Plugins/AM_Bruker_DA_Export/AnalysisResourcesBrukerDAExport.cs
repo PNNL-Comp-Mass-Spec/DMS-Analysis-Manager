@@ -67,28 +67,28 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Get the instrument data
-                var strRawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
 
                 var retrievalAttempts = 0;
 
                 while (retrievalAttempts < 2)
                 {
                     retrievalAttempts++;
-                    switch (strRawDataType.ToLower())
+                    switch (rawDataType.ToLower())
                     {
                         case RAW_DATA_TYPE_DOT_D_FOLDERS:
                         case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
                         case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                            currentTask = "Retrieve spectra: " + strRawDataType;
+                            currentTask = "Retrieve spectra: " + rawDataType;
 
-                            if (!FileSearch.RetrieveSpectra(strRawDataType))
+                            if (!FileSearch.RetrieveSpectra(rawDataType))
                             {
                                 LogError("AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;
                         default:
-                            mMessage = "Dataset type " + strRawDataType + " is not supported";
+                            mMessage = "Dataset type " + rawDataType + " is not supported";
                             LogWarning(
                                 "AnalysisManagerBrukerDAExportPlugin.GetResources: " + mMessage + "; must be " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + " or " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);

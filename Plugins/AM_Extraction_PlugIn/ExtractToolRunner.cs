@@ -778,7 +778,7 @@ namespace AnalysisManagerExtractionPlugin
                                 continue;
                             }
 
-                            var udtPSM = new MSGFPlusPSMs.PSMInfo
+                            var psm = new MSGFPlusPSMs.PSMInfo
                             {
                                 Peptide = peptide,
                                 SpecEValue = specEValue,
@@ -789,7 +789,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 // Possibly store this value
 
-                                var passesFilter = hitsForScan.AddPSM(udtPSM, protein);
+                                var passesFilter = hitsForScan.AddPSM(psm, protein);
 
                                 if (passesFilter && specEValue < scanChargeBestScore[scanChargeCombo])
                                 {
@@ -800,7 +800,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 // New entry for this scan/charge combo
                                 hitsForScan = new MSGFPlusPSMs(scanNumber, chargeState, numberOfHitsPerScanToKeep);
-                                hitsForScan.AddPSM(udtPSM, protein);
+                                hitsForScan.AddPSM(psm, protein);
 
                                 dictionary.Add(scanChargeCombo, hitsForScan);
                                 scanChargeBestScore.Add(scanChargeCombo, specEValue);

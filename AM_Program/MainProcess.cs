@@ -2481,9 +2481,9 @@ namespace AnalysisManagerProg
                 try
                 {
                     // We run the DMS Update Manager for the first job processed, but not for subsequent jobs
-                    var successCopying = mDMSProgramsSynchronized || transferUtility.RunDMSUpdateManager();
+                    var copySuccess = mDMSProgramsSynchronized || transferUtility.RunDMSUpdateManager();
 
-                    if (!successCopying)
+                    if (!copySuccess)
                     {
                         mMostRecentErrorMessage = "Error copying manager-related files to the remote host";
                         LogError(mMostRecentErrorMessage);
@@ -2507,9 +2507,9 @@ namespace AnalysisManagerProg
 
                 try
                 {
-                    var successCopying = toolResourcer.CopyResourcesToRemote(transferUtility);
+                    var copySuccess = toolResourcer.CopyResourcesToRemote(transferUtility);
 
-                    if (!successCopying)
+                    if (!copySuccess)
                     {
                         mMostRecentErrorMessage = "Error copying job-related files to the remote host";
                         LogError(mMostRecentErrorMessage);

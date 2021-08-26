@@ -603,15 +603,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var tsvFilePath = Path.Combine(mWorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
-                var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
-                if (!fiMzidFile.Exists)
+                var mzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
+                if (!mzidFile.Exists)
                 {
-                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
+                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + mzidFile.FullName);
                     return string.Empty;
                 }
 
                 // Make sure the mzid file ends with XML tag </MzIdentML>
-                if (!MSGFPlusResultsFileHasClosingTag(fiMzidFile))
+                if (!MSGFPlusResultsFileHasClosingTag(mzidFile))
                 {
                     OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML");
                     return string.Empty;
@@ -711,22 +711,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                 tsvFilePath = Path.Combine(mWorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
-                var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
-                if (!fiMzidFile.Exists)
+                var mzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
+                if (!mzidFile.Exists)
                 {
-                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
+                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + mzidFile.FullName);
                     return string.Empty;
                 }
 
                 // Make sure the mzid file ends with XML tag </MzIdentML>
-                if (!MSGFPlusResultsFileHasClosingTag(fiMzidFile))
+                if (!MSGFPlusResultsFileHasClosingTag(mzidFile))
                 {
                     OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML");
                     return string.Empty;
                 }
 
                 // Dynamically set the amount of required memory based on the size of the .mzid file
-                var fileSizeMB = Global.BytesToMB(fiMzidFile.Length);
+                var fileSizeMB = Global.BytesToMB(mzidFile.Length);
                 int javaMemorySizeMB;
 
                 if (fileSizeMB < 100)
@@ -2214,14 +2214,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
         /// </summary>
         /// <param name="sourceParameterFilePath">Full path to the MS-GF+ parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
-        /// <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
+        /// <param name="options">String builder of command line arguments to pass to MS-GF+</param>
         /// <param name="numMods">Max Number of Modifications per peptide</param>
         /// <param name="staticMods">List of Static Mods</param>
         /// <param name="dynamicMods">List of Dynamic Mods</param>
         /// <param name="customAminoAcids">List of Custom Amino Acids</param>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("Deprecated in February 2019")]
-        private bool ParseMSGFDBModifications(string sourceParameterFilePath, StringBuilder sbOptions, int numMods,
+        private bool ParseMSGFDBModifications(string sourceParameterFilePath, StringBuilder options, int numMods,
             IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
         {
             try
@@ -2239,7 +2239,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
                 PhosphorylationSearch = false;
 
-                sbOptions.Append(" -mod " + MOD_FILE_NAME);
+                options.Append(" -mod " + MOD_FILE_NAME);
 
                 using var writer = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -3078,24 +3078,24 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(dbTools);
 
                 // Get a table to hold the results of the query
-                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dtResults, retryCount);
+                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var results, retryCount);
 
                 if (!success)
                 {
                     OnErrorEvent("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset");
-                    dtResults.Dispose();
+                    results.Dispose();
                     return false;
                 }
 
                 // Verify at least one row returned
-                if (dtResults.Rows.Count < 1)
+                if (results.Rows.Count < 1)
                 {
                     // No data was returned
                     OnStatusEvent("No rows were returned for dataset " + datasetName + " from V_Dataset_ScanType_CrossTab in DMS");
                     return false;
                 }
 
-                foreach (DataRow curRow in dtResults.Rows)
+                foreach (DataRow curRow in results.Rows)
                 {
                     countLowResMSn += curRow["CID-MSn"].CastDBVal<int>();
                     countHighResMSn += curRow["CID-HMSn"].CastDBVal<int>();
@@ -3114,7 +3114,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     countLowResMSn += curRow["PQD-MSn"].CastDBVal<int>();
                 }
 
-                dtResults.Dispose();
+                results.Dispose();
                 return true;
             }
             catch (Exception ex)
@@ -3276,9 +3276,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private string ReverseString(string text)
         {
-            var chReversed = text.ToCharArray();
-            Array.Reverse(chReversed);
-            return new string(chReversed);
+            var reversed = text.ToCharArray();
+            Array.Reverse(reversed);
+            return new string(reversed);
         }
 
         private static bool TryGetParameter(IEnumerable<MSGFPlusParameter> msgfPlusParameters,
@@ -3635,7 +3635,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Zips MS-GF+ Output File (creating a .gz file)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        public CloseOutType ZipOutputFile(AnalysisToolRunnerBase oToolRunner, string fileName)
+        public CloseOutType ZipOutputFile(AnalysisToolRunnerBase toolRunner, string fileName)
         {
             try
             {
@@ -3646,9 +3646,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
-                if (!oToolRunner.GZipFile(tmpFilePath, false))
+                if (!toolRunner.GZipFile(tmpFilePath, false))
                 {
-                    OnErrorEvent("Error zipping output files: oToolRunner.GZipFile returned false");
+                    OnErrorEvent("Error zipping output files: toolRunner.GZipFile returned false");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

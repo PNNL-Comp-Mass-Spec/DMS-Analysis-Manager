@@ -482,7 +482,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 const bool continueOnError = true;
                 const int maxErrorCount = 10;
-                var dtLastLogTime = DateTime.UtcNow;
+                var lastLogTime = DateTime.UtcNow;
 
                 // This dictionary tracks the datasets that have been processed
                 // Keys are dataset ID, values are dataset name
@@ -490,9 +490,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var jobInfo in linqJobsSortedByDataset)
                 {
-                    var udtCurrentJobInfo = jobInfo.Value;
+                    var currentJobInfo = jobInfo.Value;
 
-                    mStatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
+                    mStatusTools.CurrentOperation = "Processing job " + currentJobInfo.Job + ", dataset " + currentJobInfo.Dataset;
 
                     Console.WriteLine();
                     LogDebug(string.Format("{0}: {1}", jobsProcessed + 1, mStatusTools.CurrentOperation), 10);
@@ -509,9 +509,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             break;
                     }
 
-                    if (!datasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID))
+                    if (!datasetsProcessed.ContainsKey(currentJobInfo.DatasetID))
                     {
-                        datasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset);
+                        datasetsProcessed.Add(currentJobInfo.DatasetID, currentJobInfo.Dataset);
                     }
 
                     jobsProcessed++;
@@ -519,9 +519,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         mDataPackagePeptideHitJobs.Count);
                     mStatusTools.UpdateAndWrite(mProgress);
 
-                    if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 || mDebugLevel >= 2)
+                    if (DateTime.UtcNow.Subtract(lastLogTime).TotalMinutes >= 5 || mDebugLevel >= 2)
                     {
-                        dtLastLogTime = DateTime.UtcNow;
+                        lastLogTime = DateTime.UtcNow;
                         LogDebug(" ... processed " + jobsProcessed + " / " + mDataPackagePeptideHitJobs.Count + " jobs");
                     }
                 }
@@ -987,16 +987,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                var fiNewMGFFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + DOT_MGF));
+                var newMGFFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + DOT_MGF));
 
-                if (!fiNewMGFFile.Exists)
+                if (!newMGFFile.Exists)
                 {
                     // MGF file was not created
                     LogError("A .mgf file was not created for the _dta.txt file for job " + dataPkgJob.Job);
                     return false;
                 }
 
-                mgfFilePath = fiNewMGFFile.FullName;
+                mgfFilePath = newMGFFile.FullName;
 
                 return true;
             }
@@ -1046,20 +1046,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             try
             {
                 // Look in mWorkDir for the .mzXML file for this dataset
-                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, dataset + AnalysisResources.DOT_MZXML_EXTENSION));
+                var mzXmlFilePathLocal = new FileInfo(Path.Combine(mWorkDir, dataset + AnalysisResources.DOT_MZXML_EXTENSION));
 
-                if (fiMzXmlFilePathLocal.Exists)
+                if (mzXmlFilePathLocal.Exists)
                 {
-                    if (!mPreviousDatasetFilesToDelete.Contains(fiMzXmlFilePathLocal.FullName))
+                    if (!mPreviousDatasetFilesToDelete.Contains(mzXmlFilePathLocal.FullName))
                     {
-                        AddToListIfNew(mPreviousDatasetFilesToDelete, fiMzXmlFilePathLocal.FullName);
+                        AddToListIfNew(mPreviousDatasetFilesToDelete, mzXmlFilePathLocal.FullName);
                     }
                     return true;
                 }
 
                 // .mzXML file not found
                 // Look for a StoragePathInfo file
-                var mzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
+                var mzXmlStoragePathFile = mzXmlFilePathLocal.FullName + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
 
                 string destinationPath;
                 bool success;
@@ -1170,10 +1170,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!success)
                     return false;
 
-                fiMzXmlFilePathLocal.Refresh();
-                if (fiMzXmlFilePathLocal.Exists)
+                mzXmlFilePathLocal.Refresh();
+                if (mzXmlFilePathLocal.Exists)
                 {
-                    AddToListIfNew(mPreviousDatasetFilesToDelete, fiMzXmlFilePathLocal.FullName);
+                    AddToListIfNew(mPreviousDatasetFilesToDelete, mzXmlFilePathLocal.FullName);
                 }
                 else
                 {
@@ -1189,9 +1189,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     datasetYearQuarter = string.Empty;
                 }
 
-                CopyMzXMLFileToServerCache(fiMzXmlFilePathLocal.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
+                CopyMzXMLFileToServerCache(mzXmlFilePathLocal.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
-                mJobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(mzXmlFilePathLocal.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
@@ -1229,7 +1229,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         [Obsolete("No longer used")]
-        private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, FilterThresholds udtFilterThresholds,
+        private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, FilterThresholds filterThresholds,
             IDictionary<string, List<PseudoMSGFData>> pseudoMSGFData)
         {
             const int MSGF_SPEC_EVALUE_NOT_DEFINED = 10;
@@ -1423,9 +1423,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
                         }
 
-                        if (udtFilterThresholds.UseMSGFSpecEValue)
+                        if (filterThresholds.UseMSGFSpecEValue)
                         {
-                            if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
+                            if (msgfSpecEValue > filterThresholds.MSGFSpecEValueThreshold)
                             {
                                 validPSM = false;
                             }
@@ -1434,14 +1434,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (!mFilterThresholdsUsed.UseMSGFSpecEValue)
                             {
                                 mFilterThresholdsUsed.UseMSGFSpecEValue = true;
-                                mFilterThresholdsUsed.MSGFSpecEValueThreshold = udtFilterThresholds.MSGFSpecEValueThreshold;
+                                mFilterThresholdsUsed.MSGFSpecEValueThreshold = filterThresholds.MSGFSpecEValueThreshold;
                             }
                         }
 
-                        if (pepFDRValuesArePresent && udtFilterThresholds.UsePepFDRThreshold)
+                        if (pepFDRValuesArePresent && filterThresholds.UsePepFDRThreshold)
                         {
                             // Typically only MSGFDB results will have PepFDR values
-                            if (pepFDR > udtFilterThresholds.PepFDRThreshold)
+                            if (pepFDR > filterThresholds.PepFDRThreshold)
                             {
                                 validPSM = false;
                             }
@@ -1450,14 +1450,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (!mFilterThresholdsUsed.UsePepFDRThreshold)
                             {
                                 mFilterThresholdsUsed.UsePepFDRThreshold = true;
-                                mFilterThresholdsUsed.PepFDRThreshold = udtFilterThresholds.PepFDRThreshold;
+                                mFilterThresholdsUsed.PepFDRThreshold = filterThresholds.PepFDRThreshold;
                             }
                         }
 
-                        if (fdrValuesArePresent && udtFilterThresholds.UseFDRThreshold)
+                        if (fdrValuesArePresent && filterThresholds.UseFDRThreshold)
                         {
                             // Typically only MSGFDB results will have FDR values
-                            if (fdr > udtFilterThresholds.FDRThreshold)
+                            if (fdr > filterThresholds.FDRThreshold)
                             {
                                 validPSM = false;
                             }
@@ -1466,16 +1466,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (!mFilterThresholdsUsed.UseFDRThreshold)
                             {
                                 mFilterThresholdsUsed.UseFDRThreshold = true;
-                                mFilterThresholdsUsed.FDRThreshold = udtFilterThresholds.FDRThreshold;
+                                mFilterThresholdsUsed.FDRThreshold = filterThresholds.FDRThreshold;
                             }
                         }
 
                         if (validPSM && !thresholdChecked)
                         {
                             // Switch to filtering on MSGFSpecEValueThreshold instead of on FDR or PepFDR
-                            if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
+                            if (msgfSpecEValue < MSGF_SPEC_EVALUE_NOT_DEFINED && filterThresholds.MSGFSpecEValueThreshold < 0.0001)
                             {
-                                if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
+                                if (msgfSpecEValue > filterThresholds.MSGFSpecEValueThreshold)
                                 {
                                     validPSM = false;
                                 }
@@ -1483,7 +1483,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 if (!mFilterThresholdsUsed.UseMSGFSpecEValue)
                                 {
                                     mFilterThresholdsUsed.UseMSGFSpecEValue = true;
-                                    mFilterThresholdsUsed.MSGFSpecEValueThreshold = udtFilterThresholds.MSGFSpecEValueThreshold;
+                                    mFilterThresholdsUsed.MSGFSpecEValueThreshold = filterThresholds.MSGFSpecEValueThreshold;
                                 }
                             }
                         }
@@ -1491,7 +1491,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (validPSM)
                         {
                             // Filter on P-value
-                            if (pValue >= udtFilterThresholds.PValueThreshold)
+                            if (pValue >= filterThresholds.PValueThreshold)
                             {
                                 validPSM = false;
                             }
@@ -1625,7 +1625,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             suffix = string.Empty;
                         }
 
-                        var udtPseudoMSGFData = new PseudoMSGFData
+                        var newMSGFData = new PseudoMSGFData
                         {
                             ResultID = reader.CurrentPSM.ResultID,
                             Peptide = reader.CurrentPSM.Peptide,
@@ -1646,11 +1646,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (newScanNumber)
                         {
-                            bestMatchByScanScoreValues.Add(reader.CurrentPSM.ScanNumber, udtPseudoMSGFData);
+                            bestMatchByScanScoreValues.Add(reader.CurrentPSM.ScanNumber, newMSGFData);
                         }
                         else
                         {
-                            bestMatchByScanScoreValues[reader.CurrentPSM.ScanNumber] = udtPseudoMSGFData;
+                            bestMatchByScanScoreValues[reader.CurrentPSM.ScanNumber] = newMSGFData;
                         }
                     }
                 }
@@ -1710,11 +1710,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="job"></param>
         /// <param name="dataset"></param>
-        /// <param name="udtFilterThresholds"></param>
+        /// <param name="filterThresholds"></param>
         /// <param name="prideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("No longer used")]
-        private bool CreateMSGFReportFile(int job, string dataset, FilterThresholds udtFilterThresholds,
+        private bool CreateMSGFReportFile(int job, string dataset, FilterThresholds filterThresholds,
             out string prideReportXMLFilePath)
         {
             var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
@@ -1812,7 +1812,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 pseudoMSGFData.Clear();
 
-                var pseudoMsgfFilePath = CreatePseudoMSGFFileUsingPHRPReader(job, dataset, udtFilterThresholds, pseudoMSGFData);
+                var pseudoMsgfFilePath = CreatePseudoMSGFFileUsingPHRPReader(job, dataset, filterThresholds, pseudoMSGFData);
 
                 if (string.IsNullOrEmpty(pseudoMsgfFilePath))
                 {
@@ -1829,7 +1829,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 //if (!mCreateMSGFReportFilesOnly)
                 //{
                 //    prideReportXMLFilePath = CreateMSGFReportXMLFile(templateFileName, dataPkgJob, pseudoMsgfFilePath, pseudoMSGFData,
-                //        orgDBNameGenerated, proteinCollectionListOrFasta, udtFilterThresholds);
+                //        orgDBNameGenerated, proteinCollectionListOrFasta, filterThresholds);
 
                 //    if (string.IsNullOrEmpty(prideReportXMLFilePath))
                 //    {
@@ -1853,7 +1853,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         [Obsolete("No longer used")]
         private string CreateMSGFReportXMLFile(string templateFileName, DataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
             IReadOnlyDictionary<string, List<PseudoMSGFData>> pseudoMSGFData, string orgDBNameGenerated,
-            string proteinCollectionListOrFasta, FilterThresholds udtFilterThresholds)
+            string proteinCollectionListOrFasta, FilterThresholds filterThresholds)
         {
             string prideReportXMLFilePath;
 
@@ -2110,7 +2110,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     writer.WriteStartElement("ConfigurationOptions");
 
                                     WriteConfigurationOption(writer, "search_engine", "MSGF");
-                                    WriteConfigurationOption(writer, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"));
+                                    WriteConfigurationOption(writer, "peptide_threshold", filterThresholds.PValueThreshold.ToString("0.00"));
                                     WriteConfigurationOption(writer, "add_carbamidomethylation", "false");
 
                                     writer.WriteEndElement();      // ConfigurationOptions
@@ -2273,15 +2273,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     writer.WriteElementString("DatabaseVersion", "Unknown");
 
                     // Write out each PSM for this protein
-                    foreach (var udtPeptide in proteinEntry.Value)
+                    foreach (var peptide in proteinEntry.Value)
                     {
                         writer.WriteStartElement("Peptide");
 
-                        writer.WriteElementString("Sequence", udtPeptide.CleanSequence);
+                        writer.WriteElementString("Sequence", peptide.CleanSequence);
                         writer.WriteElementString("CuratedSequence", string.Empty);
                         writer.WriteElementString("Start", "0");
                         writer.WriteElementString("End", "0");
-                        writer.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString());
+                        writer.WriteElementString("SpectrumReference", peptide.ScanNumber.ToString());
 
                         // Could write out details of dynamic mods
                         //    Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
@@ -2301,31 +2301,31 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         writer.WriteElementString("isSpecific", "false");
 
                         // I wanted to record ResultID here, but we instead have to record Scan Number; otherwise PRIDE Converter Crashes
-                        writer.WriteElementString("UniqueIdentifier", udtPeptide.ScanNumber.ToString());
+                        writer.WriteElementString("UniqueIdentifier", peptide.ScanNumber.ToString());
 
                         writer.WriteStartElement("additional");
 
-                        WriteCVParam(writer, "PRIDE", "PRIDE:0000065", "Upstream flanking sequence", udtPeptide.PrefixResidue);
-                        WriteCVParam(writer, "PRIDE", "PRIDE:0000066", "Downstream flanking sequence", udtPeptide.SuffixResidue);
+                        WriteCVParam(writer, "PRIDE", "PRIDE:0000065", "Upstream flanking sequence", peptide.PrefixResidue);
+                        WriteCVParam(writer, "PRIDE", "PRIDE:0000066", "Downstream flanking sequence", peptide.SuffixResidue);
 
-                        WriteCVParam(writer, "MS", "MS:1000041", "charge state", udtPeptide.ChargeState.ToString());
+                        WriteCVParam(writer, "MS", "MS:1000041", "charge state", peptide.ChargeState.ToString());
                         WriteCVParam(writer, "MS", "MS:1000042", "peak intensity", "0.0");
-                        WriteCVParam(writer, "MS", "MS:1001870", "p-value for peptides", udtPeptide.PValue);
+                        WriteCVParam(writer, "MS", "MS:1001870", "p-value for peptides", peptide.PValue);
 
-                        WriteUserParam(writer, "MQScore", udtPeptide.MQScore);
-                        WriteUserParam(writer, "TotalPRMScore", udtPeptide.TotalPRMScore);
+                        WriteUserParam(writer, "MQScore", peptide.MQScore);
+                        WriteUserParam(writer, "TotalPRMScore", peptide.TotalPRMScore);
 
                         // WriteUserParam(writer, "MedianPRMScore", "0.0")
                         // WriteUserParam(writer, "FractionY", "0.0")
                         // WriteUserParam(writer, "FractionB", "0.0")
 
-                        WriteUserParam(writer, "NTT", udtPeptide.NTT.ToString());
+                        WriteUserParam(writer, "NTT", peptide.NTT.ToString());
 
                         // WriteUserParam(writer, "F-Score", "0.0")
 
-                        WriteUserParam(writer, "DeltaScore", udtPeptide.DeltaScore);
-                        WriteUserParam(writer, "DeltaScoreOther", udtPeptide.DeltaScoreOther);
-                        WriteUserParam(writer, "SpecProb", udtPeptide.MSGFSpecEValue);
+                        WriteUserParam(writer, "DeltaScore", peptide.DeltaScore);
+                        WriteUserParam(writer, "DeltaScoreOther", peptide.DeltaScoreOther);
+                        WriteUserParam(writer, "SpecProb", peptide.MSGFSpecEValue);
 
                         writer.WriteEndElement();      // additional
 
@@ -3369,7 +3369,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Initialize additional items
 
-            // Deprecated: mFilterThresholdsUsed = new udtFilterThresholdsType();
+            // Deprecated: mFilterThresholdsUsed = new filterThresholdsType();
             mInstrumentGroupsStored = new Dictionary<string, SortedSet<string>>();
             mSearchToolsUsed = new SortedSet<string>();
             mExperimentNEWTInfo = new Dictionary<int, string>();
@@ -3381,24 +3381,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Deprecated:
             // // Determine the filter thresholds
-            // var udtFilterThresholds = new udtFilterThresholdsType();
-            // udtFilterThresholds.Clear();
-            // udtFilterThresholds.PValueThreshold = mJobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
-            // udtFilterThresholds.FDRThreshold = mJobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
-            // udtFilterThresholds.PepFDRThreshold = mJobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
+            // var filterThresholds = new filterThresholdsType();
+            // filterThresholds.Clear();
+            // filterThresholds.PValueThreshold = mJobParams.GetJobParameter("PValueThreshold", filterThresholds.PValueThreshold);
+            // filterThresholds.FDRThreshold = mJobParams.GetJobParameter("FDRThreshold", filterThresholds.FDRThreshold);
+            // filterThresholds.PepFDRThreshold = mJobParams.GetJobParameter("PepFDRThreshold", filterThresholds.PepFDRThreshold);
 
             // // Support both SpecProb and SpecEValue job parameters
-            // udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
-            // udtFilterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            // filterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecProbThreshold", filterThresholds.MSGFSpecEValueThreshold);
+            // filterThresholds.MSGFSpecEValueThreshold = mJobParams.GetJobParameter("MSGFSpecEvalueThreshold", filterThresholds.MSGFSpecEValueThreshold);
 
-            // udtFilterThresholds.UseFDRThreshold = mJobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
-            // udtFilterThresholds.UsePepFDRThreshold = mJobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
+            // filterThresholds.UseFDRThreshold = mJobParams.GetJobParameter("UseFDRThreshold", filterThresholds.UseFDRThreshold);
+            // filterThresholds.UsePepFDRThreshold = mJobParams.GetJobParameter("UsePepFDRThreshold", filterThresholds.UsePepFDRThreshold);
 
             // // Support both SpecProb and SpecEValue job parameters
-            // udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
-            // udtFilterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
+            // filterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecProb", filterThresholds.UseMSGFSpecEValue);
+            // filterThresholds.UseMSGFSpecEValue = mJobParams.GetJobParameter("UseMSGFSpecEValue", filterThresholds.UseMSGFSpecEValue);
 
-            //return udtFilterThresholds;
+            //return filterThresholds;
         }
 
         /// <summary>
@@ -3753,7 +3753,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             //{
             //    // Create the .msgf-report.xml file for this job
 
-            //    success = CreateMSGFReportFile(job, dataset, udtFilterThresholds, out var prideReportXMLFilePath);
+            //    success = CreateMSGFReportFile(job, dataset, filterThresholds, out var prideReportXMLFilePath);
             //    if (!success)
             //    {
             //        return CloseOutType.CLOSEOUT_FAILED;
@@ -3873,8 +3873,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private SampleMetadata.CvParamInfo ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
             Stack<int> elementCloseDepths)
         {
-            var udtCvParam = new SampleMetadata.CvParamInfo();
-            udtCvParam.Clear();
+            var cvParam = new SampleMetadata.CvParamInfo();
+            cvParam.Clear();
 
             writer.WriteStartElement(xmlReader.Name);
 
@@ -3888,25 +3888,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     switch (xmlReader.Name)
                     {
                         case "accession":
-                            udtCvParam.Accession = xmlReader.Value;
+                            cvParam.Accession = xmlReader.Value;
                             break;
                         case "cvRef":
-                            udtCvParam.CvRef = xmlReader.Value;
+                            cvParam.CvRef = xmlReader.Value;
                             break;
                         case "name":
-                            udtCvParam.Name = xmlReader.Value;
+                            cvParam.Name = xmlReader.Value;
                             break;
                         case "value":
-                            udtCvParam.Value = xmlReader.Value;
+                            cvParam.Value = xmlReader.Value;
                             break;
                         case "unitCvRef":
-                            udtCvParam.unitCvRef = xmlReader.Value;
+                            cvParam.unitCvRef = xmlReader.Value;
                             break;
                         case "unitName":
-                            udtCvParam.unitName = xmlReader.Value;
+                            cvParam.unitName = xmlReader.Value;
                             break;
                         case "unitAccession":
-                            udtCvParam.unitAccession = xmlReader.Value;
+                            cvParam.unitAccession = xmlReader.Value;
                             break;
                     }
                 } while (xmlReader.MoveToNextAttribute());
@@ -3918,7 +3918,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 writer.WriteEndElement();
             }
 
-            return udtCvParam;
+            return cvParam;
         }
 
         private bool RetrievePHRPFiles(
@@ -4005,12 +4005,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         mMyEMSLUtilities.AddDataset(dataset);
                         DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, out var cleanFilePath);
 
-                        var fiSourceFileClean = new FileInfo(cleanFilePath);
-                        var unzipRequired = string.Equals(fiSourceFileClean.Extension, ".zip", StringComparison.OrdinalIgnoreCase);
+                        var sourceFileClean = new FileInfo(cleanFilePath);
+                        var unzipRequired = string.Equals(sourceFileClean.Extension, ".zip", StringComparison.OrdinalIgnoreCase);
 
                         mMyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired);
 
-                        filesCopied.Add(fiSourceFileClean.Name);
+                        filesCopied.Add(sourceFileClean.Name);
 
                         continue;
                     }
@@ -4877,18 +4877,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     case "cvParam":
                                         if (readModAccession && !readingSpecificityRules)
                                         {
-                                            var udtModInfo = ReadWriteCvParam(xmlReader, writer, elementCloseDepths);
+                                            var modInfo = ReadWriteCvParam(xmlReader, writer, elementCloseDepths);
 
-                                            if (!string.IsNullOrEmpty(udtModInfo.Accession))
+                                            if (!string.IsNullOrEmpty(modInfo.Accession))
                                             {
-                                                if (!mModificationsUsed.ContainsKey(udtModInfo.Accession))
+                                                if (!mModificationsUsed.ContainsKey(modInfo.Accession))
                                                 {
-                                                    mModificationsUsed.Add(udtModInfo.Accession, udtModInfo);
+                                                    mModificationsUsed.Add(modInfo.Accession, modInfo);
                                                 }
 
-                                                if (!sampleMetadata.Modifications.ContainsKey(udtModInfo.Accession))
+                                                if (!sampleMetadata.Modifications.ContainsKey(modInfo.Accession))
                                                 {
-                                                    sampleMetadata.Modifications.Add(udtModInfo.Accession, udtModInfo);
+                                                    sampleMetadata.Modifications.Add(modInfo.Accession, modInfo);
                                                 }
                                             }
 

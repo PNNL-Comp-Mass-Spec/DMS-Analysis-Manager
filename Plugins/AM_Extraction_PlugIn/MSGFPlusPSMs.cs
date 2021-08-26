@@ -50,12 +50,12 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Adds the given PSM if the list has fewer than MaximumPSMsToKeep PSMs, or if the specEValue is less than the worst scoring entry in the list
         /// </summary>
-        /// <param name="udtPSM"></param>
+        /// <param name="psm"></param>
         /// <param name="protein"></param>
         /// <returns>True if the PSM was stored, otherwise false</returns>
-        public bool AddPSM(PSMInfo udtPSM, string protein)
+        public bool AddPSM(PSMInfo psm, string protein)
         {
-            udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide);
+            psm.Peptide = RemovePrefixAndSuffix(psm.Peptide);
 
             var updateScores = false;
             var addPeptide = false;
@@ -66,35 +66,35 @@ namespace AnalysisManagerExtractionPlugin
             }
             else
             {
-                if ((from item in mPSMs.Values where item.Peptide == udtPSM.Peptide select item).Any())
+                if ((from item in mPSMs.Values where item.Peptide == psm.Peptide select item).Any())
                 {
                     addPeptide = true;
                 }
             }
 
-            var proteinPeptide = protein + "_" + udtPSM.Peptide;
+            var proteinPeptide = protein + "_" + psm.Peptide;
 
             if (addPeptide)
             {
                 if (mPSMs.TryGetValue(proteinPeptide, out var existingPSM))
                 {
-                    if (existingPSM.SpecEValue > udtPSM.SpecEValue)
+                    if (existingPSM.SpecEValue > psm.SpecEValue)
                     {
-                        existingPSM.SpecEValue = udtPSM.SpecEValue;
+                        existingPSM.SpecEValue = psm.SpecEValue;
                         // Update the dictionary (necessary since existingPSM is a structure and not an object)
                         mPSMs[proteinPeptide] = existingPSM;
                     }
                 }
                 else
                 {
-                    mPSMs.Add(proteinPeptide, udtPSM);
+                    mPSMs.Add(proteinPeptide, psm);
                 }
 
                 updateScores = true;
             }
             else
             {
-                if (udtPSM.SpecEValue < mWorstSpecEValue)
+                if (psm.SpecEValue < mWorstSpecEValue)
                 {
                     if (mPSMs.Count <= 1 || mSpecEValues.Count == 1)
                     {
@@ -112,16 +112,16 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Add the new PSM
-                    mPSMs.Add(proteinPeptide, udtPSM);
+                    mPSMs.Add(proteinPeptide, psm);
 
                     updateScores = true;
                 }
-                else if (Math.Abs(udtPSM.SpecEValue - mBestSpecEValue) < double.Epsilon)
+                else if (Math.Abs(psm.SpecEValue - mBestSpecEValue) < double.Epsilon)
                 {
                     // The new peptide has the same score as the best scoring peptide; keep it (and don't remove anything)
 
                     // Add the new PSM
-                    mPSMs.Add(proteinPeptide, udtPSM);
+                    mPSMs.Add(proteinPeptide, psm);
 
                     updateScores = true;
                 }
@@ -134,27 +134,27 @@ namespace AnalysisManagerExtractionPlugin
                     // Make sure all peptides have the same SpecEvalue
                     var bestScoreByPeptide = new Dictionary<string, double>();
 
-                    foreach (var psm in mPSMs)
+                    foreach (var item in mPSMs)
                     {
-                        var peptideToFind = psm.Value.Peptide;
+                        var peptideToFind = item.Value.Peptide;
                         if (bestScoreByPeptide.TryGetValue(peptideToFind, out var storedScore))
                         {
-                            bestScoreByPeptide[peptideToFind] = Math.Min(storedScore, psm.Value.SpecEValue);
+                            bestScoreByPeptide[peptideToFind] = Math.Min(storedScore, item.Value.SpecEValue);
                         }
                         else
                         {
-                            bestScoreByPeptide.Add(peptideToFind, psm.Value.SpecEValue);
+                            bestScoreByPeptide.Add(peptideToFind, item.Value.SpecEValue);
                         }
                     }
 
                     foreach (var key in mPSMs.Keys.ToList())
                     {
-                        var udtStoredPSM = mPSMs[key];
-                        var bestScore = bestScoreByPeptide[udtStoredPSM.Peptide];
-                        if (bestScore < udtStoredPSM.SpecEValue)
+                        var storedPSM = mPSMs[key];
+                        var bestScore = bestScoreByPeptide[storedPSM.Peptide];
+                        if (bestScore < storedPSM.SpecEValue)
                         {
-                            udtStoredPSM.SpecEValue = bestScore;
-                            mPSMs[key] = udtStoredPSM;
+                            storedPSM.SpecEValue = bestScore;
+                            mPSMs[key] = storedPSM;
                         }
                     }
                 }

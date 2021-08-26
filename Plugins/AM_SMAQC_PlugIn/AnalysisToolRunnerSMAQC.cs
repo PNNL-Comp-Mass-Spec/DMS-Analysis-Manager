@@ -81,12 +81,12 @@ namespace AnalysisManagerSMAQCPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the name of the .XML file listing the Measurements to run
-                var strParameterFileName = mJobParams.GetParam("ParmFileName");
-                var strParameterFilePath = Path.Combine(mWorkDir, strParameterFileName);
+                var parameterFileName = mJobParams.GetParam("ParmFileName");
+                var parameterFilePath = Path.Combine(mWorkDir, parameterFileName);
 
                 // Lookup the InstrumentID for this dataset
-                var InstrumentID = 0;
-                if (!LookupInstrumentIDFromDB(ref InstrumentID))
+                var instrumentID = 0;
+                if (!LookupInstrumentIDFromDB(ref instrumentID))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -96,13 +96,13 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogMessage("Running SMAQC");
 
                 // Set up and execute a program runner to run SMAQC
-                var arguments = PossiblyQuotePath(mWorkDir) +                       // Path to folder containing input files
-                                " /O:" + PossiblyQuotePath(resultsFilePath) +       // Text file to write the results to
-                                " /DB:" + PossiblyQuotePath(mWorkDir) +             // Folder where SQLite DB will be created
-                                " /I:" + InstrumentID +                             // Instrument ID
-                                " /M:" + PossiblyQuotePath(strParameterFilePath);   // Path to XML file specifying measurements to run
+                var arguments = PossiblyQuotePath(mWorkDir) +              // Path to folder containing input files
+                                " /O:" + PossiblyQuotePath(resultsFilePath) +    // Text file to write the results to
+                                " /DB:" + PossiblyQuotePath(mWorkDir) +          // Folder where SQLite DB will be created
+                                " /I:" + instrumentID +                          // Instrument ID
+                                " /M:" + PossiblyQuotePath(parameterFilePath);   // Path to XML file specifying measurements to run
 
-                mJobParams.AddResultFileToSkip("SMAQC.s3db");                       // Don't keep the SQLite DB
+                mJobParams.AddResultFileToSkip("SMAQC.s3db");                    // Don't keep the SQLite DB
 
                 if (mDebugLevel >= 1)
                 {
@@ -203,7 +203,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 mJobParams.AddResultFileToSkip("SMAQC_AnalysisSummary.txt");
 
                 // Don't move the parameter file to the results folder, since it's not very informative
-                mJobParams.AddResultFileToSkip(strParameterFileName);
+                mJobParams.AddResultFileToSkip(parameterFileName);
 
                 mProgress = PROGRESS_PCT_COMPLETE;
 
@@ -246,27 +246,27 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used")]
         private bool ComputeLLRC()
         {
-            bool blnSuccess;
+            bool success;
 
-            List<int> lstDatasetIDs;
+            List<int> datasetIDs;
 
             if (!LLRC_ENABLED)
-                throw new Exception("LLRC is disabled -- do not call this function");
+                throw new Exception("LLRC is disabled -- do not call this method");
 
 #pragma warning disable 162
-            var intDatasetID = mJobParams.GetJobParameter("DatasetID", -1);
+            var datasetID = mJobParams.GetJobParameter("DatasetID", -1);
 
-            if (intDatasetID < 0)
+            if (datasetID < 0)
             {
                 LogError("Job parameter DatasetID is missing; cannot compute LLRC");
                 return false;
             }
 
-            lstDatasetIDs.Add(intDatasetID);
+            datasetIDs.Add(datasetID);
 
             LogMessage("Running LLRC to compute QCDM");
 
-            var oLLRC = new LLRC.LLRCWrapper
+            var llrc = new LLRC.LLRCWrapper
             {
                 PostToDB = true,
                 WorkingDirectory = mWorkDir
@@ -280,11 +280,11 @@ namespace AnalysisManagerSMAQCPlugIn
             mJobParams.AddResultFileToSkip("data.csv");
             mJobParams.AddResultFileToSkip("TestingDataset.csv");
 
-            blnSuccess = oLLRC.ProcessDatasets(lstDatasetIDs);
+            success = llrc.ProcessDatasets(datasetIDs);
 
-            if (!blnSuccess)
+            if (!success)
             {
-                mEvalMessage = "Error running LLRC: " + oLLRC.ErrorMessage;
+                mEvalMessage = "Error running LLRC: " + llrc.ErrorMessage;
                 LogWarning(mEvalMessage);
             }
             else if (mDebugLevel >= 2)
@@ -292,7 +292,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogMessage("LLRC Succeeded");
             }
 
-            return blnSuccess;
+            return success;
 
 #pragma warning restore 162
 
@@ -306,18 +306,18 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const short retryCount = 3;
 
-            var strDatasetID = mJobParams.GetParam("DatasetID");
+            var datasetID = mJobParams.GetParam("DatasetID");
             mDatasetID = 0;
 
-            if (string.IsNullOrWhiteSpace(strDatasetID))
+            if (string.IsNullOrWhiteSpace(datasetID))
             {
                 mMessage = "DatasetID not defined";
                 return false;
             }
 
-            if (!int.TryParse(strDatasetID, out mDatasetID))
+            if (!int.TryParse(datasetID, out mDatasetID))
             {
-                mMessage = "DatasetID is not numeric: " + strDatasetID;
+                mMessage = "DatasetID is not numeric: " + datasetID;
                 return false;
             }
 
@@ -329,18 +329,18 @@ namespace AnalysisManagerSMAQCPlugIn
 
             var sqlStr = "SELECT Instrument_ID " +
                          "FROM V_Dataset_Instrument_List_Report " +
-                         "WHERE ID = " + strDatasetID;
+                         "WHERE ID = " + datasetID;
 
             instrumentID = 0;
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            if (dbTools.GetQueryScalar(sqlStr, out var objResult, retryCount, 5))
+            if (dbTools.GetQueryScalar(sqlStr, out var result, retryCount, 5))
             {
-                if (objResult != null)
+                if (result != null)
                 {
-                    instrumentID = objResult.CastDBVal<int>();
+                    instrumentID = result.CastDBVal<int>();
                     success = true;
                 }
             }
@@ -360,7 +360,7 @@ namespace AnalysisManagerSMAQCPlugIn
             return success;
         }
 
-        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> lstResults, out string strXMLResults)
+        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> results, out string xmlresults)
         {
             // XML will look like:
 
@@ -380,31 +380,31 @@ namespace AnalysisManagerSMAQCPlugIn
             //   </Measurements>
             // </SMAQC_Results>
 
-            var sbXML = new StringBuilder();
-            strXMLResults = string.Empty;
+            var builder = new StringBuilder();
+            xmlresults = string.Empty;
 
-            var strPSMSourceJob = mJobParams.GetParam("SourceJob");
+            var psmSourceJob = mJobParams.GetParam("SourceJob");
 
             try
             {
-                sbXML.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
-                sbXML.Append("<SMAQC_Results>");
+                builder.Append("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
+                builder.Append("<SMAQC_Results>");
 
-                sbXML.AppendFormat("<Dataset>{0}</Dataset>", mDatasetName);
-                sbXML.AppendFormat("<Job>{0}</Job>", mJob);
-                sbXML.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", strPSMSourceJob);
+                builder.AppendFormat("<Dataset>{0}</Dataset>", mDatasetName);
+                builder.AppendFormat("<Job>{0}</Job>", mJob);
+                builder.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", psmSourceJob);
 
-                sbXML.Append("<Measurements>");
+                builder.Append("<Measurements>");
 
-                foreach (var kvResult in lstResults)
+                foreach (var kvResult in results)
                 {
-                    sbXML.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", kvResult.Key, kvResult.Value);
+                    builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", kvResult.Key, kvResult.Value);
                 }
 
-                sbXML.Append("</Measurements>");
-                sbXML.Append("</SMAQC_Results>");
+                builder.Append("</Measurements>");
+                builder.Append("</SMAQC_Results>");
 
-                strXMLResults = sbXML.ToString();
+                xmlresults = builder.ToString();
             }
             catch (Exception ex)
             {
@@ -438,13 +438,13 @@ namespace AnalysisManagerSMAQCPlugIn
             // QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45, C_4C, 27.18
 
             // The measurements are returned via this list
-            var lstResults = new List<KeyValuePair<string, string>>();
+            var results = new List<KeyValuePair<string, string>>();
 
             if (!File.Exists(ResultsFilePath))
             {
                 mMessage = "SMAQC Results file not found";
                 LogDebug(mMessage + ": " + ResultsFilePath);
-                return lstResults;
+                return results;
             }
 
             if (mDebugLevel >= 2)
@@ -485,12 +485,12 @@ namespace AnalysisManagerSMAQCPlugIn
 
                     if (dataCols.Length >= 3)
                     {
-                        lstResults.Add(new KeyValuePair<string, string>(dataCols[1].Trim(), dataCols[2].Trim()));
+                        results.Add(new KeyValuePair<string, string>(dataCols[1].Trim(), dataCols[2].Trim()));
                     }
                 }
             }
 
-            return lstResults;
+            return results;
         }
 
         // Example Console output:
@@ -521,16 +521,16 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <summary>
         /// Parse the SMAQC console output file to track progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -538,14 +538,14 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 var effectiveProgress = (float)PROGRESS_PCT_SMAQC_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -624,78 +624,78 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + ")", ex);
                 }
             }
         }
 
-        private bool PostSMAQCResultsToDB(string strXMLResults)
+        private bool PostSMAQCResultsToDB(string xmlresults)
         {
             // Note that mDatasetID gets populated by LookupInstrumentIDFromDB
 
-            return PostSMAQCResultsToDB(mDatasetID, strXMLResults);
+            return PostSMAQCResultsToDB(mDatasetID, xmlresults);
         }
 
-        private bool PostSMAQCResultsToDB(int intDatasetID, string strXMLResults)
+        private bool PostSMAQCResultsToDB(int datasetID, string xmlresults)
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess;
+            bool success;
 
             try
             {
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("Posting SMAQC Results to the database (using Dataset ID " + intDatasetID + ")");
+                    LogDebug("Posting SMAQC Results to the database (using Dataset ID " + datasetID + ")");
                 }
 
-                // We need to remove the encoding line from strXMLResults before posting to the DB
+                // We need to remove the encoding line from xmlresults before posting to the DB
                 // This line will look like this:
                 //   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-                var intStartIndex = strXMLResults.IndexOf("?>", StringComparison.Ordinal);
-                string strXMLResultsClean;
-                if (intStartIndex > 0)
+                var startIndex = xmlresults.IndexOf("?>", StringComparison.Ordinal);
+                string xmlresultsClean;
+                if (startIndex > 0)
                 {
-                    strXMLResultsClean = strXMLResults.Substring(intStartIndex + 2).Trim();
+                    xmlresultsClean = xmlresults.Substring(startIndex + 2).Trim();
                 }
                 else
                 {
-                    strXMLResultsClean = strXMLResults;
+                    xmlresultsClean = xmlresults;
                 }
 
                 // Call stored procedure StoreSMAQCResults in DMS5
-                var objAnalysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
-                var dbTools = objAnalysisTask.DMSProcedureExecutor;
+                var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
+                var dbTools = analysisTask.DMSProcedureExecutor;
 
                 var cmd = dbTools.CreateCommand(STORE_SMAQC_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: intDatasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = strXMLResultsClean;
+                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlresultsClean;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
 
                 if (resCode == 0)
                 {
-                    blnSuccess = true;
+                    success = true;
                 }
                 else
                 {
                     mMessage = "Error storing SMAQC Results in database, " + STORE_SMAQC_RESULTS_SP_NAME + " returned " + resCode;
                     LogError(mMessage);
-                    blnSuccess = false;
+                    success = false;
                 }
             }
             catch (Exception ex)
             {
                 mMessage = "Exception storing SMAQC Results in database";
                 LogError(mMessage, ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -704,13 +704,13 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <param name="ResultsFilePath">Path to the SMAQC results file</param>
         private bool ReadAndStoreSMAQCResults(string ResultsFilePath)
         {
-            var blnSuccess = false;
+            var success = false;
 
             try
             {
-                var lstResults = LoadSMAQCResults(ResultsFilePath);
+                var results = LoadSMAQCResults(ResultsFilePath);
 
-                if (lstResults.Count == 0)
+                if (results.Count == 0)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -720,12 +720,12 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     // Convert the results to XML format
-                    blnSuccess = ConvertResultsToXML(ref lstResults, out var xmlResults);
+                    success = ConvertResultsToXML(ref results, out var xmlResults);
 
-                    if (blnSuccess)
+                    if (success)
                     {
                         // Store the results in the database
-                        blnSuccess = PostSMAQCResultsToDB(xmlResults);
+                        success = PostSMAQCResultsToDB(xmlResults);
                     }
                 }
             }
@@ -733,10 +733,10 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 mMessage = "Exception parsing SMAQC results";
                 LogError("Exception parsing SMAQC results and posting to the database", ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -754,16 +754,16 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (matchingFiles.Length > 0)
                 {
                     // There should only be one file; just parse matchingFiles[0]
-                    var strLogFilePathNew = Path.Combine(mWorkDir, "SMAQC_log.txt");
+                    var logFilePathNew = Path.Combine(mWorkDir, "SMAQC_log.txt");
 
-                    if (File.Exists(strLogFilePathNew))
+                    if (File.Exists(logFilePathNew))
                     {
-                        File.Delete(strLogFilePathNew);
+                        File.Delete(logFilePathNew);
                     }
 
-                    matchingFiles[0].MoveTo(strLogFilePathNew);
+                    matchingFiles[0].MoveTo(logFilePathNew);
 
-                    return strLogFilePathNew;
+                    return logFilePathNew;
                 }
             }
             catch (Exception ex)

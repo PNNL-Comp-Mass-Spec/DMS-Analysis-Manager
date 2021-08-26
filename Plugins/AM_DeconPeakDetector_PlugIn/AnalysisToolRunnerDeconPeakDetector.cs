@@ -84,26 +84,26 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 }
 
                 // Run DeconPeakDetector
-                var blnSuccess = RunDeconPeakDetector(progLoc);
+                var success = RunDeconPeakDetector(progLoc);
 
-                if (blnSuccess)
+                if (success)
                 {
                     // Look for the DeconPeakDetector results file
                     var peakDetectorResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_peaks.txt");
 
-                    var fiResultsFile = new FileInfo(peakDetectorResultsFilePath);
+                    var resultsFile = new FileInfo(peakDetectorResultsFilePath);
 
-                    if (!fiResultsFile.Exists)
+                    if (!resultsFile.Exists)
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
                             mMessage = "DeconPeakDetector results file not found: " + Path.GetFileName(peakDetectorResultsFilePath);
                         }
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
 
-                if (blnSuccess)
+                if (success)
                 {
                     mJobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
                 }
@@ -119,14 +119,14 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory();
+                var copySuccess = CopyResultsToTransferDirectory();
 
-                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -152,16 +152,16 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// <summary>
         /// Parse the DeconPeakDetector console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -169,12 +169,12 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 var peakDetectProgress = 0;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -192,11 +192,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     }
                 }
 
-                var sngActualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, peakDetectProgress, 100);
+                var actualProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, peakDetectProgress, 100);
 
-                if (mProgress < sngActualProgress)
+                if (mProgress < actualProgress)
                 {
-                    mProgress = sngActualProgress;
+                    mProgress = actualProgress;
                 }
             }
             catch (Exception ex)
@@ -204,12 +204,12 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogWarning("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
-        private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
+        private bool RunDeconPeakDetector(string peakDetectorProgLoc)
         {
             var peakDetectorParamFileName = mJobParams.GetJobParameter("PeakDetectorParamFile", "");
             var paramFilePath = Path.Combine(mWorkDir, peakDetectorParamFileName);
@@ -236,7 +236,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                             " /P:" + PossiblyQuotePath(paramFilePath) +
                             " /O:" + PossiblyQuotePath(mWorkDir);
 
-            LogDebug(strPeakDetectorProgLoc + " " + arguments);
+            LogDebug(peakDetectorProgLoc + " " + arguments);
 
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             RegisterEvents(mCmdRunner);
@@ -251,14 +251,14 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             mProgress = PROGRESS_PCT_STARTING;
 
-            var blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, arguments, "PeakDetector", true);
+            var success = mCmdRunner.RunProgram(peakDetectorProgLoc, arguments, "PeakDetector", true);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running DeconPeakDetector");
 

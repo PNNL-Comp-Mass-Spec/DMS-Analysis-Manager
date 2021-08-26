@@ -399,9 +399,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <returns>Dictionary where keys are parameter names and values are parameter values</returns>
         public Dictionary<string, string> GetAllParametersForSection(string sectionName)
         {
-            if (mJobParams.TryGetValue(sectionName, out var oParams))
+            if (mJobParams.TryGetValue(sectionName, out var parameters))
             {
-                return oParams;
+                return parameters;
             }
 
             return new Dictionary<string, string>();
@@ -759,9 +759,9 @@ namespace AnalysisManagerBase.JobConfig
         {
             paramValue = string.Empty;
 
-            if (mJobParams.TryGetValue(section, out var oParams))
+            if (mJobParams.TryGetValue(section, out var parameters))
             {
-                if (oParams.TryGetValue(paramName, out paramValue))
+                if (parameters.TryGetValue(paramName, out paramValue))
                 {
                     if (string.IsNullOrWhiteSpace(paramValue))
                     {
@@ -898,7 +898,7 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
 
-                var sbOutput = new StringBuilder();
+                var builder = new StringBuilder();
 
                 var settings = new XmlWriterSettings
                 {
@@ -907,12 +907,12 @@ namespace AnalysisManagerBase.JobConfig
                     OmitXmlDeclaration = true
                 };
 
-                using (var writer = XmlWriter.Create(sbOutput, settings))
+                using (var writer = XmlWriter.Create(builder, settings))
                 {
                     doc.Save(writer);
                 }
 
-                var filteredXML = sbOutput.ToString();
+                var filteredXML = builder.ToString();
 
                 return filteredXML;
             }
@@ -1690,8 +1690,8 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
-            var oRandom = new Random();
-            Global.IdleLoop(oRandom.Next(2, 5));
+            var random = new Random();
+            Global.IdleLoop(random.Next(2, 5));
 
             var lockFileContentsNew = new List<string>();
 

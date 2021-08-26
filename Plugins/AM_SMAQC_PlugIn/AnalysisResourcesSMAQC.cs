@@ -28,10 +28,10 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             // Retrieve the parameter file
-            var strParamFileName = mJobParams.GetParam("ParmFileName");
-            var strParamFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
+            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -72,25 +72,25 @@ namespace AnalysisManagerSMAQCPlugIn
 
 #pragma warning disable 162
 
-            var strLLRCRunnerProgLoc = mMgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
-            var lstFilesToCopy = new List<string> {
+            var llrcRunnerProgLoc = mMgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
+            var filesToCopy = new List<string> {
                 LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
                 LLRC.LLRCWrapper.RDATA_FILE_MODELS};
 
-            foreach (var strFileName in lstFilesToCopy)
+            foreach (var fileName in filesToCopy)
             {
-                var fiSourceFile = new FileInfo(Path.Combine(strLLRCRunnerProgLoc, strFileName));
+                var sourceFile = new FileInfo(Path.Combine(llrcRunnerProgLoc, fileName));
 
-                if (!fiSourceFile.Exists)
+                if (!sourceFile.Exists)
                 {
-                    mMessage = "LLRC RData file not found: " + fiSourceFile.FullName;
+                    mMessage = "LLRC RData file not found: " + sourceFile.FullName;
                     LogError(mMessage);
                     return false;
                 }
                 else
                 {
-                    fiSourceFile.CopyTo(Path.Combine(mWorkDir, fiSourceFile.Name));
-                    mJobParams.AddResultFileToSkip(fiSourceFile.Name);
+                    sourceFile.CopyTo(Path.Combine(mWorkDir, sourceFile.Name));
+                    mJobParams.AddResultFileToSkip(sourceFile.Name);
                 }
             }
 
@@ -195,7 +195,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         private bool RetrievePHRPFiles()
         {
-            var lstFileNamesToGet = new List<string>();
+            var fileNamesToGet = new List<string>();
             PeptideHitResultTypes PeptideHitResultTypes;
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
@@ -203,30 +203,30 @@ namespace AnalysisManagerSMAQCPlugIn
             //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
-            var strInputFolder = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
+            var inputFolder = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
-            if (string.IsNullOrEmpty(strInputFolder))
+            if (string.IsNullOrEmpty(inputFolder))
             {
                 mMessage = "InputFolder step parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            if (strInputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
+            if (inputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
             {
                 PeptideHitResultTypes = PeptideHitResultTypes.XTandem;
             }
-            else if (strInputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
+            else if (inputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
             {
                 PeptideHitResultTypes = PeptideHitResultTypes.Sequest;
             }
-            else if (strInputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
+            else if (inputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
                 PeptideHitResultTypes = PeptideHitResultTypes.MSGFPlus;
             }
             else
             {
-                mMessage = "InputFolder is not an X!Tandem, SEQUEST, or MS-GF+ folder: " + strInputFolder +
+                mMessage = "InputFolder is not an X!Tandem, SEQUEST, or MS-GF+ folder: " + inputFolder +
                     "; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
                 LogError(mMessage);
                 return false;
@@ -254,13 +254,13 @@ namespace AnalysisManagerSMAQCPlugIn
                 msgfplusSynopsisFile = synFileToFind;
             }
 
-            lstFileNamesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, DatasetName));
-            lstFileNamesToGet.Add(ReaderFactory.GetMSGFFileName(msgfplusSynopsisFile));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPResultToSeqMapFileName(PeptideHitResultTypes, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqInfoFileName(PeptideHitResultTypes, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPSeqToProteinMapFileName(PeptideHitResultTypes, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetPHRPModSummaryFileName(PeptideHitResultTypes, DatasetName));
+            fileNamesToGet.Add(ReaderFactory.GetMSGFFileName(msgfplusSynopsisFile));
 
-            foreach (var phrpFile in lstFileNamesToGet)
+            foreach (var phrpFile in fileNamesToGet)
             {
                 string fileToGet;
                 if (autoSwitchFilename)

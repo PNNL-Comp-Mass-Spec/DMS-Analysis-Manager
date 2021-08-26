@@ -120,12 +120,12 @@ namespace AnalysisManager_Cyclops_PlugIn
                     rFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, rFile.Name));
                 }
 
-                var strCyclopsWorkflowDirectory = Path.Combine(dmsWorkflowsFolderPath, "Cyclops", analysisType);
+                var cyclopsWorkflowDirectory = Path.Combine(dmsWorkflowsFolderPath, "Cyclops", analysisType);
 
-                LogMessage("Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, cyclopsWorkflowFileName));
+                LogMessage("Retrieving workflow file: " + Path.Combine(cyclopsWorkflowDirectory, cyclopsWorkflowFileName));
 
                 // Now copy the Cyclops workflow file to the working directory
-                if (!CopyFileToWorkDir(cyclopsWorkflowFileName, strCyclopsWorkflowDirectory, mWorkDir))
+                if (!CopyFileToWorkDir(cyclopsWorkflowFileName, cyclopsWorkflowDirectory, mWorkDir))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

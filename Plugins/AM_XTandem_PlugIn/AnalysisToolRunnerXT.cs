@@ -219,7 +219,7 @@ namespace AnalysisManagerXTandemPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = mXTandemVersion;
+            var toolVersionInfo = mXTandemVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -228,7 +228,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
@@ -240,20 +240,20 @@ namespace AnalysisManagerXTandemPlugIn
         private string DetermineXTandemProgramLocation(string progLoc)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
-            var strXTandemStepToolVersion = mJobParams.GetParam("XTandem_Version");
+            var xtandemStepToolVersion = mJobParams.GetParam("XTandem_Version");
 
-            if (!string.IsNullOrWhiteSpace(strXTandemStepToolVersion))
+            if (!string.IsNullOrWhiteSpace(xtandemStepToolVersion))
             {
                 // progLoc is currently "C:\DMS_Programs\DMS5\XTandem\bin\Tandem.exe" or "C:\DMS_Programs\XTandem\bin\x64\Tandem.exe"
-                // strXTandemStepToolVersion will be similar to "v2011.12.1.1"
+                // xtandemStepToolVersion will be similar to "v2011.12.1.1"
                 // Insert the specific version just before \bin\ in progLoc
 
-                var intInsertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
+                var insertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
 
-                if (intInsertIndex > 0)
+                if (insertIndex > 0)
                 {
-                    var newProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
-                    newProgLoc = Path.Combine(newProgLoc, progLoc.Substring(intInsertIndex + 1));
+                    var newProgLoc = Path.Combine(progLoc.Substring(0, insertIndex), xtandemStepToolVersion);
+                    newProgLoc = Path.Combine(newProgLoc, progLoc.Substring(insertIndex + 1));
                     progLoc = newProgLoc;
                 }
                 else
@@ -270,18 +270,18 @@ namespace AnalysisManagerXTandemPlugIn
         /// <summary>
         /// Parse the X!Tandem console output file to determine the X!Tandem version and to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             var valueMatcher = new Regex(@"= *(\d+)", RegexOptions.Compiled);
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -289,10 +289,10 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var linesRead = 0;
                 while (!reader.EndOfStream)
@@ -371,7 +371,7 @@ namespace AnalysisManagerXTandemPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }

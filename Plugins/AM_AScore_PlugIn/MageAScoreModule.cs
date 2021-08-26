@@ -232,19 +232,19 @@ namespace AnalysisManager_AScore_PlugIn
                 Console.WriteLine();
 
                 // Confirm that AScore created the output file
-                var fiAScoreFile = new FileInfo(ascoreOutputFilePath);
-                if (fiAScoreFile.Exists)
+                var ascoreFile = new FileInfo(ascoreOutputFilePath);
+                if (ascoreFile.Exists)
                 {
                     // Look for the _ProteinMap.txt file
                     // AScore will create that file if a valid FastaFile is defined
-                    var fiProteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(fiAScoreFile.Name) + "_ProteinMap.txt"));
-                    if (fiProteinMap.Exists && fiProteinMap.Length > fiAScoreFile.Length)
-                        fiAScoreFile = fiProteinMap;
+                    var proteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreFile.Name) + "_ProteinMap.txt"));
+                    if (proteinMap.Exists && proteinMap.Length > ascoreFile.Length)
+                        ascoreFile = proteinMap;
 
                     // load AScore results into SQLite database
                     const string tableName = "T_Results_AScore";
                     var dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
-                    AScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
+                    AScoreMagePipeline.ImportFileToSQLite(ascoreFile.FullName, dbFilePath, tableName);
                 }
 
                 if (File.Exists(ascoreOutputFilePath))
@@ -372,9 +372,9 @@ namespace AnalysisManager_AScore_PlugIn
         private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo resultsDirectory, int jobNumber, string toolName, string connectionString)
         {
             AScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
-            var lstArchiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
+            var archiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
 
-            if (lstArchiveFiles.Count == 0)
+            if (archiveFiles.Count == 0)
             {
                 // Lookup the shared results directory name
                 var dtaDirectoryName = GetSharedResultsDirectoryName(jobNumber, toolName, connectionString);
@@ -385,16 +385,16 @@ namespace AnalysisManager_AScore_PlugIn
                     return null;
                 }
 
-                lstArchiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaDirectoryName, datasetName);
+                archiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", dtaDirectoryName, datasetName);
 
-                if (lstArchiveFiles.Count == 0)
+                if (archiveFiles.Count == 0)
                 {
                     LogTools.LogError("DTA file not found in directory " + dtaDirectoryName + " in MyEMSL");
                     return null;
                 }
             }
 
-            AScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(lstArchiveFiles.First().FileInfo);
+            AScoreMagePipeline.mMyEMSLDatasetInfo.AddFileToDownloadQueue(archiveFiles.First().FileInfo);
 
             if (!AScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadLayout.FlatNoSubdirectories))
             {
@@ -402,7 +402,7 @@ namespace AnalysisManager_AScore_PlugIn
                 return null;
             }
 
-            var dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
+            var dtaZipPathLocal = Path.Combine(WorkingDir, archiveFiles.First().FileInfo.Filename);
 
             return dtaZipPathLocal;
         }
@@ -412,10 +412,10 @@ namespace AnalysisManager_AScore_PlugIn
             // Check if the dta is in the search tool's directory
             string dtaZipSourceFilePath;
 
-            var lstFiles = resultsDirectory.GetFiles("*_dta.zip").ToList();
-            if (lstFiles.Count > 0)
+            var files = resultsDirectory.GetFiles("*_dta.zip").ToList();
+            if (files.Count > 0)
             {
-                dtaZipSourceFilePath = lstFiles.First().FullName;
+                dtaZipSourceFilePath = files.First().FullName;
             }
             else
             {
@@ -444,21 +444,21 @@ namespace AnalysisManager_AScore_PlugIn
                     return null;
                 }
 
-                lstFiles = alternateDtaDirectory.GetFiles("*_dta.zip").ToList();
-                if (lstFiles.Count == 0)
+                files = alternateDtaDirectory.GetFiles("*_dta.zip").ToList();
+                if (files.Count == 0)
                 {
                     LogTools.LogError("DTA file not found in directory " + alternateDtaDirectory.FullName);
                     return null;
                 }
 
-                dtaZipSourceFilePath = lstFiles.First().FullName;
+                dtaZipSourceFilePath = files.First().FullName;
             }
 
-            var fiDtaZipRemote = new FileInfo(dtaZipSourceFilePath);
-            var dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
+            var dtaZipRemote = new FileInfo(dtaZipSourceFilePath);
+            var dtaZipPathLocal = Path.Combine(WorkingDir, dtaZipRemote.Name);
 
             // Copy the DTA file locally, overwriting if it already exists
-            fiDtaZipRemote.CopyTo(dtaZipPathLocal, true);
+            dtaZipRemote.CopyTo(dtaZipPathLocal, true);
 
             return dtaZipPathLocal;
         }

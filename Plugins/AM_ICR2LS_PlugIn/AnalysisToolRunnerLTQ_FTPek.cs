@@ -91,8 +91,8 @@ namespace AnalysisManagerICR2LSPlugIn
                     PerfPostAnalysisTasks(false);
 
                     // Try to save whatever files were moved into the results directory
-                    var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
-                    objAnalysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
+                    var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
+                    analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
                 }
                 else
                 {

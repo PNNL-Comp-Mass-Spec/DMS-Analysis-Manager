@@ -159,21 +159,21 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Run the MultiAlign pipeline(s) listed in "MultiAlignOperations" parameter
         /// </summary>
-        private bool RunMultiAlign(string sMultiAlignConsolePath)
+        private bool RunMultiAlign(string multiAlignConsolePath)
         {
-            bool bSuccess;
+            bool success;
 
             try
             {
-                var oMultiAlignMage = new MultiAlignMage(mJobParams, mMgrParams, mStatusTools);
-                RegisterEvents(oMultiAlignMage);
+                var multiAlignMage = new MultiAlignMage(mJobParams, mMgrParams, mStatusTools);
+                RegisterEvents(multiAlignMage);
 
-                bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
+                success = multiAlignMage.Run(multiAlignConsolePath);
 
-                if (!bSuccess)
+                if (!success)
                 {
-                    if (!string.IsNullOrWhiteSpace(oMultiAlignMage.Message))
-                        mMessage = oMultiAlignMage.Message;
+                    if (!string.IsNullOrWhiteSpace(multiAlignMage.Message))
+                        mMessage = multiAlignMage.Message;
                     else
                         mMessage = "Unknown error running MultiAlign";
                 }
@@ -185,13 +185,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
 
-            return bSuccess;
+            return success;
         }
 
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+        private bool StoreToolVersionInfo(string multiAlignProgLoc)
         {
             var toolVersionInfo = string.Empty;
 
@@ -200,8 +200,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var ioMultiAlignInfo = new FileInfo(strMultiAlignProgLoc);
-            if (!ioMultiAlignInfo.Exists)
+            var multiAlignInfo = new FileInfo(multiAlignProgLoc);
+            if (!multiAlignInfo.Exists)
             {
                 try
                 {
@@ -218,32 +218,32 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             // Lookup the version of the Feature Finder
-            var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, ioMultiAlignInfo.FullName);
-            if (!blnSuccess)
+            var success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignInfo.FullName);
+            if (!success)
                 return false;
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                new(strMultiAlignProgLoc)
+                new(multiAlignProgLoc)
             };
 
-            if (ioMultiAlignInfo.DirectoryName != null)
+            if (multiAlignInfo.DirectoryName != null)
             {
                 // Lookup the version of MultiAlignEngine (in the MultiAlign directory)
-                var strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, strMultiAlignEngineDllLoc);
-                if (!blnSuccess)
+                var multiAlignEngineDllLoc = Path.Combine(multiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignEngineDllLoc);
+                if (!success)
                     return false;
 
                 // Lookup the version of MultiAlignCore (in the MultiAlign directory)
-                var strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, strMultiAlignCoreDllLoc);
-                if (!blnSuccess)
+                var multiAlignCoreDllLoc = Path.Combine(multiAlignInfo.DirectoryName, "MultiAlignCore.dll");
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignCoreDllLoc);
+                if (!success)
                     return false;
 
-                toolFiles.Add(new FileInfo(strMultiAlignEngineDllLoc));
-                toolFiles.Add(new FileInfo(strMultiAlignCoreDllLoc));
+                toolFiles.Add(new FileInfo(multiAlignEngineDllLoc));
+                toolFiles.Add(new FileInfo(multiAlignCoreDllLoc));
             }
 
             try
@@ -294,9 +294,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         return true;
                     }
 
-                    var strZipFilePath = Path.Combine(plotsDirectory.FullName, "PlotFiles.zip");
+                    var zipFilePath = Path.Combine(plotsDirectory.FullName, "PlotFiles.zip");
 
-                    var success = mDotNetZipTools.ZipDirectory(plotsDirectory.FullName, strZipFilePath, false, "*.png");
+                    var success = mDotNetZipTools.ZipDirectory(plotsDirectory.FullName, zipFilePath, false, "*.png");
 
                     if (!success)
                     {

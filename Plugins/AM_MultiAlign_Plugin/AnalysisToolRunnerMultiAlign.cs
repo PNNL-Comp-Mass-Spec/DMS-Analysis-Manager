@@ -126,10 +126,10 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Move the Plots folder to the result files folder
-            var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
+            var plotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-            var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
-            diPlotsFolder.MoveTo(strTargetFolderPath);
+            var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
+            plotsFolder.MoveTo(targetFolderPath);
 
             var success = CopyResultsToTransferDirectory();
 
@@ -180,22 +180,22 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string strMultiAlignProgLoc)
+        private bool StoreToolVersionInfo(string multiAlignProgLoc)
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var ioMultiAlignProg = new FileInfo(strMultiAlignProgLoc);
-            if (!ioMultiAlignProg.Exists)
+            var multiAlignProg = new FileInfo(multiAlignProgLoc);
+            if (!multiAlignProg.Exists)
             {
                 try
                 {
-                    strToolVersionInfo = "Unknown";
-                    SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
+                    toolVersionInfo = "Unknown";
+                    SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -207,42 +207,42 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Lookup the version of MultiAlign
-            var blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignProg.FullName);
-            if (!blnSuccess)
+            var success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignProg.FullName);
+            if (!success)
                 return false;
 
             var toolFiles = new List<FileInfo>();
 
-            if (ioMultiAlignProg.DirectoryName != null)
+            if (multiAlignProg.DirectoryName != null)
             {
                 // Lookup the version of additional DLLs
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
-                if (!blnSuccess)
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(multiAlignProg.DirectoryName, "PNNLOmics.dll"));
+                if (!success)
                     return false;
 
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
-                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
-                if (!blnSuccess)
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
+                                                              Path.Combine(multiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
+                if (!success)
                     return false;
 
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
-                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"));
-                if (!blnSuccess)
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
+                                                              Path.Combine(multiAlignProg.DirectoryName, "MultiAlignCore.dll"));
+                if (!success)
                     return false;
 
-                blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
-                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"));
-                if (!blnSuccess)
+                success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
+                                                              Path.Combine(multiAlignProg.DirectoryName, "PNNLControls.dll"));
+                if (!success)
                     return false;
 
                 // Store paths to key DLLs in toolFiles
-                toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
-                toolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
+                toolFiles.Add(new FileInfo(Path.Combine(multiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
+                toolFiles.Add(new FileInfo(Path.Combine(multiAlignProg.DirectoryName, "PNNLOmics.dll")));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

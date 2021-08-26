@@ -146,13 +146,13 @@ namespace AnalysisManagerMODPlusPlugin
                             if (dataColumns.Length > 3)
                             {
                                 var mgfFilePath = dataColumns[0].TrimStart('>');
-                                var fiMgfFileLocal = new FileInfo(mgfFilePath);
+                                var mgfFileLocal = new FileInfo(mgfFilePath);
 
-                                if (fiMgfFileLocal.Name.Length > 0)
+                                if (mgfFileLocal.Name.Length > 0)
                                 {
                                     // Reconstruct dataLine
 
-                                    mgfFilePath = Path.Combine("E:\\DMS_WorkDir\\", fiMgfFileLocal.Name);
+                                    mgfFilePath = Path.Combine("E:\\DMS_WorkDir\\", mgfFileLocal.Name);
 
                                     dataLine = ">>" + mgfFilePath + "\t" + dataColumns[1] + "\t";
 

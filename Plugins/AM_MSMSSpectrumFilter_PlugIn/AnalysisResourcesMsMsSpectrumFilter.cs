@@ -60,74 +60,80 @@ namespace MSMSSpectrumFilterAM
             //       This is essentially a job-depending-on a job
             //  b) The .Raw file
 
-            var strMSLevelFilter = mJobParams.GetJobParameter("MSLevelFilter", "0");
+            var mslevelFilter = mJobParams.GetJobParameter("MSLevelFilter", "0");
 
-            var strScanTypeFilter = mJobParams.GetJobParameter("ScanTypeFilter", "");
-            var strScanTypeMatchType = mJobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
+            var scanTypeFilter = mJobParams.GetJobParameter("ScanTypeFilter", "");
+            var scanTypeMatchType = mJobParams.GetJobParameter("ScanTypeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
-            var strMSCollisionModeFilter = mJobParams.GetJobParameter("MSCollisionModeFilter", "");
-            var strMSCollisionModeMatchType = mJobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
+            var msCollisionModeFilter = mJobParams.GetJobParameter("MSCollisionModeFilter", "");
+            var msCollisionModeMatchType = mJobParams.GetJobParameter("MSCollisionModeMatchType", clsMsMsSpectrumFilter.TEXT_MATCH_TYPE_CONTAINS);
 
-            var blnNeedScanStatsFiles = false;
+            var needScanStatsFiles = false;
 
-            if (!string.IsNullOrEmpty(strMSLevelFilter) && strMSLevelFilter != "0")
+            if (!string.IsNullOrEmpty(mslevelFilter) && mslevelFilter != "0")
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("GetResources: MSLevelFilter is defined (" + strMSLevelFilter + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: MSLevelFilter is defined (" + mslevelFilter + "); will retrieve or generate the ScanStats files");
                 }
-                blnNeedScanStatsFiles = true;
+                needScanStatsFiles = true;
             }
 
-            if (!string.IsNullOrEmpty(strScanTypeFilter))
+            if (!string.IsNullOrEmpty(scanTypeFilter))
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("GetResources: ScanTypeFilter is defined (" + strScanTypeFilter + " with match type " + strScanTypeMatchType + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: ScanTypeFilter is defined (" + scanTypeFilter + " with match type " + scanTypeMatchType + "); will retrieve or generate the ScanStats files");
                 }
-                blnNeedScanStatsFiles = true;
+                needScanStatsFiles = true;
             }
 
-            if (!string.IsNullOrEmpty(strMSCollisionModeFilter))
+            if (!string.IsNullOrEmpty(msCollisionModeFilter))
             {
                 if (mDebugLevel >= 1)
                 {
-                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter +
-                        " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + msCollisionModeFilter +
+                        " with match type " + msCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
                 }
-                blnNeedScanStatsFiles = true;
+                needScanStatsFiles = true;
             }
 
-            if (blnNeedScanStatsFiles)
+            if (needScanStatsFiles)
             {
                 // Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
                 // However, if the _ScanStats.txt file does not have column ScanTypeName, we will need the .raw file
 
-                var blnScanStatsFilesRetrieved = false;
+                var scanStatsFilesRetrieved = false;
 
-                var strDatasetFileOrFolderPath = DirectorySearch.FindDatasetFileOrDirectory(out var blnIsFolder, assumeUnpurged: false);
+                var datasetFileOrFolderPath = DirectorySearch.FindDatasetFileOrDirectory(out var isFolder, assumeUnpurged: false);
 
-                if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) && !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                if (!string.IsNullOrEmpty(datasetFileOrFolderPath) && !datasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    DirectoryInfo diDatasetFolder;
-                    if (blnIsFolder)
+                    DirectoryInfo datasetDirectory;
+                    if (isFolder)
                     {
-                        diDatasetFolder = new DirectoryInfo(strDatasetFileOrFolderPath);
-                        diDatasetFolder = diDatasetFolder.Parent;
+                        var datasetSubdirectory = new DirectoryInfo(datasetFileOrFolderPath);
+                        datasetDirectory = datasetSubdirectory.Parent;
                     }
                     else
                     {
-                        var fiDatasetFile = new FileInfo(strDatasetFileOrFolderPath);
-                        diDatasetFolder = fiDatasetFile.Directory;
+                        var datasetFile = new FileInfo(datasetFileOrFolderPath);
+                        datasetDirectory = datasetFile.Directory;
                     }
 
-                    if (FindExistingScanStatsFile(diDatasetFolder.FullName))
+                    if (datasetDirectory == null)
                     {
-                        blnScanStatsFilesRetrieved = true;
+                        LogError("Unable to determine the parent directory of " + datasetFileOrFolderPath);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (FindExistingScanStatsFile(datasetDirectory.FullName))
+                    {
+                        scanStatsFilesRetrieved = true;
                     }
                 }
 
-                if (!blnScanStatsFilesRetrieved)
+                if (!scanStatsFilesRetrieved)
                 {
                     // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
@@ -227,12 +233,12 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Look for the _ScanStatsEx.txt file
-                var strScanStatsExPath = Path.Combine(newestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(newestScanStatsFile.Name) + "Ex.txt");
+                var scanStatsExPath = Path.Combine(newestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(newestScanStatsFile.Name) + "Ex.txt");
 
-                if (File.Exists(strScanStatsExPath))
+                if (File.Exists(scanStatsExPath))
                 {
                     // Copy it locally
-                    File.Copy(strScanStatsExPath, Path.Combine(mWorkDir, Path.GetFileName(strScanStatsExPath)));
+                    File.Copy(scanStatsExPath, Path.Combine(mWorkDir, Path.GetFileName(scanStatsExPath)));
 
                     if (mDebugLevel >= 1)
                     {

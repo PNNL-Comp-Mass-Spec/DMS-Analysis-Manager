@@ -87,10 +87,10 @@ namespace AnalysisManager_AScore_PlugIn
             {
                 var FastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);
 
-                var fiFastaFile = new FileInfo(FastaFilePath);
+                var fastaFile = new FileInfo(FastaFilePath);
 
-                if (fiFastaFile.Exists)
-                    mFastaFilePath = fiFastaFile.FullName;
+                if (fastaFile.Exists)
+                    mFastaFilePath = fastaFile.FullName;
             }
 
             // Remove the file extension from mParamFilename
@@ -133,19 +133,19 @@ namespace AnalysisManager_AScore_PlugIn
                 return false;
             }
 
-            const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
-            var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
+            const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
+            var maparameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(maparameterFileStoragePath))
             {
-                strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
+                maparameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                    "Parameter " + strParamFileStoragePathKeyName + " is not defined " +
+                    "Parameter " + paramFileStoragePathKeyName + " is not defined " +
                     "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                    "will assume: " + strMAParameterFileStoragePath);
+                    "will assume: " + maparameterFileStoragePath);
             }
 
             // Find all parameter files that match the base name and copy to working directory
-            var paramFileDirectory = new DirectoryInfo(strMAParameterFileStoragePath);
+            var paramFileDirectory = new DirectoryInfo(maparameterFileStoragePath);
 
             // Define the file mask to search for
             var fileMask = Path.GetFileNameWithoutExtension(mParamFilename) + "*.xml";

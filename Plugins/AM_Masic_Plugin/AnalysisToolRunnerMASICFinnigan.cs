@@ -51,11 +51,11 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Examine the size of the .Raw file
-            var fiInputFile = new FileInfo(inputFilePath);
-            if (!fiInputFile.Exists)
+            var inputFile = new FileInfo(inputFilePath);
+            if (!inputFile.Exists)
             {
                 // Unable to resolve the file path
-                mErrorMessage = "Could not find " + fiInputFile.FullName + "; unable to run MASIC";
+                mErrorMessage = "Could not find " + inputFile.FullName + "; unable to run MASIC";
                 LogError(mErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

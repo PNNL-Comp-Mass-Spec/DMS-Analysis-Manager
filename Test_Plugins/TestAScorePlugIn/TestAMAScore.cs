@@ -14,7 +14,7 @@ namespace TestAScorePlugIn
         /// </summary>
         public void Test_RunAScore()
         {
-            var dctJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            var jobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -37,7 +37,7 @@ namespace TestAScorePlugIn
                 { "AScoreSearchType", "sequest" }
             };
 
-            var dctMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+            var mgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "debuglevel", "0" },
                 { "AScoreprogloc", @"C:\ToolsApplications\AScore\AScore_Console.exe" },
                 { "workdir", @"C:\DMS_WorkDir" },
@@ -48,8 +48,8 @@ namespace TestAScorePlugIn
                 { "StepTool_ParamFileStoragePath_AScore", @"\\gigasax\DMS_Parameter_Files\AScore"}
 
             };
-            var mgrParams = new MgrParamsStub(dctMgrParms);
-            var jobParams = new JobParamsStub(dctJobParms);
+            var mgrParams = new MgrParamsStub(mgrParms);
+            var jobParams = new JobParamsStub(jobParms);
 
             var workDir = mgrParams.GetParam("workdir");
             var logFilenameSaved = mgrParams.GetParam("logfilename");

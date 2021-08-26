@@ -687,7 +687,7 @@ namespace DTASpectraFileGen
                 }
 
                 // This dictionary is used to track the spectrum scan numbers in cdtaWithFragIonData
-                // This is used to reduce the number of times that oCDTAReaderFragIonData is closed and re-opened
+                // This is used to reduce the number of times that cdtareaderFragIonData is closed and re-opened
                 var fragIonDataScanStatus = new Dictionary<int, SortedSet<int>>();
 
                 // Cache the Start/End scan combos in cdtaWithFragIonData
@@ -796,7 +796,7 @@ namespace DTASpectraFileGen
 
                             if (string.IsNullOrWhiteSpace(dataLinesToAppend))
                             {
-                                LogError("oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " +
+                                LogError("cdtareaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " +
                                          "StartScan=" + parentIonDataHeader.ScanNumberStart + " and " +
                                          "EndScan=" + parentIonDataHeader.ScanNumberEnd +
                                          " in MergeCDTAs for " + Path.GetFileName(cdtaWithParentIonData));

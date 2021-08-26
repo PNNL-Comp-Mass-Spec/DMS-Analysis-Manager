@@ -120,13 +120,13 @@ namespace AnalysisManagerNOMSIPlugin
                     // Look for the result files
 
                     var workingDirectory = new DirectoryInfo(mWorkDir);
-                    var fiResultsFiles = workingDirectory.GetFiles("Distributions.zip").ToList();
-                    if (fiResultsFiles.Count == 0)
+                    var resultsFiles = workingDirectory.GetFiles("Distributions.zip").ToList();
+                    if (resultsFiles.Count == 0)
                     {
-                        fiResultsFiles = workingDirectory.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
+                        resultsFiles = workingDirectory.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
                     }
 
-                    if (fiResultsFiles.Count == 0)
+                    if (resultsFiles.Count == 0)
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
@@ -181,9 +181,9 @@ namespace AnalysisManagerNOMSIPlugin
             try
             {
                 var workingDirectory = new DirectoryInfo(mWorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(workingDirectory);
+                var spectraFiles = GetXMLSpectraFiles(workingDirectory);
 
-                foreach (var file in fiSpectraFiles)
+                foreach (var file in spectraFiles)
                 {
                     file.Delete();
                 }
@@ -212,14 +212,14 @@ namespace AnalysisManagerNOMSIPlugin
             return workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
         }
 
-        private int MoveWorkDirFiles(FileSystemInfo diZipWork, string fileMask)
+        private int MoveWorkDirFiles(FileSystemInfo zipWork, string fileMask)
         {
             var workingDirectory = new DirectoryInfo(mWorkDir);
             var filesToMove = workingDirectory.GetFiles(fileMask).ToList();
 
             foreach (var sourceFile in filesToMove)
             {
-                sourceFile.MoveTo(Path.Combine(diZipWork.FullName, sourceFile.Name));
+                sourceFile.MoveTo(Path.Combine(zipWork.FullName, sourceFile.Name));
             }
 
             return filesToMove.Count;
@@ -229,8 +229,8 @@ namespace AnalysisManagerNOMSIPlugin
         /// Parse the NOMSI console output file to track the search progress
         /// </summary>
         /// <remarks>Not used at present</remarks>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -247,11 +247,11 @@ namespace AnalysisManagerNOMSIPlugin
             {
                 var reErrorMessage = new Regex(@"err\t\[(.+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -259,10 +259,10 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 while (!reader.EndOfStream)
                 {
@@ -305,24 +305,24 @@ namespace AnalysisManagerNOMSIPlugin
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
-        private void PostProcessResultsOneScan(DirectoryInfo diZipWork, int scanCount, int scanNumber)
+        private void PostProcessResultsOneScan(DirectoryInfo zipWork, int scanCount, int scanNumber)
         {
-            diZipWork.Refresh();
-            if (diZipWork.Exists)
+            zipWork.Refresh();
+            if (zipWork.Exists)
             {
-                foreach (var fileToRemove in diZipWork.GetFiles("*").ToList())
+                foreach (var fileToRemove in zipWork.GetFiles("*").ToList())
                 {
                     fileToRemove.Delete();
                 }
             }
             else
             {
-                diZipWork.Create();
+                zipWork.Create();
             }
 
             var filesMatched = 0;
@@ -334,23 +334,23 @@ namespace AnalysisManagerNOMSIPlugin
                 mJobParams.AddResultFileToSkip("nomsi_summary.txt");
 
                 // Combine the distribution files into a single .zip file
-                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
+                filesMatched += MoveWorkDirFiles(zipWork, "distribution*.txt");
 
                 if (filesMatched > 0)
-                    mDotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(mWorkDir, "Distributions.zip"));
+                    mDotNetZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, "Distributions.zip"));
             }
             else
             {
                 // Combine the distribution files, the dm_ files, and the console output file into a zip file
                 // Example name: NOMSI_Results_scan1.zip
 
-                filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "dm_pairs*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "dm_stats*.txt");
-                filesMatched += MoveWorkDirFiles(diZipWork, "NOMSI_ConsoleOutput_scan*.txt");
+                filesMatched += MoveWorkDirFiles(zipWork, "distribution*.txt");
+                filesMatched += MoveWorkDirFiles(zipWork, "dm_pairs*.txt");
+                filesMatched += MoveWorkDirFiles(zipWork, "dm_stats*.txt");
+                filesMatched += MoveWorkDirFiles(zipWork, "NOMSI_ConsoleOutput_scan*.txt");
 
                 if (filesMatched > 0)
-                    mDotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(mWorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
+                    mDotNetZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
             }
         }
 
@@ -418,19 +418,19 @@ namespace AnalysisManagerNOMSIPlugin
 
             // Parse the nomsi_summary file to look for errors
             Global.IdleLoop(0.25);
-            var fiLogSummaryFile = new FileInfo(Path.Combine(mWorkDir, "nomsi_summary.txt"));
-            if (!fiLogSummaryFile.Exists)
+            var logSummaryFile = new FileInfo(Path.Combine(mWorkDir, "nomsi_summary.txt"));
+            if (!logSummaryFile.Exists)
             {
                 // Summary file not created
                 // Look for a log file in folder C:\Users\d3l243\AppData\Local\
                 var alternateLogPath = Path.Combine(@"C:\Users", GetUsername(), @"AppData\Local\NOMSI.log");
 
-                var fiAlternateLogFile = new FileInfo(alternateLogPath);
-                if (fiAlternateLogFile.Exists)
-                    fiAlternateLogFile.CopyTo(fiLogSummaryFile.FullName, true);
+                var alternateLogFile = new FileInfo(alternateLogPath);
+                if (alternateLogFile.Exists)
+                    alternateLogFile.CopyTo(logSummaryFile.FullName, true);
             }
 
-            ParseConsoleOutputFile(fiLogSummaryFile.FullName);
+            ParseConsoleOutputFile(logSummaryFile.FullName);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -494,7 +494,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 mProgress = PROGRESS_PCT_STARTING;
 
-                var diZipWork = new DirectoryInfo(Path.Combine(mWorkDir, "ScanResultsZipWork"));
+                var zipWork = new DirectoryInfo(Path.Combine(mWorkDir, "ScanResultsZipWork"));
 
                 var filesProcessed = 0;
                 var fileCountNoPeaks = 0;
@@ -509,7 +509,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                     mJobParams.AddResultFileToSkip(spectrumFile.Name);
 
-                    PostProcessResultsOneScan(diZipWork, spectraFiles.Count, scanNumber);
+                    PostProcessResultsOneScan(zipWork, spectraFiles.Count, scanNumber);
 
                     if (mNoPeaksFound)
                         fileCountNoPeaks++;
@@ -595,8 +595,8 @@ namespace AnalysisManagerNOMSIPlugin
         {
             try
             {
-                var fiParamFile = new FileInfo(paramFilePath);
-                if (fiParamFile.DirectoryName == null)
+                var paramFile = new FileInfo(paramFilePath);
+                if (paramFile.DirectoryName == null)
                 {
                     LogError("Directory for parameter file found to be null in UpdateParameterFile");
                     return false;
@@ -609,10 +609,10 @@ namespace AnalysisManagerNOMSIPlugin
                     return true;
                 }
 
-                var fiParamFileNew = new FileInfo(fiParamFile.FullName + ".new");
+                var paramFileNew = new FileInfo(paramFile.FullName + ".new");
 
-                using (var reader = new StreamReader(new FileStream(fiParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var writer = new StreamWriter(new FileStream(fiParamFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(paramFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(paramFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -634,12 +634,12 @@ namespace AnalysisManagerNOMSIPlugin
                     }
                 }
 
-                fiParamFile.MoveTo(Path.Combine(fiParamFile.DirectoryName, fiParamFile.Name + ".old"));
+                paramFile.MoveTo(Path.Combine(paramFile.DirectoryName, paramFile.Name + ".old"));
 
-                fiParamFileNew.MoveTo(paramFilePath);
+                paramFileNew.MoveTo(paramFilePath);
 
                 // Skip the old parameter file
-                mJobParams.AddResultFileToSkip(fiParamFile.Name);
+                mJobParams.AddResultFileToSkip(paramFile.Name);
                 return true;
             }
             catch (Exception ex)

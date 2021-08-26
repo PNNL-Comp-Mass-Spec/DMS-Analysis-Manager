@@ -66,7 +66,7 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterEvents(dbTools);
 
             var peptideHitJobs = DataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
-                dbTools, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
+                dbTools, dataPackageID, out var additionalJobs, out var errorMsg);
 
             if (!string.IsNullOrEmpty(errorMsg))
             {
@@ -86,12 +86,12 @@ namespace AnalysisManager_Mage_PlugIn
             // Confirm that every Peptide_Hit job has a corresponding MASIC job (required to populate table T_Reporter_Ions)
             if (requireMasicJobs)
             {
-                masicJobsAreValid = ValidateMasicJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
+                masicJobsAreValid = ValidateMasicJobs(dataPackageID, peptideHitJobs, additionalJobs);
             }
 
             if (checkDeconJobs)
             {
-                ValidateDeconJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs);
+                ValidateDeconJobs(dataPackageID, peptideHitJobs, additionalJobs);
             }
 
             return masicJobsAreValid ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
@@ -100,22 +100,22 @@ namespace AnalysisManager_Mage_PlugIn
         private void ValidateDeconJobs(
             int dataPackageID,
             IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs)
+            IReadOnlyCollection<DataPackageJobInfo> additionalJobs)
         {
-            ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
+            ValidateMatchingJobs(dataPackageID, peptideHitJobs, additionalJobs, "HMMA_Peak", "DeconTools");
         }
 
         private bool ValidateMasicJobs(int dataPackageID,
             IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs)
+            IReadOnlyCollection<DataPackageJobInfo> additionalJobs)
         {
-            return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
+            return ValidateMatchingJobs(dataPackageID, peptideHitJobs, additionalJobs, "SIC", "MASIC");
         }
 
         private bool ValidateMatchingJobs(
             int dataPackageID,
             IReadOnlyCollection<DataPackageJobInfo> peptideHitJobs,
-            IReadOnlyCollection<DataPackageJobInfo> lstAdditionalJobs,
+            IReadOnlyCollection<DataPackageJobInfo> additionalJobs,
             string resultType,
             string toolName)
         {
@@ -126,7 +126,7 @@ namespace AnalysisManager_Mage_PlugIn
                 var datasetID = job.DatasetID;
 
                 var matchFound =
-                    (from matchingJob in lstAdditionalJobs
+                    (from matchingJob in additionalJobs
                      where matchingJob.DatasetID == datasetID && matchingJob.ResultType == resultType
                      select matchingJob).Any();
 

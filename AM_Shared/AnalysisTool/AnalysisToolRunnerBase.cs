@@ -838,7 +838,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             // Copy results directory to transfer directory
-            // Existing files will be overwritten if they exist in htFilesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
+            // Existing files will be overwritten if they exist in filesToOverwrite (with the assumption that the files created by this manager are newer, and thus supersede existing files)
 
             try
             {
@@ -1969,11 +1969,11 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 var is64Bit = Environment.Is64BitProcess;
-                var sRSubKey = is64Bit ? "R64" : "R";
-                var regR = regRCore.OpenSubKey(sRSubKey);
+                var rSubKey = is64Bit ? "R64" : "R";
+                var regR = regRCore.OpenSubKey(rSubKey);
                 if (regR == null)
                 {
-                    LogError("Registry key is not found: " + RCORE_SUBKEY + "\\" + sRSubKey);
+                    LogError("Registry key is not found: " + RCORE_SUBKEY + "\\" + rSubKey);
                     return string.Empty;
                 }
 
@@ -1983,7 +1983,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (string.IsNullOrEmpty(currentVersionText))
                 {
-                    var noSubkeyMessage = "Unable to determine the R Path: " + RCORE_SUBKEY + "\\" + sRSubKey + " has no subkeys";
+                    var noSubkeyMessage = "Unable to determine the R Path: " + RCORE_SUBKEY + "\\" + rSubKey + " has no subkeys";
 
                     if (regR.SubKeyCount == 0)
                     {
@@ -2026,7 +2026,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     var installPath = (string)regR.GetValue("InstallPath");
                     if (string.IsNullOrEmpty(installPath))
                     {
-                        LogError("Unable to determine the R Path: " + RCORE_SUBKEY + "\\" + sRSubKey + " does not have key InstallPath");
+                        LogError("Unable to determine the R Path: " + RCORE_SUBKEY + "\\" + rSubKey + " does not have key InstallPath");
                         return string.Empty;
                     }
 
@@ -2859,12 +2859,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Notify the user that the settings file is missing a required parameter
         /// </summary>
-        /// <param name="oJobParams"></param>
+        /// <param name="jobParams"></param>
         /// <param name="parameterName"></param>
-        public static string NotifyMissingParameter(IJobParams oJobParams, string parameterName)
+        public static string NotifyMissingParameter(IJobParams jobParams, string parameterName)
         {
-            var settingsFile = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
-            var toolName = oJobParams.GetJobParameter("ToolName", "?UnknownToolName?");
+            var settingsFile = jobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
+            var toolName = jobParams.GetJobParameter("ToolName", "?UnknownToolName?");
 
             return "Settings file " + settingsFile + " for tool " + toolName + " does not have parameter " + parameterName + " defined";
         }

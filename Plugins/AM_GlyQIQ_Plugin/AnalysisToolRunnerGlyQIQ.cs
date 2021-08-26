@@ -118,11 +118,11 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Run GlyQ-IQ
-                var blnSuccess = RunGlyQIQ();
+                var success = RunGlyQIQ();
 
-                if (blnSuccess)
+                if (success)
                 {
-                    blnSuccess = CombineResultFiles();
+                    success = CombineResultFiles();
                 }
 
                 // Zip up the settings files and batch files so we have a record of them
@@ -139,14 +139,14 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Make sure objects are released
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory();
+                var copySuccess = CopyResultsToTransferDirectory();
 
-                if (!success)
+                if (!copySuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 // It is now safe to delete the _peaks.txt file that is in the transfer folder
@@ -174,35 +174,35 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 // Combine the results files
-                var diResultsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Results_" + mDatasetName));
-                if (!diResultsFolder.Exists)
+                var resultsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Results_" + mDatasetName));
+                if (!resultsFolder.Exists)
                 {
-                    mMessage = "Results folder not found: " + diResultsFolder.FullName;
+                    mMessage = "Results folder not found: " + resultsFolder.FullName;
                     LogError(mMessage);
                     return false;
                 }
 
-                var fiUnfilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults_Unfiltered.txt"));
-                var fiFilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults.txt"));
+                var unfilteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults_Unfiltered.txt"));
+                var filteredResults = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_iqResults.txt"));
 
-                using (var writerUnfiltered = new StreamWriter(new FileStream(fiUnfilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                using (var writerFiltered = new StreamWriter(new FileStream(fiFilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writerUnfiltered = new StreamWriter(new FileStream(unfilteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var writerFiltered = new StreamWriter(new FileStream(filteredResults.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     for (var core = 1; core <= mCoreCount; core++)
                     {
-                        var fiResultFile = new FileInfo(Path.Combine(diResultsFolder.FullName, mDatasetName + "_iqResults_" + core + ".txt"));
+                        var resultFile = new FileInfo(Path.Combine(resultsFolder.FullName, mDatasetName + "_iqResults_" + core + ".txt"));
 
-                        if (!fiResultFile.Exists)
+                        if (!resultFile.Exists)
                         {
                             if (string.IsNullOrEmpty(mMessage))
                             {
-                                mMessage = "Result file not found: " + fiResultFile.Name;
+                                mMessage = "Result file not found: " + resultFile.Name;
                             }
-                            LogError("Result file not found: " + fiResultFile.FullName);
+                            LogError("Result file not found: " + resultFile.FullName);
                             continue;
                         }
 
-                        using var reader = new StreamReader(new FileStream(fiResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                        using var reader = new StreamReader(new FileStream(resultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                         var linesRead = 0;
                         while (!reader.EndOfStream)
@@ -229,12 +229,12 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Zip the unfiltered results
-                ZipFile(fiUnfilteredResults.FullName, true);
+                ZipFile(unfilteredResults.FullName, true);
 
                 // Parse the filtered results to count the number of identified glycans
-                var blnSuccess = ExamineFilteredResults(fiFilteredResults);
+                var success = ExamineFilteredResults(filteredResults);
 
-                return blnSuccess;
+                return success;
             }
             catch (Exception ex)
             {
@@ -305,9 +305,9 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private bool ExamineFilteredResults(FileInfo fiResultsFile)
+        private bool ExamineFilteredResults(FileInfo resultsFile)
         {
-            return ExamineFilteredResults(fiResultsFile, mJob, string.Empty);
+            return ExamineFilteredResults(resultsFile, mJob, string.Empty);
         }
 
         /// <summary>
@@ -315,10 +315,10 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Post the results to DMS using jobNumber
         /// </summary>
         /// <remarks>If dmsConnectionStringOverride is empty then PostJobResults will use the Manager Parameters (mMgrParams)</remarks>
-        /// <param name="fiResultsFile"></param>
+        /// <param name="resultsFile"></param>
         /// <param name="jobNumber"></param>
         /// <param name="dmsConnectionStringOverride">Optional: DMS5 connection string</param>
-        public bool ExamineFilteredResults(FileInfo fiResultsFile, int jobNumber, string dmsConnectionStringOverride)
+        public bool ExamineFilteredResults(FileInfo resultsFile, int jobNumber, string dmsConnectionStringOverride)
         {
             try
             {
@@ -328,7 +328,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 var uniqueCodeFormulaCombos = new SortedSet<string>();
                 var uniqueCodes = new SortedSet<string>();
 
-                using (var reader = new StreamReader(new FileStream(fiResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(resultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -380,14 +380,14 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var udtPSMStats = new PSMStats();
-                udtPSMStats.Clear();
-                udtPSMStats.TotalPSMs = totalPSMs;
-                udtPSMStats.UniquePeptideCount = uniqueCodeFormulaCombos.Count;
-                udtPSMStats.UniqueProteinCount = uniqueCodes.Count;
+                var psmstats = new PSMStats();
+                psmstats.Clear();
+                psmstats.TotalPSMs = totalPSMs;
+                psmstats.UniquePeptideCount = uniqueCodeFormulaCombos.Count;
+                psmstats.UniqueProteinCount = uniqueCodes.Count;
 
                 // Store the results in the database
-                PostJobResults(jobNumber, udtPSMStats, dmsConnectionStringOverride);
+                PostJobResults(jobNumber, psmstats, dmsConnectionStringOverride);
 
                 return true;
             }
@@ -412,10 +412,10 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Move the batch files and console output files into the FilesToZip folder
                 var workingDirectory = new DirectoryInfo(mWorkDir);
-                var lstFilesToMove = new List<FileInfo>();
+                var filesToMove = new List<FileInfo>();
 
                 var batchFiles = workingDirectory.GetFiles("*.bat");
-                lstFilesToMove.AddRange(batchFiles);
+                filesToMove.AddRange(batchFiles);
 
                 // We don't keep the entire ConsoleOutput file
                 // Instead, just keep a trimmed version of the original, removing extraneous log messages
@@ -424,7 +424,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     PruneConsoleOutputFiles(consoleOutputFile, tempZipDirectory);
                 }
 
-                foreach (var file in lstFilesToMove)
+                foreach (var file in filesToMove)
                 {
                     file.MoveTo(Path.Combine(tempZipDirectory.FullName, file.Name));
                 }
@@ -468,9 +468,9 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var strZipFilePath = Path.Combine(mWorkDir, "GlyQIq_Automation_Files.zip");
+                var zipFilePath = Path.Combine(mWorkDir, "GlyQIq_Automation_Files.zip");
 
-                mDotNetZipTools.ZipDirectory(tempZipDirectory.FullName, strZipFilePath);
+                mDotNetZipTools.ZipDirectory(tempZipDirectory.FullName, zipFilePath);
             }
             catch (Exception ex)
             {
@@ -492,7 +492,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private bool PostJobResults(int jobNumber, PSMStats udtPSMStats, string dmsConnectionStringOverride)
+        private bool PostJobResults(int jobNumber, PSMStats psmstats, string dmsConnectionStringOverride)
         {
             const int MAX_RETRY_COUNT = 3;
 
@@ -536,12 +536,12 @@ namespace AnalysisManagerGlyQIQPlugin
                 dbTools.AddTypedParameter(cmd, "@MSGFThreshold", SqlType.Float, value: 1);
                 dbTools.AddTypedParameter(cmd, "@FDRThreshold", SqlType.Float, value: 0.25);
                 dbTools.AddTypedParameter(cmd, "@SpectraSearched", SqlType.Int, value: mSpectraSearched);
-                dbTools.AddTypedParameter(cmd, "@TotalPSMs", SqlType.Int, value: udtPSMStats.TotalPSMs);
-                dbTools.AddTypedParameter(cmd, "@UniquePeptides", SqlType.Int, value: udtPSMStats.UniquePeptideCount);
-                dbTools.AddTypedParameter(cmd, "@UniqueProteins", SqlType.Int, value: udtPSMStats.UniqueProteinCount);
-                dbTools.AddTypedParameter(cmd, "@TotalPSMsFDRFilter", SqlType.Int, value: udtPSMStats.TotalPSMs);
-                dbTools.AddTypedParameter(cmd, "@UniquePeptidesFDRFilter", SqlType.Int, value: udtPSMStats.UniquePeptideCount);
-                dbTools.AddTypedParameter(cmd, "@UniqueProteinsFDRFilter", SqlType.Int, value: udtPSMStats.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMs", SqlType.Int, value: psmstats.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptides", SqlType.Int, value: psmstats.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteins", SqlType.Int, value: psmstats.UniqueProteinCount);
+                dbTools.AddTypedParameter(cmd, "@TotalPSMsFDRFilter", SqlType.Int, value: psmstats.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@UniquePeptidesFDRFilter", SqlType.Int, value: psmstats.UniquePeptideCount);
+                dbTools.AddTypedParameter(cmd, "@UniqueProteinsFDRFilter", SqlType.Int, value: psmstats.UniqueProteinCount);
                 dbTools.AddTypedParameter(cmd, "@MSGFThresholdIsEValue", SqlType.TinyInt, value: 0);
 
                 // Execute the SP (retry the call up to 3 times)
@@ -564,19 +564,19 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private void PruneConsoleOutputFiles(FileInfo fiConsoleOutputFile, DirectoryInfo diTargetFolder)
+        private void PruneConsoleOutputFiles(FileInfo consoleOutputFile, DirectoryInfo targetFolder)
         {
-            if (fiConsoleOutputFile.Directory == null)
+            if (consoleOutputFile.Directory == null)
                 return;
 
-            if (fiConsoleOutputFile.Directory.FullName == diTargetFolder.FullName)
+            if (consoleOutputFile.Directory.FullName == targetFolder.FullName)
             {
-                throw new Exception("The Source console output file cannot reside in the Target Folder: " + fiConsoleOutputFile.FullName + " vs. " + diTargetFolder.FullName);
+                throw new Exception("The Source console output file cannot reside in the Target Folder: " + consoleOutputFile.FullName + " vs. " + targetFolder.FullName);
             }
 
             try
             {
-                var lstLinesToPrune = new List<string>
+                var linesToPrune = new List<string>
                 {
                     "LC Peaks To Analyze:",
                     "Best:",
@@ -598,9 +598,9 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 var reNumericLine = new Regex("^[0-9.]+$", RegexOptions.Compiled);
 
-                var consoleOutputFilePruned = Path.Combine(diTargetFolder.FullName, fiConsoleOutputFile.Name);
+                var consoleOutputFilePruned = Path.Combine(targetFolder.FullName, consoleOutputFile.Name);
 
-                using (var reader = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(consoleOutputFilePruned, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
@@ -618,7 +618,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             break;
                         }
 
-                        var skipLine = lstLinesToPrune.Any(textToFind => dataLine.StartsWith(textToFind));
+                        var skipLine = linesToPrune.Any(textToFind => dataLine.StartsWith(textToFind));
 
                         if (skipLine)
                             continue;
@@ -634,9 +634,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Make sure that we don't keep the original, non-pruned file
-                // The pruned file was created in diTargetFolder and will get included in GlyQIq_Automation_Files.zip
+                // The pruned file was created in targetFolder and will get included in GlyQIq_Automation_Files.zip
                 //
-                mJobParams.AddResultFileToSkip(fiConsoleOutputFile.Name);
+                mJobParams.AddResultFileToSkip(consoleOutputFile.Name);
             }
             catch (Exception ex)
             {
@@ -679,7 +679,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 mProgress = PROGRESS_PCT_STARTING;
 
                 mGlyQRunners = new Dictionary<int, GlyQIqRunner>();
-                // var lstThreads = new List<Thread>();
+                // var threads = new List<Thread>();
 
                 for (var core = 1; core <= mCoreCount; core++)
                 {
@@ -697,7 +697,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     };
 
                     newThread.Start();
-                    // lstThreads.Add(newThread);
+                    // threads.Add(newThread);
                 }
 
                 // Wait for all of the threads to exit
@@ -705,7 +705,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 currentTask = "Waiting for all of the threads to exit";
 
-                var dtStartTime = DateTime.UtcNow;
+                var startTime = DateTime.UtcNow;
                 var completedCores = new SortedSet<int>();
 
                 while (true)
@@ -749,7 +749,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     Global.IdleLoop(2);
 
-                    if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
+                    if (DateTime.UtcNow.Subtract(startTime).TotalDays > 14)
                     {
                         mMessage = "GlyQ-IQ ran for over 14 days; aborting";
 
@@ -762,7 +762,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var blnSuccess = true;
+                var success = true;
                 var exitCode = 0;
 
                 currentTask = "Looking for console output error messages";
@@ -780,7 +780,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     foreach (var cachedError in progRunner.CachedConsoleErrors)
                     {
                         LogError("Core " + glyQRunner.Key + ": " + cachedError);
-                        blnSuccess = false;
+                        success = false;
                     }
 
                     if (progRunner.ExitCode != 0 && exitCode == 0)
@@ -789,7 +789,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error running GlyQ-IQ");
 

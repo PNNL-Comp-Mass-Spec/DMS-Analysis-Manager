@@ -144,10 +144,10 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         private bool ZipMainOutputFile()
         {
-            var strOMSSAResultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_om.omx");
+            var omssaresultsFilePath = Path.Combine(mWorkDir, mDatasetName + "_om.omx");
 
-            var blnSuccess = ZipFile(strOMSSAResultsFilePath, true);
-            return blnSuccess;
+            var success = ZipFile(omssaresultsFilePath, true);
+            return success;
         }
 
         /// <summary>
@@ -228,7 +228,7 @@ namespace AnalysisManagerOMSSAPlugIn
         /// </summary>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
@@ -244,7 +244,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

@@ -180,19 +180,19 @@ namespace AnalysisManagerICR2LSPlugIn
                     transferDirectory.Create();
                 }
 
-                var fiTargetFileFinal = new FileInfo(Path.Combine(transferDirectory.FullName, Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE));
-                var fiTargetFileTemp = new FileInfo(fiTargetFileFinal.FullName + ".new");
+                var targetFileFinal = new FileInfo(Path.Combine(transferDirectory.FullName, Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE));
+                var targetFileTemp = new FileInfo(targetFileFinal.FullName + ".new");
 
-                mPEKResultsFile.CopyTo(fiTargetFileTemp.FullName, true);
+                mPEKResultsFile.CopyTo(targetFileTemp.FullName, true);
 
-                fiTargetFileTemp.Refresh();
+                targetFileTemp.Refresh();
 
-                if (fiTargetFileFinal.Exists)
-                    fiTargetFileFinal.Delete();
+                if (targetFileFinal.Exists)
+                    targetFileFinal.Delete();
 
-                fiTargetFileTemp.MoveTo(fiTargetFileFinal.FullName);
+                targetFileTemp.MoveTo(targetFileFinal.FullName);
 
-                mJobParams.AddServerFileToDelete(fiTargetFileFinal.FullName);
+                mJobParams.AddServerFileToDelete(targetFileFinal.FullName);
             }
             catch (Exception ex)
             {
@@ -209,7 +209,7 @@ namespace AnalysisManagerICR2LSPlugIn
             var reScanNumber = new Regex(@"Scan = (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var reScanNumberFromFilename = new Regex(@"Filename: .+ Scan.(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var lstClosingMessages = new List<string>
+            var closingMessages = new List<string>
             {
                 "Number of isotopic distributions detected",
                 "Processing stop time",
@@ -237,7 +237,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         int.TryParse(reMatch.Groups[1].Value, out currentScan);
                     }
 
-                    foreach (var closingMessage in lstClosingMessages)
+                    foreach (var closingMessage in closingMessages)
                     {
                         if (dataLine.StartsWith(closingMessage))
                         {
@@ -327,26 +327,26 @@ namespace AnalysisManagerICR2LSPlugIn
                         }
                         else if (key.Equals("ScansProcessed", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (int.TryParse(value, out var intResult))
+                            if (int.TryParse(value, out var result))
                             {
                                 // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
                                 // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
                                 // To correct for this, subtract out mMinScanOffset
-                                // scansProcessed = intResult - mMinScanOffset
+                                // scansProcessed = result - mMinScanOffset
 
                                 // New: ScansProcessed is truly the number of scans processed
-                                scansProcessed = intResult;
+                                scansProcessed = result;
                                 if (scansProcessed < 0)
                                 {
-                                    scansProcessed = intResult;
+                                    scansProcessed = result;
                                 }
                             }
                         }
                         else if (key.Equals("PercentComplete", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (float.TryParse(value, out var sngResult))
+                            if (float.TryParse(value, out var result))
                             {
-                                mICR2LSStatus.PercentComplete = sngResult;
+                                mICR2LSStatus.PercentComplete = result;
                             }
                         }
                         else if (key.Equals("state", StringComparison.OrdinalIgnoreCase))
@@ -421,20 +421,20 @@ namespace AnalysisManagerICR2LSPlugIn
             }
         }
 
-        private void InitializeStatusLogFileWatcher(string strWorkDir, string strFilenameToWatch)
+        private void InitializeStatusLogFileWatcher(string workDir, string filenameToWatch)
         {
             mStatusFileWatcher = new FileSystemWatcher();
             mStatusFileWatcher.Changed += StatusFileWatcher_Changed;
             mStatusFileWatcher.BeginInit();
-            mStatusFileWatcher.Path = strWorkDir;
+            mStatusFileWatcher.Path = workDir;
             mStatusFileWatcher.IncludeSubdirectories = false;
-            mStatusFileWatcher.Filter = Path.GetFileName(strFilenameToWatch);
+            mStatusFileWatcher.Filter = Path.GetFileName(filenameToWatch);
             mStatusFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
             mStatusFileWatcher.EndInit();
             mStatusFileWatcher.EnableRaisingEvents = true;
         }
 
-        protected virtual CloseOutType PerfPostAnalysisTasks(bool blnCopyResultsToServer)
+        protected virtual CloseOutType PerfPostAnalysisTasks(bool copyResultsToServer)
         {
             // Stop the job timer
             mStopTime = DateTime.UtcNow;
@@ -526,17 +526,17 @@ namespace AnalysisManagerICR2LSPlugIn
             // This file is updated after each scan is processed
             InitializeStatusLogFileWatcher(Path.GetDirectoryName(mStatusFilePath), Path.GetFileName(mStatusFilePath));
 
-            var strExeFilePath = mMgrParams.GetParam("ICR2LSProgLoc");
+            var exeFilePath = mMgrParams.GetParam("ICR2LSProgLoc");
 
-            if (string.IsNullOrEmpty(strExeFilePath))
+            if (string.IsNullOrEmpty(exeFilePath))
             {
                 LogError("Job parameter ICR2LSProgLoc is not defined; unable to run ICR-2LS");
                 return false;
             }
 
-            if (!File.Exists(strExeFilePath))
+            if (!File.Exists(exeFilePath))
             {
-                LogError("ICR-2LS path not found: " + strExeFilePath);
+                LogError("ICR-2LS path not found: " + exeFilePath);
                 return false;
             }
 
@@ -548,8 +548,8 @@ namespace AnalysisManagerICR2LSPlugIn
             var pekTempFilePath = Path.Combine(mPEKResultsFile.Directory.FullName,
                 Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE);
 
-            var fiTempResultsFile = new FileInfo(pekTempFilePath);
-            if (fiTempResultsFile.Exists)
+            var tempResultsFile = new FileInfo(pekTempFilePath);
+            if (tempResultsFile.Exists)
             {
                 // Open the .pek.tmp file and determine the last scan number that has "Number of isotopic distributions detected"
                 scanToResumeAfter = GetLastScanInPEKFile(pekTempFilePath);
@@ -557,7 +557,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (scanToResumeAfter > 0)
                 {
                     useAllScans = false;
-                    fiTempResultsFile.MoveTo(resultsFileNamePath);
+                    tempResultsFile.MoveTo(resultsFileNamePath);
                 }
             }
 
@@ -575,33 +575,33 @@ namespace AnalysisManagerICR2LSPlugIn
             //
             // See AnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders
 
-            string strArguments;
+            string arguments;
 
             switch (eICR2LSMode)
             {
                 case ICR2LSProcessingModeConstants.SerFolderPEK:
                 case ICR2LSProcessingModeConstants.SerFolderTIC:
-                    strArguments = " /I:" + PossiblyQuotePath(instrumentFilePath) + "\\acqus /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
+                    arguments = " /I:" + PossiblyQuotePath(instrumentFilePath) + "\\acqus /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
                                    PossiblyQuotePath(resultsFileNamePath);
 
                     break;
                 case ICR2LSProcessingModeConstants.SerFilePEK:
                 case ICR2LSProcessingModeConstants.SerFileTIC:
                     // Need to find the location of the apexAcquisition.method file
-                    var strApexAcqFilePath = FileSearch.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE);
+                    var apexAcqFilePath = FileSearch.FindFileInDirectoryTree(Path.GetDirectoryName(instrumentFilePath), APEX_ACQUISITION_METHOD_FILE);
 
-                    if (string.IsNullOrEmpty(strApexAcqFilePath))
+                    if (string.IsNullOrEmpty(apexAcqFilePath))
                     {
                         LogError("Could not find the " + APEX_ACQUISITION_METHOD_FILE + " file in folder " + instrumentFilePath);
                         return false;
                     }
 
-                    strArguments = " /I:" + PossiblyQuotePath(strApexAcqFilePath) + " /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
+                    arguments = " /I:" + PossiblyQuotePath(apexAcqFilePath) + " /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
                                    PossiblyQuotePath(resultsFileNamePath);
 
                     break;
                 default:
-                    strArguments = " /I:" + PossiblyQuotePath(instrumentFilePath) + " /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
+                    arguments = " /I:" + PossiblyQuotePath(instrumentFilePath) + " /P:" + PossiblyQuotePath(paramFilePath) + " /O:" +
                                    PossiblyQuotePath(resultsFileNamePath);
                     break;
             }
@@ -609,24 +609,24 @@ namespace AnalysisManagerICR2LSPlugIn
             switch (eICR2LSMode)
             {
                 case ICR2LSProcessingModeConstants.LTQFTPEK:
-                    strArguments += " /M:PEK /T:1";
+                    arguments += " /M:PEK /T:1";
                     break;
                 case ICR2LSProcessingModeConstants.LTQFTTIC:
-                    strArguments += " /M:TIC /T:1";
+                    arguments += " /M:TIC /T:1";
                     break;
                 case ICR2LSProcessingModeConstants.SFoldersPEK:
-                    strArguments += " /M:PEK /T:2";
+                    arguments += " /M:PEK /T:2";
                     break;
                 case ICR2LSProcessingModeConstants.SFoldersTIC:
-                    strArguments += " /M:TIC /T:2";
+                    arguments += " /M:TIC /T:2";
                     break;
                 case ICR2LSProcessingModeConstants.SerFolderPEK:
                 case ICR2LSProcessingModeConstants.SerFilePEK:
-                    strArguments += " /M:PEK /T:0";
+                    arguments += " /M:PEK /T:0";
                     break;
                 case ICR2LSProcessingModeConstants.SerFolderTIC:
                 case ICR2LSProcessingModeConstants.SerFileTIC:
-                    strArguments += " /M:TIC /T:0";
+                    arguments += " /M:TIC /T:0";
                     break;
                 default:
                     // Unknown mode
@@ -647,18 +647,18 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (scanToResumeAfter > 0 && minScan < scanToResumeAfter)
                     minScan = scanToResumeAfter + 1;
 
-                strArguments += " /F:" + minScan + " /L:" + maxScan;
+                arguments += " /F:" + minScan + " /L:" + maxScan;
             }
 
             if (skipMS2)
             {
-                strArguments += " /NoMS2";
+                arguments += " /NoMS2";
             }
 
             // Possibly enable preview mode (skips the actual deisotoping)
             if (false && Environment.MachineName.IndexOf("WE31383", StringComparison.InvariantCultureIgnoreCase) >= 0)
             {
-                strArguments += " /preview";
+                arguments += " /preview";
             }
 
             // Initialize the program runner
@@ -671,10 +671,10 @@ namespace AnalysisManagerICR2LSPlugIn
             // Set up and execute a program runner to run ICR2LS.exe
             if (mDebugLevel >= 1)
             {
-                LogDebug(strExeFilePath + strArguments);
+                LogDebug(exeFilePath + arguments);
             }
 
-            if (strArguments.Length > 250)
+            if (arguments.Length > 250)
             {
                 // VB6 programs cannot parse command lines over 255 characters in length
                 // Save the arguments to a text file and then call ICR2LS using the /R switch
@@ -682,21 +682,21 @@ namespace AnalysisManagerICR2LSPlugIn
                 var commandLineFilePath = Path.GetTempFileName();
                 using (var writer = new StreamWriter(new FileStream(commandLineFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(strArguments);
+                    writer.WriteLine(arguments);
                 }
 
-                strArguments = "/R:" + PossiblyQuotePath(commandLineFilePath);
+                arguments = "/R:" + PossiblyQuotePath(commandLineFilePath);
 
                 if (mDebugLevel >= 1)
                 {
                     LogDebug("Command line is over 250 characters long; will use /R instead");
-                    LogDebug("  " + strExeFilePath + " " + strArguments);
+                    LogDebug("  " + exeFilePath + " " + arguments);
                 }
             }
 
             // Start ICR-2LS.  Note that .RunProgram will not return until after the ICR2LS.exe closes
             // However, it will raise a Loop Waiting event every MONITOR_INTERVAL_SECONDS seconds (see CmdRunner_LoopWaiting)
-            var success = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", true);
+            var success = mCmdRunner.RunProgram(exeFilePath, arguments, "ICR2LS.exe", true);
 
             // Pause for another 500 msec to make sure ICR-2LS closes
             Global.IdleLoop(0.5);
@@ -831,23 +831,23 @@ namespace AnalysisManagerICR2LSPlugIn
             return valid;
         }
 
-        protected bool VerifyPEKFileExists(string strFolderPath, string strDatasetName)
+        protected bool VerifyPEKFileExists(string folderPath, string datasetName)
         {
-            var blnMatchFound = false;
+            var matchFound = false;
 
             try
             {
-                var fiFolder = new DirectoryInfo(strFolderPath);
-                if (fiFolder.Exists)
+                var folder = new DirectoryInfo(folderPath);
+                if (folder.Exists)
                 {
-                    if (fiFolder.GetFiles(strDatasetName + "*.pek").Length > 0)
+                    if (folder.GetFiles(datasetName + "*.pek").Length > 0)
                     {
-                        blnMatchFound = true;
+                        matchFound = true;
                     }
                 }
                 else
                 {
-                    LogError("Error in VerifyPEKFileExists; folder not found: " + strFolderPath);
+                    LogError("Error in VerifyPEKFileExists; folder not found: " + folderPath);
                 }
             }
             catch (Exception ex)
@@ -855,7 +855,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 LogError("Exception in VerifyPEKFileExists: " + ex.Message);
             }
 
-            return blnMatchFound;
+            return matchFound;
         }
 
         private void CmdRunner_LoopWaiting()
@@ -865,21 +865,21 @@ namespace AnalysisManagerICR2LSPlugIn
 
             const int CHECKPOINT_SAVE_INTERVAL_MINUTES = 1;
 
-            var blnLogStatus = false;
+            var logStatus = false;
 
-            var dblMinutesElapsed = DateTime.UtcNow.Subtract(mLastStatusLogTime).TotalMinutes;
+            var minutesElapsed = DateTime.UtcNow.Subtract(mLastStatusLogTime).TotalMinutes;
             if (mDebugLevel > 0)
             {
-                if (dblMinutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES && mDebugLevel >= 2)
+                if (minutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES && mDebugLevel >= 2)
                 {
-                    blnLogStatus = true;
+                    logStatus = true;
                 }
-                else if (dblMinutesElapsed >= NORMAL_LOG_INTERVAL_MINUTES)
+                else if (minutesElapsed >= NORMAL_LOG_INTERVAL_MINUTES)
                 {
-                    blnLogStatus = true;
+                    logStatus = true;
                 }
 
-                if (blnLogStatus)
+                if (logStatus)
                 {
                     mLastStatusLogTime = DateTime.UtcNow;
 

@@ -159,12 +159,12 @@ namespace AnalysisManager_Cyclops_PlugIn
                 }
 
                 // Move the Plots folder to the result files folder
-                var diPlotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
+                var plotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
-                if (diPlotsFolder.Exists)
+                if (plotsFolder.Exists)
                 {
-                    var strTargetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
-                    diPlotsFolder.MoveTo(strTargetFolderPath);
+                    var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
+                    plotsFolder.MoveTo(targetFolderPath);
                 }
 
                 var success = CopyResultsToTransferDirectory();
@@ -182,19 +182,19 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         }
 
-        private void PossiblyDeleteCyclopsLogFile(string cyclopsLogFile)
+        private void PossiblyDeleteCyclopsLogFile(string cyclopsLogFilePath)
         {
             try
             {
 
-                var fiCyclopsLogFile = new FileInfo(cyclopsLogFile);
-                if (!fiCyclopsLogFile.Exists)
+                var cyclopsLogFile = new FileInfo(cyclopsLogFilePath);
+                if (!cyclopsLogFile.Exists)
                 {
                     return;
                 }
 
                 var deleteFile = false;
-                if (fiCyclopsLogFile.Length == 0)
+                if (cyclopsLogFile.Length == 0)
                 {
                     deleteFile = true;
                 }
@@ -202,7 +202,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 {
                     var lineCount = 0;
 
-                    using var logFileReader = new StreamReader(new FileStream(fiCyclopsLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                    using var logFileReader = new StreamReader(new FileStream(cyclopsLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                     while (!logFileReader.EndOfStream)
                     {
@@ -227,7 +227,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (deleteFile)
                 {
-                    mFileTools.DeleteFileWithRetry(fiCyclopsLogFile, out _);
+                    mFileTools.DeleteFileWithRetry(cyclopsLogFile, out _);
                 }
 
             }

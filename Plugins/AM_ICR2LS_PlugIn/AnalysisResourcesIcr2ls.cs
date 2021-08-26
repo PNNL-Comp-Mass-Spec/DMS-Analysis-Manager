@@ -72,56 +72,56 @@ namespace AnalysisManagerICR2LSPlugIn
                     return true;
                 }
 
-                var strRemoteDatasetFolderPath = Path.Combine(mJobParams.GetParam("DatasetArchivePath"), mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
+                var remoteDatasetFolderPath = Path.Combine(mJobParams.GetParam("DatasetArchivePath"), mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
 
-                string strLocalDatasetFolderPath;
+                string localDatasetFolderPath;
                 if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                 {
-                    strLocalDatasetFolderPath = Path.Combine(mWorkDir, DatasetName + ".d");
-                    strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName + ".d");
+                    localDatasetFolderPath = Path.Combine(mWorkDir, DatasetName + ".d");
+                    remoteDatasetFolderPath = Path.Combine(remoteDatasetFolderPath, DatasetName + ".d");
                 }
                 else
                 {
-                    strLocalDatasetFolderPath = mWorkDir;
+                    localDatasetFolderPath = mWorkDir;
                 }
 
-                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out var blnIsFolder);
+                var serFileOrFolderPath = FindSerFileOrFolder(localDatasetFolderPath, out var isFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
                     // Ser file, fid file, or 0.ser folder not found in the working directory
                     // See if the file exists in the archive
 
-                    serFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, out blnIsFolder);
+                    serFileOrFolderPath = FindSerFileOrFolder(remoteDatasetFolderPath, out isFolder);
 
                     if (!string.IsNullOrEmpty(serFileOrFolderPath))
                     {
                         // File found in the archive; need to copy it locally
 
-                        var dtStartTime = DateTime.UtcNow;
+                        var startTime = DateTime.UtcNow;
 
-                        if (blnIsFolder)
+                        if (isFolder)
                         {
-                            var diSourceFolder = new DirectoryInfo(serFileOrFolderPath);
+                            var sourceFolder = new DirectoryInfo(serFileOrFolderPath);
 
                             LogMessage("Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
                             ResetTimestampForQueueWaitTimeLogging();
-                            mFileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
+                            mFileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(localDatasetFolderPath, sourceFolder.Name));
 
                             if (mDebugLevel >= 1)
                             {
                                 LogMessage(
-                                    "Successfully copied 0.ser folder in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
+                                    "Successfully copied 0.ser folder in " + DateTime.UtcNow.Subtract(startTime).TotalSeconds.ToString("0") +
                                     " seconds");
                             }
                         }
                         else
                         {
-                            var fiSourceFile = new FileInfo(serFileOrFolderPath);
+                            var sourceFile = new FileInfo(serFileOrFolderPath);
 
                             LogMessage("Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
 
-                            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, BaseLogger.LogLevels.ERROR))
+                            if (!CopyFileToWorkDir(sourceFile.Name, sourceFile.Directory.FullName, localDatasetFolderPath, BaseLogger.LogLevels.ERROR))
                             {
                                 return false;
                             }
@@ -130,7 +130,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             {
                                 LogMessage(
                                     "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
-                                    DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") + " seconds");
+                                    DateTime.UtcNow.Subtract(startTime).TotalSeconds.ToString("0") + " seconds");
                             }
                         }
                     }
@@ -147,17 +147,17 @@ namespace AnalysisManagerICR2LSPlugIn
         }
 
         /// <summary>
-        /// Looks for a ser file, fid file, or 0.ser folder in strFolderToCheck
+        /// Looks for a ser file, fid file, or 0.ser folder in folderToCheck
         /// </summary>
-        /// <param name="strFolderToCheck"></param>
-        /// <param name="blnIsFolder"></param>
+        /// <param name="folderToCheck"></param>
+        /// <param name="isFolder"></param>
         /// <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
-        public static string FindSerFileOrFolder(string strFolderToCheck, out bool blnIsFolder)
+        public static string FindSerFileOrFolder(string folderToCheck, out bool isFolder)
         {
-            blnIsFolder = false;
+            isFolder = false;
 
             // Look for a ser file in the working directory
-            var serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_SER_FILE);
+            var serFileOrFolderPath = Path.Combine(folderToCheck, BRUKER_SER_FILE);
 
             if (File.Exists(serFileOrFolderPath))
             {
@@ -166,7 +166,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Ser file not found; look for a fid file
-            serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_FID_FILE);
+            serFileOrFolderPath = Path.Combine(folderToCheck, BRUKER_FID_FILE);
 
             if (File.Exists(serFileOrFolderPath))
             {
@@ -175,10 +175,10 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             // Fid file not found; look for a 0.ser folder in the working directory
-            serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_ZERO_SER_FOLDER);
+            serFileOrFolderPath = Path.Combine(folderToCheck, BRUKER_ZERO_SER_FOLDER);
             if (Directory.Exists(serFileOrFolderPath))
             {
-                blnIsFolder = true;
+                isFolder = true;
                 return serFileOrFolderPath;
             }
 
@@ -205,7 +205,7 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             try
             {
-                var strJob = mJobParams.GetParam("Job");
+                var job = mJobParams.GetParam("Job");
                 var transferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferDirectoryPath))
@@ -223,19 +223,19 @@ namespace AnalysisManagerICR2LSPlugIn
                     LogDebug("Checking for " + AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferDirectoryPath);
                 }
 
-                var diSourceFolder = new DirectoryInfo(transferDirectoryPath);
+                var sourceFolder = new DirectoryInfo(transferDirectoryPath);
 
-                if (!diSourceFolder.Exists)
+                if (!sourceFolder.Exists)
                 {
                     // Transfer folder not found; return false
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("  ... Transfer folder not found: " + diSourceFolder.FullName);
+                        LogDebug("  ... Transfer folder not found: " + sourceFolder.FullName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                var pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName + AnalysisToolRunnerICRBase.PEK_TEMP_FILE);
+                var pekTempFilePath = Path.Combine(sourceFolder.FullName, DatasetName + AnalysisToolRunnerICRBase.PEK_TEMP_FILE);
 
                 var tempPekFile = new FileInfo(pekTempFilePath);
                 if (!tempPekFile.Exists)
@@ -250,7 +250,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (mDebugLevel >= 1)
                 {
                     LogDebug(
-                        AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
+                        AnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + job + " (file size = " +
                         (tempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
                 }
 

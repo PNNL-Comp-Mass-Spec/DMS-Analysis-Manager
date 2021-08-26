@@ -31,7 +31,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return result;
             }
 
-            var strRawDataType = mJobParams.GetJobParameter("RawDataType", "");
+            var rawDataType = mJobParams.GetJobParameter("RawDataType", "");
 
             // Retrieve the peak detector parameter file
 
@@ -46,7 +46,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             }
 
             // Retrieve the instrument data file
-            if (!FileSearch.RetrieveSpectra(strRawDataType))
+            if (!FileSearch.RetrieveSpectra(rawDataType))
             {
                 if (string.IsNullOrEmpty(mMessage))
                 {

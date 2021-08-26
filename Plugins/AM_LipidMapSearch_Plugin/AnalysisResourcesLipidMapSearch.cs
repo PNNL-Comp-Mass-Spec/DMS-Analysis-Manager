@@ -33,10 +33,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Retrieve the parameter file
-            var strParamFileName = mJobParams.GetParam("ParmFileName");
-            var strParamFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
 
-            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
+            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -89,48 +89,48 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strDeconToolsFolderName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
+            var deconToolsFolderName = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
-            if (string.IsNullOrEmpty(strDeconToolsFolderName))
+            if (string.IsNullOrEmpty(deconToolsFolderName))
             {
                 mMessage = "InputFolderName step parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            if (!strDeconToolsFolderName.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
+            if (!deconToolsFolderName.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "InputFolderName step parameter is not a DeconTools folder; it should start with DLS and is auto-determined by the SourceJob SpecialProcessing text";
                 LogError(mMessage);
                 return false;
             }
 
-            var strDatasetFolder = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-            var strDatasetFolderArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+            var datasetFolder = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            var datasetFolderArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
-            if (string.IsNullOrEmpty(strDatasetFolder))
+            if (string.IsNullOrEmpty(datasetFolder))
             {
                 mMessage = "DatasetStoragePath job parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            if (string.IsNullOrEmpty(strDatasetFolderArchive))
+            if (string.IsNullOrEmpty(datasetFolderArchive))
             {
                 mMessage = "DatasetArchivePath job parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            strDatasetFolder = Path.Combine(strDatasetFolder, DatasetName);
-            strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, DatasetName);
+            datasetFolder = Path.Combine(datasetFolder, DatasetName);
+            datasetFolderArchive = Path.Combine(datasetFolderArchive, DatasetName);
 
             if (mDebugLevel >= 2)
             {
                 LogDebug("Retrieving the dataset's .Raw file and DeconTools _peaks.txt file");
             }
 
-            return RetrieveDatasetAndPeaksFile(DatasetName, strDatasetFolder, strDatasetFolderArchive);
+            return RetrieveDatasetAndPeaksFile(DatasetName, datasetFolder, datasetFolderArchive);
         }
 
         private bool RetrieveSecondDatasetFiles()
@@ -153,63 +153,63 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strSourceJob2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2");
+            var sourceJob2Text = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2");
 
-            if (string.IsNullOrWhiteSpace(strSourceJob2))
+            if (string.IsNullOrWhiteSpace(sourceJob2Text))
             {
                 // Second dataset is not defined; that's OK
                 return true;
             }
 
-            if (!int.TryParse(strSourceJob2, out var intSourceJob2))
+            if (!int.TryParse(sourceJob2Text, out var sourceJob2))
             {
                 mMessage = "SourceJob2 is not numeric";
                 LogError(mMessage);
                 return false;
             }
 
-            if (intSourceJob2 <= 0)
+            if (sourceJob2 <= 0)
             {
                 // Second dataset is not defined; that's OK
                 return true;
             }
 
-            var strDataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
-            if (string.IsNullOrEmpty(strDataset2))
+            var dataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
+            if (string.IsNullOrEmpty(dataset2))
             {
                 mMessage = "SourceJob2Dataset job parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            var strInputFolder = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPath");
-            var strInputFolderArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPathArchive");
+            var inputFolderPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPath");
+            var inputFolderPathArchive = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPathArchive");
 
-            if (string.IsNullOrEmpty(strInputFolder))
+            if (string.IsNullOrEmpty(inputFolderPath))
             {
                 mMessage = "SourceJob2FolderPath job parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            if (string.IsNullOrEmpty(strInputFolderArchive))
+            if (string.IsNullOrEmpty(inputFolderPathArchive))
             {
                 mMessage = "SourceJob2FolderPathArchive job parameter not found; this is unexpected";
                 LogError(mMessage);
                 return false;
             }
 
-            var diInputFolder = new DirectoryInfo(strInputFolder);
-            var diInputFolderArchive = new DirectoryInfo(strInputFolderArchive);
+            var inputFolder = new DirectoryInfo(inputFolderPath);
+            var inputFolderArchive = new DirectoryInfo(inputFolderPathArchive);
 
-            if (!diInputFolder.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
+            if (!inputFolder.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
                 LogError(mMessage);
                 return false;
             }
 
-            if (!diInputFolderArchive.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
+            if (!inputFolderArchive.Name.StartsWith("DLS", System.StringComparison.OrdinalIgnoreCase))
             {
                 mMessage = "SourceJob2FolderPathArchive is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
                 LogError(mMessage);
@@ -221,23 +221,23 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 LogDebug("Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file");
             }
 
-            return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName);
+            return RetrieveDatasetAndPeaksFile(dataset2, inputFolder.Parent.FullName, inputFolderArchive.Parent.FullName);
         }
 
-        private bool RetrieveDatasetAndPeaksFile(string strDatasetName, string strDatasetFolderPath, string strDatasetFolderPathArchive)
+        private bool RetrieveDatasetAndPeaksFile(string datasetName, string datasetFolderPath, string datasetFolderPathArchive)
         {
             // Copy the .Raw file
             // Search the dataset directory first, then the archive folder
 
-            var fileToFind = strDatasetName + DOT_RAW_EXTENSION;
-            if (!CopyFileToWorkDir(fileToFind, strDatasetFolderPath, mWorkDir, BaseLogger.LogLevels.INFO))
+            var fileToFind = datasetName + DOT_RAW_EXTENSION;
+            if (!CopyFileToWorkDir(fileToFind, datasetFolderPath, mWorkDir, BaseLogger.LogLevels.INFO))
             {
                 // Raw file not found on the storage server; try the archive
-                if (!CopyFileToWorkDir(fileToFind, strDatasetFolderPathArchive, mWorkDir, BaseLogger.LogLevels.ERROR))
+                if (!CopyFileToWorkDir(fileToFind, datasetFolderPathArchive, mWorkDir, BaseLogger.LogLevels.ERROR))
                 {
                     // Raw file still not found; try MyEMSL
 
-                    var datasetDirectoryPath = DirectorySearch.FindValidDirectory(strDatasetName, fileToFind, retrievingInstrumentDataDir: false);
+                    var datasetDirectoryPath = DirectorySearch.FindValidDirectory(datasetName, fileToFind, retrievingInstrumentDataDir: false);
                     if (datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download

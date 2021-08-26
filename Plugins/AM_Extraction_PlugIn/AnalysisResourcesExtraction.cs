@@ -335,13 +335,13 @@ namespace AnalysisManagerExtractionPlugin
                 //   <note type="input" label="residue, potential modification mass">79.9663@S,79.9663@T,79.9663@Y</note>
                 //   <note type="input" label="refine, potential modification mass">79.9663@S,79.9663@T,79.9663@Y</note>
 
-                var objParamFile = new XmlDocument
+                var paramFile = new XmlDocument
                 {
                     PreserveWhitespace = true
                 };
-                objParamFile.Load(searchToolParamFilePath);
+                paramFile.Load(searchToolParamFilePath);
 
-                if (objParamFile.DocumentElement == null)
+                if (paramFile.DocumentElement == null)
                 {
                     LogError("Error reading the X!Tandem param file: DocumentElement is null");
                     return false;
@@ -349,36 +349,36 @@ namespace AnalysisManagerExtractionPlugin
 
                 for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
                 {
-                    var objSelectedNodes = settingIndex switch
+                    var selectedNodes = settingIndex switch
                     {
-                        0 => objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='residue, potential modification mass']"),
-                        1 => objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='refine, potential modification mass']"),
+                        0 => paramFile.DocumentElement.SelectNodes("/bioml/note[@label='residue, potential modification mass']"),
+                        1 => paramFile.DocumentElement.SelectNodes("/bioml/note[@label='refine, potential modification mass']"),
                         _ => null
                     };
 
-                    if (objSelectedNodes == null)
+                    if (selectedNodes == null)
                     {
                         continue;
                     }
 
-                    for (var matchIndex = 0; matchIndex <= objSelectedNodes.Count - 1; matchIndex++)
+                    for (var matchIndex = 0; matchIndex <= selectedNodes.Count - 1; matchIndex++)
                     {
-                        var xmlAttributes = objSelectedNodes.Item(matchIndex)?.Attributes;
+                        var xmlAttributes = selectedNodes.Item(matchIndex)?.Attributes;
 
                         // Make sure this node has an attribute named type with value "input"
-                        var objAttributeNode = xmlAttributes?.GetNamedItem("type");
+                        var attributeNode = xmlAttributes?.GetNamedItem("type");
 
-                        if (objAttributeNode == null)
+                        if (attributeNode == null)
                         {
                             // Node does not have an attribute named "type"
                             continue;
                         }
 
-                        if (!string.Equals(objAttributeNode.Value, "input", StringComparison.OrdinalIgnoreCase))
+                        if (!string.Equals(attributeNode.Value, "input", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         // Valid node; examine its InnerText value
-                        var modDefList = objSelectedNodes.Item(matchIndex)?.InnerText;
+                        var modDefList = selectedNodes.Item(matchIndex)?.InnerText;
                         if (string.IsNullOrWhiteSpace(modDefList))
                             continue;
 
@@ -967,8 +967,8 @@ namespace AnalysisManagerExtractionPlugin
                                 // Examine the date of the TSV file
                                 // If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
-                                var fiTSVFile = new FileInfo(Path.Combine(tsvSourceDir, tsvFile));
-                                if (DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4)
+                                var tsvfile = new FileInfo(Path.Combine(tsvSourceDir, tsvFile));
+                                if (DateTime.UtcNow.Subtract(tsvfile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
                                     if (!CopyFileToWorkDir(tsvFile, tsvSourceDir, mWorkDir))
@@ -980,14 +980,14 @@ namespace AnalysisManagerExtractionPlugin
                                         skipMSGFResultsZipFileCopy = true;
                                         mJobParams.AddResultFileToSkip(tsvFile);
 
-                                        if (fiTSVFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
+                                        if (tsvfile.LastWriteTimeUtc > newestMzIdOrTsvFile)
                                         {
-                                            newestMzIdOrTsvFile = fiTSVFile.LastWriteTimeUtc;
+                                            newestMzIdOrTsvFile = tsvfile.LastWriteTimeUtc;
                                         }
                                     }
                                 }
 
-                                mJobParams.AddServerFileToDelete(fiTSVFile.FullName);
+                                mJobParams.AddServerFileToDelete(tsvfile.FullName);
                             }
                         }
                     }
@@ -1007,16 +1007,16 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         mJobParams.AddResultFileToSkip(mzidFile);
 
-                        var fiMzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFile));
-                        if (!fiMzidFile.Exists)
+                        var mzidFileInfo = new FileInfo(Path.Combine(mWorkDir, mzidFile));
+                        if (!mzidFileInfo.Exists)
                         {
                             LogError(string.Format(
                                          "FileSearch.FindAndRetrieveMiscFiles returned true, but {0} was not found in the working directory", mzidFile));
                         }
 
-                        if (fiMzidFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
+                        if (mzidFileInfo.LastWriteTimeUtc > newestMzIdOrTsvFile)
                         {
-                            newestMzIdOrTsvFile = fiMzidFile.LastWriteTimeUtc;
+                            newestMzIdOrTsvFile = mzidFileInfo.LastWriteTimeUtc;
                         }
 
                         // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
@@ -1044,10 +1044,10 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Get the peptide to protein mapping file
-                    var pepToProtMapFile = baseName + "_PepToProtMap.txt";
-                    currentStep = "Retrieving " + pepToProtMapFile;
+                    var pepToProtMapFileName = baseName + "_PepToProtMap.txt";
+                    currentStep = "Retrieving " + pepToProtMapFileName;
 
-                    if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFile, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
+                    if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFileName, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
                     {
                         // Errors were reported in function call
 
@@ -1091,8 +1091,8 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         if (splitFastaEnabled && !string.IsNullOrWhiteSpace(sourceDir))
                         {
-                            var fiPepToProtMapFile = new FileInfo(Path.Combine(sourceDir, pepToProtMapFile));
-                            mJobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName);
+                            var pepToProtMapFile = new FileInfo(Path.Combine(sourceDir, pepToProtMapFileName));
+                            mJobParams.AddServerFileToDelete(pepToProtMapFile.FullName);
                         }
                     }
 
@@ -1332,14 +1332,14 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Confirm that the file was actually created
-                var fiModDefsFile = new FileInfo(Path.Combine(mWorkDir, modDefsFilename));
+                var modDefsFile = new FileInfo(Path.Combine(mWorkDir, modDefsFilename));
 
-                if (!fiModDefsFile.Exists && resultTypeName.Equals(RESULT_TYPE_MSPATHFINDER))
+                if (!modDefsFile.Exists && resultTypeName.Equals(RESULT_TYPE_MSPATHFINDER))
                 {
                     // MSPathFinder should have already created the ModDefs file during the previous step
                     // Retrieve it from the transfer directory now
                     FileSearch.FindAndRetrieveMiscFiles(modDefsFilename, false);
-                    fiModDefsFile.Refresh();
+                    modDefsFile.Refresh();
                 }
 
                 if (resultTypeName.Equals(RESULT_TYPE_XTANDEM))
@@ -1348,7 +1348,7 @@ namespace AnalysisManagerExtractionPlugin
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
-                if (!fiModDefsFile.Exists && !resultTypeName.Equals(RESULT_TYPE_MSALIGN) && !resultTypeName.Equals(RESULT_TYPE_TOPPIC))
+                if (!modDefsFile.Exists && !resultTypeName.Equals(RESULT_TYPE_MSALIGN) && !resultTypeName.Equals(RESULT_TYPE_TOPPIC))
                 {
                     mMessage = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +
@@ -1370,7 +1370,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (string.IsNullOrEmpty(remoteModDefsDirectory))
                 {
                     // ModDefs file not found on the server
-                    if (fiModDefsFile.Length == 0)
+                    if (modDefsFile.Length == 0)
                     {
                         // File is empty; no point in keeping it
                         mJobParams.AddResultFileToSkip(modDefsFilename);
@@ -1378,7 +1378,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else if (remoteModDefsDirectory.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (Global.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
+                    if (Global.FilesMatch(modDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
                         mJobParams.AddResultFileToSkip(modDefsFilename);
                     }

@@ -94,16 +94,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             // The keys in this dictionary are DataPackageJobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML or .mzML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-            var dctInstrumentDataToRetrieve = new Dictionary<DataPackageJobInfo, KeyValuePair<string, string>>();
+            var instrumentDataToRetrieve = new Dictionary<DataPackageJobInfo, KeyValuePair<string, string>>();
 
             // Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
-            var dctDatasetRawFilePaths = new Dictionary<string, string>();
+            var datasetRawFilePaths = new Dictionary<string, string>();
 
             // Keys in this dictionary are dataset name, values are the raw_data_type for the dataset
-            var dctDatasetRawDataTypes = new Dictionary<string, string>();
+            var datasetRawDataTypes = new Dictionary<string, string>();
 
             // Cache the current dataset and job info
-            var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+            var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
             var missingInstrumentDataCount = 0;
 
@@ -116,15 +116,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var lastProgressUpdate = DateTime.UtcNow;
 
-            foreach (var udtJobInfo in jobsToProcess)
+            foreach (var jobInfo in jobsToProcess)
             {
                 jobsProcessed++;
-                if (dctDatasetRawDataTypes.ContainsKey(udtJobInfo.Dataset))
+                if (datasetRawDataTypes.ContainsKey(jobInfo.Dataset))
                     continue;
 
-                dctDatasetRawDataTypes.Add(udtJobInfo.Dataset, udtJobInfo.RawDataType);
+                datasetRawDataTypes.Add(jobInfo.Dataset, jobInfo.RawDataType);
 
-                if (!OverrideCurrentDatasetAndJobInfo(udtJobInfo))
+                if (!OverrideCurrentDatasetAndJobInfo(jobInfo))
                 {
                     // Error message has already been logged
                     return false;
@@ -132,10 +132,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (includeMzXmlFiles)
                 {
-                    if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_UIMF_FILES)
+                    if (jobInfo.RawDataType == RAW_DATA_TYPE_DOT_UIMF_FILES)
                     {
                         // Don't create .mzXML files for .UIMF files
-                        // Instead simply add the .uimf path to dctDatasetRawFilePaths
+                        // Instead simply add the .uimf path to datasetRawFilePaths
                     }
                     else
                     {
@@ -151,23 +151,23 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                         if (!string.IsNullOrEmpty(mzXMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
+                            instrumentDataToRetrieve.Add(jobInfo, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
                         }
                         else if (!string.IsNullOrEmpty(mzMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzMLFilePath, hashcheckFilePath));
+                            instrumentDataToRetrieve.Add(jobInfo, new KeyValuePair<string, string>(mzMLFilePath, hashcheckFilePath));
                         }
                         else
                         {
                             // mzXML or mzML file not found
-                            if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
+                            if (jobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
                             {
                                 // Will need to retrieve the .Raw file for this dataset
-                                dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(string.Empty, string.Empty));
+                                instrumentDataToRetrieve.Add(jobInfo, new KeyValuePair<string, string>(string.Empty, string.Empty));
                             }
                             else
                             {
-                                mMessage = "mzXML/mzML file not found for dataset " + udtJobInfo.Dataset +
+                                mMessage = "mzXML/mzML file not found for dataset " + jobInfo.Dataset +
                                             " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
                                 LogError(mMessage);
                                 return false;
@@ -187,9 +187,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         rawFilePath = string.Empty;
                         missingInstrumentDataCount++;
 
-                        if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
+                        if (!datasetRawFilePaths.ContainsKey(jobInfo.Dataset))
                         {
-                            var msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
+                            var msg = "Instrument data file not found for dataset " + jobInfo.Dataset;
                             LogError(msg);
                         }
                     }
@@ -197,14 +197,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (!string.IsNullOrEmpty(rawFilePath))
                 {
-                    if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
+                    if (!datasetRawFilePaths.ContainsKey(jobInfo.Dataset))
                     {
                         if (rawFilePath.StartsWith(MYEMSL_PATH_FLAG))
                         {
                             mMyEMSLUtilities.AddFileToDownloadQueue(mMyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
                         }
 
-                        dctDatasetRawFilePaths.Add(udtJobInfo.Dataset, rawFilePath);
+                        datasetRawFilePaths.Add(jobInfo.Dataset, rawFilePath);
                     }
                 }
 
@@ -239,7 +239,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
             // Restore the dataset and job info for this aggregation job
-            OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
+            OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
             if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
@@ -247,10 +247,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
 
             // Store the dataset paths in a Packed Job Parameter
-            StorePackedJobParameterDictionary(dctDatasetRawFilePaths, JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+            StorePackedJobParameterDictionary(datasetRawFilePaths, JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
 
             // Store the dataset RawDataTypes in a Packed Job Parameter
-            StorePackedJobParameterDictionary(dctDatasetRawDataTypes, JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
+            StorePackedJobParameterDictionary(datasetRawDataTypes, JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
             var retrievalOptions = new DataPackageFileHandler.DataPackageRetrievalOptionsType
             {
@@ -263,7 +263,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 dataPackageInfoLoader.DataPackageID,
                 this);
 
-            var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, retrievalOptions);
+            var success = dataPackageFileHandler.RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
 
             return success;
         }
@@ -281,13 +281,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             try
             {
-                foreach (var udtJob in dataPackagePeptideHitJobs)
+                foreach (var job in dataPackagePeptideHitJobs)
                 {
                     var candidateFileNames = new List<string>
                     {
-                        udtJob.Dataset + DOT_MZXML_EXTENSION,
-                        udtJob.Dataset + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION,
-                        udtJob.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION
+                        job.Dataset + DOT_MZXML_EXTENSION,
+                        job.Dataset + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION,
+                        job.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION
                     };
 
                     var matchFound = false;
@@ -312,10 +312,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         }
                     }
 
-                    if (!matchFound && !datasetNames.Contains(udtJob.Dataset))
+                    if (!matchFound && !datasetNames.Contains(job.Dataset))
                     {
-                        datasetNames.Add(udtJob.Dataset);
-                        datasetYearQuarter.Add(udtJob.Dataset + "=" + GetDatasetYearQuarter(udtJob.ServerStoragePath));
+                        datasetNames.Add(job.Dataset);
+                        datasetYearQuarter.Add(job.Dataset + "=" + GetDatasetYearQuarter(job.ServerStoragePath));
                     }
                 }
 
@@ -339,25 +339,26 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // This dictionary is used to avoid calling RetrieveOrgDB() for every job
                 // The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
                 // The dictionary values are the name of the generated (or retrieved) FASTA file
-                var dctOrgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
+                var orgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
 
                 // This list tracks the generated FASTA file name
                 var generatedOrgDBNames = new List<string>();
 
                 // Cache the current dataset and job info
-                var udtCurrentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
+                var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                foreach (var udtJob in dataPackagePeptideHitJobs)
+                foreach (var analysisJob in dataPackagePeptideHitJobs)
                 {
-                    var dictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
-                                                      udtJob.ProteinOptions);
-                    if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var orgDbNameGenerated))
+                    var dictionaryKey = string.Format("{0}_{1}_{2}", 
+                        analysisJob.LegacyFastaFileName, analysisJob.ProteinCollectionList, analysisJob.ProteinOptions);
+
+                    if (orgDBParamsToGeneratedFileNameMap.TryGetValue(dictionaryKey, out var orgDbNameGenerated))
                     {
                         // Organism DB was already generated
                     }
                     else
                     {
-                        OverrideCurrentDatasetAndJobInfo(udtJob);
+                        OverrideCurrentDatasetAndJobInfo(analysisJob);
                         mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
@@ -373,19 +374,20 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             return false;
                         }
 
-                        if (orgDbNameGenerated != udtJob.GeneratedFASTAFileName)
+                        if (orgDbNameGenerated != analysisJob.GeneratedFASTAFileName)
                         {
                             mMessage = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected FASTA file name (" +
-                                        udtJob.GeneratedFASTAFileName + "); aborting";
+                                       analysisJob.GeneratedFASTAFileName + "); aborting";
+
                             LogError(mMessage + " (class AnalysisResourcesRepoPkgr)");
                             return false;
                         }
-                        dctOrgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, orgDbNameGenerated);
+                        orgDBParamsToGeneratedFileNameMap.Add(dictionaryKey, orgDbNameGenerated);
 
                         generatedOrgDBNames.Add(orgDbNameGenerated);
                     }
                     // Add a new job parameter that associates orgDbNameGenerated with this job
-                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
+                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(analysisJob.Job),
                                                        orgDbNameGenerated);
                 }
 
@@ -394,7 +396,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 StorePackedJobParameterList(generatedOrgDBNames, FASTA_FILES_FOR_DATA_PACKAGE);
 
                 // Restore the dataset and job info for this aggregation job
-                OverrideCurrentDatasetAndJobInfo(udtCurrentDatasetAndJobInfo);
+                OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
             }
             catch (Exception ex)
             {

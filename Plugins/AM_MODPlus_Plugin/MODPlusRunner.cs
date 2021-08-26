@@ -175,9 +175,9 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var blnSuccess = ProgramRunner.RunProgram(mJavaProgLog, arguments, "MODPlus", true);
+            var success = ProgramRunner.RunProgram(mJavaProgLog, arguments, "MODPlus", true);
 
-            if (blnSuccess)
+            if (success)
             {
                 Status = MODPlusRunnerStatusCodes.Success;
                 Progress = 100;
@@ -226,12 +226,12 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Parse the MODPlus console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     return;
                 }
@@ -239,7 +239,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var spectraSearched = 0;
                 var totalSpectra = 1;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -281,18 +281,18 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 // Ignore errors here
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    "Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
             }
         }
 
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="strMessage"></param>
+        /// <param name="message"></param>
         /// <param name="ex"></param>
-        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage, ex);
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, message, ex);
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;

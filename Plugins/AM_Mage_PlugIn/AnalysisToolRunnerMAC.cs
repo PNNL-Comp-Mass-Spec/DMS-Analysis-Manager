@@ -159,15 +159,15 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Confirms that the table has 1 or more rows and has the specified columns
         /// </summary>
-        /// <param name="fiSqlLiteDatabase"></param>
+        /// <param name="sqlLiteDatabase"></param>
         /// <param name="tableName"></param>
-        /// <param name="lstColumns"></param>
+        /// <param name="columns"></param>
         /// <param name="errorMessage">Error message</param>
         /// <param name="exceptionDetail">Exception details (empty if errorMessage is empty)</param>
         protected bool TableContainsDataAndColumns(
-          FileInfo fiSqlLiteDatabase,
+          FileInfo sqlLiteDatabase,
           string tableName,
-          IEnumerable<string> lstColumns,
+          IEnumerable<string> columns,
           out string errorMessage,
           out string exceptionDetail)
         {
@@ -176,7 +176,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             try
             {
-                var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+                var connectionString = "Data Source = " + sqlLiteDatabase.FullName + "; Version=3;";
 
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
@@ -193,7 +193,7 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 reader.Read();
-                foreach (var columnName in lstColumns)
+                foreach (var columnName in columns)
                 {
                     try
                     {
@@ -217,13 +217,13 @@ namespace AnalysisManager_Mage_PlugIn
             return true;
         }
 
-        protected bool TableExists(FileInfo fiSqlLiteDatabase, string tableName)
+        protected bool TableExists(FileInfo sqlLiteDatabase, string tableName)
         {
             var tableFound = false;
 
             try
             {
-                var connectionString = "Data Source = " + fiSqlLiteDatabase.FullName + "; Version=3;";
+                var connectionString = "Data Source = " + sqlLiteDatabase.FullName + "; Version=3;";
 
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();

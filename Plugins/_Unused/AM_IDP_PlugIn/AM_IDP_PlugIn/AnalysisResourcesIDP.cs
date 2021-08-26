@@ -32,26 +32,26 @@ namespace AnalysisManager_IDP_PlugIn
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                string strInputFileExtension = string.Empty;
+                string inputFileExtension = string.Empty;
 
                 // Retrieve the Cyclops Workflow file specified for this job
-                string strCyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
+                string cyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
 
                 // Retrieve the Workflow file name specified for this job
-                if (string.IsNullOrEmpty(strCyclopsWorkflowFileName))
+                if (string.IsNullOrEmpty(cyclopsWorkflowFileName))
                 {
                     m_message = "Parameter CyclopsWorkflowName not defined in the job parameters for this job";
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, m_message + "; unable to continue");
                     return IJobParams.CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-                string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
-                string strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
+                string dmsworkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+                string cyclopsWorkflowDirectory = Path.Combine(dmsworkflowsFolderPath, "Cyclops", analysisType);
 
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(cyclopsWorkflowDirectory, cyclopsWorkflowFileName));
 
                 // Now copy the Cyclops workflow file to the working directory
-                if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
+                if (!CopyFileToWorkDir(cyclopsWorkflowFileName, cyclopsWorkflowDirectory, m_WorkingDir))
                 {
                     //Errors were reported in function call, so just return
                     return IJobParams.CloseOutType.CLOSEOUT_FAILED;

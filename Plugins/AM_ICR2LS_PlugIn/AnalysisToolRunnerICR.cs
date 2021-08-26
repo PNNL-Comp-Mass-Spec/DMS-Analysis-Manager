@@ -102,29 +102,29 @@ namespace AnalysisManagerICR2LSPlugIn
                 // It could be in a "0.ser" folder, a ser file inside a .D folder, or a fid file inside a .D folder
 
                 string datasetFolderPathBase;
-                bool blnBrukerFT;
+                bool brukerFT;
 
                 if (string.Equals(rawDataTypeName.ToLower(), AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
                 {
                     datasetFolderPathBase = Path.Combine(mWorkDir, mDatasetName + ".d");
-                    blnBrukerFT = true;
+                    brukerFT = true;
                 }
                 else
                 {
                     datasetFolderPathBase = mWorkDir;
-                    blnBrukerFT = false;
+                    brukerFT = false;
                 }
 
                 // Look for a ser file or fid file in the working directory
                 currentTask = "FindSerFileOrFolder";
 
-                var serFileOrFolderPath = AnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out var blnIsFolder);
+                var serFileOrFolderPath = AnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out var isFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
                     // Did not find a ser file, fid file, or 0.ser folder
 
-                    if (blnBrukerFT)
+                    if (brukerFT)
                     {
                         mMessage = "ser file or fid file not found; unable to process with ICR-2LS";
                         LogError(mMessage);
@@ -142,7 +142,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     if (mDebugLevel >= 1)
                     {
-                        if (blnIsFolder)
+                        if (isFolder)
                         {
                             LogDebug("0.ser folder found: " + serFileOrFolderPath);
                         }
@@ -159,16 +159,16 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (!string.IsNullOrEmpty(serFileOrFolderPath))
                 {
-                    string strSerTypeName;
-                    if (!blnIsFolder)
+                    string serTypeName;
+                    if (!isFolder)
                     {
                         eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK;
-                        strSerTypeName = "file";
+                        serTypeName = "file";
                     }
                     else
                     {
                         eICR2LSMode = ICR2LSProcessingModeConstants.SerFolderPEK;
-                        strSerTypeName = "folder";
+                        serTypeName = "folder";
                     }
 
                     currentTask = "StartICR2LS for " + serFileOrFolderPath;
@@ -178,7 +178,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (!success)
                     {
-                        LogError("Error running ICR-2LS on " + strSerTypeName + " " + serFileOrFolderPath);
+                        LogError("Error running ICR-2LS on " + serTypeName + " " + serFileOrFolderPath);
                     }
                 }
                 else
@@ -214,8 +214,8 @@ namespace AnalysisManagerICR2LSPlugIn
                         PerfPostAnalysisTasks(false);
 
                         // Try to save whatever files were moved into the results directory
-                        var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
-                        objAnalysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
+                        var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
+                        analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(mWorkDir, mResultsDirectoryName));
                     }
                     else
                     {

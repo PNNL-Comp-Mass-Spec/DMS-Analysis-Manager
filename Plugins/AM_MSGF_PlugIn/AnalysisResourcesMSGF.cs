@@ -410,12 +410,12 @@ namespace AnalysisManagerMSGFPlugin
                     }
 
                     // Possibly unzip the .mzXML file
-                    var fiMzXMLFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION));
-                    if (fiMzXMLFile.Exists)
+                    var mzXMLFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + DOT_MZXML_EXTENSION + DOT_GZ_EXTENSION));
+                    if (mzXMLFile.Exists)
                     {
                         mJobParams.AddResultFileExtensionToSkip(DOT_GZ_EXTENSION);
 
-                        if (!GUnzipFile(fiMzXMLFile.FullName))
+                        if (!GUnzipFile(mzXMLFile.FullName))
                         {
                             mMessage = "Error decompressing .mzXML.gz file";
                             return CloseOutType.CLOSEOUT_FAILED;

@@ -59,24 +59,24 @@ namespace TestMultiAlignPlugIn
 
             var statusFile = new StatusFileStub();
 
-            var oMultiAlignMage = new MultiAlignMage(m_jobParams, m_mgrParams, statusFile);
-            var sMultiAlignConsolePath = m_mgrParams.GetParam("MultiAlignProgLoc");
-            sMultiAlignConsolePath = Path.Combine(sMultiAlignConsolePath, "MultiAlignConsole.exe");
+            var multiAlignMage = new MultiAlignMage(m_jobParams, m_mgrParams, statusFile);
+            var multiAlignConsolePath = m_mgrParams.GetParam("MultiAlignProgLoc");
+            multiAlignConsolePath = Path.Combine(multiAlignConsolePath, "MultiAlignConsole.exe");
 
-            var bSuccess = oMultiAlignMage.Run(sMultiAlignConsolePath);
+            var success = multiAlignMage.Run(multiAlignConsolePath);
 
             // Change the name of the log file back to the analysis manager log file
             LogFileName = mLogFilename;
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             LogTools.ChangeLogFileName(LogFileName);
 
-            if (bSuccess)
+            if (success)
                 return string.Empty;
 
-            if (string.IsNullOrEmpty(oMultiAlignMage.Message))
+            if (string.IsNullOrEmpty(multiAlignMage.Message))
                 return "Unknown error running Multialign";
 
-            return "Error running Multialign: " + oMultiAlignMage.Message;
+            return "Error running Multialign: " + multiAlignMage.Message;
         }
     }
 }

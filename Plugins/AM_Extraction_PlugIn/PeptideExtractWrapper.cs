@@ -189,13 +189,13 @@ namespace AnalysisManagerExtractionPlugin
             var workFiles = Directory.GetFiles(mWorkDir);
             var workFileMatch = string.Empty;
 
-            var reCheckSuffix = new Regex("_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var suffixChecker = new Regex("_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            foreach (var workFile in workFiles)
+            foreach (var candidateWorkFile in workFiles)
             {
-                if (reCheckSuffix.IsMatch(workFile))
+                if (suffixChecker.IsMatch(candidateWorkFile))
                 {
-                    workFileMatch = workFile;
+                    workFileMatch = candidateWorkFile;
                     break;
                 }
             }
@@ -207,8 +207,8 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Get the _syn.txt file size and verify it's > 0 bytes
-            var fiWorkFile = new FileInfo(workFileMatch);
-            if (fiWorkFile.Length > 0)
+            var workFile = new FileInfo(workFileMatch);
+            if (workFile.Length > 0)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

@@ -39,20 +39,19 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         /// Look for zipped files in given directory and convert them to gzip.
         /// (conversions are performed in the working directory)
         /// </summary>
-        /// <param name="targetDir">Full path to directory that contains zipped files to convert</param>
+        /// <param name="targetDirectoryPath">Full path to directory that contains zipped files to convert</param>
         /// <param name="workDir">Local working directory</param>
         /// <returns>The number of .zip files that were converted to .gz files</returns>
-        public static int ConvertZipsToGZips(string targetDir, string workDir)
+        public static int ConvertZipsToGZips(string targetDirectoryPath, string workDir)
         {
             const int debugLevel = 1;
 
-            //  make zipper to work on workDir
+            // make zipper to work on workDir
             var dotNetZipTools = new DotNetZipTools(debugLevel, workDir);
 
-            // get file handler object to access the targetDir
-            var diTargetDir = new DirectoryInfo(targetDir);
+            var targetDir = new DirectoryInfo(targetDirectoryPath);
 
-            if (!diTargetDir.Exists)
+            if (!targetDir.Exists)
                 return 0;
 
             // get file handler object to access the workDir
@@ -61,16 +60,16 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             var filesUpdated = 0;
 
             // for each zip file in target directory
-            foreach (var tarFi in diTargetDir.GetFiles("*.zip"))
+            foreach (var fileToZip in targetDir.GetFiles("*.zip"))
             {
                 // get job prefix from zip file
-                var pfx = Regex.Match(tarFi.Name, @"Job_\d*_").Groups[0].Value;
+                var pfx = Regex.Match(fileToZip.Name, @"Job_\d*_").Groups[0].Value;
 
                 // copy zip file to local working directory
-                tarFi.CopyTo(Path.Combine(workDir, tarFi.Name));
+                fileToZip.CopyTo(Path.Combine(workDir, fileToZip.Name));
 
                 // unzip it and delete zip
-                dotNetZipTools.UnzipFile(Path.Combine(workDir, tarFi.Name));
+                dotNetZipTools.UnzipFile(Path.Combine(workDir, fileToZip.Name));
 
                 // find the unzipped mzid file
                 var mzFiles = workingDirectory.GetFiles("*.mzid");
@@ -98,15 +97,15 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 }
 
                 // move the gzip file to target directory
-                var targetFilePath = Path.Combine(targetDir, gzFileName);
+                var targetFilePath = Path.Combine(targetDir.FullName, gzFileName);
                 if (File.Exists(targetFilePath))
                     File.Delete(targetFilePath);
 
                 File.Move(Path.Combine(workDir, gzFileName), targetFilePath);
 
                 // get rid of zip file on both sides
-                File.Delete(Path.Combine(workDir, tarFi.Name));
-                File.Delete(tarFi.FullName);
+                File.Delete(Path.Combine(workDir, fileToZip.Name));
+                File.Delete(fileToZip.FullName);
 
                 filesUpdated++;
             }

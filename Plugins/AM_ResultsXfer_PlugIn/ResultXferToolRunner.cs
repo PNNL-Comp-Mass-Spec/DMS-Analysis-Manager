@@ -175,7 +175,7 @@ namespace AnalysisManagerResultsXferPlugin
 
         private string LookupLocalPath(string serverName, string uncSharePath, string directoryFunction, string connectionString)
         {
-            string strMsg;
+            string msg;
 
             if (!uncSharePath.StartsWith(@"\\"))
             {
@@ -205,27 +205,27 @@ namespace AnalysisManagerResultsXferPlugin
                 uncSharePath = uncSharePath.TrimEnd('\\');
             }
 
-            var sbSql = new StringBuilder();
+            var sql = new StringBuilder();
 
             // Query V_Storage_Path_Export for the local volume name of the given path
             //
-            sbSql.Append(" SELECT TOP 1 VolServer, [Path]");
-            sbSql.Append(" FROM V_Storage_Path_Export");
-            sbSql.AppendFormat(" WHERE (MachineName = '{0}') AND", serverName);
-            sbSql.AppendFormat("       ([Path] = '{0}' OR", uncSharePath);
-            sbSql.AppendFormat("        [Path] = '{0}\\')", uncSharePath);
-            sbSql.AppendFormat(" ORDER BY CASE WHEN [Function] = '{0}' THEN 1 ELSE 2 END, ID DESC", directoryFunction);
+            sql.Append(" SELECT TOP 1 VolServer, [Path]");
+            sql.Append(" FROM V_Storage_Path_Export");
+            sql.AppendFormat(" WHERE (MachineName = '{0}') AND", serverName);
+            sql.AppendFormat("       ([Path] = '{0}' OR", uncSharePath);
+            sql.AppendFormat("        [Path] = '{0}\\')", uncSharePath);
+            sql.AppendFormat(" ORDER BY CASE WHEN [Function] = '{0}' THEN 1 ELSE 2 END, ID DESC", directoryFunction);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
             // Get a table to hold the results of the query
-            var success = dbTools.GetQueryResultsDataTable(sbSql.ToString(), out var dt);
+            var success = dbTools.GetQueryResultsDataTable(sql.ToString(), out var dt);
 
             if (!success)
             {
-                strMsg = "LookupLocalPath; Excessive failures attempting to retrieve directory info from database";
-                LogError(strMsg);
+                msg = "LookupLocalPath; Excessive failures attempting to retrieve directory info from database";
+                LogError(msg);
                 return string.Empty;
             }
 
@@ -237,8 +237,8 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // No data was returned
-            strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncSharePath + "' on server " + serverName;
-            LogError(strMsg);
+            msg = "LookupLocalPath; could not resolve a local volume name for path '" + uncSharePath + "' on server " + serverName;
+            LogError(msg);
             return string.Empty;
         }
 
@@ -278,37 +278,37 @@ namespace AnalysisManagerResultsXferPlugin
                     LogDebug("Moving files locally to " + targetDirectory.FullName);
                 }
 
-                foreach (var fiSourceFile in sourceDirectory.GetFiles())
+                foreach (var sourceFile in sourceDirectory.GetFiles())
                 {
                     try
                     {
-                        var fiTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, fiSourceFile.Name));
+                        var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFile.Name));
 
-                        if (fiTargetFile.Exists)
+                        if (targetFile.Exists)
                         {
                             if (!overwriteExisting)
                             {
                                 if (mDebugLevel >= 2)
                                 {
-                                    LogDebug("Skipping existing file: " + fiTargetFile.FullName);
+                                    LogDebug("Skipping existing file: " + targetFile.FullName);
                                 }
                                 continue;
                             }
-                            fiTargetFile.Delete();
+                            targetFile.Delete();
                         }
 
-                        fiSourceFile.MoveTo(fiTargetFile.FullName);
+                        sourceFile.MoveTo(targetFile.FullName);
                     }
                     catch (Exception ex)
                     {
                         errorCount++;
                         if (errorCount == 1)
                         {
-                            LogError("Error moving file " + fiSourceFile.Name + ": " + ex.Message, ex);
+                            LogError("Error moving file " + sourceFile.Name + ": " + ex.Message, ex);
                         }
                         else
                         {
-                            LogErrorNoMessageUpdate("Error moving file " + fiSourceFile.Name + ": " + ex.Message);
+                            LogErrorNoMessageUpdate("Error moving file " + sourceFile.Name + ": " + ex.Message);
                         }
                         success = false;
                     }

@@ -106,10 +106,10 @@ namespace AnalysisManagerProSightQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                var strRawDataType = mJobParams.GetParam("RawDataType");
+                var rawDataType = mJobParams.GetParam("RawDataType");
                 string arguments;
 
-                switch (strRawDataType.ToLower())
+                switch (rawDataType.ToLower())
                 {
                     case AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));
@@ -119,7 +119,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                         arguments = " " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName) + AnalysisResources.DOT_D_EXTENSION);
                         break;
                     default:
-                        mMessage = "Dataset type " + strRawDataType + " is not supported";
+                        mMessage = "Dataset type " + rawDataType + " is not supported";
                         LogDebug(mMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -167,10 +167,10 @@ namespace AnalysisManagerProSightQuantPlugIn
                 if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
-                    var strOutputFileName = mDatasetName + "_quant.txt";
-                    if (!File.Exists(Path.Combine(mWorkDir, strOutputFileName)))
+                    var outputFileName = mDatasetName + "_quant.txt";
+                    if (!File.Exists(Path.Combine(mWorkDir, outputFileName)))
                     {
-                        mMessage = "ProSight_Quant result file not found (" + strOutputFileName + ")";
+                        mMessage = "ProSight_Quant result file not found (" + outputFileName + ")";
                         processingSuccess = false;
                     }
                 }
@@ -206,13 +206,13 @@ namespace AnalysisManagerProSightQuantPlugIn
                         LogDebug("TargetedWorkflowsConsole Quantitation Complete");
                     }
 
-                    var fiConsoleOutputfile = new FileInfo(Path.Combine(mWorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
-                    var fiDeconWorkflowsLogFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_log.txt"));
+                    var consoleOutputfile = new FileInfo(Path.Combine(mWorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
+                    var deconWorkflowsLogFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_log.txt"));
 
-                    if (fiConsoleOutputfile.Exists && fiDeconWorkflowsLogFile.Exists && fiConsoleOutputfile.Length > fiDeconWorkflowsLogFile.Length)
+                    if (consoleOutputfile.Exists && deconWorkflowsLogFile.Exists && consoleOutputfile.Length > deconWorkflowsLogFile.Length)
                     {
                         // Don't keep the _log.txt file since the Console_Output file has all of the same information
-                        mJobParams.AddResultFileToSkip(fiDeconWorkflowsLogFile.Name);
+                        mJobParams.AddResultFileToSkip(deconWorkflowsLogFile.Name);
                     }
 
                     // Don't keep the _peaks.txt file since it can get quite large
@@ -262,10 +262,10 @@ namespace AnalysisManagerProSightQuantPlugIn
             try
             {
                 var targetedQuantParamFilePath = Path.Combine(mWorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                const string strProSightPCResultsFile = AnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
+                const string proSightPCResultsFile = AnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
-                var strWorkflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
-                if (string.IsNullOrEmpty(strWorkflowParamFileName))
+                var workflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
+                if (string.IsNullOrEmpty(workflowParamFileName))
                 {
                     mMessage = NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
                     return string.Empty;
@@ -285,10 +285,10 @@ namespace AnalysisManagerProSightQuantPlugIn
                 WriteXMLSetting(writer, "FileContainingDatasetPaths", "");
                 WriteXMLSetting(writer, "FolderPathForCopiedRawDataset", "");
                 WriteXMLSetting(writer, "LoggingFolder", mWorkDir);
-                WriteXMLSetting(writer, "TargetsFilePath", Path.Combine(mWorkDir, strProSightPCResultsFile));
+                WriteXMLSetting(writer, "TargetsFilePath", Path.Combine(mWorkDir, proSightPCResultsFile));
                 WriteXMLSetting(writer, "TargetType", "LcmsFeature");
                 WriteXMLSetting(writer, "ResultsFolder", mWorkDir);
-                WriteXMLSetting(writer, "WorkflowParameterFile", Path.Combine(mWorkDir, strWorkflowParamFileName));
+                WriteXMLSetting(writer, "WorkflowParameterFile", Path.Combine(mWorkDir, workflowParamFileName));
                 WriteXMLSetting(writer, "WorkflowType", "TopDownTargetedWorkflowExecutor1");
 
                 writer.WriteEndElement();    // WorkflowParameters
@@ -332,8 +332,8 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
@@ -348,11 +348,11 @@ namespace AnalysisManagerProSightQuantPlugIn
                     };
                 }
 
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -360,7 +360,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 double subProgressAddon = 0;
@@ -369,7 +369,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
                     while (!reader.EndOfStream)
@@ -382,23 +382,23 @@ namespace AnalysisManagerProSightQuantPlugIn
                             var dataLineLCase = dataLine.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
-                            foreach (var oItem in mConsoleOutputProgressMap)
+                            foreach (var item in mConsoleOutputProgressMap)
                             {
-                                if (dataLine.IndexOf(oItem.Key, StringComparison.OrdinalIgnoreCase) >= 0)
+                                if (dataLine.IndexOf(item.Key, StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
-                                    if (effectiveProgress < oItem.Value)
+                                    if (effectiveProgress < item.Value)
                                     {
-                                        effectiveProgress = oItem.Value;
+                                        effectiveProgress = item.Value;
                                     }
                                 }
                             }
 
                             if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
-                                var oMatch = reSubProgress.Match(dataLine);
-                                if (oMatch.Success)
+                                var match = reSubProgress.Match(dataLine);
+                                if (match.Success)
                                 {
-                                    if (double.TryParse(oMatch.Groups[1].Value, out subProgressAddon))
+                                    if (double.TryParse(match.Groups[1].Value, out subProgressAddon))
                                     {
                                         subProgressAddon /= 100;
                                     }
@@ -447,7 +447,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -468,10 +468,10 @@ namespace AnalysisManagerProSightQuantPlugIn
             return success;
         }
 
-        public void WriteXMLSetting(XmlTextWriter writer, string strSettingName, string strSettingValue)
+        public void WriteXMLSetting(XmlTextWriter writer, string settingName, string settingValue)
         {
-            writer.WriteStartElement(strSettingName);
-            writer.WriteValue(strSettingValue);
+            writer.WriteStartElement(settingName);
+            writer.WriteValue(settingValue);
             writer.WriteEndElement();
         }
 

@@ -263,8 +263,8 @@ namespace AnalysisManagerDataImportPlugIn
         /// </summary>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = Global.GetAppDirectoryPath();
+            var toolVersionInfo = string.Empty;
+            var appFolderPath = Global.GetAppDirectoryPath();
 
             if (mDebugLevel >= 2)
             {
@@ -272,19 +272,19 @@ namespace AnalysisManagerDataImportPlugIn
             }
 
             // Lookup the version of AnalysisManagerDataImportPlugIn
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerDataImportPlugIn"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerDataImportPlugIn"))
             {
                 return false;
             }
 
             // Store the path to AnalysisManagerDataImportPlugIn.dll in toolFiles
             var toolFiles = new List<FileInfo> {
-                new(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
+                new(Path.Combine(appFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

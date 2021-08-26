@@ -279,18 +279,18 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <param name="msXmlCreator">MzXML Creator</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="analysisResults">Analysis Results class</param>
-        /// <param name="dctDatasetRawFilePaths">Dictionary with dataset names and dataset raw file paths</param>
-        /// <param name="dctDatasetYearQuarter">Dictionary with dataset names and year/quarter information</param>
-        /// <param name="dctDatasetRawDataTypes">Dictionary with dataset names and the raw data type of the instrument data file</param>
+        /// <param name="datasetRawFilePaths">Dictionary with dataset names and dataset raw file paths</param>
+        /// <param name="datasetYearQuarters">Dictionary with dataset names and year/quarter information</param>
+        /// <param name="datasetRawDataTypes">Dictionary with dataset names and the raw data type of the instrument data file</param>
         /// <param name="datasetFilePathLocal">Output parameter: Path to the locally cached dataset file</param>
         /// <returns>The full path to the locally created MzXML file</returns>
         private string CreateMzXMLFileIfMissing(
             MSXMLCreator msXmlCreator,
             string datasetName,
             AnalysisResults analysisResults,
-            Dictionary<string, string> dctDatasetRawFilePaths,
-            Dictionary<string, string> dctDatasetYearQuarter,
-            Dictionary<string, string> dctDatasetRawDataTypes,
+            Dictionary<string, string> datasetRawFilePaths,
+            Dictionary<string, string> datasetYearQuarters,
+            Dictionary<string, string> datasetRawDataTypes,
           out string datasetFilePathLocal)
         {
             datasetFilePathLocal = string.Empty;
@@ -330,7 +330,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 // Need to create the .mzXML file
-                if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
+                if (!datasetRawFilePaths.ContainsKey(datasetName))
                 {
                     mMessage = "Dataset " + datasetName + " not found in job parameter " +
                         AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
@@ -345,10 +345,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Make sure the dataset file is present in the working directory
                 // Copy it locally if necessary
 
-                var datasetFilePathRemote = dctDatasetRawFilePaths[datasetName];
+                var datasetFilePathRemote = datasetRawFilePaths[datasetName];
                 if (string.IsNullOrEmpty(datasetFilePathRemote))
                 {
-                    mMessage = "Dataset " + datasetName + " has an empty instrument file path in dctDatasetRawFilePaths";
+                    mMessage = "Dataset " + datasetName + " has an empty instrument file path in datasetRawFilePaths";
                     LogError(mMessage);
                     return string.Empty;
                 }
@@ -377,7 +377,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     }
                 }
 
-                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
+                if (!datasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
@@ -428,7 +428,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var msXmlGeneratorName = Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath);
 
-                if (!dctDatasetYearQuarter.TryGetValue(datasetName, out var datasetYearQuarter))
+                if (!datasetYearQuarters.TryGetValue(datasetName, out var datasetYearQuarter))
                 {
                     datasetYearQuarter = string.Empty;
                 }
@@ -466,9 +466,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             AnalysisResults analysisResults,
             MSXMLCreator msXmlCreator,
             string datasetName,
-            Dictionary<string, string> dctDatasetRawFilePaths,
-            Dictionary<string, string> dctDatasetYearQuarter,
-            Dictionary<string, string> dctDatasetRawDataTypes)
+            Dictionary<string, string> datasetRawFilePaths,
+            Dictionary<string, string> datasetYearQuarter,
+            Dictionary<string, string> datasetRawDataTypes)
         {
             var datasetFilePathLocal = string.Empty;
 
@@ -476,16 +476,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 var instrumentDataDirectoryPath = Path.Combine(mOutputResultsDirectoryPath, "Instrument_Data");
 
-                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
+                if (!datasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
                 if (rawDataType != AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && mIncludeMzXMLFiles)
                 {
                     // Create the .mzXML or .mzML file if it is missing
                     var mzXmlFilePathLocal = CreateMzXMLFileIfMissing(msXmlCreator, datasetName, analysisResults,
-                                                                      dctDatasetRawFilePaths,
-                                                                      dctDatasetYearQuarter,
-                                                                      dctDatasetRawDataTypes,
+                                                                      datasetRawFilePaths,
+                                                                      datasetYearQuarter,
+                                                                      datasetRawDataTypes,
                                                                       out datasetFilePathLocal);
 
                     if (string.IsNullOrEmpty(mzXmlFilePathLocal))
@@ -510,7 +510,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (mIncludeInstrumentData)
                 {
                     // Copy the .raw file, either from the local working directory or from the remote dataset directory
-                    var datasetFilePathSource = dctDatasetRawFilePaths[datasetName];
+                    var datasetFilePathSource = datasetRawFilePaths[datasetName];
                     if (!string.IsNullOrEmpty(datasetFilePathLocal))
                     {
                         // Dataset was already copied locally; copy it from the local computer to the staging directory
@@ -573,9 +573,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private bool RetrieveInstrumentData(out int datasetsProcessed)
         {
             // Extract the packed parameters
-            var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
-            var dctDatasetYearQuarter = ExtractPackedJobParameterDictionary(AnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
-            var dctDatasetRawDataTypes = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
+            var datasetRawFilePaths = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+            var datasetYearQuarter = ExtractPackedJobParameterDictionary(AnalysisResourcesRepoPkgr.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
+            var datasetRawDataTypes = ExtractPackedJobParameterDictionary(AnalysisResources.JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES);
 
             datasetsProcessed = 0;
 
@@ -590,16 +590,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var successCount = 0;
             var errorCount = 0;
 
-            if (dctDatasetRawFilePaths.Keys.Count == 0)
+            if (datasetRawFilePaths.Keys.Count == 0)
             {
-                mMessage = "Could not retrieve instrument data since dctDatasetRawFilePaths is empty";
+                mMessage = "Could not retrieve instrument data since datasetRawFilePaths is empty";
                 return false;
             }
 
             // Process each dataset
-            foreach (var datasetName in dctDatasetRawFilePaths.Keys)
+            foreach (var datasetName in datasetRawFilePaths.Keys)
             {
-                var success = ProcessDataset(analysisResults, msXmlCreator, datasetName, dctDatasetRawFilePaths, dctDatasetYearQuarter, dctDatasetRawDataTypes);
+                var success = ProcessDataset(analysisResults, msXmlCreator, datasetName, datasetRawFilePaths, datasetYearQuarter, datasetRawDataTypes);
 
                 if (success)
                     successCount++;
@@ -607,7 +607,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     errorCount++;
 
                 datasetsProcessed++;
-                mProgress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, dctDatasetRawFilePaths.Count);
+                mProgress = ComputeIncrementalProgress(PROGRESS_PCT_MZID_RESULTS_COPIED, PROGRESS_PCT_INSTRUMENT_DATA_COPIED, datasetsProcessed, datasetRawFilePaths.Count);
                 mStatusTools.UpdateAndWrite(mProgress);
             }
 

@@ -99,8 +99,8 @@ namespace AnalysisManagerDtaImportPlugIn
             try
             {
                 // Copy the DTA folder to the transfer folder
-                var objAnalysisResults = new AnalysisResults(mMgrParams, mJobParams);
-                objAnalysisResults.CopyDirectory(sourceFolderNamePath, targetFolderNamePath, false);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
+                analysisResults.CopyDirectory(sourceFolderNamePath, targetFolderNamePath, false);
 
                 // Now move the DTA folder to succeeded folder
                 Directory.Move(sourceFolderNamePath, completeFolderNamePath);

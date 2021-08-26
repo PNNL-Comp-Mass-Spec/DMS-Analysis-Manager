@@ -97,14 +97,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Update Filename, JobInfo, FileID, Length, and MD5 hash
         /// </summary>
-        /// <param name="oSource"></param>
-        public void Update(PXFileInfoBase oSource)
+        /// <param name="source"></param>
+        public void Update(PXFileInfoBase source)
         {
-            Filename = oSource.Filename;
-            JobInfo = oSource.JobInfo;
-            FileID = oSource.FileID;
-            Length = oSource.Length;
-            MD5Hash = oSource.MD5Hash;
+            Filename = source.Filename;
+            JobInfo = source.JobInfo;
+            FileID = source.FileID;
+            Length = source.Length;
+            MD5Hash = source.MD5Hash;
         }
 
         /// <summary>

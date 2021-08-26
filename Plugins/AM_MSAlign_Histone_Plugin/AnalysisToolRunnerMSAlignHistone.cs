@@ -175,9 +175,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Read the MSAlign Parameter File
-                var strParamFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
-                var cmdLineGenerated = CreateMSAlignCommandLine(strParamFilePath, out var strMSAlignCmdLineOptions);
+                var cmdLineGenerated = CreateMSAlignCommandLine(paramFilePath, out var msalignCmdLineOptions);
                 if (!cmdLineGenerated)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -187,7 +187,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (string.IsNullOrEmpty(strMSAlignCmdLineOptions))
+                if (string.IsNullOrEmpty(msalignCmdLineOptions))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -206,7 +206,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Set up and execute a program runner to run MSAlign_Histone
                 var arguments = " -Xmx" + javaMemorySize + "M" +
                                 " -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " +
-                                strMSAlignCmdLineOptions;
+                                msalignCmdLineOptions;
 
                 LogDebug(JavaProgLoc + " " + arguments);
 
@@ -275,7 +275,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         // Create the HTML and XML files
                         // Need to call MsAlignPipeline.jar again, but this time with a different classpath
 
-                        var reportGenerated = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, javaMemorySize);
+                        var reportGenerated = MakeReportFiles(JavaProgLoc, msalignCmdLineOptions, javaMemorySize);
                         if (!reportGenerated)
                             processingSuccess = false;
 
@@ -286,14 +286,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             processingSuccess = false;
                         }
 
-                        var strResultTableSourcePath = Path.Combine(mWorkDir, mDatasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
+                        var resultTableSourcePath = Path.Combine(mWorkDir, mDatasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
 
-                        if (processingSuccess && File.Exists(strResultTableSourcePath))
+                        if (processingSuccess && File.Exists(resultTableSourcePath))
                         {
                             // Make sure the _OUTPUT_TABLE.txt file is not empty
                             // Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
 
-                            if (ValidateResultTableFile(strResultTableSourcePath))
+                            if (ValidateResultTableFile(resultTableSourcePath))
                             {
                                 eResult = CloseOutType.CLOSEOUT_SUCCESS;
                             }
@@ -347,48 +347,48 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
         }
 
-        private bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
+        private bool CopyFastaCheckResidues(string sourceFilePath, string targetFilePath)
         {
             const int RESIDUES_PER_LINE = 60;
 
-            var intWarningCount = 0;
+            var warningCount = 0;
 
             try
             {
                 var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
 
-                var oReader = new ProteinFileReader.FastaFileReader();
-                if (!oReader.OpenFile(strSourceFilePath))
+                var reader = new ProteinFileReader.FastaFileReader();
+                if (!reader.OpenFile(sourceFilePath))
                 {
                     mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
                     return false;
                 }
 
-                using (var writer = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (oReader.ReadNextProteinEntry())
+                    while (reader.ReadNextProteinEntry())
                     {
-                        writer.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
-                        var strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
+                        writer.WriteLine(reader.ProteinLineStartChar + reader.HeaderLine);
+                        var proteinResidues = reInvalidResidues.Replace(reader.ProteinSequence, "-");
 
-                        if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
+                        if (warningCount < 5 && proteinResidues.GetHashCode() != reader.ProteinSequence.GetHashCode())
                         {
-                            LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
-                            intWarningCount++;
+                            LogWarning("Changed invalid residues to '-' in protein " + reader.ProteinName);
+                            warningCount++;
                         }
 
-                        var intIndex = 0;
-                        var intResidueCount = strProteinResidues.Length;
-                        while (intIndex < strProteinResidues.Length)
+                        var index = 0;
+                        var residueCount = proteinResidues.Length;
+                        while (index < proteinResidues.Length)
                         {
-                            var intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
-                            writer.WriteLine(strProteinResidues.Substring(intIndex, intLength));
-                            intIndex += RESIDUES_PER_LINE;
+                            var length = Math.Min(RESIDUES_PER_LINE, residueCount - index);
+                            writer.WriteLine(proteinResidues.Substring(index, length));
+                            index += RESIDUES_PER_LINE;
                         }
                     }
                 }
 
-                oReader.CloseFile();
+                reader.CloseFile();
             }
             catch (Exception ex)
             {
@@ -410,15 +410,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZXML_EXTENSION);
 
                 // Copy any search result files that are not empty from the MSAlign folder to the work directory
-                var dctResultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
+                var resultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
 
-                foreach (var kvItem in dctResultFiles)
+                foreach (var kvItem in resultFiles)
                 {
-                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+                    var searchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
-                    if (fiSearchResultFile.Exists && fiSearchResultFile.Length > 0)
+                    if (searchResultFile.Exists && searchResultFile.Length > 0)
                     {
-                        fiSearchResultFile.CopyTo(Path.Combine(mWorkDir, Path.GetFileName(fiSearchResultFile.Name)));
+                        searchResultFile.CopyTo(Path.Combine(mWorkDir, Path.GetFileName(searchResultFile.Name)));
                     }
                 }
 
@@ -432,32 +432,32 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        private bool CopyMSAlignProgramFiles(string strMSAlignJarFilePath)
+        private bool CopyMSAlignProgramFiles(string msalignJarFilePath)
         {
             try
             {
-                var fiMSAlignJarFile = new FileInfo(strMSAlignJarFilePath);
+                var msalignJarFile = new FileInfo(msalignJarFilePath);
 
-                if (!fiMSAlignJarFile.Exists)
+                if (!msalignJarFile.Exists)
                 {
-                    LogError("MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
+                    LogError("MSAlign .Jar file not found: " + msalignJarFile.FullName);
                     return false;
                 }
 
-                if (fiMSAlignJarFile.Directory == null)
+                if (msalignJarFile.Directory == null)
                 {
-                    LogError("Unable to determine the parent directory of " + fiMSAlignJarFile.FullName);
+                    LogError("Unable to determine the parent directory of " + msalignJarFile.FullName);
                     return false;
                 }
 
-                if (fiMSAlignJarFile.Directory.Parent == null)
+                if (msalignJarFile.Directory.Parent == null)
                 {
-                    LogError("Unable to determine the parent directory of " + fiMSAlignJarFile.Directory.FullName);
+                    LogError("Unable to determine the parent directory of " + msalignJarFile.Directory.FullName);
                     return false;
                 }
 
                 // The source folder is one level up from the .Jar file
-                var msAlignSourceDirectory = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
+                var msAlignSourceDirectory = new DirectoryInfo(msalignJarFile.Directory.Parent.FullName);
                 var msAlignWorkingDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "MSAlign"));
 
                 LogMessage("Copying MSAlign program file to the Work Directory");
@@ -553,7 +553,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             try
             {
                 // Initialize the dictionary that maps parameter names in the parameter file to command line switches
-                var dctParameterMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                var parameterMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     {"activation", "a"},
                     {"search", "s"},
@@ -647,7 +647,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
                     }
 
-                    if (dctParameterMap.TryGetValue(keyName, out var switchName))
+                    if (parameterMap.TryGetValue(keyName, out var switchName))
                     {
                         commandLine += " -" + switchName + " " + value;
                     }
@@ -667,25 +667,25 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        private Dictionary<string, string> GetExpectedMSAlignResultFiles(string strDatasetName)
+        private Dictionary<string, string> GetExpectedMSAlignResultFiles(string datasetName)
         {
             // Keys in this dictionary are the expected file name
             // Values are the new name to rename the file to
-            var dctResultFiles = new Dictionary<string, string>();
-            var strBaseName = Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName);
+            var resultFiles = new Dictionary<string, string>();
+            var baseName = Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName);
 
-            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName + "_PTM_Search_Result.xml");
-            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_TOP_RESULT, string.Empty);
+            resultFiles.Add(baseName + "." + OUTPUT_FILE_EXTENSION_PTM_SEARCH, datasetName + "_PTM_Search_Result.xml");
+            resultFiles.Add(baseName + "." + OUTPUT_FILE_EXTENSION_TOP_RESULT, string.Empty);
             // Don't keep this file since it's virtually identical to the E_VALUE_RESULT file
-            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, strDatasetName + "_PTM_Search_Result_EValue.xml");
-            dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, strDatasetName + "_PTM_Search_Result_Final.xml");
+            resultFiles.Add(baseName + "." + OUTPUT_FILE_EXTENSION_E_VALUE_RESULT, datasetName + "_PTM_Search_Result_EValue.xml");
+            resultFiles.Add(baseName + "." + OUTPUT_FILE_EXTENSION_OUTPUT_RESULT, datasetName + "_PTM_Search_Result_Final.xml");
 
-            dctResultFiles.Add(strBaseName + "." + RESULT_TABLE_FILE_EXTENSION, strDatasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
+            resultFiles.Add(baseName + "." + RESULT_TABLE_FILE_EXTENSION, datasetName + "_" + RESULT_TABLE_FILE_EXTENSION);
 
-            return dctResultFiles;
+            return resultFiles;
         }
 
-        private bool InitializeInputFolder(string strMSAlignWorkFolderPath)
+        private bool InitializeInputFolder(string msalignWorkFolderPath)
         {
             try
             {
@@ -710,7 +710,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 mInputPropertyValues.FastaFileName = fastaFile.Name;
 
-                if (!CopyFastaCheckResidues(fastaFile.FullName, Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.FastaFileName)))
+                if (!CopyFastaCheckResidues(fastaFile.FullName, Path.Combine(msalignWorkFolderPath, mInputPropertyValues.FastaFileName)))
                 {
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = "CopyFastaCheckResidues returned false";
@@ -727,7 +727,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 mInputPropertyValues.SpectrumFileName = matchingFiles[0].Name;
-                matchingFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
+                matchingFiles[0].MoveTo(Path.Combine(msalignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
             }
             catch (Exception ex)
             {
@@ -738,18 +738,18 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        private bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
+        private bool MakeReportFiles(string JavaProgLoc, string msalignCmdLineOptions, int javaMemorySize)
         {
-            bool blnSuccess;
+            bool success;
 
             try
             {
                 LogMessage("Creating MSAlign_Histone Report Files");
 
                 // Set up and execute a program runner to run MSAlign_Histone
-                var arguments = " -Xmx" + intJavaMemorySize + "M" +
+                var arguments = " -Xmx" + javaMemorySize + "M" +
                                 " -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
-                                strMSAlignCmdLineOptions;
+                                msalignCmdLineOptions;
 
                 LogDebug(JavaProgLoc + " " + arguments);
 
@@ -764,9 +764,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, MSAlign_Report_CONSOLE_OUTPUT);
 
-                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
+                success = cmdRunner.RunProgram(JavaProgLoc, arguments, "MSAlign_Histone", true);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error running MSAlign_Histone to create HTML and XML files");
 
@@ -791,7 +791,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 return false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         // Example Console output
@@ -873,12 +873,12 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 // Update progress if the line starts with Processing spectrum
                                 if (dataLine.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0)
                                 {
-                                    var oMatch = reExtractPercentFinished.Match(dataLine);
-                                    if (oMatch.Success)
+                                    var match = reExtractPercentFinished.Match(dataLine);
+                                    if (match.Success)
                                     {
-                                        if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
+                                        if (short.TryParse(match.Groups[1].Value, out var progress))
                                         {
-                                            actualProgress = intProgress;
+                                            actualProgress = progress;
                                         }
                                     }
                                 }
@@ -917,7 +917,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = mMSAlignVersion;
+            var toolVersionInfo = mMSAlignVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
@@ -926,7 +926,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {
@@ -937,18 +937,18 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         private bool MoveMSAlignResultFiles()
         {
-            var strEValueResultFilePath = string.Empty;
-            var strFinalResultFilePath = string.Empty;
+            var eValueResultFilePath = string.Empty;
+            var finalResultFilePath = string.Empty;
 
             try
             {
-                var dctResultsFilesToMove = GetExpectedMSAlignResultFiles(mDatasetName);
+                var resultsFilesToMove = GetExpectedMSAlignResultFiles(mDatasetName);
 
-                foreach (var kvItem in dctResultsFilesToMove)
+                foreach (var kvItem in resultsFilesToMove)
                 {
-                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+                    var searchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
-                    if (!fiSearchResultFile.Exists)
+                    if (!searchResultFile.Exists)
                     {
                         // Note that ValidateResultFiles should have already logged the missing files
                     }
@@ -963,17 +963,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
                         else
                         {
-                            var strTargetFilePath = Path.Combine(mWorkDir, kvItem.Value);
+                            var targetFilePath = Path.Combine(mWorkDir, kvItem.Value);
 
-                            fiSearchResultFile.CopyTo(strTargetFilePath, true);
+                            searchResultFile.CopyTo(targetFilePath, true);
 
                             if (kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_E_VALUE_RESULT))
                             {
-                                strEValueResultFilePath = strTargetFilePath;
+                                eValueResultFilePath = targetFilePath;
                             }
                             else if (kvItem.Key.EndsWith(OUTPUT_FILE_EXTENSION_OUTPUT_RESULT))
                             {
-                                strFinalResultFilePath = strTargetFilePath;
+                                finalResultFilePath = targetFilePath;
                             }
                         }
                     }
@@ -985,11 +985,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Skip the E_VALUE_RESULT file if it is identical to the OUTPUT_RESULT file
 
-                if (!string.IsNullOrEmpty(strEValueResultFilePath) && !string.IsNullOrEmpty(strFinalResultFilePath))
+                if (!string.IsNullOrEmpty(eValueResultFilePath) && !string.IsNullOrEmpty(finalResultFilePath))
                 {
-                    if (Global.FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
+                    if (Global.FilesMatch(eValueResultFilePath, finalResultFilePath))
                     {
-                        mJobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
+                        mJobParams.AddResultFileToSkip(Path.GetFileName(eValueResultFilePath));
                     }
                 }
             }
@@ -1008,13 +1008,13 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                var dctResultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
+                var resultFiles = GetExpectedMSAlignResultFiles(mDatasetName);
 
-                foreach (var kvItem in dctResultFiles)
+                foreach (var kvItem in resultFiles)
                 {
-                    var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
+                    var searchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
-                    if (!fiSearchResultFile.Exists)
+                    if (!searchResultFile.Exists)
                     {
                         const string msg = "MSAlign results file not found";
 
@@ -1025,7 +1025,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             processingError = true;
                         }
 
-                        LogErrorNoMessageUpdate(msg + ": " + fiSearchResultFile.FullName);
+                        LogErrorNoMessageUpdate(msg + ": " + searchResultFile.FullName);
                     }
                 }
             }
@@ -1038,20 +1038,20 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return !processingError;
         }
 
-        private bool ValidateResultTableFile(string strSourceFilePath)
+        private bool ValidateResultTableFile(string sourceFilePath)
         {
             try
             {
-                var blnValidDataFound = false;
+                var validDataFound = false;
                 var linesRead = 0;
 
-                var strOutputFilePath = Path.Combine(mWorkDir, mDatasetName + RESULT_TABLE_NAME_SUFFIX);
+                var outputFilePath = Path.Combine(mWorkDir, mDatasetName + RESULT_TABLE_NAME_SUFFIX);
 
-                if (!File.Exists(strSourceFilePath))
+                if (!File.Exists(sourceFilePath))
                 {
                     if (mDebugLevel >= 2)
                     {
-                        LogWarning("MSAlign OUTPUT_TABLE file not found: " + strSourceFilePath);
+                        LogWarning("MSAlign OUTPUT_TABLE file not found: " + sourceFilePath);
                     }
                     if (string.IsNullOrEmpty(mMessage))
                     {
@@ -1067,8 +1067,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Open the input file and
                 // create the output file
-                using (var reader = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -1083,20 +1083,20 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 dataLine += "FragMethod";
                             }
 
-                            if (!blnValidDataFound)
+                            if (!validDataFound)
                             {
-                                var strSplitLine = dataLine.Split('\t');
+                                var splitLine = dataLine.Split('\t');
 
-                                if (strSplitLine.Length > 1)
+                                if (splitLine.Length > 1)
                                 {
                                     // The first column has the source .msalign file name
                                     // The second column has Prsm_ID
 
                                     // Look for an integer in the second column
-                                    if (int.TryParse(strSplitLine[1], out _))
+                                    if (int.TryParse(splitLine[1], out _))
                                     {
                                         // Integer found; line is valid
-                                        blnValidDataFound = true;
+                                        validDataFound = true;
                                     }
                                 }
                             }
@@ -1106,14 +1106,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     }
                 }
 
-                if (!blnValidDataFound)
+                if (!validDataFound)
                 {
                     LogError("MSAlign OUTPUT_TABLE file is empty");
                     return false;
                 }
 
                 // Don't keep the original output table; only the new file we just created
-                mJobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
+                mJobParams.AddResultFileToSkip(Path.GetFileName(sourceFilePath));
             }
             catch (Exception ex)
             {
@@ -1124,38 +1124,38 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        private bool ZipMSAlignResultFolder(string strFolderName)
+        private bool ZipMSAlignResultFolder(string folderName)
         {
             try
             {
-                var strTargetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
-                var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
+                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + folderName.ToUpper() + ".zip");
+                var sourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, folderName);
 
                 // Confirm that the directory has one or more files or subdirectories
-                var sourceDirectory = new DirectoryInfo(strSourceFolderPath);
+                var sourceDirectory = new DirectoryInfo(sourceFolderPath);
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
                     if (mDebugLevel >= 1)
                     {
-                        LogWarning("MSAlign results directory is empty; nothing to zip: " + strSourceFolderPath);
+                        LogWarning("MSAlign results directory is empty; nothing to zip: " + sourceFolderPath);
                     }
                     return false;
                 }
 
                 if (mDebugLevel >= 1)
                 {
-                    var strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
+                    var logMessage = "Zipping " + folderName.ToUpper() + " folder at " + sourceFolderPath;
 
                     if (mDebugLevel >= 2)
                     {
-                        strLogMessage += ": " + strTargetFilePath;
+                        logMessage += ": " + targetFilePath;
                     }
-                    LogMessage(strLogMessage);
+                    LogMessage(logMessage);
                 }
 
-                var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
-                objZipper.AddDirectory(strSourceFolderPath);
-                objZipper.Save();
+                var zipper = new Ionic.Zip.ZipFile(targetFilePath);
+                zipper.AddDirectory(sourceFolderPath);
+                zipper.Save();
             }
             catch (Exception ex)
             {

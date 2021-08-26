@@ -177,10 +177,10 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Use MSConvert to convert the .mzXML or .mzML file to a .mgf file
         /// </summary>
-        /// <param name="fiSpectrumFile"></param>
-        /// <param name="fiMgfFile"></param>
+        /// <param name="spectrumFile"></param>
+        /// <param name="mgfFile"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ConvertMsXmlToMGF(FileSystemInfo fiSpectrumFile, FileSystemInfo fiMgfFile)
+        private bool ConvertMsXmlToMGF(FileSystemInfo spectrumFile, FileSystemInfo mgfFile)
         {
             // Set up and execute a program runner to run MSConvert
 
@@ -198,8 +198,8 @@ namespace AnalysisManagerMODPlusPlugin
             mJobParams.AddResultFileToSkip(msConvertConsoleOutput);
 
             var arguments = " --mgf" +
-                            " --outfile " + fiMgfFile.FullName +
-                            " " + PossiblyQuotePath(fiSpectrumFile.FullName);
+                            " --outfile " + mgfFile.FullName +
+                            " " + PossiblyQuotePath(spectrumFile.FullName);
 
             if (mDebugLevel >= 1)
             {
@@ -229,7 +229,7 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 if (mDebugLevel >= 2)
                 {
-                    LogDebug("MSConvert.exe successfully created " + fiMgfFile.Name);
+                    LogDebug("MSConvert.exe successfully created " + mgfFile.Name);
                 }
                 return true;
             }
@@ -269,21 +269,21 @@ namespace AnalysisManagerMODPlusPlugin
         {
             try
             {
-                var fiParamFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
-                if (!fiParamFile.Exists)
+                var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
+                if (!paramFile.Exists)
                 {
                     LogError("Parameter file not found by CreateParameterFiles");
                     return new Dictionary<int, string>();
                 }
 
                 var doc = new XmlDocument();
-                doc.Load(fiParamFile.FullName);
+                doc.Load(paramFile.FullName);
 
                 DefineParamFileDatasetAndFasta(doc, fastaFilePath);
 
                 DefineParamMassResolutionSettings(doc);
 
-                var paramFileList = CreateThreadParamFiles(fiParamFile, doc, mgfFiles);
+                var paramFileList = CreateThreadParamFiles(paramFile, doc, mgfFiles);
 
                 return paramFileList;
             }
@@ -294,14 +294,14 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        private Dictionary<int, string> CreateThreadParamFiles(FileInfo fiMasterParamFile, XmlNode doc, IEnumerable<FileInfo> mgfFiles)
+        private Dictionary<int, string> CreateThreadParamFiles(FileInfo masterParamFile, XmlNode doc, IEnumerable<FileInfo> mgfFiles)
         {
             var reThreadNumber = new Regex(@"_Part(\d+)\.mgf", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var paramFileList = new Dictionary<int, string>();
 
-            if (fiMasterParamFile.Directory == null)
+            if (masterParamFile.Directory == null)
             {
-                LogError("Unable to determine the parent directory of parameter file " + fiMasterParamFile.FullName);
+                LogError("Unable to determine the parent directory of parameter file " + masterParamFile.FullName);
                 return paramFileList;
             }
 
@@ -338,8 +338,8 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                var paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) + "_Part" + threadNumber + ".xml";
-                var paramFilePath = Path.Combine(fiMasterParamFile.Directory.FullName, paramFileName);
+                var paramFileName = Path.GetFileNameWithoutExtension(masterParamFile.Name) + "_Part" + threadNumber + ".xml";
+                var paramFilePath = Path.Combine(masterParamFile.Directory.FullName, paramFileName);
 
                 using (var writer = new XmlTextWriter(new FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
                 {
@@ -431,10 +431,10 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Validate the setting for instrument_resolution and fragment_ion_tol
 
-            var strDatasetType = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
+            var datasetType = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
             var instrumentResolutionMsMs = LOW_RES_FLAG;
 
-            if (strDatasetType.EndsWith("hmsn", StringComparison.OrdinalIgnoreCase))
+            if (datasetType.EndsWith("hmsn", StringComparison.OrdinalIgnoreCase))
             {
                 instrumentResolutionMsMs = HIGH_RES_FLAG;
             }
@@ -528,12 +528,12 @@ namespace AnalysisManagerMODPlusPlugin
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            var fiFastaFile = new FileInfo(fastaFilePath);
+            var fastaFile = new FileInfo(fastaFilePath);
 
-            if (!fiFastaFile.Exists)
+            if (!fastaFile.Exists)
             {
                 // FASTA file not found
-                LogError("FASTA file not found: " + fiFastaFile.Name, "FASTA file not found: " + fiFastaFile.FullName);
+                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
                 return false;
             }
 
@@ -602,7 +602,7 @@ namespace AnalysisManagerMODPlusPlugin
                 // Keys in this list are scan numbers with charge state encoded as Charge / 100
                 // For example, if scan 1000 and charge 2, the key will be 1000.02
                 // Values are a list of readers that have that given ScanPlusCharge combo
-                var lstNextAvailableScan = new SortedList<double, List<MODPlusResultsReader>>();
+                var nextAvailableScan = new SortedList<double, List<MODPlusResultsReader>>();
 
                 // Combine the result files using a Merge Sort (we assume the results are sorted by scan in each result file)
 
@@ -618,9 +618,9 @@ namespace AnalysisManagerMODPlusPlugin
                         continue;
                     }
 
-                    var fiResultFile = new FileInfo(modPlusRunner.Value.OutputFilePath);
+                    var resultFile = new FileInfo(modPlusRunner.Value.OutputFilePath);
 
-                    if (!fiResultFile.Exists)
+                    if (!resultFile.Exists)
                     {
                         // Result file not found for the current thread
                         // Log an error, but continue to combine the files
@@ -629,7 +629,7 @@ namespace AnalysisManagerMODPlusPlugin
                         continue;
                     }
 
-                    if (fiResultFile.Length == 0)
+                    if (resultFile.Length == 0)
                     {
                         // 0-byte result file
                         // Log an error, but continue to combine the files
@@ -638,24 +638,24 @@ namespace AnalysisManagerMODPlusPlugin
                         continue;
                     }
 
-                    var reader = new MODPlusResultsReader(mDatasetName, fiResultFile);
+                    var reader = new MODPlusResultsReader(mDatasetName, resultFile);
                     if (reader.SpectrumAvailable)
                     {
-                        PushReader(lstNextAvailableScan, reader);
+                        PushReader(nextAvailableScan, reader);
                     }
                 }
 
                 // The final results file is named Dataset_modp.txt
                 var combinedResultsFilePath = Path.Combine(mWorkDir, mDatasetName + MODPlusRunner.RESULTS_FILE_SUFFIX);
-                var fiCombinedResults = new FileInfo(combinedResultsFilePath);
+                var combinedResults = new FileInfo(combinedResultsFilePath);
 
-                using (var combinedResultsWriter = new StreamWriter(new FileStream(fiCombinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var combinedResultsWriter = new StreamWriter(new FileStream(combinedResults.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (lstNextAvailableScan.Count > 0)
+                    while (nextAvailableScan.Count > 0)
                     {
-                        var nextScan = lstNextAvailableScan.First();
+                        var nextScan = nextAvailableScan.First();
 
-                        lstNextAvailableScan.Remove(nextScan.Key);
+                        nextAvailableScan.Remove(nextScan.Key);
 
                         foreach (var reader in nextScan.Value)
                         {
@@ -669,7 +669,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                             if (reader.ReadNextSpectrum())
                             {
-                                PushReader(lstNextAvailableScan, reader);
+                                PushReader(nextAvailableScan, reader);
                             }
                         }
                     }
@@ -681,12 +681,12 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 // Zip the output file along with the ConsoleOutput files
-                var diZipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Temp_ZipScratch"));
-                if (!diZipFolder.Exists)
-                    diZipFolder.Create();
+                var zipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Temp_ZipScratch"));
+                if (!zipFolder.Exists)
+                    zipFolder.Create();
 
                 var filesToMove = new List<FileInfo> {
-                    fiCombinedResults
+                    combinedResults
                 };
 
                 var workingDirectory = new DirectoryInfo(mWorkDir);
@@ -701,16 +701,16 @@ namespace AnalysisManagerMODPlusPlugin
                 {
                     if (sourceFile.Exists)
                     {
-                        sourceFile.MoveTo(Path.Combine(diZipFolder.FullName, sourceFile.Name));
+                        sourceFile.MoveTo(Path.Combine(zipFolder.FullName, sourceFile.Name));
                     }
                 }
 
-                var zippedResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) + ".zip");
-                var blnSuccess = mDotNetZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
+                var zippedResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(combinedResults.Name) + ".zip");
+                var success = mDotNetZipTools.ZipDirectory(zipFolder.FullName, zippedResultsFilePath);
 
-                if (blnSuccess)
+                if (success)
                 {
-                    mJobParams.AddResultFileToSkip(fiCombinedResults.Name);
+                    mJobParams.AddResultFileToSkip(combinedResults.Name);
                 }
                 else if (string.IsNullOrEmpty(mMessage))
                 {
@@ -732,9 +732,9 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        private void PushReader(SortedList<double, List<MODPlusResultsReader>> lstNextAvailableScan, MODPlusResultsReader reader)
+        private void PushReader(SortedList<double, List<MODPlusResultsReader>> nextAvailableScan, MODPlusResultsReader reader)
         {
-            if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
+            if (nextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
             {
                 readersForValue.Add(reader);
             }
@@ -744,7 +744,7 @@ namespace AnalysisManagerMODPlusPlugin
                     reader
                 };
 
-                lstNextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue);
+                nextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue);
             }
         }
 
@@ -752,14 +752,14 @@ namespace AnalysisManagerMODPlusPlugin
         /// Split the .mgf file into multiple parts
         /// </summary>
         /// <remarks>Uses a round-robin splitting</remarks>
-        /// <param name="fiMgfFile"></param>
+        /// <param name="mgfFile"></param>
         /// <param name="threadCount"></param>
         /// <returns>List of newly created .mgf files</returns>
-        private List<FileInfo> SplitMGFFiles(FileSystemInfo fiMgfFile, int threadCount)
+        private List<FileInfo> SplitMGFFiles(FileSystemInfo mgfFile, int threadCount)
         {
             if (mDebugLevel >= 1)
             {
-                LogDebug("Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
+                LogDebug("Splitting mgf file into " + threadCount + " parts: " + mgfFile.Name);
             }
 
             // Cache the current state of mMessage
@@ -771,7 +771,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Split the .mgf file
             // If an error occurs, mMessage will be updated because ErrorEventHandler calls LogError when event ErrorEvent is raised by SplitMGFFile
-            var mgfFiles = splitter.SplitMgfFile(fiMgfFile.FullName, threadCount, "_Part");
+            var mgfFiles = splitter.SplitMgfFile(mgfFile.FullName, threadCount, "_Part");
 
             if (mgfFiles.Count == 0)
             {
@@ -786,7 +786,7 @@ namespace AnalysisManagerMODPlusPlugin
             // Restore mMessage
             mMessage = cachedStatusMessage;
 
-            mJobParams.AddResultFileToSkip(fiMgfFile.FullName);
+            mJobParams.AddResultFileToSkip(mgfFile.FullName);
 
             return mgfFiles;
         }
@@ -834,24 +834,24 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Convert .mzML file to MGF";
 
-                var fiSpectrumFile = new FileInfo(Path.Combine(mWorkDir, spectrumFileName));
-                if (!fiSpectrumFile.Exists)
+                var spectrumFile = new FileInfo(Path.Combine(mWorkDir, spectrumFileName));
+                if (!spectrumFile.Exists)
                 {
-                    LogError("Spectrum file not found: " + fiSpectrumFile.Name);
+                    LogError("Spectrum file not found: " + spectrumFile.Name);
                     return false;
                 }
 
-                var fiMgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION));
+                var mgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION));
 
-                if (fiMgfFile.Exists)
+                if (mgfFile.Exists)
                 {
                     // The .MGF file already exists
                     // This will typically only be true while debugging
                 }
                 else
                 {
-                    var success = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile);
-                    if (!success)
+                    var convertSuccess = ConvertMsXmlToMGF(spectrumFile, mgfFile);
+                    if (!convertSuccess)
                     {
                         return false;
                     }
@@ -860,7 +860,7 @@ namespace AnalysisManagerMODPlusPlugin
                 currentTask = "Split the MGF file";
 
                 // Create one MGF file for each thread
-                var mgfFiles = SplitMGFFiles(fiMgfFile, threadCount);
+                var mgfFiles = SplitMGFFiles(mgfFile, threadCount);
                 if (mgfFiles.Count == 0)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -931,7 +931,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = "Waiting for all of the threads to exit";
 
-                var dtStartTime = DateTime.UtcNow;
+                var startTime = DateTime.UtcNow;
                 var completedThreads = new SortedSet<int>();
 
                 const int SECONDS_BETWEEN_UPDATES = 15;
@@ -1004,7 +1004,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
 
-                    if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
+                    if (DateTime.UtcNow.Subtract(startTime).TotalDays > 14)
                     {
                         LogError("MODPlus ran for over 14 days; aborting");
 
@@ -1017,7 +1017,7 @@ namespace AnalysisManagerMODPlusPlugin
                     }
                 }
 
-                var blnSuccess = true;
+                var success = true;
                 var exitCode = 0;
 
                 currentTask = "Looking for console output error messages";
@@ -1037,7 +1037,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     if (progRunner == null)
                     {
-                        blnSuccess = false;
+                        success = false;
                         if (string.IsNullOrWhiteSpace(mMessage))
                         {
                             mMessage = "progRunner object is null for thread " + modPlusRunner.Key;
@@ -1051,17 +1051,17 @@ namespace AnalysisManagerMODPlusPlugin
                         var consoleError = "Console error for thread " + modPlusRunner.Key + ": " +
                                            progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
                         LogError(consoleError);
-                        blnSuccess = false;
+                        success = false;
                     }
 
                     if (progRunner.ExitCode != 0 && exitCode == 0)
                     {
-                        blnSuccess = false;
+                        success = false;
                         exitCode = progRunner.ExitCode;
                     }
                 }
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error running MODPlus");
 
@@ -1104,7 +1104,7 @@ namespace AnalysisManagerMODPlusPlugin
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = mMODPlusVersion;
+            var toolVersionInfo = mMODPlusVersion;
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo>();
@@ -1116,7 +1116,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

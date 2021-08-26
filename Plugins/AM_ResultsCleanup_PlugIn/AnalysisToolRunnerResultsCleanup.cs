@@ -281,7 +281,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
                 if (resultsFiles.Count > 1)
                 {
-                    // Delete the Results.db3 files for the steps prior to intLastStep
+                    // Delete the Results.db3 files for the steps prior to lastStep
                     var lastStep = resultsFiles.Keys.Max();
                     var fileCountDeleted = 0;
 

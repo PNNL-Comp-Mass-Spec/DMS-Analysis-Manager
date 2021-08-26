@@ -61,8 +61,8 @@ namespace MSGFPlusIndexFileCopier
         {
             try
             {
-                var diRemoteShare = new DirectoryInfo(remoteIndexFolderPath);
-                if (!diRemoteShare.Exists)
+                var remoteShare = new DirectoryInfo(remoteIndexFolderPath);
+                if (!remoteShare.Exists)
                 {
                     ShowErrorMessage("Remote share not found: " + remoteIndexFolderPath);
                     return false;
@@ -104,14 +104,14 @@ namespace MSGFPlusIndexFileCopier
                 else
                 {
                     // Confirm that the .MSGFPlusIndexFileInfo file was created
-                    var fiIndexFile = new FileInfo(Path.Combine(remoteIndexFolderPath, fastaFile.Name + ".MSGFPlusIndexFileInfo"));
-                    if (fiIndexFile.Exists)
+                    var indexFile = new FileInfo(Path.Combine(remoteIndexFolderPath, fastaFile.Name + ".MSGFPlusIndexFileInfo"));
+                    if (indexFile.Exists)
                     {
-                        Console.WriteLine("Index file created: " + fiIndexFile.FullName);
+                        Console.WriteLine("Index file created: " + indexFile.FullName);
                     }
                     else
                     {
-                        ShowErrorMessage("Index file not found: " + fiIndexFile.FullName);
+                        ShowErrorMessage("Index file not found: " + indexFile.FullName);
                         success = false;
                     }
                 }
@@ -134,15 +134,15 @@ namespace MSGFPlusIndexFileCopier
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
-            var lstValidParameters = new List<string> { "F", "R", "X" };
+            var validParameters = new List<string> { "F", "R", "X" };
 
             try
             {
                 // Make sure no invalid parameters are present
-                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (var item in commandLineParser.InvalidParameters(lstValidParameters))
+                    foreach (var item in commandLineParser.InvalidParameters(validParameters))
                     {
                         badArguments.Add("/" + item);
                     }

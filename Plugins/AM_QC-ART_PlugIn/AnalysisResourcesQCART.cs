@@ -206,7 +206,7 @@ namespace AnalysisManagerQCARTPlugin
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
 
-                    // Restore the dataset and job info using udtCurrentDatasetAndJobInfo
+                    // Restore the dataset and job info using currentDatasetAndJobInfo
                     OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
                     success = CreateBaselineDatasetInfoFile(baselineDatasets);
@@ -259,11 +259,11 @@ namespace AnalysisManagerQCARTPlugin
             {
                 var templateMatcher = new Regex(@"{\$([^}]+)}", RegexOptions.Compiled);
 
-                var fiTemplateFile = new FileInfo(Path.Combine(mWorkDir, rScriptName));
-                var fiCustomizedScript = new FileInfo(Path.Combine(mWorkDir, QCART_PROCESSING_SCRIPT_NAME));
+                var templateFile = new FileInfo(Path.Combine(mWorkDir, rScriptName));
+                var customizedScript = new FileInfo(Path.Combine(mWorkDir, QCART_PROCESSING_SCRIPT_NAME));
 
-                using (var reader = new StreamReader(new FileStream(fiTemplateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var writer = new StreamWriter(new FileStream(fiCustomizedScript.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(templateFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(customizedScript.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -362,7 +362,7 @@ namespace AnalysisManagerQCARTPlugin
                     }
                 }
 
-                mJobParams.AddResultFileToSkip(fiTemplateFile.Name);
+                mJobParams.AddResultFileToSkip(templateFile.Name);
 
                 return true;
             }
@@ -468,8 +468,8 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Find the parameter file in the remote location
                 currentTask = "Finding parameter file";
-                var fiParamFile = new FileInfo(paramFilePath);
-                if (!fiParamFile.Exists)
+                var paramFile = new FileInfo(paramFilePath);
+                if (!paramFile.Exists)
                 {
                     errorMessage = "Parameter file not found";
                     LogError(errorMessage, errorMessage + ": " + paramFilePath);
@@ -477,7 +477,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                if (fiParamFile.Directory == null)
+                if (paramFile.Directory == null)
                 {
                     errorMessage = "Parameter file directory is null";
                     LogError(errorMessage, errorMessage + ": " + paramFilePath);
@@ -486,29 +486,29 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 currentTask = "Finding cache folder";
-                var diCacheFolder = new DirectoryInfo(Path.Combine(fiParamFile.Directory.FullName, "Cache"));
+                var cacheFolder = new DirectoryInfo(Path.Combine(paramFile.Directory.FullName, "Cache"));
 
-                if (!diCacheFolder.Exists)
+                if (!cacheFolder.Exists)
                 {
                     // Create the directory (we'll use it later)
-                    diCacheFolder.Create();
+                    cacheFolder.Create();
                     return false;
                 }
 
                 currentTask = "Finding project-specific cache folder";
-                var diProjectFolder = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, mProjectName));
+                var projectFolder = new DirectoryInfo(Path.Combine(cacheFolder.FullName, mProjectName));
 
-                if (!diProjectFolder.Exists)
+                if (!projectFolder.Exists)
                 {
                     // Create the directory (we'll use it later)
-                    diProjectFolder.Create();
+                    projectFolder.Create();
                     return false;
                 }
 
-                baselineMetadataFilePath = GetBaselineMetadataFilePath(diProjectFolder.FullName, baselineMetadataKey);
+                baselineMetadataFilePath = GetBaselineMetadataFilePath(projectFolder.FullName, baselineMetadataKey);
                 var baselineMetadataFileName = Path.GetFileName(baselineMetadataFilePath);
 
-                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, diProjectFolder.FullName);
+                mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, projectFolder.FullName);
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, baselineMetadataFileName);
 
                 currentTask = "Looking for a QCART baseline metadata lock file";
@@ -520,9 +520,9 @@ namespace AnalysisManagerQCARTPlugin
                 // Now check for an existing baseline results file
                 currentTask = "Looking for " + baselineMetadataFilePath;
 
-                var fiBaselineMetadata = new FileInfo(baselineMetadataFilePath);
+                var baselineMetadata = new FileInfo(baselineMetadataFilePath);
 
-                if (!fiBaselineMetadata.Exists)
+                if (!baselineMetadata.Exists)
                 {
                     // Valid baseline results metadata file was not found
                     return false;
@@ -530,7 +530,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 currentTask = "Retrieving cached results";
 
-                var success = RetrieveExistingBaselineResultFile(fiBaselineMetadata, out criticalError);
+                var success = RetrieveExistingBaselineResultFile(baselineMetadata, out criticalError);
                 return success;
             }
             catch (Exception ex)
@@ -644,18 +644,18 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Compute the MD5 Hash of the datasets and jobs in baselineDatasets
 
-                var sbTextToHash = new StringBuilder();
+                var textToHash = new StringBuilder();
                 var query = (from item in baselineDatasets orderby item.Key select item);
 
                 foreach (var item in query)
                 {
-                    sbTextToHash.Append(item.Key);
-                    sbTextToHash.Append(item.Value);
+                    textToHash.Append(item.Key);
+                    textToHash.Append(item.Value);
                 }
 
                 // Hash contents of this stream
                 // We will use the first 8 characters of the hash as a uniquifier for the baseline unique key
-                var md5Hash = PRISM.HashUtilities.ComputeStringHashMD5(sbTextToHash.ToString());
+                var md5Hash = PRISM.HashUtilities.ComputeStringHashMD5(textToHash.ToString());
 
                 // Key format: FirstJob_LastJob_DatasetCount_FirstEightCharsFromHash
                 baselineMetadataKey = baselineDatasets.Values.Min() + "_" + baselineDatasets.Values.Max() + "_" + baselineDatasets.Count + "_" + md5Hash.Substring(0, 8);
@@ -713,23 +713,23 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Parse the baseline results metadata file to determine the baseline results filename then copy it locally
         /// </summary>
-        /// <param name="fiBaselineMetadata"></param>
+        /// <param name="baselineMetadata"></param>
         /// <param name="criticalError"></param>
         /// <returns>True if the baseline results were successfully copied locally; otherwise false</returns>
-        private bool RetrieveExistingBaselineResultFile(FileInfo fiBaselineMetadata, out bool criticalError)
+        private bool RetrieveExistingBaselineResultFile(FileInfo baselineMetadata, out bool criticalError)
         {
             criticalError = false;
 
             try
             {
-                if (fiBaselineMetadata.Directory == null)
+                if (baselineMetadata.Directory == null)
                 {
                     const string warningMessage = "QC-ART baseline metadata file directory is null";
                     LogError(warningMessage);
                     return false;
                 }
 
-                var paramFile = new XPathDocument(new FileStream(fiBaselineMetadata.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                var paramFile = new XPathDocument(new FileStream(baselineMetadata.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
                 var contents = paramFile.CreateNavigator();
 
                 var projectNode = contents.Select("/Parameters/Results/BaselineDataCacheFile");
@@ -749,28 +749,28 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                var baselineResultsFilePath = Path.Combine(fiBaselineMetadata.Directory.FullName, baselineDataCacheFileName);
+                var baselineResultsFilePath = Path.Combine(baselineMetadata.Directory.FullName, baselineDataCacheFileName);
 
-                var fiBaselineResultsFileSource = new FileInfo(baselineResultsFilePath);
+                var baselineResultsFileSource = new FileInfo(baselineResultsFilePath);
 
-                if (!fiBaselineResultsFileSource.Exists || fiBaselineResultsFileSource.Directory == null)
+                if (!baselineResultsFileSource.Exists || baselineResultsFileSource.Directory == null)
                 {
                     var warningMessage = "QC-ART baseline results data file not found: " + baselineResultsFilePath;
                     LogError(warningMessage);
 
-                    warningMessage = "Deleting invalid QC-ART baseline metadata file: " + fiBaselineMetadata.FullName;
+                    warningMessage = "Deleting invalid QC-ART baseline metadata file: " + baselineMetadata.FullName;
                     LogError(warningMessage);
 
-                    fiBaselineMetadata.Delete();
+                    baselineMetadata.Delete();
                     return false;
                 }
 
-                var success = CopyFileToWorkDir(fiBaselineResultsFileSource.Name, fiBaselineResultsFileSource.Directory.FullName, mWorkDir);
+                var success = CopyFileToWorkDir(baselineResultsFileSource.Name, baselineResultsFileSource.Directory.FullName, mWorkDir);
 
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
-                        LogError("Unknown error retrieving " + fiBaselineResultsFileSource.Name);
+                        LogError("Unknown error retrieving " + baselineResultsFileSource.Name);
 
                     criticalError = true;
                     return false;
@@ -778,9 +778,9 @@ namespace AnalysisManagerQCARTPlugin
 
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
                                                    JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME,
-                                                   fiBaselineResultsFileSource.Name);
+                                                   baselineResultsFileSource.Name);
 
-                mJobParams.AddResultFileToSkip(fiBaselineResultsFileSource.Name);
+                mJobParams.AddResultFileToSkip(baselineResultsFileSource.Name);
 
                 return true;
             }

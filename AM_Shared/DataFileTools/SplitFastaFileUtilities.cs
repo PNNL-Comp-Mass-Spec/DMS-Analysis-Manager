@@ -218,8 +218,8 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         OnErrorEvent("Exception deleting lock file in DeleteLockStream: " + ex.Message);
                         retryCount--;
-                        var oRandom = new Random();
-                        Global.IdleLoop(0.25 + oRandom.NextDouble());
+                        var random = new Random();
+                        Global.IdleLoop(0.25 + random.NextDouble());
                     }
                 }
             }

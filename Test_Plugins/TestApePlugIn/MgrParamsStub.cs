@@ -69,12 +69,12 @@ namespace TestApePlugIn
 
         public string GetParam(string ItemKey, string ValueIfMissing)
         {
-            var strValue = GetParam(ItemKey);
-            if (string.IsNullOrEmpty(strValue))
+            var paramValue = GetParam(ItemKey);
+            if (string.IsNullOrEmpty(value))
             {
                 return ValueIfMissing;
             }
-            return strValue;
+            return paramValue;
         }
         public void SetParam(string ItemKey, string ItemValue) {
             throw new NotImplementedException();

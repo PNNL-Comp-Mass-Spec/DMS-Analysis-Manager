@@ -623,7 +623,7 @@ namespace AnalysisManagerSequestPlugin
             const int MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
             bool success;
 
-            var oRandom = new Random();
+            var random = new Random();
 
             if (mDebugLevel >= 2)
             {
@@ -685,7 +685,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     LogWarning("Error appending .out files to the _out.txt.tmp file: " + ex.Message);
                     // Delay for a random length between 15 and 30 seconds
-                    Global.IdleLoop(oRandom.Next(15, 30));
+                    Global.IdleLoop(random.Next(15, 30));
                     success = false;
                 }
 

@@ -35,7 +35,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogMessage("Getting required files");
 
-            var strInputFileExtension = string.Empty;
+            var inputFileExtension = string.Empty;
 
             var splitString = mJobParams.GetParam("TargetJobFileList").Split(',');
 
@@ -50,11 +50,11 @@ namespace AnalysisManagerMultiAlignPlugIn
                 {
                     mJobParams.AddResultFileExtensionToSkip(fileNameExt[1]);
                 }
-                strInputFileExtension = fileNameExt[1];
+                inputFileExtension = fileNameExt[1];
             }
 
             // Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
-            var fileToGet = DatasetName + strInputFileExtension;
+            var fileToGet = DatasetName + inputFileExtension;
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in function call, so just return
@@ -92,7 +92,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Build the MultiAlign input text file
-            var success = BuildMultiAlignInputTextFile(strInputFileExtension);
+            var success = BuildMultiAlignInputTextFile(inputFileExtension);
 
             if (!success)
             {
@@ -103,14 +103,14 @@ namespace AnalysisManagerMultiAlignPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
+        private bool BuildMultiAlignInputTextFile(string inputFileExtension)
         {
             const string INPUT_FILENAME = "input.txt";
 
             var TargetFilePath = Path.Combine(mWorkDir, INPUT_FILENAME);
-            var DatasetFilePath = Path.Combine(mWorkDir, DatasetName + strInputFileExtension);
+            var DatasetFilePath = Path.Combine(mWorkDir, DatasetName + inputFileExtension);
 
-            var blnSuccess = true;
+            var success = true;
 
             // Create the MA input file
             try
@@ -134,10 +134,10 @@ namespace AnalysisManagerMultiAlignPlugIn
             {
                 LogError("AnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file " +
                          "(" + INPUT_FILENAME + "): " + ex.Message);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
     }
 }

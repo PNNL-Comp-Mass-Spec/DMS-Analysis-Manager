@@ -75,14 +75,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             // Retrieve the files for the jobs in the data package associated with this job
             if (!RetrieveAggregateFiles(
                     fileSpecList, DataPackageFileRetrievalModeConstants.Ascore,
-                    callingMethodCanRegenerateMissingFile, out var dctDataPackageJobs))
+                    callingMethodCanRegenerateMissingFile, out var dataPackageJobs))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Cache the data package info
-            if (!CacheDataPackageInfo(dctDataPackageJobs))
+            if (!CacheDataPackageInfo(dataPackageJobs))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -90,7 +90,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool CacheDataPackageInfo(Dictionary<int, DataPackageJobInfo> dctDataPackageJobs)
+        private bool CacheDataPackageInfo(Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
             try
             {
@@ -105,11 +105,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 foreach (var subDirectory in workDir.GetDirectories("Job*"))
                 {
                     var jobNumber = int.Parse(subDirectory.Name.Substring(3));
-                    var udtJobInfo = dctDataPackageJobs[jobNumber];
+                    var jobInfo = dataPackageJobs[jobNumber];
 
-                    jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset);
-                    jobToSettingsFileMap.Add(jobNumber.ToString(), udtJobInfo.SettingsFileName);
-                    jobToolMap.Add(jobNumber.ToString(), udtJobInfo.Tool);
+                    jobToDatasetMap.Add(jobNumber.ToString(), jobInfo.Dataset);
+                    jobToSettingsFileMap.Add(jobNumber.ToString(), jobInfo.SettingsFileName);
+                    jobToolMap.Add(jobNumber.ToString(), jobInfo.Tool);
                 }
 
                 // Store the packed job parameters

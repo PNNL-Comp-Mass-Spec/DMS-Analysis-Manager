@@ -93,9 +93,9 @@ namespace AnalysisManagerPBFGenerator
                 {
                     // Look for the results file
 
-                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION));
+                    var resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_PBF_EXTENSION));
 
-                    if (fiResultsFile.Exists)
+                    if (resultsFile.Exists)
                     {
                         // Success; validate mPbfFormatVersion
                         if (string.IsNullOrEmpty(mPbfFormatVersion))
@@ -166,32 +166,32 @@ namespace AnalysisManagerPBFGenerator
                         else
                         {
                             // Copy the .pbf file to the MSXML cache
-                            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, fiResultsFile.FullName, purgeOldFilesIfNeeded: true);
+                            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
 
                             if (string.IsNullOrEmpty(remoteCachefilePath))
                             {
                                 if (string.IsNullOrEmpty(mMessage))
                                 {
-                                    LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
+                                    LogError("CopyFileToServerCache returned false for " + resultsFile.Name);
                                 }
                                 processingSuccess = false;
                             }
 
                             // Create the _CacheInfo.txt file
-                            var cacheInfoFilePath = fiResultsFile.FullName + "_CacheInfo.txt";
+                            var cacheInfoFilePath = resultsFile.FullName + "_CacheInfo.txt";
                             using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
                                 writer.WriteLine(remoteCachefilePath);
                             }
 
-                            mJobParams.AddResultFileToSkip(fiResultsFile.Name);
+                            mJobParams.AddResultFileToSkip(resultsFile.Name);
                         }
                     }
                     else
                     {
                         if (string.IsNullOrEmpty(mMessage))
                         {
-                            LogError("PBF_Gen results file not found: " + fiResultsFile.Name);
+                            LogError("PBF_Gen results file not found: " + resultsFile.Name);
                             processingSuccess = false;
                         }
                     }
@@ -252,11 +252,11 @@ namespace AnalysisManagerPBFGenerator
         {
             try
             {
-                var fiResults = new FileInfo(mResultsFilePath);
+                var results = new FileInfo(mResultsFilePath);
 
-                if (fiResults.Exists && mInstrumentFileSizeBytes > 0)
+                if (results.Exists && mInstrumentFileSizeBytes > 0)
                 {
-                    var percentComplete = fiResults.Length / (float)mInstrumentFileSizeBytes * 100;
+                    var percentComplete = results.Length / (float)mInstrumentFileSizeBytes * 100;
                     return percentComplete;
                 }
             }
@@ -271,8 +271,8 @@ namespace AnalysisManagerPBFGenerator
         /// <summary>
         /// Parse the PBFGen console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -281,11 +281,11 @@ namespace AnalysisManagerPBFGenerator
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -293,12 +293,12 @@ namespace AnalysisManagerPBFGenerator
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -321,9 +321,9 @@ namespace AnalysisManagerPBFGenerator
                             if (dataLineLCase.StartsWith("PbfFormatVersion:".ToLower()))
                             {
                                 // Parse out the version number
-                                var strVersion = dataLine.Substring("PbfFormatVersion:".Length).Trim();
+                                var version = dataLine.Substring("PbfFormatVersion:".Length).Trim();
 
-                                mPbfFormatVersion = strVersion;
+                                mPbfFormatVersion = version;
                             }
                         }
                     }
@@ -341,7 +341,7 @@ namespace AnalysisManagerPBFGenerator
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -362,14 +362,14 @@ namespace AnalysisManagerPBFGenerator
             var rawFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION);
 
             // Cache the size of the instrument data file
-            var fiInstrumentFile = new FileInfo(rawFilePath);
-            if (!fiInstrumentFile.Exists)
+            var instrumentFile = new FileInfo(rawFilePath);
+            if (!instrumentFile.Exists)
             {
                 LogError("Instrument data not found: " + rawFilePath);
                 return false;
             }
 
-            mInstrumentFileSizeBytes = fiInstrumentFile.Length;
+            mInstrumentFileSizeBytes = instrumentFile.Length;
             mPbfFormatVersion = string.Empty;
 
             // Cache the full path to the expected output file

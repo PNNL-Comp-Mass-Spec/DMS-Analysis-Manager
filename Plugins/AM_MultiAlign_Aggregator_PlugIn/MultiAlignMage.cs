@@ -96,12 +96,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// Do processing
         /// </summary>
         /// <returns>True if success; otherwise false</returns>
-        public bool Run(string sMultiAlignConsolePath)
+        public bool Run(string multiAlignConsolePath)
         {
             var dataPackageID = mJobParams.RequireJobParam("DataPackageID");
 
-            var blnSuccess = GetMultiAlignParameterFile();
-            if (!blnSuccess)
+            var success = GetMultiAlignParameterFile();
+            if (!success)
                 return false;
 
             var multialignJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "Decon2LS_V2");
@@ -116,12 +116,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
 
-            blnSuccess = CopyMultiAlignInputFiles(multialignJobsToProcess, mSearchType);
-            if (!blnSuccess)
+            success = CopyMultiAlignInputFiles(multialignJobsToProcess, mSearchType);
+            if (!success)
                 return false;
 
-            blnSuccess = BuildMultiAlignInputTextFile(mSearchType);
-            if (!blnSuccess)
+            success = BuildMultiAlignInputTextFile(mSearchType);
+            if (!success)
                 return false;
 
             InitializeProgressStepDictionaries();
@@ -135,15 +135,15 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MultiAlignMage.RunTool(): Enter");
             }
 
-            if (string.IsNullOrWhiteSpace(sMultiAlignConsolePath))
+            if (string.IsNullOrWhiteSpace(multiAlignConsolePath))
             {
                 mMessage = "MultiAlignConsolePath is empty";
                 return false;
             }
 
-            if (!File.Exists(sMultiAlignConsolePath))
+            if (!File.Exists(multiAlignConsolePath))
             {
-                mMessage = "MultiAlign program not found: " + sMultiAlignConsolePath;
+                mMessage = "MultiAlign program not found: " + multiAlignConsolePath;
                 return false;
             }
 
@@ -163,7 +163,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (mDebugLevel >= 1)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, sMultiAlignConsolePath + " " + arguments);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, multiAlignConsolePath + " " + arguments);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -171,7 +171,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             cmdRunner.EchoOutputToConsole = true;
             cmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, arguments, "MultiAlign", true))
+            if (!cmdRunner.RunProgram(multiAlignConsolePath, arguments, "MultiAlign", true))
             {
                 if (string.IsNullOrEmpty(mMessage))
                     mMessage = "Error running MultiAlign";
@@ -200,20 +200,20 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return false;
                 }
 
-                const string strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
-                var strMAParameterFileStoragePath = mMgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
-                if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
+                const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
+                var maparameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrEmpty(maparameterFileStoragePath))
                 {
-                    strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
-                    OnWarningEvent("Parameter " + strParamFileStoragePathKeyName +
-                        " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
+                    maparameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
+                    OnWarningEvent("Parameter " + paramFileStoragePathKeyName +
+                        " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + maparameterFileStoragePath);
                 }
 
-                var sourceFilePath = Path.Combine(strMAParameterFileStoragePath, mParamFilename);
+                var sourceFilePath = Path.Combine(maparameterFileStoragePath, mParamFilename);
 
                 if (!File.Exists(sourceFilePath))
                 {
-                    mMessage = "MultiAlign parameter file not found: " + strMAParameterFileStoragePath;
+                    mMessage = "MultiAlign parameter file not found: " + maparameterFileStoragePath;
                     OnErrorEvent(mMessage);
                     return false;
                 }
@@ -357,8 +357,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <summary>
         /// Build the MultiAlign input file
         /// </summary>
-        /// <param name="strInputFileExtension"></param>
-        private bool BuildMultiAlignInputTextFile(string strInputFileExtension)
+        /// <param name="inputFileExtension"></param>
+        private bool BuildMultiAlignInputTextFile(string inputFileExtension)
         {
             const string INPUT_FILENAME = "input.txt";
 
@@ -368,11 +368,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             try
             {
-                var Files = Directory.GetFiles(mWorkingDir, "*" + strInputFileExtension);
+                var Files = Directory.GetFiles(mWorkingDir, "*" + inputFileExtension);
 
                 if (Files.Length == 0)
                 {
-                    mMessage = "Did not find any files of type " + strInputFileExtension + " in directory " + mWorkingDir;
+                    mMessage = "Did not find any files of type " + inputFileExtension + " in directory " + mWorkingDir;
                     OnErrorEvent(mMessage);
                     return false;
                 }
@@ -413,9 +413,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return false;
             }
         }
-        private void CmdRunnerOnErrorEvent(string strMessage, Exception ex)
+        private void CmdRunnerOnErrorEvent(string message, Exception ex)
         {
-            OnErrorEvent(strMessage, ex);
+            OnErrorEvent(message, ex);
         }
 
         /// <summary>
@@ -477,7 +477,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         private void ParseMultiAlignLogFile()
         {
-            var strLogFilePath = string.Empty;
+            var logFilePath = string.Empty;
 
             try
             {
@@ -486,28 +486,28 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (matchingFiles.Count >= 1)
                 {
-                    strLogFilePath = matchingFiles[0].FullName;
+                    logFilePath = matchingFiles[0].FullName;
 
                     if (matchingFiles.Count > 1)
                     {
                         // Use the newest file in matchingFiles
-                        var intBestIndex = 0;
+                        var bestIndex = 0;
 
-                        for (var intIndex = 1; intIndex <= matchingFiles.Count - 1; intIndex++)
+                        for (var index = 1; index <= matchingFiles.Count - 1; index++)
                         {
-                            if (matchingFiles[intIndex].LastWriteTimeUtc > matchingFiles[intBestIndex].LastWriteTimeUtc)
+                            if (matchingFiles[index].LastWriteTimeUtc > matchingFiles[bestIndex].LastWriteTimeUtc)
                             {
-                                intBestIndex = intIndex;
+                                bestIndex = index;
                             }
                         }
 
-                        strLogFilePath = matchingFiles[intBestIndex].FullName;
+                        logFilePath = matchingFiles[bestIndex].FullName;
                     }
                 }
 
-                if (!string.IsNullOrWhiteSpace(strLogFilePath))
+                if (!string.IsNullOrWhiteSpace(logFilePath))
                 {
-                    ParseMultiAlignLogFile(strLogFilePath);
+                    ParseMultiAlignLogFile(logFilePath);
                 }
             }
             catch (Exception ex)
@@ -569,13 +569,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             var matchFound = false;
 
                             // Update progress if the line contains any of the entries in mProgressStepLogText
-                            foreach (var lstItem in mProgressStepLogText)
+                            foreach (var item in mProgressStepLogText)
                             {
-                                if (dataLine.Contains(lstItem.Key))
+                                if (dataLine.Contains(item.Key))
                                 {
-                                    if (eProgress < lstItem.Value)
+                                    if (eProgress < item.Value)
                                     {
-                                        eProgress = lstItem.Value;
+                                        eProgress = item.Value;
                                     }
                                     matchFound = true;
                                     break;
@@ -615,7 +615,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {
                     float progressOverall = actualProgress;
 
-                    // Possibly bump up dblActualProgress incrementally
+                    // Possibly bump up actualProgress incrementally
 
                     if (totalDatasets > 0)
                     {
@@ -642,11 +642,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                             if (subProgressPercent > 100)
                                 subProgressPercent = 100;
 
-                            // Bump up dblActualProgress based on subProgressPercent
+                            // Bump up actualProgress based on subProgressPercent
 
-                            if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out var intProgressNext))
+                            if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out var progressNext))
                             {
-                                progressOverall += (float)(subProgressPercent * (intProgressNext - actualProgress) / 100.0);
+                                progressOverall += (float)(subProgressPercent * (progressNext - actualProgress) / 100.0);
                             }
                         }
                     }

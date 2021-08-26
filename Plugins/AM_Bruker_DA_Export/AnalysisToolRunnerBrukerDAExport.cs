@@ -97,9 +97,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     // Look for the at least one exported mass spectrum
 
-                    var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_scan1.xml"));
+                    var resultsFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_scan1.xml"));
 
-                    if (fiResultsFile.Exists)
+                    if (resultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessExportedSpectra();
                         if (!postProcessSuccess)
@@ -167,11 +167,11 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             double datasetSizeMB;
 
-            var diDataFolder = new DirectoryInfo(dataFolderPath);
-            var fiBafFile = diDataFolder.GetFiles("analysis.baf", SearchOption.AllDirectories).ToList();
-            if (fiBafFile.Count > 0)
+            var dataFolder = new DirectoryInfo(dataFolderPath);
+            var bafFile = dataFolder.GetFiles("analysis.baf", SearchOption.AllDirectories).ToList();
+            if (bafFile.Count > 0)
             {
-                datasetSizeMB = Global.BytesToMB(fiBafFile[0].Length);
+                datasetSizeMB = Global.BytesToMB(bafFile[0].Length);
             }
             else
             {
@@ -401,15 +401,15 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo workingDirectory)
         {
-            var fiSpectraFiles = workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
-            return fiSpectraFiles;
+            var spectraFiles = workingDirectory.GetFiles(mDatasetName + "_scan*.xml").ToList();
+            return spectraFiles;
         }
 
         /// <summary>
         /// Parse the Spectrum Export console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
 
@@ -433,11 +433,11 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var reTotalScans = new Regex(@"Scans to export = (\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 var reCurrentScan = new Regex(@"Scan (\d+), mass range", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -445,7 +445,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
@@ -453,7 +453,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var totalScans = 0;
                 var currentScan = 0;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -506,7 +506,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogWarning("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -536,24 +536,24 @@ namespace AnalysisManagerBrukerDAExportPlugin
             try
             {
                 var workingDirectory = new DirectoryInfo(mWorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(workingDirectory);
+                var spectraFiles = GetXMLSpectraFiles(workingDirectory);
 
-                if (fiSpectraFiles.Count == 0)
+                if (spectraFiles.Count == 0)
                 {
                     LogError("No exported spectra files were found in PostProcessExportedSpectra");
                     return false;
                 }
 
-                var diSubDir = workingDirectory.CreateSubdirectory("FilesToZip");
+                var subDir = workingDirectory.CreateSubdirectory("FilesToZip");
 
                 PRISM.ProgRunner.GarbageCollectNow();
 
-                foreach (var file in fiSpectraFiles)
+                foreach (var fileToMove in spectraFiles)
                 {
-                    file.MoveTo(Path.Combine(diSubDir.FullName, file.Name));
+                    fileToMove.MoveTo(Path.Combine(subDir.FullName, fileToMove.Name));
                 }
 
-                var success = mDotNetZipTools.ZipDirectory(diSubDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
+                var success = mDotNetZipTools.ZipDirectory(subDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -577,22 +577,22 @@ namespace AnalysisManagerBrukerDAExportPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
+            var program = new FileInfo(progLoc);
+            if (!program.Exists)
             {
                 try
                 {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
+                    toolVersionInfo = "Unknown";
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -602,22 +602,22 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
 
             // Lookup the version of the DataAnalysis program
-            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
+            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, program.FullName);
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                fiProgram
+                program
             };
 
-            if (fiProgram.Directory != null)
+            if (program.Directory != null)
             {
-                toolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AnalysisCore.dll")));
+                toolFiles.Add(new FileInfo(Path.Combine(program.Directory.FullName, "AnalysisCore.dll")));
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

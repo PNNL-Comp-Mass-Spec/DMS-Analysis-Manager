@@ -48,21 +48,21 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private string ConstructXML()
         {
-            var sbXml = new StringBuilder();
+            var builder = new StringBuilder();
 
             try
             {
-                sbXml.Append("<DTARef_MassErrorStats>");
+                builder.Append("<DTARef_MassErrorStats>");
 
-                sbXml.AppendFormat("<Dataset>{0}</Dataset>", MassErrorInfo.DatasetName);
-                sbXml.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", MassErrorInfo.PSMJob);
+                builder.AppendFormat("<Dataset>{0}</Dataset>", MassErrorInfo.DatasetName);
+                builder.AppendFormat("<PSM_Source_Job>{0}</PSM_Source_Job>", MassErrorInfo.PSMJob);
 
-                sbXml.Append("<Measurements>");
-                sbXml.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM", MassErrorInfo.MassErrorPPM);
-                sbXml.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM_Refined", MassErrorInfo.MassErrorPPMRefined);
-                sbXml.Append("</Measurements>");
+                builder.Append("<Measurements>");
+                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM", MassErrorInfo.MassErrorPPM);
+                builder.AppendFormat("<Measurement Name=\"{0}\">{1}</Measurement>", "MassErrorPPM_Refined", MassErrorInfo.MassErrorPPMRefined);
+                builder.Append("</Measurements>");
 
-                sbXml.Append("</DTARef_MassErrorStats>");
+                builder.Append("</DTARef_MassErrorStats>");
             }
             catch (Exception ex)
             {
@@ -71,7 +71,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return string.Empty;
             }
 
-            return sbXml.ToString();
+            return builder.ToString();
         }
 
         /// <summary>

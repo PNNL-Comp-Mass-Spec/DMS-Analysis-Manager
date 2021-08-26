@@ -209,7 +209,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             return false;
         }
 
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -218,11 +218,11 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -230,10 +230,10 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 while (!reader.EndOfStream)
                 {
@@ -255,7 +255,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }

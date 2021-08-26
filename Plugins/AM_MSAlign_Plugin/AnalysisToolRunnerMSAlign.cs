@@ -368,8 +368,8 @@ namespace AnalysisManagerMSAlignPlugIn
             {
                 var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
 
-                var oReader = new ProteinFileReader.FastaFileReader();
-                if (!oReader.OpenFile(sourceFilePath))
+                var reader = new ProteinFileReader.FastaFileReader();
+                if (!reader.OpenFile(sourceFilePath))
                 {
                     mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
                     return false;
@@ -377,14 +377,14 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (oReader.ReadNextProteinEntry())
+                    while (reader.ReadNextProteinEntry())
                     {
-                        writer.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
-                        var proteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
+                        writer.WriteLine(reader.ProteinLineStartChar + reader.HeaderLine);
+                        var proteinResidues = reInvalidResidues.Replace(reader.ProteinSequence, "-");
 
-                        if (warningCount < 5 && proteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
+                        if (warningCount < 5 && proteinResidues.GetHashCode() != reader.ProteinSequence.GetHashCode())
                         {
-                            LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
+                            LogWarning("Changed invalid residues to '-' in protein " + reader.ProteinName);
                             warningCount++;
                         }
 
@@ -399,7 +399,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
                 }
 
-                oReader.CloseFile();
+                reader.CloseFile();
             }
             catch (Exception ex)
             {

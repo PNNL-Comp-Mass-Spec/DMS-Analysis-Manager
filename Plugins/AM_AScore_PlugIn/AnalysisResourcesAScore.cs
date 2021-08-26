@@ -176,8 +176,8 @@ namespace AnalysisManager_AScore_PlugIn
         //    LogMessage("Getting AScoreHCDParamFile param file");
 
         //    {
-        //        Dictionary<int, udtDataPackageJobInfoType> dctDataPackageJobs;
-        //        if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
+        //        Dictionary<int, dataPackageJobInfoType> dataPackageJobs;
+        //        if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dataPackageJobs))
         //        {
         //            //Errors were reported in function call, so just return
         //            return false;

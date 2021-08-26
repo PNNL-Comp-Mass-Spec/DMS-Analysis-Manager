@@ -138,8 +138,8 @@ namespace AnalysisManagerInSpecTPlugIn
                 if (!mIsParallelInspect)
                 {
                     // Zip the output file
-                    var blnSuccess = ZipFile(mInspectResultsFilePath, true);
-                    if (!blnSuccess)
+                    var zipSuccess = ZipFile(mInspectResultsFilePath, true);
+                    if (!zipSuccess)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -154,9 +154,9 @@ namespace AnalysisManagerInSpecTPlugIn
                 // Make sure objects are released
                 ProgRunner.GarbageCollectNow();
 
-                var success = CopyResultsToTransferDirectory();
+                var copySuccess = CopyResultsToTransferDirectory();
 
-                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -248,27 +248,27 @@ namespace AnalysisManagerInSpecTPlugIn
         }
 
         // Unused function
-        // private int ExtractScanCountValueFromMzXML(string strMZXMLFilename)
+        // private int ExtractScanCountValueFromMzXML(string mzxmlfilename)
         // {
         //    int scanCount = 0;
         //
         //    try
         //    {
-        //        var objMZXmlFile = new MSDataFileReader.MzXMLFileReader();
+        //        var mzxmlFile = new MSDataFileReader.MzXMLFileReader();
         //
         //        // Open the file
-        //        objMZXmlFile.OpenFile(strMZXMLFilename);
+        //        mzxmlFile.OpenFile(mzxmlfilename);
         //
         //        // Read the first spectrum (required to determine the ScanCount)
-        //        MSDataFileReader.SpectrumInfo objSpectrumInfo;
-        //        if (objMZXmlFile.ReadNextSpectrum(out objSpectrumInfo))
+        //        MSDataFileReader.SpectrumInfo spectrumInfo;
+        //        if (mzxmlFile.ReadNextSpectrum(out spectrumInfo))
         //        {
-        //            scanCount = objMZXmlFile.ScanCount;
+        //            scanCount = mzxmlFile.ScanCount;
         //        }
         //
-        //        if (objMZXmlFile != null)
+        //        if (mzxmlFile != null)
         //        {
-        //            objMZXmlFile.CloseFile();
+        //            mzxmlFile.CloseFile();
         //        }
         //    }
         //    catch (Exception ex)
@@ -280,12 +280,12 @@ namespace AnalysisManagerInSpecTPlugIn
         //    return scanCount;
         // }
 
-        private void InitializeInspectSearchLogFileWatcher(string strWorkDir)
+        private void InitializeInspectSearchLogFileWatcher(string workDir)
         {
             mSearchLogFileWatcher = new FileSystemWatcher();
             mSearchLogFileWatcher.Changed += SearchLogFileWatcher_Changed;
             mSearchLogFileWatcher.BeginInit();
-            mSearchLogFileWatcher.Path = strWorkDir;
+            mSearchLogFileWatcher.Path = workDir;
             mSearchLogFileWatcher.IncludeSubdirectories = false;
             mSearchLogFileWatcher.Filter = Path.GetFileName(mInspectSearchLogFilePath);
             mSearchLogFileWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
@@ -323,8 +323,8 @@ namespace AnalysisManagerInSpecTPlugIn
                     return true;
                 }
 
-                // Initialize htMessages
-                var htMessages = new Hashtable();
+                // Initialize messages
+                var messages = new Hashtable();
 
                 // Read the contents of the error file
                 using var reader = new StreamReader(new FileStream(errorFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -340,9 +340,9 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     if (dataLineTrimmed.Length > 0)
                     {
-                        if (!htMessages.Contains(dataLineTrimmed))
+                        if (!messages.Contains(dataLineTrimmed))
                         {
-                            htMessages.Add(dataLineTrimmed, 1);
+                            messages.Add(dataLineTrimmed, 1);
                             LogWarning("Inspect warning/error: " + dataLineTrimmed);
                         }
                     }
@@ -364,7 +364,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         private CloseOutType RunInSpecT(string InspectDir)
         {
-            var blnSuccess = false;
+            var success = false;
 
             // Build the Inspect Input Parameters file
             mInspectCustomParamFileName = BuildInspectInputFile();
@@ -433,7 +433,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         // This is a warning, and not an error
                         LogWarning(
                             "Exit code indicates message from PValue.c concerning not enough top-scoring matches for a given charge state; we ignore this error since it only affects the p-values");
-                        blnSuccess = true;
+                        success = true;
                         break;
                     case -1073741510:
                         // Corresponds to the user pressing Ctrl+Break to stop Inspect
@@ -459,10 +459,10 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             else
             {
-                blnSuccess = true;
+                success = true;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running Inspect");
             }
@@ -484,15 +484,15 @@ namespace AnalysisManagerInSpecTPlugIn
             // Even though success is returned, check for the result file
             if (File.Exists(mInspectResultsFilePath))
             {
-                blnSuccess = true;
+                success = true;
             }
             else
             {
                 LogError("Inspect results file not found; job failed: " + Path.GetFileName(mInspectResultsFilePath));
-                blnSuccess = false;
+                success = false;
             }
 
-            if (blnSuccess)
+            if (success)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -517,18 +517,18 @@ namespace AnalysisManagerInSpecTPlugIn
             LogProgress("Inspect");
         }
 
-        private void ParseInspectSearchLogFile(string strSearchLogFilePath)
+        private void ParseInspectSearchLogFile(string searchLogFilePath)
         {
             try
             {
-                var ioFile = new FileInfo(strSearchLogFilePath);
-                if (!ioFile.Exists || ioFile.Length == 0) return;
+                var file = new FileInfo(searchLogFilePath);
+                if (!file.Exists || file.Length == 0) return;
 
                 // Search log file has been updated
                 // Open the file and read the contents
                 string lastEntry = null;
 
-                using (var reader = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
+                using (var reader = new StreamReader(new FileStream(searchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
                 {
                     // Read to the end of the file
                     while (!reader.EndOfStream)
@@ -565,8 +565,8 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     // Parse out the % complete from the 4th column
                     // Use .TrimEnd to remove the trailing % sign
-                    var strProgress = dataCols[3].TrimEnd('%');
-                    float.TryParse(strProgress, out mProgress);
+                    var progress = dataCols[3].TrimEnd('%');
+                    float.TryParse(progress, out mProgress);
                 }
             }
             catch (Exception ex)
@@ -578,7 +578,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string strInspectFolder)
+        private bool StoreToolVersionInfo(string inspectFolder)
         {
             var toolVersionInfo = string.Empty;
 
@@ -589,7 +589,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new(Path.Combine(strInspectFolder, INSPECT_EXE_NAME))
+                new(Path.Combine(inspectFolder, INSPECT_EXE_NAME))
             };
 
             try

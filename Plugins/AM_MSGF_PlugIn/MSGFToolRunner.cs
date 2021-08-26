@@ -1163,7 +1163,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             const int MAX_ERRORS_TO_LOG = 5;
 
-            var chSepChars = new[] { '\t' };
+            var sepChars = new[] { '\t' };
 
             var linesRead = 0;
             var specProbErrorCount = 0;
@@ -1345,7 +1345,7 @@ namespace AnalysisManagerMSGFPlugin
                             // The item left of the tab is the skipped result id
                             // the item right of the tab is the protein corresponding to the skipped result id
 
-                            var skipInfo = skipList[index].Split(chSepChars, 2);
+                            var skipInfo = skipList[index].Split(sepChars, 2);
 
                             writer.WriteLine(skipInfo[0] + "\t" + scan + "\t" + charge + "\t" + skipInfo[1] + "\t" +
                                                     originalPeptide + "\t" + specProb + "\t" + notes);
@@ -1689,7 +1689,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool RunMSGFonMSGFDBCachedData(IReadOnlyCollection<string> lstData, string msgfInputFilePath, string msgfResultsFilePathFinal, string collisionMode)
+        private bool RunMSGFonMSGFDBCachedData(IReadOnlyCollection<string> data, string msgfInputFilePath, string msgfResultsFilePathFinal, string collisionMode)
         {
             try
             {
@@ -1698,13 +1698,13 @@ namespace AnalysisManagerMSGFPlugin
 
                 using (var writer = new StreamWriter(new FileStream(inputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    foreach (var item in lstData)
+                    foreach (var item in data)
                     {
                         writer.WriteLine(item);
                     }
                 }
 
-                var success = RunMSGF(lstData.Count - 1, inputFileTempPath, resultFileTempPath);
+                var success = RunMSGF(data.Count - 1, inputFileTempPath, resultFileTempPath);
 
                 if (!success)
                 {
@@ -1811,17 +1811,17 @@ namespace AnalysisManagerMSGFPlugin
                 if (success)
                 {
                     // Call MSGF for each segment
-                    foreach (var udtSegmentFile in segmentFileInfo)
+                    foreach (var segmentFile in segmentFileInfo)
                     {
-                        var resultFile = AddFileNameSuffix(msgfResultsFilePath, udtSegmentFile.Segment);
+                        var resultFile = AddFileNameSuffix(msgfResultsFilePath, segmentFile.Segment);
 
-                        success = RunMSGFWork(udtSegmentFile.FilePath, resultFile);
+                        success = RunMSGFWork(segmentFile.FilePath, resultFile);
 
                         if (!success)
                             break;
 
                         resultFiles.Add(resultFile);
-                        mMSGFLineCountPreviousSegments += udtSegmentFile.Entries;
+                        mMSGFLineCountPreviousSegments += segmentFile.Entries;
                     }
                 }
 
@@ -1839,9 +1839,9 @@ namespace AnalysisManagerMSGFPlugin
                     }
 
                     // Delete the segment files
-                    foreach (var udtSegmentFile in segmentFileInfo)
+                    foreach (var segmentFile in segmentFileInfo)
                     {
-                        DeleteTemporaryFile(udtSegmentFile.FilePath);
+                        DeleteTemporaryFile(segmentFile.FilePath);
                     }
 
                     // Delete the result files
@@ -1855,10 +1855,10 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 // Delete the Console_Output.txt file if it is empty
-                var fiConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
-                if (fiConsoleOutputFile.Exists && fiConsoleOutputFile.Length == 0)
+                var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
+                if (consoleOutputFile.Exists && consoleOutputFile.Length == 0)
                 {
-                    fiConsoleOutputFile.Delete();
+                    consoleOutputFile.Delete();
                 }
             }
             catch (Exception ex)
@@ -2241,10 +2241,10 @@ namespace AnalysisManagerMSGFPlugin
 
                 StreamWriter writer = null;
 
-                SegmentFileInfo udtThisSegment;
-                udtThisSegment.FilePath = string.Empty;
-                udtThisSegment.Entries = 0;
-                udtThisSegment.Segment = 0;
+                SegmentFileInfo thisSegment;
+                thisSegment.FilePath = string.Empty;
+                thisSegment.Entries = 0;
+                thisSegment.Segment = 0;
 
                 while (!reader.EndOfStream)
                 {
@@ -2260,29 +2260,29 @@ namespace AnalysisManagerMSGFPlugin
                         headerLine = dataLine;
                     }
 
-                    if (udtThisSegment.Segment == 0 || udtThisSegment.Entries >= msgfEntriesPerSegment)
+                    if (thisSegment.Segment == 0 || thisSegment.Entries >= msgfEntriesPerSegment)
                     {
                         // Need to create a new segment
                         // However, if the number of lines remaining to be written is less than 5% of msgfEntriesPerSegment then keep writing to this segment
 
                         var lineCountRemaining = msgfInputFileLineCount - lineCountAllSegments;
 
-                        if (udtThisSegment.Segment == 0 || lineCountRemaining > msgfEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
+                        if (thisSegment.Segment == 0 || lineCountRemaining > msgfEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
                         {
-                            if (udtThisSegment.Segment > 0)
+                            if (thisSegment.Segment > 0)
                             {
                                 // Close the current segment
                                 writer?.Flush();
                                 writer?.Dispose();
-                                segmentFileInfo.Add(udtThisSegment);
+                                segmentFileInfo.Add(thisSegment);
                             }
 
                             // Initialize a new segment
-                            udtThisSegment.Segment++;
-                            udtThisSegment.Entries = 0;
-                            udtThisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, udtThisSegment.Segment);
+                            thisSegment.Segment++;
+                            thisSegment.Entries = 0;
+                            thisSegment.FilePath = AddFileNameSuffix(msgfInputFilePath, thisSegment.Segment);
 
-                            writer = new StreamWriter(new FileStream(udtThisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                            writer = new StreamWriter(new FileStream(thisSegment.FilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                             // Write the header line to the new segment
                             writer.WriteLine(headerLine);
@@ -2295,7 +2295,7 @@ namespace AnalysisManagerMSGFPlugin
                             throw new Exception("writer has not been initialized; this indicates a bug in SplitMSGFInputFile");
 
                         writer.WriteLine(dataLine);
-                        udtThisSegment.Entries++;
+                        thisSegment.Entries++;
                         lineCountAllSegments++;
                     }
                 }
@@ -2304,7 +2304,7 @@ namespace AnalysisManagerMSGFPlugin
                 writer?.Flush();
                 writer?.Dispose();
 
-                segmentFileInfo.Add(udtThisSegment);
+                segmentFileInfo.Add(thisSegment);
             }
             catch (Exception ex)
             {
@@ -2500,12 +2500,12 @@ namespace AnalysisManagerMSGFPlugin
             {
                 LogDebug("Contact PHRPReader.GetPHRPProteinModsFileName for resultType " + resultType, 3);
 
-                var fiProteinModsFile = new FileInfo(Path.Combine(mWorkDir, ReaderFactory.GetPHRPProteinModsFileName(resultType, mDatasetName)));
-                var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
+                var proteinModsFile = new FileInfo(Path.Combine(mWorkDir, ReaderFactory.GetPHRPProteinModsFileName(resultType, mDatasetName)));
+                var proteinModsFileNew = new FileInfo(proteinModsFile.FullName + ".tmp");
 
-                if (!fiProteinModsFile.Exists)
+                if (!proteinModsFile.Exists)
                 {
-                    LogWarning("PHRP ProteinMods.txt file not found: " + fiProteinModsFile.Name);
+                    LogWarning("PHRP ProteinMods.txt file not found: " + proteinModsFile.Name);
                     return true;
                 }
 
@@ -2520,10 +2520,10 @@ namespace AnalysisManagerMSGFPlugin
 
                 var msgfSpecProbColIndex = -1;
 
-                LogDebug("Read " + fiProteinModsFile.FullName + " and create " + fiProteinModsFileNew.FullName, 3);
+                LogDebug("Read " + proteinModsFile.FullName + " and create " + proteinModsFileNew.FullName, 3);
 
-                using (var reader = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var writer = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(proteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(proteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -2594,13 +2594,13 @@ namespace AnalysisManagerMSGFPlugin
 
                 try
                 {
-                    LogDebug("Replace " + fiProteinModsFile.FullName + " with " + fiProteinModsFileNew.Name, 3);
+                    LogDebug("Replace " + proteinModsFile.FullName + " with " + proteinModsFileNew.Name, 3);
 
-                    fiProteinModsFile.Delete();
+                    proteinModsFile.Delete();
 
                     try
                     {
-                        fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
+                        proteinModsFileNew.MoveTo(proteinModsFile.FullName);
                         if (mDebugLevel >= 2)
                         {
                             LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");

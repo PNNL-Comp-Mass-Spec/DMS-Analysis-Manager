@@ -1457,7 +1457,7 @@ namespace MSGFResultsSummarizer
                 // If sequenceInfoAvailable is True, instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
                 //   For example, VGVEASEETPQT with Phosph at index 5
                 //
-                // The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
+                // The SeqID value tracked by normalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
                 //
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();

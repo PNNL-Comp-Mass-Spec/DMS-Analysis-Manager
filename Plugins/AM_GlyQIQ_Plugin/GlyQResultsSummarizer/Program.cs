@@ -23,21 +23,21 @@ namespace GlyQResultsSummarizer
 
         static int Main(string[] args)
         {
-            var objParseCommandLine = new clsParseCommandLine();
+            var parseCommandLine = new clsParseCommandLine();
 
             try
             {
                 var success = false;
 
-                if (objParseCommandLine.ParseCommandLine())
+                if (parseCommandLine.ParseCommandLine())
                 {
-                    if (SetOptionsUsingCommandLineParameters(objParseCommandLine))
+                    if (SetOptionsUsingCommandLineParameters(parseCommandLine))
                         success = true;
                 }
 
                 if (!success ||
-                    objParseCommandLine.NeedToShowHelp ||
-                    objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0 ||
+                    parseCommandLine.NeedToShowHelp ||
+                    parseCommandLine.ParameterCount + parseCommandLine.NonSwitchParameterCount == 0 ||
                     string.IsNullOrWhiteSpace(mGlyQResultsFilePath))
                 {
                     ShowProgramHelp();
@@ -114,18 +114,18 @@ namespace GlyQResultsSummarizer
             return success;
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine parseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
-            var lstValidParameters = new List<string> { "I", "Job" };
+            var validParameters = new List<string> { "I", "Job" };
 
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
+                if (parseCommandLine.InvalidParametersPresent(validParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (var item in objParseCommandLine.InvalidParameters(lstValidParameters))
+                    foreach (var item in parseCommandLine.InvalidParameters(validParameters))
                     {
                         badArguments.Add("/" + item);
                     }
@@ -135,40 +135,40 @@ namespace GlyQResultsSummarizer
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present
-                if (objParseCommandLine.NonSwitchParameterCount > 0)
+                // Query parseCommandLine to see if various parameters are present
+                if (parseCommandLine.NonSwitchParameterCount > 0)
                 {
-                    mGlyQResultsFilePath = objParseCommandLine.RetrieveNonSwitchParameter(0);
+                    mGlyQResultsFilePath = parseCommandLine.RetrieveNonSwitchParameter(0);
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("I", out var strValue))
+                if (parseCommandLine.RetrieveValueForParameter("I", out var value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                     {
                         ShowErrorMessage("/I does not have a file path defined");
                         return false;
                     }
-                    mGlyQResultsFilePath = strValue;
+                    mGlyQResultsFilePath = value;
                 }
 
-                if (objParseCommandLine.RetrieveValueForParameter("Job", out strValue))
+                if (parseCommandLine.RetrieveValueForParameter("Job", out value))
                 {
-                    if (string.IsNullOrWhiteSpace(strValue))
+                    if (string.IsNullOrWhiteSpace(value))
                     {
                         ShowErrorMessage("/Job does not have a job number defined");
                         return false;
                     }
 
-                    if (String.Compare(strValue, "auto", StringComparison.OrdinalIgnoreCase) == 0)
+                    if (String.Compare(value, "auto", StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         // Automatically determine the job number based on the parent folder name
                         mJob = AUTO_JOB_FLAG;
                     }
                     else
                     {
-                        if (!int.TryParse(strValue, out mJob))
+                        if (!int.TryParse(value, out mJob))
                         {
-                            ShowErrorMessage(strValue + " is not numeric for /Job");
+                            ShowErrorMessage(value + " is not numeric for /Job");
                             return false;
                         }
                     }

@@ -95,7 +95,7 @@ namespace AnalysisManagerBase.DataFileTools
             var spectraParsed = 0;
             var spectraCountRemoved = 0;
 
-            var sbCurrentSpectrum = new System.Text.StringBuilder();
+            var currentSpectrum = new System.Text.StringBuilder();
 
             try
             {
@@ -134,7 +134,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                         if (string.IsNullOrEmpty(dataLine))
                         {
-                            sbCurrentSpectrum.AppendLine();
+                            currentSpectrum.AppendLine();
                         }
                         else
                         {
@@ -143,18 +143,18 @@ namespace AnalysisManagerBase.DataFileTools
                                 // DTA header line, for example:
                                 // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
 
-                                if (sbCurrentSpectrum.Length > 0)
+                                if (currentSpectrum.Length > 0)
                                 {
                                     if (ionCount >= MINIMUM_ION_COUNT || spectraParsed == 0)
                                     {
                                         // Write the cached spectrum
-                                        writer.Write(sbCurrentSpectrum.ToString());
+                                        writer.Write(currentSpectrum.ToString());
                                     }
                                     else
                                     {
                                         spectraCountRemoved++;
                                     }
-                                    sbCurrentSpectrum.Clear();
+                                    currentSpectrum.Clear();
                                     ionCount = 0;
                                 }
 
@@ -174,16 +174,16 @@ namespace AnalysisManagerBase.DataFileTools
                                 ionCount++;
                             }
 
-                            sbCurrentSpectrum.AppendLine(dataLine);
+                            currentSpectrum.AppendLine(dataLine);
                         }
                     }
 
-                    if (sbCurrentSpectrum.Length > 0)
+                    if (currentSpectrum.Length > 0)
                     {
                         if (ionCount >= MINIMUM_ION_COUNT)
                         {
                             // Write the cached spectrum
-                            writer.Write(sbCurrentSpectrum.ToString());
+                            writer.Write(currentSpectrum.ToString());
                         }
                         else
                         {

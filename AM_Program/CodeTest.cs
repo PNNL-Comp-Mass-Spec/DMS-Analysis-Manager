@@ -489,7 +489,7 @@ namespace AnalysisManagerProg
                 if (Directory.Exists(dtaRefineryDataFolderPath))
                 {
                     Console.WriteLine("Processing " + dtaRefineryDataFolderPath);
-                    // massErrorExtractor.ParseDTARefineryLogFile(udtPSMJob.Dataset, udtPSMJob.DatasetID, udtPSMJob.Job, udtPSMJob.DtaRefineryDataFolderPath)
+                    // massErrorExtractor.ParseDTARefineryLogFile(psmjob.Dataset, psmjob.DatasetID, psmjob.Job, psmjob.DtaRefineryDataFolderPath)
                 }
                 else
                 {
@@ -888,7 +888,7 @@ namespace AnalysisManagerProg
                 //var tool = new AnalysisManagerMSGFDBPlugIn.MSGFDBUtils(
                 //    mMgrSettings, jobParams, jobNum, mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
 
-                //RegisterEvents(oTool);
+                //RegisterEvents(tool);
 
                 //float fastaFileSizeKB;
 

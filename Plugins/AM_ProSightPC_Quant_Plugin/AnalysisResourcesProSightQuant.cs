@@ -47,21 +47,21 @@ namespace AnalysisManagerProSightQuantPlugIn
             // Retrieve the MSAlign_Quant parameter file
             // For example, MSAlign_Quant_Workflow_2012-07-25
 
-            string strParamFileStoragePathKeyName = null;
-            string strParamFileStoragePath = null;
-            strParamFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
+            string paramFileStoragePathKeyName = null;
+            string paramFileStoragePath = null;
+            paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
 
-            strParamFileStoragePath = mMgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(strParamFileStoragePath))
+            paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(paramFileStoragePath))
             {
-                strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
+                paramFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
                 LogWarning(
-                    "Parameter '" + strParamFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strParamFileStoragePath);
+                    "Parameter '" + paramFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + paramFileStoragePath);
             }
 
-            var strParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
-            if (string.IsNullOrEmpty(strParamFileName))
+            var paramFileName = mJobParams.GetParam("ProSightQuantParamFile");
+            if (string.IsNullOrEmpty(paramFileName))
             {
                 mMessage = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
                 LogError(mMessage);
@@ -70,7 +70,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             LogMessage("Getting data files");
 
-            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
+            if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }

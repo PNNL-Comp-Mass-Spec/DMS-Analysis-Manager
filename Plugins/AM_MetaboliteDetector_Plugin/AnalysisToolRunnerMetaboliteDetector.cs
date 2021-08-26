@@ -121,7 +121,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
         }
 
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
             //
@@ -130,11 +130,11 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -142,10 +142,10 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
-                using var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 while (!reader.EndOfStream)
                 {
@@ -167,7 +167,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -179,13 +179,13 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         {
             try
             {
-                var fiResultsFile = new FileInfo(Path.Combine(mWorkDir, METABOLITE_DETECTOR_RESULTS_FILE));
+                var resultsFile = new FileInfo(Path.Combine(mWorkDir, METABOLITE_DETECTOR_RESULTS_FILE));
 
-                if (!fiResultsFile.Exists)
+                if (!resultsFile.Exists)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        LogError("Metabolite Detector results not found: " + fiResultsFile.Name);
+                        LogError("Metabolite Detector results not found: " + resultsFile.Name);
                     }
                     return false;
                 }
@@ -297,22 +297,22 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        private bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (mDebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
+            var program = new FileInfo(progLoc);
+            if (!program.Exists)
             {
                 try
                 {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
+                    toolVersionInfo = "Unknown";
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), false);
                 }
                 catch (Exception ex)
                 {
@@ -322,17 +322,17 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
 
             // Lookup the version of the .NET program
-            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
+            mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, program.FullName);
 
             // Store paths to key DLLs in toolFiles
             var toolFiles = new List<FileInfo>
             {
-                fiProgram
+                program
             };
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, toolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, toolFiles, false);
             }
             catch (Exception ex)
             {

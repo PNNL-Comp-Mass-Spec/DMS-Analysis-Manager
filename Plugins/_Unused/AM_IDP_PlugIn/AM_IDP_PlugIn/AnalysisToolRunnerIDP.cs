@@ -21,7 +21,7 @@ namespace AnalysisManager_IDP_PlugIn
             try
             {
                 IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-                bool blnSuccess = false;
+                bool success = false;
 
                 //Do the base class stuff
                 if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
@@ -63,7 +63,7 @@ namespace AnalysisManager_IDP_PlugIn
 
                     // if a workflow is not passed to IDPicker, then do not run the program.
                     if (!string.IsNullOrEmpty(d_Params["IDPWorkflowName"]))
-                        blnSuccess = idp.Run();
+                        success = idp.Run();
 
                     //Change the name of the log file for the local log file to the plug in log filename
                     LogFileName = m_mgrParams.GetParam("logfilename");
@@ -78,7 +78,7 @@ namespace AnalysisManager_IDP_PlugIn
                     LogTools.ChangeLogFileName(LogFileName);
 
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Error running IDP: " + ex.Message);
-                    blnSuccess = false;
+                    success = false;
                 }
 
                 //Stop the job timer
@@ -96,7 +96,7 @@ namespace AnalysisManager_IDP_PlugIn
                 System.Threading.Thread.Sleep(2000);
                 PRISM.Processes.ProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MultiAlign problems
@@ -123,13 +123,13 @@ namespace AnalysisManager_IDP_PlugIn
                 }
 
                 // Move the Plots folder to the result files folder
-                System.IO.DirectoryInfo diPlotsFolder = default(System.IO.DirectoryInfo);
-                diPlotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "IDPickerResults"));
+                System.IO.DirectoryInfo plotsFolder = default(System.IO.DirectoryInfo);
+                plotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "IDPickerResults"));
 
-                if (diPlotsFolder.Exists)
+                if (plotsFolder.Exists)
                 {
-                    string strTargetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "IDPickerResults");
-                    diPlotsFolder.MoveTo(strTargetFolderPath);
+                    string targetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "IDPickerResults");
+                    plotsFolder.MoveTo(targetFolderPath);
                 }
 
                 result = CopyResultsFolderToServer();
@@ -154,19 +154,19 @@ namespace AnalysisManager_IDP_PlugIn
         {
             IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
 
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            string failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrEmpty(failedResultsFolderPath))
+                failedResultsFolderPath = "??Not Defined??";
 
-            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+            string folderPathToArchive;
+            folderPathToArchive = string.Copy(m_WorkDir);
 
             // If necessary, delete extra files with the following
             /*
@@ -189,14 +189,14 @@ namespace AnalysisManager_IDP_PlugIn
                 result = MoveResultFiles();
                 if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    // Move was a success; update folderPathToArchive
+                    folderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
                 }
             }
 
             // Copy the results folder to the Archive folder
-            AnalysisResults objAnalysisResults = new AnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            AnalysisResults analysisResults = new AnalysisResults(m_mgrParams, m_jobParams);
+            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive);
 
         }
 
@@ -206,7 +206,7 @@ namespace AnalysisManager_IDP_PlugIn
         private bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo = string.Empty;
+            string toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -215,11 +215,11 @@ namespace AnalysisManager_IDP_PlugIn
 
             try
             {
-                System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("IDP").GetName();
+                System.Reflection.AssemblyName assemblyName = System.Reflection.Assembly.Load("IDP").GetName();
 
-                string strNameAndVersion;
-                strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version.ToString();
-                strToolVersionInfo = Global.AppendToComment(strToolVersionInfo, strNameAndVersion);
+                string nameAndVersion;
+                nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version.ToString();
+                toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
             }
             catch (Exception ex)
             {
@@ -228,12 +228,12 @@ namespace AnalysisManager_IDP_PlugIn
             }
 
             // Store paths to key DLLs
-            System.Collections.Generic.List<System.IO.FileInfo> ioToolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
-            ioToolFiles.Add(new System.IO.FileInfo("IDP.dll"));
+            System.Collections.Generic.List<System.IO.FileInfo> toolFiles = new System.Collections.Generic.List<System.IO.FileInfo>();
+            toolFiles.Add(new System.IO.FileInfo("IDP.dll"));
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return base.SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }
             catch (Exception ex)
             {

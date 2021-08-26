@@ -109,8 +109,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private void CacheTargets()
         {
-            var fiBatchFile = new FileInfo(mBatchFilePath);
-            if (!fiBatchFile.Exists)
+            var batchFile = new FileInfo(mBatchFilePath);
+            if (!batchFile.Exists)
             {
                 throw new FileNotFoundException("Batch file not found", mBatchFilePath);
             }
@@ -119,7 +119,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 var fileContents = string.Empty;
 
-                using (var reader = new StreamReader(new FileStream(fiBatchFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(batchFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     if (!reader.EndOfStream)
                     {
@@ -129,7 +129,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (string.IsNullOrWhiteSpace(fileContents))
                 {
-                    throw new Exception("Batch file is empty, " + fiBatchFile.Name);
+                    throw new Exception("Batch file is empty, " + batchFile.Name);
                 }
 
                 // Replace instances of " " with tab characters
@@ -157,34 +157,34 @@ namespace AnalysisManagerGlyQIQPlugin
                     throw new DirectoryNotFoundException("Folder not found, " + workingParametersDirectory.FullName);
                 }
 
-                var fiTargetsFile = new FileInfo(Path.Combine(workingParametersDirectory.FullName, targetsFileName));
-                if (!fiTargetsFile.Exists)
+                var targetsFile = new FileInfo(Path.Combine(workingParametersDirectory.FullName, targetsFileName));
+                if (!targetsFile.Exists)
                 {
-                    throw new FileNotFoundException("Targets file not found, " + fiTargetsFile.FullName);
+                    throw new FileNotFoundException("Targets file not found, " + targetsFile.FullName);
                 }
 
                 char[] columnDelimiters = { '\t' };
                 const int CODE_COLUMN_INDEX = 2;
 
-                using (var reader = new StreamReader(new FileStream(fiTargetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(targetsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Read the header line
                     if (!reader.EndOfStream)
                     {
                         var headerLine = reader.ReadLine();
                         if (headerLine == null)
-                            throw new Exception("Header line in the targets file is empty, " + fiTargetsFile.Name);
+                            throw new Exception("Header line in the targets file is empty, " + targetsFile.Name);
 
                         var headers = headerLine.Split('\t');
                         if (headers.Length < 3)
                         {
-                            throw new Exception("Header line in the targets file does not have enough columns, " + fiTargetsFile.Name);
+                            throw new Exception("Header line in the targets file does not have enough columns, " + targetsFile.Name);
                         }
 
                         if (!string.Equals(headers[CODE_COLUMN_INDEX], "Code", StringComparison.OrdinalIgnoreCase))
                         {
                             throw new Exception("The 3rd column in the header line of the targets file is not 'Code', it is '" +
-                                                                 headers[2] + "' in " + fiTargetsFile.Name);
+                                                                 headers[2] + "' in " + targetsFile.Name);
                         }
                     }
 
@@ -233,9 +233,9 @@ namespace AnalysisManagerGlyQIQPlugin
             mStatus = GlyQIqRunnerStatusCodes.Running;
 
             var arguments = string.Empty;
-            var blnSuccess = mCmdRunner.RunProgram(BatchFilePath, arguments, "GlyQ-IQ", true);
+            var success = mCmdRunner.RunProgram(BatchFilePath, arguments, "GlyQ-IQ", true);
 
-            if (blnSuccess)
+            if (success)
             {
                 mStatus = GlyQIqRunnerStatusCodes.Success;
                 mProgress = 100;
@@ -256,19 +256,19 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <summary>
         /// Parse the GlyQ-IQ console output file to track the search progress
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     return;
                 }
 
                 var analysisFinished = false;
 
-                using (var reader = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
@@ -313,18 +313,18 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Ignore errors here
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
-                    "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    "Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
             }
         }
 
         /// <summary>
         /// Event handler for event CmdRunner.ErrorEvent
         /// </summary>
-        /// <param name="strMessage"></param>
+        /// <param name="message"></param>
         /// <param name="ex"></param>
-        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
+        private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage, ex);
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, message, ex);
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
