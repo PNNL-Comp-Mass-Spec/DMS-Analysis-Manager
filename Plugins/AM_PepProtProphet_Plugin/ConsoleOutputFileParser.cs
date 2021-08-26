@@ -213,7 +213,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 ConsoleOutputErrorMsg = string.Empty;
 
-                var versionMatcher = new Regex(@"INFO.+Executing [^ ]+ +(?<Version>v[^ ]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var versionMatcher = new Regex("INFO.+Executing [^ ]+ +(?<Version>v[^ ]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 if (DebugLevel >= 4)
                 {

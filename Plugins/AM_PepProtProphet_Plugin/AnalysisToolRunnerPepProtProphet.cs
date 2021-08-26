@@ -1970,7 +1970,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 using (var writer = new StreamWriter(new FileStream(ptmShepherdConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    writer.WriteLine(@"database = " + mFastaFilePath);
+                    writer.WriteLine("database = " + mFastaFilePath);
 
                     foreach (var experimentGroup in experimentGroupWorkingDirectories)
                     {
