@@ -28,15 +28,11 @@ namespace AnalysisManagerMODPlusPlugin
 
         #region "Constants and Enums"
 
-        private const string MODPlus_CONSOLE_OUTPUT = "MODPlus_ConsoleOutput.txt";
         private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
-        private const string TDA_PLUS_JAR_NAME = "tda_plus.jar";
 
         private const int PROGRESS_PCT_CONVERTING_MSXML_TO_MGF = 1;
-        private const int PROGRESS_PCT_SPLITTING_MGF = 3;
         private const int PROGRESS_PCT_MODPLUS_STARTING = 5;
         private const int PROGRESS_PCT_MODPLUS_COMPLETE = 95;
-        private const int PROGRESS_PCT_COMPUTING_FDR = 96;
 
         #endregion
 
@@ -46,7 +42,6 @@ namespace AnalysisManagerMODPlusPlugin
         private string mMODPlusVersion;
 
         private string mMODPlusProgLoc;
-        private string mConsoleOutputErrorMsg;
 
         /// <summary>
         /// Dictionary of ModPlus instances
@@ -808,7 +803,6 @@ namespace AnalysisManagerMODPlusPlugin
 
                 mToolVersionWritten = false;
                 mMODPlusVersion = string.Empty;
-                mConsoleOutputErrorMsg = string.Empty;
 
                 currentTask = "Determine thread count";
 

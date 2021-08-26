@@ -39,10 +39,8 @@ namespace AnalysisManagerNOMSIPlugin
         private bool mNoPeaksFound;
 
         private DateTime mLastConsoleOutputParse;
-        private DateTime mLastProgressWriteTime;
 
         private int mTotalSpectra;
-        private int mSpectraProcessed;
 
         #endregion
 
@@ -69,10 +67,8 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
-                mLastProgressWriteTime = DateTime.UtcNow;
 
                 mTotalSpectra = 0;
-                mSpectraProcessed = 0;
 
                 // Determine the path to NOMSI
                 var progLoc = DetermineProgramLocation("NOMSIProgLoc", "NOMSI.exe");

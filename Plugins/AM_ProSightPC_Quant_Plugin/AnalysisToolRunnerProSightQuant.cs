@@ -28,11 +28,9 @@ namespace AnalysisManagerProSightQuantPlugIn
         private const int PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED = 15;
         private const int PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE = 95;
 
-        private const int PROGRESS_TARGETED_WORKFLOWS_COMPLETE = 98;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private string mConsoleOutputErrorMsg;
-        private int mDatasetID = 0;
 
         private string mTargetedWorkflowsProgLoc;
         private Dictionary<string, int> mConsoleOutputProgressMap;

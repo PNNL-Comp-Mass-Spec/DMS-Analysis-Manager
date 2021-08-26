@@ -18,7 +18,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         private const int PROGRESS_PCT_MULTIALIGN_DONE = 99;
 
         private string mCurrentMultiAlignTask = string.Empty;
-        private DateTime mLastStatusUpdateTime;
 
         /// <summary>
         /// Primary entry point for running this tool
@@ -53,7 +52,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 mCurrentMultiAlignTask = "Running MultiAlign";
-                mLastStatusUpdateTime = DateTime.UtcNow;
+
                 UpdateStatusRunning(mProgress);
 
                 LogMessage(mCurrentMultiAlignTask);

@@ -23,7 +23,6 @@ namespace AnalysisManagerDtaSplitPlugIn
         // Ignore Spelling: pre
 
         private readonly Regex r_FileSeparator;
-        private Regex r_DTAFirstLine;        // Presently not used
 
         /// <summary>
         /// Constructor
@@ -34,10 +33,10 @@ namespace AnalysisManagerDtaSplitPlugIn
                                         @"(?<endscan>\d+)\.(?<chargestate>\d+)\.(?<filetype>.+)\""\s+[=]{5,}\s*$",
                                              RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-            // Presently not used
-            r_DTAFirstLine = new Regex(@"^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+" +
-                                       @"cs\=(?<chargestate>\d+)$",
-                                            RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            // Old code:
+            // r_DTAFirstLine = new RegEx(@"^\s*(?<parentmass>\d+\.\d+)\s+\d+\s+scan\=(?<scannum>\d+)\s+" +
+            //                           @"cs\=(?<chargestate>\d+)$",
+            //                                RegexOptions.CultureInvariant | RegexOptions.Compiled);
         }
 
         /// <summary>

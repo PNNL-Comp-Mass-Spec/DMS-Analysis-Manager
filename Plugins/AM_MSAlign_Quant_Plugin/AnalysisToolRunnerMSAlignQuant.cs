@@ -30,7 +30,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         private const int PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED = 15;
         private const int PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE = 95;
 
-        private const int PROGRESS_TARGETED_WORKFLOWS_COMPLETE = 98;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
         private string mConsoleOutputErrorMsg;
