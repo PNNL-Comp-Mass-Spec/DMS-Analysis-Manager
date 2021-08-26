@@ -37,30 +37,30 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Properties"
 
-        public string BatchFilePath => mBatchFilePath;
+        public string BatchFilePath { get; }
 
-        public string ConsoleOutputFilePath => mConsoleOutputFilePath;
+        public string ConsoleOutputFilePath { get; private set; }
 
-        public int Core => mCore;
+        public int Core { get; }
 
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
-        public double Progress => mProgress;
+        public double Progress { get; private set; }
 
-        public RunDosProgram ProgramRunner => mCmdRunner;
+        public RunDosProgram ProgramRunner { get; private set; }
 
-        public GlyQIqRunnerStatusCodes Status => mStatus;
+        public GlyQIqRunnerStatusCodes Status { get; private set; }
 
         public ProgRunner.States ProgRunnerStatus
         {
             get
             {
-                if (mCmdRunner == null)
+                if (ProgramRunner == null)
                 {
                     return ProgRunner.States.NotMonitoring;
                 }
-                return mCmdRunner.State;
+                return ProgramRunner.State;
             }
         }
 
@@ -68,31 +68,21 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Member Variables"
 
-        private readonly string mBatchFilePath;
-        private string mConsoleOutputFilePath;
-        private readonly int mCore;
-
-        private double mProgress;
-
         /// <summary>
         /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
         private readonly Dictionary<string, bool> mTargets;
 
-        private GlyQIqRunnerStatusCodes mStatus;
-
         private readonly string mWorkingDirectory;
-
-        private RunDosProgram mCmdRunner;
 
         #endregion
 
         public GlyQIqRunner(string workingDirectory, int processingCore, string batchFilePathToUse)
         {
             mWorkingDirectory = workingDirectory;
-            mCore = processingCore;
-            mBatchFilePath = batchFilePathToUse;
-            mStatus = GlyQIqRunnerStatusCodes.NotStarted;
+            Core = processingCore;
+            BatchFilePath = batchFilePathToUse;
+            Status = GlyQIqRunnerStatusCodes.NotStarted;
 
             mTargets = new Dictionary<string, bool>();
 
@@ -104,15 +94,15 @@ namespace AnalysisManagerGlyQIQPlugin
         /// </summary>
         public void AbortProcessingNow()
         {
-            mCmdRunner?.AbortProgramNow();
+            ProgramRunner?.AbortProgramNow();
         }
 
         private void CacheTargets()
         {
-            var batchFile = new FileInfo(mBatchFilePath);
+            var batchFile = new FileInfo(BatchFilePath);
             if (!batchFile.Exists)
             {
-                throw new FileNotFoundException("Batch file not found", mBatchFilePath);
+                throw new FileNotFoundException("Batch file not found", BatchFilePath);
             }
 
             try
@@ -215,34 +205,34 @@ namespace AnalysisManagerGlyQIQPlugin
 
         public void StartAnalysis()
         {
-            mCmdRunner = new RunDosProgram(mWorkingDirectory);
-            mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
-            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+            ProgramRunner = new RunDosProgram(mWorkingDirectory);
+            ProgramRunner.ErrorEvent += CmdRunner_ErrorEvent;
+            ProgramRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            mProgress = 0;
+            Progress = 0;
 
-            mConsoleOutputFilePath = Path.Combine(mWorkingDirectory, GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + mCore + ".txt");
+            ConsoleOutputFilePath = Path.Combine(mWorkingDirectory, GLYQ_IQ_CONSOLE_OUTPUT_PREFIX + Core + ".txt");
 
-            mCmdRunner.CreateNoWindow = true;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.EchoOutputToConsole = false;
+            ProgramRunner.CreateNoWindow = true;
+            ProgramRunner.CacheStandardOutput = false;
+            ProgramRunner.EchoOutputToConsole = false;
 
-            mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = mConsoleOutputFilePath;
+            ProgramRunner.WriteConsoleOutputToFile = true;
+            ProgramRunner.ConsoleOutputFilePath = ConsoleOutputFilePath;
 
-            mStatus = GlyQIqRunnerStatusCodes.Running;
+            Status = GlyQIqRunnerStatusCodes.Running;
 
             var arguments = string.Empty;
-            var success = mCmdRunner.RunProgram(BatchFilePath, arguments, "GlyQ-IQ", true);
+            var success = ProgramRunner.RunProgram(BatchFilePath, arguments, "GlyQ-IQ", true);
 
             if (success)
             {
-                mStatus = GlyQIqRunnerStatusCodes.Success;
-                mProgress = 100;
+                Status = GlyQIqRunnerStatusCodes.Success;
+                Progress = 100;
             }
             else
             {
-                mStatus = GlyQIqRunnerStatusCodes.Failure;
+                Status = GlyQIqRunnerStatusCodes.Failure;
             }
         }
 
@@ -304,9 +294,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (analysisFinished)
                     glyqIqProgress = 100;
 
-                if (glyqIqProgress > mProgress)
+                if (glyqIqProgress > Progress)
                 {
-                    mProgress = glyqIqProgress;
+                    Progress = glyqIqProgress;
                 }
             }
             catch (Exception ex)
@@ -335,7 +325,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
-                ParseConsoleOutputFile(mConsoleOutputFilePath);
+                ParseConsoleOutputFile(ConsoleOutputFilePath);
             }
 
             CmdRunnerWaiting?.Invoke();

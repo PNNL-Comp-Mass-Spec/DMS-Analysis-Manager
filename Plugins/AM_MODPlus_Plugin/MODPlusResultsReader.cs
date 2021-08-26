@@ -10,7 +10,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <summary>
         /// Data lines for the current scan
         /// </summary>
-        public List<string> CurrentScanData => mCurrentScanData;
+        public List<string> CurrentScanData { get; }
 
         /// <summary>
         /// Currently available scan number and charge
@@ -20,13 +20,11 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks>-1 if no more scans remain</remarks>
         public double CurrentScanChargeCombo => mCurrentScanChargeCombo;
 
-        public FileInfo ResultFile => mResultFile;
+        public FileInfo ResultFile { get; }
 
         public bool SpectrumAvailable => mSpectrumAvailable;
 
         private double mCurrentScanChargeCombo;
-
-        private readonly List<string> mCurrentScanData;
 
         private string mSavedLine;
 
@@ -36,14 +34,12 @@ namespace AnalysisManagerMODPlusPlugin
 
         private readonly StreamReader mReader;
 
-        private readonly FileInfo mResultFile;
-
         /// <summary>
         /// Constructor
         /// </summary>
         public MODPlusResultsReader(string datasetName, FileInfo modPlusResultsFile)
         {
-            mResultFile = modPlusResultsFile;
+            ResultFile = modPlusResultsFile;
 
             // This RegEx is used to parse out the charge and scan number from the current spectrum
             // LineFormat (where \t is tab)
@@ -62,7 +58,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             mReader = new StreamReader(new FileStream(modPlusResultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-            mCurrentScanData = new List<string>();
+            CurrentScanData = new List<string>();
             mSavedLine = string.Empty;
 
             ReadNextSpectrum();
@@ -89,7 +85,7 @@ namespace AnalysisManagerMODPlusPlugin
                 dataLine = mReader.ReadLine();
             }
 
-            mCurrentScanData.Clear();
+            CurrentScanData.Clear();
 
             var startScanFound = false;
 
@@ -179,12 +175,12 @@ namespace AnalysisManagerMODPlusPlugin
                             // Do not reconstruct dataLine
                         }
                     }
-                    mCurrentScanData.Add(dataLine);
+                    CurrentScanData.Add(dataLine);
                 }
 
                 if (mReader.EndOfStream)
                 {
-                    if (mCurrentScanData.Count > 0)
+                    if (CurrentScanData.Count > 0)
                     {
                         mSpectrumAvailable = true;
                         return true;
