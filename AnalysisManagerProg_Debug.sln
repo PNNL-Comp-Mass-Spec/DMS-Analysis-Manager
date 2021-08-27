@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPepProtProph
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerExtractionPlugin", "Plugins\AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.csproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,6 +64,10 @@ Global
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{657B81BF-1D50-4289-878A-CAAE154835C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
