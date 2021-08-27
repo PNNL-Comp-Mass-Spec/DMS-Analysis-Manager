@@ -474,7 +474,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             // RegEx to match lines like:
             //  001. Sample_Bane_06May21_20-11-16.mzML 1.0 s | deisotoping 0.6 s
-            var datasetMatcher = new Regex(@"^ +(?<DatasetNumber>\d+)\. .+ deisotoping ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            //	001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzBIN_calibrated 0.1 s
+            var datasetMatcher = new Regex(@"^[\t ]+(?<DatasetNumber>\d+)\. .+\.(mzML|mzBIN)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // RegEx to match lines like:
             // Operating on slice 1 of 2: 4463ms
@@ -548,6 +549,18 @@ namespace AnalysisManagerMSFraggerPlugIn
                             continue;
 
                         currentProgress = processingStep.Key;
+
+                        if (currentProgress == MAIN_SEARCH_START)
+                        {
+                            // Reset slice tracking variables
+                            currentSlice = 0;
+                            totalSlices = 0;
+
+                            currentDatasetId = 0;
+                            datasetProgress = 0;
+                        }
+
+                        break;
                     }
 
                     // Check whether the line starts with the text error
