@@ -176,7 +176,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <param name="progressValues"></param>
         /// <param name="currentProgress"></param>
         /// <returns>Next progress value, or 100 if either the current value is not found, or the next value is not defined</returns>
-        private int GetNextProgressValue(LinkedList<int> progressValues, int currentProgress)
+        private static int GetNextProgressValue(LinkedList<int> progressValues, int currentProgress)
         {
             var currentNode = progressValues.Find(currentProgress);
 
@@ -208,7 +208,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 : setting.Comment;
         }
 
-        private Regex GetRegEx(string matchPattern, bool ignoreCase = true)
+        private static Regex GetRegEx(string matchPattern, bool ignoreCase = true)
         {
             var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
             return new Regex(matchPattern, options);
