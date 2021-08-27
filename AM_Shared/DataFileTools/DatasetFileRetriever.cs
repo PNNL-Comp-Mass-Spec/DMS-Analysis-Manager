@@ -104,7 +104,7 @@ namespace AnalysisManagerBase.DataFileTools
                     return RetrieveDataPackageDatasets(dataPackageInfo, usingMzML, progressPercentAtFinish, out dataPackageDatasets);
                 }
 
-                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, out dataPackageDatasets);
+                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, usingMzML, out dataPackageDatasets);
             }
             catch (Exception ex)
             {
@@ -118,7 +118,14 @@ namespace AnalysisManagerBase.DataFileTools
         /// Determine the dataset files associated with the current data package
         /// </summary>
         /// <param name="dataPackageInfo"></param>
-        /// <param name="usingMzML">True if this job's settings file indicates to use .mzML files instead of the original instrument file</param>
+        /// <param name="usingMzML">
+        /// <para>
+        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// </para>
+        /// <para>
+        /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger force this to true
+        /// </para>
+        /// </param>
         /// <param name="progressPercentAtFinish">Final percent complete value to use for computing incremental progress</param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveDataPackageDatasets(
@@ -219,10 +226,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="workingDirectory"></param>
         /// <param name="dataPackageInfo"></param>
+        /// <param name="usingMzML"></param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveSingleDataset(
             FileSystemInfo workingDirectory,
             DataPackageInfo dataPackageInfo,
+            bool usingMzML,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             var currentTask = "Initializing";
@@ -263,7 +272,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 dataPackageDatasets.Add(datasetID, dataPackageDatasetInfo);
 
-                var usingMzML = mResourceClass.JobParams.GetJobParameter("CreateMzMLFiles", false);
+                usingMzML = mResourceClass.JobParams.GetJobParameter("CreateMzMLFiles", usingMzML);
 
                 if (usingMzML)
                 {
