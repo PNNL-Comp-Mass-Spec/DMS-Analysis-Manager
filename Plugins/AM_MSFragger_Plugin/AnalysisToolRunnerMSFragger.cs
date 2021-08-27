@@ -64,6 +64,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private DateTime mLastConsoleOutputParse;
 
+        private bool mWarnedInvalidDatasetCount;
+
         private RunDosProgram mCmdRunner;
 
         private static DotNetZipTools mZipTool;
@@ -590,6 +592,29 @@ namespace AnalysisManagerMSFraggerPlugIn
                     float currentProgressOnSlice;
                     float nextProgressOnSlice;
 
+                    if (currentDatasetId > 0 && currentDatasetId > mDatasetCount)
+                    {
+                        if (!mWarnedInvalidDatasetCount)
+                        {
+                            if (mDatasetCount == 0)
+                            {
+                                LogWarning(
+                                    "mDatasetCount is 0 in ParseMSFraggerConsoleOutputFile; this indicates a programming bug. " +
+                                    "Auto-updating dataset count to " + currentDatasetId);
+                            }
+                            else
+                            {
+                                LogWarning(string.Format(
+                                    "CurrentDatasetId is greater than mDatasetCount in ParseMSFraggerConsoleOutputFile; this indicates a programming bug. " +
+                                    "Auto-updating dataset count from {0} to {1}", mDatasetCount, currentDatasetId));
+                            }
+
+                            mWarnedInvalidDatasetCount = true;
+                        }
+
+                        mDatasetCount = currentDatasetId;
+                    }
+
                     if (currentDatasetId == 0 || mDatasetCount == 0)
                     {
                         currentProgressOnSlice = 0;
@@ -717,6 +742,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 }
 
                 mDatasetCount = dataPackageInfo.DatasetFiles.Count;
+                mWarnedInvalidDatasetCount = false;
 
                 LogDebug(javaProgLoc + " " + arguments);
 
