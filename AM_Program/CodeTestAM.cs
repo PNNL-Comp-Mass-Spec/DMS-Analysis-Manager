@@ -58,13 +58,13 @@ namespace AnalysisManagerProg
             CreateTestFiles(mWorkDir, 5, "TestResultFile");
 
             // Make some subdirectories with more files
-            var subDirectoryPath = Path.Combine(mWorkDir, "Plots");
-            Directory.CreateDirectory(subDirectoryPath);
-            CreateTestFiles(subDirectoryPath, 4, "Plot");
+            var subdirectoryPath = Path.Combine(mWorkDir, "Plots");
+            Directory.CreateDirectory(subdirectoryPath);
+            CreateTestFiles(subdirectoryPath, 4, "Plot");
 
-            subDirectoryPath = Path.Combine(subDirectoryPath, "MoreStuff");
-            Directory.CreateDirectory(subDirectoryPath);
-            var success = CreateTestFiles(subDirectoryPath, 5, "Stuff");
+            subdirectoryPath = Path.Combine(subdirectoryPath, "MoreStuff");
+            Directory.CreateDirectory(subdirectoryPath);
+            var success = CreateTestFiles(subdirectoryPath, 5, "Stuff");
 
             // Stop the job timer
             mStopTime = System.DateTime.UtcNow;

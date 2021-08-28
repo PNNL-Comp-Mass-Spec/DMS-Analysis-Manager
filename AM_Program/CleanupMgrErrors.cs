@@ -266,18 +266,18 @@ namespace AnalysisManagerProg
                 }
 
                 // Delete the sub directories
-                foreach (var subDirectory in workDir.GetDirectories())
+                foreach (var subdirectory in workDir.GetDirectories())
                 {
-                    if (DeleteFilesWithRetry(subDirectory))
+                    if (DeleteFilesWithRetry(subdirectory))
                     {
                         // Remove the directory if it is empty
-                        subDirectory.Refresh();
-                        if (subDirectory.GetFileSystemInfos().Length != 0)
+                        subdirectory.Refresh();
+                        if (subdirectory.GetFileSystemInfos().Length != 0)
                             continue;
 
                         try
                         {
-                            subDirectory.Delete();
+                            subdirectory.Delete();
                         }
                         catch (IOException)
                         {
@@ -286,7 +286,7 @@ namespace AnalysisManagerProg
                             var directoryAcl = new DirectorySecurity();
                             var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
 
-                            LogWarning("IOException deleting " + subDirectory.FullName + "; will try granting modify access to user " + currentUser);
+                            LogWarning("IOException deleting " + subdirectory.FullName + "; will try granting modify access to user " + currentUser);
                             directoryAcl.AddAccessRule(new FileSystemAccessRule(
                                                            currentUser,
                                                            FileSystemRights.Modify,
@@ -299,48 +299,48 @@ namespace AnalysisManagerProg
                                 // To remove existing permissions, use this: directoryAcl.SetAccessRuleProtection(True, False)
 
                                 // Add the new access rule
-                                subDirectory.SetAccessControl(directoryAcl);
+                                subdirectory.SetAccessControl(directoryAcl);
 
                                 // Make sure the ReadOnly flag and System flags are not set
                                 // It's likely not even possible for a directory to have a ReadOnly flag set, but it doesn't hurt to check
-                                subDirectory.Refresh();
-                                var attributes = subDirectory.Attributes;
+                                subdirectory.Refresh();
+                                var attributes = subdirectory.Attributes;
                                 if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly ||
                                     (attributes & FileAttributes.System) == FileAttributes.System)
                                 {
-                                    subDirectory.Attributes = attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
+                                    subdirectory.Attributes = attributes & ~FileAttributes.ReadOnly & ~FileAttributes.System;
                                 }
 
                                 try
                                 {
                                     // Retry the delete
-                                    subDirectory.Delete();
+                                    subdirectory.Delete();
                                     LogDebug("Updated permissions, then successfully deleted the directory");
                                 }
                                 catch (Exception ex3)
                                 {
-                                    var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex3.Message;
+                                    var failureMessage = "Error deleting directory " + subdirectory.FullName + ": " + ex3.Message;
                                     LogError(failureMessage);
                                     failedDeleteCount++;
                                 }
                             }
                             catch (Exception ex2)
                             {
-                                var failureMessage = "Error updating permissions for directory " + subDirectory.FullName + ": " + ex2.Message;
+                                var failureMessage = "Error updating permissions for directory " + subdirectory.FullName + ": " + ex2.Message;
                                 LogError(failureMessage);
                                 failedDeleteCount++;
                             }
                         }
                         catch (Exception ex)
                         {
-                            var failureMessage = "Error deleting directory " + subDirectory.FullName + ": " + ex.Message;
+                            var failureMessage = "Error deleting directory " + subdirectory.FullName + ": " + ex.Message;
                             LogError(failureMessage);
                             failedDeleteCount++;
                         }
                     }
                     else
                     {
-                        var failureMessage = "Error deleting working directory subdirectory " + subDirectory.FullName;
+                        var failureMessage = "Error deleting working directory subdirectory " + subdirectory.FullName;
                         LogError(failureMessage);
                         failedDeleteCount++;
                     }

@@ -563,14 +563,14 @@ namespace AnalysisManagerBase.AnalysisTool
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache directory
-        /// Will store the file in the subdirectory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
+        /// Will store the file in the subdirectory subdirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
         /// <remarks>
         /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
         /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
-        /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subdirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -580,26 +580,26 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
-            string subDirectoryInTarget,
+            string subdirectoryInTarget,
             string sourceFilePath,
             string datasetYearQuarter,
             bool purgeOldFilesIfNeeded)
         {
             return CopyFileToServerCache(
-                cacheDirectoryPath, subDirectoryInTarget, sourceFilePath,
+                cacheDirectoryPath, subdirectoryInTarget, sourceFilePath,
                 datasetYearQuarter, purgeOldFilesIfNeeded, out _);
         }
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache directory
-        /// Will store the file in the directory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
+        /// Will store the file in the directory subdirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
         /// <remarks>
         /// Determines the Year_Quarter directory named using the DatasetStoragePath or DatasetArchivePath job parameter
         /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-11\MSXML_Cache</param>
-        /// <param name="subDirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subdirectoryInTarget">Directory name to create below cacheDirectoryPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -610,7 +610,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
-            string subDirectoryInTarget, string
+            string subdirectoryInTarget, string
             sourceFilePath,
             string datasetYearQuarter,
             bool purgeOldFilesIfNeeded,
@@ -631,13 +631,13 @@ namespace AnalysisManagerBase.AnalysisTool
                 DirectoryInfo targetDirectory;
 
                 // Define the target directory
-                if (string.IsNullOrEmpty(subDirectoryInTarget))
+                if (string.IsNullOrEmpty(subdirectoryInTarget))
                 {
                     targetDirectory = cacheDirectory;
                 }
                 else
                 {
-                    targetDirectory = new DirectoryInfo(Path.Combine(cacheDirectory.FullName, subDirectoryInTarget));
+                    targetDirectory = new DirectoryInfo(Path.Combine(cacheDirectory.FullName, subdirectoryInTarget));
                     if (!targetDirectory.Exists)
                         targetDirectory.Create();
                 }
@@ -1000,11 +1000,11 @@ namespace AnalysisManagerBase.AnalysisTool
             // If any of the subdirectories have an error, we'll continue copying, but will set errorEncountered to True
             var success = true;
 
-            foreach (var subDirectory in sourceDirectory.GetDirectories())
+            foreach (var subdirectory in sourceDirectory.GetDirectories())
             {
-                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subDirectory.Name);
+                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subdirectory.Name);
 
-                success = CopyResultsFolderRecursive(rootSourceDirectoryPath, subDirectory.FullName, targetDirectoryPathCurrent, analysisResults,
+                success = CopyResultsFolderRecursive(rootSourceDirectoryPath, subdirectory.FullName, targetDirectoryPathCurrent, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
                 if (!success)
@@ -3765,17 +3765,17 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (copySubdirectories)
                 {
-                    var subDirectories = sourceDirectory.GetDirectories();
+                    var subdirectories = sourceDirectory.GetDirectories();
 
-                    foreach (var subDirectory in subDirectories)
+                    foreach (var subdirectory in subdirectories)
                     {
-                        var subDirectoryTargetPath = Path.Combine(targetDirectoryPath, subDirectory.Name);
-                        var success = SynchronizeFolders(subDirectory.FullName, subDirectoryTargetPath,
+                        var subdirectoryTargetPath = Path.Combine(targetDirectoryPath, subdirectory.Name);
+                        var success = SynchronizeFolders(subdirectory.FullName, subdirectoryTargetPath,
                             fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories: true);
 
                         if (!success)
                         {
-                            LogError("Error copying subdirectory " + subDirectory.FullName + " to " + targetDirectoryPath);
+                            LogError("Error copying subdirectory " + subdirectory.FullName + " to " + targetDirectoryPath);
                             break;
                         }
                     }

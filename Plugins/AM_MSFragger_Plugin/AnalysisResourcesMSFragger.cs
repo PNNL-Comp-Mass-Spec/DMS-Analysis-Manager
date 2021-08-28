@@ -62,7 +62,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // Furthermore, the .mzML files need to have centroided MS2 spectra
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
-                const bool usingMzML = true;
+                const bool retrieveMzML = true;
 
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveParamFile " + paramFileName;
@@ -83,7 +83,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
-                    usingMzML,
+                    retrieveMzML,
                     AnalysisToolRunnerMSFragger.PROGRESS_PCT_INITIALIZING,
                     out var dataPackageInfo,
                     out _);

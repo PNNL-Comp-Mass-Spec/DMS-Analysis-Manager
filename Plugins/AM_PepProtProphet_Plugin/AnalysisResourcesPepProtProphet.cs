@@ -100,7 +100,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
-                const bool usingMzML = true;
+                const bool retrieveMzML = true;
 
                 currentTask = "RetrieveParamFile " + paramFileName;
 
@@ -122,7 +122,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
-                    usingMzML,
+                    retrieveMzML,
                     AnalysisToolRunnerPepProtProphet.PROGRESS_PCT_INITIALIZING,
                     out var dataPackageInfo,
                     out _);

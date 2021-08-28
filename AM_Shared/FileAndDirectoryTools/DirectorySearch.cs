@@ -322,9 +322,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var datasetDirectory = new DirectoryInfo(serverPath);
 
             // Find the instrument data directory (e.g. Dataset.D or Dataset.Raw) in the dataset directory
-            foreach (var subDirectory in datasetDirectory.GetDirectories(directoryExtensionWildcard))
+            foreach (var subdirectory in datasetDirectory.GetDirectories(directoryExtensionWildcard))
             {
-                return subDirectory.FullName;
+                return subdirectory.FullName;
             }
 
             // No match found
@@ -349,9 +349,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // Get a list of the subdirectories in the dataset directory
             // Go through the directories looking for a file with a ".mgf" extension
 
-            foreach (var subDirectory in datasetDirectory.GetDirectories())
+            foreach (var subdirectory in datasetDirectory.GetDirectories())
             {
-                foreach (var mgfFile in subDirectory.GetFiles("*" + AnalysisResources.DOT_MGF_EXTENSION))
+                foreach (var mgfFile in subdirectory.GetFiles("*" + AnalysisResources.DOT_MGF_EXTENSION))
                 {
                     // Return the first .mgf file that was found
                     return mgfFile.FullName;

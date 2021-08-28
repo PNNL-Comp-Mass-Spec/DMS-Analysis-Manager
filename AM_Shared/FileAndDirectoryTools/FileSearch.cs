@@ -657,11 +657,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Match not found
                 // Recursively call this method with the subdirectories in this directory
 
-                foreach (var subDirectory in targetDirectory.GetDirectories())
+                foreach (var subdirectory in targetDirectory.GetDirectories())
                 {
-                    if (!directoryNamesToSkip.Contains(subDirectory.Name))
+                    if (!directoryNamesToSkip.Contains(subdirectory.Name))
                     {
-                        var filePathMatch = FindFileInDirectoryTree(subDirectory.FullName, fileName);
+                        var filePathMatch = FindFileInDirectoryTree(subdirectory.FullName, fileName);
                         if (!string.IsNullOrEmpty(filePathMatch))
                         {
                             return filePathMatch;
@@ -806,12 +806,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     if (msXmlServerDirectory.Exists)
                     {
                         // See if the ServerPath directory actually contains a subdirectory named MSXmlFolderName
-                        var subDirectories = msXmlServerDirectory.GetDirectories(msXmlDirectoryName);
+                        var subdirectories = msXmlServerDirectory.GetDirectories(msXmlDirectoryName);
 
-                        if (subDirectories.Length > 0)
+                        if (subdirectories.Length > 0)
                         {
                             // MSXml directory found; return the path to the file
-                            return Path.Combine(subDirectories[0].FullName, mzXMLFilename);
+                            return Path.Combine(subdirectories[0].FullName, mzXMLFilename);
                         }
                     }
                 }
@@ -891,10 +891,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             else
             {
-                // Look for the file in the top level subDirectories of the MSXML file cache
+                // Look for the file in the top level subdirectories of the MSXML file cache
                 foreach (var toolDirectory in msXmlCacheDirectory.GetDirectories())
                 {
-                    var subDirectories = toolDirectory.GetDirectories(yearQuarter);
 
                     if (subDirectories.Length > 0)
                     {

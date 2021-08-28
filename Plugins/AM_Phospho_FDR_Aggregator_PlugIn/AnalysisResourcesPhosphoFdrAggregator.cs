@@ -102,9 +102,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // Find the Job* folders
 
-                foreach (var subDirectory in workDir.GetDirectories("Job*"))
+                foreach (var subdirectory in workDir.GetDirectories("Job*"))
                 {
-                    var jobNumber = int.Parse(subDirectory.Name.Substring(3));
+                    var jobNumber = int.Parse(subdirectory.Name.Substring(3));
                     var jobInfo = dataPackageJobs[jobNumber];
 
                     jobToDatasetMap.Add(jobNumber.ToString(), jobInfo.Dataset);
