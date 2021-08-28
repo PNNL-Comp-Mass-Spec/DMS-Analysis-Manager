@@ -158,7 +158,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     break;
 
                 case AnalysisResources.RawDataTypeConstants.UIMF:
-                    var processingAgilentDotD = JobParams.GetJobParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
+                    var processingAgilentDotD = JobParams.GetJobParameter("DatasetFileRetriever", "ProcessingAgilentDotD", false);
 
                     if (processingAgilentDotD)
                     {

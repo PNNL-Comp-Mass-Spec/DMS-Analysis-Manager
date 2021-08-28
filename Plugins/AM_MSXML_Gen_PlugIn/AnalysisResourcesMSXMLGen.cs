@@ -206,42 +206,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-        /// <summary>
-        /// Look for a .D directory for this dataset
-        /// </summary>
-        /// <returns>True if found, otherwise empty string</returns>
-        private bool DatasetHasAgilentDotD()
-        {
-            FindValidDirectory(
-                DatasetName, string.Empty, DatasetName + ".d", 2,
-                false,
-                false,
-                out var validDirectoryFound,
-                false,
-                out var _);
-
-            if (validDirectoryFound)
-            {
-                LogMessage("Found .d directory for " + DatasetName);
-                return true;
-            }
-
-            LogMessage("Did not find a .d directory for " + DatasetName + "; will process the dataset's .UIMF file");
-            return false;
-        }
-
-        private CloseOutType GetDatasetFile(string rawDataTypeName)
-        {
-            if (FileSearchTool.RetrieveSpectra(rawDataTypeName))
-            {
-                // Raw file
-                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-
-            LogDebug("AnalysisResourcesMSXMLGen.GetDatasetFile: Error occurred retrieving spectra.");
-            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
     }
 }

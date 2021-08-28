@@ -33,6 +33,30 @@ namespace AnalysisManagerBase.DataFileTools
             ErrorMessage = string.Empty;
         }
 
+        /// <summary>
+        /// Look for a .D directory for this dataset
+        /// </summary>
+        /// <returns>True if found, otherwise empty string</returns>
+        private bool DatasetHasAgilentDotD(string datasetName)
+        {
+            mResourceClass.FindValidDirectory(
+                datasetName, string.Empty, datasetName + ".d", 2,
+                false,
+                false,
+                out var validDirectoryFound,
+                false,
+                out var _);
+
+            if (validDirectoryFound)
+            {
+                OnDebugEvent("Found .d directory for " + datasetName);
+                return true;
+            }
+
+            OnStatusEvent("Did not find a .d directory for " + datasetName + "; will process the dataset's .UIMF file");
+            return false;
+        }
+
         private CloseOutType GetDatasetFile(string rawDataTypeName)
         {
             if (mResourceClass.FileSearchTool.RetrieveSpectra(rawDataTypeName))
@@ -310,21 +334,56 @@ namespace AnalysisManagerBase.DataFileTools
                             if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                 return datasetResult;
 
+                            break;
 
-                            dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
+                        case AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES:
+                            // Check whether the dataset directory has an Agilent .D directory
+                            // If it does, and if PreferUIMF is false, retrieve it; otherwise, retrieve the .UIMF file
+                            // Instruments IMS08_AgQTOF05 and IMS09_AgQToF06 should have .D directories
 
-                            dataPackageDatasetInfo.IsDirectoryBased = isDirectory;
+                            var isAgilentDotD = DatasetHasAgilentDotD(mResourceClass.DatasetName);
+                            var preferUIMF = mResourceClass.JobParams.GetJobParameter("PreferUIMF", false);
+
+                            if (isAgilentDotD && !preferUIMF)
+                            {
+                                // Retrieve the .D directory
+                                currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
+                                var dotDSuccess = mResourceClass.FileSearchTool.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
+                                if (!dotDSuccess)
+                                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
+                                mResourceClass.JobParams.AddAdditionalParameter("DatasetFileRetriever", "ProcessingAgilentDotD", true);
+                            }
+                            else
+                            {
+                                // Retrieve the .uimf file for these
+                                currentTask = string.Format("Retrieve .UIMF file; instrument: {0}", instrumentName);
+                                var uimfResult = GetDatasetFile(rawDataTypeName);
+                                if (uimfResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
+                                    return uimfResult;
+
+                                mResourceClass.JobParams.AddAdditionalParameter("DatasetFileRetriever", "ProcessingAgilentDotD", false);
+                            }
+
                             break;
 
                         default:
-                            ErrorMessage = "Dataset type " + rawDataTypeName + " is not supported";
+                            if (string.IsNullOrWhiteSpace(rawDataTypeName))
+                            {
+                                ErrorMessage = "Job parameter RawDataType is not defined (DatasetFileRetriever.RetrieveSingleDataset)";
+                            }
+                            else
+                            {
+                                ErrorMessage = "Dataset type " + rawDataTypeName + " is not supported";
 
-                            OnDebugEvent(
-                                "DatasetFileRetriever.GetResources: " + ErrorMessage + "; must be " +
-                                AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
-                                AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
-                                AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
-                                AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+                                OnDebugEvent(
+                                    "DatasetFileRetriever.RetrieveSingleDataset: " + ErrorMessage + "; must be " +
+                                    AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
+                                    AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
+                                    AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
+                                    AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES + ", or " +
+                                    AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+                            }
 
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
