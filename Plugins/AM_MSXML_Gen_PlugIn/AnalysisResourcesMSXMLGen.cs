@@ -1,6 +1,7 @@
 ﻿using AnalysisManagerBase;
 using System;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMsXmlGenPlugIn
@@ -30,8 +31,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 currentTask = "Examine processing options";
-                var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");    // ReAdW.exe or MSConvert.exe
-                var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");      // Typically mzXML or mzML
+                var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator"); // ReAdW.exe or MSConvert.exe
+                var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");   // Typically mzXML or mzML
 
                 if (string.IsNullOrWhiteSpace(msXmlGenerator) || string.IsNullOrWhiteSpace(msXmlFormat))
                 {
@@ -41,13 +42,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 if (Global.IsMatch(scriptName, "MaxQuant_DataPkg"))
                 {
-                    var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
-                    var usingMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+                    var createMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
 
-                    if (dataPackageID > 0 && !usingMzML)
+                    if (dataPackageID > 0 && !createMzML)
                     {
                         EvalMessage = string.Format("Skipping MSXMLGen since script is {0} and job parameter CreateMzMLFiles is false", scriptName);
                         LogMessage(EvalMessage);
@@ -61,8 +62,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     LogMessage(EvalMessage);
                     return CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN;
                 }
-
-                currentTask = "Determine RawDataType";
 
                 var proMexBruker = scriptName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
@@ -83,119 +82,49 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
                 }
 
-                // Get input data file
-                var rawDataTypeName = mJobParams.GetParam("RawDataType");
-                var instrumentName = mJobParams.GetParam("Instrument");
+                const bool retrieveMzML = false;
 
-                var retrievalAttempts = 0;
+                var datasetFileRetriever = new DatasetFileRetriever(this);
+                RegisterEvents(datasetFileRetriever);
 
-                while (retrievalAttempts < 2)
+                // If processing datasets in a data package, if an existing .mzML file is found,
+                // do not retrieve the .raw file and thus do not re-create the .mzML file
+                var skipDatasetsWithExistingMzML = dataPackageID > 0;
+
+                var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
+                    dataPackageID,
+                    retrieveMzML,
+                    1,
+                    skipDatasetsWithExistingMzML,
+                    out var dataPackageInfo,
+                    out _);
+
+                if (datasetCopyResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    retrievalAttempts++;
-                    switch (rawDataTypeName.ToLower())
+                    if (!string.IsNullOrWhiteSpace(datasetFileRetriever.ErrorMessage))
                     {
-                        case RAW_DATA_TYPE_DOT_RAW_FILES:
-                        case RAW_DATA_TYPE_DOT_D_FOLDERS:
-                        case RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER:
-                        case RAW_DATA_TYPE_BRUKER_FT_FOLDER:
-                            currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataTypeName, instrumentName);
-                            var datasetResult = GetDatasetFile(rawDataTypeName);
-                            if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
-                                return datasetResult;
-
-                            break;
-
-                        case RAW_DATA_TYPE_DOT_UIMF_FILES:
-                            // Check whether the dataset directory has an Agilent .D directory
-                            // If it does, and if PreferUIMF is false, retrieve it; otherwise, retrieve the .UIMF file
-                            // Instruments IMS08_AgQTOF05 and IMS09_AgQToF06 should have .D directories
-
-                            var isAgilentDotD = DatasetHasAgilentDotD();
-                            var preferUIMF = mJobParams.GetJobParameter("PreferUIMF", false);
-
-                            if (isAgilentDotD && !preferUIMF)
-                            {
-                                // Retrieve the .D directory
-                                currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
-                                var dotDSuccess = FileSearchTool.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
-                                if (!dotDSuccess)
-                                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-
-                                mJobParams.AddAdditionalParameter("MSXMLGenerator", "ProcessingAgilentDotD", true);
-                            }
-                            else
-                            {
-                                // Retrieve the .uimf file for these
-                                currentTask = string.Format("Retrieve .UIMF file; instrument: {0}", instrumentName);
-                                var uimfResult = GetDatasetFile(rawDataTypeName);
-                                if (uimfResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
-                                    return uimfResult;
-
-                                mJobParams.AddAdditionalParameter("MSXMLGenerator", "ProcessingAgilentDotD", false);
-                            }
-
-                            break;
-
-                        default:
-                            mMessage = "Dataset type " + rawDataTypeName + " is not supported";
-                            LogDebug(
-                                "AnalysisResourcesMSXMLGen.GetResources: " + mMessage + "; must be " +
-                                RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
-                                RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
-                                RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
-                                RAW_DATA_TYPE_DOT_UIMF_FILES + ", or " +
-                                RAW_DATA_TYPE_BRUKER_FT_FOLDER);
-
-                            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        mMessage = datasetFileRetriever.ErrorMessage;
                     }
 
-                    if (mMyEMSLUtilities.FilesToDownload.Count == 0)
-                    {
-                        break;
-                    }
-
-                    currentTask = "ProcessMyEMSLDownloadQueue";
-                    if (mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
-                    {
-                        break;
-                    }
-
-                    // Look for this file on the Samba share
-                    DisableMyEMSLSearch();
+                    return datasetCopyResult;
                 }
 
-                var mzMLRefParamFile = mJobParams.GetJobParameter("MzMLRefParamFile", string.Empty);
-
-                if (!string.IsNullOrEmpty(mzMLRefParamFile))
+                if (skipDatasetsWithExistingMzML && dataPackageInfo.DatasetFiles.Count == 0)
                 {
-                    // Retrieve the FASTA file
-                    var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
-
-                    currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
-
-                    if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
-                        return resultCode;
-
-                    currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
-
-                    const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MzML_Refinery";
-
-                    var mzMLRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
-                    if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
-                    {
-                        mzMLRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzMLRefinery";
-                        LogWarning(
-                            "Parameter '" + paramFileStoragePathKeyName +
-                            "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
-                            mzMLRefineryParmFileStoragePath);
-                    }
-
-                    // Retrieve param file
-                    if (!FileSearchTool.RetrieveFile(mzMLRefParamFile, mJobParams.GetParam("ParmFileStoragePath")))
-                    {
-                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-                    }
+                    EvalMessage = string.Format("Skipping MSXMLGen since all {0} datasets in data package {1} already have a .mzML file", dataPackageInfo.Datasets.Count, dataPackageID);
+                    LogMessage(EvalMessage);
+                    return CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN;
                 }
+
+                // Store information about the datasets in several packed job parameters
+                dataPackageInfo.StorePackedDictionaries(this);
+
+                if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                {
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -203,9 +132,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
         }
     }
 }

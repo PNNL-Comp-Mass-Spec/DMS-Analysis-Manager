@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMsXmlGenPlugIn
@@ -63,14 +64,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
             }
 
-            var result = CreateMSXMLFile();
+            var result = CreateMSXMLFile(out var processedDatasets);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            if (!PostProcessMSXmlFile())
+            if (!PostProcessMSXmlFiles(processedDatasets))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -89,9 +90,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Generate the mzXML or mzML file
         /// </summary>
+        /// <param name="processedDatasets">Output: dictionary where keys are dataset names and values are raw data type names</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        private CloseOutType CreateMSXMLFile()
+        private CloseOutType CreateMSXMLFile(out Dictionary<string, string> processedDatasets)
         {
+            processedDatasets = new Dictionary<string, string>();
+
             try
             {
                 if (mDebugLevel > 4)
@@ -152,7 +156,72 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                // If this job applies to a single dataset, dataPackageID will be 0
+                // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                // warnIfMissingFileInfo is set to true here in case we're processing a data package where some of the datasets already have existing .mzML files
+                var dataPackageInfo = new DataPackageInfo(dataPackageID, this, false);
+                RegisterEvents(dataPackageInfo);
+
+                if (dataPackageInfo.DatasetFiles.Count == 0)
+                {
+                    LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // Process each dataset
+                foreach (var item in dataPackageInfo.Datasets)
+                {
+                    var datasetId = item.Key;
+                    var datasetName = item.Value;
+
+                    if (dataPackageID > 0)
+                    {
+                        var datasetFile = dataPackageInfo.DatasetFiles[datasetId];
+
+                        if (string.IsNullOrWhiteSpace(datasetFile))
+                        {
+                            // The .mzML file already exists for this dataset
+                            continue;
+                        }
+                    }
+
+                    if (processedDatasets.ContainsKey(datasetName))
+                    {
+                        LogError(string.Format("Dictionary processedDatasets already contains dataset {0}; aborting", datasetName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    var rawDataTypeName = dataPackageInfo.DatasetRawDataTypeNames[datasetId];
+
+                    var resultCode = CreateMSXMLFileForDataset(
+                        datasetName, rawDataTypeName, msXmlGenerator,
+                        centroidMS1, centroidMS2,
+                        customMSConvertArguments, centroidPeakCountToRetain);
+
+                    processedDatasets.Add(datasetName, rawDataTypeName);
+
+                    if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                        return resultCode;
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in CreateMSXMLFile", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType CreateMSXMLFileForDataset(
+            string datasetName, string rawDataTypeName, string msXmlGenerator,
+            bool centroidMS1, bool centroidMS2,
+            string customMSConvertArguments, int centroidPeakCountToRetain)
+        {
+            try
+            {
                 var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
 
                 MSXmlGen msXmlGen;
@@ -164,7 +233,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     // mMSXmlGeneratorAppPath should have been populated during the call to StoreToolVersionInfo()
 
                     msXmlGen = new MSXMLGenReadW(
-                        mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                        mWorkDir, mMSXmlGeneratorAppPath, datasetName,
                         rawDataType, mMSXmlOutputFileType,
                         centroidMS1 || centroidMS2,
                         mJobParams);
@@ -182,7 +251,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     if (string.IsNullOrWhiteSpace(customMSConvertArguments))
                     {
                         msXmlGen = new MSXmlGenMSConvert(
-                            mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                            mWorkDir, mMSXmlGeneratorAppPath, datasetName,
                             rawDataType, mMSXmlOutputFileType,
                             centroidMS1, centroidMS2,
                             centroidPeakCountToRetain,
@@ -191,7 +260,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     else
                     {
                         msXmlGen = new MSXmlGenMSConvert(
-                            mWorkDir, mMSXmlGeneratorAppPath, mDatasetName,
+                            mWorkDir, mMSXmlGeneratorAppPath, datasetName,
                             rawDataType, mMSXmlOutputFileType,
                             customMSConvertArguments, mJobParams);
                     }
@@ -229,14 +298,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     LogError(msXmlGen.ErrorMessage);
                 }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                LogError("Exception in CreateMSXMLFile", ex);
+                LogError("Exception in CreateMSXMLFileForDataset", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -269,7 +338,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return string.Empty;
         }
 
-        private bool PostProcessMSXmlFile()
+        private bool PostProcessMSXmlFiles(IReadOnlyDictionary<string, string> processedDatasets)
         {
             try
             {
@@ -281,7 +350,28 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     _ => throw new Exception("Unrecognized MSXMLOutputType value")
                 };
 
-                var msXmlFilePath = Path.Combine(mWorkDir, mDatasetName + resultFileExtension);
+                foreach (var item in processedDatasets)
+                {
+                    var success = PostProcessMSXmlFile(item.Key, resultFileExtension);
+
+                    if (!success)
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in PostProcessMSXmlFile", ex);
+                return false;
+            }
+        }
+
+        private bool PostProcessMSXmlFile(string datasetName, string resultFileExtension)
+        {
+            try
+            {
+                var msXmlFilePath = Path.Combine(mWorkDir, datasetName + resultFileExtension);
                 var msXmlFile = new FileInfo(msXmlFilePath);
 
                 if (!msXmlFile.Exists)
@@ -291,6 +381,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Possibly update the file using results from RawConverter
+                // For reference, see job request https://dms2.pnl.gov/analysis_job_request/show/18382
+                // and settings file IonTrapDefSettings_MzML_RawConverter_StatCysAlk_4plexITRAQ.xml
 
                 var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
                 if (recalculatePrecursors && mMSXmlOutputFileType != AnalysisResources.MSXMLOutputTypeConstants.mgf)
@@ -346,14 +438,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     writer.WriteLine(remoteCacheFilePath);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Exception in PostProcessMSXmlFile", ex);
                 return false;
             }
-
-            return true;
         }
 
         /// <summary>
