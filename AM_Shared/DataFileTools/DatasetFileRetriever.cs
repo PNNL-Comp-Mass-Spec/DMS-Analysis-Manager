@@ -161,6 +161,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+                        dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, dataset.Value.RawDataType);
 
                     dataPackageInfo.DatasetExperimentGroup.Add(datasetID, dataset.Value.DatasetExperimentGroup);
                     dataPackageInfo.DatasetMaxQuantParamGroup.Add(datasetID, dataset.Value.MaxQuantParamGroup);
@@ -287,6 +288,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     dataPackageInfo.DatasetFiles.Add(datasetID, mResourceClass.DatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, "File");
+                    dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, AnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -308,9 +310,7 @@ namespace AnalysisManagerBase.DataFileTools
                             if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                 return datasetResult;
 
-                            var datasetFileOrDirectoryName = GetDatasetFileOrDirectoryName(rawDataType, out var isDirectory);
 
-                            dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileOrDirectoryName);
                             dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
 
                             dataPackageDatasetInfo.IsDirectoryBased = isDirectory;
@@ -328,6 +328,14 @@ namespace AnalysisManagerBase.DataFileTools
 
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
+
+                    var datasetFileOrDirectoryName = GetDatasetFileOrDirectoryName(rawDataType, out var isDirectory);
+
+                    dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileOrDirectoryName);
+                    dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
+                    dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, rawDataTypeName);
+
+                    dataPackageDatasetInfo.IsDirectoryBased = isDirectory;
 
                     if (mResourceClass.MyEMSLUtils.FilesToDownload.Count == 0)
                     {
