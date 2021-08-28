@@ -349,7 +349,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Packed job parameter DatasetRawDataTypes
         /// </summary>
-        /// <remarks>This is used by AnalysisResourcesRepoPkgr</remarks>
+        /// <remarks>This is used by AnalysisResourcesRepoPkgr and AnalysisManagerMsXmlGenPlugIn</remarks>
         public const string JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes";
 
         /// <summary>
@@ -4190,7 +4190,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Retrieve the files specified by the file processing options parameter
         /// </summary>
         /// <remarks>
-        /// this method is used by plugins PhosphoFDRAggregator and PRIDEMzXML
+        /// This method is used by plugins PhosphoFDRAggregator and PRIDEMzXML
         /// However, PrideMzXML is dormant as of September 2013
         /// </remarks>
         /// <param name="fileSpecList">
@@ -4375,7 +4375,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                     // Look for a mzML.gz file instead
 
                                     var retrieved = FileSearchTool.RetrieveCachedMSXMLFile(
-                                        DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile,
+                                        DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile, true,
                                         out var errorMessage, out _, out _);
 
                                     if (!retrieved)

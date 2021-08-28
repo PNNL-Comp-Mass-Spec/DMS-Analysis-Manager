@@ -85,6 +85,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     dataPackageID,
                     retrieveMzML,
                     AnalysisToolRunnerMSFragger.PROGRESS_PCT_INITIALIZING,
+                    false,
                     out var dataPackageInfo,
                     out _);
 

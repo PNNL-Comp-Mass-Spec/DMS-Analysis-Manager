@@ -124,6 +124,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     dataPackageID,
                     retrieveMzML,
                     AnalysisToolRunnerPepProtProphet.PROGRESS_PCT_INITIALIZING,
+                    false,
                     out var dataPackageInfo,
                     out _);
 

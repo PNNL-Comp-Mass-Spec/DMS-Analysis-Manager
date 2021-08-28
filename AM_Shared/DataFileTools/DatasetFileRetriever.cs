@@ -102,14 +102,26 @@ namespace AnalysisManagerBase.DataFileTools
         /// or for the jobs associated with a data package
         /// </summary>
         /// <param name="dataPackageID">0 to use the current job and dataset, non-zero to use jobs in a data package</param>
-        /// <param name="usingMzML">True if this job's settings file indicates to use .mzML files instead of the original instrument file</param>
+        /// <param name="retrieveMzML">
+        /// <para>
+        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// </para>
+        /// <para>
+        /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
+        /// </para>
+        /// </param>
         /// <param name="progressPercentAtFinish">Final percent complete value to use for computing incremental progress</param>
+        /// <param name="skipDatasetsWithExistingMzML">
+        /// When true, for each dataset in a data package, if an existing .mzML file can be found,
+        /// do not retrieve the .raw file and do not add to dataPackageDatasets
+        /// </param>
         /// <param name="dataPackageInfo">Output: new instance of DataPackageInfo, which tracks datasets, experiments, files, etc. associated with this job</param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         public CloseOutType RetrieveInstrumentFilesForJobDatasets(
             int dataPackageID,
-            bool usingMzML,
+            bool retrieveMzML,
             float progressPercentAtFinish,
+            bool skipDatasetsWithExistingMzML,
             out DataPackageInfo dataPackageInfo,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
@@ -125,10 +137,10 @@ namespace AnalysisManagerBase.DataFileTools
                 // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (dataPackageID > 0)
                 {
-                    return RetrieveDataPackageDatasets(dataPackageInfo, usingMzML, progressPercentAtFinish, out dataPackageDatasets);
+                    return RetrieveDataPackageDatasets(dataPackageInfo, retrieveMzML, progressPercentAtFinish, skipDatasetsWithExistingMzML, out dataPackageDatasets);
                 }
 
-                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, usingMzML, out dataPackageDatasets);
+                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, retrieveMzML, out dataPackageDatasets);
             }
             catch (Exception ex)
             {
@@ -141,21 +153,26 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Determine the dataset files associated with the current data package
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="usingMzML">
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="retrieveMzML">
         /// <para>
         /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
         /// </para>
         /// <para>
-        /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger force this to true
+        /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
         /// </para>
         /// </param>
         /// <param name="progressPercentAtFinish">Final percent complete value to use for computing incremental progress</param>
+        /// <param name="skipDatasetsWithExistingMzML">
+        /// When true, for each dataset in the data package, if an existing .mzML file can be found,
+        /// do not retrieve the .raw file and do not add to dataPackageInfo.DatasetFiles, dataPackageInfo.DatasetFileTypes, or dataPackageInfo.DatasetRawDataTypeNames
+        /// </param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveDataPackageDatasets(
             DataPackageInfo dataPackageInfo,
-            bool usingMzML,
+            bool retrieveMzML,
             float progressPercentAtFinish,
+            bool skipDatasetsWithExistingMzML,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             try
@@ -163,14 +180,15 @@ namespace AnalysisManagerBase.DataFileTools
                 // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset</param>
 
                 var filesRetrieved = RetrieveDataPackageDatasetFiles(
-                    usingMzML,
+                    retrieveMzML,
                     out dataPackageDatasets, out var datasetRawFilePaths,
-                    0, progressPercentAtFinish
+                    0, progressPercentAtFinish,
+                    skipDatasetsWithExistingMzML
                     );
 
                 if (!filesRetrieved)
                 {
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                   return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 foreach (var dataset in dataPackageDatasets)
@@ -178,19 +196,25 @@ namespace AnalysisManagerBase.DataFileTools
                     var datasetID = dataset.Key;
                     var datasetName = dataset.Value.Dataset;
 
-                    var datasetFileName = Path.GetFileName(datasetRawFilePaths[datasetName]);
-
                     dataPackageInfo.Datasets.Add(datasetID, datasetName);
                     dataPackageInfo.Experiments.Add(datasetID, dataset.Value.Experiment);
 
-                    dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
-                    dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+                    if (datasetRawFilePaths.TryGetValue(datasetName, out var datasetFilePath))
+                    {
+                        var datasetFileName = Path.GetFileName(datasetFilePath);
+                        mResourceClass.AddResultFileToSkip(datasetFileName);
+
+                        dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
+                        dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
                         dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, dataset.Value.RawDataType);
+                    }
+                    else if (!skipDatasetsWithExistingMzML)
+                    {
+                        OnWarningEvent("Dataset file not found by RetrieveDataPackageDatasetFiles for dataset " + datasetName);
+                    }
 
                     dataPackageInfo.DatasetExperimentGroup.Add(datasetID, dataset.Value.DatasetExperimentGroup);
                     dataPackageInfo.DatasetMaxQuantParamGroup.Add(datasetID, dataset.Value.MaxQuantParamGroup);
-
-                    mResourceClass.AddResultFileToSkip(datasetFileName);
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -206,18 +230,39 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
         /// </summary>
-        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
-        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
-        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <param name="retrieveMzMLFiles">
+        /// <para>
+        /// Set to true to obtain mzML files for the datasets
+        /// </para>
+        /// <para>
+        /// This method will return false if a .mzML file cannot be found for any of the datasets
+        /// </para>
+        /// </param>
+        /// <param name="dataPackageDatasets">
+        /// Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
+        /// </param>
+        /// <param name="datasetRawFilePaths">
+        /// <para>
+        /// Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
+        /// </para>
+        /// <para>
+        /// If skipDatasetsWithExistingMzML is true, datasets will not be added to datasetRawFilePaths if an existing .mzML file is found
+        /// </para>
+        /// </param>
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <param name="skipDatasetsWithExistingMzML">
+        /// When true, for each dataset in the data package, if an existing .mzML file can be found,
+        /// do not retrieve the .raw file and do not add to datasetRawFilePaths
+        /// </param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackageDatasetFiles(
             bool retrieveMzMLFiles,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out Dictionary<string, string> datasetRawFilePaths,
             float progressPercentAtStart,
-            float progressPercentAtFinish)
+            float progressPercentAtFinish,
+            bool skipDatasetsWithExistingMzML = false)
         {
             ErrorMessage = string.Empty;
 
@@ -236,7 +281,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             var success = dataPackageFileHandler.RetrieveDataPackageDatasetFiles(
                 retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
-                progressPercentAtStart, progressPercentAtFinish);
+                progressPercentAtStart, progressPercentAtFinish, skipDatasetsWithExistingMzML);
 
             if (!success)
             {
@@ -249,14 +294,21 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Retrieve the dataset file for the current dataset
         /// </summary>
-        /// <param name="workingDirectory"></param>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="usingMzML"></param>
+        /// <param name="workingDirectory">Working directory</param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="retrieveMzML">
+        /// <para>
+        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// </para>
+        /// <para>
+        /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
+        /// </para>
+        /// </param>
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveSingleDataset(
             FileSystemInfo workingDirectory,
             DataPackageInfo dataPackageInfo,
-            bool usingMzML,
+            bool retrieveMzML,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             var currentTask = "Initializing";
@@ -297,9 +349,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 dataPackageDatasets.Add(datasetID, dataPackageDatasetInfo);
 
-                usingMzML = mResourceClass.JobParams.GetJobParameter("CreateMzMLFiles", usingMzML);
-
-                if (usingMzML)
+                if (retrieveMzML)
                 {
                     currentTask = "GetMzMLFile";
 

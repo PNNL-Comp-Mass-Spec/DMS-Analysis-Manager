@@ -1090,17 +1090,31 @@ namespace AnalysisManagerBase.JobConfig
         /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
         /// </summary>
         /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
-        /// <param name="dataPackageDatasets">Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID</param>
-        /// <param name="datasetRawFilePaths">Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset</param>
+        /// <param name="dataPackageDatasets">
+        /// Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
+        /// </param>
+        /// <param name="datasetRawFilePaths">
+        /// <para>
+        /// Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
+        /// </para>
+        /// <para>
+        /// If skipDatasetsWithExistingMzML is true, datasets will not be added to datasetRawFilePaths if an existing .mzML file is found
+        /// </para>
+        /// </param>
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
+        /// <param name="skipDatasetsWithExistingMzML">
+        /// When true, for each dataset in the data package, if an existing .mzML file can be found,
+        /// do not retrieve the .raw file and do not add to dataPackageInfo.DatasetFiles, dataPackageInfo.DatasetFileTypes, or dataPackageInfo.DatasetRawDataTypeNames
+        /// </param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackageDatasetFiles(
             bool retrieveMzMLFiles,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out Dictionary<string, string> datasetRawFilePaths,
             float progressPercentAtStart,
-            float progressPercentAtFinish)
+            float progressPercentAtFinish,
+            bool skipDatasetsWithExistingMzML = false)
         {
             ErrorMessage = string.Empty;
 
@@ -1152,8 +1166,10 @@ namespace AnalysisManagerBase.JobConfig
 
                 var datasetsProcessed = 0;
 
-                foreach (var dataPkgDataset in dataPackageDatasets.Values)
+                foreach (var item in dataPackageDatasets)
                 {
+                    var dataPkgDataset = item.Value;
+
                     if (!mAnalysisResources.OverrideCurrentDatasetInfo(dataPkgDataset))
                     {
                         // Error message has already been logged
@@ -1165,6 +1181,19 @@ namespace AnalysisManagerBase.JobConfig
                     {
                         OnWarningEvent(string.Format(
                             "Dataset name mismatch: {0} vs. {1}", dataPkgDataset.Dataset, mAnalysisResources.DatasetName));
+                    }
+
+                    if (skipDatasetsWithExistingMzML)
+                    {
+                        var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out _);
+                        if (!string.IsNullOrWhiteSpace(existingMzMLFilePath))
+                        {
+                            OnStatusEvent(string.Format(
+                                "Skipping dataset {0} since an existing .mzML file was found (RetrieveDataPackageDatasetFiles)",
+                                dataPkgDataset.Dataset));
+
+                            continue;
+                        }
                     }
 
                     bool success;
@@ -1568,7 +1597,10 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="retrievalOptions">File retrieval options</param>
         /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in batch file RetrieveInstrumentData.bat)</param>
-        /// <param name="instrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
+        /// <param name="instrumentDataToRetrieve">
+        /// Instrument files that need to be copied locally
+        /// Keys are dataPkgJob, values are either an existing .mzML file (or .mzXML file), or an empty string
+        /// </param>
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         private bool RetrieveDataPackageInstrumentFile(
             DataPackageJobInfo dataPkgJob,
@@ -1582,9 +1614,22 @@ namespace AnalysisManagerBase.JobConfig
             {
                 // See if a .mzXML file already exists for this dataset
 
-                var mzXMLFilePath = mAnalysisResources.FileSearchTool.FindMZXmlFile(out var hashcheckFilePath);
+                var mzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out var mzMLHashcheckFilePath);
 
-                if (string.IsNullOrEmpty(mzXMLFilePath))
+                string msXMLFilePath;
+                string hashcheckFilePath;
+
+                if (string.IsNullOrEmpty(mzMLFilePath))
+                {
+                    msXMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashcheckFilePath);
+                }
+                else
+                {
+                    msXMLFilePath = mzMLFilePath;
+                    hashcheckFilePath = mzMLHashcheckFilePath;
+                }
+
+                if (string.IsNullOrEmpty(msXMLFilePath))
                 {
                     // mzXML file not found
                     if (dataPkgJob.RawDataType == AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
@@ -1594,17 +1639,21 @@ namespace AnalysisManagerBase.JobConfig
                     }
                     else
                     {
-                        OnErrorEvent("mzXML file not found for dataset " + dataPkgJob.Dataset + " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file");
+                        OnErrorEvent(string.Format(
+                            "mzXML/mzML file not found for dataset {0} (job {1}) and the dataset is not a .Raw file, " +
+                            "so we cannot auto-create the missing mzXML file", dataPkgJob.Dataset, dataPkgJob.Job));
+
                         return false;
                     }
                 }
                 else
                 {
-                    instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(mzXMLFilePath, hashcheckFilePath));
+                    instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(msXMLFilePath, hashcheckFilePath));
                 }
             }
 
-            var rawFilePath = mAnalysisResources.DirectorySearchTool.FindDatasetFileOrDirectory(out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
+            var rawFilePath = mAnalysisResources.DirectorySearchTool.FindDatasetFileOrDirectory(
+                out var isDirectory, retrievalOptions.AssumeInstrumentDataUnpurged);
 
             if (string.IsNullOrEmpty(rawFilePath))
                 return true;

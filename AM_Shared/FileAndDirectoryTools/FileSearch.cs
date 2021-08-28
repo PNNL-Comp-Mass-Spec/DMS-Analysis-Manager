@@ -719,11 +719,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Looks for the newest .mzXML or .mzML file for this dataset
+        /// Looks for the newest .mzXML file for this dataset (not .mzML)
         /// </summary>
         /// <remarks>Supports both gzipped mzXML/mzML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
         /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML or .mzML file was found in the MSXml cache</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
+        [Obsolete("Use FindMsXmlFileInCache which can find both .mzXML and .mzML files")]
         public string FindMZXmlFile(out string hashCheckFilePath)
         {
             // First look in the MsXML cache directory
@@ -822,7 +823,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Looks for the newest mzXML or mzML file for this dataset
+        /// <para></para>
+        /// Looks for the newest mzXML or mzML file (as specified by argument msXmlType) for this dataset
+        /// <para>
+        /// The logic in this method is similar to <see cref="RetrieveCachedMSXMLFile"/>,
+        /// but this method only looks in the cache directory for the dataset's mzXML or mzML file,
+        /// while RetrieveCachedMSXMLFile checks additional directories
+        /// </para>
         /// </summary>
         /// <remarks>Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
         /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
@@ -855,11 +862,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache)
             var msXmlCacheDirectoryPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
 
+            if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
+            {
+                var msg = string.Format("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
+                OnWarningEvent(msg);
+                return string.Empty;
+            }
+
             var msXmlCacheDirectory = new DirectoryInfo(msXmlCacheDirectoryPath);
 
             if (!msXmlCacheDirectory.Exists)
             {
-                OnWarningEvent("Warning: MsXML cache directory not found: " + msXmlCacheDirectoryPath);
+                var msg = "Warning: MsXML cache directory not found: " + msXmlCacheDirectoryPath;
+                OnWarningEvent(msg);
                 return string.Empty;
             }
 
@@ -885,6 +900,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     filesToAppend = msXmlCacheDirectory.GetFiles(DatasetName + AnalysisResources.DOT_MZXML_EXTENSION, SearchOption.AllDirectories);
                 }
 
+                // Add the files to matchingFiles, sorting by descending date
                 var query = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
 
                 matchingFiles.AddRange(query);
@@ -894,19 +910,23 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Look for the file in the top level subdirectories of the MSXML file cache
                 foreach (var toolDirectory in msXmlCacheDirectory.GetDirectories())
                 {
+                    var subdirectories = toolDirectory.GetDirectories(yearQuarter);
 
-                    if (subDirectories.Length > 0)
+                    if (subdirectories.Length == 0)
                     {
-                        var filesToAppend = subDirectories.First().GetFiles(msXMLFilename, SearchOption.TopDirectoryOnly);
-                        if (filesToAppend.Length == 0 && msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML)
-                        {
-                            // Older .mzXML files were not gzipped
-                            filesToAppend = subDirectories.First().GetFiles(DatasetName + AnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
-                        }
-
-                        var query = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
-                        matchingFiles.AddRange(query);
+                        continue;
                     }
+
+                    var filesToAppend = subdirectories.First().GetFiles(msXMLFilename, SearchOption.TopDirectoryOnly);
+                    if (filesToAppend.Length == 0 && msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML)
+                    {
+                        // Older .mzXML files were not gzipped
+                        filesToAppend = subdirectories.First().GetFiles(DatasetName + AnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
+                    }
+
+                    // Add the files to matchingFiles, sorting by descending date
+                    var query = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
+                    matchingFiles.AddRange(query);
                 }
             }
 
@@ -1077,7 +1097,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieve the dataset's cached .mzML file from the MsXML Cache
         /// </summary>
         /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
@@ -1088,9 +1108,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
             const bool callingMethodCanRegenerateMissingFile = false;
+            const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
@@ -1098,7 +1119,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieve the dataset's cached .mzXML file from the MsXML Cache
         /// </summary>
         /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_105_367204
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
@@ -1109,9 +1130,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
             const bool callingMethodCanRegenerateMissingFile = false;
+            const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_MZXML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                AnalysisResources.DOT_MZXML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
@@ -1119,7 +1141,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieve the dataset's cached .PBF file from the MsXML Cache
         /// </summary>
         /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         /// <param name="errorMessage">Output parameter: Error message</param>
@@ -1130,22 +1152,31 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             const bool unzip = false;
             const bool callingMethodCanRegenerateMissingFile = false;
+            const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile,
+                AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
-        /// Retrieve the dataset's cached .mzXML, .mzML, or .pbf file from the MsXML Cache
+        /// <para>
+        /// Retrieve the dataset's cached .mzXML, .mzML, or .pbf file, checking various locations
+        /// </para>
+        /// <para>
+        /// The logic in this method is similar to <see cref="FindMsXmlFileInCache"/>, but this method
+        /// first looks in the input folder for this job, next looks in the shared folders associated with this job,
+        /// then looks in the cache directory
+        /// </para>
         /// </summary>
         /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
+        /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
@@ -1154,6 +1185,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string resultFileExtension,
             bool unzip,
             bool callingMethodCanRegenerateMissingFile,
+            bool warnFileNotFound,
             out string errorMessage,
             out bool fileMissingFromCache,
             out string sourceDirectoryPath)
@@ -1202,20 +1234,64 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            var msXMLCacheDirPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
+            errorMessage = string.Empty;
+            fileMissingFromCache = false;
+            sourceDirectoryPath = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(msXMLCacheDirPath))
+            if (string.IsNullOrEmpty(resultFileExtension))
+            {
+                errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML";
+                return false;
+            }
+
+            if (Global.OfflineMode)
+            {
+                // Look for the .mzML file in the working directory
+                var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + resultFileExtension));
+                if (localMsXmlFile.Exists)
+                {
+                    OnStatusEvent(string.Format("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir));
+                    sourceDirectoryPath = mWorkDir;
+                    return true;
+                }
+
+                var localMsXmlGzFile = new FileInfo(localMsXmlFile.FullName + AnalysisResources.DOT_GZ_EXTENSION);
+                if (!localMsXmlGzFile.Exists)
+                {
+                    errorMessage = string.Format(
+                        "Could not find a {0} file or {1} file for this dataset in the working directory",
+                        resultFileExtension, resultFileExtension + AnalysisResources.DOT_GZ_EXTENSION);
+
+                    OnWarningEvent(errorMessage);
+                    return false;
+                }
+
+                sourceDirectoryPath = mWorkDir;
+
+                if (!unzip)
+                    return true;
+
+                if (GUnzipFile(localMsXmlGzFile.FullName))
+                    return true;
+
+                errorMessage = mDotNetZipTools.Message;
+                return false;
+            }
+
+            var msXmlCacheDirectoryPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
             {
                 errorMessage = string.Format("Manager parameter {0} is not defined",
                                              AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
                 return false;
             }
 
-            var msXmlCacheDir = new DirectoryInfo(msXMLCacheDirPath);
+            var msXmlCacheDirectory = new DirectoryInfo(msXmlCacheDirectoryPath);
 
-            if (!msXmlCacheDir.Exists)
+            if (!msXmlCacheDirectory.Exists)
             {
-                errorMessage = "MSXmlCache directory not found: " + msXMLCacheDirPath;
+                errorMessage = "MSXmlCache directory not found: " + msXmlCacheDirectoryPath;
                 return false;
             }
 
@@ -1291,7 +1367,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             foreach (var toolNameVersionDir in msXmlToolNameVersionDirs)
             {
-                var candidateSourceDir = AnalysisResources.GetMSXmlCacheFolderPath(msXmlCacheDir.FullName, mJobParams, toolNameVersionDir, out errorMessage);
+                var candidateSourceDir = AnalysisResources.GetMSXmlCacheFolderPath(msXmlCacheDirectory.FullName, mJobParams, toolNameVersionDir, out errorMessage);
                 if (!string.IsNullOrEmpty(errorMessage))
                 {
                     continue;
@@ -1353,15 +1429,18 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var sourceFile = new FileInfo(sourceFilePath);
             if (!sourceFile.Exists)
             {
-                errorMessage = string.Format("Cached {0} file does not exist in {1}", expectedFileDescription, sourceDirectory.FullName);
+                if (warnFileNotFound)
+                {
+                    errorMessage = string.Format("Cached {0} file does not exist in {1}", expectedFileDescription, sourceDirectory.FullName);
 
-                if (callingMethodCanRegenerateMissingFile)
-                {
-                    errorMessage += "; will re-generate it";
-                }
-                else
-                {
-                    errorMessage += "; you must manually re-create it";
+                    if (callingMethodCanRegenerateMissingFile)
+                    {
+                        errorMessage += "; will re-generate it";
+                    }
+                    else
+                    {
+                        errorMessage += "; you must manually re-create it";
+                    }
                 }
 
                 fileMissingFromCache = true;
@@ -1705,9 +1784,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Looks for the newest .mzXML or .mzML file for this dataset
+        /// Looks for the newest .mzXML file for this dataset (not .mzML)
         /// First looks for the newest file in \\Proto-11\MSXML_Cache
-        /// If not found, looks in the dataset directory, looking for subDirectories
+        /// If not found, looks in the dataset directory, looking for subdirectories
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
         /// </summary>
         /// <remarks>The retrieved file might be gzipped</remarks>
@@ -1716,7 +1795,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
+#pragma warning disable 618
             sourceFilePath = FindMZXmlFile(out var hashCheckFilePath);
+#pragma warning restore 618
 
             if (string.IsNullOrEmpty(sourceFilePath))
             {
@@ -2063,8 +2144,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             // See if the ServerPath directory actually contains a subdirectory that starts with "SIC"
-            var subDirectories = datasetDirectory.GetDirectories("SIC*");
-            if (subDirectories.Length == 0)
+            var subdirectories = datasetDirectory.GetDirectories("SIC*");
+            if (subdirectories.Length == 0)
             {
                 OnErrorEvent("Dataset directory does not contain any MASIC results directories");
                 OnWarningEvent("Dataset directory path: " + datasetDirectory.FullName);
@@ -2076,9 +2157,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var newestScanStatsFileDate = DateTime.MinValue;
             var newestScanStatsFilePath = string.Empty;
 
-            foreach (var subDirectory in subDirectories)
+            foreach (var subdirectory in subdirectories)
             {
-                var scanStatsFile = new FileInfo(Path.Combine(subDirectory.FullName, scanStatsFilename));
+                var scanStatsFile = new FileInfo(Path.Combine(subdirectory.FullName, scanStatsFilename));
                 if (scanStatsFile.Exists)
                 {
                     if (string.IsNullOrEmpty(newestScanStatsFilePath) || scanStatsFile.LastWriteTimeUtc > newestScanStatsFileDate)
@@ -2611,16 +2692,16 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 unzipDirPathBase = Path.Combine(chameleonCachedDataDir.FullName, DatasetName);
 
-                foreach (var subDirectory in chameleonCachedDataDir.GetDirectories())
+                foreach (var subdirectory in chameleonCachedDataDir.GetDirectories())
                 {
-                    if (!Global.IsMatch(subDirectory.Name, DatasetName))
+                    if (!Global.IsMatch(subdirectory.Name, DatasetName))
                     {
                         // Delete this directory
                         try
                         {
                             if (mDebugLevel >= 2)
                             {
-                                OnDebugEvent("Deleting old dataset subdirectory from chameleon cached data directory: " + subDirectory.FullName);
+                                OnDebugEvent("Deleting old dataset subdirectory from chameleon cached data directory: " + subdirectory.FullName);
                             }
 
                             if (mMgrParams.ManagerName.IndexOf("monroe", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -2629,12 +2710,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                             }
                             else
                             {
-                                subDirectory.Delete(true);
+                                subdirectory.Delete(true);
                             }
                         }
                         catch (Exception ex)
                         {
-                            OnErrorEvent("Error deleting cached subdirectory " + subDirectory.FullName, ex);
+                            OnErrorEvent("Error deleting cached subdirectory " + subdirectory.FullName, ex);
                             return false;
                         }
                     }

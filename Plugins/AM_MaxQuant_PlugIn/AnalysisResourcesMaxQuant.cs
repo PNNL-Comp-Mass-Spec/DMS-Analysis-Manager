@@ -170,6 +170,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     dataPackageID,
                     retrieveMzML,
                     AnalysisToolRunnerMaxQuant.PROGRESS_PCT_TOOL_RUNNER_STARTING,
+                    false,
                     out var dataPackageInfo,
                     out var dataPackageDatasets);
 

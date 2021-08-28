@@ -114,7 +114,7 @@ namespace AnalysisManagerBase.JobConfig
         public string DatasetArchivePath { get; set; }
 
         /// <summary>
-        /// Instrument data type
+        /// Instrument data type name
         /// </summary>
         public string RawDataType { get; set; }
 
