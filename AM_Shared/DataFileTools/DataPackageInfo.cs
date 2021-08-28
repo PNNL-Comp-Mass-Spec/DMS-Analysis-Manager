@@ -152,7 +152,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="dataPackageID"></param>
         /// <param name="toolRunner"></param>
-        public DataPackageInfo(int dataPackageID, AnalysisToolRunnerBase toolRunner)
+        /// <param name="warnIfMissingFileInfo">When true, warn if dataset file info is missing</param>
+        public DataPackageInfo(int dataPackageID, AnalysisToolRunnerBase toolRunner, bool warnIfMissingFileInfo = true)
         {
             DataPackageID = dataPackageID;
 
@@ -180,8 +181,8 @@ namespace AnalysisManagerBase.DataFileTools
             foreach (var datasetId in Datasets.Keys)
             {
                 AddKeyIfMissing("Experiments", Experiments, datasetId);
-                AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId);
-                AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId);
+                AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
                 AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
             }
