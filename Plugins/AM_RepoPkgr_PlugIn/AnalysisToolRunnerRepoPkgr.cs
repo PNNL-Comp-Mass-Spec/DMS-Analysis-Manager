@@ -274,9 +274,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         }
 
         /// <summary>
-        /// Retrieves or creates the .MzXML file for this dataset
+        /// Retrieves or creates the .mzXML or mzML file for this dataset
         /// </summary>
-        /// <param name="msXmlCreator">MzXML Creator</param>
+        /// <param name="msXmlCreator">mzXML/mzML Creator</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="analysisResults">Analysis Results class</param>
         /// <param name="datasetRawFilePaths">Dictionary with dataset names and dataset raw file paths</param>
@@ -288,9 +288,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             MSXMLCreator msXmlCreator,
             string datasetName,
             AnalysisResults analysisResults,
-            Dictionary<string, string> datasetRawFilePaths,
-            Dictionary<string, string> datasetYearQuarters,
-            Dictionary<string, string> datasetRawDataTypes,
+            IReadOnlyDictionary<string, string> datasetRawFilePaths,
+            IReadOnlyDictionary<string, string> datasetYearQuarters,
+            IReadOnlyDictionary<string, string> datasetRawDataTypes,
           out string datasetFilePathLocal)
         {
             datasetFilePathLocal = string.Empty;
@@ -466,9 +466,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             AnalysisResults analysisResults,
             MSXMLCreator msXmlCreator,
             string datasetName,
-            Dictionary<string, string> datasetRawFilePaths,
-            Dictionary<string, string> datasetYearQuarter,
-            Dictionary<string, string> datasetRawDataTypes)
+            IReadOnlyDictionary<string, string> datasetRawFilePaths,
+            IReadOnlyDictionary<string, string> datasetYearQuarter,
+            IReadOnlyDictionary<string, string> datasetRawDataTypes)
         {
             var datasetFilePathLocal = string.Empty;
 
