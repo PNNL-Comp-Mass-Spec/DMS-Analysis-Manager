@@ -141,11 +141,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         // See if a .mzXML or .mzML file already exists for this dataset
 
+#pragma warning disable 618
+                        // First search for a .mzXML file
                         var mzXMLFilePath = FileSearchTool.FindMZXmlFile(out var hashcheckFilePath);
+#pragma warning restore 618
+
                         var mzMLFilePath = string.Empty;
 
                         if (string.IsNullOrEmpty(mzXMLFilePath))
                         {
+                            // mzXML not found; look for .mzML
                             mzMLFilePath = FileSearchTool.FindMsXmlFileInCache(MSXMLOutputTypeConstants.mzML, out hashcheckFilePath);
                         }
 
@@ -159,7 +164,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         }
                         else
                         {
-                            // mzXML or mzML file not found
+                            // Did not find a .mzXML or a .mzML file
                             if (jobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
                             {
                                 // Will need to retrieve the .Raw file for this dataset
