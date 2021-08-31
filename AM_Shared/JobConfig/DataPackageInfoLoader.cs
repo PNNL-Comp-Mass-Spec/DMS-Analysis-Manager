@@ -91,7 +91,6 @@ namespace AnalysisManagerBase.JobConfig
             {
                 const string errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
                 LogTools.LogError(errorMessage);
-                resultSet.Dispose();
                 return false;
             }
 
@@ -114,7 +113,6 @@ namespace AnalysisManagerBase.JobConfig
                 }
             }
 
-            resultSet.Dispose();
             return true;
         }
 
@@ -162,7 +160,6 @@ namespace AnalysisManagerBase.JobConfig
             {
                 const string errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogTools.LogError(errorMessage);
-                dataPackageJobQueryResults.Dispose();
                 return false;
             }
 
@@ -230,8 +227,6 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
             }
-
-            dataPackageJobQueryResults.Dispose();
 
             return true;
         }
@@ -315,8 +310,6 @@ namespace AnalysisManagerBase.JobConfig
                         jobParameters.Add(parameter, value);
                     }
                 }
-
-                resultSet.Dispose();
 
                 return true;
             }

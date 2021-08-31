@@ -1903,7 +1903,6 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 const string errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
                 LogTools.LogError(errorMessage);
-                resultSet.Dispose();
                 return string.Empty;
             }
 
@@ -1922,7 +1921,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var storagePath = curRow[0].CastDBVal<string>();
 
-            resultSet.Dispose();
             return storagePath;
         }
 
@@ -3121,7 +3119,6 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 const string errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogMessage(errorMessage, 0, true);
-                resultSet.Dispose();
                 jobInfo = genericJobInfo;
                 return false;
             }
