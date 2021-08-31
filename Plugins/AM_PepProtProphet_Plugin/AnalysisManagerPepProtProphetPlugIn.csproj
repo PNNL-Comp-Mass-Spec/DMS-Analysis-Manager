@@ -53,7 +53,7 @@
     <Compile Include="AnalysisToolRunnerPepProtProphet.cs" />
     <Compile Include="ConsoleOutputFileParser.cs" />
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="MSFraggerOptions.cs" />
+    <Compile Include="FragPipeOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

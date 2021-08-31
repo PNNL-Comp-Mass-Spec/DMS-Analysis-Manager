@@ -374,9 +374,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetCount"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
         /// <returns>True if success, false if an error</returns>
-        private bool LoadMSFraggerOptions(string paramFilePath, int datasetCount, out MSFraggerOptions options)
+        private bool LoadMSFraggerOptions(string paramFilePath, int datasetCount, out FragPipeOptions options)
         {
-            options = new MSFraggerOptions(mJobParams, null, datasetCount);
+            options = new FragPipeOptions(mJobParams, null, datasetCount);
             RegisterEvents(options);
 
             try

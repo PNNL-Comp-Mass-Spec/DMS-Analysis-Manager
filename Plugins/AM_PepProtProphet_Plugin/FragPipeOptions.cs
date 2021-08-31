@@ -27,7 +27,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         Tmt16 = 6
     }
 
-    internal class MSFraggerOptions : EventNotifier
+    internal class FragPipeOptions : EventNotifier
     {
         // Ignore Spelling: acetylation, nc, plex, quantitation
 
@@ -112,7 +112,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="jobParams"></param>
         /// <param name="philosopherExe">Path to philosopher.exe</param>
         /// <param name="datasetCount"></param>
-        public MSFraggerOptions(IJobParams jobParams, FileInfo philosopherExe, int datasetCount)
+        public FragPipeOptions(IJobParams jobParams, FileInfo philosopherExe, int datasetCount)
         {
             mJobParams = jobParams;
 

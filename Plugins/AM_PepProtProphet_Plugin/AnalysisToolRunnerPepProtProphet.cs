@@ -467,7 +467,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetName"></param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
-            MSFraggerOptions options,
+            FragPipeOptions options,
             FileSystemInfo fragPipeLibDirectory,
             FileSystemInfo experimentGroupDirectory, string datasetName)
         {
@@ -840,9 +840,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="paramFilePath"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
         /// <returns>True if success, false if an error</returns>
-        private bool LoadMSFraggerOptions(FileInfo philosopherExe, int datasetCount, string paramFilePath, out MSFraggerOptions options)
+        private bool LoadMSFraggerOptions(FileInfo philosopherExe, int datasetCount, string paramFilePath, out FragPipeOptions options)
         {
-            options = new MSFraggerOptions(mJobParams, philosopherExe, datasetCount);
+            options = new FragPipeOptions(mJobParams, philosopherExe, datasetCount);
             RegisterEvents(options);
 
             try
@@ -1028,7 +1028,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -1084,7 +1084,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options)
+            FragPipeOptions options)
         {
             try
             {
@@ -1279,7 +1279,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options)
+            FragPipeOptions options)
         {
             try
             {
@@ -1451,7 +1451,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
-        private bool RunLabelQuant(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunLabelQuant(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -1526,7 +1526,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
             try
@@ -1589,7 +1589,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
             try
@@ -1654,7 +1654,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
             peptideProphetPepXmlFiles = new List<FileInfo>();
@@ -1859,7 +1859,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="peptideProphetPepXmlFiles">List of .pep.xml files created by peptide prophet</param>
         /// <param name="options"></param>
-        private bool RunProteinProphet(ICollection<FileInfo> peptideProphetPepXmlFiles, MSFraggerOptions options)
+        private bool RunProteinProphet(ICollection<FileInfo> peptideProphetPepXmlFiles, FragPipeOptions options)
         {
             try
             {
@@ -1935,7 +1935,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunPTMShepherd(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunPTMShepherd(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -2101,7 +2101,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private bool RunResultsFilter(
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             bool usedProteinProphet)
         {
             try
@@ -2174,7 +2174,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunTmtIntegrator(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, MSFraggerOptions options)
+        private bool RunTmtIntegrator(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -2360,7 +2360,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
             peptideProphetPepXmlFiles = new List<FileInfo>();
@@ -2471,7 +2471,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
             DataPackageInfo dataPackageInfo,
             Dictionary<int, DirectoryInfo> workspaceDirectoryByDatasetId,
-            MSFraggerOptions options,
+            FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
             // This method updates the .pep.xml files created by PeptideProphet to remove the experiment group name and forward slash from the <msms_run_summary> element
