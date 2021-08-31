@@ -972,7 +972,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (mMSGFPlusRunTimeMinutes < cmdRunnerRuntimeMinutes)
                 mMSGFPlusRunTimeMinutes = cmdRunnerRuntimeMinutes;
-            
+
             // Wait a minimum of 5 minutes for Java to finish
             // Wait longer for jobs that have been running longer
             var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));

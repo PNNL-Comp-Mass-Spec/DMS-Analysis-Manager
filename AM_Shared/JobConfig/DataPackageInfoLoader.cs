@@ -84,7 +84,6 @@ namespace AnalysisManagerBase.JobConfig
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
 
-            // Get a table to hold the results of the query
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
             if (!success)
@@ -153,7 +152,6 @@ namespace AnalysisManagerBase.JobConfig
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
 
-            // Get a table to hold the results of the query
             var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobQueryResults);
 
             if (!successForJobs)
@@ -169,7 +167,7 @@ namespace AnalysisManagerBase.JobConfig
                 // No data was returned
                 string warningMessage;
 
-                // If the data package exists and has datasets associated with it, Log this as a warning but return true
+                // If the data package exists and has datasets associated with it, log this as a warning but return true
                 // Otherwise, log an error and return false
 
                 sqlStr.Clear();
@@ -177,7 +175,6 @@ namespace AnalysisManagerBase.JobConfig
                 sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
                 sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
 
-                // Get a table to hold the results of the query
                 var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
 
                 if (successForDatasets && dataPackageDatasets.Rows.Count > 0)

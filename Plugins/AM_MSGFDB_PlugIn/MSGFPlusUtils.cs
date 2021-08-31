@@ -3077,7 +3077,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mMgrParams.TraceMode);
                 RegisterEvents(dbTools);
 
-                // Get a table to hold the results of the query
                 var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var results, retryCount);
 
                 if (!success)

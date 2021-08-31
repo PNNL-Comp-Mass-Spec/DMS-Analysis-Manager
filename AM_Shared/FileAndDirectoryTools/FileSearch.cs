@@ -1170,8 +1170,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </para>
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
+        /// </para>
+        /// <para>
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </para>
         /// </remarks>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>

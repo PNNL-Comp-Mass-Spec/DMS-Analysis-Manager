@@ -177,7 +177,7 @@ namespace AnalysisManagerBase.DataFileTools
         {
             try
             {
-                // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset</param>
+                // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset
 
                 var filesRetrieved = RetrieveDataPackageDatasetFiles(
                     retrieveMzML,
