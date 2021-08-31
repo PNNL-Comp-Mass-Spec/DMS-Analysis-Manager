@@ -66,6 +66,8 @@ namespace AnalysisManagerMzRefineryPlugIn
         private bool mMSGFPlusComplete;
 
         private DateTime mMSGFPlusCompletionTime;
+        private double mMSGFPlusRunTimeMinutes;
+
         private bool mSkipMzRefinery;
         private bool mUnableToUseMzRefinery;
 
@@ -756,29 +758,46 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                     return;
 
+                var cmdRunnerRuntimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
+
                 if (!mMSGFPlusComplete)
                 {
                     mMSGFPlusComplete = true;
                     mMSGFPlusCompletionTime = DateTime.UtcNow;
+                    mMSGFPlusRunTimeMinutes = cmdRunnerRuntimeMinutes;
+                    return;
                 }
-                else
-                {
-                    if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < 5)
-                        return;
 
-                    // MS-GF+ is stuck at 96% complete and has been that way for 5 minutes
-                    // Java is likely frozen and thus the process should be aborted
-                    var warningMessage = "MS-GF+ has been stuck at " +
-                                         MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
-                                         "aborting since Java appears frozen";
-                    LogWarning(warningMessage);
+                // A previous call to this method should have updated mMSGFPlusCompletionTime and mMSGFPlusRunTimeMinutes
+                // Check, just to be sure, updating if necessary
+                if (mMSGFPlusCompletionTime == DateTime.MinValue)
+                    mMSGFPlusCompletionTime = DateTime.UtcNow;
 
-                    // Bump up mMSGFPlusCompletionTime by one hour
-                    // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
-                    mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+                if (mMSGFPlusRunTimeMinutes < cmdRunnerRuntimeMinutes)
+                    mMSGFPlusRunTimeMinutes = cmdRunnerRuntimeMinutes;
 
-                    mCmdRunner.AbortProgramNow();
-                }
+                // Wait a minimum of 5 minutes for Java to finish
+                // Wait longer for jobs that have been running longer
+                var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
+
+                if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
+                    return;
+
+                // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
+                // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
+                // However, it is also possible that Java frozen and thus the process should be aborted
+
+                var warningMessage = string.Format(
+                    "MS-GF+ has been stuck at {0}% complete for {1} minutes (after running for {2:F0} minutes); aborting since Java appears frozen",
+                    MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE, waitTimeMinutes, mMSGFPlusRunTimeMinutes);
+
+                LogWarning(warningMessage);
+
+                // Bump up mMSGFPlusCompletionTime by one hour
+                // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
+                mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+
+                mCmdRunner.AbortProgramNow();
             }
             else if (mProgRunnerMode == MzRefinerProgRunnerMode.MzRefiner)
             {
