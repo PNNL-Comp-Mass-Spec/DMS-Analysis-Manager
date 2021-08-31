@@ -2349,14 +2349,14 @@ namespace AnalysisManagerBase.AnalysisTool
         public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIdDirectory)
         {
             // Remove the dataset ID from the end of the directory name
-            var reToolNameAndVersion = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
-            var reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIdDirectory);
-            if (!reMatch.Success)
+            var toolNameAndVersionMatcher = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
+            var match = toolNameAndVersionMatcher.Match(toolNameVersionDatasetIdDirectory);
+            if (!match.Success)
             {
                 throw new Exception("Directory name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID");
             }
 
-            return reMatch.Groups["ToolNameVersion"].ToString();
+            return match.Groups["ToolNameVersion"].ToString();
         }
 
         /// <summary>
