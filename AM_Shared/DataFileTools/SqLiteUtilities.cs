@@ -260,8 +260,6 @@ namespace AnalysisManagerBase.DataFileTools
                     cmdTargetDB.ExecuteNonQuery();
 
                     cmdTargetDB.Dispose();
-
-                    targetDB.Close();
                 }
 
                 sourceDB.Close();

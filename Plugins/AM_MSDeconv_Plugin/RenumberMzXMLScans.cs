@@ -160,7 +160,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                     {
                         hashValue = mySha1.ComputeHash(indexedFileStream);
                     }
-                    mySha1.Dispose();
                 }
 
                 PRISM.ProgRunner.GarbageCollectNow();
