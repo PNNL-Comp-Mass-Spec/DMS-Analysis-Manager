@@ -955,15 +955,24 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (mProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                 return;
 
-            mMSGFPlusRunTimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
+            var cmdRunnerRuntimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
 
             if (!mMSGFPlusComplete)
             {
                 mMSGFPlusComplete = true;
                 mMSGFPlusCompletionTime = DateTime.UtcNow;
+                mMSGFPlusRunTimeMinutes = cmdRunnerRuntimeMinutes;
                 return;
             }
 
+            // A previous call to this method should have updated mMSGFPlusCompletionTime and mMSGFPlusRunTimeMinutes
+            // Check, just to be sure, updating if necessary
+            if (mMSGFPlusCompletionTime == DateTime.MinValue)
+                mMSGFPlusCompletionTime = DateTime.UtcNow;
+
+            if (mMSGFPlusRunTimeMinutes < cmdRunnerRuntimeMinutes)
+                mMSGFPlusRunTimeMinutes = cmdRunnerRuntimeMinutes;
+            
             // Wait a minimum of 5 minutes for Java to finish
             // Wait longer for jobs that have been running longer
             var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
