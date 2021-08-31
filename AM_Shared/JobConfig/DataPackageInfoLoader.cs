@@ -88,7 +88,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (!success)
             {
-                const string errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
+                const string errorMessage = "LoadDataPackageDatasetInfo: Excessive failures attempting to retrieve data package dataset info from database";
                 LogTools.LogError(errorMessage);
                 return false;
             }
@@ -97,7 +97,7 @@ namespace AnalysisManagerBase.JobConfig
             if (resultSet.Rows.Count < 1)
             {
                 // No data was returned
-                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
+                var warningMessage = "LoadDataPackageDatasetInfo: No datasets were found for data package " + dataPackageID;
                 LogTools.LogWarning(warningMessage);
                 return false;
             }
@@ -156,7 +156,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (!successForJobs)
             {
-                const string errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
+                const string errorMessage = "LoadDataPackageJobInfo: Excessive failures attempting to retrieve data package job info from database";
                 LogTools.LogError(errorMessage);
                 return false;
             }
@@ -183,14 +183,13 @@ namespace AnalysisManagerBase.JobConfig
                     {
                         var datasetCount = curRow[0].CastDBVal<int>();
 
+                        // ReSharper disable once InvertIf
                         if (datasetCount > 0)
                         {
-                            warningMessage = "LoadDataPackageJobInfo; " +
-                                             "No jobs were found for data package " + dataPackageID +
-                                             ", but it does have " + datasetCount + " dataset";
-
-                            if (datasetCount > 1)
-                                warningMessage += "s";
+                            warningMessage = string.Format(
+                                "LoadDataPackageJobInfo: No jobs were found for data package {0}, " +
+                                "but it does have {1} dataset{2}",
+                                dataPackageID, datasetCount, datasetCount > 1 ? "s" : string.Empty);
 
                             LogTools.LogWarning(warningMessage);
                             return true;
@@ -198,7 +197,7 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
 
-                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + dataPackageID;
+                warningMessage = "LoadDataPackageJobInfo: No jobs were found for data package " + dataPackageID;
                 LogTools.LogError(warningMessage);
                 return false;
             }
@@ -299,7 +298,10 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (jobParameters.ContainsKey(parameter))
                     {
-                        var msg = "Job " + jobNumber + " has multiple values for parameter " + parameter + "; only using the first occurrence";
+                        var msg = string.Format(
+                            "Job {0} has multiple values for parameter {1}; only using the first occurrence",
+                            jobNumber, parameter);
+
                         LogTools.LogWarning(msg);
                     }
                     else
