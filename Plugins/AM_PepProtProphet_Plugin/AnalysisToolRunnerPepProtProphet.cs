@@ -7,6 +7,7 @@
 
 using AnalysisManagerBase;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -964,7 +965,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 options.JavaProgLoc = GetJavaProgLoc();
 
+                if (string.IsNullOrWhiteSpace(options.JavaProgLoc))
+                {
+                    // The error has already been logged
+                    return false;
+                }
+
                 options.LoadMSFraggerOptions(paramFilePath);
+
                 return true;
             }
             catch (Exception ex)
