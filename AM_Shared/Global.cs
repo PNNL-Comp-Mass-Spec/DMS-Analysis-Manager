@@ -1035,7 +1035,7 @@ namespace AnalysisManagerBase
 
                 while (!reader1.EndOfStream)
                 {
-                    var dataLine1 = reader1.ReadLine();
+                    var dataLine1 = reader1.ReadLine() ?? string.Empty;
                     lineNumber++;
 
                     if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
@@ -1044,16 +1044,12 @@ namespace AnalysisManagerBase
                         break;
                     }
 
-                    dataLine1 ??= string.Empty;
-
                     if (!reader2.EndOfStream)
                     {
-                        var dataLine2 = reader2.ReadLine();
+                        var dataLine2 = reader2.ReadLine() ?? string.Empty;
 
                         if (lineNumber >= comparisonStartLine)
                         {
-                            dataLine2 ??= string.Empty;
-
                             if (ignoreWhitespace)
                             {
                                 dataLine1 = dataLine1.Trim(whiteSpaceChars);
@@ -1087,11 +1083,12 @@ namespace AnalysisManagerBase
                     }
 
                     // Ignoring whitespace
+
                     // If file1 only has blank lines from here on out, the files match; otherwise, they don't
                     // See if the remaining lines are blank
                     while (true)
                     {
-                        if (dataLine1.Length != 0)
+                        if (dataLine1.Length > 0)
                         {
                             if (!TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs))
                             {
@@ -1105,11 +1102,9 @@ namespace AnalysisManagerBase
                             break;
                         }
 
-                        dataLine1 = reader1.ReadLine();
-                        if (dataLine1 == null)
-                            dataLine1 = string.Empty;
-                        else
-                            dataLine1 = dataLine1.Trim(whiteSpaceChars);
+                        dataLine1 = reader1.ReadLine() ?? string.Empty;
+
+                        dataLine1 = dataLine1.Trim(whiteSpaceChars);
                     }
 
                     break;
@@ -1125,12 +1120,11 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                // Ignoring whitespace
                 // If file2 only has blank lines from here on out, the files match; otherwise, they don't
                 // See if the remaining lines are blank
                 do
                 {
-                    var lineExtra = reader2.ReadLine() ?? "";
+                    var lineExtra = reader2.ReadLine() ?? string.Empty;
 
                     var trimmedLine = lineExtra.Trim(whiteSpaceChars);
 
