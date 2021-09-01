@@ -6,6 +6,8 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class DataPackageDatasetInfo
     {
+        // Ignore Spelling: Maxq
+
         /// <summary>
         /// Dataset name
         /// </summary>
@@ -95,8 +97,23 @@ namespace AnalysisManagerBase.JobConfig
         /// Dataset experiment group name (used by MSFragger); empty string if not defined
         /// </summary>
         /// <remarks>
-        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report
+        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3871/-/-/-/-/-
         /// </remarks>
+        /// <example>
+        /// The following are example dataset comments that include the experiment group name (CohortA, 1, 10, or 5):
+        /// MSFragger Group CohortA
+        /// MSFragger Group 1
+        /// MSFrag Group CohortA
+        /// MSFrag Group 10
+        /// FragPipe Group CohortA
+        /// FragPipe Group 5
+        /// MaxQuant Group CohortA
+        /// MaxQuant Group 5
+        /// Maxq Group: CohortA
+        /// Maxq Group: 5
+        /// MQ Group CohortA
+        /// MQ Group 5
+        /// </example>
         public string DatasetExperimentGroup { get; set; }
 
         /// <summary>
@@ -105,6 +122,13 @@ namespace AnalysisManagerBase.JobConfig
         /// <remarks>
         /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-
         /// </remarks>
+        /// <example>
+        /// The following are example dataset comments that include the experiment group name (1, 3, or 10):
+        /// MaxQuant Group 1
+        /// Maxq Group: 3
+        /// MQ Group 10
+        /// </example>
+
         public int MaxQuantParamGroup { get; set; }
 
         /// <summary>

@@ -304,6 +304,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// <see cref="GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT
+        /// When ReporterIonMode is Tmt11, this method looks for job parameter ReporterIonMode to attempt to determine the actual TMT mode in use
+        /// Otherwise, this method simply returns reporterIonMode
+        /// </summary>
+        /// <param name="reporterIonMode"></param>
         private ReporterIonModes DetermineReporterIonMode(ReporterIonModes reporterIonMode)
         {
             if (reporterIonMode != ReporterIonModes.Tmt11)
@@ -395,6 +401,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (Math.Abs(modMass - 229.162933) < 0.005)
             {
                 // 6-plex, 10-plex, and 11-plex TMT
+                // Use TMT 11 for now, though method DetermineReporterIonMode(ReporterIonModes reporterIonMode)
+                // will look for a job parameter to override this
                 return ReporterIonModes.Tmt11;
             }
 
