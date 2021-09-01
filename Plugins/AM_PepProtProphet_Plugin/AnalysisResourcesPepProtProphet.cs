@@ -353,7 +353,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 if (!fileUpdated)
+                {
+                    updatedPinFile.Delete();
                     return true;
+                }
 
                 var finalPath = sourcePinFile.FullName;
                 sourcePinFile.MoveTo(sourcePinFile.FullName + TRASH_EXTENSION);
