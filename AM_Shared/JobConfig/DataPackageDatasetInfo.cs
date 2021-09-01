@@ -128,7 +128,6 @@ namespace AnalysisManagerBase.JobConfig
         /// Maxq Group: 3
         /// MQ Group 10
         /// </example>
-
         public int MaxQuantParamGroup { get; set; }
 
         /// <summary>

@@ -758,7 +758,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return reporterIonNames;
 
                 case ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16:
-                {
                     reporterIonNames.Add("126");
                     reporterIonNames.Add("127N");
                     reporterIonNames.Add("127C");
@@ -788,7 +787,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     reporterIonNames.Add("134N");
 
                     return reporterIonNames;
-                }
             }
 
             if (reporterIonMode != ReporterIonModes.Itraq4 && reporterIonMode != ReporterIonModes.Itraq8)
@@ -1912,6 +1910,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
+
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);

@@ -396,7 +396,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (executablePath.StartsWith("/") && Path.DirectorySeparatorChar == '\\')
             {
                 // Log a warning
-                OnWarningEvent("Unix-style path on a Windows machine; program execution may fail: " + executablePath);
+                OnWarningEvent("Linux-style path on a Windows machine; program execution may fail: " + executablePath);
             }
 
             // Re-instantiate mProgRunner each time RunProgram is called since it is disposed of later in this method

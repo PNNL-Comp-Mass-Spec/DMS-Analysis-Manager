@@ -460,7 +460,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compare two strings (not case sensitive)
         /// </summary>
-        /// <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
+        /// <remarks>
+        /// A null string is considered equivalent to an empty string.
+        /// Thus, two null strings are considered equal.
+        /// </remarks>
         /// <param name="text1"></param>
         /// <param name="text2"></param>
         /// <returns>True if they match; false if not</returns>
@@ -983,7 +986,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.  If
+        /// Compares two files line-by-line. If comparisonStartLine is > 0, ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
@@ -998,7 +1001,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.  If
+        /// Compares two files line-by-line. If comparisonStartLine is > 0, ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
