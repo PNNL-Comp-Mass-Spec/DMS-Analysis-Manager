@@ -282,6 +282,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 using (var reader = new StreamReader(new FileStream(sourcePinFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedPinFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
+                    // Use LF for the newline character
+                    writer.NewLine = "\n";
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
