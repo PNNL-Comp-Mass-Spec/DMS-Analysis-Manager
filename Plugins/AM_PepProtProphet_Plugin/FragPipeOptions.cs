@@ -123,24 +123,24 @@ namespace AnalysisManagerPepProtProphetPlugIn
             LibraryFinder = new FragPipeLibFinder(philosopherExe);
             RegisterEvents(LibraryFinder);
 
-            MatchBetweenRuns = mJobParams.GetJobParameter("MatchBetweenRuns", true);
+            MatchBetweenRuns = mJobParams.GetJobParameter("MatchBetweenRuns", false);
 
-            var runPeptideProphetValue = mJobParams.GetJobParameter("RunPeptideProphet", string.Empty);
-            var runPercolatorValue = mJobParams.GetJobParameter("RunPercolator", string.Empty);
+            var runPeptideProphetJobParam = mJobParams.GetJobParameter("RunPeptideProphet", string.Empty);
+            var runPercolatorJobParam = mJobParams.GetJobParameter("RunPercolator", string.Empty);
 
-            if (IsUndefinedOrAuto(runPeptideProphetValue) && IsUndefinedOrAuto(runPercolatorValue))
+            if (IsUndefinedOrAuto(runPeptideProphetJobParam) && IsUndefinedOrAuto(runPercolatorJobParam))
             {
-                // Use Percolator if Match Between Runs is enabled, otherwise use Peptide Prophet
-                // This value will get updated by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
+                // Use Percolator if match-between runs is enabled, otherwise use Peptide Prophet
+                // This value will get changed by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
                 MS1ValidationMode = MatchBetweenRuns ? MS1ValidationModes.Percolator : MS1ValidationModes.PeptideProphet;
 
                 MS1ValidationModeAutoDefined = true;
             }
             else
             {
-                var runPeptideProphet = !string.IsNullOrWhiteSpace(runPeptideProphetValue) && bool.Parse(runPeptideProphetValue);
+                var runPeptideProphet = !string.IsNullOrWhiteSpace(runPeptideProphetJobParam) && bool.Parse(runPeptideProphetJobParam);
 
-                var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorValue) && bool.Parse(runPercolatorValue);
+                var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorJobParam) && bool.Parse(runPercolatorJobParam);
 
                 if (runPercolator)
                 {
@@ -479,7 +479,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Assume open search
                     OpenSearch = true;
 
-                    // Always use PeptideProphet with open searches
+                    // Preferably use PeptideProphet with open searches, but leave MS1ValidationMode unchanged if MS1ValidationModeAutoDefined is false
                     if (MS1ValidationModeAutoDefined && MS1ValidationMode == MS1ValidationModes.Percolator)
                     {
                         MS1ValidationMode = MS1ValidationModes.PeptideProphet;
@@ -489,7 +489,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     OpenSearch = false;
 
-                    if (MS1ValidationMode != MS1ValidationModes.Disabled && !MS1ValidationModeAutoDefined)
+                    if (MS1ValidationModeAutoDefined && MS1ValidationMode != MS1ValidationModes.Disabled)
                     {
                         if (MS1ValidationMode == MS1ValidationModes.Percolator &&
                             ReporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
