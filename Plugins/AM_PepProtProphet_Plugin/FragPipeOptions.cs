@@ -572,7 +572,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var spaceIndex2 = remainingValue.IndexOf(' ');
 
-                var affectedResidueList = spaceIndex2 > 0 ? parameter.Value.Substring(0, spaceIndex2).Trim() : string.Empty;
+                if (spaceIndex2 <= 0)
+                {
+                    OnWarningEvent(string.Format(
+                        "Affected residues not found after the modification mass for parameter '{0} = {1}' in the MSFragger parameter file",
+                        parameter.Key, parameter.Value));
+                }
+
+                var affectedResidueList = spaceIndex2 > 0 ? remainingValue.Substring(0, spaceIndex2).Trim() : string.Empty;
 
                 affectedResidues = ParseAffectedResidueList(affectedResidueList);
             }
