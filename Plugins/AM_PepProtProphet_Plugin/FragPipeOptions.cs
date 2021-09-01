@@ -505,7 +505,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                return !string.IsNullOrWhiteSpace(JavaProgLoc);
+                return true;
             }
             catch (Exception ex)
             {
