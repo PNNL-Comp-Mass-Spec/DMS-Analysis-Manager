@@ -172,5 +172,15 @@ namespace AnalysisManagerBase.JobConfig
 
             RawDataType = string.Empty;
         }
+
+        /// <summary>
+        /// Show dataset name or ID
+        /// </summary>
+        public override string ToString()
+        {
+            return string.IsNullOrWhiteSpace(Dataset)
+                ? "Dataset ID " + DatasetID
+                : Dataset;
+        }
     }
 }
