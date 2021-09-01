@@ -583,6 +583,37 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private FileInfo CreateReporterIonAliasNameFile(ReporterIonModes reporterIonMode, FileInfo aliasNameFile)
+        {
+            try
+            {
+                using var writer = new StreamWriter(new FileStream(aliasNameFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                var reporterIonNames = GetReporterIonNames(reporterIonMode);
+
+                // Example output:
+                // 126 sample-01
+                // 127N sample-02
+                // 127C sample-03
+                // 128N sample-04
+
+                var sampleNumber = 0;
+                foreach (var reporterIon in reporterIonNames)
+                {
+                    sampleNumber++;
+                    writer.WriteLine("{0} sample-{1:D2}", reporterIon, sampleNumber);
+                }
+
+                aliasNameFile.Refresh();
+                return aliasNameFile;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateReporterIonAliasNameFile", ex);
+                return null;
+            }
+        }
+
         /// <summary>
         /// Delete temporary directories, ignoring errors
         /// </summary>
@@ -708,6 +739,89 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 ReporterIonModes.Disabled => 0,
                 _ => throw new ArgumentOutOfRangeException()
             };
+        }
+
+        private IEnumerable GetReporterIonNames(ReporterIonModes reporterIonMode)
+        {
+            var reporterIonNames = new List<string>();
+
+            switch (reporterIonMode)
+            {
+                case ReporterIonModes.Tmt6:
+                    reporterIonNames.Add("126");
+                    reporterIonNames.Add("127N");
+                    reporterIonNames.Add("128C");
+                    reporterIonNames.Add("129N");
+                    reporterIonNames.Add("130C");
+                    reporterIonNames.Add("131");
+                    return reporterIonNames;
+
+                case ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16:
+                {
+                    reporterIonNames.Add("126");
+                    reporterIonNames.Add("127N");
+                    reporterIonNames.Add("127C");
+                    reporterIonNames.Add("128N");
+                    reporterIonNames.Add("128C");
+                    reporterIonNames.Add("129N");
+                    reporterIonNames.Add("129C");
+                    reporterIonNames.Add("130N");
+                    reporterIonNames.Add("130C");
+                    reporterIonNames.Add("131N");
+
+                    if (reporterIonMode == ReporterIonModes.Tmt10)
+                        return reporterIonNames;
+
+                    // TMT 11 and TMT 16
+                    reporterIonNames.Add("131C");
+
+                    if (reporterIonMode == ReporterIonModes.Tmt11)
+                        return reporterIonNames;
+
+                    // TMT 16
+                    reporterIonNames.Add("131C");
+                    reporterIonNames.Add("132N");
+                    reporterIonNames.Add("132C");
+                    reporterIonNames.Add("133N");
+                    reporterIonNames.Add("133C");
+                    reporterIonNames.Add("134N");
+
+                    return reporterIonNames;
+                }
+            }
+
+            if (reporterIonMode != ReporterIonModes.Itraq4 && reporterIonMode != ReporterIonModes.Itraq8)
+            {
+                LogWarning("Unrecognized reporter ion mode in GetReporterIonNames: " + reporterIonMode);
+                return reporterIonNames;
+            }
+
+            if (reporterIonMode == ReporterIonModes.Itraq8)
+            {
+                // 8-plex iTRAQ
+                reporterIonNames.Add("113");
+            }
+
+            if (reporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
+            {
+                // 4-plex and 8-plex iTRAQ
+                reporterIonNames.Add("114");
+                reporterIonNames.Add("115");
+                reporterIonNames.Add("116");
+                reporterIonNames.Add("117");
+            }
+
+            if (reporterIonMode != ReporterIonModes.Itraq8)
+            {
+                return reporterIonNames;
+            }
+
+            // 8-plex iTRAQ
+            reporterIonNames.Add("118");
+            reporterIonNames.Add("119");
+            reporterIonNames.Add("121");
+
+            return reporterIonNames;
         }
 
         /// <summary>
@@ -1447,7 +1561,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <remarks>
         /// Results will appear in the.tsv files created by the Report step (ion.tsv, peptide.tsv, protein.tsv, and psm.tsv),
-        /// in columns corresponding to labels in the AliasNames.txt file
+        /// in columns corresponding to labels in the AliasNames.txt file (or experiment group specific alias name file)
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
@@ -1481,15 +1595,34 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-                    var aliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
+                    FileInfo aliasFile;
 
-                    if (!aliasFile.Exists)
+                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
+                    var genericAliasFile = new FileInfo(Path.Combine(mWorkDir, "AliasNames.txt"));
+                    var genericAliasFile2 = new FileInfo(Path.Combine(mWorkDir, "AliasName.txt"));
+
+                    if (experimentSpecificAliasFile.Exists)
                     {
-                        LogError(string.Format(
-                            "{0} alias file not found: {1}; cannot run LabelQuant",
-                            reporterIonType, aliasFile.Name));
+                        aliasFile = experimentSpecificAliasFile;
+                    }
+                    else if (genericAliasFile.Exists)
+                    {
+                        aliasFile = genericAliasFile;
+                    }
+                    else if (genericAliasFile2.Exists)
+                    {
+                        aliasFile = genericAliasFile2;
+                    }
+                    else
+                    {
+                        LogMessage(string.Format(
+                            "{0} alias file not found; will auto-generate file {1} for use with LabelQuant",
+                            reporterIonType, experimentSpecificAliasFile.Name));
 
-                        continue;
+                        aliasFile = CreateReporterIonAliasNameFile(options.ReporterIonMode, experimentSpecificAliasFile);
+
+                        if (aliasFile == null)
+                            return false;
                     }
 
                     // ReSharper disable StringLiteralTypo
