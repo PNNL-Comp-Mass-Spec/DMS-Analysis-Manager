@@ -1128,20 +1128,23 @@ namespace AnalysisManagerBase
                 // See if the remaining lines are blank
                 do
                 {
-                    var lineExtra = reader2.ReadLine();
-                    if (lineExtra == null)
-                        lineExtra = string.Empty;
-                    else
-                        lineExtra = lineExtra.Trim(whiteSpaceChars);
+                    var lineExtra = reader2.ReadLine() ?? "";
 
-                    if (lineExtra.Length != 0)
+                    var trimmedLine = lineExtra.Trim(whiteSpaceChars);
+
+                    if (trimmedLine.Length == 0)
                     {
-                        if (!TextFilesMatchIgnoreLine(lineExtra, lineIgnoreRegExSpecs))
-                        {
-                            // Files do not match
-                            return false;
-                        }
+                        continue;
                     }
+
+                    if (TextFilesMatchIgnoreLine(trimmedLine, lineIgnoreRegExSpecs))
+                    {
+                        continue;
+                    }
+
+                    // Files do not match
+                    return false;
+
                 } while (!reader2.EndOfStream);
 
                 return true;
