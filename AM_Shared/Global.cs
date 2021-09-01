@@ -12,6 +12,8 @@ using System.Xml.Linq;
 using AnalysisManagerBase.StatusReporting;
 using PRISMDatabaseUtils;
 
+// ReSharper disable UnusedMember.Global
+
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
@@ -1009,7 +1011,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is greater than 1, ignores differences up until the given line number.
+        /// Compares two files line-by-line. If comparisonStartLine is greater than 1, ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>

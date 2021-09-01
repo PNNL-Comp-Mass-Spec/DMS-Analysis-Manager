@@ -31,7 +31,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, dir, expectscore
         // Ignore Spelling: fasta, filelist, fragpipe, freequant, glyco, groupby, itraq, java, labelquant,
         // Ignore Spelling: mapmods, masswidth, maxppmdiff, minprob, multidir
-        // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, protxml, psm, psms, --ptw, prot
+        // Ignore Spelling: nocheck, nonparam, num, peptideprophet, pepxml, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot
         // Ignore Spelling: razorbin, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
 
@@ -1472,6 +1472,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
                 else
                 {
+                    // ReSharper disable CommentTypo
+
                     // Option 1: append each psm.tsv file and each .pepXML file
                     //
                     // for each (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
@@ -1493,6 +1495,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     //        arguments.AppendFormat(@" {0}\{1}.pepXML ", experimentWorkingDirectory.Name, datasetName);
                     //    }
                     // }
+
+                    // ReSharper restore CommentTypo
 
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
@@ -2260,6 +2264,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     arguments.Clear();
 
+                    // ReSharper disable CommentTypo
+
                     // Closed search, without match between runs:
                     // --sequential --razor --picked --prot 0.01 --tag XXX_
 
@@ -2268,6 +2274,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // Open search:
                     // --sequential --razor --prot 0.01 --mapmods --tag XXX_
+
+                    // ReSharper restore CommentTypo
 
                     arguments.Append("filter --sequential --razor");
 
