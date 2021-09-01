@@ -327,15 +327,32 @@ namespace AnalysisManagerBase.JobConfig
 
             var packageComment = curRow["PackageComment"].CastDBVal<string>();
 
-            // Examine the comment to look for "MSFragger Group GroupName"  (case insensitive)
-            var experimentGroupMatcher = new Regex("(MSFragger|MSFrag|FragPipe|MaxQuant)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // Examine the comment to look for "MSFragger Group GroupName" (or similar)
+            // Example allowed comments:
+            //   MSFragger Group CohortA
+            //   MSFragger Group 1
+            //   MSFrag Group CohortA
+            //   MSFrag Group 10
+            //   FragPipe Group CohortA
+            //   FragPipe Group 5
+            //   MaxQuant Group CohortA
+            //   MaxQuant Group 5
+            //   Maxq Group: CohortA
+            //   Maxq Group: 5
+            //   MQ Group CohortA
+            //   MQ Group 5
+            var experimentGroupMatcher = new Regex("(MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match1 = experimentGroupMatcher.Match(packageComment);
 
             var datasetExperimentGroup = match1.Success ? match1.Groups["GroupName"].Value : string.Empty;
 
-            // Examine the comment to look for "MaxQuant Group 0"  (case insensitive)
-            var maxQuantGroupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ ]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // Examine the comment to look for "MaxQuant Group 0" (or similar)
+            // Example allowed comments:
+            //   MaxQuant Group 1
+            //   Maxq Group: 3
+            //   MQ Group 10
+            var maxQuantGroupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ :]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match2 = maxQuantGroupMatcher.Match(packageComment);
 
