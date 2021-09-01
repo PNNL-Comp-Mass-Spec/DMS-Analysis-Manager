@@ -96,6 +96,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool MS1ValidationModeAutoDefined { get; }
 
         /// <summary>
+        /// True when FreeQuant and IonQuant are auto-defined
+        /// </summary>
+        public bool QuantModeAutoDefined { get; set; }
+
+        /// <summary>
         /// Whether to run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
@@ -169,30 +174,33 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             else
             {
-                var runFreeQuant = mJobParams.GetJobParameter("RunFreeQuant", false);
+                var runFreeQuantJobParam = mJobParams.GetJobParameter("RunFreeQuant", string.Empty);
+                var runIonQuantJobParam = mJobParams.GetJobParameter("RunIonQuant", string.Empty);
 
                 if (datasetCount > 1)
                 {
                     // Multi-dataset job
-                    // Preferably run IonQuant, but use FreeQuant if RunFreeQuant is true
 
-                    RunFreeQuant = runFreeQuant;
-                    RunIonQuant = !runFreeQuant;
+                    if (MatchBetweenRuns)
+                    {
+                        // Run IonQuant since match-between runs is enabled
+                        RunFreeQuant = false;
+                        RunIonQuant = true;
+                        QuantModeAutoDefined = false;
+                    }
+                    else
+                    {
+                        SetMS1QuantOptions(runFreeQuantJobParam, runIonQuantJobParam);
+                    }
+
+                    // After loading the MSFragger parameter file, if the mods include TMT or iTRAQ, FreeQuant will be auto-enabled
                 }
                 else
                 {
                     // Single dataset job
-                    // Only enable MS1 quantitation if RunFreeQuant or RunIonQuant is defined
-                    if (runFreeQuant)
-                    {
-                        RunFreeQuant = true;
-                        RunIonQuant = false;
-                    }
-                    else
-                    {
-                        RunFreeQuant = false;
-                        RunIonQuant = mJobParams.GetJobParameter("RunIonQuant", false);
-                    }
+                    // Only enable MS1 quantitation if RunFreeQuant or RunIonQuant is defined as a job parameter
+
+                    SetMS1QuantOptions(runFreeQuantJobParam, runIonQuantJobParam);
                 }
             }
 
@@ -293,7 +301,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return true;
                 }
 
-                OnErrorEvent("The MSFragger parameter file has more than one reporter ion mode defined: " + string.Join(", ", matchedReporterIonModes.Keys.ToList()));
+                OnErrorEvent(string.Format(
+                    "The MSFragger parameter file has more than one reporter ion mode defined: {0}",
+                    string.Join(", ", matchedReporterIonModes.Keys.ToList())));
 
                 return false;
             }
@@ -317,8 +327,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // Look for a job parameter that specifies the reporter ion mode
             var reporterIonModeName = mJobParams.GetJobParameter("ReporterIonMode", string.Empty);
-            if (string.IsNullOrWhiteSpace(reporterIonModeName))
+            if (IsUndefinedOrAuto(reporterIonModeName))
+            {
                 return reporterIonMode;
+            }
 
             return reporterIonModeName.ToLower() switch
             {
@@ -503,6 +515,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             MS1ValidationMode = MS1ValidationModes.Percolator;
                         }
                     }
+
+                    if (QuantModeAutoDefined && ReporterIonMode != ReporterIonModes.Disabled)
+                    {
+                        // RunFreeQuant since TMT or iTRAQ is defined
+                        RunFreeQuant = true;
+                        RunIonQuant = false;
+                    }
                 }
 
                 return true;
@@ -594,6 +613,39 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 parameter.Key, parameter.Value));
 
             return false;
+        }
+
+        private void SetMS1QuantOptions(string runFreeQuantJobParam, string runIonQuantJobParam)
+        {
+            if (IsUndefinedOrAuto(runFreeQuantJobParam) && IsUndefinedOrAuto(runIonQuantJobParam))
+            {
+                RunFreeQuant = false;
+                RunIonQuant = false;
+                QuantModeAutoDefined = true;
+                return;
+            }
+
+            // ReSharper disable once SimplifyConditionalTernaryExpression
+            var runFreeQuant = IsUndefinedOrAuto(runFreeQuantJobParam)
+                ? false
+                : mJobParams.GetJobParameter("RunFreeQuant", false);
+
+            if (runFreeQuant)
+            {
+                RunFreeQuant = true;
+                RunIonQuant = false;
+            }
+            else
+            {
+                RunFreeQuant = false;
+
+                // ReSharper disable once SimplifyConditionalTernaryExpression
+                RunIonQuant = IsUndefinedOrAuto(runIonQuantJobParam)
+                    ? false
+                    : mJobParams.GetJobParameter("RunIonQuant", false);
+            }
+
+            QuantModeAutoDefined = false;
         }
 
         private void UpdateReporterIonModeStats(IDictionary<ReporterIonModes, int> reporterIonModeStats, ReporterIonModes reporterIonMode)
