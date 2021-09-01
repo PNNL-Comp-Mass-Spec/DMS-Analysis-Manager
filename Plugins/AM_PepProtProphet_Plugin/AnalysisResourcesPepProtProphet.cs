@@ -52,9 +52,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return result;
                 }
 
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+
+                currentTask = "RetrieveParamFile " + paramFileName;
+
+                // Retrieve param file
+                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+
                 currentTask = "Get DataPackageID";
 
-                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
                 var datasetCount = GetDatasetCount();
@@ -101,12 +108,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // In contrast, MaxQuant can work with either .raw files or .mzML files
                 const bool retrieveMzML = true;
-
-                currentTask = "RetrieveParamFile " + paramFileName;
-
-                // Retrieve param file
-                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
-                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
                 // Retrieve FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
