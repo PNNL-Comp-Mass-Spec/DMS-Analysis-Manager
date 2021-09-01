@@ -57,8 +57,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                if (targetFolderPath == null)
-                    targetFolderPath = "??";
+                targetFolderPath ??= "??";
 
                 mMessage = "Error archiving param file to ParmFileStoragePath";
                 LogErrorToDatabase(mMessage + ": " + sourceFilePath + " --> " + targetFolderPath + ": " + ex.Message);

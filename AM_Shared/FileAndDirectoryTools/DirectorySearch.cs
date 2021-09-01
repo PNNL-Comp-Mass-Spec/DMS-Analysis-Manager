@@ -502,10 +502,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             try
             {
-                if (fileNameToFind == null)
-                    fileNameToFind = string.Empty;
-                if (directoryNameToFind == null)
-                    directoryNameToFind = string.Empty;
+                fileNameToFind ??= string.Empty;
+
+                directoryNameToFind ??= string.Empty;
 
                 if (assumeUnpurged)
                 {

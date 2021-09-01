@@ -12,7 +12,7 @@ namespace AnalysisManagerBase.OfflineJobs
     public static class OfflineProcessing
     {
         /// <summary>
-        /// Update files in the TaskQueue directory, renaming the .info file to .success or .fail and appending the completion code and eval code info
+        /// Update files in the TaskQueue directory, renaming the .info file to .success or .fail and appending the completion code and evaluation code info
         /// Also removes the .lock file
         /// </summary>
         /// <param name="infoFilePath">Info file path</param>
@@ -51,11 +51,9 @@ namespace AnalysisManagerBase.OfflineJobs
                 else
                     targetFilePath = Path.ChangeExtension(infoFilePath, ".fail");
 
-                if (compMsg == null)
-                    compMsg = string.Empty;
+                compMsg ??= string.Empty;
 
-                if (evalMsg == null)
-                    evalMsg = string.Empty;
+                evalMsg ??= string.Empty;
 
                 var settingsToAppend = new SortedSet<string>
                 {

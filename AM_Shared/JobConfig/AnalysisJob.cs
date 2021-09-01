@@ -207,8 +207,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             try
             {
-                if (paramValue == null)
-                    paramValue = string.Empty;
+                paramValue ??= string.Empty;
 
                 SetParam(sectionName, paramName, paramValue);
                 return true;
@@ -655,8 +654,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             var matchFound = false;
 
-            if (paramValue == null)
-                paramValue = string.Empty;
+            paramValue ??= string.Empty;
 
             foreach (var section in mJobParams)
             {
@@ -689,8 +687,7 @@ namespace AnalysisManagerBase.JobConfig
                 mJobParams.Add(section, parameters);
             }
 
-            if (paramValue == null)
-                paramValue = string.Empty;
+            paramValue ??= string.Empty;
 
             // Add/update paramName
             parameters[paramName] = paramValue;
@@ -1013,7 +1010,7 @@ namespace AnalysisManagerBase.JobConfig
                             if (TraceMode)
                             {
                                 ConsoleMsgUtils.ShowDebug(
-                                    "  Ignore {0} since referred to by a recent task info file",workDir.Name);
+                                    "  Ignore {0} since referred to by a recent task info file", workDir.Name);
                             }
                             // This work dir is active; ignore it
                             continue;
@@ -1754,11 +1751,9 @@ namespace AnalysisManagerBase.JobConfig
         {
             var compCode = (int)closeOut;
 
-            if (compMsg == null)
-                compMsg = string.Empty;
+            compMsg ??= string.Empty;
 
-            if (evalMsg == null)
-                evalMsg = string.Empty;
+            evalMsg ??= string.Empty;
 
             if (TaskClosed && Global.OfflineMode)
             {
@@ -1905,11 +1900,9 @@ namespace AnalysisManagerBase.JobConfig
                 throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
             }
 
-            if (compMsg == null)
-                compMsg = string.Empty;
+            compMsg ??= string.Empty;
 
-            if (evalMsg == null)
-                evalMsg = string.Empty;
+            evalMsg ??= string.Empty;
 
             // Setup for execution of stored procedure SetStepTaskComplete
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);

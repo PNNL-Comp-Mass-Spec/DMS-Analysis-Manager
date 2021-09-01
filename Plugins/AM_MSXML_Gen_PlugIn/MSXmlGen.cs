@@ -212,8 +212,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             ProgRunnerStarting?.Invoke(mProgramPath + arguments);
 
-            if (ConsoleOutputSuffix == null)
-                ConsoleOutputSuffix = string.Empty;
+            ConsoleOutputSuffix ??= string.Empty;
 
             ConsoleOutputFileName = Path.GetFileNameWithoutExtension(mProgramPath) + "_ConsoleOutput" + ConsoleOutputSuffix + ".txt";
 
