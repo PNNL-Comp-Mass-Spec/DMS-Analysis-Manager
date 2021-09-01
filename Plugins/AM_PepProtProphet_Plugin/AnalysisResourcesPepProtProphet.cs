@@ -139,13 +139,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return datasetCopyResult;
                 }
 
-                if (dataPackageID > 0)
+                if (dataPackageID > 0 && options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
-                    // Look for a file named AliasNames.txt in the data package directory
-                    // If found, copy it locally
-                    // If not found, it will be auto-generated during the LabelQuant step
+                    var copyResultCode = RetrieveAliasNameFiles(dataPackageID);
 
-                    // ToDo: base.Retrieve
+                    if (copyResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                        return copyResultCode;
                 }
 
                 currentTask = "GetPepXMLFiles";
@@ -382,13 +381,56 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                options.LoadMSFraggerOptions(paramFilePath);
-                return true;
+                return options.LoadMSFraggerOptions(paramFilePath);
             }
             catch (Exception ex)
             {
                 LogError("Error in LoadMSFraggerOptions", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Look for AliasName text files in the data package directory
+        /// If found, copy locally
+        /// If not found, alias name file(s) will be auto-generated during the LabelQuant step
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// The data package can either have a single file named AliasNames.txt that is used for all experiment groups
+        /// </para>
+        /// <para>
+        /// Or it can have a separate alias name file for each experiment group. For example, AliasNames_CohortA.txt
+        /// </para>
+        /// </remarks>
+        /// <param name="dataPackageId"></param>
+        private CloseOutType RetrieveAliasNameFiles(int dataPackageId)
+        {
+            try
+            {
+                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATA_PACKAGE_PATH);
+
+                if (string.IsNullOrEmpty(dataPackagePath))
+                {
+                    LogError("DataPackagePath job parameter is empty; unable to look for file AliasNames.txt");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                var dataPackageDirectory = new DirectoryInfo(dataPackagePath);
+
+                foreach (var aliasNameFile in dataPackageDirectory.GetFiles("AliasName*.txt"))
+                {
+                    LogDebug(string.Format("Copying {0} to the working directory", aliasNameFile));
+                    var targetFilePath = Path.Combine(mWorkDir, aliasNameFile.Name);
+                    aliasNameFile.CopyTo(targetFilePath);
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Error copying AliasName files for data package {0} in RetrieveAliasNameFiles", dataPackageId), ex);
+                return CloseOutType.CLOSEOUT_FAILED;
             }
         }
 
