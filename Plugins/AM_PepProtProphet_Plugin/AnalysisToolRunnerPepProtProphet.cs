@@ -2094,7 +2094,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Closed search, with TMT or iTRAQ:
                 // --maxppmdiff 2000000 --minprob 0.9 --output combined
 
-                arguments.Append("--maxppmdiff 2000000");
+                arguments.Append("proteinprophet --maxppmdiff 2000000");
 
                 if (options.ReporterIonMode != ReporterIonModes.Disabled && !options.OpenSearch)
                 {
@@ -2306,7 +2306,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable once ConvertToConstant.Local
-                    var arguments = "philosopher.exe report";
+                    var arguments = "report";
 
                     var success = RunPhilosopher(PhilosopherToolType.GenerateReport, arguments, "generate report files", experimentGroupDirectory.FullName);
 
@@ -2371,7 +2371,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --mapmods");
                     }
 
-                    arguments.Append("--tag XXX_");
+                    arguments.Append(" --tag XXX_");
 
                     arguments.AppendFormat(" --pepxml {0}", experimentGroupDirectory.FullName);
 
