@@ -2019,6 +2019,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mCmdRunner.MonitorInterval = GetMonitoringInterval(toolType);
                 mCmdRunnerMode = CmdRunnerModes.Philosopher;
 
+                if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
+                {
+                    // Peptide prophet reports numerous warnings via the console error stream; ignore them
+                    mCmdRunner.RaiseConsoleErrorEvents = false;
+                }
+
                 LogDebug(mPhilosopherProgLoc + " " + arguments);
 
                 // Start the program and wait for it to finish
@@ -2032,6 +2038,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var currentStep = GetCurrentPhilosopherToolDescription(toolType);
                 UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep, toolType);
+
+                if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
+                {
+                    mCmdRunner.RaiseConsoleErrorEvents = true;
+                }
 
                 if (!processingSuccess)
                 {
