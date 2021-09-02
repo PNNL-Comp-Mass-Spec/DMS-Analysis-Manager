@@ -2030,8 +2030,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
-                var currentStep = GetCurrentPhilosopherToolDescription();
-                UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+                var currentStep = GetCurrentPhilosopherToolDescription(toolType);
+                UpdateCombinedPhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep, toolType);
 
                 if (!processingSuccess)
                 {
@@ -2512,7 +2512,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName, string currentStep)
+        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName, string currentStep, PhilosopherToolType currentTool = PhilosopherToolType.Undefined)
         {
             try
             {
@@ -2571,9 +2571,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PERCOLATOR_CONSOLE_OUTPUT_COMBINED, currentStep);
         }
 
-        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep)
+        private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep, PhilosopherToolType toolType)
         {
-            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep);
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep, toolType);
         }
 
         /// <summary>
