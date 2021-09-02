@@ -31,6 +31,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public string PhilosopherVersion { get; private set; }
 
         /// <summary>
+        /// RegEx for extracting the Philosopher version
+        /// </summary>
+        private Regex PhilosopherVersionMatcher { get; } = new("INFO.+version=(?<Version>[^ ]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        /// <summary>
         /// This even is raised when an error occurs, but we don't want AnalysisToolRunnerPepProtProphet to update mMessage
         /// </summary>
         public event StatusEventEventHandler ErrorNoMessageUpdateEvent;
@@ -142,7 +147,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Example Console output when initializing the workspace
             // ----------------------------------------------------
 
-            // INFO[17:45:51] Executing Workspace  v3.4.13
+            // INFO[17:45:51] Executing Workspace  v4.0.0
             // INFO[17:45:51] Removing workspace
             // INFO[17:45:51] Done
 
@@ -213,11 +218,31 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 ConsoleOutputErrorMsg = string.Empty;
 
-                var versionMatcher = new Regex("INFO.+Executing [^ ]+ +(?<Version>v[^ ]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
                 if (DebugLevel >= 4)
                 {
                     OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFilePath, currentPhilosopherTool));
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLineWithColor = reader.ReadLine() ?? string.Empty;
+
+                    var dataLine = ColorTagMatcher.Replace(dataLineWithColor, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (toolType == AnalysisToolRunnerPepProtProphet.PhilosopherToolType.ShowVersion)
+                    {
+                        var match = PhilosopherVersionMatcher.Match(dataLine);
+                        if (match.Success)
+                        {
+                            PhilosopherVersion = match.Groups["Version"].ToString();
+                        }
+                    }
+
                 }
             }
             catch (Exception ex)

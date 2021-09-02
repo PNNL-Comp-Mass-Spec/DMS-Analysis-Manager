@@ -88,18 +88,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Philosopher tool type
         /// </summary>
-        private enum PhilosopherToolType
+        internal enum PhilosopherToolType
         {
             Undefined = 0,
-            WorkspaceManager = 1,
-            PeptideProphet = 2,
-            ProteinProphet = 3,
-            AnnotateDatabase = 4,
-            ResultsFilter = 5,
-            FreeQuant = 6,
-            LabelQuant = 7,
-            GenerateReport = 8,
-            Abacus = 9
+            ShowVersion = 1,
+            WorkspaceManager = 2,
+            PeptideProphet = 3,
+            ProteinProphet = 4,
+            AnnotateDatabase = 5,
+            ResultsFilter = 6,
+            FreeQuant = 7,
+            LabelQuant = 8,
+            GenerateReport = 9,
+            Abacus = 10
         }
 
         /// <summary>
@@ -139,12 +140,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             IonQuant = 7
         }
 
-        private bool mToolVersionWritten;
-
         private string mFastaFilePath;
-
-        // Populate this with a tool version reported to the console
-        private string mPhilosopherVersion;
 
         private string mPercolatorProgLoc;
         private string mPhilosopherProgLoc;
@@ -207,9 +203,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the Philosopher version info in the database after the first line is written to file Philosopher_ConsoleOutput.txt
-                mPhilosopherVersion = string.Empty;
-
                 mConsoleOutputFileParser = new ConsoleOutputFileParser(mDebugLevel);
                 RegisterEvents(mConsoleOutputFileParser);
 
@@ -262,6 +255,28 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private bool DeterminePhilosopherVersion()
+        {
+            const PhilosopherToolType toolType = PhilosopherToolType.ShowVersion;
+
+            var success = RunPhilosopher(toolType, "version", "get the version");
+            if (!success)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(mConsoleOutputFileParser.PhilosopherVersion))
+            {
+                mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT), toolType);
+            }
+
+            if (!string.IsNullOrWhiteSpace(mConsoleOutputFileParser.PhilosopherVersion))
+            {
+                return StoreToolVersionInfo();
+            }
+
+            LogError("Unable to determine the version of Philosopher");
+            return false;
+        }
+
         private CloseOutType ExecuteWorkflow()
         {
             try
@@ -270,6 +285,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
                 var philosopherExe = new FileInfo(mPhilosopherProgLoc);
+
+                // Determine the version of Philosopher
+                var versionSuccess = DeterminePhilosopherVersion();
+
+                if (!versionSuccess)
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 var moveFilesSuccess = OrganizePepXmlAndPinFiles(
                     out var dataPackageInfo,
@@ -635,11 +656,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private string GetCurrentPhilosopherToolDescription()
+        internal static string GetCurrentPhilosopherToolDescription(PhilosopherToolType currentTool)
         {
-            return mCurrentPhilosopherTool switch
+            return currentTool switch
             {
                 PhilosopherToolType.Undefined => "Undefined",
+                PhilosopherToolType.ShowVersion => "Get Version",
                 PhilosopherToolType.WorkspaceManager => "Workspace Manager",
                 PhilosopherToolType.PeptideProphet => "Peptide Prophet",
                 PhilosopherToolType.ProteinProphet => "Protein Prophet",
@@ -913,6 +935,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
+                const PhilosopherToolType toolType = PhilosopherToolType.WorkspaceManager;
+
                 if (!directory.Exists)
                 {
                     if (!createDirectoryIfMissing)
@@ -928,12 +952,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var arguments = "workspace --init --nocheck";
 
                 // Run the workspace init command
-                var success = RunPhilosopher(PhilosopherToolType.WorkspaceManager, arguments, "initialize the workspace", directory.FullName);
-
-                if (string.IsNullOrWhiteSpace(mPhilosopherVersion))
-                {
-                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT), GetCurrentPhilosopherToolDescription());
-                }
+                var success = RunPhilosopher(toolType, arguments, "initialize the workspace", directory.FullName);
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2431,7 +2450,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(mPhilosopherVersion, toolFiles);
+                return SetStepTaskToolVersion(mConsoleOutputFileParser.PhilosopherVersion, toolFiles);
             }
             catch (Exception ex)
             {
@@ -2456,10 +2475,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(combinedFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
 
-                writer.WriteLine();
-                writer.WriteLine();
-                writer.WriteLine("### {0} ### ", currentStep);
-                writer.WriteLine();
+                if (currentTool != PhilosopherToolType.ShowVersion)
+                {
+                    writer.WriteLine();
+                    writer.WriteLine();
+                    writer.WriteLine("### {0} ### ", currentStep);
+                    writer.WriteLine();
+                }
 
                 while (!reader.EndOfStream)
                 {
@@ -2869,11 +2891,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 default:
                     throw new ArgumentOutOfRangeException();
-            }
-
-            if (!mToolVersionWritten && mCmdRunnerMode == CmdRunnerModes.Philosopher && !string.IsNullOrWhiteSpace(mPhilosopherVersion))
-            {
-                mToolVersionWritten = StoreToolVersionInfo();
             }
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
