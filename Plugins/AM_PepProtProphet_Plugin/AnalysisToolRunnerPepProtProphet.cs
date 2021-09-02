@@ -659,7 +659,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 try
                 {
-                    directory.Delete();
+                    directory.Delete(true);
                 }
                 catch (Exception ex)
                 {
