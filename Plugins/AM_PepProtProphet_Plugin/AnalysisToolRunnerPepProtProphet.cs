@@ -2379,7 +2379,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         // ReSharper disable StringLiteralTypo
 
-                        arguments.AppendFormat(" --protxml {0}", Path.Combine(experimentGroupDirectory.FullName, "combined.prot.xml"));
+                        arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkDir, "combined.prot.xml"));
 
                         // Each invocation of filter uses the same razor.bin file
                         arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
@@ -2789,7 +2789,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         "-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1} {2}",
                         libDirectory.FullName, pepXmlFile.FullName, datasetFile.FullName);
 
-                    mCmdRunner.WorkDir = workingDirectory.FullName;
+                    mCmdRunner.WorkDir = workingDirectory.Parent.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
                     mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                     mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
