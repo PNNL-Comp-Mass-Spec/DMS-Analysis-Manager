@@ -161,6 +161,12 @@ namespace AnalysisManagerBase.AnalysisTool
         public int ExitCode { get; private set; }
 
         /// <summary>
+        /// When true, any messages written to the error stream by the program will be reported via event <see cref="ProgRunner_ConsoleErrorEvent"/>
+        /// When false, error messages will be appended to mCachedConsoleErrors, but not reported via an event
+        /// </summary>
+        public bool RaiseConsoleErrorEvents { get; set; } = true;
+
+        /// <summary>
         /// Maximum amount of time (seconds) that the program will be allowed to run; 0 if allowed to run indefinitely
         /// </summary>
         public int MaxRuntimeSeconds { get; private set; }
@@ -562,7 +568,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
         private void ProgRunner_ConsoleErrorEvent(string newText)
         {
-            OnErrorEvent("Console error: " + newText);
+            if (RaiseConsoleErrorEvents)
+            {
+                OnErrorEvent("Console error: " + newText);
+            }
 
             if (string.IsNullOrWhiteSpace(mCachedConsoleErrors))
             {
