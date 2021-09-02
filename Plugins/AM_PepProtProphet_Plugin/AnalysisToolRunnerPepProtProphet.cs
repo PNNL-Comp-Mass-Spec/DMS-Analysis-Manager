@@ -715,7 +715,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             foreach (var item in dataPackageInfo.Datasets)
             {
                 var datasetId = item.Key;
-
                 var experimentGroup = dataPackageInfo.DatasetExperimentGroup[datasetId];
 
                 if (string.IsNullOrWhiteSpace(experimentGroup) && dataPackageInfo.Datasets.Count == 1)
@@ -889,7 +888,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Initialize the workspace directories for PeptideProphet (separate subdirectory for each dataset)
             foreach (var item in datasetIDsByExperimentGroup)
             {
-                var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+                var experimentGroupName = item.Key;
+                var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                 // Create a separate temp directory for each dataset
                 foreach (var datasetId in item.Value)
@@ -1287,7 +1287,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+                    var experimentGroupName = item.Key;
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                     foreach (var datasetId in item.Value)
                     {
@@ -1799,7 +1800,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+                    var experimentGroupName = item.Key;
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                     // ReSharper disable StringLiteralTypo
 
@@ -1874,7 +1876,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+                    var experimentGroupName = item.Key;
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                     LogDebug("Running Percolator in " + experimentGroupDirectory.FullName);
 
@@ -2628,7 +2631,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[item.Key];
+                    var experimentGroupName = item.Key;
+                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
                     var pepXmlFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "interact.pep.xml"));
 
