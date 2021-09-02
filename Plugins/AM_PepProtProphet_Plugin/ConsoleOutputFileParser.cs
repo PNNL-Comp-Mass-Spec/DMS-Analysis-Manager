@@ -15,6 +15,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper restore CommentTypo
 
         /// <summary>
+        /// RegEx for matching color codes that appear in the Philosopher console output file
+        /// </summary>
+        /// <remarks>
+        /// Philosopher colorizes text at the console, resulting in text like the following:
+        /// INFO[15:52:40] Done
+        /// </remarks>
+        public Regex ColorTagMatcher { get; } = new(@"\x1B\[\d+m", RegexOptions.Compiled);
+
+        /// <summary>
         /// Error message from the console output file
         /// </summary>
         public string ConsoleOutputErrorMsg { get; private set; }
@@ -119,7 +128,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent("Parsing file " + consoleOutputFilePath);
+                    OnDebugEvent("Parsing file " + consoleOutputFile.FullName);
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLineWithColor = reader.ReadLine() ?? string.Empty;
+
+                    var dataLine = ColorTagMatcher.Replace(dataLineWithColor, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
                 }
             }
             catch (Exception ex)

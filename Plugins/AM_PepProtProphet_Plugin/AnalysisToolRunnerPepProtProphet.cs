@@ -2487,9 +2487,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     var dataLine = reader.ReadLine();
                     if (string.IsNullOrWhiteSpace(dataLine))
+                    {
                         writer.WriteLine();
-                    else
+                        continue;
+                    }
+
+                    if (currentTool == PhilosopherToolType.Undefined)
+                    {
                         writer.WriteLine(dataLine);
+                    }
+
+                    // Remove any color tags
+                    var cleanedLine = mConsoleOutputFileParser.ColorTagMatcher.Replace(dataLine, string.Empty);
+                    writer.WriteLine(cleanedLine);
                 }
             }
             catch (Exception ex)
