@@ -431,8 +431,8 @@ namespace AnalysisManagerBase.JobConfig
                         {
                             // Note: the TopFD plugin expects the tool version to be in the format
                             // program.exe: yyyy-MM-dd hh:mm:ss tt
-                            var toolFileNameAndDate = toolFile.Name + ": " +
-                                                      toolFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            var toolFileNameAndDate = string.Format("{0}: {1}",
+                                toolFile.Name, toolFile.LastWriteTime.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                             exeInfo = Global.AppendToComment(exeInfo, toolFileNameAndDate);
 
