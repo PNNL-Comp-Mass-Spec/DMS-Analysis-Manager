@@ -58,6 +58,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public const int CRYSTALC_MEMORY_SIZE_GB = 14;
 
         /// <summary>
+        /// Interval, in milliseconds, for monitoring programs run via <see cref="mCmdRunner"/>
+        /// </summary>
+        private const int DEFAULT_MONITOR_INTERVAL_MSEC = 2000;
+
+        /// <summary>
         /// Reserve 4 GB when running IonQuant with Java
         /// </summary>
         public const int ION_QUANT_MEMORY_SIZE_GB = 4;
@@ -281,8 +286,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
-                var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT),
+                    MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC
+                };
+                RegisterEvents(mCmdRunner);
+                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 var philosopherExe = new FileInfo(mPhilosopherProgLoc);
 
@@ -302,6 +316,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return moveFilesSuccess;
                 }
 
+                var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
+                var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+
                 var datasetCount = datasetIDsByExperimentGroup.Sum(item => item.Value.Count);
 
                 var optionsLoaded = LoadMSFraggerOptions(philosopherExe, datasetCount, paramFilePath, out var options);
@@ -310,17 +327,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-
-                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
-                {
-                    CreateNoWindow = true,
-                    CacheStandardOutput = true,
-                    EchoOutputToConsole = true,
-                    WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT)
-                };
-                RegisterEvents(mCmdRunner);
-                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 mProgress = (int)ProgressPercentValues.ProcessingStarted;
 
@@ -524,6 +530,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                 mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
@@ -736,6 +743,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             return datasetIDsByExperimentGroup;
+        }
+
+        /// <summary>
+        /// Get the interval, in milliseconds, for monitoring programs run via <see cref="mCmdRunner"/>
+        /// </summary>
+        /// <remarks>
+        /// Monitor every 500 msec if determining the version or managing the workspace
+        /// Otherwise, monitor every 2000 msec
+        /// </remarks>
+        /// <param name="toolType"></param>
+        private int GetMonitoringInterval(PhilosopherToolType toolType)
+        {
+            return toolType is PhilosopherToolType.ShowVersion or PhilosopherToolType.WorkspaceManager
+                ? 500
+                : DEFAULT_MONITOR_INTERVAL_MSEC;
         }
 
         /// <summary>
@@ -1291,6 +1313,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
                         mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                        mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                         mCmdRunnerMode = CmdRunnerModes.CrystalC;
 
                         LogDebug(options.JavaProgLoc + " " + arguments);
@@ -1553,6 +1576,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCmdRunner.WorkDir = mWorkDir;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                 mCmdRunnerMode = CmdRunnerModes.IonQuant;
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
@@ -1922,6 +1946,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PERCOLATOR_CONSOLE_OUTPUT);
+                mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                 mCmdRunnerMode = CmdRunnerModes.Percolator;
 
                 LogDebug(mPercolatorProgLoc + " " + arguments);
@@ -1976,6 +2001,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCmdRunner.WorkDir = string.IsNullOrWhiteSpace(workingDirectoryPath) ? mWorkDir : workingDirectoryPath;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT);
+                mCmdRunner.MonitorInterval = GetMonitoringInterval(toolType);
                 mCmdRunnerMode = CmdRunnerModes.Philosopher;
 
                 LogDebug(mPhilosopherProgLoc + " " + arguments);
@@ -2203,6 +2229,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCmdRunner.WorkDir = mWorkDir;
                 mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, PTM_SHEPHERD_CONSOLE_OUTPUT);
+                mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;    // GetMonitoringInterval(toolType);
                 mCmdRunnerMode = CmdRunnerModes.PtmShepherd;
 
                 LogDebug(options.JavaProgLoc + " " + arguments);
@@ -2403,6 +2430,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     mCmdRunner.WorkDir = experimentGroup.Value.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                     mCmdRunnerMode = CmdRunnerModes.PercolatorOutputToPepXml;
 
                     arguments.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
@@ -2598,6 +2626,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     mCmdRunner.WorkDir = experimentGroupDirectory.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                     mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
@@ -2717,6 +2746,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     mCmdRunner.WorkDir = workingDirectory.FullName;
                     mCmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, JAVA_CONSOLE_OUTPUT);
+                    mCmdRunner.MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC;
                     mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
