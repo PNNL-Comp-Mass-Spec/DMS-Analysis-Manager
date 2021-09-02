@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using PRISM;
 
 namespace AnalysisManagerPepProtProphetPlugIn
@@ -19,7 +20,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <remarks>
         /// Philosopher colorizes text at the console, resulting in text like the following:
-        /// INFO[15:52:40] Done
+        /// [36mINFO[0m[15:52:40] Done
         /// </remarks>
         public Regex ColorTagMatcher { get; } = new(@"\x1B\[\d+m", RegexOptions.Compiled);
 
@@ -75,7 +76,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+
+                if (!consoleOutputFile.Exists)
                 {
                     if (DebugLevel >= 4)
                     {
@@ -85,11 +88,37 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return;
                 }
 
-                ConsoleOutputErrorMsg = string.Empty;
-
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFilePath, cmdRunnerMode));
+                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFile.FullName, cmdRunnerMode));
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine() ?? string.Empty;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // ToDo: customize the check for errors
+
+                    // ReSharper disable once InvertIf
+                    if (dataLine.StartsWith("ERROR") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    {
+                        // Fatal error
+                        if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
+                        {
+                            ConsoleOutputErrorMsg = string.Format("Error running {0}: {1}", cmdRunnerMode, dataLine);
+                            OnWarningEvent(ConsoleOutputErrorMsg);
+                        }
+                        else
+                        {
+                            ConsoleOutputErrorMsg += "; " + dataLine;
+                            OnWarningEvent(dataLine);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -114,7 +143,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+
+                if (!consoleOutputFile.Exists)
                 {
                     if (DebugLevel >= 4)
                     {
@@ -142,6 +173,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
+                    // ToDo: customize the check for errors
+
+                    // ReSharper disable once InvertIf
+                    if (dataLine.StartsWith("ERROR") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    {
+                        // Fatal error
+                        if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
+                        {
+                            ConsoleOutputErrorMsg = string.Format("Error running {0}: {1}", "Percolator", dataLine);
+                            OnWarningEvent(ConsoleOutputErrorMsg);
+                        }
+                        else
+                        {
+                            ConsoleOutputErrorMsg += "; " + dataLine;
+                            OnWarningEvent(dataLine);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -158,10 +206,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the Philosopher console output file to determine the Philosopher version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        /// <param name="currentPhilosopherTool"></param>
+        /// <param name="toolType"></param>
         public void ParsePhilosopherConsoleOutputFile(
             string consoleOutputFilePath,
-            string currentPhilosopherTool)
+            AnalysisToolRunnerPepProtProphet.PhilosopherToolType toolType)
         {
             // ReSharper disable CommentTypo
 
@@ -228,7 +276,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                if (!File.Exists(consoleOutputFilePath))
+                var currentPhilosopherTool = AnalysisToolRunnerPepProtProphet.GetCurrentPhilosopherToolDescription(toolType);
+
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+
+                if (!consoleOutputFile.Exists)
                 {
                     if (DebugLevel >= 4)
                     {
@@ -265,6 +317,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
                     }
 
+                    // ReSharper disable once InvertIf
+                    // ReSharper disable once StringLiteralTypo
+                    if (dataLine.StartsWith("FATA") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    {
+                        // Fatal error
+                        if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
+                        {
+                            ConsoleOutputErrorMsg = string.Format("Error running {0}: {1}", "Philosopher", dataLine);
+                            OnWarningEvent(ConsoleOutputErrorMsg);
+                        }
+                        else
+                        {
+                            ConsoleOutputErrorMsg += "; " + dataLine;
+                            OnWarningEvent(dataLine);
+                        }
+                    }
                 }
             }
             catch (Exception ex)

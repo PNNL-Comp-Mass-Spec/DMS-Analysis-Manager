@@ -2893,7 +2893,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     break;
 
                 case CmdRunnerModes.Philosopher:
-                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, GetCurrentPhilosopherToolDescription());
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCurrentPhilosopherTool);
                     break;
 
                 case CmdRunnerModes.Undefined:
