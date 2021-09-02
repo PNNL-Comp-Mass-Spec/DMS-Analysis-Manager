@@ -697,7 +697,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="experimentGroupCount"></param>
         private string GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
         {
-            return experimentGroupCount <= 1 ? mWorkDir : Path.Combine(mWorkDir, experimentGroupName);
+            if (experimentGroupCount <= 1)
+                return mWorkDir;
+
+            foreach (var invalidChar in Path.GetInvalidPathChars())
+            {
+                if (experimentGroupName.Contains(invalidChar))
+                    experimentGroupName = experimentGroupName.Replace(invalidChar, '_');
+            }
+
+            return Path.Combine(mWorkDir, experimentGroupName);
         }
 
         /// <summary>
