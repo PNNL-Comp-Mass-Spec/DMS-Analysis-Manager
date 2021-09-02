@@ -539,6 +539,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
                 var currentStep = "PercolatorOutputToPepXML for " + datasetName;
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
@@ -1320,6 +1325,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                        if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                        {
+                            LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                        }
+
                         var currentStep = "Crystal-C for " + pepXmlFile.Name;
                         UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
@@ -1582,6 +1592,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug(options.JavaProgLoc + " " + arguments);
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
 
                 var currentStep = "IonQuant";
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
@@ -2236,6 +2251,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
                 if (processingSuccess)
                 {
                     return true;
@@ -2440,6 +2460,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
                 var currentStep = "TMT-Integrator";
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
@@ -2633,6 +2658,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                    if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                    {
+                        LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                    }
+
                     UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                     if (!processingSuccess)
@@ -2752,6 +2782,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogDebug(options.JavaProgLoc + " " + arguments);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                    if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                    {
+                        LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                    }
 
                     UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
