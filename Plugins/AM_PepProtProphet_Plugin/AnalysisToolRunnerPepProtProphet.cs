@@ -1046,15 +1046,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 const PhilosopherToolType toolType = PhilosopherToolType.WorkspaceManager;
 
-                if (!directory.Exists)
+                if (!targetDirectory.Exists)
                 {
                     if (!createDirectoryIfMissing)
                     {
-                        LogError("Cannot initialize the Philosopher workspace; directory not found: " + directory.FullName);
+                        LogError("Cannot initialize the Philosopher workspace; directory not found: " + targetDirectory.FullName);
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    directory.Create();
+                    targetDirectory.Create();
                 }
 
                 // ReSharper disable once StringLiteralTypo
