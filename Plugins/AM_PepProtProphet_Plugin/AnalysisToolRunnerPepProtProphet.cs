@@ -140,9 +140,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             CrystalC = 2,
             Percolator = 3,
             PercolatorOutputToPepXml = 4,
-            PtmShepherd = 5,
-            RewritePepXml = 6,
-            IonQuant = 7
+            TmtIntegrator = 5,
+            PtmShepherd = 6,
+            RewritePepXml = 7,
+            IonQuant = 8
         }
 
         private string mFastaFilePath;
@@ -1298,6 +1299,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 case CmdRunnerModes.CrystalC:
                 case CmdRunnerModes.IonQuant:
                 case CmdRunnerModes.PercolatorOutputToPepXml:
+                case CmdRunnerModes.TmtIntegrator:
                 case CmdRunnerModes.PtmShepherd:
                 case CmdRunnerModes.RewritePepXml:
                     mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCmdRunnerMode);
