@@ -257,6 +257,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Skip these console output files since we created combined console output files
+                mJobParams.AddResultFileToSkip(JAVA_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip(PERCOLATOR_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip(PHILOSOPHER_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip("reprint.int.tsv");
+                mJobParams.AddResultFileToSkip("reprint.spc.tsv");
+                mJobParams.AddResultFileToSkip("protein.fas");
+
                 var success = CopyResultsToTransferDirectory();
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -569,6 +577,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
+                    mJobParams.AddResultFileToSkip(string.Format("interact-{0}.pep.xml", datasetName));
                     return true;
                 }
 
@@ -1721,6 +1730,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
 
                     arguments.AppendFormat("--multidir . --filelist {0}", fileListFile.FullName);
+
+                    mJobParams.AddResultFileToSkip(fileListFile.Name);
                 }
 
                 // ReSharper restore StringLiteralTypo
@@ -2316,6 +2327,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
 
                     arguments.AppendFormat(" {0}", fileListFile.FullName);
+
+                    mJobParams.AddResultFileToSkip(fileListFile.Name);
                 }
                 else
                 {
