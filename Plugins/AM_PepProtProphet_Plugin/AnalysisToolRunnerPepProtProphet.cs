@@ -153,6 +153,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private ConsoleOutputFileParser mConsoleOutputFileParser;
 
+        /// <summary>
+        /// This is set to false before each call to mCmdRunner.RunProgram
+        /// It is set to true by ParseConsoleOutputFile
+        /// </summary>
+        public bool mConsoleOutputFileParsed;
+
         private PhilosopherToolType mCurrentPhilosopherTool;
 
         private DateTime mLastConsoleOutputParse;
@@ -538,6 +544,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
@@ -1365,6 +1376,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                        if (!mConsoleOutputFileParsed)
+                        {
+                            ParseConsoleOutputFile();
+                        }
+
                         if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                         {
                             LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
@@ -1632,6 +1648,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug(options.JavaProgLoc + " " + arguments);
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
@@ -2012,6 +2033,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(mPercolatorProgLoc, arguments, "Percolator", true);
 
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
+
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
@@ -2072,6 +2098,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(mPhilosopherProgLoc, arguments, "Philosopher", true);
+
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
 
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
@@ -2304,6 +2335,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
+
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
@@ -2513,6 +2549,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
+
                 if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                 {
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
@@ -2712,6 +2753,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
+                    if (!mConsoleOutputFileParsed)
+                    {
+                        ParseConsoleOutputFile();
+                    }
+
                     if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                     {
                         LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
@@ -2834,8 +2880,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mCmdRunnerMode = CmdRunnerModes.RewritePepXml;
 
                     LogDebug(options.JavaProgLoc + " " + arguments);
+                    LogCommandToExecute(workingDirectory.Parent, options.JavaProgLoc, arguments, options.WorkingDirectoryPadWidth);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                    if (!mConsoleOutputFileParsed)
+                    {
+                        ParseConsoleOutputFile();
+                    }
 
                     if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
                     {
