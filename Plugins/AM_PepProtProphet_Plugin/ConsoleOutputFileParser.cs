@@ -317,6 +317,32 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
                     }
 
+                    // ReSharper disable once StringLiteralTypo
+                    if (dataLine.StartsWith("ERRO") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    {
+                        var removeMatcher = new Regex(@"remove .+\.exe", RegexOptions.IgnoreCase);
+
+                        if (removeMatcher.IsMatch(dataLine))
+                        {
+                            // The message is similar to the following, and can be ignored
+                            // remove C:\Users\D3L243\AppData\Local\Temp\8c5fd63b-9cb8-4fdb-ab2a-62cef7285253\DatabaseParser.exe: The process cannot access the file because it is being used by another process.
+                        }
+                        else
+                        {
+                            // Error
+                            if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
+                            {
+                                ConsoleOutputErrorMsg = string.Format("Error running {0}: {1}", "Philosopher", dataLine);
+                                OnWarningEvent(ConsoleOutputErrorMsg);
+                            }
+                            else
+                            {
+                                ConsoleOutputErrorMsg += "; " + dataLine;
+                                OnWarningEvent(dataLine);
+                            }
+                        }
+                    }
+
                     // ReSharper disable once InvertIf
                     // ReSharper disable once StringLiteralTypo
                     if (dataLine.StartsWith("FATA") && !ConsoleOutputErrorMsg.Contains(dataLine))
