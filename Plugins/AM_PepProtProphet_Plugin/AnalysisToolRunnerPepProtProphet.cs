@@ -315,7 +315,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var moveFilesSuccess = OrganizePepXmlAndPinFiles(
                     out var dataPackageInfo,
                     out var datasetIDsByExperimentGroup,
-                    out var experimentGroupWorkingDirectories);
+                    out var experimentGroupWorkingDirectories,
+                    out var workingDirectoryPadWidth);
 
                 if (moveFilesSuccess != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -333,6 +334,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                options.WorkingDirectoryPadWidth = workingDirectoryPadWidth;
 
                 mProgress = (int)ProgressPercentValues.ProcessingStarted;
 
@@ -402,7 +405,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     usedProteinProphet = false;
                 }
 
-                var dbAnnotateSuccess = RunDatabaseAnnotation(experimentGroupWorkingDirectories);
+                var dbAnnotateSuccess = RunDatabaseAnnotation(experimentGroupWorkingDirectories, options);
                 if (!dbAnnotateSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -419,7 +422,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Always run FreeQuant when we have reporter ions
                     // If no reporter ions, either run FreeQuant or run IonQuant
 
-                    var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories);
+                    var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories, options);
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -435,7 +438,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
-                var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories);
+                var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
                 if (!reportSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -501,9 +504,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetName"></param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
-            FragPipeOptions options,
             FileSystemInfo fragPipeLibDirectory,
-            FileSystemInfo experimentGroupDirectory, string datasetName)
+            FileSystemInfo experimentGroupDirectory,
+            string datasetName,
+            FragPipeOptions options)
         {
             try
             {
@@ -770,6 +774,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return datasetIDsByExperimentGroup;
         }
 
+        private static int GetLongestWorkingDirectoryName(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            return GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories.Values.ToList());
+        }
+
+        private static int GetLongestWorkingDirectoryName(IReadOnlyCollection<DirectoryInfo> workingDirectories)
+        {
+            return workingDirectories.Count == 0
+                ? 0
+                : workingDirectories.Max(item => item.FullName.Length);
+        }
+
         /// <summary>
         /// Get the interval, in milliseconds, for monitoring programs run via <see cref="mCmdRunner"/>
         /// </summary>
@@ -928,7 +944,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             var workspaceDirectoryByDatasetId = new Dictionary<int, DirectoryInfo>();
 
-            // Initialize the workspace directories for PeptideProphet (separate subdirectory for each dataset)
+            // Populate a dictionary with the working directories to create
             foreach (var item in datasetIDsByExperimentGroup)
             {
                 var experimentGroupName = item.Key;
@@ -942,10 +958,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var directoryName = string.Format("fragpipe-{0}{1}", datasetName, TEMP_PEP_PROPHET_DIR_SUFFIX);
                     var workingDirectory = new DirectoryInfo(Path.Combine(experimentGroupDirectory.FullName, directoryName));
 
-                    InitializePhilosopherWorkspaceWork(workingDirectory);
-
                     workspaceDirectoryByDatasetId.Add(datasetId, workingDirectory);
                 }
+            }
+
+            var workingDirectoryPadWidth = workspaceDirectoryByDatasetId.Values.Max(item => item.FullName.Length);
+
+            // Initialize the workspace directories for PeptideProphet (separate subdirectory for each dataset)
+            foreach (var workingDirectory in workspaceDirectoryByDatasetId.Values)
+            {
+                InitializePhilosopherWorkspaceWork(workingDirectory, workingDirectoryPadWidth);
             }
 
             return workspaceDirectoryByDatasetId;
@@ -957,12 +979,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <param name="experimentGroupNames"></param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="workingDirectoryPadWidth">Longest directory path in experimentGroupWorkingDirectories</param>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
             SortedSet<string> experimentGroupNames,
-            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            out int workingDirectoryPadWidth)
         {
             experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+            workingDirectoryPadWidth = 0;
 
             try
             {
@@ -970,23 +995,30 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCurrentPhilosopherTool = PhilosopherToolType.WorkspaceManager;
 
-                var workDirSuccess = InitializePhilosopherWorkspaceWork(new DirectoryInfo(mWorkDir), false);
+                var experimentCount = experimentGroupNames.Count;
+
+                // Populate a dictionary with experiment group names and corresponding working directories
+                foreach (var experimentGroupName in experimentGroupNames)
+                {
+                    var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
+
+                    experimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
+                }
+
+                workingDirectoryPadWidth = GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories);
+
+                // Initialize the workspace in the primary working directory
+                var workDirSuccess = InitializePhilosopherWorkspaceWork(mWorkingDirectory, workingDirectoryPadWidth, false);
                 if (workDirSuccess != CloseOutType.CLOSEOUT_SUCCESS)
                     return workDirSuccess;
 
-                var experimentCount = experimentGroupNames.Count;
+                if (experimentCount <= 1)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
 
-                foreach (var experimentGroupName in experimentGroupNames)
+                // Since we have multiple experiment groups, initialize the workspace for each one
+                foreach (var workingDirectory in experimentGroupWorkingDirectories.Values)
                 {
-                    var workingDirectoryPath = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
-                    var workingDirectory = new DirectoryInfo(workingDirectoryPath);
-
-                    experimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
-
-                    if (experimentCount == 1)
-                        continue;
-
-                    var success = InitializePhilosopherWorkspaceWork(workingDirectory);
+                    var success = InitializePhilosopherWorkspaceWork(workingDirectory, workingDirectoryPadWidth);
 
                     if (success != CloseOutType.CLOSEOUT_SUCCESS)
                         return success;
@@ -1001,7 +1033,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private CloseOutType InitializePhilosopherWorkspaceWork(DirectoryInfo directory, bool createDirectoryIfMissing = true)
+        private CloseOutType InitializePhilosopherWorkspaceWork(
+            DirectoryInfo targetDirectory,
+            int workingDirectoryPadWidth,
+            bool createDirectoryIfMissing = true)
         {
             try
             {
@@ -1022,7 +1057,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var arguments = "workspace --init --nocheck";
 
                 // Run the workspace init command
-                var success = RunPhilosopher(toolType, arguments, "initialize the workspace", directory.FullName);
+                var success = RunPhilosopher(toolType, arguments, "initialize the workspace", targetDirectory, workingDirectoryPadWidth);
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1200,10 +1235,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
         /// </param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="workingDirectoryPadWidth">Longest directory path in experimentGroupWorkingDirectories</param>
         private CloseOutType OrganizePepXmlAndPinFiles(
             out DataPackageInfo dataPackageInfo,
             out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            out int workingDirectoryPadWidth)
         {
             // Keys in this dictionary are experiment group names, values are the working directory to use
             experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
@@ -1228,7 +1265,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 experimentGroupNames.Add(item);
             }
 
-            var initResult = InitializePhilosopherWorkspace(experimentGroupNames, out experimentGroupWorkingDirectories);
+            var initResult = InitializePhilosopherWorkspace(
+                experimentGroupNames,
+                out experimentGroupWorkingDirectories,
+                out workingDirectoryPadWidth);
+
             if (initResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return initResult;
@@ -1451,14 +1492,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Create a db.bin file in the .meta subdirectory of the working directory and in any experiment directories
         /// </summary>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        private bool RunDatabaseAnnotation(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        /// <param name="options"></param>
+        private bool RunDatabaseAnnotation(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
                 LogDebug("Annotating the FASTA file to create db.bin files", 2);
 
                 // First process the working directory
-                var workDirSuccess = RunDatabaseAnnotation(mWorkDir);
+                var workDirSuccess = RunDatabaseAnnotation(mWorkingDirectory, options.WorkingDirectoryPadWidth);
                 if (!workDirSuccess)
                     return false;
 
@@ -1470,7 +1512,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
-                    var success = RunDatabaseAnnotation(experimentGroupDirectory.FullName);
+                    var success = RunDatabaseAnnotation(experimentGroupDirectory, options.WorkingDirectoryPadWidth);
 
                     if (success)
                         successCount++;
@@ -1488,15 +1530,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create a db.bin file in the .meta subdirectory of the given directory
         /// </summary>
-        /// <param name="workingDirectoryPath"></param>
-        private bool RunDatabaseAnnotation(string workingDirectoryPath)
+        /// <param name="workingDirectory"></param>
+        /// <param name="workingDirectoryPadWidth"></param>
+        private bool RunDatabaseAnnotation(DirectoryInfo workingDirectory, int workingDirectoryPadWidth)
         {
             var arguments = string.Format("database --annotate {0} --prefix XXX_", mFastaFilePath);
 
-            return RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectoryPath);
+            return RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
         }
 
-        private bool RunFreeQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        private bool RunFreeQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -1519,7 +1562,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkDir);
 
-                    var success = RunPhilosopher(PhilosopherToolType.FreeQuant, arguments, "run FreeQuant", experimentGroupDirectory.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.FreeQuant,
+                        arguments,
+                        "run FreeQuant",
+                        experimentGroupDirectory,
+                        options.WorkingDirectoryPadWidth);
 
                     if (success)
                         successCount++;
@@ -1800,7 +1848,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         PhilosopherToolType.LabelQuant,
                         arguments,
                         "run LabelQuant",
-                        experimentGroup.Value.FullName);
+                        experimentGroup.Value,
+                        options.WorkingDirectoryPadWidth);
 
                     if (success)
                         successCount++;
@@ -1842,6 +1891,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     datasetIDsByExperimentGroup,
                     experimentGroupWorkingDirectories);
 
+                var workingDirectoryPadWidth = GetLongestWorkingDirectoryName(workspaceDirectoryByDatasetId.Values);
+
                 // Run Peptide Prophet separately against each dataset
 
                 foreach (var item in workspaceDirectoryByDatasetId)
@@ -1857,7 +1908,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper restore StringLiteralTypo
 
-                    var success = RunPhilosopher(PhilosopherToolType.PeptideProphet, arguments, "run peptide prophet", workingDirectory.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.PeptideProphet,
+                        arguments,
+                        "run peptide prophet",
+                        workingDirectory,
+                        workingDirectoryPadWidth);
 
                     if (!success)
                     {
@@ -1868,7 +1924,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 DeleteTempDirectories(workspaceDirectoryByDatasetId.Values.ToList());
 
-                return UpdateMsMsRunSummaryInPepXmlFiles(dataPackageInfo, workspaceDirectoryByDatasetId, options, out peptideProphetPepXmlFiles);
+                return UpdateMsMsRunSummaryInPepXmlFiles(
+                    dataPackageInfo,
+                    workspaceDirectoryByDatasetId,
+                    options,
+                    out peptideProphetPepXmlFiles);
             }
             catch (Exception ex)
             {
@@ -1920,7 +1980,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.AppendFormat(" {0}", pepXmlFilename);
                     }
 
-                    var success = RunPhilosopher(PhilosopherToolType.PeptideProphet, arguments.ToString(), "run peptide prophet", experimentGroupDirectory.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.PeptideProphet,
+                        arguments.ToString(),
+                        "run peptide prophet",
+                        experimentGroupDirectory,
+                        options.WorkingDirectoryPadWidth);
 
                     if (!success)
                     {
@@ -1976,11 +2041,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                        var percolatorSuccess = RunPercolatorOnDataset(experimentGroupDirectory, datasetName, out var percolatorPsmFiles);
+                        var percolatorSuccess = RunPercolatorOnDataset(
+                            experimentGroupDirectory, datasetName,
+                            options.WorkingDirectoryPadWidth,
+                            out var percolatorPsmFiles);
+
                         if (!percolatorSuccess)
                             continue;
 
-                        var percolatorToPepXMLSuccess = ConvertPercolatorOutputToPepXML(options, fragPipeLibDirectory, experimentGroupDirectory, datasetName);
+                        var percolatorToPepXMLSuccess = ConvertPercolatorOutputToPepXML(
+                            fragPipeLibDirectory,
+                            experimentGroupDirectory, datasetName,
+                            options);
+
                         if (!percolatorToPepXMLSuccess)
                             continue;
 
@@ -2016,7 +2089,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunPercolatorOnDataset(FileSystemInfo experimentGroupDirectory, string datasetName, out List<FileInfo> percolatorPsmFiles)
+        private bool RunPercolatorOnDataset(
+            FileSystemInfo experimentGroupDirectory,
+            string datasetName,
+            int workingDirectoryPadWidth,
+            out List<FileInfo> percolatorPsmFiles)
         {
             // Future: possibly adjust this
             const int PERCOLATOR_THREAD_COUNT = 4;
@@ -2105,9 +2182,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="toolType"></param>
         /// <param name="arguments"></param>
         /// <param name="currentTask"></param>
-        /// <param name="workingDirectoryPath"></param>
+        /// <param name="workingDirectory">Optional, custom working directory; if null, will use mWorkingDirectory</param>
+        /// <param name="workingDirectoryPadWidth"></param>
         /// <returns>True if successful, false if error</returns>
-        private bool RunPhilosopher(PhilosopherToolType toolType, string arguments, string currentTask, string workingDirectoryPath = "")
+        private bool RunPhilosopher(
+            PhilosopherToolType toolType,
+            string arguments,
+            string currentTask,
+            DirectoryInfo workingDirectory = null,
+            int workingDirectoryPadWidth = 0)
         {
             try
             {
@@ -2405,7 +2488,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunReportGeneration(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        private bool RunReportGeneration(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
             {
@@ -2420,7 +2503,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable once ConvertToConstant.Local
                     var arguments = "report";
 
-                    var success = RunPhilosopher(PhilosopherToolType.GenerateReport, arguments, "generate report files", experimentGroupDirectory.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.GenerateReport,
+                        arguments,
+                        "generate report files",
+                        experimentGroupDirectory,
+                        options.WorkingDirectoryPadWidth);
 
                     if (success)
                         successCount++;
@@ -2499,7 +2587,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // ReSharper restore StringLiteralTypo
                     }
 
-                    var success = RunPhilosopher(PhilosopherToolType.ResultsFilter, arguments.ToString(), "filter results", experimentGroupDirectory.FullName);
+                    var success = RunPhilosopher(
+                        PhilosopherToolType.ResultsFilter,
+                        arguments.ToString(),
+                        "filter results",
+                        experimentGroupDirectory,
+                        options.WorkingDirectoryPadWidth);
 
                     if (success)
                         successCount++;

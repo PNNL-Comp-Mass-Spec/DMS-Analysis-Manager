@@ -31,6 +31,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // Ignore Spelling: acetylation, nc, plex, quantitation
 
+        private readonly IJobParams mJobParams;
+
         /// <summary>
         /// Number of datasets in the data package for this job
         /// </summary>
@@ -51,9 +53,25 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool MatchBetweenRuns { get; set; }
 
         /// <summary>
+        /// Whether to run PeptideProphet, Percolator, or nothing
+        /// </summary>
+        /// <remarks>Defaults to PeptideProphet, but auto-set to Percolator if MatchBetweenRuns is true or TMT is in use</remarks>
+        public MS1ValidationModes MS1ValidationMode { get; set; }
+
+        /// <summary>
+        /// True when the MS1 validation mode was auto-defined (since job parameters RunPeptideProphet and/or RunPercolator were not present)
+        /// </summary>
+        public bool MS1ValidationModeAutoDefined { get; }
+
+        /// <summary>
         /// True if the MSFragger parameter file has open search based tolerances
         /// </summary>
         public bool OpenSearch { get; set; }
+
+        /// <summary>
+        /// True when FreeQuant and IonQuant are auto-defined
+        /// </summary>
+        public bool QuantModeAutoDefined { get; set; }
 
         /// <summary>
         /// Reporter ion mode defined in the parameter file
@@ -85,28 +103,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIonQuant { get; set; }
 
         /// <summary>
-        /// Whether to run PeptideProphet, Percolator, or nothing
-        /// </summary>
-        /// <remarks>Defaults to PeptideProphet, but auto-set to Percolator if MatchBetweenRuns is true or TMT is in use</remarks>
-        public MS1ValidationModes MS1ValidationMode { get; set; }
-
-        /// <summary>
-        /// True when the MS1 validation mode was auto-defined (since job parameters RunPeptideProphet and/or RunPercolator were not present)
-        /// </summary>
-        public bool MS1ValidationModeAutoDefined { get; }
-
-        /// <summary>
-        /// True when FreeQuant and IonQuant are auto-defined
-        /// </summary>
-        public bool QuantModeAutoDefined { get; set; }
-
-        /// <summary>
         /// Whether to run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
         public bool RunPTMShepherd { get; set; }
 
-        private readonly IJobParams mJobParams;
+        /// <summary>
+        /// Pad width to use when logging calls to external programs
+        /// </summary>
+        /// <remarks>
+        /// Based on the longest directory path in the working directories for experiment groups
+        /// </remarks>
+        public int WorkingDirectoryPadWidth { get; set; }
 
         /// <summary>
         /// Constructor
