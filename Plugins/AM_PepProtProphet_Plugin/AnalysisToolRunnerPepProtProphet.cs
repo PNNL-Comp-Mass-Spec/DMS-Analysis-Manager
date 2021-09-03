@@ -2328,7 +2328,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper disable CommentTypo
 
-                // Note that Protein Prophet creates a subdirectory named 6c436c4-ccee-42bd-b2e7-cc9e23e14ab5 below the user's temp directory
+                // Note that Protein Prophet creates a GUID-named subdirectory below the user's temp directory
                 // Inside this directory, files batchcoverage.exe and DatabaseParser.exe are created
                 // When Protein Prophet finishes, these files are deleted
                 // Antivirus scanning processes sometimes lock these files, preventing their deletion, leading to errors like these:
