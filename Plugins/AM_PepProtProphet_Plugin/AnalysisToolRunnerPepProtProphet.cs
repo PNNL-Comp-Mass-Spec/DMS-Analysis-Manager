@@ -702,6 +702,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 PhilosopherToolType.FreeQuant => "FreeQuant",
                 PhilosopherToolType.LabelQuant => "LabelQuant",
                 PhilosopherToolType.GenerateReport => "Generate Report",
+                PhilosopherToolType.Abacus => "Abacus",
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
