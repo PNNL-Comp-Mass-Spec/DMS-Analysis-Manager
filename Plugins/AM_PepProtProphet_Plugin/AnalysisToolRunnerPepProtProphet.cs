@@ -1203,6 +1203,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
+        private void ParseConsoleOutputFile()
+        {
+            mLastConsoleOutputParse = DateTime.UtcNow;
+
+            switch (mCmdRunnerMode)
+            {
+                case CmdRunnerModes.CrystalC:
+                case CmdRunnerModes.IonQuant:
+                case CmdRunnerModes.PercolatorOutputToPepXml:
+                case CmdRunnerModes.PtmShepherd:
+                case CmdRunnerModes.RewritePepXml:
+                    mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCmdRunnerMode);
+                    break;
+
+                case CmdRunnerModes.Percolator:
+                    mConsoleOutputFileParser.ParsePercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
+
+                case CmdRunnerModes.Philosopher:
+                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCurrentPhilosopherTool);
+                    break;
+
+                case CmdRunnerModes.Undefined:
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
         private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
@@ -2965,32 +2995,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (!(DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE))
                 return;
 
-            mLastConsoleOutputParse = DateTime.UtcNow;
-
-            switch (mCmdRunnerMode)
-            {
-                case CmdRunnerModes.CrystalC:
-                case CmdRunnerModes.IonQuant:
-                case CmdRunnerModes.PercolatorOutputToPepXml:
-                case CmdRunnerModes.PtmShepherd:
-                case CmdRunnerModes.RewritePepXml:
-                    mConsoleOutputFileParser.ParseJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCmdRunnerMode);
-                    break;
-
-                case CmdRunnerModes.Percolator:
-                    mConsoleOutputFileParser.ParsePercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
-                    break;
-
-                case CmdRunnerModes.Philosopher:
-                    mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCurrentPhilosopherTool);
-                    break;
-
-                case CmdRunnerModes.Undefined:
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            ParseConsoleOutputFile();
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
