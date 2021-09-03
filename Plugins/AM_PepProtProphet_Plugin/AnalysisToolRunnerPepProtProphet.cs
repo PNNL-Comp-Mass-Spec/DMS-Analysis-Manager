@@ -167,6 +167,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private CmdRunnerModes mCmdRunnerMode;
 
+        private DirectoryInfo mWorkingDirectory;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -200,6 +202,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mFastaFilePath = string.Empty;
+                mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
                 // Determine the path to Percolator, Philosopher, and TMT Integrator
 
@@ -276,7 +279,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (string.IsNullOrWhiteSpace(mConsoleOutputFileParser.PhilosopherVersion))
             {
-                mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT), toolType);
+                mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(Path.Combine(mWorkingDirectory.FullName, PHILOSOPHER_CONSOLE_OUTPUT), toolType);
             }
 
             if (!string.IsNullOrWhiteSpace(mConsoleOutputFileParser.PhilosopherVersion))
@@ -292,13 +295,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                mCmdRunner = new RunDosProgram(mWorkingDirectory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, PHILOSOPHER_CONSOLE_OUTPUT),
+                    ConsoleOutputFilePath = Path.Combine(mWorkingDirectory.FullName, PHILOSOPHER_CONSOLE_OUTPUT),
                     MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC
                 };
                 RegisterEvents(mCmdRunner);
@@ -324,7 +327,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
-                var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+                var paramFilePath = Path.Combine(mWorkingDirectory.FullName, paramFileName);
 
                 var datasetCount = datasetIDsByExperimentGroup.Sum(item => item.Value.Count);
 
@@ -612,7 +615,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 writer.WriteLine();
                 writer.WriteLine("thread = {0}", CRYSTALC_THREAD_COUNT);
                 writer.WriteLine("fasta = {0}", mFastaFilePath);
-                writer.WriteLine("raw_file_location = {0}", mWorkDir);
+                writer.WriteLine("raw_file_location = {0}", mWorkingDirectory.FullName);
                 writer.WriteLine("raw_file_extension = mzML");
                 writer.WriteLine("output_location = {0}", experimentGroupDirectory.FullName);
                 writer.WriteLine();
@@ -711,10 +714,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </remarks>
         /// <param name="experimentGroupName"></param>
         /// <param name="experimentGroupCount"></param>
-        private string GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
+        private DirectoryInfo GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
         {
             if (experimentGroupCount <= 1)
-                return mWorkDir;
+                return mWorkingDirectory;
 
             foreach (var invalidChar in Path.GetInvalidPathChars())
             {
@@ -722,7 +725,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     experimentGroupName = experimentGroupName.Replace(invalidChar, '_');
             }
 
-            return Path.Combine(mWorkDir, experimentGroupName);
+            return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroupName));
         }
 
         /// <summary>
@@ -1200,13 +1203,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         if (sourceIsWorkDirectory)
                         {
-                            sourceDirectoryPath = mWorkDir;
+                            sourceDirectoryPath = mWorkingDirectory.FullName;
                             targetDirectoryPath = experimentWorkingDirectory.FullName;
                         }
                         else
                         {
                             sourceDirectoryPath = experimentWorkingDirectory.FullName;
-                            targetDirectoryPath = mWorkDir;
+                            targetDirectoryPath = mWorkingDirectory.FullName;
                         }
 
                         var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
@@ -1560,7 +1563,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable once StringLiteralTypo
-                    var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkDir);
+                    var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkingDirectory.FullName);
 
                     var success = RunPhilosopher(
                         PhilosopherToolType.FreeQuant,
@@ -1643,7 +1646,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (experimentGroupWorkingDirectories.Count <= 1)
                 {
-                    arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkDir);
+                    arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkingDirectory.FullName);
 
                     foreach (var datasetIDs in datasetIDsByExperimentGroup.Values)
                     {
@@ -1666,7 +1669,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     //    arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
                     // }
                     //
-                    // arguments.AppendFormat(" --multidir . --specdir {0}", mWorkDir);
+                    // arguments.AppendFormat(" --multidir . --specdir {0}", mWorkingDirectory.FullName);
                     //
                     // for each (var item in datasetIDsByExperimentGroup)
                     // {
@@ -1686,7 +1689,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
 
-                    var fileListFile = new FileInfo(Path.Combine(mWorkDir, "filelist_ionquant.txt"));
+                    var fileListFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "filelist_ionquant.txt"));
 
                     using (var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
@@ -1698,7 +1701,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             writer.WriteLine(@"--psm{0}{1}\psm.tsv", '\t', experimentGroupWorkingDirectory.Name);
                         }
 
-                        writer.WriteLine("--specdir{0}{1}", '\t', mWorkDir);
+                        writer.WriteLine("--specdir{0}{1}", '\t', mWorkingDirectory.FullName);
 
                         foreach (var item in datasetIDsByExperimentGroup)
                         {
@@ -1805,9 +1808,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     FileInfo aliasFile;
 
-                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkDir, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
-                    var genericAliasFile = new FileInfo(Path.Combine(mWorkDir, "AliasNames.txt"));
-                    var genericAliasFile2 = new FileInfo(Path.Combine(mWorkDir, "AliasName.txt"));
+                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
+                    var genericAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasNames.txt"));
+                    var genericAliasFile2 = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasName.txt"));
 
                     if (experimentSpecificAliasFile.Exists)
                     {
@@ -1840,7 +1843,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         plex,
                         aliasFile.FullName,
                         reporterIonType.ToLower(),
-                        mWorkDir);
+                        mWorkingDirectory.FullName);
 
                     // ReSharper restore StringLiteralTypo
 
@@ -2299,7 +2302,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (peptideProphetPepXmlFiles.Count > 1)
                 {
                     // Create a text file listing the .pep.xml files, one per line (thus reducing the length of the command line)
-                    var fileListFile = new FileInfo(Path.Combine(mWorkDir, "filelist_proteinprophet.txt"));
+                    var fileListFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "filelist_proteinprophet.txt"));
 
                     using (var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
@@ -2374,7 +2377,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return false;
 
                 // Create the PTM-Shepherd config file
-                var ptmShepherdConfigFile = new FileInfo(Path.Combine(mWorkDir, "shepherd.config"));
+                var ptmShepherdConfigFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "shepherd.config"));
 
                 using (var writer = new StreamWriter(new FileStream(ptmShepherdConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -2387,7 +2390,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         writer.WriteLine("dataset = {0} {1} {2}",
                             experimentGroup.Key,
                             Path.Combine(experimentGroup.Value.FullName, "psm.tsv"),
-                            mWorkDir);
+                            mWorkingDirectory.FullName);
                     }
 
                     writer.WriteLine();
@@ -2579,7 +2582,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         // ReSharper disable StringLiteralTypo
 
-                        arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkDir, "combined.prot.xml"));
+                        arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkingDirectory.FullName, "combined.prot.xml"));
 
                         // Each invocation of filter uses the same razor.bin file
                         arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
@@ -2626,7 +2629,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 arguments.AppendFormat("-Xmx{0}G -cp \"{1}\" TMTIntegrator", TMT_INTEGRATOR_MEMORY_SIZE_GB, mTmtIntegratorProgLoc);
 
                 // Create the TMT-Integrator config file
-                var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkDir, "tmt-integrator-conf.yml"));
+                var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "tmt-integrator-conf.yml"));
 
                 using (var writer = new StreamWriter(new FileStream(tmtIntegratorConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -2643,7 +2646,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  min_pep_prob: 0.9");
                     writer.WriteLine("  psm_norm: false");
                     writer.WriteLine("  outlier_removal: true");
-                    writer.WriteLine("  output: {0}", Path.Combine(mWorkDir, "tmt-report"));
+                    writer.WriteLine("  output: {0}", Path.Combine(mWorkingDirectory.FullName, "tmt-report"));
                     writer.WriteLine("  path: {0}", mTmtIntegratorProgLoc);
                     writer.WriteLine("  channel_num: {0}", plex);
                     writer.WriteLine("  ms1_int: true");
@@ -2748,7 +2751,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return;
                 }
 
-                var combinedFilePath = Path.Combine(mWorkDir, combinedFileName);
+                var combinedFilePath = Path.Combine(mWorkingDirectory.FullName, combinedFileName);
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
                 using var writer = new StreamWriter(new FileStream(combinedFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
@@ -2865,7 +2868,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Append the .mzML files
                     foreach (var datasetId in item.Value)
                     {
-                        var datasetFile = new FileInfo(Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles[datasetId]));
+                        var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
                         if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
@@ -2993,7 +2996,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var currentStep = string.Format(@"RewritePepxml for {0}\{1}", workingDirectory.Parent.Name, pepXmlFile.Name);
 
-                    var datasetFile = new FileInfo(Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles[datasetId]));
+                    var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
                     if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                     {
                         LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
@@ -3144,8 +3147,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     var datasetName = dataset.Value;
 
-                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
-                    var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PIN_EXTENSION));
+                    var pepXmlFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PEPXML_EXTENSION));
+                    var pinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PIN_EXTENSION));
 
                     var pinFileUpdated = UpdatePinFileStripDataset(pinFile);
 
