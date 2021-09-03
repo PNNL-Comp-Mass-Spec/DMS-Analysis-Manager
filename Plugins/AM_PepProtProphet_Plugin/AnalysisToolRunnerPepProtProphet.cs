@@ -540,7 +540,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     CmdRunnerModes.PercolatorOutputToPepXml,
                     500);
 
-                LogDebug(options.JavaProgLoc + " " + arguments);
+                LogCommandToExecute(experimentGroupDirectory, options.JavaProgLoc, arguments, options.WorkingDirectoryPadWidth);
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
@@ -1069,6 +1069,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private void LogCommandToExecute(FileSystemInfo workingDirectory, string exePath, string arguments, int workingDirectoryPadWidth = 0)
+        {
+            LogDebug(string.Format("[{0}] {1} {2}",
+                workingDirectory.FullName.PadRight(workingDirectoryPadWidth),
+                exePath,
+                arguments));
+        }
+
         private bool MoveFile(string sourceDirectoryPath, string fileName, string targetDirectoryPath)
         {
             try
@@ -1395,7 +1403,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
                             CmdRunnerModes.CrystalC);
 
-                        LogDebug(options.JavaProgLoc + " " + arguments);
+                        LogCommandToExecute(experimentGroupDirectory, options.JavaProgLoc, arguments.ToString(), options.WorkingDirectoryPadWidth);
 
                         var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
@@ -1668,7 +1676,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
                     CmdRunnerModes.IonQuant);
 
-                LogDebug(options.JavaProgLoc + " " + arguments);
+                LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments.ToString());
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
@@ -2050,7 +2058,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     Path.Combine(mWorkingDirectory.FullName, PERCOLATOR_CONSOLE_OUTPUT),
                     CmdRunnerModes.Percolator);
 
-                LogDebug(mPercolatorProgLoc + " " + arguments);
+                LogCommandToExecute(experimentGroupDirectory, mPercolatorProgLoc, arguments, workingDirectoryPadWidth);
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
@@ -2113,14 +2121,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     CmdRunnerModes.Philosopher,
                     GetMonitoringInterval(toolType));
 
+                if (toolType == PhilosopherToolType.ShowVersion)
+                    LogDebug(mPhilosopherProgLoc + " " + arguments);
+                else
+                    LogCommandToExecute(workingDirectory, mPhilosopherProgLoc, arguments, workingDirectoryPadWidth);
 
                 if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
                 {
                     // Peptide prophet reports numerous warnings via the console error stream; ignore them
                     mCmdRunner.RaiseConsoleErrorEvents = false;
                 }
-
-                LogDebug(mPhilosopherProgLoc + " " + arguments);
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
@@ -2358,7 +2368,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     Path.Combine(mWorkingDirectory.FullName, PTM_SHEPHERD_CONSOLE_OUTPUT),
                     CmdRunnerModes.PtmShepherd);
 
-                LogDebug(options.JavaProgLoc + " " + arguments);
+                LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments);
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
@@ -2573,6 +2583,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     CmdRunnerModes.TmtIntegrator,
                     500);
 
+                LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments.ToString());
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
@@ -2777,7 +2788,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         CmdRunnerModes.RewritePepXml,
                         500);
 
-                    LogDebug(options.JavaProgLoc + " " + arguments);
+                    LogCommandToExecute(experimentGroupDirectory, options.JavaProgLoc, arguments.ToString(), options.WorkingDirectoryPadWidth);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
 
@@ -2908,7 +2919,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         CmdRunnerModes.RewritePepXml,
                         500);
 
-                    LogDebug(options.JavaProgLoc + " " + arguments);
                     LogCommandToExecute(workingDirectory.Parent, options.JavaProgLoc, arguments, options.WorkingDirectoryPadWidth);
 
                     var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
