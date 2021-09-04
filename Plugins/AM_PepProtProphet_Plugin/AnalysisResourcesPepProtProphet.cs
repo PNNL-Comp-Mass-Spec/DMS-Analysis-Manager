@@ -24,7 +24,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
     /// </remarks>
     public class AnalysisResourcesPepProtProphet : AnalysisResources
     {
-        // Ignore Spelling: resourcer
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: hyperscore, ntt, nmc, resourcer, retentiontime
+
+        // ReSharper restore CommentTypo
 
         /// <summary>
         /// Initialize options
@@ -250,6 +254,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Keys in this dictionary are column index values, Values are charge state
                 var columnIndexToChargeMap = new Dictionary<int, int>();
 
+                // ReSharper disable StringLiteralTypo
+
                 var headerNames = new List<string>
                 {
                     "SpecId",
@@ -276,6 +282,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "Peptide",
                     "Proteins"
                 };
+
+                // ReSharper restore StringLiteralTypo
 
                 var fileUpdated = false;
 
