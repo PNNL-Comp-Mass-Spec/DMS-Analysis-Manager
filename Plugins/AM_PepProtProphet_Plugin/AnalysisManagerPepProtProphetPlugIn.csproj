@@ -54,6 +54,7 @@
     <Compile Include="ConsoleOutputFileParser.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="FragPipeOptions.cs" />
+    <Compile Include="PhilosopherResultsUpdater.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

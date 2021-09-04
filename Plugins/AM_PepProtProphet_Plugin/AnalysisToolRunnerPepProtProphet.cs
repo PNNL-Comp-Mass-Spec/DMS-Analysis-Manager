@@ -122,7 +122,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DBAnnotationComplete = 45,
             ResultsFilterComplete = 60,
             FreeQuantOrLabelQuantComplete = 75,
-            ReportGenerated = 85,
+            ReportGenerated = 84,
+            ReportFilesUpdated = 85,
             AbacusComplete = 87,
             IonQuantComplete = 90,
             TmtIntegratorComplete = 95,
@@ -456,6 +457,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
+                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
+                if (!reportFilesUpdated)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
+                mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
+
                 if (experimentGroupWorkingDirectories.Count > 1 && options.RunAbacus)
                 {
                     var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
@@ -505,6 +512,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogError("Error in ExecuteWorkflow", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
+            RegisterEvents(processor);
+
+            return processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
         }
 
         /// <summary>
