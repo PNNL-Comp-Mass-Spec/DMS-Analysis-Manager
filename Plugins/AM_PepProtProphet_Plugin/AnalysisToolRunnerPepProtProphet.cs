@@ -527,10 +527,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Convert the output from Percolator to .pep.xml
         /// </summary>
-        /// <param name="options"></param>
         /// <param name="fragPipeLibDirectory"></param>
         /// <param name="experimentGroupDirectory"></param>
         /// <param name="datasetName"></param>
+        /// <param name="options"></param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
             FileSystemInfo fragPipeLibDirectory,
@@ -1954,6 +1954,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         peptideProphetPepXmlFiles = new List<FileInfo>();
                         return false;
                     }
+
+                    mJobParams.AddResultFileToSkip(string.Format("interact-{0}.pep.xml", datasetName));
                 }
 
                 DeleteTempDirectories(workspaceDirectoryByDatasetId.Values.ToList());
@@ -1998,6 +2000,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper restore StringLiteralTypo
 
+                    var crystalcPepXmlFiles = new List<FileInfo>();
+
                     foreach (var datasetId in item.Value)
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
@@ -2012,6 +2016,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         arguments.AppendFormat(" {0}", pepXmlFilename);
+                        crystalcPepXmlFiles.Add(pepXmlFile);
                     }
 
                     var success = RunPhilosopher(
@@ -2025,6 +2030,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         peptideProphetPepXmlFiles = new List<FileInfo>();
                         return false;
+                    }
+
+                    foreach (var pepXmlFile in crystalcPepXmlFiles)
+                    {
+                        mJobParams.AddResultFileToSkip(pepXmlFile.Name);
                     }
                 }
 
