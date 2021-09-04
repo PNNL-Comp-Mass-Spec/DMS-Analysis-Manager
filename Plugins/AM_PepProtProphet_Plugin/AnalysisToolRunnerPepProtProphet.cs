@@ -82,6 +82,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         public const string PIN_EXTENSION = ".pin";
 
+        private const string PROTEIN_PROPHET_RESULTS_FILE = "combined.prot.xml";
+
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
         private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.0.0.jar";
@@ -2368,7 +2370,26 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                return RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run protein prophet");
+                var success = RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run protein prophet");
+
+                if (!success)
+                    return false;
+
+                // Zip the protein prophet results file, combined.prot.xml
+
+                var proteinGroupsFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
+
+                var zipFilePath = Path.Combine(mWorkingDirectory.FullName, "ProteinProphet_Protein_Groups.zip");
+
+                var fileZipped = mDotNetZipTools.ZipFile(proteinGroupsFile.FullName, false, zipFilePath);
+
+                if (!fileZipped)
+                {
+                    return false;
+                }
+
+                mJobParams.AddResultFileToSkip(PROTEIN_PROPHET_RESULTS_FILE);
+                return true;
             }
             catch (Exception ex)
             {
@@ -2613,7 +2634,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         // ReSharper disable StringLiteralTypo
 
-                        arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkingDirectory.FullName, "combined.prot.xml"));
+                        arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
 
                         // Each invocation of filter uses the same razor.bin file
                         arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
