@@ -2822,7 +2822,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     writer.WriteLine();
                     writer.WriteLine();
-                    writer.WriteLine("### {0} ### ", currentStep);
+                    writer.WriteLine("### {0} ###", currentStep);
                     writer.WriteLine();
                 }
 
