@@ -115,13 +115,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                if (!ValidateFastaFile())
+                if (!ValidateFastaFile(out var fastaFile))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Process the mzML files using MSFragger
-                var processingResult = StartMSFragger();
+                var processingResult = StartMSFragger(fastaFile);
 
                 mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
@@ -672,7 +672,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
         }
 
-        private CloseOutType StartMSFragger()
+        private CloseOutType StartMSFragger(FileInfo fastaFile)
         {
             try
             {
@@ -732,11 +732,18 @@ namespace AnalysisManagerMSFraggerPlugIn
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
+                // Larger FASTA files need more memory
+                // 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
 
-                var javaMemorySizeMB = mJobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000);
-                if (javaMemorySizeMB < 2000)
-                    javaMemorySizeMB = 2000;
+                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
+
+                var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+
+                if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
+                {
+                    mEvalMessage = Global.AppendToComment(mEvalMessage,
+                        string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB));
+                }
 
                 LogMessage("Running MSFragger");
                 mProgress = (int)ProgressPercentValues.StartingMSFragger;
@@ -1013,7 +1020,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
         }
 
-        private bool ValidateFastaFile()
+        private bool ValidateFastaFile(out FileInfo fastaFile)
         {
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
@@ -1021,7 +1028,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
-            var fastaFile = new FileInfo(fastaFilePath);
+            fastaFile = new FileInfo(fastaFilePath);
 
             if (!fastaFile.Exists)
             {

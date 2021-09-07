@@ -19,7 +19,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     public class AnalysisResourcesMSFragger : AnalysisResources
     {
-        // Ignore Spelling: centroided, Fragger, ParmFile, resourcer
+        // Ignore Spelling: centroided, Fragger, ParmFile, resourcer, Xmx
 
         /// <summary>
         /// Initialize options
@@ -47,7 +47,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return result;
                 }
 
-                // Make sure the machine has enough free memory to run MSFragger
+                // Make sure the machine has enough free memory to run MSFragger, based on the JavaMemorySize job parameter
                 // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
 
                 currentTask = "ValidateFreeMemorySize";
@@ -75,8 +75,15 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
-                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                const int maxLegacyFASTASizeGB = 100;
+
+                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, maxLegacyFASTASizeGB, out var fastaFileSizeGB))
                     return resultCode;
+
+                // Possibly require additional system memory, based on the size of the FASTA file
+                var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024);
+                if (javaMemoryCheckResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                    return javaMemoryCheckResultCode;
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
@@ -114,6 +121,72 @@ namespace AnalysisManagerMSFraggerPlugIn
                 LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        /// <summary>
+        /// Get the amount of memory (in MB) to reserve for Java when running MSFragger
+        /// </summary>
+        /// <remarks>
+        /// Larger FASTA files need more memory
+        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
+        /// </remarks>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
+        /// <param name="msFraggerJavaMemorySizeMB">JavaMemorySize job parameter value</param>
+        /// <returns>Memory size (in MB) to use with Java argument -Xmx</returns>
+        public static int GetJavaMemorySizeToUse(IJobParams jobParams, double fastaFileSizeMB, out int msFraggerJavaMemorySizeMB)
+        {
+            // This formula is an estimate and may need to be updated in the future
+            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 2.5) * 1024;
+
+            // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
+            msFraggerJavaMemorySizeMB = Math.Max(2000, jobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000));
+
+            return recommendedMemorySizeMB > msFraggerJavaMemorySizeMB ? recommendedMemorySizeMB : msFraggerJavaMemorySizeMB;
+        }
+
+        /// <summary>
+        /// Get the amount of memory (in MB) to reserve for Java when running MSFragger
+        /// </summary>
+        /// <remarks>
+        /// Larger FASTA files need more memory
+        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
+        /// </remarks>
+        /// <param name="fastaFileSizeMB"></param>
+        public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB)
+        {
+            var recommendedMemorySizeMB = GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+
+            if (recommendedMemorySizeMB < msFraggerJavaMemorySizeMB)
+            {
+                if (ValidateFreeMemorySize(msFraggerJavaMemorySizeMB, StepToolName, true))
+                {
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                mMessage = string.Format(
+                    "Not enough free memory to run MSFragger; need {0:N0} MB, as defined by the settings file",
+                    msFraggerJavaMemorySizeMB);
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var validFreeMemory = ValidateFreeMemorySize(recommendedMemorySizeMB, StepToolName, true);
+
+            if (!validFreeMemory)
+            {
+                mMessage = string.Format(
+                    "Not enough free memory to run MSFragger; need {0:N0} MB due to a {1:N0} MB FASTA file",
+                    recommendedMemorySizeMB, fastaFileSizeMB);
+
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            LogMessage(string.Format(
+                "Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file",
+                msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB));
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
     }
 }
