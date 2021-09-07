@@ -5211,15 +5211,16 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="freeMemoryRequiredMB"></param>
         /// <param name="stepToolName"></param>
         /// <param name="logFreeMemoryOnSuccess"></param>
+        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool logFreeMemoryOnSuccess)
         {
             var freeMemoryMB = Global.GetFreeMemoryMB();
 
             if (freeMemoryRequiredMB >= freeMemoryMB)
             {
-                var errMsg = "Not enough free memory to run " + stepToolName + "; " +
-                             "need " + freeMemoryRequiredMB + " MB but " +
-                             "system has " + freeMemoryMB.ToString("0") + " MB available";
+                var errMsg = string.Format(
+                    "Not enough free memory to run {0}; need {1:N0} MB but system has {2:N0} MB available",
+                    stepToolName, freeMemoryRequiredMB, freeMemoryMB);
 
                 LogTools.LogError(errMsg);
                 return false;
@@ -5228,8 +5229,10 @@ namespace AnalysisManagerBase.AnalysisTool
             if (logFreeMemoryOnSuccess)
             {
                 // Example message: MS-GF+ will use 4000 MB; system has 7296 MB available
-                var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
-                             "system has " + freeMemoryMB.ToString("0") + " MB available";
+                var message = string.Format(
+                     "{0} will use {1:N0} MB; system has {2:N0} MB available",
+                     stepToolName, freeMemoryRequiredMB, freeMemoryMB);
+
                 LogTools.LogDebug(message);
             }
 
