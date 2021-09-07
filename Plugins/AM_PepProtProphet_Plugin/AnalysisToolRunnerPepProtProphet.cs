@@ -2179,6 +2179,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     Path.Combine(mWorkingDirectory.FullName, PERCOLATOR_CONSOLE_OUTPUT),
                     CmdRunnerModes.Percolator);
 
+                // Percolator reports all of its messages via the console error stream
+                // Instruct mCmdRunner to treat them as normal messages
+                mCmdRunner.RaiseConsoleErrorEvents = false;
+
                 LogCommandToExecute(experimentGroupDirectory, mPercolatorProgLoc, arguments, workingDirectoryPadWidth);
 
                 // Start the program and wait for it to finish
@@ -2196,6 +2200,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 UpdateCombinedPercolatorConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, datasetName);
+
+                mCmdRunner.RaiseConsoleErrorEvents = true;
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (processingSuccess && mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains("Error: no decoy PSMs were provided."))
+                {
+                    return false;
+                }
 
                 if (processingSuccess)
                 {
@@ -2216,6 +2228,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in RunPercolatorOnDataset", ex);
+                mCmdRunner.RaiseConsoleErrorEvents = true;
                 return false;
             }
         }
@@ -2255,7 +2268,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
                 {
-                    // Peptide prophet reports numerous warnings via the console error stream; ignore them
+                    // Peptide prophet reports numerous warnings via the console error stream
+                    // Instruct mCmdRunner to treat them as normal messages
                     mCmdRunner.RaiseConsoleErrorEvents = false;
                 }
 
@@ -2302,6 +2316,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in RunPhilosopher", ex);
+                mCmdRunner.RaiseConsoleErrorEvents = true;
                 return false;
             }
         }
