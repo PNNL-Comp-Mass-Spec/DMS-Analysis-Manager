@@ -39,6 +39,9 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
+    <Reference Include="ProteinFileReader">
+      <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

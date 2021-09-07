@@ -28,7 +28,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Batmass, centroided, cp, Da, deisotoping, fragpipe, java, num, pepindex, postprocessing, timsdata, Xmx
+        // Ignore Spelling: Batmass, centroided, cp, Da, deisotoping, fragpipe, java, na, num, pepindex, postprocessing, timsdata, Xmx
         // Ignore Spelling: \batmass-io, \fragpipe, \tools
 
         // ReSharper restore CommentTypo
@@ -1030,13 +1030,29 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return false;
             }
 
-            var proteinOptions = mJobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(proteinOptions) && proteinOptions.IndexOf("seq_direction=forward", StringComparison.OrdinalIgnoreCase) >= 0)
+            var proteinCollectionList = mJobParams.GetParam("ProteinCollectionList");
+
+            var fastaHasDecoys = ValidateFastaHasDecoyProteins(fastaFile);
+
+            if (!fastaHasDecoys)
             {
+                string warningMessage;
+
+                if (string.IsNullOrWhiteSpace(proteinCollectionList) || proteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
+                {
+                    warningMessage = "Using a legacy FASTA file that does not have decoy proteins; " +
+                                     "this will lead to errors with Peptide Prophet or Percolator";
+                }
+                else
+                {
+                    warningMessage = "Protein options for this analysis job contain seq_direction=forward; " +
+                                     "decoy proteins will not be used (which will lead to errors with Peptide Prophet or Percolator)";
+                }
+
                 // The FASTA file does not have decoy sequences
                 // MSFragger will be unable to optimize parameters and Peptide Prophet will likely fail
-
-                LogWarning("Protein options for this analysis job contain seq_direction=forward; decoy proteins will not be used (which could lead to errors)");
+                // Log a warning, which will be stored in the Evaluation_Message column in the database
+                LogWarning(warningMessage, true);
             }
 
             // Copy the FASTA file to the working directory
@@ -1052,6 +1068,49 @@ namespace AnalysisManagerMSFraggerPlugIn
             mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;
+        }
+
+        private bool ValidateFastaHasDecoyProteins(FileSystemInfo fastaFile)
+        {
+            const string DECOY_PREFIX = "XXX_";
+
+            try
+            {
+                // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
+                // But, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
+
+                var forwardCount = 0;
+                var decoyCount = 0;
+
+                var reader = new ProteinFileReader.FastaFileReader(fastaFile.FullName);
+
+                while (reader.ReadNextProteinEntry())
+                {
+                    if (reader.ProteinName.StartsWith(DECOY_PREFIX))
+                        decoyCount++;
+                    else
+                        forwardCount++;
+                }
+
+                if (decoyCount == 0)
+                {
+                    LogDebug(string.Format(
+                        "FASTA file {0} has {1:N0} forward proteins, but no decoy proteins",
+                        fastaFile.Name, forwardCount));
+                    return false;
+                }
+
+                LogDebug(string.Format(
+                    "FASTA file {0} has {1:N0} forward proteins and {2:N0} decoy proteins",
+                    fastaFile.Name, forwardCount, decoyCount));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ValidateFastaHasDecoyProteins", ex);
+                return false;
+            }
         }
 
         private void WriteParameterFileSetting(TextWriter writer, string paramName, string paramValue, string comment)
