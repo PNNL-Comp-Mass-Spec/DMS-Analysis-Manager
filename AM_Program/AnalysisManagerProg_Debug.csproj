@@ -148,9 +148,9 @@
       <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Plugins\AM_MaxQuant_PlugIn\AnalysisManagerMaxQuantPlugIn.csproj">
-      <Project>{12b6a7d7-4d7a-48d8-b18a-9033f3795f66}</Project>
-      <Name>AnalysisManagerMaxQuantPlugIn</Name>
+    <ProjectReference Include="..\Plugins\AM_PepProtProphet_Plugin\AnalysisManagerPepProtProphetPlugIn.csproj">
+      <Project>{cce46827-b4ee-4cd7-b9b5-6500b5dedf9b}</Project>
+      <Name>AnalysisManagerPepProtProphetPlugIn</Name>
     </ProjectReference>
   </ItemGroup>
   <!-- R.NET uses DynamicInterop, which it will auto-download from NuGet -->
