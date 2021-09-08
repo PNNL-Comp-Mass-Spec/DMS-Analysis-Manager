@@ -865,7 +865,6 @@ namespace AnalysisManagerMSFraggerPlugIn
         {
             // Larger FASTA files need more memory
             // 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
-            // 15 GB of memory was not sufficient for a 26 MB FASTA file with 3 dynamic mods (where the 3rd mod is TMT at the N-terminus)
 
             var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
 

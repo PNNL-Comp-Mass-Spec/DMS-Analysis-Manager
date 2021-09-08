@@ -135,7 +135,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         /// <remarks>
         /// Larger FASTA files need more memory
-        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
+        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
         /// </remarks>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
@@ -144,7 +144,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         public static int GetJavaMemorySizeToUse(IJobParams jobParams, double fastaFileSizeMB, out int msFraggerJavaMemorySizeMB)
         {
             // This formula is an estimate and may need to be updated in the future
-            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 2.5) * 1024;
+            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 10) * 1024;
 
             // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
             msFraggerJavaMemorySizeMB = Math.Max(2000, jobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000));
