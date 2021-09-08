@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using PRISM;
 
 // ReSharper disable CommentTypo
@@ -9,10 +12,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     /// <summary>
     /// This class is used to determine paths to FragPipe related directories and .jar files
+    /// It also includes methods to find the newest version of Python 3
     /// </summary>
     public class FragPipeLibFinder : EventNotifier
     {
-        // Ignore Spelling: batmass-io, bruker, crystalc, fragpipe, grppr, ionquant
+        // Ignore Spelling: batmass-io, bruker, cd, crystalc, fragpipe, grppr, ionquant, usr
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
         /// <summary>
@@ -59,7 +63,15 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         public FileInfo PhilosopherExe { get; }
 
+        /// <summary>
+        /// Path to the python executable
+        /// </summary>
+        public static string PythonPath { get; private set; }
 
+        /// <summary>
+        /// True if the Python .exe could be found, otherwise false
+        /// </summary>
+        public static bool PythonInstalled => FindPython();
 
         /// <summary>
         /// Constructor
@@ -302,6 +314,69 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
+        /// Find the best candidate directory with Python 3.x
+        /// </summary>
+        /// <returns>True if Python could be found, otherwise false</returns>
+        private static bool FindPython()
+        {
+            if (!string.IsNullOrWhiteSpace(PythonPath))
+                return true;
+
+            if (SystemInfo.IsLinux)
+            {
+                PythonPath = "/usr/bin/python3";
+                ConsoleMsgUtils.ShowDebug("Assuming Python 3 is at {0}", PythonPath);
+                return true;
+            }
+
+            foreach (var directoryPath in PythonPathsToCheck())
+            {
+                var exePath = FindPythonExe(directoryPath);
+                if (string.IsNullOrWhiteSpace(exePath))
+                    continue;
+
+                PythonPath = exePath;
+                break;
+            }
+
+            return !string.IsNullOrWhiteSpace(PythonPath);
+        }
+
+        /// <summary>
+        /// Find the best candidate directory with Python 3.x
+        /// </summary>
+        /// <returns>Path to the python executable, otherwise an empty string</returns>
+        private static string FindPythonExe(string directoryPath)
+        {
+            var directory = new DirectoryInfo(directoryPath);
+            if (!directory.Exists)
+                return string.Empty;
+
+            var subDirectories = directory.GetDirectories("Python3*").ToList();
+            subDirectories.AddRange(directory.GetDirectories("Python 3*"));
+            subDirectories.Add(directory);
+
+            var candidates = new List<FileInfo>();
+
+            foreach (var subDirectory in subDirectories)
+            {
+                var files = subDirectory.GetFiles("python.exe");
+                if (files.Length == 0)
+                    continue;
+
+                candidates.Add(files.First());
+            }
+
+            if (candidates.Count == 0)
+                return string.Empty;
+
+            // Find the newest .exe
+            var query = (from item in candidates orderby item.LastWriteTime select item.FullName);
+
+            return query.First();
+        }
+
+        /// <summary>
         /// Find the vendor lib directory
         /// </summary>
         /// <remarks>
@@ -346,6 +421,64 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             OnErrorEvent("MSFragger vendor lib directory not found: " + vendorLibDirectory.FullName);
             return false;
+        }
+
+        /// <summary>
+        /// Look for a subdirectory below the site-packages directory for the given Python package
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns>True if the package was found, otherwise false</returns>
+        public static bool PythonPackageInstalled(string packageName, out string errorMessage)
+        {
+            var pythonExe = new FileInfo(PythonPath);
+
+            if (!pythonExe.Exists)
+            {
+                errorMessage = "Python executable not found: " + PythonPath;
+                return false;
+            }
+
+            if (pythonExe.Directory == null)
+            {
+                errorMessage = "Unable to determine the parent directory of the Python executable: " + PythonPath;
+                return false;
+            }
+
+            var sitePackagesDirectory = new DirectoryInfo(Path.Combine(pythonExe.Directory.FullName, "Lib", "site-packages"));
+            if (!sitePackagesDirectory.Exists)
+            {
+                errorMessage = "Python site-packages directory not found: " + sitePackagesDirectory.FullName;
+                return false;
+            }
+
+            var packageDirectory = new DirectoryInfo(Path.Combine(sitePackagesDirectory.FullName, packageName));
+            if (!packageDirectory.Exists)
+            {
+                errorMessage = string.Format(
+                    "Python package {0} is not installed; install using \"cd {1} \" then \"pip install {0}\"",
+                    packageName, pythonExe.Directory.FullName);
+
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
+        /// <summary>
+        /// Obtain a list of directories to search for a Python subdirectory
+        /// </summary>
+        private static IEnumerable<string> PythonPathsToCheck()
+        {
+            return new List<string>
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs"),
+                @"C:\ProgramData\Anaconda3",
+                @"C:\"
+            };
         }
     }
 }
