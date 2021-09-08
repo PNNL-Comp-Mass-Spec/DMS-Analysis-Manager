@@ -3407,9 +3407,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var pepXmlFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PEPXML_EXTENSION));
                     var pinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PIN_EXTENSION));
 
-                    var pinFileUpdated = UpdatePinFileStripDataset(pinFile);
+                    bool pinFileUpdated;
+                    if (pinFile.Exists)
+                    {
+                        pinFileUpdated = UpdatePinFileStripDataset(pinFile);
+                    }
+                    else
+                    {
+                        pinFileUpdated = true;
+                    }
 
-                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile);
+                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile, pinFile.Exists);
                     if (!zipSuccess || !pinFileUpdated)
                     {
                         continue;
