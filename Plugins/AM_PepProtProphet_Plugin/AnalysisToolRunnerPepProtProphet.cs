@@ -594,7 +594,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    mJobParams.AddResultFileToSkip(string.Format("interact-{0}.pep.xml", datasetName));
+                    // Verify that Percolator created the .pin.pep.xml file
+                    var pepXmlFileFromPercolator = new FileInfo(
+                        Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pin.pep.xml", datasetName)));
+
+                    if (!pepXmlFileFromPercolator.Exists)
+                    {
+                        LogError("PercolatorOutputToPepXML did not create file " + pepXmlFileFromPercolator.Name);
+                        return false;
+                    }
+
+                    mJobParams.AddResultFileToSkip(pepXmlFileFromPercolator.Name);
                     return true;
                 }
 
@@ -1391,7 +1401,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     arguments.AppendFormat(" {0}", experimentGroupDirectory.Name);
                 }
 
-                return RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "run abacus");
+                var success = RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "run abacus");
+
+                // ToDo: Verify that the Abacus results file exists
+                var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Abacus_Results.txt"));
+                //if (!outputFile.Exists)
+                //{
+                //    LogError("Abacus results file not found: " + outputFile.Name);
+                //    return false;
+                //}
+
+                return success;
             }
             catch (Exception ex)
             {
@@ -1507,6 +1527,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             continue;
                         }
 
+                        var newPepXmlFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, string.Format("{0}_c.pepXML", datasetName)));
+
+                        if (!newPepXmlFile.Exists)
+                        {
+                            LogError("Crystal-C results file not found: " + newPepXmlFile.Name);
+                            return false;
+                        }
+
                         successCount++;
                     }
                 }
@@ -1568,7 +1596,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             var arguments = string.Format("database --annotate {0} --prefix XXX_", mFastaFilePath);
 
-            return RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
+            var success = RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
+            if (!success)
+                return false;
+
+            // The database annotation command should have created db.bin in the .meta directory:
+            // Verify that it was created
+
+            var outputFile = new FileInfo(Path.Combine(workingDirectory.FullName, ".meta", "db.bin"));
+            if (outputFile.Exists)
+            {
+                return true;
+            }
+
+            LogError("Database annotation file not found in the .meta directory: " + outputFile.Name);
+            return false;
         }
 
         private bool RunFreeQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
@@ -1601,8 +1643,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         experimentGroupDirectory,
                         options.WorkingDirectoryPadWidth);
 
-                    if (success)
-                        successCount++;
+                    if (!success)
+                    {
+                        continue;
+                    }
+
+                    // ToDo: Verify that the FreeQuant results file was created
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("FreeQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
+                    successCount++;
                 }
 
                 return successCount == experimentGroupWorkingDirectories.Count;
@@ -1777,6 +1831,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
+                    // ToDo: Customize this check for a results file
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "IonQuant_Results.txt"));
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("IonQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
                     return true;
                 }
 
@@ -1885,8 +1947,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         experimentGroup.Value,
                         options.WorkingDirectoryPadWidth);
 
-                    if (success)
-                        successCount++;
+                    if (!success)
+                    {
+                        continue;
+                    }
+
+                    // ToDo: Verify that the LabelQuant results file was created
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("LabelQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
+                    successCount++;
                 }
 
                 return successCount == experimentGroupWorkingDirectories.Count;
@@ -1935,6 +2009,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var datasetName = dataPackageInfo.Datasets[datasetId];
                     var workingDirectory = item.Value;
 
+                    if (workingDirectory.Parent == null)
+                    {
+                        LogError("Unable to determine the parent directory of " + workingDirectory.FullName);
+                        peptideProphetPepXmlFiles = new List<FileInfo>();
+                        return false;
+                    }
+
                     // ReSharper disable StringLiteralTypo
                     var arguments = string.Format(
                         @"peptideprophet --decoyprobs --ppm --accmass --nonparam --expectscore --decoy XXX_ --database {0} ..\{1}.pepXML",
@@ -1955,7 +2036,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         return false;
                     }
 
-                    mJobParams.AddResultFileToSkip(string.Format("interact-{0}.pep.xml", datasetName));
+                    // Verify that the PeptideProphet results file was created
+
+                    var pepXmlFile = new FileInfo(Path.Combine(workingDirectory.Parent.FullName, string.Format("interact-{0}.pep.xml", datasetName)));
+                    if (!pepXmlFile.Exists)
+                    {
+                        LogError("PeptideProphet results file not found: " + pepXmlFile.Name);
+                        peptideProphetPepXmlFiles = new List<FileInfo>();
+                        return false;
+                    }
+
+                    mJobParams.AddResultFileToSkip(pepXmlFile.Name);
                 }
 
                 DeleteTempDirectories(workspaceDirectoryByDatasetId.Values.ToList());
@@ -2031,6 +2122,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         peptideProphetPepXmlFiles = new List<FileInfo>();
                         return false;
                     }
+
+                    // Note that UpdateMsMsRunSummaryInCombinedPepXmlFiles will verify that PeptideProphet created .pep.xml files
 
                     foreach (var pepXmlFile in crystalcPepXmlFiles)
                     {
@@ -2154,8 +2247,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Example command line:
                 // percolator-v3-05.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
 
-                var targetPsmFile = GetPercolatorFileName(datasetName, false);
-                var decoyPsmFile = GetPercolatorFileName(datasetName, true);
+                var targetPsmFileName = GetPercolatorFileName(datasetName, false);
+                var decoyPsmFileName = GetPercolatorFileName(datasetName, true);
                 var pinFile = string.Format("{0}.pin", datasetName);
 
                 var arguments = string.Format(
@@ -2164,15 +2257,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "--decoy-results-psms {2} " +
                     "{3}",
                     PERCOLATOR_THREAD_COUNT,
-                    targetPsmFile,
-                    decoyPsmFile,
+                    targetPsmFileName,
+                    decoyPsmFileName,
                     pinFile);
 
                 // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
 
-                percolatorPsmFiles.Add(new FileInfo(Path.Combine(mCmdRunner.WorkDir, targetPsmFile)));
-                percolatorPsmFiles.Add(new FileInfo(Path.Combine(mCmdRunner.WorkDir, decoyPsmFile)));
+                var targetPsmFile = new FileInfo(Path.Combine(mCmdRunner.WorkDir, targetPsmFileName));
+                var decoyPsmFile = new FileInfo(Path.Combine(mCmdRunner.WorkDir, decoyPsmFileName));
+
+                percolatorPsmFiles.Add(targetPsmFile);
+                percolatorPsmFiles.Add(decoyPsmFile);
 
                 InitializeCommandRunner(
                     experimentGroupDirectory,
@@ -2206,11 +2302,24 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (processingSuccess && mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains("Error: no decoy PSMs were provided."))
                 {
+                    // The error should have already been logged (and stored in mMessage)
                     return false;
                 }
 
                 if (processingSuccess)
                 {
+                    if (!targetPsmFile.Exists)
+                    {
+                        LogError("Percolator results file not found: " + targetPsmFile.Name);
+                        return false;
+                    }
+
+                    if (!decoyPsmFile.Exists)
+                    {
+                        LogError("Percolator results file not found: " + decoyPsmFile.Name);
+                        return false;
+                    }
+
                     return true;
                 }
 
@@ -2400,9 +2509,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!success)
                     return false;
 
-                // Zip the protein prophet results file, combined.prot.xml
+                // Verify that the ProteinProphet results file was created
 
                 var proteinGroupsFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
+
+                if (!proteinGroupsFile.Exists)
+                {
+                    LogError("ProteinProphet results file not found: " + proteinGroupsFile.Name);
+                    return false;
+                }
+
+                // Zip the ProteinProphet results file, combined.prot.xml
 
                 var zipFilePath = Path.Combine(mWorkingDirectory.FullName, "ProteinProphet_Protein_Groups.zip");
 
@@ -2547,6 +2664,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
+                    // ToDo: Customize this check for a results file
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Shepherd_Results.txt"));
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("IonQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
                     return true;
                 }
 
@@ -2590,8 +2715,35 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         experimentGroupDirectory,
                         options.WorkingDirectoryPadWidth);
 
-                    if (success)
-                        successCount++;
+                    if (!success)
+                    {
+                        continue;
+                    }
+
+                    // Verify that report files were created
+                    var reportFiles = new List<FileInfo>
+                    {
+                        new(Path.Combine(experimentGroupDirectory.FullName, "psm.tsv")),
+                        new(Path.Combine(experimentGroupDirectory.FullName, "ion.tsv")),
+                        new(Path.Combine(experimentGroupDirectory.FullName, "peptide.tsv")),
+                        new(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv"))
+                    };
+
+                    var missingFiles = new List<string>();
+
+                    foreach (var reportFile in reportFiles.Where(item => !item.Exists))
+                    {
+                        LogWarning("Philosopher report file not found: " + reportFile.Name);
+                        missingFiles.Add(reportFile.Name);
+                    }
+
+                    if (missingFiles.Count > 1)
+                    {
+                        LogError("Multiple Philosopher report files were missing: " + string.Join(", ", missingFiles));
+                        continue;
+                    }
+
+                    successCount++;
                 }
 
                 return successCount == experimentGroupWorkingDirectories.Count;
@@ -2674,8 +2826,24 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         experimentGroupDirectory,
                         options.WorkingDirectoryPadWidth);
 
-                    if (success)
-                        successCount++;
+                    if (!success)
+                    {
+                        continue;
+                    }
+
+                    // The filter command should have created four .bin files in the .meta directory:
+                    //   psm.bin, ion.bin, pep.bin, and pro.bin
+
+                    // Verify that psm.bin was created
+
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, ".meta", "psm.bin"));
+                    if (!outputFile.Exists)
+                    {
+                        LogError("Filtered results file not found in the .meta directory: " + outputFile.Name);
+                        return false;
+                    }
+
+                    successCount++;
                 }
 
                 return successCount == experimentGroupWorkingDirectories.Count;
@@ -2775,6 +2943,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
+                    // ToDo: Customize this check for a results file
+                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "TMT_Integrator_Results.txt"));
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("IonQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
                     return true;
                 }
 
