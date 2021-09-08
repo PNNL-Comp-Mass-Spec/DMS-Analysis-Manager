@@ -428,6 +428,16 @@ namespace AnalysisManagerMSFraggerPlugIn
             //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzBIN_calibrated 0.2 s
             //                 [progress: 18812/18812 (100%) - 29348 spectra/s] 0.6s | postprocessing 1.7 s
 
+            // ----------------------------------------------------
+            // Output when running a split FASTA search
+            // ----------------------------------------------------
+            // STARTED: slice 1 of 8
+            // ...
+            // DONE: slice 1 of 8
+            // STARTED: slice 2 of 8
+            // ...
+            // DONE: slice 8 of 8
+
             // ReSharper restore CommentTypo
 
             const int FIRST_SEARCH_START = (int)ProgressPercentValues.StartingMSFragger + 1;
@@ -474,6 +484,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             // DatasetName.mzML 7042ms [progress: 29940/50420 (59.38%) - 5945.19 spectra/s]
             var progressMatcher = new Regex(@"progress: \d+/\d+ \((?<PercentComplete>[0-9.]+)%\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+            var splitFastaMatcher = new Regex(@"^[\t ]*(?<Action>STARTED|DONE): slice (?<CurrentSplitFile>\d+) of (?<TotalSplitFiles>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
             try
             {
                 if (!File.Exists(consoleOutputFilePath))
@@ -495,6 +507,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var currentProgress = 0;
                 var currentSlice = 0;
                 var totalSlices = 0;
+
+                var currentSplitFastaFile = 0;
+                var splitFastaFileCount = 0;
 
                 var currentDatasetId = 0;
                 float datasetProgress = 0;
@@ -552,6 +567,17 @@ namespace AnalysisManagerMSFraggerPlugIn
                         break;
                     }
 
+                    var splitFastaProgressMatch = splitFastaMatcher.Match(dataLine);
+                    if (splitFastaProgressMatch.Success &&
+                        splitFastaProgressMatch.Groups["Action"].Value.Equals("STARTED", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentSplitFastaFile = int.Parse(splitFastaProgressMatch.Groups["CurrentSplitFile"].Value);
+
+                        if (splitFastaFileCount == 0)
+                        {
+                            splitFastaFileCount = int.Parse(splitFastaProgressMatch.Groups["TotalSplitFiles"].Value);
+                        }
+                    }
                     // Check whether the line starts with the text error
                     // Future: possibly adjust this check
 
@@ -648,8 +674,23 @@ namespace AnalysisManagerMSFraggerPlugIn
                     effectiveProgressOverall = currentProgress;
                 }
 
-                if (!float.IsNaN(effectiveProgressOverall))
-                    mProgress = effectiveProgressOverall;
+                if (float.IsNaN(effectiveProgressOverall))
+                {
+                    return;
+                }
+
+                if (currentSplitFastaFile > 0 && splitFastaFileCount > 0)
+                {
+                    // Compute overall progress as 50 plus a value between 0 and 45, where 45 is MAIN_SEARCH_DONE / 2.0
+
+                    var currentProgressOnSplitFasta = (currentSplitFastaFile - 1) * (MAIN_SEARCH_DONE / 2f / splitFastaFileCount);
+                    var nextProgressOnSplitFasta = currentSplitFastaFile * (MAIN_SEARCH_DONE / 2f / splitFastaFileCount);
+
+                    mProgress = 50 + ComputeIncrementalProgress(currentProgressOnSplitFasta, nextProgressOnSplitFasta, 50);
+                    return;
+                }
+
+                mProgress = effectiveProgressOverall;
             }
             catch (Exception ex)
             {
