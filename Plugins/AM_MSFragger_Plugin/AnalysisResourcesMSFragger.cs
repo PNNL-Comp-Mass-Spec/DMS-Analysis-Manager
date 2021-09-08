@@ -6,6 +6,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.IO;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
@@ -76,6 +77,16 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (databaseSplitCount > 1 && !VerifyPythonAvailable())
                     return CloseOutType.CLOSEOUT_FAILED;
+
+                var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
+
+                var options = new MSFraggerOptions(mJobParams);
+                RegisterEvents(options);
+
+                if (!options.ValidateMSFraggerOptions(paramFile))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 // Retrieve FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);

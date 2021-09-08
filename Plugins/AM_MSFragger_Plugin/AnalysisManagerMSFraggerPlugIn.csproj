@@ -55,6 +55,7 @@
     <Compile Include="AnalysisResourcesMSFragger.cs" />
     <Compile Include="AnalysisToolRunnerMSFragger.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="IntegerParameter.cs" />
     <Compile Include="MSFraggerOptions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

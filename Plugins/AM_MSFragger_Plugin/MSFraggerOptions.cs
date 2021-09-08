@@ -87,6 +87,11 @@ namespace AnalysisManagerMSFraggerPlugIn
             mJobParams = jobParams;
         }
 
+        private void AddParameterToValidate(IDictionary<string, IntegerParameter> parametersToValidate, string parameterName, int minValue, int maxValue)
+        {
+            parametersToValidate.Add(parameterName, new IntegerParameter(parameterName, minValue, maxValue));
+        }
+
         /// <summary>
         /// Examine the dynamic and static mods loaded from a MSFragger parameter file to determine the reporter ion mode
         /// </summary>
@@ -413,6 +418,22 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
         }
 
+        private bool ParameterValueInRange(IntegerParameter parameter)
+        {
+            var value = parameter.ParameterValue;
+
+            if (value >= parameter.MinValue && value <= parameter.MaxValue)
+            {
+                return true;
+            }
+
+            OnErrorEvent(string.Format(
+                "Invalid value for {0} in the MSFraggerParameter file; it should be between {1} and {2}",
+                parameter.ParameterName, parameter.MinValue, parameter.MaxValue));
+
+            return false;
+        }
+
         private List<string> ParseAffectedResidueList(string affectedResidueList)
         {
             // This matches [^ or ]^ or [A
@@ -512,6 +533,93 @@ namespace AnalysisManagerMSFraggerPlugIn
                 {
                     reporterIonModeStats.Add(reporterIonMode, 1);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Examine MSFragger parameters to check for errors
+        /// </summary>
+        /// <param name="paramFile"></param>
+        /// <returns>True if no problems, false if errors</returns>
+        public bool ValidateMSFraggerOptions(FileInfo paramFile)
+        {
+            try
+            {
+                if (!paramFile.Exists)
+                {
+                    OnErrorEvent("MSFragger parameter file not found: " + paramFile.FullName);
+                    return false;
+                }
+
+                var paramFileReader = new KeyValueParamFileReader("MSFragger", paramFile.DirectoryName, paramFile.Name);
+                RegisterEvents(paramFileReader);
+
+                var paramFileLoaded = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries, true);
+                if (!paramFileLoaded)
+                {
+                    return false;
+                }
+
+                var parametersToValidate = new Dictionary<string, IntegerParameter>();
+
+                AddParameterToValidate(parametersToValidate, "precursor_mass_units", 0, 1);
+                AddParameterToValidate(parametersToValidate, "data_type", 0, 2);
+                AddParameterToValidate(parametersToValidate, "precursor_true_units", 0, 1);
+                AddParameterToValidate(parametersToValidate, "fragment_mass_units", 0, 1);
+                AddParameterToValidate(parametersToValidate, "calibrate_mass", 0, 2);
+                AddParameterToValidate(parametersToValidate, "use_all_mods_in_first_search", 0, 1);
+                AddParameterToValidate(parametersToValidate, "deisotope", 0, 2);
+
+                // ReSharper disable once StringLiteralTypo
+                AddParameterToValidate(parametersToValidate, "deneutralloss", 0, 1);
+
+                AddParameterToValidate(parametersToValidate, "remove_precursor_peak", 0, 2);
+                AddParameterToValidate(parametersToValidate, "intensity_transform", 0, 1);
+                AddParameterToValidate(parametersToValidate, "write_calibrated_mgf", 0, 1);
+                AddParameterToValidate(parametersToValidate, "mass_diff_to_variable_mod", 0, 2);
+                AddParameterToValidate(parametersToValidate, "localize_delta_mass", 0, 1);
+                AddParameterToValidate(parametersToValidate, "num_enzyme_termini", 0, 2);
+                AddParameterToValidate(parametersToValidate, "allowed_missed_cleavage", 1, 5);
+                AddParameterToValidate(parametersToValidate, "clip_nTerm_M", 0, 1);
+                AddParameterToValidate(parametersToValidate, "allow_multiple_variable_mods_on_residue", 0, 1);
+                AddParameterToValidate(parametersToValidate, "max_variable_mods_per_peptide", 1, 10);
+                AddParameterToValidate(parametersToValidate, "max_variable_mods_combinations", 1000, 65534);
+                AddParameterToValidate(parametersToValidate, "output_report_topN", 1, 10);
+                AddParameterToValidate(parametersToValidate, "report_alternative_proteins", 0, 1);
+                AddParameterToValidate(parametersToValidate, "override_charge", 0, 1);
+                AddParameterToValidate(parametersToValidate, "digest_min_length", 5, 20);
+                AddParameterToValidate(parametersToValidate, "digest_max_length", 20, 60);
+                AddParameterToValidate(parametersToValidate, "max_fragment_charge", 1, 4);
+
+                foreach (var parameter in paramFileEntries)
+                {
+                    if (!parametersToValidate.TryGetValue(parameter.Key, out var matchingParameter))
+                        continue;
+
+                    if (!GetParamValueInt(parameter, out var parameterValue))
+                        return false;
+
+                    matchingParameter.SetValue(parameterValue);
+                }
+
+                foreach (var item in parametersToValidate)
+                {
+                    if (!item.Value.IsDefined)
+                    {
+                        OnErrorEvent(string.Format("Parameter {0} is missing from the MSFraggerParameter file", item.Key));
+                        return false;
+                    }
+
+                    if (!ParameterValueInRange(item.Value))
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in ValidateMSFraggerOptions", ex);
+                return false;
             }
         }
     }
