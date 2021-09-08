@@ -131,7 +131,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </remarks>
         /// <param name="toolsDirectory"></param>
         /// <returns>True if found, otherwise false</returns>
-        private bool FindFragPipeToolsDirectory(out DirectoryInfo toolsDirectory)
+        public bool FindFragPipeToolsDirectory(out DirectoryInfo toolsDirectory)
         {
             if (mFragPipeToolsDirectory != null)
             {

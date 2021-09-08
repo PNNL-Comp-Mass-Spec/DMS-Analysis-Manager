@@ -216,7 +216,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             return new Regex(matchPattern, options);
         }
 
-        private bool MzMLFilesAreCentroided(string javaProgLoc, DataPackageInfo dataPackageInfo)
+        private bool MzMLFilesAreCentroided(string javaProgLoc, DataPackageInfo dataPackageInfo, FragPipeLibFinder libraryFinder)
         {
             try
             {
@@ -234,17 +234,6 @@ namespace AnalysisManagerMSFraggerPlugIn
                     dataPackageInfo.DatasetFiles.Count == 1 ? "file is" : "files are"));
 
                 // Set up and execute a program runner to run CheckCentroid
-
-                // Determine the path to Philosopher
-                var philosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
-                if (string.IsNullOrWhiteSpace(philosopherProgLoc))
-                {
-                    return false;
-                }
-
-                var philosopherExe = new FileInfo(philosopherProgLoc);
-
-                var libraryFinder = new FragPipeLibFinder(philosopherExe);
 
                 // Find the fragpipe jar file
                 if (!libraryFinder.FindJarFileFragPipe(out var jarFileFragPipe))
@@ -712,11 +701,22 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Determine the path to Philosopher
+                var philosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
+                if (string.IsNullOrWhiteSpace(philosopherProgLoc))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var philosopherExe = new FileInfo(philosopherProgLoc);
+
+                var libraryFinder = new FragPipeLibFinder(philosopherExe);
+
                 mProgress = (int)ProgressPercentValues.VerifyingMzMLFiles;
                 ResetProgRunnerCpuUsage();
 
                 // Confirm that the .mzML files have centroided MS2 spectra
-                if (!MzMLFilesAreCentroided(javaProgLoc, dataPackageInfo))
+                if (!MzMLFilesAreCentroided(javaProgLoc, dataPackageInfo, libraryFinder))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -734,9 +734,16 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
 
+                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
 
+                if (databaseSplitCount > 1 && !FragPipeLibFinder.PythonInstalled)
                 {
+                    LogError("Could not find Python 3.x; cannot run MSFragger with the split database option");
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
+                mWarnedInvalidDatasetCount = false;
 
                 LogMessage("Running MSFragger");
                 mProgress = (int)ProgressPercentValues.StartingMSFragger;
@@ -745,8 +752,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 bool processingSuccess;
 
+                if (databaseSplitCount <= 1)
                 {
                     processingSuccess = StartMSFragger(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath);
+                }
+                else
+                {
+                    processingSuccess = StartMSFraggerSplitFASTA(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath, databaseSplitCount, libraryFinder);
                 }
 
                 if (!mToolVersionWritten)
@@ -880,6 +892,66 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
             return mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
+        }
+
+        private bool StartMSFraggerSplitFASTA(
+            DataPackageInfo dataPackageInfo,
+            string javaProgLoc,
+            double fastaFileSizeMB,
+            string paramFilePath,
+            int databaseSplitCount,
+            FragPipeLibFinder libraryFinder)
+        {
+            var pythonExe = FragPipeLibFinder.PythonPath;
+
+            if (!libraryFinder.FindFragPipeToolsDirectory(out var toolsDirectory))
+            {
+                // The error has already been logged
+                return false;
+            }
+
+            var msFraggerScript = new FileInfo(Path.Combine(toolsDirectory.FullName, "msfragger_pep_split.py"));
+            if (!msFraggerScript.Exists)
+            {
+                LogError("MSFragger script not found; cannot run a split FASTA search: " + msFraggerScript.FullName);
+                return false;
+            }
+
+            AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+
+            mEvalMessage = Global.AppendToComment(mEvalMessage,
+                string.Format("Allocating {0:N0} MB to Java, splitting the {1:N0} MB FASTA file into {2} parts",
+                    msFraggerJavaMemorySizeMB, fastaFileSizeMB, databaseSplitCount));
+
+            // ReSharper disable CommentTypo
+
+            // Example command line:
+            // C:\Python39\python.exe C:\DMS_Programs\MSFragger\fragpipe\tools\msfragger_pep_split.py 2 "java -jar -Dfile.encoding=UTF-8 -Xmx14G" C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\MSFragger-3.3.jar C:\DMS_WorkDir\MSFragger_ParamFile.params C:\DMS_WorkDir\DatasetName.mzML
+
+            // ReSharper restore CommentTypo
+
+            var arguments = new StringBuilder();
+
+            arguments.AppendFormat("{0} {1}", msFraggerScript.FullName, databaseSplitCount);
+
+            // ReSharper disable once StringLiteralTypo
+            arguments.AppendFormat(" \"{0} -jar -Dfile.encoding=UTF-8 -Xmx{1}M \"", javaProgLoc, msFraggerJavaMemorySizeMB);
+
+            arguments.AppendFormat(" {0}", mMSFraggerProgLoc);
+
+            arguments.AppendFormat(" {0}", paramFilePath);
+
+            // Append the .mzML files
+            foreach (var item in dataPackageInfo.DatasetFiles)
+            {
+                arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
+            }
+
+            LogDebug(pythonExe + " " + arguments);
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            return mCmdRunner.RunProgram(pythonExe, arguments.ToString(), "MSFragger", true);
         }
 
         /// <summary>

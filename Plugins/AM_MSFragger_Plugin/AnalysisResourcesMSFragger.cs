@@ -9,6 +9,7 @@ using System;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 
@@ -19,7 +20,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     public class AnalysisResourcesMSFragger : AnalysisResources
     {
-        // Ignore Spelling: centroided, Fragger, ParmFile, resourcer, Xmx
+        // Ignore Spelling: centroided, Fragger, numpy, ParmFile, resourcer, Xmx
 
         /// <summary>
         /// Initialize options
@@ -71,6 +72,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                 if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
+                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
+                if (databaseSplitCount > 1 && !VerifyPythonAvailable())
+                    return CloseOutType.CLOSEOUT_FAILED;
+
                 // Retrieve FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
@@ -81,7 +87,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return resultCode;
 
                 // Possibly require additional system memory, based on the size of the FASTA file
-                var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024);
+                // However, when FASTA file splitting is enabled, use the memory size defined by the settings file
+                var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024, databaseSplitCount);
                 if (javaMemoryCheckResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return javaMemoryCheckResultCode;
 
@@ -150,14 +157,15 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </summary>
         /// <remarks>
         /// Larger FASTA files need more memory
-        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
+        /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
         /// </remarks>
         /// <param name="fastaFileSizeMB"></param>
-        public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB)
+        /// <param name="databaseSplitCount"></param>
+        public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB, int databaseSplitCount)
         {
             var recommendedMemorySizeMB = GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
 
-            if (recommendedMemorySizeMB < msFraggerJavaMemorySizeMB)
+            if (recommendedMemorySizeMB < msFraggerJavaMemorySizeMB || databaseSplitCount > 1)
             {
                 if (ValidateFreeMemorySize(msFraggerJavaMemorySizeMB, StepToolName, true))
                 {
@@ -187,6 +195,38 @@ namespace AnalysisManagerMSFraggerPlugIn
                 msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB));
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private bool VerifyPythonAvailable()
+        {
+            try
+            {
+                if (!FragPipeLibFinder.PythonInstalled)
+                {
+                    LogError("Could not find Python 3.x; cannot run MSFragger with the split database option");
+                    return false;
+                }
+
+                // Confirm that the required Python packages are installed
+                if (!FragPipeLibFinder.PythonPackageInstalled("numpy", out var errorMessage1))
+                {
+                    LogError(errorMessage1);
+                    return false;
+                }
+
+                if (!FragPipeLibFinder.PythonPackageInstalled("pandas", out var errorMessage2))
+                {
+                    LogError(errorMessage2);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in VerifyPythonAvailable", ex);
+                return false;
+            }
         }
     }
 }
