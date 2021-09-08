@@ -129,7 +129,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                mMessage = "Exception in GetResources: " + ex.Message;
+                mMessage = "Error in GetResources: " + ex.Message;
                 LogError(mMessage + "; task = " + currentTask + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }

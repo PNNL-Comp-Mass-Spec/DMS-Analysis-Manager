@@ -2145,7 +2145,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetExistingJobParametersFile", ex);
+                LogError("Error in GetExistingJobParametersFile", ex);
                 return false;
             }
         }
@@ -2639,7 +2639,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception)
             {
-                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetDirectoryPath);
+                LogTools.LogWarning("Error in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetDirectoryPath);
                 jobInfo.ServerStoragePath = datasetInfo.DatasetDirectoryPath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
@@ -2649,7 +2649,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception)
             {
-                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetArchivePath);
+                LogTools.LogWarning("Error in GetPseudoDataPackageJobInfo determining the parent directory of " + datasetInfo.DatasetArchivePath);
                 jobInfo.ArchiveStoragePath = datasetInfo.DatasetArchivePath.Replace(@"\" + datasetInfo.Dataset, string.Empty);
             }
 
@@ -4458,7 +4458,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in RetrieveAggregateFiles", ex);
+                LogError("Error in RetrieveAggregateFiles", ex);
                 success = false;
             }
 
@@ -4682,7 +4682,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in RetrieveOrgDB", ex);
+                LogError("Error in RetrieveOrgDB", ex);
                 resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -5089,7 +5089,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateCDTAFileIsCentroided", ex);
+                LogError("Error in ValidateCDTAFileIsCentroided", ex);
                 return false;
             }
         }

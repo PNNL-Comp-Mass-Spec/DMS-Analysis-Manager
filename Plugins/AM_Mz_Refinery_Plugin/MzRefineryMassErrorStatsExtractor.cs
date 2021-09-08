@@ -172,7 +172,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in ParsePPMErrorCharterOutput: " + ex.Message;
+                ErrorMessage = "Error in ParsePPMErrorCharterOutput: " + ex.Message;
                 return false;
             }
 

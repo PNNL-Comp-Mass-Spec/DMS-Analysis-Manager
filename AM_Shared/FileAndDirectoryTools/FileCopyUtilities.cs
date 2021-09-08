@@ -218,7 +218,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName), ex);
+                OnErrorEvent("Error in CopyFileToWorkDir for " + Path.Combine(sourceFolderPath, sourceFileName), ex);
             }
 
             return false;
@@ -306,7 +306,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CopyFileToWorkDirWithRename for " + sourceFilePath, ex);
+                OnErrorEvent("Error in CopyFileToWorkDirWithRename for " + sourceFilePath, ex);
             }
 
             return false;
@@ -414,7 +414,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreateStoragePathInfoFile for " + infoFilePath, ex);
+                OnErrorEvent("Error in CreateStoragePathInfoFile for " + infoFilePath, ex);
                 return false;
             }
 

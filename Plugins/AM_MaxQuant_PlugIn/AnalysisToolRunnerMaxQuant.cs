@@ -944,7 +944,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in StoreToolVersionInfo", ex);
+                LogError("Error in StoreToolVersionInfo", ex);
                 return false;
             }
         }
@@ -1122,7 +1122,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in UpdateAndromedaParameterFile", ex);
+                LogError("Error in UpdateAndromedaParameterFile", ex);
                 fileUpdated = false;
                 return false;
             }
@@ -1497,7 +1497,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in UpdateMaxQuantParameterFileMetadata", ex);
+                LogError("Error in UpdateMaxQuantParameterFileMetadata", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1608,7 +1608,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                errorMessage = "Exception in UpdateMaxQuantParameterFileStartStepIDs: " + ex.Message;
+                errorMessage = "Error in UpdateMaxQuantParameterFileStartStepIDs: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1663,7 +1663,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in UpdateMaxQuantRuntimeFilePaths", ex);
+                LogError("Error in UpdateMaxQuantRuntimeFilePaths", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

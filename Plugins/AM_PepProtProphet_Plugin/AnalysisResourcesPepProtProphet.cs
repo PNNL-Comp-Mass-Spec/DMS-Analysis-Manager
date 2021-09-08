@@ -172,7 +172,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
+                LogError("Error in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

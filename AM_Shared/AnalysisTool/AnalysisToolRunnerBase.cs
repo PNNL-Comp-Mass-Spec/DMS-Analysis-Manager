@@ -556,7 +556,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in CopyFileToServerCache", ex);
+                LogError("Error in CopyFileToServerCache", ex);
                 return string.Empty;
             }
         }
@@ -2091,7 +2091,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetRPathFromWindowsRegistry", ex);
+                LogError("Error in GetRPathFromWindowsRegistry", ex);
                 return string.Empty;
             }
         }
@@ -2231,7 +2231,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in GZipFile", ex);
+                LogError("Error in GZipFile", ex);
                 return null;
             }
         }
@@ -3483,7 +3483,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in SortTextFile", ex);
+                LogError("Error in SortTextFile", ex);
                 return false;
             }
         }
@@ -3924,7 +3924,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in UpdateCpuUsageByProcessName determining the processor usage of " + processName, ex);
+                LogError("Error in UpdateCpuUsageByProcessName determining the processor usage of " + processName, ex);
                 return -1;
             }
         }
@@ -4155,7 +4155,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateCDTAFile", ex);
+                LogError("Error in ValidateCDTAFile", ex);
                 return false;
             }
         }

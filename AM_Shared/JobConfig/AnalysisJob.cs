@@ -1643,7 +1643,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                LogError("Exception in LockOfflineJobInfoFile", ex);
+                LogError("Error in LockOfflineJobInfoFile", ex);
                 return false;
             }
         }

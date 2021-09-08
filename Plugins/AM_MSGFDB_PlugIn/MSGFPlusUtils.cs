@@ -1178,7 +1178,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreatePeptideToProteinMapping", ex);
+                OnErrorEvent("Error in CreatePeptideToProteinMapping", ex);
 
                 if (ignorePeptideToProteinMapperErrors)
                 {
@@ -1824,7 +1824,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in LoadScanTypeFile";
+                ErrorMessage = "Error in LoadScanTypeFile";
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
@@ -3118,7 +3118,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in LookupScanTypesForDataset", ex);
+                OnErrorEvent("Error in LookupScanTypesForDataset", ex);
                 return false;
             }
         }
@@ -3444,7 +3444,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in ValidateMSGFPlusModifications";
+                ErrorMessage = "Error in ValidateMSGFPlusModifications";
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }

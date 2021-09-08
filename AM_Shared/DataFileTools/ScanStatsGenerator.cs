@@ -122,7 +122,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in GenerateScanStatsFiles: " + ex.Message;
+                ErrorMessage = "Error in GenerateScanStatsFiles: " + ex.Message;
                 return false;
             }
         }

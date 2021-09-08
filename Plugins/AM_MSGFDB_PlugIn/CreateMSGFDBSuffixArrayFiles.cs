@@ -229,7 +229,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CopyExistingIndexFilesFromRemote", ex);
+                OnErrorEvent("Error in CopyExistingIndexFilesFromRemote", ex);
                 success = false;
             }
 
@@ -359,7 +359,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                errorMessage = "Exception in CopyIndexFilesToRemote; " + ex.Message;
+                errorMessage = "Error in CopyIndexFilesToRemote; " + ex.Message;
                 return false;
             }
         }
@@ -635,7 +635,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in .CreateIndexedDbFiles";
+                mErrorMessage = "Error in .CreateIndexedDbFiles";
                 OnErrorEvent(mErrorMessage + "; " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -826,7 +826,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in .CreateSuffixArrayFilesWork";
+                mErrorMessage = "Error in .CreateSuffixArrayFilesWork";
                 OnErrorEvent(mErrorMessage + "; " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1180,7 +1180,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in UpdateRemoteLastUsedFile", ex);
+                OnErrorEvent("Error in UpdateRemoteLastUsedFile", ex);
             }
         }
 

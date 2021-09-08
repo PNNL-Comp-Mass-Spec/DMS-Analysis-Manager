@@ -371,7 +371,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in ExamineFirstHitsFile: " + ex.Message, ex);
+                SetErrorMessage("Error in ExamineFirstHitsFile: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
             }
         }
@@ -499,7 +499,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in VerifyReporterIonPTMs: " + ex.Message, ex);
+                SetErrorMessage("Error in VerifyReporterIonPTMs: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
             }
         }
@@ -1335,7 +1335,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in ProcessPSMResults: " + ex.Message, ex);
+                SetErrorMessage("Error in ProcessPSMResults: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }
@@ -1827,7 +1827,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception in LoadPSMs: " + ex.Message, ex);
+                SetErrorMessage("Error in LoadPSMs: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
                 return false;
             }

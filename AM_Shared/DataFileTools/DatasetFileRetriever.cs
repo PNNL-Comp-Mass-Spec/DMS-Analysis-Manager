@@ -221,7 +221,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in RetrieveDataPackageDatasets", ex);
+                OnErrorEvent("Error in RetrieveDataPackageDatasets", ex);
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -465,7 +465,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in RetrieveSingleDataset (CurrentTask = " + currentTask + ")", ex);
+                OnErrorEvent("Error in RetrieveSingleDataset (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

@@ -333,7 +333,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in GetCoreUsage", ex);
+                OnErrorEvent("Error in GetCoreUsage", ex);
                 return -1;
             }
         }

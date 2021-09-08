@@ -324,7 +324,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception instantiating performance counter 'Available MBytes'", ex);
+                OnErrorEvent("Error instantiating performance counter 'Available MBytes'", ex);
             }
 
             try
@@ -334,7 +334,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception instantiating performance counter 'Pool Paged Bytes'", ex);
+                OnErrorEvent("Error instantiating performance counter 'Pool Paged Bytes'", ex);
             }
 
             try
@@ -344,7 +344,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception instantiating performance counter 'Pool NonPaged Bytes'", ex);
+                OnErrorEvent("Error instantiating performance counter 'Pool NonPaged Bytes'", ex);
             }
 
             mPerfCountersInitialized = true;

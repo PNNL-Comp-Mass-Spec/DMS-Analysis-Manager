@@ -213,7 +213,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
+                LogError("Error in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -345,7 +345,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in CheckSkipMaxQuant", ex);
+                LogError("Error in CheckSkipMaxQuant", ex);
                 abortProcessing = true;
                 return false;
             }
@@ -368,7 +368,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in CreatePrecursorInfoFile", ex);
+                LogError("Error in CreatePrecursorInfoFile", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -438,7 +438,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in DetermineProteinDescriptionParseRule", ex);
+                LogError("Error in DetermineProteinDescriptionParseRule", ex);
                 proteinDescriptionParseRule = string.Empty;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -501,7 +501,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetExistingToolParametersFile", ex);
+                LogError("Error in GetExistingToolParametersFile", ex);
                 return false;
             }
         }
@@ -596,7 +596,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetScanStatsFiles", ex);
+                LogError("Error in GetScanStatsFiles", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -686,7 +686,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
+                LogError("Error in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

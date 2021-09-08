@@ -548,7 +548,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     catch (Exception ex)
                     {
                         // Exception checking TempDir; log an error, but continue checking the other directories in directoriesToSearch
-                        OnErrorEvent("Exception in FindDataFile looking for: " + fileToFind + " in " + directoryPath, ex);
+                        OnErrorEvent("Error in FindDataFile looking for: " + fileToFind + " in " + directoryPath, ex);
                     }
                 }
 
@@ -581,7 +581,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in FindDataFile looking for: " + fileToFind, ex);
+                OnErrorEvent("Error in FindDataFile looking for: " + fileToFind, ex);
             }
 
             // We'll only get here if an exception occurs

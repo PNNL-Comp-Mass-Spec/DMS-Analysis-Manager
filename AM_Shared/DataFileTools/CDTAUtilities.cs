@@ -72,7 +72,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in ConvertCDTAToMGF: " + ex.Message, ex);
+                OnErrorEvent("Error in ConvertCDTAToMGF: " + ex.Message, ex);
                 return false;
             }
 
@@ -206,7 +206,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in RemoveSparseSpectra: " + ex.Message);
+                OnErrorEvent("Error in RemoveSparseSpectra: " + ex.Message);
                 return false;
             }
 
@@ -396,7 +396,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in ValidateCDTAFileScanAndCSTags: " + ex.Message);
+                OnErrorEvent("Error in ValidateCDTAFileScanAndCSTags: " + ex.Message);
                 return false;
             }
         }
@@ -474,7 +474,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in ValidateCDTAFileSize: " + ex.Message);
+                OnErrorEvent("Error in ValidateCDTAFileSize: " + ex.Message);
                 return false;
             }
         }

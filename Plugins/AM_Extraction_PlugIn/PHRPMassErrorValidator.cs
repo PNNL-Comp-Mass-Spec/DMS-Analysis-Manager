@@ -357,7 +357,7 @@ namespace AnalysisManagerExtractionPlugin
             catch (Exception ex)
             {
                 OnErrorEvent("Error in ValidatePHRPResultMassErrors", ex);
-                ErrorMessage = "Exception in ValidatePHRPResultMassErrors";
+                ErrorMessage = "Error in ValidatePHRPResultMassErrors";
                 return false;
             }
         }

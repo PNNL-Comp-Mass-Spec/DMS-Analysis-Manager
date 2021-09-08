@@ -97,7 +97,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreateWorkingDirectoryMetadataFile", ex);
+                OnErrorEvent("Error in CreateWorkingDirectoryMetadataFile", ex);
                 return false;
             }
         }

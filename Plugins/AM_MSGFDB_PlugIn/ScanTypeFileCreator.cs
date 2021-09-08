@@ -163,7 +163,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in CacheScanTypeUsingScanStatsEx: " + ex.GetType().Name;
+                ErrorMessage = "Error in CacheScanTypeUsingScanStatsEx: " + ex.GetType().Name;
                 ExceptionDetails = ex.Message;
                 return false;
             }
@@ -296,7 +296,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in CreateScanTypeFile: " + ex.GetType().Name;
+                ErrorMessage = "Error in CreateScanTypeFile: " + ex.GetType().Name;
                 ExceptionDetails = ex.Message;
                 return false;
             }

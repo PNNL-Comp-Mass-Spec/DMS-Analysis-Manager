@@ -31,7 +31,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreatePrecursorInfoFile", ex);
+                OnErrorEvent("Error in CreatePrecursorInfoFile", ex);
                 return false;
             }
         }
@@ -143,7 +143,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreatePrecursorInfoFile", ex);
+                OnErrorEvent("Error in CreatePrecursorInfoFile", ex);
                 return false;
             }
         }

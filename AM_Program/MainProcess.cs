@@ -284,7 +284,7 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    ConsoleMsgUtils.ShowError("Exception instantiating AnalysisMgrSettings", ex);
+                    ConsoleMsgUtils.ShowError("Error instantiating AnalysisMgrSettings", ex);
                     Global.IdleLoop(0.5);
                     return false;
                 }
@@ -449,7 +449,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex) when (!throwExceptions)
             {
-                ConsoleMsgUtils.ShowError("Exception instantiating AnalysisMgrSettings", ex);
+                ConsoleMsgUtils.ShowError("Error instantiating AnalysisMgrSettings", ex);
                 Global.IdleLoop(0.5);
             }
         }
@@ -838,7 +838,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception in DoAnalysis", ex);
+                LogError("Error in DoAnalysis", ex);
                 mStatusTools.UpdateIdle("Error encountered", "MainProcess.DoAnalysis(): " + ex.Message, mMostRecentJobInfo, true);
             }
             finally
@@ -1143,7 +1143,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mMostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
+                mMostRecentErrorMessage = "Error instantiating the RemoteMonitor class";
                 LogError(mMostRecentErrorMessage, ex);
                 resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 remoteMonitor = null;
@@ -1254,7 +1254,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception in CleanupAfterJob", ex);
+                LogError("Error in CleanupAfterJob", ex);
                 mStatusTools.UpdateIdle("Error encountered", "MainProcess.CleanupAfterJob(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
@@ -1809,7 +1809,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception in cleaning up after RunTool error", ex);
+                LogError("Error in cleaning up after RunTool error", ex);
                 mStatusTools.UpdateIdle("Error encountered", "MainProcess.HandleJobFailure(): " + ex.Message, mMostRecentJobInfo, true);
                 return false;
             }
@@ -1934,7 +1934,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mMostRecentErrorMessage = "Exception initializing the remote transfer utility: " + ex.Message;
+                mMostRecentErrorMessage = "Error initializing the remote transfer utility: " + ex.Message;
                 LogError(mMostRecentErrorMessage, ex);
                 return null;
             }
@@ -2164,7 +2164,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception in LogErrorToDatabasePeriodically", ex);
+                LogError("Error in LogErrorToDatabasePeriodically", ex);
             }
         }
 

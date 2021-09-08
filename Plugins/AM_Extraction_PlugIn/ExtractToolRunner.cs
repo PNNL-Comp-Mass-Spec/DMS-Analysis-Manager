@@ -622,7 +622,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in ConvertMZIDToTSV", ex);
+                LogError("Error in ConvertMZIDToTSV", ex);
             }
 
             return string.Empty;
@@ -2292,7 +2292,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in ExtractToolRunner.InterleaveFiles", ex);
+                LogError("Error in ExtractToolRunner.InterleaveFiles", ex);
                 return false;
             }
         }
@@ -2408,7 +2408,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in ExtractToolRunner.SplitFileRoundRobin", ex);
+                LogError("Error in ExtractToolRunner.SplitFileRoundRobin", ex);
                 return false;
             }
         }

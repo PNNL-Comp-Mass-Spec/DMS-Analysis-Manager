@@ -225,7 +225,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in DeleteLockStream: " + ex.Message);
+                OnErrorEvent("Error in DeleteLockStream: " + ex.Message);
             }
         }
 
@@ -337,7 +337,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in StoreSplitFastaFileNames for " + splitFastaName + ": " + ex.Message;
+                ErrorMessage = "Error in StoreSplitFastaFileNames for " + splitFastaName + ": " + ex.Message;
                 OnErrorEvent(ErrorMessage);
                 return false;
             }
@@ -389,7 +389,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in UpdateCachedOrganismDBInfo: " + ex.Message;
+                ErrorMessage = "Error in UpdateCachedOrganismDBInfo: " + ex.Message;
                 OnErrorEvent(ErrorMessage);
             }
         }
@@ -629,7 +629,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
+                ErrorMessage = "Error in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
