@@ -50,14 +50,16 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-v3-05.exe";
 
+        private DirectoryInfo mFragPipeLibDirectory;
+
+        private DirectoryInfo mFragPipeToolsDirectory;
+
         /// <summary>
         /// Path to philosopher.exe
         /// </summary>
         public FileInfo PhilosopherExe { get; }
 
-        private DirectoryInfo mFragPipeLibDirectory;
 
-        private DirectoryInfo mFragPipeToolsDirectory;
 
         /// <summary>
         /// Constructor
