@@ -73,12 +73,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the FragPipe lib directory
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib
+        /// </remarks>
         /// <param name="libDirectory"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindFragPipeLibDirectory(out DirectoryInfo libDirectory)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\lib
-
             if (mFragPipeLibDirectory != null)
             {
                 libDirectory = mFragPipeLibDirectory;
@@ -114,7 +115,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the FragPipe tools directory
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools
         /// </remarks>
         /// <param name="toolsDirectory"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -157,12 +158,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the Batmass IO .jar file
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar
+        /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileBatmassIO(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar
-
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
                 jarFile = null;
@@ -181,12 +183,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Commons-Math3 .jar file
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar
+        /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileCommonsMath(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar
-
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
                 jarFile = null;
@@ -204,12 +207,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the Crystal-C .jar file
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar
+        /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileCrystalC(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar
-
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
                 jarFile = null;
@@ -227,12 +231,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the fragpipe .jar file
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-16.0.jar
+        /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileFragPipe(out FileInfo jarFile)
         {
-            // Typically at c:\dms_programs\MSFragger\fragpipe\lib\fragpipe-16.0.jar
-
             if (!FindFragPipeLibDirectory(out var libDirectory))
             {
                 jarFile = null;
@@ -251,12 +256,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the Grppr .jar file
         /// </summary>
+        /// <remarks>
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar
+        /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileGrppr(out FileInfo jarFile)
         {
-            // Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar
-
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
                 jarFile = null;
