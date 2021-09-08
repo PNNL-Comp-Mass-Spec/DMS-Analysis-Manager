@@ -732,43 +732,22 @@ namespace AnalysisManagerMSFraggerPlugIn
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                // Larger FASTA files need more memory
-                // 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked
-
                 var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
 
-                var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
 
-                if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
                 {
-                    mEvalMessage = Global.AppendToComment(mEvalMessage,
-                        string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB));
                 }
 
                 LogMessage("Running MSFragger");
                 mProgress = (int)ProgressPercentValues.StartingMSFragger;
 
                 // Set up and execute a program runner to run MSFragger
-                var arguments = new StringBuilder();
 
-                arguments.AppendFormat(" -Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);
+                bool processingSuccess;
 
-                arguments.AppendFormat(" {0}", paramFilePath);
-
-                // Append the .mzML files
-                foreach (var item in dataPackageInfo.DatasetFiles)
                 {
-                    arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
+                    processingSuccess = StartMSFragger(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath);
                 }
-
-                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
-                mWarnedInvalidDatasetCount = false;
-
-                LogDebug(javaProgLoc + " " + arguments);
-
-                // Start the program and wait for it to finish
-                // However, while it's running, LoopWaiting will get called via events
-                var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -864,6 +843,43 @@ namespace AnalysisManagerMSFraggerPlugIn
                 LogError("Error in StartMSFragger", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private bool StartMSFragger(
+            DataPackageInfo dataPackageInfo,
+            string javaProgLoc,
+            double fastaFileSizeMB,
+            string paramFilePath)
+        {
+            // Larger FASTA files need more memory
+            // 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
+            // 15 GB of memory was not sufficient for a 26 MB FASTA file with 3 dynamic mods (where the 3rd mod is TMT at the N-terminus)
+
+            var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+
+            if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
+            {
+                mEvalMessage = Global.AppendToComment(mEvalMessage,
+                    string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB));
+            }
+
+            var arguments = new StringBuilder();
+
+            arguments.AppendFormat("-Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);
+
+            arguments.AppendFormat(" {0}", paramFilePath);
+
+            // Append the .mzML files
+            foreach (var item in dataPackageInfo.DatasetFiles)
+            {
+                arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
+            }
+
+            LogDebug(javaProgLoc + " " + arguments);
+
+            // Start the program and wait for it to finish
+            // However, while it's running, LoopWaiting will get called via events
+            return mCmdRunner.RunProgram(javaProgLoc, arguments.ToString(), "MSFragger", true);
         }
 
         /// <summary>
