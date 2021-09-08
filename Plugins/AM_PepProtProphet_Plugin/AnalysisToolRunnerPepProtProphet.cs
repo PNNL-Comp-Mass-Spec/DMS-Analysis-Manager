@@ -264,9 +264,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mJobParams.AddResultFileToSkip(JAVA_CONSOLE_OUTPUT);
                 mJobParams.AddResultFileToSkip(PERCOLATOR_CONSOLE_OUTPUT);
                 mJobParams.AddResultFileToSkip(PHILOSOPHER_CONSOLE_OUTPUT);
+
+                // Skip the filtered FASTA file, created when method RunReportGeneration is called
+                mJobParams.AddResultFileToSkip("protein.fas");
+
+                // Also skip these files
                 mJobParams.AddResultFileToSkip("reprint.int.tsv");
                 mJobParams.AddResultFileToSkip("reprint.spc.tsv");
-                mJobParams.AddResultFileToSkip("protein.fas");
 
                 var success = CopyResultsToTransferDirectory();
                 if (!success)
