@@ -21,7 +21,7 @@ using AnalysisManagerMSFraggerPlugIn;
 namespace AnalysisManagerPepProtProphetPlugIn
 {
     /// <summary>
-    /// Class for running peptide prophet and protein prophet using Philosopher
+    /// Class for running PeptideProphet, ProteinProphet, and other tools for post-processing MSFragger results
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerPepProtProphet : AnalysisToolRunnerBase
@@ -182,7 +182,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Runs peptide and protein prophet using Philosopher
+        /// Runs peptide and ProteinProphet using Philosopher
         /// Optionally also runs other post-processing tools
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
@@ -368,7 +368,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.MS1ValidationMode == MS1ValidationModes.PeptideProphet)
                 {
-                    // Run Peptide Prophet
+                    // Run PeptideProphet
                     psmValidationSuccess = RunPeptideProphet(
                         dataPackageInfo,
                         datasetIDsByExperimentGroup,
@@ -406,7 +406,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (peptideProphetPepXmlFiles.Count > 0)
                 {
-                    // Run Protein Prophet
+                    // Run ProteinProphet
                     var proteinProphetSuccess = RunProteinProphet(peptideProphetPepXmlFiles, options);
                     if (!proteinProphetSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -721,8 +721,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 PhilosopherToolType.Undefined => "Undefined",
                 PhilosopherToolType.ShowVersion => "Get Version",
                 PhilosopherToolType.WorkspaceManager => "Workspace Manager",
-                PhilosopherToolType.PeptideProphet => "Peptide Prophet",
-                PhilosopherToolType.ProteinProphet => "Protein Prophet",
+                PhilosopherToolType.PeptideProphet => "PeptideProphet",
+                PhilosopherToolType.ProteinProphet => "ProteinProphet",
                 PhilosopherToolType.AnnotateDatabase => "Annotate Database",
                 PhilosopherToolType.ResultsFilter => "Results Filter",
                 PhilosopherToolType.FreeQuant => "FreeQuant",
@@ -962,7 +962,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Create the temporary directories used by Peptide Prophet
+        /// Create the temporary directories used by PeptideProphet
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
@@ -1452,7 +1452,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         if (!pepXmlFile.Exists)
                         {
-                            LogError("Peptide prophet results file not found: " + pepXmlFile.FullName);
+                            LogError("Cannot run Crystal-C since the PeptideProphet results file was not found: " + pepXmlFile.FullName);
                             return false;
                         }
 
@@ -1907,7 +1907,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                LogDebug("Running peptide prophet", 2);
+                LogDebug("Running PeptideProphet", 2);
 
                 if (options.OpenSearch)
                 {
@@ -1927,7 +1927,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var workingDirectoryPadWidth = GetLongestWorkingDirectoryName(workspaceDirectoryByDatasetId.Values);
 
-                // Run Peptide Prophet separately against each dataset
+                // Run PeptideProphet separately against each dataset
 
                 foreach (var item in workspaceDirectoryByDatasetId)
                 {
@@ -1945,7 +1945,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var success = RunPhilosopher(
                         PhilosopherToolType.PeptideProphet,
                         arguments,
-                        "run peptide prophet",
+                        "run PeptideProphet",
                         workingDirectory,
                         workingDirectoryPadWidth);
 
@@ -1983,7 +1983,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                // Run Peptide Prophet separately against each experiment group
+                // Run PeptideProphet separately against each experiment group
 
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
@@ -2022,7 +2022,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var success = RunPhilosopher(
                         PhilosopherToolType.PeptideProphet,
                         arguments.ToString(),
-                        "run peptide prophet",
+                        "run PeptideProphet",
                         experimentGroupDirectory,
                         options.WorkingDirectoryPadWidth);
 
@@ -2268,7 +2268,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
                 {
-                    // Peptide prophet reports numerous warnings via the console error stream
+                    // PeptideProphet reports numerous warnings via the console error stream
                     // Instruct mCmdRunner to treat them as normal messages
                     mCmdRunner.RaiseConsoleErrorEvents = false;
                 }
@@ -2322,15 +2322,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Run protein prophet
+        /// Run ProteinProphet
         /// </summary>
-        /// <param name="peptideProphetPepXmlFiles">List of .pep.xml files created by peptide prophet</param>
+        /// <param name="peptideProphetPepXmlFiles">List of .pep.xml files created by PeptideProphet</param>
         /// <param name="options"></param>
         private bool RunProteinProphet(ICollection<FileInfo> peptideProphetPepXmlFiles, FragPipeOptions options)
         {
             try
             {
-                LogDebug("Running Protein Prophet", 2);
+                LogDebug("Running ProteinProphet", 2);
 
                 // ReSharper disable CommentTypo
                 // ReSharper disable StringLiteralTypo
@@ -2383,9 +2383,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper disable CommentTypo
 
-                // Note that Protein Prophet creates a GUID-named subdirectory below the user's temp directory
+                // Note that ProteinProphet creates a GUID-named subdirectory below the user's temp directory
                 // Inside this directory, files batchcoverage.exe and DatabaseParser.exe are created
-                // When Protein Prophet finishes, these files are deleted
+                // When ProteinProphet finishes, these files are deleted
                 // Antivirus scanning processes sometimes lock these files, preventing their deletion, leading to errors like these:
 
                 // ERRO[16:24:59] remove C:\Users\D3L243\AppData\Local\Temp\06c436c4-ccee-42bd-b2e7-cc9e23e14ab5\batchcoverage.exe: The process cannot access the file because it is being used by another process.
@@ -2395,7 +2395,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                var success = RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run protein prophet");
+                var success = RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run ProteinProphet");
 
                 if (!success)
                     return false;
@@ -2882,17 +2882,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Update the msms_run_summary element in pepXML files created by Peptide Prophet to adjust the path to the parent .mzML files
+        /// Update the msms_run_summary element in pepXML files created by PeptideProphet to adjust the path to the parent .mzML files
         /// </summary>
         /// <remarks>
-        /// This method is called when peptide prophet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
+        /// This method is called when PeptideProphet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
         /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
         /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
-        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
+        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
             DataPackageInfo dataPackageInfo,
@@ -2929,7 +2929,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!pepXmlFile.Exists)
                     {
-                        LogError("Peptide prophet results file not found: " + pepXmlFile.FullName);
+                        LogError("PeptideProphet results file not found: " + pepXmlFile.FullName);
                         continue;
                     }
 
@@ -3004,11 +3004,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Update the msms_run_summary element in pepXML files created by Peptide Prophet to adjust the path to the parent .mzML file
+        /// Update the msms_run_summary element in pepXML files created by PeptideProphet to adjust the path to the parent .mzML file
         /// </summary>
         /// <remarks>
         /// <para>
-        /// This method is called when Peptide Prophet was run separately against each dataset (<seealso cref="UpdateMsMsRunSummaryInCombinedPepXmlFiles"/>)
+        /// This method is called when PeptideProphet was run separately against each dataset (<seealso cref="UpdateMsMsRunSummaryInCombinedPepXmlFiles"/>)
         /// </para>
         /// <para>
         /// This corresponds to FragPipe step "Rewrite pepxml"
@@ -3017,7 +3017,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="dataPackageInfo"></param>
         /// <param name="workspaceDirectoryByDatasetId"></param>
         /// <param name="options"></param>
-        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by peptide prophet</param>
+        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
             DataPackageInfo dataPackageInfo,
@@ -3065,7 +3065,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!pepXmlFile.Exists)
                     {
-                        LogError("Peptide prophet results file not found: " + pepXmlFile.FullName);
+                        LogError("PeptideProphet results file not found: " + pepXmlFile.FullName);
                         continue;
                     }
 

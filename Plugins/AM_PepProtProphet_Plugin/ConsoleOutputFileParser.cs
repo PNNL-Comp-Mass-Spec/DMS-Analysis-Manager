@@ -222,7 +222,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // INFO[17:45:51] Done
 
             // ----------------------------------------------------
-            // Example Console output when running Peptide Prophet
+            // Example Console output when running PeptideProphet
             // ----------------------------------------------------
 
             // INFO[11:01:05] Executing PeptideProphet  v3.4.13
@@ -236,7 +236,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // INFO[11:01:25] Done
 
             // ----------------------------------------------------
-            // Example Console output when running Protein Prophet
+            // Example Console output when running ProteinProphet
             // ----------------------------------------------------
 
             // INFO[11:05:08] Executing ProteinProphet  v3.4.13

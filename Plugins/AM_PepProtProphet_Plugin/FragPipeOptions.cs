@@ -143,7 +143,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (IsUndefinedOrAuto(runPeptideProphetJobParam) && IsUndefinedOrAuto(runPercolatorJobParam))
             {
-                // Use Percolator if match-between runs is enabled, otherwise use Peptide Prophet
+                // Use Percolator if match-between runs is enabled, otherwise use PeptideProphet
                 // This value will get changed by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
                 MS1ValidationMode = MatchBetweenRuns ? MS1ValidationModes.Percolator : MS1ValidationModes.PeptideProphet;
 
