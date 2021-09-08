@@ -13,6 +13,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using AnalysisManagerMSFraggerPlugIn;
 
 namespace AnalysisManagerPepProtProphetPlugIn
 {
