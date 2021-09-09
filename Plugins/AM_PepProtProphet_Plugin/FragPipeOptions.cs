@@ -115,11 +115,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
             var runPeptideProphetJobParam = mJobParams.GetJobParameter("RunPeptideProphet", string.Empty);
             var runPercolatorJobParam = mJobParams.GetJobParameter("RunPercolator", string.Empty);
 
+            var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
             if (FraggerOptions.IsUndefinedOrAuto(runPeptideProphetJobParam) && FraggerOptions.IsUndefinedOrAuto(runPercolatorJobParam))
             {
                 // Use Percolator if match-between runs is enabled, otherwise use PeptideProphet
                 // This value will get changed by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
-                FraggerOptions.MS1ValidationMode = MatchBetweenRuns ? MS1ValidationModes.Percolator : MS1ValidationModes.PeptideProphet;
+                FraggerOptions.MS1ValidationMode = MatchBetweenRuns && databaseSplitCount == 1
+                    ? MS1ValidationModes.Percolator
+                    : MS1ValidationModes.PeptideProphet;
 
                 FraggerOptions.MS1ValidationModeAutoDefined = true;
             }
@@ -129,11 +133,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorJobParam) && bool.Parse(runPercolatorJobParam);
 
-                if (runPercolator)
+                if (runPercolator && databaseSplitCount <= 1)
                 {
                     FraggerOptions.MS1ValidationMode = MS1ValidationModes.Percolator;
                 }
-                else if (runPeptideProphet)
+                else if (runPeptideProphet || runPercolator && databaseSplitCount > 1)
                 {
                     FraggerOptions.MS1ValidationMode = MS1ValidationModes.PeptideProphet;
                 }

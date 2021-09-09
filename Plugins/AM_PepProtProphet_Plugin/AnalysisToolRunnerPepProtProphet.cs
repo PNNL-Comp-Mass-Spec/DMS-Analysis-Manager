@@ -370,6 +370,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 bool psmValidationSuccess;
                 List<FileInfo> peptideProphetPepXmlFiles;
 
+                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+                if (databaseSplitCount > 1 && options.MS1ValidationMode == MS1ValidationModes.Percolator)
+                {
+                    // Split FASTA search
+                    // Cannot run Percolator since we don't have .pin files
+                    options.FraggerOptions.MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+                }
+
                 if (options.MS1ValidationMode == MS1ValidationModes.PeptideProphet)
                 {
                     // Run PeptideProphet
@@ -1231,6 +1239,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return true;
                 }
 
+                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
@@ -1255,9 +1265,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
+                        if (!pepXmlSuccess)
+                            return false;
+
+                        if (databaseSplitCount > 1)
+                        {
+                            // .pin files are not created for split FASTA MSFragger searches
+                            continue;
+                        }
+
                         var pinSuccess = MoveFile(sourceDirectoryPath, datasetName + PIN_EXTENSION, targetDirectoryPath);
 
-                        if (!pepXmlSuccess || !pinSuccess)
+                        if (!pinSuccess)
                             return false;
                     }
                 }

@@ -244,6 +244,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 if (!sourcePinFile.Exists)
                 {
+                    var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+                    if (databaseSplitCount > 1)
+                        return true;
+
                     LogError("File not found: " + sourcePinFile.FullName);
                     return false;
                 }
