@@ -124,12 +124,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DBAnnotationComplete = 45,
             ResultsFilterComplete = 60,
             FreeQuantOrLabelQuantComplete = 75,
-            ReportGenerated = 84,
-            ReportFilesUpdated = 85,
+            ReportGenerated = 85,
             AbacusComplete = 87,
             IonQuantComplete = 90,
-            TmtIntegratorComplete = 95,
-            PtmShepherdComplete = 97,
+            TmtIntegratorComplete = 93,
+            PtmShepherdComplete = 95,
+            ReportFilesUpdated = 97,
             ProcessingComplete = 99
         }
 
@@ -471,12 +471,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
-                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
-                if (!reportFilesUpdated)
-                    return CloseOutType.CLOSEOUT_FAILED;
-
-                mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
-
                 if (experimentGroupWorkingDirectories.Count > 1 && options.RunAbacus)
                 {
                     var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
@@ -512,6 +506,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     mProgress = (int)ProgressPercentValues.PtmShepherdComplete;
                 }
+
+                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
+                if (!reportFilesUpdated)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
+                mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
 
                 var moveSuccess = MoveResultsOutOfSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
                 if (!moveSuccess)
