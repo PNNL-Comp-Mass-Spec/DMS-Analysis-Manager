@@ -2936,6 +2936,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper restore StringLiteralTypo
                 }
 
+                arguments.AppendFormat(" {0}", tmtIntegratorConfigFile.Name);
+
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
                     arguments.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
