@@ -105,7 +105,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ToDo: customize the check for errors
 
                     // ReSharper disable once InvertIf
-                    if (dataLine.StartsWith("ERROR") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    if ((dataLine.StartsWith("ERROR") || dataLine.StartsWith("Exception in thread")) &&
+                        !ConsoleOutputErrorMsg.Contains(dataLine))
                     {
                         // Fatal error
                         if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
