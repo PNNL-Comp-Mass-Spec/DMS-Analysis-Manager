@@ -2643,7 +2643,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception calling toolRunner.Setup()", ex);
+                LogError("Error calling toolRunner.Setup()", ex);
                 return false;
             }
 

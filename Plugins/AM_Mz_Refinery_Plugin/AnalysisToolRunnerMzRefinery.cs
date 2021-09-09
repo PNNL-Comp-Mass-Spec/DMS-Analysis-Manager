@@ -1633,7 +1633,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Error calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

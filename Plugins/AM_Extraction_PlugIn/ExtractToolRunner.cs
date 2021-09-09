@@ -2531,7 +2531,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
+                LogError("Error calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }
@@ -2622,7 +2622,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling ValidatePHRPResultMassErrors", ex);
+                LogError("Error calling ValidatePHRPResultMassErrors", ex);
                 success = false;
             }
 

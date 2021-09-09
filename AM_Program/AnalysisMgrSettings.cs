@@ -141,7 +141,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling " + SP_NAME_ACK_MANAGER_UPDATE, ex);
+                OnErrorEvent("Error calling " + SP_NAME_ACK_MANAGER_UPDATE, ex);
             }
         }
 

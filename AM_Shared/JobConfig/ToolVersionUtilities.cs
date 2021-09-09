@@ -516,7 +516,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
                 catch (Exception ex)
                 {
-                    OnErrorEvent("Exception calling SetStepTaskToolVersion", ex);
+                    OnErrorEvent("Error calling SetStepTaskToolVersion", ex);
                     return false;
                 }
             }
@@ -562,7 +562,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling SetStepTaskToolVersion", ex);
+                OnErrorEvent("Error calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

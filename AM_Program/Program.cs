@@ -123,7 +123,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        LogTools.LogError("Exception calling CodeTest", ex);
+                        LogTools.LogError("Error calling CodeTest", ex);
                     }
 
                     ShowTrace("Exiting the application");

@@ -507,7 +507,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                errorMsg = "Exception calling LoadDataPackageJobInfo: " + ex.Message;
+                errorMsg = "Error calling LoadDataPackageJobInfo: " + ex.Message;
                 return dataPackagePeptideHitJobs;
             }
 
@@ -578,7 +578,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                errorMsg = "Exception calling LookupJobParametersFromHistory (RetrieveDataPackagePeptideHitJobInfo): " + ex.Message;
+                errorMsg = "Error calling LookupJobParametersFromHistory (RetrieveDataPackagePeptideHitJobInfo): " + ex.Message;
                 return new List<DataPackageJobInfo>();
             }
 

@@ -3013,7 +3013,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
+                LogError("Error calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

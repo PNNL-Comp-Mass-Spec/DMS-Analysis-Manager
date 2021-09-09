@@ -873,6 +873,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                         {
                             LogError(string.Format("MSFragger did not create a .tsv file{0}", optionalDatasetInfo));
                         }
+
+                        // ToDo: create a .tsv file using the .pepXML file
                     }
 
                     if (!pinFile.Exists && !splitFastaSearch)
@@ -1022,7 +1024,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
+                LogError("Error calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

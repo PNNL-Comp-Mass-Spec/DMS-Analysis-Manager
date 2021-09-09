@@ -1149,7 +1149,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling LoadDataPackageDatasetInfo", ex);
+                OnErrorEvent("Error calling LoadDataPackageDatasetInfo", ex);
                 return false;
             }
 
@@ -1387,7 +1387,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling LoadDataPackageDatasetInfo", ex);
+                OnErrorEvent("Error calling LoadDataPackageDatasetInfo", ex);
                 return false;
             }
 
@@ -1412,7 +1412,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception calling RetrieveDataPackagePeptideHitJobInfo", ex);
+                OnErrorEvent("Error calling RetrieveDataPackagePeptideHitJobInfo", ex);
                 return false;
             }
 

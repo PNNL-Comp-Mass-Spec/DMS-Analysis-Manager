@@ -542,11 +542,11 @@ namespace AnalysisManagerProg
                 string errorMessage;
                 if (mMgrConfigDBConnectionString == null)
                 {
-                    errorMessage = "Exception calling " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";
+                    errorMessage = "Error calling " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";
                 }
                 else
                 {
-                    errorMessage = "Exception calling " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
+                    errorMessage = "Error calling " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
                 }
 
                 LogError(errorMessage, ex);
