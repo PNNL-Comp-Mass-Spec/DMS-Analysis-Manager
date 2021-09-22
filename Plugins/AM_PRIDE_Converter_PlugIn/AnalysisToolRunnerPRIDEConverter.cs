@@ -3138,27 +3138,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     accession = "MS:1000471";
                     description = "6140 Quadrupole LC/MS";
                     break;
+
                 case "Agilent_TOF_V2":
                     accession = "MS:1000472";
                     description = "6210 Time-of-Flight LC/MS";
                     break;
-                case "Bruker_Amazon_Ion_Trap":
-                    accession = "MS:1001542";
-                    description = "amaZon ETD";
 
+                case "Bruker_Amazon_Ion_Trap":
+                    accession = "MS:1001545";
+                    description = "Bruker Daltonics amaZon series";
                     break;
+
                 case "Bruker_FTMS":
-                    accession = "MS:1001549";
-                    description = "solariX";
+                case "BrukerFT_BAF":
+                    accession = "MS:1001548";
+                    description = "Bruker Daltonics solarix series";
                     break;
+
                 case "Bruker_QTOF":
-                    accession = "MS:1001537";
-                    description = "BioTOF";
+                    accession = "MS:1001535";
+                    description = "Bruker Daltonics BioTOF series";
                     break;
+
                 case "Exactive":
                     accession = "MS:1000649";
                     description = "Exactive";
                     break;
+
                 case "TSQ":
                 case "GC-TSQ":
                     if (instrumentName.Equals("TSQ_1") || instrumentName.Equals("TSQ_2"))
@@ -3174,31 +3180,38 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         description = "TSQ Vantage";
                     }
                     break;
+
                 case "LCQ":
                     accession = "MS:1000554";
                     description = "LCQ Deca";
                     break;
+
                 case "LTQ":
                 case "LTQ-Prep":
                     accession = "MS:1000447";
                     description = "LTQ";
                     break;
+
                 case "LTQ-ETD":
                     accession = "MS:1000638";
                     description = "LTQ XL ETD";
                     break;
+
                 case "LTQ-FT":
                     accession = "MS:1000448";
                     description = "LTQ FT";
                     break;
+
                 case "Lumos":
                     accession = "MS:1002732";
                     description = "Orbitrap Fusion Lumos";
                     break;
+
                 case "Orbitrap":
                     accession = "MS:1000449";
                     description = "LTQ Orbitrap";
                     break;
+
                 case "QExactive":
                 case "GC-QExactive":
                 case "QEHFX":
@@ -3223,22 +3236,31 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         description = "Q Exactive";
                     }
                     break;
+
                 case "QTrap":
                     accession = "MS:1000931";
                     description = "QTRAP 5500";
                     break;
+
                 case "Sciex_TripleTOF":
                     accession = "MS:1000932";
                     description = "TripleTOF 5600";
                     break;
+
                 case "VelosOrbi":
                     accession = "MS:1001742";
                     description = "LTQ Orbitrap Velos";
                     break;
+
                 case "VelosPro":
                     // Note that VPro01 is actually a Velos Pro
                     accession = "MS:1003096";
                     description = "LTQ Orbitrap Velos Pro";
+                    break;
+
+                case "Eclipse":
+                    accession = "MS:1003029";
+                    description = "Orbitrap Eclipse";
                     break;
             }
         }
