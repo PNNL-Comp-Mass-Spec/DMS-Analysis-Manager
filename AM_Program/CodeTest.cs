@@ -568,16 +568,16 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var resFolderName = Path.Combine(GetWorkDirPath(), "TestResults");
-            var resultsFolder = new DirectoryInfo(resFolderName);
-            if (!resultsFolder.Exists)
-                resultsFolder.Create();
+            var resultsDirectoryPath = Path.Combine(GetWorkDirPath(), "TestResults");
+            var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
+            if (!resultsDirectory.Exists)
+                resultsDirectory.Create();
 
             var rand = new Random();
 
             for (var i = 0; i < 5; i++)
             {
-                var outFilePath = Path.Combine(resultsFolder.FullName, "TestOutFile" + i + ".txt");
+                var outFilePath = Path.Combine(resultsDirectory.FullName, "TestOutFile" + i + ".txt");
 
                 using var writer = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write));
 
@@ -590,7 +590,7 @@ namespace AnalysisManagerProg
             }
 
             var analysisResults = new AnalysisResults(mMgrSettings, jobParams);
-            analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(GetWorkDirPath(), resFolderName));
+            analysisResults.CopyFailedResultsToArchiveDirectory(Path.Combine(GetWorkDirPath(), resultsDirectoryPath));
         }
 
         /// <summary>
