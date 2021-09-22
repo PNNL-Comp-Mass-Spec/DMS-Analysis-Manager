@@ -1476,7 +1476,7 @@ namespace AnalysisManagerBase.StatusReporting
         {
             ClearCachedInfo();
 
-            if (!(managerStatus == MgrStatusCodes.DISABLED_LOCAL || managerStatus == MgrStatusCodes.DISABLED_MC))
+            if (managerStatus is not (MgrStatusCodes.DISABLED_LOCAL or MgrStatusCodes.DISABLED_MC))
             {
                 managerStatus = MgrStatusCodes.DISABLED_LOCAL;
             }

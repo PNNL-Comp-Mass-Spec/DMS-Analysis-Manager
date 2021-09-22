@@ -2730,9 +2730,10 @@ namespace AnalysisManagerProg
         /// <param name="resultCode"></param>
         private bool SkippedStepTool(CloseOutType resultCode)
         {
-            return resultCode == CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT ||
-                   resultCode == CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN ||
-                   resultCode == CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
+            return resultCode is
+                CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT or
+                CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN or
+                CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
         }
 
         /// <summary>
