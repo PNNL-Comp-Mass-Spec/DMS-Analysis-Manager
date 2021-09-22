@@ -222,10 +222,8 @@ namespace AnalysisManagerBase.AnalysisTool
         public int Job => mJob;
 
         /// <summary>
-        /// Publicly accessible results directory name and path
         /// Will be set to true if the job cannot be run due to not enough free memory
         /// </summary>
-        public string ResFolderName => mResultsDirectoryName;
         public bool InsufficientFreeMemory => mInsufficientFreeMemory;
 
         /// <summary>
