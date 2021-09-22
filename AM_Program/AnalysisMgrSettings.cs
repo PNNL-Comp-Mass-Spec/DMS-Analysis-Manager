@@ -154,37 +154,6 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
-        /// </summary>
-        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
-        /// <returns>True if success, false if an error</returns>
-        public bool LoadSettings(Dictionary<string, string> configFileSettings)
-        {
-            var loadSettingsFromDB = !Global.OfflineMode;
-
-            var success = LoadSettings(configFileSettings, loadSettingsFromDB);
-            if (!success)
-            {
-                return false;
-            }
-
-            if (Global.OfflineMode)
-            {
-                var successLocal = LoadLocalSettings();
-                if (!successLocal)
-                    return false;
-
-                var foldersValidated = ValidateOfflineTaskDirectories();
-                return foldersValidated;
-            }
-
-            // LoadSettings already loaded settings from Manager Control DB
-            // Now load settings from the Broker DB (DMS_Pipeline)
-            var brokerSuccess = LoadBrokerDBSettings();
-            return brokerSuccess;
-        }
-
-        /// <summary>
         /// Check for the existence of a job task parameter
         /// </summary>
         /// <param name="name">Parameter name</param>
@@ -192,6 +161,75 @@ namespace AnalysisManagerProg
         public bool HasParam(string name)
         {
             return MgrParams.ContainsKey(name);
+        }
+
+        /// <summary>
+        /// Gets global settings from Broker DB (typically DMS_Pipeline)
+        /// </summary>
+        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
+        /// <returns>True for success; False for error</returns>
+        private bool LoadBrokerDBSettings(short retryCount = 6)
+        {
+            // Retrieves global settings from the Broker DB. Performs retries if necessary.
+            //
+            // At present, the only settings being retrieved are the param file storage paths for each step tool
+            // The storage path for each step tool will be stored in the manager settings dictionary
+            // For example: the LCMSFeatureFinder step tool will have an entry with
+            //   Name="StepTool_ParamFileStoragePath_LCMSFeatureFinder"
+            //   Value="\\gigasax\dms_parameter_Files\LCMSFeatureFinder"
+
+            // Gigasax.DMS_Pipeline
+            var connectionString = GetParam("BrokerConnectionString");
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+
+            ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionStringToUse);
+
+            // Construct the SQL to obtain the information:
+            //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
+            //   FROM V_Pipeline_Step_Tools_Detail_Report
+            //   WHERE ISNULL([Param File Storage Path], '') <> ''
+            //
+            const string sqlQuery =
+                " SELECT '" + Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + Name AS ParameterName, " +
+                " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
+                " WHERE ISNULL([Param File Storage Path], '') <> ''";
+
+            ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
+
+            // Query the database
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+            RegisterEvents(dbTools);
+
+            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount);
+
+            // If loop exited due to errors, return false
+            if (!success)
+            {
+                const string statusMessage = "AnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
+                ReportError(statusMessage, false);
+                return false;
+            }
+
+            // Verify at least one row returned
+            if (queryResults.Count < 1)
+            {
+                // No data was returned
+                var statusMessage = string.Format(
+                    "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using {0}",
+                    connectionStringToUse);
+
+                ReportError(statusMessage, false);
+                return false;
+            }
+
+            // Store the parameters
+            foreach (var item in queryResults)
+            {
+                SetParam(item[0], item[1]);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -272,6 +310,37 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
+        /// </summary>
+        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool LoadSettings(Dictionary<string, string> configFileSettings)
+        {
+            var loadSettingsFromDB = !Global.OfflineMode;
+
+            var success = LoadSettings(configFileSettings, loadSettingsFromDB);
+            if (!success)
+            {
+                return false;
+            }
+
+            if (Global.OfflineMode)
+            {
+                var successLocal = LoadLocalSettings();
+                if (!successLocal)
+                    return false;
+
+                var foldersValidated = ValidateOfflineTaskDirectories();
+                return foldersValidated;
+            }
+
+            // LoadSettings already loaded settings from Manager Control DB
+            // Now load settings from the Broker DB (DMS_Pipeline)
+            var brokerSuccess = LoadBrokerDBSettings();
+            return brokerSuccess;
+        }
+
+        /// <summary>
         /// Read settings from file ManagerSettingsLocal.xml
         /// </summary>
         private Dictionary<string, string> ReadLocalSettingsFile()
@@ -330,75 +399,6 @@ namespace AnalysisManagerProg
                 ReportError(ErrMsg, ex);
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Gets global settings from Broker DB (typically DMS_Pipeline)
-        /// </summary>
-        /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <returns>True for success; False for error</returns>
-        private bool LoadBrokerDBSettings(short retryCount = 6)
-        {
-            // Retrieves global settings from the Broker DB. Performs retries if necessary.
-            //
-            // At present, the only settings being retrieved are the param file storage paths for each step tool
-            // The storage path for each step tool will be stored in the manager settings dictionary
-            // For example: the LCMSFeatureFinder step tool will have an entry with
-            //   Name="StepTool_ParamFileStoragePath_LCMSFeatureFinder"
-            //   Value="\\gigasax\dms_parameter_Files\LCMSFeatureFinder"
-
-            // Gigasax.DMS_Pipeline
-            var connectionString = GetParam("BrokerConnectionString");
-
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
-
-            ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionStringToUse);
-
-            // Construct the SQL to obtain the information:
-            //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
-            //   FROM V_Pipeline_Step_Tools_Detail_Report
-            //   WHERE ISNULL([Param File Storage Path], '') <> ''
-            //
-            const string sqlQuery =
-                " SELECT '" + Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + Name AS ParameterName, " +
-                " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
-                " WHERE ISNULL([Param File Storage Path], '') <> ''";
-
-            ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
-
-            // Query the database
-            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
-            RegisterEvents(dbTools);
-
-            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount);
-
-            // If loop exited due to errors, return false
-            if (!success)
-            {
-                const string statusMessage = "AnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
-                ReportError(statusMessage, false);
-                return false;
-            }
-
-            // Verify at least one row returned
-            if (queryResults.Count < 1)
-            {
-                // No data was returned
-                var statusMessage = string.Format(
-                    "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using {0}",
-                    connectionStringToUse);
-
-                ReportError(statusMessage, false);
-                return false;
-            }
-
-            // Store the parameters
-            foreach (var item in queryResults)
-            {
-                SetParam(item[0], item[1]);
-            }
-
-            return true;
         }
 
         private bool ValidateOfflineTaskDirectories()
