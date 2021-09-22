@@ -395,8 +395,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             const float MAX_WAIT_TIME_HOURS = 1.0f;
 
-            const float maxWaitTimeHours = MAX_WAIT_TIME_HOURS;
-
             var currentTask = "Initializing";
 
             InsufficientFreeMemory = false;
@@ -439,7 +437,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Check to see if another Analysis Manager is already creating the indexed DB files
                 currentTask = "Looking for lock file " + lockFile.FullName;
-                WaitForExistingLockfile(lockFile, debugLevel, maxWaitTimeHours);
+                WaitForExistingLockfile(lockFile, debugLevel, MAX_WAIT_TIME_HOURS);
 
                 // Validate that all of the expected files exist
                 // If any are missing, need to repeat the call to "BuildSA"
@@ -561,7 +559,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     const bool CHECK_FOR_LOCK_FILE_A = true;
                     resultCode = CopyExistingIndexFilesFromRemote(fastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
-                                                                   debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
+                                                                   debugLevel, MAX_WAIT_TIME_HOURS, out var diskFreeSpaceBelowThreshold1);
 
                     if (diskFreeSpaceBelowThreshold1)
                     {
@@ -584,7 +582,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     currentTask = "Create a remote lock file";
                     remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
                         fastaFile.Name, remoteIndexDirPath,
-                        out remoteLockFile, debugLevel, maxWaitTimeHours);
+                        out remoteLockFile, debugLevel, MAX_WAIT_TIME_HOURS);
                 }
 
                 if (remoteLockFileCreated)
@@ -594,7 +592,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     const bool CHECK_FOR_LOCK_FILE_B = false;
                     resultCode = CopyExistingIndexFilesFromRemote(fastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_B,
-                                                               debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold2);
+                                                               debugLevel, MAX_WAIT_TIME_HOURS, out var diskFreeSpaceBelowThreshold2);
 
                     if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                     {
