@@ -28,13 +28,14 @@ namespace AnalysisManagerProg
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: ack, mgractive, proteinseqs
+        // Ignore Spelling: ack, holdoff, mgractive, proteinseqs
 
         /// <summary>
         /// Stored procedure used to acknowledge that a manager update is required
         /// </summary>
         private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
 
+        private const string SP_NAME_PAUSE_MANAGER_TASK_REQUESTS = "PauseManagerTaskRequests";
         /// <summary>
         /// File with settings loaded when OfflineMode is enabled
         /// </summary>
@@ -80,6 +81,11 @@ namespace AnalysisManagerProg
         /// Each manager also has its own subdirectory for staging files
         /// </remarks>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
+
+        /// <summary>
+        /// Manager parameter that specifies the date/time after which tasks can be requested
+        /// </summary>
+        public const string MGR_PARAM_TASK_REQUEST_ENABLE_TIME = "TaskRequestEnableTime";
 
         /// <summary>
         /// Working directory for the manager
@@ -338,6 +344,54 @@ namespace AnalysisManagerProg
             // Now load settings from the Broker DB (DMS_Pipeline)
             var brokerSuccess = LoadBrokerDBSettings();
             return brokerSuccess;
+        }
+
+        /// <summary>
+        /// Calls stored procedure PauseManagerTaskRequests to update manager parameter TaskRequestEnableTime
+        /// </summary>
+        /// <remarks>
+        /// This will effectively put the manager to sleep, since it will not request new jobs
+        /// until the date/time is later than TaskRequestEnableTime
+        /// </remarks>
+        /// <param name="holdoffIntervalMinutes">Holdoff interval, in minutes</param>
+        public void PauseManagerTaskRequests(int holdoffIntervalMinutes = 60)
+        {
+            try
+            {
+                // Data Source=proteinseqs;Initial Catalog=manager_control
+                var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    if (Global.OfflineMode)
+                        OnDebugEvent("Skipping call to " + SP_NAME_PAUSE_MANAGER_TASK_REQUESTS + " since offline");
+                    else
+                        OnDebugEvent("Skipping call to " + SP_NAME_PAUSE_MANAGER_TASK_REQUESTS + " since the Manager Control connection string is empty");
+
+                    return;
+                }
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
+
+                ShowTrace("Pause manager tasks using " + connectionStringToUse);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                // Set up the command object prior to SP execution
+                var cmd = dbTools.CreateCommand(SP_NAME_PAUSE_MANAGER_TASK_REQUESTS, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
+                dbTools.AddParameter(cmd, "@holdoffIntervalMinutes", SqlType.Int).Value = holdoffIntervalMinutes;
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.Output);
+
+                // Execute the SP
+                dbTools.ExecuteSP(cmd);
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error calling " + SP_NAME_PAUSE_MANAGER_TASK_REQUESTS, ex);
+            }
         }
 
         /// <summary>

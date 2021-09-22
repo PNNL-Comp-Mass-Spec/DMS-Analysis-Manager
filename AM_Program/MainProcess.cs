@@ -971,6 +971,12 @@ namespace AnalysisManagerProg
 
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
+
+                if (mInsufficientFreeMemory)
+                {
+                    mMgrParams.PauseManagerTaskRequests();
+                }
+
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -985,6 +991,11 @@ namespace AnalysisManagerProg
                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_RESET_JOB_STEP, mMostRecentErrorMessage);
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
+
+                // Drive free space issues are unlikely to resolve themselves quickly
+                // Pause the manager for 6 hours
+                mMgrParams.PauseManagerTaskRequests(360);
+
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2463,6 +2474,10 @@ namespace AnalysisManagerProg
                     var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
                     mAnalysisTask.CloseTask(closeOut, mMostRecentErrorMessage, toolRunner);
 
+                    if (mInsufficientFreeMemory)
+                    {
+                        mMgrParams.PauseManagerTaskRequests();
+                    }
                 }
 
                 return success;
