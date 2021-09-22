@@ -35,7 +35,12 @@ namespace AnalysisManagerBase.AnalysisTool
         string EvalMessage { get; }
 
         /// <summary>
-        /// Set this to true if we need to abort processing as soon as possible due to a critical error
+        /// The resourcer sets this to true if the job cannot be run due to not enough free memory
+        /// </summary>
+        bool InsufficientFreeMemory { get; }
+
+        /// <summary>
+        /// The resourcer sets this to true if we need to abort processing as soon as possible due to a critical error
         /// </summary>
         bool NeedToAbortProcessing { get; }
 

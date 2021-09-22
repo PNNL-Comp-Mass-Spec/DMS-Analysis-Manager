@@ -60,8 +60,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "ValidateFreeMemorySize";
                 if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", false))
                 {
+                    mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run MS-GF+";
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                 }
 
                 // Retrieve the FASTA file

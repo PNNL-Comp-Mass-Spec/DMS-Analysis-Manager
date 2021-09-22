@@ -27,12 +27,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         private const string MSGF_PLUS_INDEX_FILE_INFO_SUFFIX = ".MSGFPlusIndexFileInfo";
 
         private string mErrorMessage = string.Empty;
+
         private readonly string mMgrName;
 
         /// <summary>
         /// Error message
         /// </summary>
         public string ErrorMessage => mErrorMessage;
+
+        /// <summary>
+        /// This will be set to true if the job cannot be run due to not enough free memory
+        /// </summary>
+        public bool InsufficientFreeMemory { get; private set; }
 
         /// <summary>
         /// Constructor
@@ -393,6 +399,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var currentTask = "Initializing";
 
+            InsufficientFreeMemory = false;
+
             try
             {
                 mErrorMessage = string.Empty;
@@ -696,8 +704,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Make sure the machine has enough free memory to run BuildSA
                 if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "BuildSA", false))
                 {
+                    InsufficientFreeMemory = true;
                     mErrorMessage = "Cannot run BuildSA since less than " + javaMemorySizeMB + " MB of free memory";
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                 }
 
                 // Create a lock file

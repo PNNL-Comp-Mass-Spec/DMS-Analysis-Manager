@@ -54,8 +54,9 @@ namespace AnalysisManagerMSGFPlugin
                 // Make sure the machine has enough free memory to run MSGF
                 if (!ValidateFreeMemorySize("MSGFJavaMemorySize"))
                 {
+                    mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run MSGF";
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                 }
             }
 

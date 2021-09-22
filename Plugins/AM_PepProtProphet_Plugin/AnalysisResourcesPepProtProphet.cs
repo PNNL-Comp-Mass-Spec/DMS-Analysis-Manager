@@ -84,7 +84,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                     }
                 }
 
@@ -96,7 +96,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("IonQuant", AnalysisToolRunnerPepProtProphet.ION_QUANT_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                     }
                 }
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("TMT-Integrator", AnalysisToolRunnerPepProtProphet.TMT_INTEGRATOR_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                     }
                 }
 
@@ -460,6 +460,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return true;
             }
 
+            mInsufficientFreeMemory = true;
             mMessage = "Not enough free memory to run " + programName;
             return false;
         }

@@ -67,6 +67,8 @@ namespace AnalysisManagerProg
 
         private bool mDMSProgramsSynchronized;
 
+        private bool mInsufficientFreeMemory;
+
         private StatusFile mStatusTools;
 
         private MyEMSLUtilities mMyEMSLUtilities;
@@ -173,6 +175,7 @@ namespace AnalysisManagerProg
             mConfigChanged = false;
             mDebugLevel = 0;
             mDMSProgramsSynchronized = false;
+            mInsufficientFreeMemory = false;
             mNeedToAbortProcessing = false;
             mMostRecentJobInfo = string.Empty;
 
@@ -962,7 +965,10 @@ namespace AnalysisManagerProg
             if (NeedToAbortProcessing())
             {
                 ShowTrace("NeedToAbortProcessing; closing job step task");
-                mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
+
+                var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                mAnalysisTask.CloseTask(closeOut, "Processing aborted");
+
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -976,7 +982,7 @@ namespace AnalysisManagerProg
                 {
                     mMostRecentErrorMessage = "Insufficient free space (location undefined)";
                 }
-                mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, mMostRecentErrorMessage);
+                mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_RESET_JOB_STEP, mMostRecentErrorMessage);
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -2054,6 +2060,12 @@ namespace AnalysisManagerProg
 
         private bool NeedToAbortProcessing()
         {
+            if (mInsufficientFreeMemory)
+            {
+                LogWarning("Analysis manager does not have enough free system memory - aborting processing");
+                return true;
+            }
+
             if (mNeedToAbortProcessing)
             {
                 LogError("Analysis manager has encountered a fatal error - aborting processing (mNeedToAbortProcessing is True)");
@@ -2316,11 +2328,22 @@ namespace AnalysisManagerProg
                     return true;
                 }
 
-                if (toolResourcer.NeedToAbortProcessing)
+                if (toolResourcer.NeedToAbortProcessing ||
+                    toolResourcer.InsufficientFreeMemory ||
+                    resultCode == CloseOutType.CLOSEOUT_RESET_JOB_STEP)
                 {
+                    mInsufficientFreeMemory = toolResourcer.InsufficientFreeMemory;
                     mNeedToAbortProcessing = true;
                     ShowTrace("toolResourcer.NeedToAbortProcessing = True; closing job step task");
-                    mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, toolResourcer.Message);
+
+                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                    mAnalysisTask.CloseTask(closeOut, toolResourcer.Message);
+
+                    if (mInsufficientFreeMemory)
+                    {
+                        mMgrParams.PauseManagerTaskRequests();
+                    }
+
                     return false;
                 }
 
@@ -2431,11 +2454,15 @@ namespace AnalysisManagerProg
                     success = false;
                 }
 
-                if (toolRunner.NeedToAbortProcessing)
+                if (toolRunner.NeedToAbortProcessing || toolRunner.InsufficientFreeMemory)
                 {
+                    mInsufficientFreeMemory = toolRunner.InsufficientFreeMemory;
                     mNeedToAbortProcessing = true;
                     ShowTrace("toolRunner.NeedToAbortProcessing = True; closing job step task");
-                    mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, mMostRecentErrorMessage, toolRunner);
+
+                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                    mAnalysisTask.CloseTask(closeOut, mMostRecentErrorMessage, toolRunner);
+
                 }
 
                 return success;

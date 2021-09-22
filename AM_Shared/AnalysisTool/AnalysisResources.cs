@@ -734,7 +734,12 @@ namespace AnalysisManagerBase.AnalysisTool
         public string EvalMessage { get; protected set; }
 
         /// <summary>
-        /// Set this to true if we need to abort processing as soon as possible due to a critical error
+        /// The resourcer sets this to true if the job cannot be run due to not enough free memory
+        /// </summary>
+        public bool InsufficientFreeMemory => mInsufficientFreeMemory;
+
+        /// <summary>
+        /// The resourcer sets this to true if we need to abort processing as soon as possible due to a critical error
         /// </summary>
         public bool NeedToAbortProcessing => mNeedToAbortProcessing;
 
@@ -5202,7 +5207,12 @@ namespace AnalysisManagerBase.AnalysisTool
             if (mDebugLevel < 1)
                 logFreeMemoryOnSuccess = false;
 
-            return ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, logFreeMemoryOnSuccess);
+            var validFreeMemory = ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, logFreeMemoryOnSuccess);
+
+            if (!validFreeMemory)
+                mInsufficientFreeMemory = true;
+
+            return validFreeMemory;
         }
 
         /// <summary>

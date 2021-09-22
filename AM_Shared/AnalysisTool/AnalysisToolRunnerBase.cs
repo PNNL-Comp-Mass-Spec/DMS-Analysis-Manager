@@ -223,8 +223,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
         /// <summary>
         /// Publicly accessible results directory name and path
+        /// Will be set to true if the job cannot be run due to not enough free memory
         /// </summary>
         public string ResFolderName => mResultsDirectoryName;
+        public bool InsufficientFreeMemory => mInsufficientFreeMemory;
 
         /// <summary>
         /// Status message related to processing tasks performed by this class
@@ -232,7 +234,7 @@ namespace AnalysisManagerBase.AnalysisTool
         public string Message => string.IsNullOrWhiteSpace(mMessage) ? string.Empty : mMessage;
 
         /// <summary>
-        /// Set this to true if we need to abort processing as soon as possible due to a critical error
+        /// Will be set to true if we need to abort processing as soon as possible
         /// </summary>
         public bool NeedToAbortProcessing => mNeedToAbortProcessing;
 
@@ -318,6 +320,7 @@ namespace AnalysisManagerBase.AnalysisTool
             mToolVersionUtilities = new ToolVersionUtilities(mgrParams, jobParams, mJob, mDatasetName, StepToolName, mDebugLevel, mWorkDir);
             RegisterEvents(mToolVersionUtilities);
 
+            mInsufficientFreeMemory = false;
             mNeedToAbortProcessing = false;
 
             mMessage = string.Empty;

@@ -33,8 +33,9 @@ namespace AnalysisManagerMSDeconvPlugIn
             // Make sure the machine has enough free memory to run MSDeconv
             if (!ValidateFreeMemorySize("MSDeconvJavaMemorySize"))
             {
+                mInsufficientFreeMemory = true;
                 mMessage = "Not enough free memory to run MSDeconv";
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
             LogMessage("Getting mzXML file");

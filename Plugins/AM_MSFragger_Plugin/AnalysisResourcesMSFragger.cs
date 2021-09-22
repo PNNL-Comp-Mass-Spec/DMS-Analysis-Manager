@@ -55,8 +55,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 currentTask = "ValidateFreeMemorySize";
                 if (!ValidateFreeMemorySize("MSFraggerJavaMemorySize", false))
                 {
+                    mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run MSFragger";
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                 }
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -187,7 +188,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     "Not enough free memory to run MSFragger; need {0:N0} MB, as defined by the settings file",
                     msFraggerJavaMemorySizeMB);
 
-                return CloseOutType.CLOSEOUT_FAILED;
+                mInsufficientFreeMemory = true;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
             var validFreeMemory = ValidateFreeMemorySize(recommendedMemorySizeMB, StepToolName, true);
@@ -198,7 +200,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     "Not enough free memory to run MSFragger; need {0:N0} MB due to a {1:N0} MB FASTA file",
                     recommendedMemorySizeMB, fastaFileSizeMB);
 
-                return CloseOutType.CLOSEOUT_FAILED;
+                mInsufficientFreeMemory = true;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
             LogMessage(string.Format(

@@ -33,8 +33,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
         /// <summary>
         /// Publicly accessible results folder name and path
+        /// Will be set to true if the job cannot be run due to not enough free memory
         /// </summary>
         string ResFolderName { get; }
+        bool InsufficientFreeMemory { get; }
 
         /// <summary>
         /// Status message related to processing tasks performed by this class

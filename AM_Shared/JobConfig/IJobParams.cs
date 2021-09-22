@@ -114,6 +114,12 @@ namespace AnalysisManagerBase.JobConfig
         CLOSEOUT_SKIPPED_MAXQUANT = 22,
 
         /// <summary>
+        /// There is a problem with this computer, e.g. not enough free memory to run the job or not enough free disk space
+        /// Since there is nothing wrong with the job itself, set the job step's state to Enabled
+        /// </summary>
+        CLOSEOUT_RESET_JOB_STEP = 23,
+
+        /// <summary>
         /// Job is running remote
         /// </summary>
         CLOSEOUT_RUNNING_REMOTE = 25,

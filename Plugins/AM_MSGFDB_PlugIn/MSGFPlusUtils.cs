@@ -234,6 +234,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         public string ErrorMessage { get; private set; } = string.Empty;
 
         /// <summary>
+        /// This will be set to true if the job cannot be run due to not enough free memory
+        /// </summary>
+        public bool InsufficientFreeMemory { get; private set; }
+
+        /// <summary>
         /// MS-GF+ version
         /// </summary>
         public string MSGFPlusVersion { get; private set; }
@@ -754,6 +759,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MzIDToTsv", LOG_FREE_MEMORY_ON_SUCCESS))
                 {
+                    InsufficientFreeMemory = true;
                     OnErrorEvent("Not enough free memory to run the MzIDToTsv module in MSGFPlus");
                     return string.Empty;
                 }
@@ -1566,6 +1572,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var mgrName = mMgrParams.ManagerName;
 
+            InsufficientFreeMemory = false;
+
             var indexedDBCreator = new CreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(indexedDBCreator);
 
@@ -1712,6 +1720,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     break;
+                }
+
+                if (indexedDBCreator.InsufficientFreeMemory)
+                {
+                    InsufficientFreeMemory = true;
+                    ErrorMessage = "Not enough free memory to create suffix array files";
+                    OnErrorEvent(indexedDBCreator.ErrorMessage);
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
                 }
 
                 if (result == CloseOutType.CLOSEOUT_FAILED || indexIteration > 2)

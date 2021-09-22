@@ -420,6 +420,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                mInsufficientFreeMemory = mMSGFPlusUtils.InsufficientFreeMemory;
                 return result;
             }
 
@@ -501,8 +502,10 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
             {
+                mInsufficientFreeMemory = true;
+
                 LogError("Not enough free memory to run MS-GF+");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
             success = StartMSGFPlus(javaExePath, "MS-GF+", arguments);

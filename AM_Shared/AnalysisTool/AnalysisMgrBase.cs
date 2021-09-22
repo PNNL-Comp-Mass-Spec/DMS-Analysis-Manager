@@ -21,13 +21,18 @@ namespace AnalysisManagerBase.AnalysisTool
         protected FileTools mFileTools;
 
         /// <summary>
+        /// Will be set to true if the job cannot be run due to not enough free memory
+        /// </summary>
+        protected bool mInsufficientFreeMemory;
+
+        /// <summary>
         /// Status message
         /// </summary>
         /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
         protected string mMessage;
 
         /// <summary>
-        /// Set to true if we need to abort processing as soon as possible
+        /// Will be set to true if we need to abort processing as soon as possible
         /// </summary>
         protected bool mNeedToAbortProcessing;
 
