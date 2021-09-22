@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: PostgreSQL, pgpass, Ack
+        // Ignore Spelling: Ack, Holdoff, pgpass, PostgreSQL
 
         // ReSharper restore CommentTypo
 
@@ -88,6 +88,12 @@ namespace AnalysisManagerBase
         /// <param name="name">Parameter name</param>
         /// <returns>True if the parameter is defined, false if not</returns>
         bool HasParam(string name);
+
+        /// <summary>
+        /// Calls stored procedure PauseManagerTaskRequests to update manager parameter TaskRequestEnableTime
+        /// </summary>
+        /// <param name="holdoffIntervalMinutes">Holdoff interval, in minutes</param>
+        void PauseManagerTaskRequests(int holdoffIntervalMinutes = 60);
 
         /// <summary>
         /// Sets a parameter in the parameters string dictionary

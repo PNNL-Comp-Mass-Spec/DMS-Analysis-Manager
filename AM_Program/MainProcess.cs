@@ -529,14 +529,23 @@ namespace AnalysisManagerProg
                     // Check to see if manager is still active
                     var mgrActive = mMgrParams.GetParam(AnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
                     var mgrActiveLocal = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
+                    var taskRequestEnableTime = mMgrParams.GetParam(AnalysisMgrSettings.MGR_PARAM_TASK_REQUEST_ENABLE_TIME);
 
-                    if (!(mgrActive && mgrActiveLocal))
+                    var taskRequestDisabled = DateTime.TryParse(taskRequestEnableTime, out var enableTimeValue) && enableTimeValue > DateTime.Now;
+
+                    if (!(mgrActive && mgrActiveLocal) || taskRequestDisabled)
                     {
                         string managerDisableReason;
                         if (!mgrActiveLocal)
                         {
                             managerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
                             UpdateStatusDisabled(MgrStatusCodes.DISABLED_LOCAL, managerDisableReason);
+                        }
+                        else if (taskRequestDisabled)
+                        {
+                            // Manager parameter TaskRequestEnableTime in the Manager Control DB has a future date/time
+                            managerDisableReason = "Requesting new tasks is disabled until " + taskRequestEnableTime;
+                            UpdateStatusDisabled(MgrStatusCodes.DISABLED_MC, managerDisableReason);
                         }
                         else
                         {
@@ -2836,7 +2845,8 @@ namespace AnalysisManagerProg
         {
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
             mStatusTools.UpdateDisabled(managerStatus, managerDisableMessage, recentErrorMessages, mMostRecentJobInfo);
-            Console.WriteLine(managerDisableMessage);
+            ConsoleMsgUtils.ShowWarning(managerDisableMessage);
+            Console.WriteLine();
         }
 
         private void UpdateStatusFlagFileExists()
