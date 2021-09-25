@@ -1948,9 +1948,10 @@
             Protein terminus static mod; supported by SEQUEST; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.mModificationSymbol">
+        <member name="F:PHRPReader.Data.ModificationDefinition.mAffectedAtom">
             <summary>
-            One letter symbol for this modification; use NO_SYMBOL_MODIFICATION_SYMBOL if no symbol (necessary for isotopic mods or protein terminus static mods)
+            For Isotopic modifications, indicate the atom affected (e.g. C, H, N, O, or S)
+            Otherwise, set to PeptideMassCalculator.NO_AFFECTED_ATOM_SYMBOL for positional modifications (including terminus modifications)
             </summary>
         </member>
         <member name="F:PHRPReader.Data.ModificationDefinition.mModificationMass">
@@ -1958,35 +1959,37 @@
             Monoisotopic modification mass
             </summary>
         </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.mTargetResidues">
+        <member name="F:PHRPReader.Data.ModificationDefinition.mModificationSymbol">
             <summary>
-            Target residues, tracked as a space-free, comma-free list of one letter amino acid residue symbols that this mod can apply to
-            Use the *_SYMBOL_DMS constants for the peptide and protein termini symbols (&lt; and &gt; for the peptide termini; [ and ] for the protein termini)
+            One letter symbol for this modification; use NO_SYMBOL_MODIFICATION_SYMBOL if no symbol (necessary for isotopic mods or protein terminus static mods)
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ModificationDefinition.AffectedAtom">
+            <summary>
+            Only used with Isotopic modifications, indicating the atom affected (e.g. C, H, N, O, or S)
             </summary>
             <remarks>
-            If this is empty, the given modification can apply to any residue or terminus
+            Set to PeptideMassCalculator.NO_AFFECTED_ATOM_SYMBOL (a dash) for positional modifications
+            (including terminus modifications)
             </remarks>
         </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.mMassCorrectionTag">
+        <member name="P:PHRPReader.Data.ModificationDefinition.MassCorrectionTag">
             <summary>
-            Name associated with the given ModificationMass; maximum length is 8 characters
+            Modification name, for example Phosph, IodoAcet, Plus1Oxy, or Methyl
+            </summary>
+            <remarks>
+            <para>
             Cannot contain a colon, comma, or space
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.mAffectedAtom">
-            <summary>
-            Set to Nothing or to PeptideMassCalculator.NO_AFFECTED_ATOM_SYMBOL for positional modifications (including terminus modifications)
-            For Isotopic modifications, indicate the atom affected (e.g. C, H, N, O, or S)
-            </summary>
-        </member>
-        <member name="P:PHRPReader.Data.ModificationDefinition.ModificationSymbol">
-            <summary>
-            One letter symbol for this modification
-            </summary>
-            <remarks>
-            Use NO_SYMBOL_MODIFICATION_SYMBOL (a dash) if no symbol
-            (necessary for isotopic mods or protein terminus static mods)
+            </para>
+            <para>
+            Prior to 2020, was limited to 8 characters in length, but that restriction has been removed
+            </para>
             </remarks>
+        </member>
+        <member name="P:PHRPReader.Data.ModificationDefinition.MaxQuantModName">
+            <summary>
+            MaxQuant modification title
+            </summary>
         </member>
         <member name="P:PHRPReader.Data.ModificationDefinition.ModificationMass">
             <summary>
@@ -1999,15 +2002,13 @@
             </summary>
             <remarks>Represents the original string value read from the data file</remarks>
         </member>
-        <member name="P:PHRPReader.Data.ModificationDefinition.TargetResidues">
+        <member name="P:PHRPReader.Data.ModificationDefinition.ModificationSymbol">
             <summary>
-            Residues that this modification can apply to
+            One letter symbol for this modification
             </summary>
             <remarks>
-            If an empty string, the modification can apply to any residue or terminus;
-            Otherwise, should contain a space-free, comma-free list of one letter amino acid residue symbols that this mod can apply to.
-            Use the *_SYMBOL_DMS constants for the peptide and protein termini symbols
-            (less than and greater than signs for the peptide termini; [ and ] for the protein termini)
+            Use NO_SYMBOL_MODIFICATION_SYMBOL (a dash) if no symbol
+            (necessary for isotopic mods or protein terminus static mods)
             </remarks>
         </member>
         <member name="P:PHRPReader.Data.ModificationDefinition.ModificationType">
@@ -2015,25 +2016,25 @@
             Modification type
             </summary>
         </member>
-        <member name="P:PHRPReader.Data.ModificationDefinition.MassCorrectionTag">
-            <summary>
-            Modification name, for example Phosph, IodoAcet, Plus1Oxy, or Methyl
-            </summary>
-            <remarks>Maximum length is 8 characters; cannot contain a colon, comma, or space</remarks>
-        </member>
-        <member name="P:PHRPReader.Data.ModificationDefinition.AffectedAtom">
-            <summary>
-            Only used with Isotopic modifications, indicating the atom affected (e.g. C, H, N, O, or S)
-            </summary>
-            <remarks>
-            Set to Nothing or to PeptideMassCalculator.NO_AFFECTED_ATOM_SYMBOL (a dash) for positional modifications
-            (including terminus modifications)
-            </remarks>
-        </member>
         <member name="P:PHRPReader.Data.ModificationDefinition.OccurrenceCount">
             <summary>
             Number of times this modification was observed in the given dataset
             </summary>
+        </member>
+        <member name="P:PHRPReader.Data.ModificationDefinition.TargetResidues">
+            <summary>
+            Residues that this modification can apply to, tracked as a
+            space-free, comma-free list of one letter amino acid residue symbols
+            </summary>
+            <remarks>
+            <para>
+            Use the *_SYMBOL_DMS constants for the peptide and protein termini symbols
+            (less than and greater than signs for the peptide termini; [ and ] for the protein termini)
+            </para>
+            <para>
+            If an empty string, the modification can apply to any residue or terminus
+            </para>
+            </remarks>
         </member>
         <member name="P:PHRPReader.Data.ModificationDefinition.UnknownModAutoDefined">
             <summary>
@@ -2289,7 +2290,7 @@
             Looks for the best match in mIntegerMassCorrectionTagLookup for modificationMass (which should be close to a integer value)
             </summary>
             <param name="modificationMass"></param>
-            <returns>The mass correction tag name if a match, otherwise nothing</returns>
+            <returns>The mass correction tag name if a match, otherwise an empty string</returns>
         </member>
         <member name="M:PHRPReader.Data.PeptideModificationContainer.GetModificationByIndex(System.Int32)">
             <summary>
@@ -2364,7 +2365,7 @@
             <summary>
             Looks for an existing modification with the given modification mass and target residues
             </summary>
-            <remarks>If chTargetResidue is nothing, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
+            <remarks>If chTargetResidue is default(char) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
             <param name="modificationMass"></param>
             <param name="chTargetResidue">
             If defined, returns the first modification with the given mass and containing the residue in .TargetResidues;
@@ -2390,7 +2391,7 @@
             <summary>
             Looks for an existing modification with the given modification mass, modification type, and target residues
             </summary>
-            <remarks>If chTargetResidue is nothing, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
+            <remarks>If chTargetResidue is default(char) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
             <param name="modificationMass"></param>
             <param name="modType"></param>
             <param name="chTargetResidue">
@@ -3682,14 +3683,14 @@
               A.BCDEFGHIJK.L
             </para>
             <para>
-            Function ComputeCleavageState is overloaded to either except the peptide sequence with
+            Method ComputeCleavageState is overloaded to either except the peptide sequence with
             prefix and suffix letters (e.g. A.BCDEFGHIJK.L) or accept the primary peptide sequence,
             the prefix residue(s), and the suffix residue(s).
             </para>
             <para>Use EnzymeMatchSpec to specify the residues to match for cleavage</para>
             <para>The default cleavage specification is for trypsin: [KR]|[^P]</para>
             <para>
-            Note: Function SplitPrefixAndSuffixFromSequence will change peptides that look like:
+            Note: Method SplitPrefixAndSuffixFromSequence will change peptides that look like:
                  E.TGMLTQKFARSLGMLAVDNQARV..   to   E.TGMLTQKFARSLGMLAVDNQARV.
               or ..TGMLTQKFARSLGMLAVDNQARV.R   to   .TGMLTQKFARSLGMLAVDNQARV.R
             </para>
@@ -4896,6 +4897,16 @@
             <param name="dynamicMods">List with mod symbols as the key and the corresponding mod mass</param>
             <param name="staticMods">List with amino acid names as the key and the corresponding mod mass</param>
             <returns>True if success; false if an error</returns>
+        </member>
+        <member name="M:PHRPReader.ReaderFactory.TryGetColumnValue(System.String[],System.String,System.Collections.Generic.SortedDictionary{System.String,System.Int32},System.String@)">
+            <summary>
+            If the column exists, get the value for the column and return true
+            </summary>
+            <param name="columns"></param>
+            <param name="columnName"></param>
+            <param name="columnHeaders"></param>
+            <param name="columnValue"></param>
+            <returns>True if the column exists, otherwise false</returns>
         </member>
         <member name="F:PHRPReader.ReaderFactory.disposedValue">
             <summary>
