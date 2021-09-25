@@ -92,6 +92,10 @@ namespace AnalysisManagerBase.DataFileTools
                     isDirectory = false;
                     return mResourceClass.DatasetName + AnalysisResources.DOT_MZML_EXTENSION;
 
+                case AnalysisResources.RawDataTypeConstants.UIMF:
+                    isDirectory = false;
+                    return mResourceClass.DatasetName + AnalysisResources.DOT_UIMF_EXTENSION;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(rawDataType), "Unsupported raw data type: " + rawDataType);
             }
@@ -403,6 +407,10 @@ namespace AnalysisManagerBase.DataFileTools
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
                                 mResourceClass.JobParams.AddAdditionalParameter("DatasetFileRetriever", "ProcessingAgilentDotD", true);
+
+                                // Override the raw data type
+                                rawDataType = AnalysisResources.RawDataTypeConstants.AgilentDFolder;
+                                rawDataTypeName = AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS;
                             }
                             else
                             {
