@@ -940,8 +940,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Possibly increase the Java memory size based on the size of the FASTA file
             var fastaBasedMinimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
 
-            // Possibly increase the Java memory size based on the size of the spectrum file
-            var spectraBasedMinimumJavaMemoryMB = 3 * Global.BytesToMB(inputFile.Length) + 2250;
+            double spectraBasedMinimumJavaMemoryMB;
+            if (inputFile == null)
+            {
+                spectraBasedMinimumJavaMemoryMB = 0;
+            }
+            else
+            {
+                // Possibly increase the Java memory size based on the size of the spectrum file
+                spectraBasedMinimumJavaMemoryMB = 3 * Global.BytesToMB(inputFile.Length) + 2250;
+            }
 
             int minimumJavaMemoryMB;
 
@@ -951,7 +959,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
                     javaMemorySizeMB, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0);
             }
-            else if (spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
+            else if (inputFile != null && spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
             {
                 minimumJavaMemoryMB = (int)Math.Ceiling(spectraBasedMinimumJavaMemoryMB / 500.0) * 500;
                 warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large {2} ({3:N0} MB)",
