@@ -28,7 +28,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA) in 2020" +
                               Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
-                              "Website: https://panomics.pnnl.gov/ or https://omics.pnl.gov",
+                              "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
 
                 UsageExamples = {
                     exeName + " DatasetInfoFile.txt",
