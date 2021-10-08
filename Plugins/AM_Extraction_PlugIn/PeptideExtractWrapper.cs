@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using AnalysisManagerBase;
-using PeptideFileExtractor;
 using PRISM;
 using System;
 using System.IO;
@@ -15,6 +14,7 @@ using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using SequestResultsProcessor;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -78,7 +78,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private readonly short mDebugLevel;
         private bool mExtractInProgress;
-        private clsPeptideFileExtractor mExtractTools;
+        private SequestFileExtractor mExtractTools;
 
         private readonly string mDatasetName;
         private readonly string mWorkDir;
@@ -111,16 +111,12 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns>CloseOutType indicating success or failure</returns>
         public CloseOutType PerformExtraction()
         {
-            var startParams = new clsPeptideFileExtractor.StartupArguments(mWorkDir, mDatasetName)
+            var startParams = new SequestFileExtractor.StartupArguments(mWorkDir, mDatasetName)
             {
                 ExpandMultiORF = true,
-                FilterEFS = false,
-                FHTFilterScoreThreshold = 0.1,
                 FHTXCorrThreshold = 0.0,
                 SynXCorrThreshold = 1.5,
-                SynFilterScoreThreshold = 0.1,
-                MakeIRRFile = false,
-                MakeNLIFile = false            // Not actually used by the extractor, since class PeptideHitEntry has COMPUTE_DISCRIMINANT_SCORE = False in the PeptideFileExtractor project
+                MakeIRRFile = false
             };
 
             // Verify the concatenated _out.txt file exists
@@ -131,7 +127,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Setup the extractor and start extraction process
-            mExtractTools = new clsPeptideFileExtractor(startParams);
+            mExtractTools = new SequestFileExtractor(startParams);
             mExtractTools.EndTask += ExtractTools_EndTask;
 
             mExtractInProgress = true;

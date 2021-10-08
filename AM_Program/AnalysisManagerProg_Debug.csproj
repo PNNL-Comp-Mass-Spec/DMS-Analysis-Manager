@@ -210,13 +210,13 @@ xcopy "$(ProjectDir)..\AM_Common\MageExtExtractionFilters.dll" "$(TargetDir)" /D
 xcopy "$(ProjectDir)..\AM_Common\MageExtContentFilters.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MageDisplayLib.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MascotGenericFileToDTA.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /D /Y /F
 xcopy "$(ProjectDir)..\AM_Common\PeptideToProteinMapEngine.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\RangerLib.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
 xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
 
 xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.BackgroundSubtraction.dll" "$(TargetDir)" /D /Y

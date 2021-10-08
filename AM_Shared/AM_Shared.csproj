@@ -73,12 +73,11 @@
     <Reference Include="ParamFileGenerator">
       <HintPath>..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
-    <Reference Include="PeptideFileExtractor, Version=1.7.6375.23234, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\PeptideFileExtractor.dll</HintPath>
-    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="SequestResultsProcessor">
+      <HintPath>..\AM_Common\SequestResultsProcessor.dll</HintPath>
     </Reference>
     <Reference Include="SpectraTypeClassifier">
       <HintPath>..\AM_Common\SpectraTypeClassifier.dll</HintPath>
@@ -209,7 +208,7 @@ xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
-xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /D /Y /F
+xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

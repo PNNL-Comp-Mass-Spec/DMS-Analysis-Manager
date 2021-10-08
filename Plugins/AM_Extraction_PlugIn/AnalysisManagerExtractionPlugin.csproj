@@ -42,9 +42,6 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="PeptideFileExtractor">
-      <HintPath>..\..\AM_Common\PeptideFileExtractor.dll</HintPath>
-    </Reference>
     <Reference Include="PeptideHitResultsProcessor">
       <HintPath>..\..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
     </Reference>
@@ -53,6 +50,10 @@
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="SequestResultsProcessor, Version=1.8.7950.30632, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\SequestResultsProcessor.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
