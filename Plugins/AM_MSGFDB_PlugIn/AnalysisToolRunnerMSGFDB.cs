@@ -396,10 +396,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
             // Possibly increase the Java memory size based on the size of the FASTA file size or the input file size
-            var javaMemorySizeMB = GetMemoryRequiredForFASTA((int)(fastaFile.Length / 1024.0), inputFile, inputFileDescription);
+            var javaMemorySizeMB = GetMemoryRequiredForFASTA(mJobParams, fastaFile, inputFile, inputFileDescription, out var warningMsg);
 
-
-
+            if (!string.IsNullOrEmpty(warningMsg))
+            {
+                LogWarning(warningMsg);
+            }
 
             // Set up and execute a program runner to run MS-GF+
             var arguments = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
@@ -883,12 +885,36 @@ namespace AnalysisManagerMSGFDBPlugIn
                    fileNameSuffix + Path.GetExtension(fileName);
         }
 
-        private int GetMemoryRequiredForFASTA(
-                int fastaFileSizeKB,
-                FileInfo inputFile,
-                string inputFileDescription)
+        /// <summary>
+        /// Determine the amount of memory to reserve for Java
+        /// </summary>
+        /// <remarks>Based on job parameter MSGFDBJavaMemorySize and the FASTA file size</remarks>
+        /// <param name="jobParams"></param>
+        /// <param name="fastaFile"></param>
+        /// <param name="warningMessage"></param>
+        /// <returns>Memory to reserve, in MB</returns>
+        public static int GetMemoryRequiredForFASTA(IJobParams jobParams, FileInfo fastaFile, out string warningMessage)
         {
+            return GetMemoryRequiredForFASTA(jobParams, fastaFile, null, string.Empty, out warningMessage);
+        }
 
+        /// <summary>
+        /// Determine the amount of memory to reserve for Java
+        /// </summary>
+        /// <remarks>Based on job parameter MSGFDBJavaMemorySize, the FASTA file size, and optionally the input file size</remarks>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="inputFile">Spectrum file; allowed to be null</param>
+        /// <param name="inputFileDescription">Description of the input file (or an empty string)</param>
+        /// <param name="warningMessage"></param>
+        /// <returns>Memory to reserve, in MB</returns>
+        public static int GetMemoryRequiredForFASTA(
+            IJobParams jobParams,
+            FileInfo fastaFile,
+            FileInfo inputFile,
+            string inputFileDescription,
+            out string warningMessage)
+        {
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
             // The amount of memory required depends on both the FASTA file size and the size of the input data file (_dta.txt or .mzML)
             //   since data from all spectra are cached in memory.
@@ -905,10 +931,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             // had large numbers of tasks on a small, finite number of threads
 
             // Setting MSGFDBJavaMemorySize is stored in the settings file for this job
-
-            var javaMemorySizeMB = mJobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
+            var javaMemorySizeMB = jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
             if (javaMemorySizeMB < 512)
                 javaMemorySizeMB = 512;
+
+            var fastaFileSizeKB = fastaFile.Length / 1024.0;
 
             // Possibly increase the Java memory size based on the size of the FASTA file
             var fastaBasedMinimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
@@ -917,32 +944,26 @@ namespace AnalysisManagerMSGFDBPlugIn
             var spectraBasedMinimumJavaMemoryMB = 3 * Global.BytesToMB(inputFile.Length) + 2250;
 
             int minimumJavaMemoryMB;
-            string warningMsg;
+
             if (fastaBasedMinimumJavaMemoryMB > javaMemorySizeMB && fastaBasedMinimumJavaMemoryMB > spectraBasedMinimumJavaMemoryMB)
             {
                 minimumJavaMemoryMB = (int)Math.Ceiling(fastaBasedMinimumJavaMemoryMB / 500.0) * 500;
-                warningMsg = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
+                warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
                     javaMemorySizeMB, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0);
             }
             else if (spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
             {
                 minimumJavaMemoryMB = (int)Math.Ceiling(spectraBasedMinimumJavaMemoryMB / 500.0) * 500;
-                warningMsg = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large {2} ({3:N0} MB)",
+                warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large {2} ({3:N0} MB)",
                     javaMemorySizeMB, minimumJavaMemoryMB, inputFileDescription, Global.BytesToMB(inputFile.Length));
             }
             else
             {
                 minimumJavaMemoryMB = javaMemorySizeMB;
-                warningMsg = string.Empty;
+                warningMessage = string.Empty;
             }
 
-            if (javaMemorySizeMB < minimumJavaMemoryMB)
-            {
-                LogWarning(warningMsg);
-                javaMemorySizeMB = minimumJavaMemoryMB;
-            }
-
-            return javaMemorySizeMB;
+            return minimumJavaMemoryMB;
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
