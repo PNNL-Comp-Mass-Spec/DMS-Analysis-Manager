@@ -916,15 +916,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             out string warningMessage)
         {
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
-            // The amount of memory required depends on both the FASTA file size and the size of the input data file (_dta.txt or .mzML)
+            // The amount of memory required depends on both the FASTA file size and the size of the input data file (typically .mzML)
             //   since data from all spectra are cached in memory.
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
-            // (job 611216 succeeded with a value of 5000)
 
             // Prior to January 2016, MS-GF+ used 4 to 7 threads, and if MSGFDBJavaMemorySize was too small,
             // we ran the risk of one thread crashing and the results files missing the search results for the spectra assigned to that thread
             // For large _dta.txt files, 2000 MB of memory could easily be small enough to result in crashing threads
-            // Consequently, the default is now 4000 MB
+            // Consequently, the default was changed to 4000 MB
             //
             // Furthermore, the 2016-Jan-21 release uses 128 search tasks (or 10 tasks per thread if over 12 threads),
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
@@ -938,7 +937,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var fastaFileSizeKB = fastaFile.Length / 1024.0;
 
             // Possibly increase the Java memory size based on the size of the FASTA file
-            var fastaBasedMinimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
+            // The multiplier here was increased from 7.5 to 20 in October 2021
+            var fastaBasedMinimumJavaMemoryMB = 20 * fastaFileSizeKB / 1024.0 + 1000;
 
             double spectraBasedMinimumJavaMemoryMB;
             if (inputFile == null)
