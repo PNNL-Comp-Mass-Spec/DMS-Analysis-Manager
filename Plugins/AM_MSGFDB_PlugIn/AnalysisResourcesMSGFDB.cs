@@ -75,11 +75,31 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return result;
                 }
 
+                var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, mFastaFileName));
+                if (!fastaFile.Exists)
+                {
+                    LogError("FASTA file not found: " + fastaFile.FullName);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // We reserve more memory for large FASTA files
+                var javaMemorySizeMB = AnalysisToolRunnerMSGFDB.GetMemoryRequiredForFASTA(mJobParams, fastaFile, out _);
+
+                // Compare the required memory size vs. actual free memory
+                var validFreeMemory = ValidateFreeMemorySize(javaMemorySizeMB, StepToolName, false);
+
+                if (!validFreeMemory)
+                {
+                    mInsufficientFreeMemory = true;
+                    mMessage = "Not enough free memory to run MS-GF+";
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                }
+
                 LogMessage("Getting param file", 2);
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query
-                //  SELECT Local_Symbol, Monoisotopic_Mass, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag, MaxQuant_Mod_Name 
+                //  SELECT Local_Symbol, Monoisotopic_Mass, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag, MaxQuant_Mod_Name
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
