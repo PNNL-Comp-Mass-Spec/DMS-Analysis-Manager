@@ -117,7 +117,7 @@ namespace AnalysisManagerExtractionPlugin
                 switch (resultTypeName)
                 {
                     case AnalysisResources.RESULT_TYPE_SEQUEST:
-                        // Run the Peptide Extractor DLL
+                        // Run the SEQUEST Results Processor DLL
                         currentAction = "running peptide extraction for SEQUEST";
                         result = PerformPeptideExtraction();
 
@@ -2496,8 +2496,8 @@ namespace AnalysisManagerExtractionPlugin
             {
                 // SEQUEST result type
 
-                // Lookup the version of the PeptideFileExtractor
-                if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "PeptideFileExtractor"))
+                // Lookup the version of SequestResultsProcessor.dll
+                if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "SequestResultsProcessor"))
                 {
                     return false;
                 }
