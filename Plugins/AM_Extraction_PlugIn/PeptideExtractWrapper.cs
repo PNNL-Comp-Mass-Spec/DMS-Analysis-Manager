@@ -179,7 +179,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType TestOutputSynFile()
         {
-            // Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
+            // Verifies that the _syn.txt file was created, and that valid data is present (file size > 0 bytes)
 
             // Test for presence of _syn.txt file
             var workFiles = Directory.GetFiles(mWorkDir);

@@ -51,6 +51,13 @@ namespace AnalysisManagerExtractionPlugin
             mPeptideProphetRunnerLocation = peptideProphetRunnerLocation;
         }
 
+        /// <summary>
+        /// Run PeptideProphet using PeptideProphetRunner.exe
+        /// </summary>
+        /// <remarks>
+        /// Note that PeptideProphetRunner.exe and PeptideProphetLibrary.dll compiled in 2021 require .NET 4.8 and the
+        /// Microsoft Visual C++ 2015-2019 Redistributable (x86) (files msvcp140.dll and msvcr140)
+        /// </remarks>
         public CloseOutType CallPeptideProphet()
         {
             try
@@ -66,7 +73,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var peptideProphetConsoleOutputFilePath = Path.Combine(inputFile.Directory.FullName, "PeptideProphetConsoleOutput.txt");
 
-                // verify that program file exists
+                // Verify that program file exists
                 if (!File.Exists(mPeptideProphetRunnerLocation))
                 {
                     ReportError("PeptideProphetRunner not found at " + mPeptideProphetRunnerLocation);

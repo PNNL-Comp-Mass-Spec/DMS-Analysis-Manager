@@ -2047,6 +2047,8 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("Running peptide prophet on file " + synFileNameAndSize);
                 }
 
+                // Note that the PeptideProphet DLL compiled in 2021 require .NET 4.8 and the
+                // Microsoft Visual C++ 2015-2019 Redistributable (x86) (files msvcp140.dll and msvcr140)
                 result = peptideProphet.CallPeptideProphet();
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
