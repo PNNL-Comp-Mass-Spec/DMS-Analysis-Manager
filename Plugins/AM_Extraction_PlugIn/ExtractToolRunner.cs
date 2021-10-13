@@ -18,7 +18,6 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
 using PHRPReader;
-using PHRPReader.Reader;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
 
