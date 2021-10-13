@@ -52,9 +52,6 @@ namespace AnalysisManagerExtractionPlugin
 
         private bool mRetrieveOrganismDB;
 
-        // Keys are the original file name, values are the new name
-        private Dictionary<string, string> mPendingFileRenames;
-
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -436,8 +433,7 @@ namespace AnalysisManagerExtractionPlugin
             // Set this to true for now
             // It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
             mRetrieveOrganismDB = true;
-            mPendingFileRenames = new Dictionary<string, string>();
-
+            
             var resultTypeName = GetResultType(mJobParams);
 
             if (string.IsNullOrWhiteSpace(resultTypeName))
@@ -461,15 +457,6 @@ namespace AnalysisManagerExtractionPlugin
             if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
-
-            foreach (var entry in mPendingFileRenames)
-            {
-                var sourceFile = new FileInfo(Path.Combine(mWorkDir, entry.Key));
-                if (sourceFile.Exists)
-                {
-                    sourceFile.MoveTo(Path.Combine(mWorkDir, entry.Value));
-                }
             }
 
             if (!mRetrieveOrganismDB)
