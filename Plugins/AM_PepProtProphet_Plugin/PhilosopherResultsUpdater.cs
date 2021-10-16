@@ -116,7 +116,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var psmSuccess = UpdatePhilosopherPSMFile(datasetOrExperimentGroupName, experimentGroup.Value);
                     var ionSuccess = UpdatePhilosopherIonFile(datasetOrExperimentGroupName, experimentGroup.Value);
-                    var peptideSuccess = UpdatePhilosopherPeptideFile(datasetOrExperimentGroupName, experimentGroup.Value);
+                    var peptideSuccess = UpdatePhilosopherPeptideFile(datasetOrExperimentGroupName, experimentGroup.Value, out var peptideCount);
+
+                    if (peptideCount == 0)
+                    {
+                        // The peptide.tsv file is empty; a corresponding protein.tsv file will not exist
+                        if (psmSuccess && ionSuccess && peptideSuccess)
+                            successCount++;
+
+                        continue;
+                    }
                     var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentGroup.Value);
 
                     if (psmSuccess && ionSuccess && peptideSuccess && proteinSuccess)
@@ -199,7 +208,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "Mapped Proteins"
                 };
 
-                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile);
+                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out _);
                 if (!success)
                     return false;
 
@@ -258,7 +267,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "Mapped Proteins"
                 };
 
-                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile);
+                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out _);
                 if (!success)
                     return false;
 
@@ -277,10 +286,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="datasetOrExperimentGroupName"></param>
         /// <param name="workingDirectory"></param>
+        /// <param name="peptideCount">Output: number of result lines in the peptide.tsv file</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherPeptideFile(
             string datasetOrExperimentGroupName,
-            FileSystemInfo workingDirectory)
+            FileSystemInfo workingDirectory,
+            out int peptideCount)
         {
             try
             {
@@ -289,6 +300,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!inputFile.Exists)
                 {
                     OnErrorEvent("Input file not found in UpdatePhilosopherPeptideFile: " + inputFile.FullName);
+                    peptideCount = 0;
                     return false;
                 }
 
@@ -313,7 +325,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "Mapped Proteins"
                 };
 
-                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile);
+                var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out peptideCount);
                 if (!success)
                     return false;
 
@@ -322,6 +334,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 OnErrorEvent("Error in UpdatePhilosopherPeptideFile", ex);
+                peptideCount = 0;
                 return false;
             }
         }
@@ -381,8 +394,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="headerNames"></param>
         /// <param name="inputFile"></param>
         /// <param name="outputFile"></param>
+        /// <param name="resultLineCount">Number of result lines (not counting the header line)</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool WriteUpdatedFile(List<string> headerNames, FileSystemInfo inputFile, FileSystemInfo outputFile)
+        private bool WriteUpdatedFile(
+            List<string> headerNames,
+            FileSystemInfo inputFile,
+            FileSystemInfo outputFile,
+            out int resultLineCount)
         {
             var spectrumColumnIndex = -1;
             var spectrumFileColumnIndex = -1;
@@ -390,6 +408,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             var scanMatcher = new Regex(@"(?<ScanNumber>\d+)\.\d+\.\d+$", RegexOptions.Compiled);
             var scanWarningsShown = 0;
+
+            resultLineCount = 0;
 
             var spectrumFiles = new SortedSet<string>();
 
@@ -466,6 +486,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 writer.WriteLine(string.Join("\t", lineParts));
+                resultLineCount++;
             }
 
             return true;
