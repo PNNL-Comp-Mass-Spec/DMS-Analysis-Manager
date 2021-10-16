@@ -1331,6 +1331,26 @@ namespace AnalysisManagerBase.JobConfig
 
                         foreach (var paramInfo in jobParameters)
                         {
+                            // Check for conflicting values
+                            if (mJobParams.TryGetValue(paramInfo.Section, out var existingSection) &&
+                                existingSection.TryGetValue(paramInfo.ParamName, out var existingValue))
+                            {
+                                if (string.Equals(existingValue, paramInfo.Value))
+                                {
+                                    LogDebug(string.Format(
+                                        "Skipping duplicate task parameter in section {0} named {1}: the new value matches the existing value of '{2}'",
+                                        paramInfo.Section, paramInfo.ParamName, existingValue));
+
+                                    continue;
+                                }
+
+                                LogError(string.Format(
+                                    "Duplicate task parameters in section {0} have the same name ({1}), but conflicting values: existing value is '{2}' vs. new value of '{3}'",
+                                    paramInfo.Section, paramInfo.ParamName, existingValue, paramInfo.Value));
+
+                                return RequestTaskResult.ResultError;
+                            }
+
                             SetParam(paramInfo.Section, paramInfo.ParamName, paramInfo.Value);
                         }
 
