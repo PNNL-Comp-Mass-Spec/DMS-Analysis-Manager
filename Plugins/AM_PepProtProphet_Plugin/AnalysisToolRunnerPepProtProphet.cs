@@ -533,7 +533,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
             var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
             RegisterEvents(processor);
 
-            return processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
+            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, out var totalPeptideCount);
+
+            if (totalPeptideCount > 0)
+            {
+                return success;
+            }
+
+            var warningMessage = string.Format("No peptides were confidently identified ({0})",
+                experimentGroupWorkingDirectories.Count > 1
+                    ? "the peptide.tsv files are all empty"
+                    : "the peptide.tsv file is empty");
+
+            LogWarning(warningMessage, true);
+
+            return success;
         }
 
         /// <summary>

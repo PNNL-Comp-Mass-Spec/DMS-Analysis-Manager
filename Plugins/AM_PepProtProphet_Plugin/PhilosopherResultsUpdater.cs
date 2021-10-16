@@ -100,9 +100,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <remarks>Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory</remarks>
         /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
+        /// <param name="totalPeptideCount">Output: total number of result lines in the peptide.tsv file(s)</param>
         /// <returns>True if successful, false if an error</returns>
-        public bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        public bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, out int totalPeptideCount)
         {
+            totalPeptideCount = 0;
+
             try
             {
                 var successCount = 0;
@@ -126,6 +129,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         continue;
                     }
+
+                    totalPeptideCount += peptideCount;
+
                     var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentGroup.Value);
 
                     if (psmSuccess && ionSuccess && peptideSuccess && proteinSuccess)
