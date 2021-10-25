@@ -61,3 +61,5 @@ CachedLibs/
 **/.vs/
 *.pdb
 /AM_Common/System.Threading.Channels.dll
+/AM_Common/CsvHelper.dll
+/AM_Common/MathNet.Numerics.dll
