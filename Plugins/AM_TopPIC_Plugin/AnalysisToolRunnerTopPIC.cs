@@ -8,11 +8,13 @@
 using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using CsvHelper;
+using CsvHelper.Configuration;
 
 namespace AnalysisManagerTopPICPlugIn
 {
@@ -1183,7 +1185,7 @@ namespace AnalysisManagerTopPICPlugIn
                 // This RegEx is used to remove double quotes from the start and end of a column value
                 var quoteMatcher = new Regex("\"(?<Data>.*)\"", RegexOptions.Compiled);
 
-                CsvParser csvParser = null;
+                CsvReader csvReader = null;
                 var currentLineNumber = 0;
 
                 // Open the input file and output file
@@ -1233,8 +1235,12 @@ namespace AnalysisManagerTopPICPlugIn
                                     if (useCsvReader)
                                     {
                                         // Instantiate the CSV Reader
-                                        // Using CsvParser instead of CsvReader since we don't need to read specific columns
-                                        csvParser = new CsvParser(reader, System.Globalization.CultureInfo.InvariantCulture);
+                                        var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+                                        {
+                                            Delimiter = ","
+                                        };
+
+                                        csvReader = new CsvReader(reader, config);
                                     }
                                 }
                             }
@@ -1252,14 +1258,24 @@ namespace AnalysisManagerTopPICPlugIn
                             try
                             {
                                 currentLineNumber++;
-                                var csvCols = csvParser.Read();
-
-                                if (csvCols == null)
+                                if (!csvReader.Read())
                                 {
-                                    // csvParser returns Null after all lines have been read from the file
                                     break;
                                 }
-                                dataLine = string.Join("\t", csvCols);
+
+                                var rowData = new List<string>();
+
+                                for (var columnIndex = 0; columnIndex < csvReader.Parser.Count; columnIndex++)
+                                {
+                                    if (!csvReader.TryGetField<string>(columnIndex, out var fieldValue))
+                                    {
+                                        break;
+                                    }
+
+                                    rowData.Add(fieldValue);
+                                }
+
+                                dataLine = string.Join("\t", rowData);
                             }
                             catch (Exception ex)
                             {
