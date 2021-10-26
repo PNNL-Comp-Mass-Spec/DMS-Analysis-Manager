@@ -1379,11 +1379,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                     outputFile.Refresh();
                     if (outputFile.Exists && outputFile.Length >= originalMSXmlFile.Length * 0.95)
                     {
-                        LogWarning(string.Format(
+                        LogWarning(
                             "Ignoring error '[MSData::stringToPair] Bad format' since the _FIXED.mzML was created " +
                             "and is similar in size to the input file ({0:F0} MB vs. {1:F0} MB)",
                             outputFile.Length / 1024.0 / 1024.0,
-                            originalMSXmlFile.Length / 1024.0 / 1024.0));
+                            originalMSXmlFile.Length / 1024.0 / 1024.0);
 
                         success = true;
                     }
@@ -1572,11 +1572,11 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (success)
             {
-                var msg = string.Format("Median mass error changed from {0:F2} ppm to {1:F2} ppm",
-                                        massErrorExtractor.MassErrorStats.MassErrorPPM,
-                                        massErrorExtractor.MassErrorStats.MassErrorPPMRefined);
-
-                mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
+                mEvalMessage = Global.AppendToComment(mEvalMessage,
+                    string.Format(
+                        "Median mass error changed from {0:F2} ppm to {1:F2} ppm",
+                        massErrorExtractor.MassErrorStats.MassErrorPPM,
+                        massErrorExtractor.MassErrorStats.MassErrorPPMRefined));
 
                 return true;
             }

@@ -174,8 +174,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading DLL " + dllFilePath + ": " + ex.Message;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception loading DLL " + dllFilePath, ex);
             }
             return obj;
         }

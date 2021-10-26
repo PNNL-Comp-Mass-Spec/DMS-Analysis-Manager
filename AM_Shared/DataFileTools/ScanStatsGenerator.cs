@@ -137,8 +137,7 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 if (!File.Exists(msFileInfoScannerDLLPath))
                 {
-                    var msg = "DLL not found: " + msFileInfoScannerDLLPath;
-                    OnErrorEvent(msg);
+                    OnErrorEvent("DLL not found: " + msFileInfoScannerDLLPath);
                 }
                 else
                 {
@@ -146,10 +145,10 @@ namespace AnalysisManagerBase.DataFileTools
                     if (newInstance != null)
                     {
                         msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)newInstance;
-                        var msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
+
                         if (mDebugLevel >= 2)
                         {
-                            OnStatusEvent(msg);
+                            OnStatusEvent("Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath);
                         }
                     }
                 }

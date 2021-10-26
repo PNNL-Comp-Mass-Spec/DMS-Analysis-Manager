@@ -109,8 +109,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
             catch (Exception ex)
             {
-                var msg = "Error in MAC Plugin->RunTool: " + ex.Message;
-                LogError(msg, ex);
+                LogError("Error in MAC Plugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

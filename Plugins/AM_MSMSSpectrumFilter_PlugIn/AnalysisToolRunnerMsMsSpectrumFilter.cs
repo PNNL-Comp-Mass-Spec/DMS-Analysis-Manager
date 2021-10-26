@@ -804,15 +804,13 @@ namespace MSMSSpectrumFilterAM
             {
                 if (!ZipFile(dtaFilePath, false))
                 {
-                    var msg = "Error zipping concatenated DTA file, job " + mJob + ", step " + mJobParams.GetParam("Step");
-                    LogError(msg);
+                    LogError("Error zipping concatenated DTA file, job {0}, step {1}", mJob, mJobParams.GetParam("Step"));
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                var msg = "Exception zipping concatenated DTA file, job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message;
-                LogError(msg);
+                LogError("Exception zipping concatenated DTA file, job {0}, step {1}: {2}", mJob, mJobParams.GetParam("Step"), ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

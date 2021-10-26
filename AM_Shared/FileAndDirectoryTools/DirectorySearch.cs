@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using MyEMSLReader;
@@ -223,10 +224,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var datasetDirPath = FindValidDirectory(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
                                                  retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
 
-            if (string.IsNullOrEmpty(datasetDirPath))
-                return string.Empty;
-
-            return datasetDirPath;
+            return string.IsNullOrEmpty(datasetDirPath) ? string.Empty : datasetDirPath;
         }
 
         /// <summary>
@@ -260,12 +258,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _, directoryNotFoundMessage: out _);
 
-            if (!string.IsNullOrEmpty(datasetDirPath))
-            {
-                return Path.Combine(datasetDirPath, dataFileName);
-            }
-
-            return string.Empty;
+            return string.IsNullOrEmpty(datasetDirPath) ? string.Empty : Path.Combine(datasetDirPath, dataFileName);
         }
 
         /// <summary>
@@ -381,9 +374,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             // The 0.ser directory does not exist; look for zipped s-folders
-            var alternateDirectoryPath = FindValidDirectory(DatasetName, "s*.zip", retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
-
-            return alternateDirectoryPath;
+            return FindValidDirectory(DatasetName, "s*.zip", retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
@@ -560,8 +551,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     {
                         if (mDebugLevel > 3)
                         {
-                            var msg = "FindValidDatasetFolder, Looking for directory " + pathToCheck.Item1;
-                            OnDebugEvent(msg);
+                            OnDebugEvent("FindValidDatasetFolder, Looking for directory " + pathToCheck.Item1);
                         }
 
                         if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
@@ -608,16 +598,20 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (mDebugLevel >= 4 || mDebugLevel >= 1 && fileNotFoundEncountered)
                     {
-                        var msg = "FindValidDirectory, Valid dataset directory has been found:  " + bestPath;
+                        var msg = new StringBuilder();
+                        msg.AppendFormat("FindValidDirectory, valid dataset directory has been found: {0}", bestPath);
+
                         if (fileNameToFind.Length > 0)
                         {
-                            msg += " (matched file " + fileNameToFind + ")";
+                            msg.AppendFormat(" (matched file {0})", fileNameToFind);
                         }
+
                         if (directoryNameToFind.Length > 0)
                         {
-                            msg += " (matched directory " + directoryNameToFind + ")";
+                            msg.AppendFormat(" (matched directory {0})", directoryNameToFind);
                         }
-                        OnDebugEvent(msg);
+
+                        OnDebugEvent(msg.ToString());
                     }
                 }
                 else
@@ -637,11 +631,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         }
                         else
                         {
-                            var msg = string.Format("{0}, Job {1}, Dataset {2}",
-                                                    directoryNotFoundMessage,
-                                                    mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
-                                                    datasetName);
-                            OnWarningEvent(msg);
+                            OnWarningEvent(string.Format(
+                                "{0}, Job {1}, Dataset {2}",
+                                directoryNotFoundMessage,
+                                mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
+                                datasetName));
                         }
                     }
                 }
@@ -695,21 +689,25 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return true;
             }
 
-            if (logDirectoryNotFound)
+            if (!logDirectoryNotFound)
             {
-                var msg = "MyEMSL does not have any files for dataset " + dataset;
-                if (!string.IsNullOrEmpty(fileNameToFind))
-                {
-                    msg += " and file " + fileNameToFind;
-                }
-
-                if (!string.IsNullOrEmpty(subdirectoryName))
-                {
-                    msg += " and subdirectory " + subdirectoryName;
-                }
-
-                OnWarningEvent(msg);
+                return false;
             }
+
+            var msg = new StringBuilder();
+            msg.AppendFormat("MyEMSL does not have any files for dataset {0}", dataset);
+            if (!string.IsNullOrEmpty(fileNameToFind))
+            {
+                msg.AppendFormat(" and file {0}", fileNameToFind);
+            }
+
+            if (!string.IsNullOrEmpty(subdirectoryName))
+            {
+                msg.AppendFormat(" and subdirectory {0}", subdirectoryName);
+            }
+
+            OnWarningEvent(msg.ToString());
+
             return false;
         }
 

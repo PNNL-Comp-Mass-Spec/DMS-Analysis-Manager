@@ -99,8 +99,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (!success)
             {
-                var msg = "AnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
-                LogError(msg);
+                LogError("AnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

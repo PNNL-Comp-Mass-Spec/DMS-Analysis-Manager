@@ -827,8 +827,7 @@ namespace DTASpectraFileGen
 
                 if (spectrumCountSkipped > 0)
                 {
-                    var msg = "Skipped " + spectrumCountSkipped + " spectra in MergeCDTAs since they were not created by MSConvert";
-                    LogWarning(msg, true);
+                    LogWarning(string.Format("Skipped {0} spectra in MergeCDTAs since they were not created by MSConvert", spectrumCountSkipped), true);
                 }
             }
             catch (Exception ex)
@@ -1226,7 +1225,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                LogError("Exception zipping spectrum file, job " + mJob + ", step " + mStepNum + ": " + ex.Message);
+                LogError("Exception zipping spectrum file, job {0}, step {1}: {2}", mJob, mStepNum, ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1236,8 +1235,7 @@ namespace DTASpectraFileGen
             var zipFile = new FileInfo(GetZipFilePathForFile(inputFilePath));
             if (!zipFile.Exists || zipFile.Length <= 0)
             {
-                var msg = "Error zipping spectrum file, job " + mJob + ", step " + mStepNum;
-                LogError(msg);
+                LogError("Error zipping spectrum file, job {0}, step {1}", mJob, mStepNum);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1256,14 +1254,12 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var msg = "Error zipping spectrum file using SharpZipLib, job " + mJob + ", step " + mStepNum;
-                LogError(msg);
+                LogError("Error zipping spectrum file using SharpZipLib, job {0}, step {1}", mJob, mStepNum);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
-                var msg = "Exception zipping spectrum file using SharpZipLib, job " + mJob + ", step " + mStepNum;
-                LogError(msg, ex);
+                LogError("Exception zipping spectrum file using SharpZipLib, job {0}, step {1}: {2}", mJob, mStepNum, ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

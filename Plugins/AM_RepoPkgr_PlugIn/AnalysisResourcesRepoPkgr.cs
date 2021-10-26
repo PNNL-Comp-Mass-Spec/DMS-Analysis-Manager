@@ -194,8 +194,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                         if (!datasetRawFilePaths.ContainsKey(jobInfo.Dataset))
                         {
-                            var msg = "Instrument data file not found for dataset " + jobInfo.Dataset;
-                            LogError(msg);
+                            LogError("Instrument data file not found for dataset {0}", jobInfo.Dataset);
                         }
                     }
                 }
@@ -235,12 +234,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 var jobId = mJobParams.GetJobParameter("Job", "??");
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", "??");
-                var msg = "Instrument data file not found for " + missingInstrumentDataCount +
-                    Global.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
+
+                var msg = string.Format(
+                    "Instrument data file not found for {0} {1} in data package {2}",
+                    missingInstrumentDataCount,
+                    Global.CheckPlural(missingInstrumentDataCount, "dataset", "datasets"),
+                    dataPackageID);
+
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
-                msg += " (pipeline job " + jobId + ")";
-                LogErrorToDatabase(msg);
+                LogErrorToDatabase(msg + " (pipeline job " + jobId + ")");
             }
 
             // Restore the dataset and job info for this aggregation job

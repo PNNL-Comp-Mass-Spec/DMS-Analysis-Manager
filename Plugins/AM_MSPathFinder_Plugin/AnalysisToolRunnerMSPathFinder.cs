@@ -792,16 +792,18 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (!success)
             {
-                var msg = "Error running MSPathFinder";
+                string msg;
 
                 if (mConsoleOutputErrorMsg.Contains("No results found"))
                 {
-                    msg = mConsoleOutputErrorMsg;
-
-                    if (mUnfilteredPromexFeatures > 0)
-                    {
-                        msg += "; loaded " + mFilteredPromexFeatures + "/" + mUnfilteredPromexFeatures + " ProMex features";
-                    }
+                    msg = string.Format("{0}{1}",
+                        mConsoleOutputErrorMsg,
+                        mUnfilteredPromexFeatures == 0 ? string.Empty :
+                            string.Format("; loaded {0}/{1} ProMex features", mFilteredPromexFeatures, mUnfilteredPromexFeatures));
+                }
+                else
+                {
+                    msg = "Error running MSPathFinder";
                 }
 
                 LogError(msg);

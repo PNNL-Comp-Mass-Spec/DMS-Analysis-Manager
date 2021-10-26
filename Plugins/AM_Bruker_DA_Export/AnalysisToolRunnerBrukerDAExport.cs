@@ -235,20 +235,20 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     var methodsDir = new DirectoryInfo(methodsDirPath);
                     if (!methodsDir.Exists)
                     {
-                        var msg = string.Format("Bruker spectra export methods directory not found " +
-                                                "(see manager parameter {0}): {1}",
-                                                BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, methodsDirPath);
-                        LogError(msg);
+                        LogError(
+                            "Bruker spectra export methods directory not found (see manager parameter {0}): {1}",
+                            BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, methodsDirPath);
+
                         return false;
                     }
 
                     methodOverridePath = Path.Combine(methodsDir.FullName, methodName);
                     if (!Directory.Exists(methodOverridePath))
                     {
-                        var msg = string.Format("Bruker spectra export method directory not found " +
-                                                "(see parameter {0} in the settings file for this job): {1}",
-                                                BRUKER_SPECTRA_EXPORT_METHOD_PARAM,  methodOverridePath);
-                        LogError(msg);
+                        LogError(
+                            "Bruker spectra export method directory not found (see parameter {0} in the settings file for this job): {1}",
+                            BRUKER_SPECTRA_EXPORT_METHOD_PARAM, methodOverridePath);
+
                         return false;
                     }
                 }
@@ -316,6 +316,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (!success || mMaxRuntimeReached)
                 {
                     var msg = "Error exporting Bruker data using DataAnalysis.exe";
+
                     if (mMaxRuntimeReached)
                     {
                         msg += "; program aborted because runtime exceeded " + (maxRuntimeSeconds / 60.0).ToString("0") + " minutes";

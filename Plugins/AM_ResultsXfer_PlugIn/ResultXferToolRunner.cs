@@ -134,9 +134,10 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log this exception, but don't treat it is a job failure
-                        var msg = "ResultXferToolRunner.RunTool(); Exception deleting dataset directory " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
-                                  " in transfer directory (another results manager may have deleted it): " + ex.Message;
-                        LogWarning(msg);
+                        LogWarning(
+                            "ResultXferToolRunner.RunTool(); Exception deleting dataset directory {0} in transfer directory " +
+                            "(another results manager may have deleted it): {1}",
+                            mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), ex.Message);
 
                         UpdateEvalCode(0, "Exception deleting dataset directory in transfer directory: " + ex.Message + "; " + transferDirectory.FullName);
                     }
@@ -145,16 +146,17 @@ namespace AnalysisManagerResultsXferPlugin
                 {
                     if (mDebugLevel >= 3)
                     {
-                        LogDebug("Dataset directory in transfer directory still has files/directories; will not delete: " + transferDirectory.FullName);
+                        LogDebug("Dataset directory in transfer directory still has files/directories; will not delete: {0}", transferDirectory.FullName);
                     }
                 }
             }
             catch (Exception ex)
             {
                 // Log this exception, but don't treat it is a job failure
-                var msg = "ResultXferToolRunner.RunTool(); Exception looking for dataset directory " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
-                          " in transfer directory (another results manager may have deleted it): " + ex.Message;
-                LogWarning(msg);
+                LogWarning(
+                    "ResultXferToolRunner.RunTool(); Exception looking for dataset directory {0} in transfer directory " +
+                    "(another results manager may have deleted it): {1}",
+                    mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), ex.Message);
 
                 UpdateEvalCode(0, "Exception looking for dataset directory in transfer directory " + ex.Message + "; " + transferDirectoryPath);
             }

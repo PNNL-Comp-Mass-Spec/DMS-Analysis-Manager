@@ -1463,8 +1463,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (dataPkgJob.PeptideHitResultType == PeptideHitResultTypes.Unknown)
                     {
-                        var msg = "PeptideHit ResultType not recognized for job " + dataPkgJob.Job + ": " + dataPkgJob.ResultType;
-                        LogTools.LogWarning(msg);
+                        LogTools.LogWarning(string.Format("PeptideHit ResultType not recognized for job {0}: {1}", dataPkgJob.Job, dataPkgJob.ResultType));
                     }
                     else
                     {

@@ -183,8 +183,7 @@ namespace AnalysisManager_AScore_PlugIn
                 Delimiter = "\t"
             };
 
-            var msg = "Exporting table t_results_ascore to " + Path.GetFileName(writer.FilePath);
-            LogMessage(msg);
+            LogMessage("Exporting table t_results_ascore to " + Path.GetFileName(writer.FilePath));
 
             var pipeline = ProcessingPipeline.Assemble("ExportTable", reader, writer);
             pipeline.RunRoot(null);

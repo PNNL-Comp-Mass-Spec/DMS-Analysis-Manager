@@ -503,8 +503,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             catch (Exception ex)
             {
-                var msg = "Exception running external program " + executablePath;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent(string.Format("Exception running external program {0}", executablePath), ex);
                 mProgRunner = null;
 
                 mStopTime = DateTime.UtcNow;
@@ -521,8 +520,9 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (ProgramAborted && mAbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath;
-                    OnErrorEvent(msg);
+                    OnErrorEvent(string.Format(
+                        "  ProgRunner.ExitCode = {0} for Program = {1}",
+                        ExitCode, executablePath));
                 }
                 return false;
             }

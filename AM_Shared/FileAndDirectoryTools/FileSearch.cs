@@ -864,8 +864,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
             {
-                var msg = string.Format("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
-                OnWarningEvent(msg);
+                OnWarningEvent(string.Format("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH));
                 return string.Empty;
             }
 
@@ -873,8 +872,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (!msXmlCacheDirectory.Exists)
             {
-                var msg = "Warning: MsXML cache directory not found: " + msXmlCacheDirectoryPath;
-                OnWarningEvent(msg);
+                OnWarningEvent("Warning: MsXML cache directory not found: " + msXmlCacheDirectoryPath);
                 return string.Empty;
             }
 

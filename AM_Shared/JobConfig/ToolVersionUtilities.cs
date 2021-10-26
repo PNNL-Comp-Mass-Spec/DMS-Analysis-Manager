@@ -865,8 +865,9 @@ namespace AnalysisManagerBase.JobConfig
             }
             catch (Exception ex)
             {
-                var msg = "Exception determining Version info for " + Path.GetFileName(dllFilePath) + "  using " + versionInspectorExeName;
-                OnErrorEvent(msg, ex);
+                OnErrorEvent(string.Format(
+                    "Exception determining Version info for {0} using {1}",
+                    Path.GetFileName(dllFilePath), versionInspectorExeName), ex);
             }
 
             return false;

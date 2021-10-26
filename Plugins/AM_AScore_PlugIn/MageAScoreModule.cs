@@ -165,9 +165,9 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (!File.Exists(paramFileToUse))
                 {
-                    var msg = "Parameter file not found: " + paramFileToUse;
-                    OnWarningMessage(new MageStatusEventArgs(msg));
-                    Console.WriteLine(msg);
+                    var warningMessage = "Parameter file not found: " + paramFileToUse;
+                    OnWarningMessage(new MageStatusEventArgs(warningMessage));
+                    Console.WriteLine(warningMessage);
 
                     var paramFileToUse2 = Path.Combine(WorkingDir, AscoreParamFileName);
                     if (Path.GetExtension(paramFileToUse2).Length == 0)
@@ -175,7 +175,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                     if (File.Exists(paramFileToUse2))
                     {
-                        msg = " ... will instead use: " + paramFileToUse2;
+                        var msg = " ... will instead use: " + paramFileToUse2;
                         OnWarningMessage(new MageStatusEventArgs(msg));
                         Console.WriteLine(msg);
                         paramFileToUse = paramFileToUse2;

@@ -679,8 +679,7 @@ namespace AnalysisManagerBase.StatusReporting
                 if (DateTime.UtcNow.Subtract(mLastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
                 {
                     mLastMessageQueueErrorTime = DateTime.UtcNow;
-                    var msg = "Error in LogStatusToMessageQueue: " + ex.Message;
-                    OnErrorEvent(msg, ex);
+                    OnErrorEvent("Error in LogStatusToMessageQueue", ex);
                 }
             }
         }
@@ -993,8 +992,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
             catch (Exception ex)
             {
-                var msg = "Error generating status info: " + ex.Message;
-                OnWarningEvent(msg);
+                OnWarningEvent(string.Format("Error generating status info: {0}", ex.Message));
                 xmlText = string.Empty;
             }
 
@@ -1262,8 +1260,8 @@ namespace AnalysisManagerBase.StatusReporting
                     // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
                     if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
                     {
-                        var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
-                        OnWarningEvent(msg);
+                        OnWarningEvent(string.Format(
+                            "Error writing status file {0}: {1}", Path.GetFileName(statusFilePath), ex.Message));
                     }
                 }
                 success = false;

@@ -1000,20 +1000,21 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     var percentDataPrecursorMassError = precursorMassErrorCount / (float)linesRead * 100f;
 
-                    var msg = percentDataPrecursorMassError.ToString("0.0") +
-                                 "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass";
+                    var msg = string.Format(
+                        "{0:F1}% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass",
+                        percentDataPrecursorMassError);
 
                     if (percentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT)
                     {
-                        msg += "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file";
-                        LogError(msg);
+                        LogError(msg + "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file");
                         tooManyPrecursorMassMismatches = true;
                     }
                     else
                     {
-                        msg += "; this is below the error threshold of " + MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT +
-                               "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)";
-                        LogWarning(msg);
+                        LogWarning(
+                            "{0}; this is below the error threshold of {1}% and thus is only a warning " +
+                            "(note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)",
+                            msg, MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT);
                     }
                 }
             }

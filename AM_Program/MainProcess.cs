@@ -782,8 +782,7 @@ namespace AnalysisManagerProg
                             if (successiveDeadLockCount >= 3)
                             {
                                 // Encountered 3 deadlocks in a row
-                                var msg = "Deadlock encountered " + successiveDeadLockCount + " times in a row when requesting a new task; exiting";
-                                LogWarning(msg);
+                                LogWarning("Deadlock encountered {0} times in a row when requesting a new task; exiting", successiveDeadLockCount);
                                 requestJobs = false;
                             }
                             else
@@ -829,11 +828,9 @@ namespace AnalysisManagerProg
                     {
                         if (tasksStartedCount > 0)
                         {
-                            var msg = "Maximum number of jobs to analyze has been reached: " + tasksStartedCount.ToString() + " job";
-                            if (tasksStartedCount != 1)
-                                msg += "s";
-                            msg += "; closing manager";
-                            LogMessage(msg);
+                            LogMessage(
+                                "Maximum number of jobs to analyze has been reached: {0} {1}; closing manager",
+                                tasksStartedCount, Global.CheckPlural(tasksStartedCount, "job", "jobs"));
                         }
                     }
                 }

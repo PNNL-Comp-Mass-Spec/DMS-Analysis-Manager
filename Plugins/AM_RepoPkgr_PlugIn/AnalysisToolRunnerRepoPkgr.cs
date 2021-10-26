@@ -203,14 +203,16 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 if (dataPkgJobCountMatch == 0)
                 {
-                    mMessage = "Data package " + mRepoPackager.DataPkgId +
-                                " does not have any analysis jobs associated with it; please add some MASIC or DeconTools jobs then reset this job";
+                    mMessage = string.Format(
+                        "Data package {0} does not have any analysis jobs associated with it; please add some MASIC or DeconTools jobs then reset this job",
+                        mRepoPackager.DataPkgId);
+
                     LogError(mMessage);
                     return false;
                 }
 
-                var msg = "Data package " + mRepoPackager.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
-                LogWarning(msg);
+                LogWarning("Data package {0} has {1} associated jobs, but no instrument data files were retrieved",
+                    mRepoPackager.DataPkgId, dataPkgJobCountMatch);
             }
             mProgress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
             mStatusTools.UpdateAndWrite(mProgress);

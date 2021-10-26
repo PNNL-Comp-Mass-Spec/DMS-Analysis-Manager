@@ -1310,17 +1310,17 @@ namespace AnalysisManagerSequestPlugin
                 if (!ZipFile(outFilePath, false))
                 {
                     mMessage = "Error zipping concatenated out file";
-                    var msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step");
-                    LogError(msg);
+
+                    LogError("{0}, job {1}, step {2}", mMessage, mJob, mJobParams.GetParam("Step"));
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 mMessage = "Exception zipping concatenated out file";
-                var msg = mMessage + ", job " + mJob + ", step " + mJobParams.GetParam("Step") + ": " + ex.Message + "; " +
-                             Global.GetExceptionStackTrace(ex);
-                LogError(msg);
+                LogError("{0}, job {1}, step {2}: {3}; {4}",
+                    mMessage, mJob, mJobParams.GetParam("Step"), ex.Message, Global.GetExceptionStackTrace(ex));
+
                 return false;
             }
 

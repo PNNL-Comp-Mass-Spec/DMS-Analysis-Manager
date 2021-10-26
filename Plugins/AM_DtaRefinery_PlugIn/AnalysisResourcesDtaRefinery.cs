@@ -154,8 +154,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var success = UpdateParameterFile(out var errorMessage);
             if (!success)
             {
-                var msg = "AnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + errorMessage;
-                LogError(msg);
+                LogError(string.Format(
+                    "AnalysisResourcesDtaRefinery.GetResources(), failed making input file: {0}", errorMessage));
+
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

@@ -867,10 +867,10 @@ namespace AnalysisManagerBase.AnalysisTool
                 // or
                 // Error copying 3 files to transfer directory
 
-                var msg = "Error copying " + failedFileCount +
-                    Global.CheckPlural(failedFileCount, " file", " files") +
-                    " to transfer directory";
-                LogError(msg);
+                LogError("Error copying {0} {1} to transfer directory",
+                    failedFileCount,
+                    Global.CheckPlural(failedFileCount, "file", "files"));
+
                 analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
                 return false;
             }
@@ -1235,12 +1235,12 @@ namespace AnalysisManagerBase.AnalysisTool
                     // File may be read-only. Clear read-only and system attributes and try again
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug("File " + fileNamePath + " exception ex1: " + ex1.Message);
+                        LogTools.LogDebug(string.Format("File {0} exception ex1: {1}", fileNamePath, ex1.Message));
                         if (ex1.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex1.InnerException.Message);
                         }
-                        LogTools.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
+                        LogTools.LogDebug(string.Format("File {0} may be read-only, attribute reset attempt #{1}", fileNamePath, retryCount));
                     }
                     File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
@@ -1251,7 +1251,8 @@ namespace AnalysisManagerBase.AnalysisTool
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug("File " + fileNamePath + " exception ex2: " + ex2.Message);
+                        LogTools.LogDebug(string.Format("File {0} exception ex2: {1}", fileNamePath, ex2.Message));
+
                         if (ex2.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex2.InnerException.Message);
@@ -1269,8 +1270,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 catch (Exception ex3)
                 {
-                    var msg = "Error deleting file, exception ex3 " + fileNamePath + ex3.Message;
-                    LogTools.LogError(msg);
+                    LogTools.LogError(string.Format("Error deleting file {0}, exception ex3: {1}", fileNamePath, ex3.Message));
                     throw new AMFileNotDeletedException(fileNamePath, ex3.Message);
                 }
             }
@@ -2525,6 +2525,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 mEvalMessage = Global.AppendToComment(mEvalMessage, warningMessage);
             }
+
             base.LogWarning(warningMessage);
         }
 
@@ -2959,9 +2960,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 else
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Tool version info file {0} did not have line {1}",
-                        toolVersionInfoFile.Name, ToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER));
+                        toolVersionInfoFile.Name, ToolVersionUtilities.TOOL_VERSION_INFO_SECTION_HEADER);
                 }
             }
 

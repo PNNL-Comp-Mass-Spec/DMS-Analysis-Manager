@@ -277,8 +277,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Verify source file exists
                 if (!FileExistsWithRetry(sourceFilePath, logMsgTypeIfNotFound))
                 {
-                    var msg = "File not found: " + sourceFilePath;
-                    LogMessageOrError(msg, logMsgTypeIfNotFound);
+                    LogMessageOrError("File not found: " + sourceFilePath, logMsgTypeIfNotFound);
                     return false;
                 }
 
@@ -478,8 +477,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     // Only log each failed attempt to find the file if logMsgTypeIfNotFound = ILogger.logMsgType.OnErrorEvent
                     // Otherwise, we won't log each failed attempt
-                    var msg = "File " + fileName + " not found. Retry count = " + retryCount;
-                    LogMessageOrError(msg, logMsgTypeIfNotFound);
+                    LogMessageOrError(string.Format("File {0} not found. Retry count = {1}", fileName, retryCount), logMsgTypeIfNotFound);
                 }
 
                 retryCount--;

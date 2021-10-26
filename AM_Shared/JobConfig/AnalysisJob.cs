@@ -1549,12 +1549,12 @@ namespace AnalysisManagerBase.JobConfig
 
                 AddAdditionalParameter(JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_XML_PARAMS_FILE, xmlParameterFilename);
 
-                var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
-
                 // Copy the Job Parameter file to the Analysis Manager directory so that we can inspect it if the job fails
                 Global.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, Global.GetAppDirectoryPath(), "RecentJobParameters.xml", 5);
 
-                LogDebug(msg, (int)BaseLogger.LogLevels.DEBUG);
+                LogDebug(string.Format(
+                    "Job Parameters successfully saved to file: {0}", xmlParameterFile.FullName),
+                    (int)BaseLogger.LogLevels.DEBUG);
             }
             catch (Exception ex)
             {

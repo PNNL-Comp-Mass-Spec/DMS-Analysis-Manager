@@ -299,8 +299,11 @@ namespace AnalysisManagerResultsCleanupPlugin
                         }
                     }
 
-                    mEvalMessage = "Deleted " + fileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
-                                    Global.CheckPlural(fileCountDeleted, "file", "files");
+                    mEvalMessage = string.Format(
+                        "Deleted {0} extra {1} {2}",
+                        fileCountDeleted,
+                        RESULTS_DB3_FILE,
+                        Global.CheckPlural(fileCountDeleted, "file", "files"));
 
                     LogMessage(mEvalMessage + " from " + resultsDirectory.FullName);
                 }

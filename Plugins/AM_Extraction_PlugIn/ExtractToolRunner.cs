@@ -409,11 +409,10 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!string.IsNullOrWhiteSpace(bestPrefix.Value) && bestPrefix.Value != decoyPrefixJobParam)
                     {
-                        var msg = string.Format("Using decoy prefix {0} instead of {1} as defined by job parameter MODPlusDecoyPrefix " +
-                                                "because {2:F1}% of the proteins start with {0}",
-                                                bestPrefix.Value, decoyPrefixJobParam, bestPrefix.Key * 100);
-
-                        LogWarning(msg, true);
+                        LogWarning(string.Format(
+                            "Using decoy prefix {0} instead of {1} as defined by job parameter MODPlusDecoyPrefix because {2:F1}% of the proteins start with {0}",
+                            bestPrefix.Value, decoyPrefixJobParam, bestPrefix.Key * 100),
+                            true);
 
                         decoyPrefixJobParam = bestPrefix.Value;
                     }
@@ -1549,13 +1548,10 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrorMessage))
-                        {
-                            msg = Global.AppendToComment(msg, phrp.ErrorMessage);
-                        }
+                        LogWarning(
+                            "Error running PHRP{0}",
+                            string.IsNullOrWhiteSpace(phrp.ErrorMessage) ? string.Empty : "; " + phrp.ErrorMessage);
 
-                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -1696,13 +1692,10 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        var msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(phrp.ErrorMessage))
-                        {
-                            msg = Global.AppendToComment(msg, phrp.ErrorMessage);
-                        }
+                        LogWarning(
+                            "Error running PHRP{0}",
+                            string.IsNullOrWhiteSpace(phrp.ErrorMessage) ? string.Empty : "; " + phrp.ErrorMessage);
 
-                        LogWarning(msg);
                         synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -2008,12 +2001,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    var msg = "Error splitting synopsis file that is over " + SYN_FILE_MAX_SIZE_MB + " MB in size";
+                    var msg = string.Format("Error splitting synopsis file that is over {0} MB in size", SYN_FILE_MAX_SIZE_MB);
 
                     if (ignorePeptideProphetErrors)
                     {
-                        msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
-                        LogWarning(msg);
+                        LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
 
@@ -2146,11 +2138,11 @@ namespace AnalysisManagerExtractionPlugin
             }
             else
             {
-                var msg = "Error interleaving the peptide prophet result files (FileCount=" + splitFileList.Count + ")";
+                var msg = string.Format("Error interleaving the peptide prophet result files (FileCount={0})", splitFileList.Count);
+
                 if (ignorePeptideProphetErrors)
                 {
-                    msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
-                    LogWarning(msg);
+                    LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
                     result = CloseOutType.CLOSEOUT_SUCCESS;
                 }
                 else

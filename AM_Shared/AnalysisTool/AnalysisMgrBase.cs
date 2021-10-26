@@ -252,22 +252,21 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             if (mDebugLevel >= 1)
             {
-                var msg = "Lock file queue timed out after " + waitTimeMinutes.ToString("0") + " minutes (" + mDerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
-                LogWarning(msg);
+                LogWarning("Lock file queue timed out after {0:F0} minutes ({1}); Source={2}, Target={3}",
+                    waitTimeMinutes, mDerivedClassName, sourceFilePath, targetFilePath);
             }
         }
 
         private void FileTools_LockQueueWaitComplete(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
-            if (mDebugLevel >= 1 && waitTimeMinutes >= 1)
-            {
-                // Round to the nearest minute
-                var minutesText = waitTimeMinutes.ToString("0");
-                var timeUnits = minutesText == "1" ? "minute" : "minutes";
+            if (mDebugLevel < 1 || waitTimeMinutes < 1)
+                return;
 
-                var msg = string.Format("Exited lock file queue after {0} {1} ({2}); will now copy file", minutesText, timeUnits, mDerivedClassName);
-                LogDebug(msg);
-            }
+            // Round to the nearest minute
+            var minutesText = waitTimeMinutes.ToString("0");
+            var timeUnits = minutesText == "1" ? "minute" : "minutes";
+
+            LogDebug("Exited lock file queue after {0} {1} ({2}); will now copy file", minutesText, timeUnits, mDerivedClassName);
         }
 
         private void FileTools_StatusEvent(string message)

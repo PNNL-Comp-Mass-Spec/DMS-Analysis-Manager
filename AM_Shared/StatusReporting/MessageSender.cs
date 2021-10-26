@@ -135,15 +135,10 @@ namespace AnalysisManagerBase.StatusReporting
             }
 
             // If we get here, we never could connect to the message broker
-
-            var msg = "Exception creating broker connection";
-            if (retryCount > 0)
-            {
-                msg += " after " + (retryCount + 1) + " attempts";
-            }
-
-            msg += ": " + string.Join("; ", errorList);
-            OnErrorEvent(msg);
+            OnErrorEvent(string.Format(
+                "Exception creating broker connection{0}: {1}",
+                retryCount == 0 ? string.Empty : " after " + (retryCount + 1) + " attempts",
+                string.Join("; ", errorList)));
         }
 
         private void DestroyConnection()

@@ -174,14 +174,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                var msg = "Error running DTARefinery";
-                if (!string.IsNullOrWhiteSpace(consoleOutputErrorMessage))
-                {
-                    msg += ": " + consoleOutputErrorMessage;
-                }
-
                 mMessage = string.Empty;
-                LogError(msg);
+
+                LogError(string.Format(
+                    "Error running DTARefinery{0}",
+                    string.IsNullOrWhiteSpace(consoleOutputErrorMessage)
+                        ? string.Empty
+                        : ": " + string.IsNullOrWhiteSpace(consoleOutputErrorMessage)));
 
                 ValidateDTARefineryLogFile();
 

@@ -653,7 +653,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (masterPXFileInfo.FileID != fileId)
             {
                 var msg = "FileID mismatch for " + file.Name;
-                LogError(msg + ":  mPxMasterFileList.FileID = " + masterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
+                LogError("{0}: mPxMasterFileList.FileID = {1} vs. FileID {2} passed into AddPxFileToMapping",
+                    msg, masterPXFileInfo.FileID, fileId);
+
                 mMessage = msg;
                 return false;
             }
@@ -920,20 +922,26 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (cdtaFile.Length != existingFileInfo.Length)
                     {
-                        var msg = "Dataset " + dataPkgJob.Dataset +
-                                  " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
-                        LogError(msg + ": file size mismatch of " + cdtaFile.Length + " for job " + dataPkgJob.Job + " vs " + existingFileInfo.Length +
-                                 " for job " + existingFileInfo.JobInfo.Job);
+                        var msg = string.Format(
+                            "Dataset {0} has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported",
+                            dataPkgJob.Dataset);
+
+                        LogError("{0}: file size mismatch of {1} for job {2} vs. {3} for job {4}",
+                            msg, cdtaFile.Length, dataPkgJob.Job, existingFileInfo.Length, existingFileInfo.JobInfo.Job);
+
                         mMessage = msg;
                         return false;
                     }
 
                     if (md5Hash != existingFileInfo.MD5Hash)
                     {
-                        var msg = "Dataset " + dataPkgJob.Dataset +
-                                  " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
-                        LogError(msg + ": MD5 hash mismatch of " + md5Hash + " for job " + dataPkgJob.Job + " vs. " + existingFileInfo.MD5Hash +
-                                 " for job " + existingFileInfo.JobInfo.Job);
+                        var msg = string.Format(
+                            "Dataset {0} has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported",
+                            dataPkgJob.Dataset);
+
+                        LogError("{0}: MD5 hash mismatch of {1} for job {2} vs. {3} for job {4}",
+                            msg, md5Hash, dataPkgJob.Job, existingFileInfo.MD5Hash, existingFileInfo.JobInfo.Job);
+
                         mMessage = msg;
                         return false;
                     }
@@ -1750,8 +1758,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (!fastaFileReader.OpenFile(fastaFilePath))
                     {
-                        var msg = "Error opening FASTA file " + orgDBNameGenerated + "; fastaFileReader.OpenFile() returned false";
-                        LogError(msg + "; see " + localOrgDBFolder);
+                        var msg = string.Format("Error opening FASTA file {0}; fastaFileReader.OpenFile() returned false", orgDBNameGenerated);
+                        LogError("{0}; see {1}", msg, localOrgDBFolder);
                         mMessage = msg;
                         return false;
                     }

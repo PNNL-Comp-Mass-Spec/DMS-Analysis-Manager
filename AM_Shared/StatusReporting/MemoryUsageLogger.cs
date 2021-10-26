@@ -403,7 +403,7 @@ namespace AnalysisManagerBase.StatusReporting
                 }
                 else
                 {
-                    OnWarningEvent(msg + " in directory " + LogDirectoryPath);
+                    OnWarningEvent("{0} in directory {1}", msg, LogDirectoryPath);
                 }
             }
         }

@@ -436,13 +436,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(mzidResultsFile);
                 if (validExistingResults)
                 {
-                    LogMessage(string.Format("Using existing MS-GF+ results: {0} created {1}",
-                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                    LogMessage("Using existing MS-GF+ results: {0} created {1}",
+                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
                 }
                 else
                 {
-                    LogMessage(string.Format("Deleting incomplete existing MS-GF+ results: {0} created {1}",
-                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                    LogMessage("Deleting incomplete existing MS-GF+ results: {0} created {1}",
+                        mzidResultsFile.Name, mzidResultsFile.LastWriteTime.ToString(DATE_TIME_FORMAT));
+
                     mzidResultsFile.Delete();
                     mzidResultsFile.Refresh();
                 }
@@ -548,16 +549,16 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                     {
-                        LogMessage(string.Format(
+                        LogMessage(
                             "Re-parsing the MS-GF+ log file now indicates that all tasks finished (waited {0:0} seconds)",
-                            DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds));
+                            DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds);
                     }
                     else if (mMSGFPlusUtils.TaskCountCompleted > savedCountCompleted)
                     {
-                        LogWarning(string.Format(
+                        LogWarning(
                             "Re-parsing the MS-GF+ log file now indicates that {0} tasks finished. " +
                             "That is an increase over the previous value but still not all {1} tasks",
-                            mMSGFPlusUtils.TaskCountCompleted, mMSGFPlusUtils.TaskCountTotal));
+                            mMSGFPlusUtils.TaskCountCompleted, mMSGFPlusUtils.TaskCountTotal);
                     }
                     else
                     {
@@ -592,13 +593,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (mMSGFPlusUtils.TaskCountCompleted > 0)
                 {
-                    var msg = mMessage;
-                    if (string.IsNullOrWhiteSpace(msg))
-                    {
-                        msg = "MS-GF+ processing failed";
-                    }
-                    msg += "; logs show " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal + " completed search tasks";
-                    LogError(msg);
+                    LogError(
+                        "{0}; logs show {1} / {2} completed search tasks",
+                        string.IsNullOrWhiteSpace(mMessage) ? "MS-GF+ processing failed" : mMessage,
+                        mMSGFPlusUtils.TaskCountCompleted,
+                        mMSGFPlusUtils);
                 }
 
                 // Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
@@ -1235,21 +1234,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir);
                 if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Progress from the MS-GF+ console output file is {0:F0}, " +
                         "which is much less than the expected value of {1:F0}; " +
                         "will not compare to the RemoteStart and RemoteFinish job parameters",
-                        msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE));
+                        msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
                 if (mMSGFPlusUtils.ElapsedTimeHours * 60 <= 1)
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Processing time from the MS-GF+ console output file is {0:F1} minutes; " +
                         "will not compare to the RemoteStart and RemoteFinish job parameters",
-                        mMSGFPlusUtils.ElapsedTimeHours * 60));
+                        mMSGFPlusUtils.ElapsedTimeHours * 60);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -1271,17 +1270,18 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (elapsedTimeHoursFromStatusFile > mMSGFPlusUtils.ElapsedTimeHours * 0.9)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
-                LogMessage(string.Format(
+                LogMessage(
                     "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MS-GF+ console output file; " +
                     "changing from {0:F1} hours to {1:F1} hours",
-                    elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours));
+                    elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours);
 
                 var newRemoteStart = remoteFinish.AddHours(-mMSGFPlusUtils.ElapsedTimeHours);
 
                 // Update the remote start time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
-                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION,
-                                                   RemoteTransferUtility.STEP_PARAM_REMOTE_START,
-                                                   string.Format("{0:O}", newRemoteStart));
+                mJobParams.AddAdditionalParameter(
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    RemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                    string.Format("{0:O}", newRemoteStart));
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

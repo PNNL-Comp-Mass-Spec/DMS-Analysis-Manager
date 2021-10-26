@@ -898,8 +898,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (jobCountSkippedUnknownJob > 0)
                 {
-                    var msg = "Skipped " + jobCountSkippedUnknownJob + " job(s) " +
-                              "because the job number was not defined in the job to dataset mapping dictionary; " + failedResultsDirInfo;
+                    var msg = string.Format(
+                        "Skipped {0} job(s) because the job number was not defined in the job to dataset mapping dictionary; {1}",
+                        jobCountSkippedUnknownJob, failedResultsDirInfo);
+
                     LogWarning(msg);
                     UpdateStatusMessage(msg);
                     successOverall = false;
@@ -907,8 +909,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (jobCountSkippedNoSpectrumFile > 0)
                 {
-                    var msg = "Skipped " + jobCountSkippedNoSpectrumFile + " job(s) " +
-                              "because the _dta.txt or .mzML file could not be found for the dataset; " + failedResultsDirInfo;
+                    var msg = string.Format(
+                        "Skipped {0} job(s) because the _dta.txt or .mzML file could not be found for the dataset; {1}",
+                        jobCountSkippedNoSpectrumFile, failedResultsDirInfo);
+
                     LogWarning(msg);
                     UpdateStatusMessage(msg);
                     successOverall = false;
@@ -916,8 +920,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (jobCountSkippedNoSynFile > 0)
                 {
-                    var msg = "Skipped " + jobCountSkippedNoSynFile + " job(s) " +
-                              "because a synopsis or first hits file was not found; " + failedResultsDirInfo;
+                    var msg = string.Format(
+                        "Skipped {0} job(s) because a synopsis or first hits file was not found; {1}",
+                        jobCountSkippedNoSynFile, failedResultsDirInfo);
+
                     LogWarning(msg);
                     UpdateStatusMessage(msg);
                 }
@@ -928,7 +934,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             catch (Exception ex)
             {
                 if (string.IsNullOrEmpty(mMessage))
+                {
                     mMessage = "Error in ProcessSynopsisFiles";
+                }
+
                 LogError("Error in ProcessSynopsisFiles: " + ex.Message);
                 return false;
             }
@@ -1032,7 +1041,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (!success)
             {
                 var msg = "Error running AScore for job " + jobMetadata.Job;
-                LogError(msg, msg + ", file " + sourceFile.Name + ", data package job " + jobMetadata.Job);
+                var detailedMessage = string.Format(
+                    "{0}, file {1}, data package job {2}",
+                    msg, sourceFile.Name, jobMetadata.Job);
+
+                LogError(msg, detailedMessage);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
