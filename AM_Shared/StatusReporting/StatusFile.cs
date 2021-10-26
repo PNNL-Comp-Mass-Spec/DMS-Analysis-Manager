@@ -428,10 +428,7 @@ namespace AnalysisManagerBase.StatusReporting
             ProgRunnerCoreUsage = 0;
 
             // Only clear the recent job info if the variable is null
-            if (MostRecentJobInfo == null)
-            {
-                MostRecentJobInfo = string.Empty;
-            }
+            MostRecentJobInfo ??= string.Empty;
 
             MostRecentLogMessage = string.Empty;
 
