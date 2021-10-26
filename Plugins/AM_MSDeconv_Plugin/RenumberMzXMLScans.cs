@@ -212,7 +212,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             return true;
         }
 
-        private void WriteShallowNode(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteShallowNode(XmlReader reader, XmlWriter writer)
         {
             switch (reader.NodeType)
             {
@@ -264,7 +264,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private void WriteUpdatedScan(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteUpdatedScan(XmlReader reader, XmlWriter writer)
         {
             writer.WriteStartElement(XML_ELEMENT_SCAN);
 
@@ -298,7 +298,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private void WriteUpdatedPrecursorMz(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteUpdatedPrecursorMz(XmlReader reader, XmlWriter writer)
         {
             writer.WriteStartElement(XML_ELEMENT_PRECURSOR_MZ);
 
