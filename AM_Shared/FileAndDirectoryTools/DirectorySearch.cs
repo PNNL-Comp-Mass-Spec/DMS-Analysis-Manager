@@ -17,7 +17,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class DirectorySearch : EventNotifier
     {
-        // Ignore Spelling: pre, Xtract
+        // Ignore Spelling: Bruker, holdoff, pre, Xtract
 
         /// <summary>
         /// Maximum number of attempts to find a directory or file

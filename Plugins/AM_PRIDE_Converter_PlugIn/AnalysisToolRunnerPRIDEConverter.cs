@@ -22,7 +22,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     // Ignore Spelling: acetylated, Bio, bool, const, Cv, dynode, electrospray, fasta, fourier, Frac, gzip, msg, msgf, msgfplus, musculus
     // Ignore Spelling: na, proteome, ProteomeXchange, proteomics, pubmed, Px, reportfile, roc, sapiens, sourcefile, spectrafile
     // Ignore Spelling: udt, Unimod, Unmarshaller, Xmx, Xpath, XpathPos, xtandem, yyyy-MM-dd
-    // Ignore Spelling: amaZon, Deca, Exactive, Lumos, Orbitrap, SolariX, Velos
+    // Ignore Spelling: amaZon, Bruker, Daltonics, Deca, Exactive, Lumos, Orbitrap, SolariX, Velos
 
     // ReSharper restore CommentTypo
 
