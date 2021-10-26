@@ -51,10 +51,10 @@ namespace AnalysisManagerBase.StatusReporting
         private DateTime mLastWriteTime;
 
         /// <summary>
-        /// Output folder for the log file
+        /// Output directory for the log file
         /// </summary>
         /// <remarks>If this is an empty string, the log file is created in the working directory</remarks>
-        public string LogFolderPath { get; }
+        public string LogDirectoryPath { get; }
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
@@ -84,11 +84,11 @@ namespace AnalysisManagerBase.StatusReporting
         {
             if (string.IsNullOrWhiteSpace(logFolderPath))
             {
-                LogFolderPath = string.Empty;
+                LogDirectoryPath = string.Empty;
             }
             else
             {
-                LogFolderPath = logFolderPath;
+                LogDirectoryPath = logFolderPath;
             }
 
             MinimumLogIntervalMinutes = minLogIntervalMinutes;
@@ -370,9 +370,9 @@ namespace AnalysisManagerBase.StatusReporting
 
                 string logFilePath;
 
-                if (!string.IsNullOrWhiteSpace(LogFolderPath))
+                if (!string.IsNullOrWhiteSpace(LogDirectoryPath))
                 {
-                    logFilePath = Path.Combine(LogFolderPath, logFileName);
+                    logFilePath = Path.Combine(LogDirectoryPath, logFileName);
                 }
                 else
                 {
@@ -397,13 +397,13 @@ namespace AnalysisManagerBase.StatusReporting
             {
                 var msg = "Error writing memory usage to file " + logFileName;
 
-                if (string.IsNullOrWhiteSpace(LogFolderPath))
+                if (string.IsNullOrWhiteSpace(LogDirectoryPath))
                 {
                     OnWarningEvent(msg);
                 }
                 else
                 {
-                    OnWarningEvent(msg + " in folder " + LogFolderPath);
+                    OnWarningEvent(msg + " in directory " + LogDirectoryPath);
                 }
             }
         }
