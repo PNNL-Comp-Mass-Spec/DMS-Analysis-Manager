@@ -164,19 +164,18 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private object LoadObject(string className, string dllFilePath)
         {
-            object obj = null;
             try
             {
                 // Dynamically load the specified class from dllFilePath
                 var assembly = System.Reflection.Assembly.LoadFrom(dllFilePath);
                 var dllType = assembly.GetType(className, false, true);
-                obj = Activator.CreateInstance(dllType);
+                return Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception loading DLL " + dllFilePath, ex);
+                return null;
             }
-            return obj;
         }
 
         private void ProcessMSFileOrFolderThread()
