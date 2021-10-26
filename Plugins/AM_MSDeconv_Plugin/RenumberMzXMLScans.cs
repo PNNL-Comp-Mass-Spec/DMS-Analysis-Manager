@@ -156,10 +156,9 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 using (var mySha1 = SHA1.Create())
                 {
-                    using (var indexedFileStream = new FileStream(indexedFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    {
-                        hashValue = mySha1.ComputeHash(indexedFileStream);
-                    }
+                    using var indexedFileStream = new FileStream(indexedFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+                    hashValue = mySha1.ComputeHash(indexedFileStream);
                 }
 
                 PRISM.ProgRunner.GarbageCollectNow();
