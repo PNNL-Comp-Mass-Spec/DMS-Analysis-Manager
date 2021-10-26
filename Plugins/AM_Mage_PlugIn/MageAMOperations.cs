@@ -228,6 +228,7 @@ namespace AnalysisManager_Mage_PlugIn
                     AnalysisToolRunnerMage.T_ALIAS_FILE);
 
                 var msgVerbose = msg + ": " + inputDirectoryPath;
+
                 AppendToWarningMessage(msg, msgVerbose);
                 OnWarningEvent(msgVerbose);
             }

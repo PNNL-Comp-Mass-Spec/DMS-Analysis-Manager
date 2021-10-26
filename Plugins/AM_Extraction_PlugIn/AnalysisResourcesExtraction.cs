@@ -433,7 +433,7 @@ namespace AnalysisManagerExtractionPlugin
             // Set this to true for now
             // It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
             mRetrieveOrganismDB = true;
-            
+
             var resultTypeName = GetResultType(mJobParams);
 
             if (string.IsNullOrWhiteSpace(resultTypeName))

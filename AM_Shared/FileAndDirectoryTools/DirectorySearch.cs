@@ -150,43 +150,43 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         fileOrDirectoryPath = FindDotDFolder(assumeUnpurged);
                         isDirectory = true;
                     }
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.ZippedSFolders:
                     // FTICR data
                     fileOrDirectoryPath = FindSFolders(assumeUnpurged);
                     isDirectory = true;
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.ThermoRawFile:
-                    // Finnigan ion trap/LTQ-FT data
+                    // Thermo ion trap/LTQ-FT data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.MicromassRawFolder:
-                    // Micromass QTOF data
+                    // Waters QTOF data
                     fileOrDirectoryPath = FindDotRawFolder(assumeUnpurged);
                     isDirectory = true;
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.UIMF:
                     // IMS UIMF data
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.mzXML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
                 case AnalysisResources.RawDataTypeConstants.mzML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
                 case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
                 case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
@@ -197,12 +197,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     fileOrDirectoryPath = FindDotDFolder(assumeUnpurged);
                     isDirectory = true;
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.BrukerMALDIImaging:
                     fileOrDirectoryPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
                     isDirectory = true;
-
                     break;
             }
 

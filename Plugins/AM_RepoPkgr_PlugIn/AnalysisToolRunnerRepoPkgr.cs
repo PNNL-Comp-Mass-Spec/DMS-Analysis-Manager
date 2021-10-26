@@ -217,8 +217,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
             mProgress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
             mStatusTools.UpdateAndWrite(mProgress);
 
-            // ToDo: Do some logging on the above pipeline runs using pipeline intermediate results (mRepoPackager.DataPackageItems; mRepoPackager.AssociatedFiles; mRepoPackager.ManifestForCopy;)?
-
             return true;
         }
 
