@@ -648,7 +648,7 @@ namespace AnalysisManagerBase.StatusReporting
                     var timeOfDay = DateTime.Now;
 
                     // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
-                    var midnightOrNoon = (timeOfDay.Hour == 0 || timeOfDay.Hour == 12) && timeOfDay.Minute >= 0 && timeOfDay.Minute < 5;
+                    var midnightOrNoon = timeOfDay.Hour is 0 or 12 && timeOfDay.Minute is >= 0 and < 5;
 
                     if (mDebugLevel >= 3 || mDebugLevel >= 1 && midnightOrNoon)
                     {
