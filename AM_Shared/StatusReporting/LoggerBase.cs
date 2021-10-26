@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using PRISM;
 using PRISM.Logging;
 
@@ -16,9 +17,20 @@ namespace AnalysisManagerBase.StatusReporting
         protected short mDebugLevel = 1;
 
         /// <summary>
+        /// Show a status message at the console, tagging it as a debug message
+        /// </summary>
+        /// <param name="formatString"></param>
+        /// <param name="args"></param>
+        [StringFormatMethod("format")]
+        public void LogDebug(string formatString, params object[] args)
+        {
+            LogDebug(string.Format(formatString, args));
+        }
+
+        /// <summary>
         /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
         /// </summary>
-        /// <remarks>The message is shown in dark gray in the console.</remarks>
+        /// <remarks>The message is shown in dark gray in the console</remarks>
         /// <param name="statusMessage">Status message</param>
         /// <param name="logFileDebugLevel">
         /// Log level for whether to log to disk:
@@ -31,6 +43,18 @@ namespace AnalysisManagerBase.StatusReporting
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
             LogTools.LogDebug(statusMessage, writeToLog);
+        }
+
+        /// <summary>
+        /// Log an error message
+        /// </summary>
+        /// <remarks>The error is shown in red in the console</remarks>
+        /// <param name="formatString"></param>
+        /// <param name="args"></param>
+        [StringFormatMethod("format")]
+        public void LogError(string formatString, params object[] args)
+        {
+            LogError(string.Format(formatString, args));
         }
 
         /// <summary>
@@ -76,6 +100,17 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Show a status message at the console
+        /// </summary>
+        /// <param name="formatString"></param>
+        /// <param name="args"></param>
+        [StringFormatMethod("format")]
+        public void LogMessage(string formatString, params object[] args)
+        {
+            LogMessage(string.Format(formatString, args));
+        }
+
+        /// <summary>
         /// Show a status message at the console and optionally include in the log file
         /// </summary>
         /// <param name="statusMessage">Status message</param>
@@ -94,9 +129,20 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Display a warning message at the console and write to the log file
+        /// Show a warning message at the console and write to the log file
         /// </summary>
-        /// <remarks>The warning is shown in yellow in the console.</remarks>
+        /// <param name="formatString"></param>
+        /// <param name="args"></param>
+        [StringFormatMethod("format")]
+        public void LogWarning(string formatString, params object[] args)
+        {
+            LogMessage(string.Format(formatString, args));
+        }
+
+        /// <summary>
+        /// Show a warning message at the console and write to the log file
+        /// </summary>
+        /// <remarks>The warning is shown in yellow in the console</remarks>
         /// <param name="warningMessage">Warning message</param>
         protected void LogWarning(string warningMessage)
         {
