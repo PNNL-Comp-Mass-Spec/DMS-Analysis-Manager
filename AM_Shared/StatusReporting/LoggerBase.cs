@@ -41,7 +41,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// </param>
         public void LogDebug(string statusMessage, int logFileDebugLevel = 0)
         {
-            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
+            var writeToLog = logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel);
             LogTools.LogDebug(statusMessage, writeToLog);
         }
 
@@ -124,7 +124,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="isError">True if this is an error</param>
         public void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
         {
-            var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel));
+            var writeToLog = logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= mDebugLevel);
             LogTools.LogMessage(statusMessage, isError, writeToLog);
         }
 

@@ -297,7 +297,7 @@ namespace AnalysisManagerBase.StatusReporting
                 var currentProcess = Process.GetCurrentProcess();
 
                 // The WorkingSet is the total physical memory usage
-                return (float)(Global.BytesToMB(currentProcess.WorkingSet64));
+                return (float)Global.BytesToMB(currentProcess.WorkingSet64);
             }
             catch (Exception ex)
             {

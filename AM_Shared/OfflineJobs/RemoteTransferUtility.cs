@@ -797,7 +797,7 @@ namespace AnalysisManagerBase.OfflineJobs
                     // parent directories of the target directory, e.g. ../MSGFDB and ../MSPathFinder
 
                     // On subsequent analysis manager directories, we only need to update the analysis manager directory itself
-                    CopySubdirectoriesToParentDirectory = (dirsProcessed == 0);
+                    CopySubdirectoriesToParentDirectory = dirsProcessed == 0;
 
                     var success = StartDMSUpdateManager(sourceDirectoryPath, targetDirectoryPath, ignoreList, out var errorMessage);
 

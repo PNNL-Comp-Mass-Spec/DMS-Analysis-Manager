@@ -375,7 +375,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return currentTaskProgressAtEnd;
             }
 
-            return (float)(currentTaskProgressAtStart + (subTaskProgress / 100.0) * (currentTaskProgressAtEnd - currentTaskProgressAtStart));
+            return (float)(currentTaskProgressAtStart + subTaskProgress / 100.0 * (currentTaskProgressAtEnd - currentTaskProgressAtStart));
         }
 
         /// <summary>

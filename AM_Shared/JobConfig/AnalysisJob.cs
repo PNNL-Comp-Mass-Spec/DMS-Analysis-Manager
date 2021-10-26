@@ -509,7 +509,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public short GetJobParameter(string name, short valueIfMissing)
         {
-            return (short)(GetJobParameter(name, (int)valueIfMissing));
+            return (short)GetJobParameter(name, (int)valueIfMissing);
         }
 
         /// <summary>
