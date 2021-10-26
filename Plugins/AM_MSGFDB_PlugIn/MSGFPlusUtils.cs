@@ -362,9 +362,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     default:
                         // Assume partially tryptic
                         replacementParameter.UpdateValue("1");
-                        OnWarningEvent(string.Format("Unrecognized value for {0} ({1}); assuming {2}={3}",
-                                                     MSGFPLUS_OPTION_NNET, paramFileLine.ParamInfo.Value,
-                                                     MSGFPLUS_OPTION_NTT, replacementParameter.Value));
+                        OnWarningEvent("Unrecognized value for {0} ({1}); assuming {2}={3}", MSGFPLUS_OPTION_NNET, paramFileLine.ParamInfo.Value, MSGFPLUS_OPTION_NTT, replacementParameter.Value);
                         break;
                 }
 
@@ -398,9 +396,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 else
                 {
                     replacementParameter.UpdateValue("0,1");
-                    OnWarningEvent(string.Format("Unrecognized value for {0} ({1}); assuming {2}={3}",
-                                                 MSGFPLUS_OPTION_C13, paramFileLine.ParamInfo.Value,
-                                                 MSGFPLUS_OPTION_NTT, replacementParameter.Value));
+                    OnWarningEvent("Unrecognized value for {0} ({1}); assuming {2}={3}", MSGFPLUS_OPTION_C13, paramFileLine.ParamInfo.Value, MSGFPLUS_OPTION_NTT, replacementParameter.Value);
                 }
 
                 return true;
@@ -573,16 +569,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (paramFileLine.ParamInfo.ValueLocked)
                 {
-                    OnStatusEvent(string.Format(
-                        "Although code logic suggests to use InstrumentID {0} ({1}), " +
-                        "the existing value will be left as {2} since it is locked in the parameter file (via an exclamation mark)",
-                        instrumentIDNew, instrumentDescription, paramFileLine.ParamInfo.Value));
+                    OnStatusEvent("Although code logic suggests to use InstrumentID {0} ({1}), " +
+                                  "the existing value will be left as {2} since it is locked in the parameter file (via an exclamation mark)", instrumentIDNew, instrumentDescription, paramFileLine.ParamInfo.Value);
                 }
                 else
                 {
-                    OnStatusEvent(string.Format(
-                        "Auto-updating instrument ID from {0} to {1} ({2}) {3}; called by {4}",
-                        paramFileLine.ParamInfo.Value, instrumentIDNew, instrumentDescription, autoSwitchReason, callerName));
+                    OnStatusEvent("Auto-updating instrument ID from {0} to {1} ({2}) {3}; called by {4}", paramFileLine.ParamInfo.Value, instrumentIDNew, instrumentDescription, autoSwitchReason, callerName);
                 }
             }
 
@@ -2516,8 +2508,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                         return CloseOutType.CLOSEOUT_FAILED;
                                 }
 
-                                OnStatusEvent(string.Format("Using Fragmentation method ID {0} because of assumed scan type {1}",
-                                              paramFileLine.ParamInfo.Value, assumedScanType));
+                                OnStatusEvent("Using Fragmentation method ID {0} because of assumed scan type {1}", paramFileLine.ParamInfo.Value, assumedScanType);
                             }
                             else
                             {
@@ -2589,10 +2580,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (AdjustParametersForMSGFPlus(msgfPlusParameters, paramFileLine, out var replacementParameter))
                         {
-                            OnStatusEvent(string.Format("Replacing parameter {0} with {1}={2}",
-                                                        paramFileLine.ParamInfo.ParameterName,
-                                                        replacementParameter.ParameterName,
-                                                        replacementParameter.Value));
+                            OnStatusEvent("Replacing parameter {0} with {1}={2}", paramFileLine.ParamInfo.ParameterName, replacementParameter.ParameterName, replacementParameter.Value);
 
                             paramFileLine.ReplaceParameter(replacementParameter);
                         }
@@ -2618,10 +2606,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                                 else
                                 {
-                                    OnWarningEvent(string.Format("Invalid value for NumThreads in MS-GF+ parameter file: {0}={1}",
-                                                                 paramFileLine.ParamInfo.ParameterName, paramFileLine.ParamInfo.Value));
-                                    OnStatusEvent(string.Format("Changing to: {0}={1}",
-                                                                paramFileLine.ParamInfo.ParameterName, "All"));
+                                    OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: {0}={1}", paramFileLine.ParamInfo.ParameterName, paramFileLine.ParamInfo.Value);
+                                    OnStatusEvent("Changing to: {0}={1}", paramFileLine.ParamInfo.ParameterName, "All");
                                 }
                             }
                         }
@@ -2640,8 +2626,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (mDebugLevel >= 1)
                             {
-                                OnWarningEvent(string.Format("Commenting out parameter {0} since the value is empty",
-                                                             paramFileLine.ParamInfo.ParameterName));
+                                OnWarningEvent("Commenting out parameter {0} since the value is empty", paramFileLine.ParamInfo.ParameterName);
                                 paramFileLine.ChangeLineToComment();
                             }
                         }
@@ -2666,8 +2651,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         paramFileLine.ChangeLineToComment("Obsolete");
                         if (mDebugLevel >= 1)
                         {
-                            OnWarningEvent(string.Format("Commenting out parameter {0} since it is not valid for this version of MS-GF+",
-                                                         paramFileLine.ParamName));
+                            OnWarningEvent("Commenting out parameter {0} since it is not valid for this version of MS-GF+", paramFileLine.ParamName);
                         }
                     }
                     else if (Global.IsMatch(paramFileLine.ParamName, "SkipMzRefinery"))
@@ -3282,8 +3266,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             if (overrideParams.TryGetValue(paramFileLine.ParamInfo.ParameterName, out var valueOverride))
             {
-                OnStatusEvent(string.Format("Overriding parameter {0} to be {1} instead of {2}",
-                                            paramFileLine.ParamInfo.ParameterName, valueOverride, paramFileLine.ParamInfo.Value));
+                OnStatusEvent("Overriding parameter {0} to be {1} instead of {2}", paramFileLine.ParamInfo.ParameterName, valueOverride, paramFileLine.ParamInfo.Value);
 
                 paramFileLine.UpdateParamValue(valueOverride);
             }
@@ -3535,7 +3518,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnErrorEvent(ErrorMessage);
 
                 Console.WriteLine();
-                OnDebugEvent(string.Format("First {0} unmatched peptides", unmatchedPeptides.Count));
+                OnDebugEvent("First {0} unmatched peptides", unmatchedPeptides.Count);
 
                 foreach (var unmatchedPeptide in unmatchedPeptides)
                 {

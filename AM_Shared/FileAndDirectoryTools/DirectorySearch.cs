@@ -630,11 +630,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         }
                         else
                         {
-                            OnWarningEvent(string.Format(
-                                "{0}, Job {1}, Dataset {2}",
+                            OnWarningEvent("{0}, Job {1}, Dataset {2}",
                                 directoryNotFoundMessage,
                                 mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job"),
-                                datasetName));
+                                datasetName);
                         }
                     }
                 }

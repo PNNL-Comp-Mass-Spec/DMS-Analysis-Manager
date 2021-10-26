@@ -1208,7 +1208,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + resultFileExtension));
                 if (localMsXmlFile.Exists)
                 {
-                    OnStatusEvent(string.Format("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir));
+                    OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir);
                     sourceDirectoryPath = mWorkDir;
                     return true;
                 }
@@ -1252,7 +1252,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + resultFileExtension));
                 if (localMsXmlFile.Exists)
                 {
-                    OnStatusEvent(string.Format("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir));
+                    OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir);
                     sourceDirectoryPath = mWorkDir;
                     return true;
                 }
@@ -1490,7 +1490,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            OnStatusEvent(string.Format("Copied {0} to {1}", sourceFile.FullName, mWorkDir));
+            OnStatusEvent("Copied {0} to {1}", sourceFile.FullName, mWorkDir);
 
             // If this is not a .gz file, return true
             if (!string.Equals(sourceFile.Extension, AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
@@ -2768,9 +2768,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (!Global.IsMatch(Path.GetFileName(misFiles[0]), imagingSeqFilePathFinal))
                     {
-                        OnDebugEvent(string.Format("Note: Renaming .mis file (ImagingSequence file) from {0} to {1}",
-                                     Path.GetFileName(misFiles[0]),
-                                     Path.GetFileName(imagingSeqFilePathFinal)));
+                        OnDebugEvent("Note: Renaming .mis file (ImagingSequence file) from {0} to {1}", Path.GetFileName(misFiles[0]), Path.GetFileName(imagingSeqFilePathFinal));
                     }
 
                     if (!mFileCopyUtilities.CopyFileWithRetry(misFiles[0], imagingSeqFilePathFinal, true))

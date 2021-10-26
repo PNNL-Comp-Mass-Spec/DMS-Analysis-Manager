@@ -90,7 +90,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFile.FullName, cmdRunnerMode));
+                    OnDebugEvent("Parsing file {0} while running {1}", consoleOutputFile.FullName, cmdRunnerMode);
                 }
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
@@ -295,7 +295,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (DebugLevel >= 4)
                 {
-                    OnDebugEvent(string.Format("Parsing file {0} while running {1}", consoleOutputFilePath, currentPhilosopherTool));
+                    OnDebugEvent("Parsing file {0} while running {1}", consoleOutputFilePath, currentPhilosopherTool);
                 }
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));

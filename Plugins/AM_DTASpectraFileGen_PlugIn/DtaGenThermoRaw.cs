@@ -264,7 +264,7 @@ namespace DTASpectraFileGen
 
                 if (mDebugLevel >= 2)
                 {
-                    OnDebugEvent(string.Format("Max scan for {0} is {1:N0}", Path.GetFileName(rawFilePath), numScans));
+                    OnDebugEvent("Max scan for {0} is {1:N0}", Path.GetFileName(rawFilePath), numScans);
                 }
                 return numScans;
             }

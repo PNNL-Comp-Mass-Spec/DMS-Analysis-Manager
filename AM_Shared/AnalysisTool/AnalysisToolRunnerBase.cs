@@ -1235,12 +1235,12 @@ namespace AnalysisManagerBase.AnalysisTool
                     // File may be read-only. Clear read-only and system attributes and try again
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug(string.Format("File {0} exception ex1: {1}", fileNamePath, ex1.Message));
+                        LogTools.LogDebug("File {0} exception ex1: {1}", fileNamePath, ex1.Message);
                         if (ex1.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex1.InnerException.Message);
                         }
-                        LogTools.LogDebug(string.Format("File {0} may be read-only, attribute reset attempt #{1}", fileNamePath, retryCount));
+                        LogTools.LogDebug("File {0} may be read-only, attribute reset attempt #{1}", fileNamePath, retryCount);
                     }
                     File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly & ~FileAttributes.System);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
@@ -1251,7 +1251,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        LogTools.LogDebug(string.Format("File {0} exception ex2: {1}", fileNamePath, ex2.Message));
+                        LogTools.LogDebug("File {0} exception ex2: {1}", fileNamePath, ex2.Message);
 
                         if (ex2.InnerException != null)
                         {
@@ -1270,7 +1270,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 catch (Exception ex3)
                 {
-                    LogTools.LogError(string.Format("Error deleting file {0}, exception ex3: {1}", fileNamePath, ex3.Message));
+                    LogTools.LogError("Error deleting file {0}, exception ex3: {1}", fileNamePath, ex3.Message);
                     throw new AMFileNotDeletedException(fileNamePath, ex3.Message);
                 }
             }

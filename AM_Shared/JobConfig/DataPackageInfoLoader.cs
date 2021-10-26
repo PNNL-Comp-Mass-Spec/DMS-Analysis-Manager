@@ -298,9 +298,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (jobParameters.ContainsKey(parameter))
                     {
-                        LogTools.LogWarning(string.Format(
-                            "Job {0} has multiple values for parameter {1}; only using the first occurrence",
-                            jobNumber, parameter));
+                        LogTools.LogWarning("Job {0} has multiple values for parameter {1}; only using the first occurrence", jobNumber, parameter);
                     }
                     else
                     {

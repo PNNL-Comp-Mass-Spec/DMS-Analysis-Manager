@@ -66,7 +66,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 // Show progress at the console every 60 seconds
                 mLastConsoleLogTime = DateTime.UtcNow;
-                OnDebugEvent(string.Format( "Extraction progress: {0:F2}% complete", mProgress));
+                OnDebugEvent("Extraction progress: {0:F2}% complete", mProgress);
             }
 
             if (updateLog)

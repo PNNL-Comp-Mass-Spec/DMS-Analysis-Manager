@@ -186,9 +186,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return true;
                 }
 
-                OnErrorEvent(string.Format(
-                    "The MSFragger parameter file has more than one reporter ion mode defined: {0}",
-                    string.Join(", ", matchedReporterIonModes.Keys.ToList())));
+                OnErrorEvent("The MSFragger parameter file has more than one reporter ion mode defined: {0}", string.Join(", ", matchedReporterIonModes.Keys.ToList()));
 
                 return false;
             }
@@ -265,9 +263,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (double.TryParse(parameter.Value, out value))
                 return true;
 
-            OnErrorEvent(string.Format(
-                "Parameter value in MSFragger parameter file is not numeric: {0} = {1}",
-                parameter.Key, parameter.Value));
+            OnErrorEvent("Parameter value in MSFragger parameter file is not numeric: {0} = {1}", parameter.Key, parameter.Value);
 
             return false;
         }
@@ -277,9 +273,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (int.TryParse(parameter.Value, out value))
                 return true;
 
-            OnErrorEvent(string.Format(
-                "Parameter value in MSFragger parameter file is not numeric: {0} = {1}",
-                parameter.Key, parameter.Value));
+            OnErrorEvent("Parameter value in MSFragger parameter file is not numeric: {0} = {1}", parameter.Key, parameter.Value);
 
             return false;
         }
@@ -427,9 +421,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return true;
             }
 
-            OnErrorEvent(string.Format(
-                "Invalid value for {0} in the MSFraggerParameter file; it should be between {1} and {2}",
-                parameter.ParameterName, parameter.MinValue, parameter.MaxValue));
+            OnErrorEvent("Invalid value for {0} in the MSFraggerParameter file; it should be between {1} and {2}", parameter.ParameterName, parameter.MinValue, parameter.MaxValue);
 
             return false;
         }
@@ -494,9 +486,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (spaceIndex2 <= 0)
                 {
-                    OnWarningEvent(string.Format(
-                        "Affected residues not found after the modification mass for parameter '{0} = {1}' in the MSFragger parameter file",
-                        parameter.Key, parameter.Value));
+                    OnWarningEvent("Affected residues not found after the modification mass for parameter '{0} = {1}' in the MSFragger parameter file", parameter.Key, parameter.Value);
                 }
 
                 var affectedResidueList = spaceIndex2 > 0 ? remainingValue.Substring(0, spaceIndex2).Trim() : string.Empty;
@@ -509,9 +499,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return true;
             }
 
-            OnErrorEvent(string.Format(
-                "Modification mass in MSFragger parameter file is not numeric: {0} = {1}",
-                parameter.Key, parameter.Value));
+            OnErrorEvent("Modification mass in MSFragger parameter file is not numeric: {0} = {1}", parameter.Key, parameter.Value);
 
             return false;
         }
@@ -606,7 +594,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 {
                     if (!item.Value.IsDefined)
                     {
-                        OnErrorEvent(string.Format("Parameter {0} is missing from the MSFraggerParameter file", item.Key));
+                        OnErrorEvent("Parameter {0} is missing from the MSFraggerParameter file", item.Key);
                         return false;
                     }
 

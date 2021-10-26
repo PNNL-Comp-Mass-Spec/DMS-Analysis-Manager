@@ -70,7 +70,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 if (DebugLevel >= 3)
                 {
-                    OnStatusEvent(string.Format("Adding {0} to .zip file {1}", fileToAdd.Name, zipFilePath));
+                    OnStatusEvent("Adding {0} to .zip file {1}", fileToAdd.Name, zipFilePath);
                 }
 
                 // Ionic.Zip.ZipFile
@@ -218,8 +218,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (!string.Equals(decompressedFile.FullName, actualDecompressedFile.FullName))
                 {
-                    OnWarningEvent(string.Format("GZipDecompressWithMetadata created a different file than expected; {0} vs. expected {1}",
-                                   actualDecompressedFile.FullName, decompressedFile.FullName));
+                    OnWarningEvent("GZipDecompressWithMetadata created a different file than expected; {0} vs. expected {1}", actualDecompressedFile.FullName, decompressedFile.FullName);
                 }
 
                 MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(actualDecompressedFile.Name, actualDecompressedFile.FullName));

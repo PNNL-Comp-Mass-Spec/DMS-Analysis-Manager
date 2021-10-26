@@ -214,8 +214,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             if (warnIfMissing)
             {
-                OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}",
-                    DataPackageID, dictionaryName, datasetId));
+                OnWarningEvent("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId);
             }
 
             targetDictionary.Add(datasetId, 0);
@@ -228,8 +227,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             if (warnIfMissing)
             {
-                OnWarningEvent(string.Format("For data package {0}, dictionary {1} is missing DatasetID {2}",
-                    DataPackageID, dictionaryName, datasetId));
+                OnWarningEvent("For data package {0}, dictionary {1} is missing DatasetID {2}", DataPackageID, dictionaryName, datasetId);
             }
 
             targetDictionary.Add(datasetId, string.Empty);

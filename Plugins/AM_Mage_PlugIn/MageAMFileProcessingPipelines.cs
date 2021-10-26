@@ -302,7 +302,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // Example message:
             // Importing result files into SQLite, storing in table T_Results; 6 jobs
-            OnDebugEvent(string.Format("{0} into SQLite, storing in table {1}; {2} {3}", taskDescription, tableName, itemCount, itemDescription));
+            OnDebugEvent("{0} into SQLite, storing in table {1}; {2} {3}", taskDescription, tableName, itemCount, itemDescription);
         }
     }
 }

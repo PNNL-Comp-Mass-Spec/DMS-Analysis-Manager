@@ -358,7 +358,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 var targetFolderVerified = CreateRemoteDirectory(remoteDirectoryPath);
                 if (!targetFolderVerified)
                 {
-                    OnErrorEvent(string.Format("Unable to verify/create directory {0} on host {1}", remoteDirectoryPath, RemoteHostName));
+                    OnErrorEvent("Unable to verify/create directory {0} on host {1}", remoteDirectoryPath, RemoteHostName);
                     infoFilePathRemote = string.Empty;
                     return false;
                 }
@@ -788,8 +788,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                     var targetDirectoryPath = PathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir.Trim());
 
-                    OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
-                                               sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
+                    OnDebugEvent("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}", sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName);
 
                     RemoteHostInfo.BaseDirectoryPath = targetDirectoryPath;
 
@@ -977,8 +976,8 @@ namespace AnalysisManagerBase.OfflineJobs
 
             while (DateTime.UtcNow.Subtract(remoteFile.LastWriteTimeUtc).TotalMinutes < 15)
             {
-                OnDebugEvent(string.Format("Waiting for another manager to finish copying the file to the remote host; " +
-                                           "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath));
+                OnDebugEvent("Waiting for another manager to finish copying the file to the remote host; " +
+                             "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath);
 
                 // Wait for 30 seconds
                 Global.IdleLoop(10);
@@ -1004,7 +1003,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 }
                 else
                 {
-                    OnDebugEvent(string.Format("File no longer exists on the remote host: {0}", remoteFilePath));
+                    OnDebugEvent("File no longer exists on the remote host: {0}", remoteFilePath);
                     return false;
                 }
             }

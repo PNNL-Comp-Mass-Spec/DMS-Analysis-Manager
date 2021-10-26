@@ -442,7 +442,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!columnMap.TryGetValue("Protein ID", out proteinIdColumnIndex) || proteinIdColumnIndex < 0)
                     {
-                        OnErrorEvent(string.Format("{0} column not found in {1}", "proteinIdColumnIndex", inputFile.FullName));
+                        OnErrorEvent("{0} column not found in {1}", "proteinIdColumnIndex", inputFile.FullName);
                         return false;
                     }
 

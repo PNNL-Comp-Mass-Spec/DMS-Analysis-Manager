@@ -236,13 +236,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (!long.TryParse(lineParts[2], out var fileSizeBytes))
                     {
-                        OnWarningEvent(string.Format("File size is not an integer ({0}); skipping {1}", lineParts[2], dataLine));
+                        OnWarningEvent("File size is not an integer ({0}); skipping {1}", lineParts[2], dataLine);
                         continue;
                     }
 
                     if (!DateTime.TryParse(lineParts[3], out var lastModifiedUTC))
                     {
-                        OnWarningEvent(string.Format("File modification time is not a date ({0}); skipping {1}", lineParts[3], dataLine));
+                        OnWarningEvent("File modification time is not a date ({0}); skipping {1}", lineParts[3], dataLine);
                         continue;
                     }
 

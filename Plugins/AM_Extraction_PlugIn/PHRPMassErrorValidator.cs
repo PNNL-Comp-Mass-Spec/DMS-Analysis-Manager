@@ -131,7 +131,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (mDebugLevel >= 2)
                 {
-                    OnDebugEvent(string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
+                    OnDebugEvent("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass);
                 }
 
                 peptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
@@ -154,7 +154,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (mDebugLevel >= 2)
             {
-                OnDebugEvent(string.Format("Will use mass tolerance of {0:0.0} Da when determining PHRP mass errors", precursorMassTolerance));
+                OnDebugEvent("Will use mass tolerance of {0:0.0} Da when determining PHRP mass errors", precursorMassTolerance);
             }
 
             // Count the number of PSMs with a mass error greater than precursorMassTolerance
@@ -235,7 +235,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
         {
-            OnErrorEvent(string.Format("  ... large error example: {0:f2} Da for {1}", massErrorEntry.Key, massErrorEntry.Value));
+            OnErrorEvent("  ... large error example: {0:f2} Da for {1}", massErrorEntry.Key, massErrorEntry.Value);
         }
 
         private SearchEngineParameters LoadSearchEngineParameters(ReaderFactory phrpReader, string searchEngineParamFilePath, PeptideHitResultTypes resultType)

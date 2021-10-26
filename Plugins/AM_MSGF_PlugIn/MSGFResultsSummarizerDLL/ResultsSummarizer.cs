@@ -535,7 +535,7 @@ namespace MSGFResultsSummarizer
 
                 if (queryResults.Count == 0)
                 {
-                    OnWarningEvent(string.Format("Dataset ID {0} not found in the database; cannot determine dataset name", datasetID));
+                    OnWarningEvent("Dataset ID {0} not found in the database; cannot determine dataset name", datasetID);
                     return false;
                 }
 
@@ -1979,16 +1979,12 @@ namespace MSGFResultsSummarizer
 
                     if (mDynamicReporterIonType != reporterIonType)
                     {
-                        OnWarningEvent(string.Format(
-                            "ModSummary.txt file has a mix of reporter ion types: {0} and {1}",
-                            mDynamicReporterIonType, reporterIonType));
+                        OnWarningEvent("ModSummary.txt file has a mix of reporter ion types: {0} and {1}", mDynamicReporterIonType, reporterIonType);
                     }
 
                     if (!mDynamicReporterIonName.Equals(massCorrectionTag))
                     {
-                        OnWarningEvent(string.Format(
-                            "ModSummary.txt file has a mix of reporter ion mod names: {0} and {1}",
-                            mDynamicReporterIonName, massCorrectionTag));
+                        OnWarningEvent("ModSummary.txt file has a mix of reporter ion mod names: {0} and {1}", mDynamicReporterIonName, massCorrectionTag);
                     }
                 }
             }

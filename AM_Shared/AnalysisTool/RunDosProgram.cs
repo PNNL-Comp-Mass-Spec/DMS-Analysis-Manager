@@ -520,9 +520,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (ProgramAborted && mAbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    OnErrorEvent(string.Format(
-                        "  ProgRunner.ExitCode = {0} for Program = {1}",
-                        ExitCode, executablePath));
+                    OnErrorEvent("  ProgRunner.ExitCode = {0} for Program = {1}", ExitCode, executablePath);
                 }
                 return false;
             }
@@ -556,7 +554,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var monoExecutable = new FileInfo(monoProgLoc);
             if (!monoExecutable.Exists)
             {
-                OnErrorEvent(string.Format("Mono not found at {0}; cannot run {1}", monoProgLoc, Path.GetFileName(executablePath)));
+                OnErrorEvent("Mono not found at {0}; cannot run {1}", monoProgLoc, Path.GetFileName(executablePath));
                 return false;
             }
 

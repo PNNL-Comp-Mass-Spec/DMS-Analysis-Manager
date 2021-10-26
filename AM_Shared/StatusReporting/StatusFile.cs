@@ -992,7 +992,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
             catch (Exception ex)
             {
-                OnWarningEvent(string.Format("Error generating status info: {0}", ex.Message));
+                OnWarningEvent("Error generating status info: {0}", ex.Message);
                 xmlText = string.Empty;
             }
 
@@ -1189,8 +1189,10 @@ namespace AnalysisManagerBase.StatusReporting
                     if (logWarning)
                     {
                         // Log a warning that the file copy failed
-                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(tempStatusFilePath) +
-                                       " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
+                        OnWarningEvent("Unable to copy temporary status file to the final status file ({0} to {1}): {2}",
+                            Path.GetFileName(tempStatusFilePath),
+                            Path.GetFileName(FileNamePath),
+                            ex.Message);
                     }
                 }
 
@@ -1204,7 +1206,7 @@ namespace AnalysisManagerBase.StatusReporting
                     if (logWarning)
                     {
                         // Log a warning that the file delete failed
-                        OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(tempStatusFilePath) + "): " + ex.Message);
+                        OnWarningEvent("Unable to delete temporary status file ({0}): {1}", Path.GetFileName(tempStatusFilePath), ex.Message);
                     }
                 }
             }
@@ -1260,8 +1262,7 @@ namespace AnalysisManagerBase.StatusReporting
                     // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
                     if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
                     {
-                        OnWarningEvent(string.Format(
-                            "Error writing status file {0}: {1}", Path.GetFileName(statusFilePath), ex.Message));
+                        OnWarningEvent("Error writing status file {0}: {1}", Path.GetFileName(statusFilePath), ex.Message);
                     }
                 }
                 success = false;

@@ -184,8 +184,8 @@ namespace AnalysisManagerBase.JobConfig
                             return string.Empty;
                         }
 
-                        OnStatusEvent(string.Format("Unable to determine the input directory for job {0} and step tool {1}; " +
-                                                    "will try again without a step tool filter", job, stepToolFilter));
+                        OnStatusEvent("Unable to determine the input directory for job {0} and step tool {1}; " +
+                                      "will try again without a step tool filter", job, stepToolFilter);
                         stepToolFilter = string.Empty;
                         stepToolFilterParam.Value = stepToolFilter;
                     }
@@ -195,7 +195,7 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
 
-                OnStatusEvent(string.Format("Determined the input directory for job {0} is {1}, step tool {2}", job, inputDirectoryName, stepToolMatch));
+                OnStatusEvent("Determined the input directory for job {0} is {1}, step tool {2}", job, inputDirectoryName, stepToolMatch);
 
                 // Look for a CacheInfo.txt file in the matched input directory
                 // Note that FindValidDirectory will search both the dataset directory and in inputDirectoryName below the dataset directory
@@ -315,7 +315,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
                 else
                 {
-                    OnStatusEvent(string.Format("Found remote mzML file for job {0}: {1}", job, remoteMsXmlFilePath));
+                    OnStatusEvent("Found remote mzML file for job {0}: {1}", job, remoteMsXmlFilePath);
                 }
 
                 // Delete the locally cached file
@@ -1188,9 +1188,7 @@ namespace AnalysisManagerBase.JobConfig
                         var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out _);
                         if (!string.IsNullOrWhiteSpace(existingMzMLFilePath))
                         {
-                            OnStatusEvent(string.Format(
-                                "Skipping dataset {0} since an existing .mzML file was found (RetrieveDataPackageDatasetFiles)",
-                                dataPkgDataset.Dataset));
+                            OnStatusEvent("Skipping dataset {0} since an existing .mzML file was found (RetrieveDataPackageDatasetFiles)", dataPkgDataset.Dataset);
 
                             continue;
                         }
@@ -1463,7 +1461,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (dataPkgJob.PeptideHitResultType == PeptideHitResultTypes.Unknown)
                     {
-                        LogTools.LogWarning(string.Format("PeptideHit ResultType not recognized for job {0}: {1}", dataPkgJob.Job, dataPkgJob.ResultType));
+                        LogTools.LogWarning("PeptideHit ResultType not recognized for job {0}: {1}", dataPkgJob.Job, dataPkgJob.ResultType);
                     }
                     else
                     {
@@ -1638,9 +1636,8 @@ namespace AnalysisManagerBase.JobConfig
                     }
                     else
                     {
-                        OnErrorEvent(string.Format(
-                            "mzXML/mzML file not found for dataset {0} (job {1}) and the dataset is not a .Raw file, " +
-                            "so we cannot auto-create the missing mzXML file", dataPkgJob.Dataset, dataPkgJob.Job));
+                        OnErrorEvent("mzXML/mzML file not found for dataset {0} (job {1}) and the dataset is not a .Raw file, " +
+                                     "so we cannot auto-create the missing mzXML file", dataPkgJob.Dataset, dataPkgJob.Job);
 
                         return false;
                     }
@@ -1877,7 +1874,7 @@ namespace AnalysisManagerBase.JobConfig
                             if (columnMap[column] >= 0)
                                 continue;
 
-                            OnWarningEvent(string.Format("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName));
+                            OnWarningEvent("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName);
                             return cachedJobMetadata;
                         }
 

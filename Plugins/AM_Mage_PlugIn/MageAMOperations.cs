@@ -63,7 +63,7 @@ namespace AnalysisManager_Mage_PlugIn
         {
             if (jobCountLimit > 0)
             {
-                OnWarningEvent(string.Format("Limiting the number of jobs to process to {0} jobs", jobCountLimit));
+                OnWarningEvent("Limiting the number of jobs to process to {0} jobs", jobCountLimit);
             }
 
             if (mageOperation.Equals("ExtractFromJobs", StringComparison.OrdinalIgnoreCase))
@@ -373,13 +373,11 @@ namespace AnalysisManager_Mage_PlugIn
                                 replaceOriginal = true;
                                 if (skipList.Count == 1)
                                 {
-                                    OnWarningEvent(string.Format("Skipped column {0} in {1} because it had an empty column name",
-                                                                 skipList.First() + 1, tAliasFile.Name));
+                                    OnWarningEvent("Skipped column {0} in {1} because it had an empty column name", skipList.First() + 1, tAliasFile.Name);
                                 }
                                 else
                                 {
-                                    OnWarningEvent(string.Format("Skipped {0} columns in {1} due to empty column names",
-                                                                 skipList.Count, tAliasFile.Name));
+                                    OnWarningEvent("Skipped {0} columns in {1} due to empty column names", skipList.Count, tAliasFile.Name);
                                 }
                             }
                         }

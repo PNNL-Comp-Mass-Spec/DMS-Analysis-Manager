@@ -110,8 +110,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     if (!extendedScanStats.TryGetValue(scanInfo.ScanNumber, out var extendedScanStatsInfo))
                     {
-                        OnWarningEvent(string.Format(
-                            "Did not find scan {0} in the extended scan stats file; this is unexpected", scanInfo.ScanNumber));
+                        OnWarningEvent("Did not find scan {0} in the extended scan stats file; this is unexpected", scanInfo.ScanNumber);
                         continue;
                     }
 
@@ -120,9 +119,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     if (!ThermoRawFileReader.XRawFileIO.ExtractParentIonMZFromFilterText(extendedScanStatsInfo.ScanFilterText, out var parentIonMz))
                     {
-                        OnWarningEvent(string.Format(
-                            "Unable to determine the parent ion m/z for scan {0} using {1}",
-                            scanInfo.ScanNumber, extendedScanStatsInfo.ScanFilterText));
+                        OnWarningEvent("Unable to determine the parent ion m/z for scan {0} using {1}", scanInfo.ScanNumber, extendedScanStatsInfo.ScanFilterText);
 
                         continue;
                     }

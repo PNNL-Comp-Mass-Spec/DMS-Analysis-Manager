@@ -65,7 +65,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!remoteIndexDirectory.Exists)
                 {
                     // This is not a critical error
-                    OnDebugEvent(string.Format("Remote index directory not found ({0}); indexing is required", remoteIndexDirectory));
+                    OnDebugEvent("Remote index directory not found ({0}); indexing is required", remoteIndexDirectory);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -94,8 +94,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!indexFileInfo.Exists)
                 {
-                    OnDebugEvent(string.Format("{0} not found at {1}; indexing is required",
-                        indexFileInfo.Name, remoteIndexDirectory.FullName));
+                    OnDebugEvent("{0} not found at {1}; indexing is required", indexFileInfo.Name, remoteIndexDirectory.FullName);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -978,9 +977,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!maxDirSizeFile.Exists)
                 {
                     OnWarningEvent("Remote index directory does not have file MaxDirSize.txt; cannot purge old index files in " + remoteIndexDirPath);
-                    OnStatusEvent(string.Format(
-                        "Create file {0} with 'MaxSizeGB=50' on a single line. " +
-                        "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+                    OnStatusEvent("Create file {0} with 'MaxSizeGB=50' on a single line. " +
+                                  "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name);
 
                     return;
                 }
@@ -1182,7 +1180,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 catch (Exception ex)
                 {
-                    OnWarningEvent(string.Format("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message));
+                    OnWarningEvent("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message);
                 }
             }
             catch (Exception ex)
@@ -1311,11 +1309,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             var sourceFileDate = sourceFile.LastWriteTimeUtc.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
                             var dateThreshold = minWriteTimeThresholdUTC.ToLocalTime().ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                            OnStatusEvent(string.Format("{0} is older than the FASTA file; {1} modified {2} vs. {3}; indexing is required",
-                                                        sourceDescription,
-                                                        sourceFile.FullName,
-                                                        sourceFileDate,
-                                                        dateThreshold));
+                            OnStatusEvent("{0} is older than the FASTA file; {1} modified {2} vs. {3}; indexing is required", sourceDescription, sourceFile.FullName, sourceFileDate, dateThreshold);
 
                             return false;
                         }

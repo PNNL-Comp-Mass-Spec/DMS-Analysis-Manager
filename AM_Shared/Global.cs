@@ -868,7 +868,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogTools.LogWarning(string.Format("{0}: {1}", baseWarningMsg, ex));
+                LogTools.LogWarning("{0}: {1}", baseWarningMsg, ex);
             }
 
             LogTools.LogWarning(baseWarningMsg);

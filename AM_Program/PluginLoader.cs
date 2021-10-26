@@ -156,7 +156,7 @@ namespace AnalysisManagerProg
                 var matchingElements = doc.Elements("Plugins").Elements(parentElementName).Elements(classTypeName).ToList();
                 if (matchingElements.Count == 0)
                 {
-                    OnErrorEvent(string.Format("{0} nodes not found in the PluginInfo file: {1}", classTypeName, pluginInfoFile.FullName));
+                    OnErrorEvent("{0} nodes not found in the PluginInfo file: {1}", classTypeName, pluginInfoFile.FullName);
                     return false;
                 }
 
@@ -167,14 +167,13 @@ namespace AnalysisManagerProg
                 {
                     var alternateName = stepToolName.Substring(5);
 
-                    OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'", stepToolName, alternateName));
+                    OnWarningEvent("Could not resolve tool name '{0}'; will try '{1}'", stepToolName, alternateName);
 
                     if (GetToolInfo(pluginInfoFile, alternateName, matchingElements, out className, out assemblyName))
                         return true;
                 }
 
-                OnErrorEvent(string.Format(
-                    "Could not resolve {0} name {1} in {2}", classTypeName, stepToolName, pluginInfoFile.FullName));
+                OnErrorEvent("Could not resolve {0} name {1} in {2}", classTypeName, stepToolName, pluginInfoFile.FullName);
 
                 return false;
             }
@@ -377,7 +376,7 @@ namespace AnalysisManagerProg
             if (Global.TryGetAttribute(element, attributeName, out attributeValue))
                 return true;
 
-            OnWarningEvent(string.Format("Attribute {0} not found for the current element in {1}", attributeName, pluginInfoFile.FullName));
+            OnWarningEvent("Attribute {0} not found for the current element in {1}", attributeName, pluginInfoFile.FullName);
             return false;
         }
     }

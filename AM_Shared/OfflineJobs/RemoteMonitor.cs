@@ -297,7 +297,7 @@ namespace AnalysisManagerBase.OfflineJobs
                         }
 
                         // Retrieve the .jobstatus file
-                        OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", remoteJobStatusFile.Name, TransferUtility.RemoteHostName));
+                        OnDebugEvent("Retrieve status file {0} from {1} ", remoteJobStatusFile.Name, TransferUtility.RemoteHostName);
 
                         var success = TransferUtility.RetrieveJobStatusFile(out var jobStatusFilePathLocal);
 
@@ -337,7 +337,7 @@ namespace AnalysisManagerBase.OfflineJobs
                     OnStatusEvent(".success file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
 
                     // Retrieve the .success file
-                    OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", remoteSuccessFile.Name, TransferUtility.RemoteHostName));
+                    OnDebugEvent("Retrieve status file {0} from {1} ", remoteSuccessFile.Name, TransferUtility.RemoteHostName);
 
                     TransferUtility.RetrieveStatusFile(remoteSuccessFile.Name, out var successFilePathLocal);
 
@@ -820,8 +820,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 if (string.IsNullOrWhiteSpace(remoteMgrName))
                 {
-                    OnErrorEvent(string.Format("File {0} did not contain parameter MgrName; cannot update status for the remote manager",
-                        statusResultFile.Name));
+                    OnErrorEvent("File {0} did not contain parameter MgrName; cannot update status for the remote manager", statusResultFile.Name);
                     return;
                 }
 

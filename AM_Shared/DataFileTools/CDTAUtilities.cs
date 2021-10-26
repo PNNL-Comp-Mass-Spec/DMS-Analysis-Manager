@@ -28,7 +28,7 @@ namespace AnalysisManagerBase.DataFileTools
         {
             try
             {
-                OnStatusEvent(string.Format("Converting {0} to a .mgf file", cdtaFile.Name));
+                OnStatusEvent("Converting {0} to a .mgf file", cdtaFile.Name);
 
                 var dtaToMGF = new DTAtoMGF.clsDTAtoMGF
                 {

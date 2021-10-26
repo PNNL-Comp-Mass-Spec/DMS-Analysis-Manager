@@ -177,10 +177,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (value?.Equals(Value) == true)
                     return true;
 
-                OnWarningEvent(string.Format(
-                    "Not changing locked value for {0} from '{1}' to '{2}'; calling method: {3}",
-                    ParameterName, Value ?? string.Empty, value ?? string.Empty,
-                    callerName));
+                OnWarningEvent("Not changing locked value for {0} from '{1}' to '{2}'; calling method: {3}", ParameterName, Value ?? string.Empty, value ?? string.Empty, callerName);
 
                 return false;
             }
