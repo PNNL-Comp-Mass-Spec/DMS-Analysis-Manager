@@ -32,14 +32,22 @@ namespace AnalysisManagerMSGFDBPlugIn
             MGF = 4
         }
 
-        private readonly List<string> mResultFilesToSkipIfNoError = new();
+        private RunDosProgram mCmdRunner;
 
-        private bool mToolVersionWritten;
+        private bool mMSGFPlusComplete;
+
+        private DateTime mMSGFPlusCompletionTime;
 
         /// <summary>
         /// Path to MSGFPlus.jar
         /// </summary>
         private string mMSGFPlusProgLoc;
+
+        private double mMSGFPlusRunTimeMinutes;
+
+        private MSGFPlusUtils mMSGFPlusUtils;
+
+        private readonly List<string> mResultFilesToSkipIfNoError = new();
 
         /// <summary>
         /// This will be set to True if the parameter file has TDA=1, meaning MS-GF+ auto-added decoy proteins to its list of candidate proteins
@@ -47,15 +55,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private bool mResultsIncludeAutoAddedDecoyPeptides;
 
+        private bool mToolVersionWritten;
+
         private string mWorkingDirectoryInUse;
-
-        private bool mMSGFPlusComplete;
-        private DateTime mMSGFPlusCompletionTime;
-        private double mMSGFPlusRunTimeMinutes;
-
-        private MSGFPlusUtils mMSGFPlusUtils;
-
-        private RunDosProgram mCmdRunner;
 
         /// <summary>
         /// Runs MS-GF+ tool (aka MSGF+)
