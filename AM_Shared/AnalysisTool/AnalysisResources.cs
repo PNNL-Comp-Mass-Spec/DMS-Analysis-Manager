@@ -4867,17 +4867,18 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
             {
-                {"Sequest", IGenerateFile.ParamFileType.BioWorks_Current},
-                {"XTandem", IGenerateFile.ParamFileType.X_Tandem},
-                {"Inspect", IGenerateFile.ParamFileType.Inspect},
-                {"MSGFPlus", IGenerateFile.ParamFileType.MSGFPlus},
-                {"MSAlign_Histone", IGenerateFile.ParamFileType.MSAlignHistone},
-                {"MSAlign", IGenerateFile.ParamFileType.MSAlign},
+                {"MaxQuant", IGenerateFile.ParamFileType.MaxQuant},
                 {"MODa", IGenerateFile.ParamFileType.MODa},
-                {"MSPathFinder", IGenerateFile.ParamFileType.MSPathFinder},
                 {"MODPlus", IGenerateFile.ParamFileType.MODPlus},
+                {"MSAlign", IGenerateFile.ParamFileType.MSAlign},
+                {"MSAlign_Histone", IGenerateFile.ParamFileType.MSAlignHistone},
+                {"MSFragger", IGenerateFile.ParamFileType.MSFragger},
+                {"MSGFPlus", IGenerateFile.ParamFileType.MSGFPlus},
+                {"MSPathFinder", IGenerateFile.ParamFileType.MSPathFinder},
+                {"Inspect", IGenerateFile.ParamFileType.Inspect},
+                {"Sequest", IGenerateFile.ParamFileType.BioWorks_Current},
                 {"TopPIC", IGenerateFile.ParamFileType.TopPIC},
-                {"MaxQuant", IGenerateFile.ParamFileType.MaxQuant}
+                {"XTandem", IGenerateFile.ParamFileType.X_Tandem}
             };
 
             if (toolNameToTypeMapping.TryGetValue(scriptName, out var paramFileType))
