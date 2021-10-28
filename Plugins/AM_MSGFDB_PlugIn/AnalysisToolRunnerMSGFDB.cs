@@ -32,10 +32,20 @@ namespace AnalysisManagerMSGFDBPlugIn
             MGF = 4
         }
 
+        /// <summary>
+        /// Class that controls the ProgRunner object for running MS-GF+
+        /// </summary>
         private RunDosProgram mCmdRunner;
 
+
+        /// <summary>
+        /// This is set to true once MS-GF+ completes the search
+        /// </summary>
         private bool mMSGFPlusComplete;
 
+        /// <summary>
+        /// Time that mMSGFPlusComplete is set to true
+        /// </summary>
         private DateTime mMSGFPlusCompletionTime;
 
         /// <summary>
@@ -43,10 +53,19 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private string mMSGFPlusProgLoc;
 
+        /// <summary>
+        /// Total runtime of MS-GF+
+        /// </summary>
         private double mMSGFPlusRunTimeMinutes;
 
+        /// <summary>
+        /// MS-GF+ Utilities
+        /// </summary>
         private MSGFPlusUtils mMSGFPlusUtils;
 
+        /// <summary>
+        /// Result files to skip copying to the transfer directory if no errors occurred
+        /// </summary>
         private readonly List<string> mResultFilesToSkipIfNoError = new();
 
         /// <summary>
@@ -55,6 +74,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private bool mResultsIncludeAutoAddedDecoyPeptides;
 
+        /// <summary>
+        /// This is set to true once the MS-GF+ version has been written to the database
+        /// </summary>
         private bool mToolVersionWritten;
 
         /// <summary>
@@ -894,7 +916,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFile">FASTA file</param>
         /// <param name="inputFile">Spectrum file; allowed to be null</param>
         /// <param name="inputFileDescription">Description of the input file (or an empty string)</param>
-        /// <param name="warningMessage"></param>
+        /// <param name="warningMessage">Output: warning message</param>
         /// <returns>Memory to reserve, in MB</returns>
         public static int GetMemoryRequiredForFASTA(
             IJobParams jobParams,
