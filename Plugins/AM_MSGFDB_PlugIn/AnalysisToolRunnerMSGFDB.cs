@@ -37,6 +37,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         private RunDosProgram mCmdRunner;
 
+        /// <summary>
+        /// FASTA file size, in MB
+        /// </summary>
+        /// <remarks>Used by MonitorProgress when deciding how long to wait for Java to exit after MS-GF+ completes</remarks>
+        private double mFastaFileSizeMB;
 
         /// <summary>
         /// This is set to true once MS-GF+ completes the search
@@ -330,6 +335,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Immediately exit the plugin; results and console output files will not be saved
                 return result;
             }
+
+            mFastaFileSizeMB = fastaFileSizeKB / 1024.0;
 
             var instrumentGroup = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
@@ -1033,18 +1040,21 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Wait a minimum of 5 minutes for Java to finish
             // Wait longer for jobs that have been running longer
-            var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
+            // Also increase the wait time as FASTA files get larger
+            var waitTimeMinutes = (int)Math.Ceiling(
+                Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)) +
+                Math.Sqrt(mFastaFileSizeMB));
 
             if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
                 return;
 
-            // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
+            // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs or for jobs with large FASTA files)
             // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
-            // However, it is also possible that Java frozen and thus the process should be aborted
+            // However, it is also possible that Java is frozen and thus the process should be aborted
 
             var warningMessage = string.Format(
-                "MS-GF+ has been stuck at {0}% complete for {1} minutes (after running for {2:F0} minutes); aborting since Java appears frozen",
-                MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE, waitTimeMinutes, mMSGFPlusRunTimeMinutes);
+                "MS-GF+ has been stuck at {0}% complete for {1} minutes (after running for {2:F0} minutes with a {3:F0} MB FASTA file); aborting since Java appears frozen",
+                MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE, waitTimeMinutes, mMSGFPlusRunTimeMinutes, mFastaFileSizeMB);
 
             LogWarning(warningMessage);
 
