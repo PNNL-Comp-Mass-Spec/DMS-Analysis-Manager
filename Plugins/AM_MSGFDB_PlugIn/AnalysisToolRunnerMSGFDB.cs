@@ -57,8 +57,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool mToolVersionWritten;
 
-        private string mWorkingDirectoryInUse;
-
         /// <summary>
         /// Runs MS-GF+ tool (aka MSGF+)
         /// </summary>
@@ -100,16 +98,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // If the MSGFPlus_ConsoleOutput.txt file or the .mzid file exist, we want to move them to the failed results folder
                     mzidResultsFile.Refresh();
 
-                    DirectoryInfo workingDirectory;
-
-                    if (string.IsNullOrEmpty(mWorkingDirectoryInUse))
-                    {
-                        workingDirectory = new DirectoryInfo(mWorkDir);
-                    }
-                    else
-                    {
-                        workingDirectory = new DirectoryInfo(mWorkingDirectoryInUse);
-                    }
+                    var workingDirectory = new DirectoryInfo(mWorkDir);
 
                     var consoleOutputFile = workingDirectory.GetFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
 
@@ -182,7 +171,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Move the enzymes.txt file into the working directory
                     var enzymesFile = new FileInfo(mMSGFPlusUtils.EnzymeDefinitionFilePath);
-                    var newEnzymesFile = new FileInfo(Path.Combine(mWorkingDirectoryInUse, enzymesFile.Name));
+                    var newEnzymesFile = new FileInfo(Path.Combine(mWorkDir, enzymesFile.Name));
                     if (!string.Equals(enzymesFile.FullName, newEnzymesFile.FullName))
                     {
                         if (newEnzymesFile.Exists && enzymesFile.Exists)
@@ -429,8 +418,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
-            mWorkingDirectoryInUse = mWorkDir;
-
             bool validExistingResults;
             if (mzidResultsFile.Exists)
             {
@@ -463,14 +450,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 Global.IdleLoop(2);
 
                 // Parse the console output file one more time in hopes of finding an error message
-                ParseConsoleOutputFile(mWorkingDirectoryInUse);
+                ParseConsoleOutputFile(mWorkDir);
             }
 
             if (!mToolVersionWritten)
             {
                 if (string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
                 {
-                    ParseConsoleOutputFile(mWorkingDirectoryInUse);
+                    ParseConsoleOutputFile(mWorkDir);
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -541,7 +528,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
                     {
                         Global.IdleLoop(5);
-                        mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse);
+                        mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir);
 
                         if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                         {
@@ -991,7 +978,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseConsoleOutputFile(mWorkingDirectoryInUse);
+            ParseConsoleOutputFile(mWorkDir);
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
