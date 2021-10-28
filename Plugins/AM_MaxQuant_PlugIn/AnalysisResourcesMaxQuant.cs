@@ -70,12 +70,21 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory, includeDatasetName);
 
-                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                currentTask = "RetrieveParamFile " + paramFileName;
+                LogMessage("Getting param file", 2);
 
-                // Retrieve param file
-                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+                // Retrieve the parameter file
+                // This will also obtain the _ModDefs.txt file using query
+                //  SELECT Local_Symbol, Monoisotopic_Mass, Residue_Symbol, Mod_Type_Symbol, Mass_Correction_Tag, MaxQuant_Mod_Name, UniMod_Mod_Name
+                //  FROM V_Param_File_Mass_Mod_Info
+                //  WHERE Param_File_Name = 'ParamFileName'
+
+                var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
+                currentTask = "RetrieveGeneratedParamFile " + paramFileName;
+
+                if (!RetrieveGeneratedParamFile(paramFileName))
+                {
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+                }
 
                 var success = GetExistingToolParametersFile(workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
 
