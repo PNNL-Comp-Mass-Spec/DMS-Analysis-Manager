@@ -35,9 +35,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         private const string CRYSTALC_JAR_NAME = "original-crystalc-1.4.2.jar";
 
         /// <summary>
+        /// Name of the FragPipe .jar file
+        /// </summary>
+        private const string FRAGPIPE_JAR_NAME = "fragpipe-17.0.jar";
+
+        /// <summary>
         /// Name of the grppr .jar file
         /// </summary>
         private const string GRPPR_JAR_NAME = "grppr-0.3.23.jar";
+
+        /// <summary>
+        /// Name of the IonQuant jar file
+        /// </summary>
+        private const string IONQUANT_JAR_NAME = "ionquant-1.7.16.jar";
 
         /// <summary>
         /// Name of the MSFragger .jar file
@@ -256,7 +266,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(libDirectory.FullName, "fragpipe-16.0.jar"));
+            jarFile = new FileInfo(Path.Combine(libDirectory.FullName, FRAGPIPE_JAR_NAME));
             if (jarFile.Exists)
                 return true;
 
@@ -305,7 +315,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "ionquant-1.5.5.jar"));
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, IONQUANT_JAR_NAME));
             if (jarFile.Exists)
                 return true;
 
