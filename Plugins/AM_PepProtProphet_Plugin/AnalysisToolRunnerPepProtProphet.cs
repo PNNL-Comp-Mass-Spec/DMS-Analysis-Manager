@@ -86,7 +86,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
-        private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.0.0.jar";
+        private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.2.0-rc1.jar";
 
         private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
 
@@ -1471,7 +1471,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable IdentifierTypo
 
                 // Run Crystal-C for this dataset; example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
 
                 // Find the thermo lib directory
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
@@ -1719,13 +1719,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable IdentifierTypo
 
                 // Run IonQuant, example command line:
-                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
+                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --proteinquant 2 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
 
-                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\bruker
+                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
                     return false;
 
-                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
+                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -2587,9 +2587,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable StringLiteralTypo
 
                 // Run PTMShepherd, example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
 
-                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.3\ext\thermo
+                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -2901,7 +2901,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.0.0.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
+                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.2.0-rc1.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
 
                 // ReSharper restore CommentTypo
 
