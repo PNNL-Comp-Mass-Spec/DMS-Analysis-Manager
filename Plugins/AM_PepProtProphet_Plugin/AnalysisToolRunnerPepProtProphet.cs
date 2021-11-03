@@ -2593,8 +2593,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
-                // Find the PTM-Shepherd jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.0.0.jar
-                if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFilePtmShepherd))
+                // Find the PTM-Shepherd jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.5.jar
+                if (!options.LibraryFinder.FindJarFilePtmShepherd(out var jarFilePtmShepherd))
                     return false;
 
                 // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar

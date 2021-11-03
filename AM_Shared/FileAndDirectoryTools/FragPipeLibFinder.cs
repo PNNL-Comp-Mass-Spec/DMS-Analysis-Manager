@@ -16,7 +16,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FragPipeLibFinder : EventNotifier
     {
-        // Ignore Spelling: batmass-io, bruker, cd, crystalc, fragpipe, grppr, ionquant, usr
+        // Ignore Spelling: batmass-io, bruker, cd, crystalc, fragpipe, grppr, ionquant, ptmshepherd, usr
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
         /// <summary>
@@ -63,6 +63,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Relative path to the percolator .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
         public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-v3-05.exe";
+
+        /// <summary>
+        /// Name of the PTM Shepherd jar file
+        /// </summary>
+        public const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-1.2.5.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
@@ -320,6 +325,29 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return true;
 
             OnErrorEvent("IonQuant .jar file not found: " + jarFile.FullName);
+            return false;
+        }
+
+        /// <summary>
+        /// Find the PtmShepherd .jar file
+        /// </summary>
+        /// <param name="jarFile"></param>
+        /// <returns>True if found, otherwise false</returns>
+        public bool FindJarFilePtmShepherd(out FileInfo jarFile)
+        {
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.5.jar
+
+            if (!FindFragPipeToolsDirectory(out var toolsDirectory))
+            {
+                jarFile = null;
+                return false;
+            }
+
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, PTMSHEPHERD_JAR_NAME));
+            if (jarFile.Exists)
+                return true;
+
+            OnErrorEvent("PtmShepherd .jar file not found: " + jarFile.FullName);
             return false;
         }
 
