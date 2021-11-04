@@ -567,7 +567,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 AddParameterToValidate(parametersToValidate, "mass_diff_to_variable_mod", 0, 2);
                 AddParameterToValidate(parametersToValidate, "localize_delta_mass", 0, 1);
                 AddParameterToValidate(parametersToValidate, "num_enzyme_termini", 0, 2);
-                AddParameterToValidate(parametersToValidate, "allowed_missed_cleavage", 1, 5);
+                AddParameterToValidate(parametersToValidate, "allowed_missed_cleavage_1", 1, 5);
                 AddParameterToValidate(parametersToValidate, "clip_nTerm_M", 0, 1);
                 AddParameterToValidate(parametersToValidate, "allow_multiple_variable_mods_on_residue", 0, 1);
                 AddParameterToValidate(parametersToValidate, "max_variable_mods_per_peptide", 1, 10);
