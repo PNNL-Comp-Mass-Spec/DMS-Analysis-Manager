@@ -17,7 +17,7 @@ namespace AnalysisManagerMaxQuantPlugIn
     /// </summary>
     public class AnalysisResourcesMaxQuant : AnalysisResources
     {
-        // Ignore Spelling: MaxQuant, Parm, Maxq, resourcer
+        // Ignore Spelling: conf, Maxq, MaxQuant, Parm, plex, resourcer
 
         private const string MAXQUANT_PEAK_STEP_TOOL = "MaxqPeak";
 
@@ -85,6 +85,10 @@ namespace AnalysisManagerMaxQuantPlugIn
                 {
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
+
+                var validModifications = ValidateMaxQuantModificationNames(mWorkDir, paramFileName);
+                if (!validModifications)
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 var success = GetExistingToolParametersFile(workingDirectory, transferDirectoryPath, paramFileName, out var previousJobStepParameterFilePath);
 
@@ -610,6 +614,97 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
         }
 
+        /// <summary>
+        /// Read modification names from file modifications.xml
+        /// </summary>
+        /// <param name="modificationsFilePath">Output: modifications file path</param>
+        /// <returns>List of modification names</returns>
+        private SortedSet<string> LoadMaxQuantModificationNames(out string modificationsFilePath)
+        {
+            modificationsFilePath = string.Empty;
+
+            try
+            {
+                // Determine the path to MaxQuantCmd.exe
+                var maxQuantProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
+                    mMgrParams, mJobParams, StepToolName,
+                    "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME,
+                    out var errorMessage, out _);
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    // The error has already been logged, but we need to update mMessage
+                    mMessage = Global.AppendToComment(mMessage, errorMessage);
+                    return new SortedSet<string>();
+                }
+
+                if (string.IsNullOrWhiteSpace(maxQuantProgLoc))
+                {
+                    LogError("MaxQuant location could not be determined using manager parameter {0} and relative path {1}", "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME);
+                    return new SortedSet<string>();
+                }
+
+                var maxQuantExecutable = new FileInfo(maxQuantProgLoc);
+                if (maxQuantExecutable.Directory == null)
+                {
+                    LogError("Unable to determine the MaxQuant parent directory using {0}", maxQuantProgLoc);
+                    return new SortedSet<string>();
+                }
+
+                var confDirectory = new DirectoryInfo(Path.Combine(maxQuantExecutable.Directory.FullName, "conf"));
+                if (!confDirectory.Exists)
+                {
+                    LogError("MaxQuant conf directory not found: {0}", confDirectory.FullName);
+                    return new SortedSet<string>();
+                }
+
+                var sourceFile = new FileInfo(Path.Combine(confDirectory.FullName, "modifications.xml"));
+                if (!sourceFile.Exists)
+                {
+                    LogError("MaxQuant modifications file not found: {0}", sourceFile.FullName);
+                    return new SortedSet<string>();
+                }
+
+                modificationsFilePath = sourceFile.FullName;
+
+                using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                var modificationNodes = doc.Elements("modifications").Elements("modification").ToList();
+
+                var maxQuantModificationNames = new SortedSet<string>();
+
+                foreach (var item in modificationNodes)
+                {
+                    if (!Global.TryGetAttribute(item, "title", out var modTitle))
+                    {
+                        LogWarning("Modification in the MaxQuant modifications.xml file is missing the title attribute: {0}", item.ToString());
+                        continue;
+                    }
+
+                    if (maxQuantModificationNames.Contains(modTitle))
+                    {
+                        LogError("Modification {0} is defined twice in the MaxQuant modifications.xml file", modTitle);
+                        LogWarning("File path {0}", sourceFile.FullName);
+                        return new SortedSet<string>();
+                    }
+
+                    maxQuantModificationNames.Add(modTitle);
+                }
+
+                return maxQuantModificationNames;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LoadMaxQuantModificationNames", ex);
+                return new SortedSet<string>();
+            }
+        }
+
         private CloseOutType RetrieveTransferDirectoryFiles(FileSystemInfo workingDirectory, string transferDirectoryPath)
         {
             var targetFilePath = "??";
@@ -698,6 +793,115 @@ namespace AnalysisManagerMaxQuantPlugIn
                 LogError("Error in RetrieveTransferDirectoryFiles for file " + targetFilePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        /// <summary>
+        /// Look for static and dynamic modifications in the MaxQuant parameter file for this job
+        /// Assure that they are defined in the local MaxQuant modifications.xml file
+        /// </summary>
+        /// <param name="workingDirectoryPath"></param>
+        /// <param name="maxQuantParameterFileName"></param>
+        /// <returns>True if the modifications are valid, false if missing</returns>
+        private bool ValidateMaxQuantModificationNames(
+            string workingDirectoryPath,
+            string maxQuantParameterFileName)
+        {
+            try
+            {
+                var maxQuantModificationNames = LoadMaxQuantModificationNames(out var modificationsFilePath);
+
+                if (maxQuantModificationNames.Count == 0)
+                {
+                    // The error has already been logged
+                    return false;
+                }
+
+                var modificationGroups = new Dictionary<string, List<XElement>>();
+
+                var sourceFile = new FileInfo(Path.Combine(workingDirectoryPath, maxQuantParameterFileName));
+
+                using var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                // Note that XDocument supersedes XmlDocument and XPathDocument
+                // XDocument can often be easier to use since XDocument is LINQ-based
+
+                var doc = XDocument.Parse(reader.ReadToEnd());
+
+                modificationGroups.Add("restrictMods", doc.Elements("MaxQuantParams").Elements("restrictMods").Elements("string").ToList());
+
+                var parameterGroupNodes = doc.Elements("MaxQuantParams").Elements("parameterGroups").Elements("parameterGroup").ToList();
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (parameterGroupNodes.Count == 0)
+                {
+                    LogWarning("MaxQuant parameter file is missing the <parameterGroup> element; cannot extract modification info");
+                    return false;
+                }
+
+                Console.WriteLine();
+
+                var groupNumber = 0;
+                foreach (var parameterGroup in parameterGroupNodes)
+                {
+                    groupNumber++;
+                    if (parameterGroupNodes.Count > 1)
+                    {
+                        Console.WriteLine("Parameter group {0}", groupNumber);
+                    }
+
+                    modificationGroups.Add("variableModificationsFirstSearch", parameterGroup.Elements("variableModificationsFirstSearch").Elements("string").ToList());
+
+                    modificationGroups.Add("fixedModifications", parameterGroup.Elements("fixedModifications").Elements("string").ToList());
+
+                    modificationGroups.Add("variableModifications", parameterGroup.Elements("variableModifications").Elements("string").ToList());
+
+                    // Check for isobaric mods, e.g. 6-plex or 10-plex TMT
+                    modificationGroups.Add("IsobaricLabelInfo_internalLabel", parameterGroup.Elements("isobaricLabels").Elements("IsobaricLabelInfo").Elements("internalLabel").ToList());
+
+                    modificationGroups.Add("IsobaricLabelInfo_terminalLabel", parameterGroup.Elements("isobaricLabels").Elements("IsobaricLabelInfo").Elements("terminalLabel").ToList());
+                }
+
+                var hasUnknownModifications = false;
+                foreach (var item in modificationGroups)
+                {
+                    if (!ValidateMaxQuantModificationNames(maxQuantModificationNames, item))
+                        hasUnknownModifications = true;
+                }
+
+                if (!hasUnknownModifications)
+                    return true;
+
+                LogError(string.Format(
+                    "Parameter file {0} has one or more modifications not defined in {1}", sourceFile.Name, modificationsFilePath), true);
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ValidateMaxQuantModificationNames", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateMaxQuantModificationNames(ICollection<string> maxQuantModificationNames, KeyValuePair<string, List<XElement>> modificationGroup)
+        {
+            var hasUnknownModifications = false;
+
+            foreach (var modification in modificationGroup.Value)
+            {
+                if (maxQuantModificationNames.Contains(modification.Value))
+                {
+                    continue;
+                }
+
+                LogError(
+                    "The MaxQuant parameter file has a modification not defined in the local MaxQuant modifications.xml file: {0} in section {1}",
+                    modification.Value, modificationGroup.Key);
+
+                hasUnknownModifications = true;
+            }
+
+            return !hasUnknownModifications;
         }
     }
 }

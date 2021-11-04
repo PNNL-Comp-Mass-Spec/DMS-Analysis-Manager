@@ -33,7 +33,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         // ReSharper restore CommentTypo
 
-        private const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
+        internal const string MAXQUANT_EXE_NAME = @"bin\MaxQuantCmd.exe";
 
         /// <summary>
         /// Percent complete to report when the tool starts
