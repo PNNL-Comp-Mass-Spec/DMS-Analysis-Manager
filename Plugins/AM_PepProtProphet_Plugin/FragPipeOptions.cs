@@ -36,7 +36,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Whether to run PeptideProphet, Percolator, or nothing
         /// </summary>
-        /// <remarks>Defaults to PeptideProphet, but auto-set to Percolator if MatchBetweenRuns is true or TMT is in use</remarks>
+        /// <remarks>
+        /// FragPipe v16 defaulted to PeptideProphet for closed searches
+        /// FragPipe v17 defaults to Percolator for closed searches
+        /// If using iTRAQ or running an open search, default to PeptideProphet
+        /// </remarks>
         public MS1ValidationModes MS1ValidationMode => FraggerOptions.MS1ValidationMode;
 
         /// <summary>
@@ -119,9 +123,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (FraggerOptions.IsUndefinedOrAuto(runPeptideProphetJobParam) && FraggerOptions.IsUndefinedOrAuto(runPercolatorJobParam))
             {
-                // Use Percolator if match-between runs is enabled, otherwise use PeptideProphet
-                // This value will get changed by LoadMSFraggerOptions if using an open search or if TMT is defined as a dynamic or static mod
-                FraggerOptions.MS1ValidationMode = MatchBetweenRuns && databaseSplitCount == 1
+                // Use Percolator by default, unless databaseSplitCount is more than 1
+                // After loading the MSFragger parameter file with LoadMSFraggerOptions, if the mods include iTRAQ or if running an open search, this will be changed to PeptideProphet
+                FraggerOptions.MS1ValidationMode = databaseSplitCount == 1
                     ? MS1ValidationModes.Percolator
                     : MS1ValidationModes.PeptideProphet;
 
