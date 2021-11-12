@@ -25,7 +25,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                               "As an alternative to including the JobParameters file, the input file can be " +
                               "in a directory with a DMS-generated name, e.g. SIC202007110835_Auto1816211",
 
-                ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA) in 2020" +
+                ContactInfo = "Program written by Matthew Monroe for PNNL (Richland, WA)" +
                               Environment.NewLine +
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
                               "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
@@ -41,13 +41,19 @@ namespace MASIC_ReporterIonObsStatsUploader
 
             parser.AddParamFileKey("Conf");
 
-            var parseResults = parser.ParseArgs(args);
-            var options = parseResults.ParsedResults;
+            var result = parser.ParseArgs(args);
+            var options = result.ParsedResults;
 
             try
             {
                 if (!parseResults.Success)
                 {
+                    if (parser.CreateParamFileProvided)
+                    {
+                        return 0;
+                    }
+
+                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                     // Error messages should have already been shown to the user
                     Thread.Sleep(1500);
                     return -1;
