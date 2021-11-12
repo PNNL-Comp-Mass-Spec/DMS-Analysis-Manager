@@ -216,7 +216,7 @@ namespace GlyQResultsSummarizer
                 Console.WriteLine("automatically determine the Job number from the parent folder name.  This will");
                 Console.WriteLine("only work if the parent folder is of the form GLY201503151614_Auto1170022");
                 Console.WriteLine();
-                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2015");
+                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 

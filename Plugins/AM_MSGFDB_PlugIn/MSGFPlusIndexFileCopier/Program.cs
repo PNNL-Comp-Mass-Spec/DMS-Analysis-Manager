@@ -239,7 +239,7 @@ namespace MSGFPlusIndexFileCopier
                                       "Use /X to create the .MSGFPlusIndexFileInfo file in the remote share, " +
                                       "using the existing files that were previously manually copied to the share"));
                 Console.WriteLine();
-                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2013");
+                Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
 
