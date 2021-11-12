@@ -9,7 +9,7 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "2020-07-31";
+        public const string PROGRAM_DATE = "2021-11-12";
 
         /// <summary>
         /// Database connections string
@@ -77,7 +77,6 @@ namespace MASIC_ReporterIonObsStatsUploader
                 Console.WriteLine(" Preview Mode is enabled: Loading stats, but not contacting the database");
                 Console.WriteLine();
             }
-
         }
 
         /// <summary>

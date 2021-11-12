@@ -29,7 +29,8 @@ namespace MASIC_ReporterIonObsStatsUploader
                               "E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov" + Environment.NewLine +
                               "Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics",
 
-                UsageExamples = {
+                UsageExamples =
+                {
                     exeName + " DatasetInfoFile.txt",
                     exeName + @" DatasetInfoFile.txt G:\Upload",
                     exeName + @" DatasetInfoFile.txt G:\Upload /Preview",
@@ -109,7 +110,6 @@ namespace MASIC_ReporterIonObsStatsUploader
 
                 Thread.Sleep(1500);
                 return -1;
-
             }
             catch (Exception ex)
             {
@@ -142,6 +142,5 @@ namespace MASIC_ReporterIonObsStatsUploader
         {
             ConsoleMsgUtils.ShowWarning(message);
         }
-
     }
 }
