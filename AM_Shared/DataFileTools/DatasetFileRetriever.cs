@@ -211,6 +211,7 @@ namespace AnalysisManagerBase.DataFileTools
                         dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
                         dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
                         dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, dataset.Value.RawDataType);
+                        dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataset.Value.DatasetDirectoryPath);
                     }
                     else if (!skipDatasetsWithExistingMzML)
                     {
@@ -367,6 +368,7 @@ namespace AnalysisManagerBase.DataFileTools
                     dataPackageInfo.DatasetFiles.Add(datasetID, mResourceClass.DatasetName + AnalysisResources.DOT_MZML_EXTENSION);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, "File");
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, AnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES);
+                    dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -451,6 +453,7 @@ namespace AnalysisManagerBase.DataFileTools
                     dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileOrDirectoryName);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, rawDataTypeName);
+                    dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
 
                     dataPackageDatasetInfo.IsDirectoryBased = isDirectory;
 

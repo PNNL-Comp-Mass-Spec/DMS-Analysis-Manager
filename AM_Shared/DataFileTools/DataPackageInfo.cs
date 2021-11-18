@@ -50,6 +50,16 @@ namespace AnalysisManagerBase.DataFileTools
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypeNames";
 
         /// <summary>
+        /// Packed parameter x
+        /// </summary>
+        /// <remarks>
+        /// Tracks the dataset directory on the storage server for each dataset
+        /// Keys are dataset IDs
+        /// Values are storage path
+        /// </remarks>
+        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS = "PackedParam_DatasetStoragePaths";
+
+        /// <summary>
         /// Packed parameter PackedParam_DatasetMaxQuantParamGroups
         /// </summary>
         /// <remarks>
@@ -99,7 +109,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         /// <summary>
         /// Keys are dataset IDs
-        /// Values are paths to the local file or directory for the dataset
+        /// Values are relative paths to the local file or directory for the dataset
         /// </summary>
         /// <remarks>File or directory name only, not the full path</remarks>
         public Dictionary<int, string> DatasetFiles { get; }
@@ -115,6 +125,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// Values are either File or Directory, indicating the file system type of the dataset file/directory
         /// </summary>
         public Dictionary<int, string> DatasetRawDataTypeNames { get; }
+
+        /// <summary>
+        /// Keys are dataset IDs
+        /// Values are paths to the dataset directory on the storage server
+        /// </summary>
+        public Dictionary<int, string> DatasetStoragePaths { get; }
 
         /// <summary>
         /// Keys are dataset IDs
@@ -160,6 +176,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles = new Dictionary<int, string>();
             DatasetFileTypes = new Dictionary<int, string>();
             DatasetRawDataTypeNames = new Dictionary<int, string>();
+            DatasetStoragePaths = new Dictionary<int, string>();
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
             DatasetExperimentGroup = new Dictionary<int, string>();
         }
@@ -180,6 +197,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             DatasetFileTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             DatasetRawDataTypeNames = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES);
+            DatasetStoragePaths = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS);
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
             DatasetExperimentGroup = new Dictionary<int, string>();
 
@@ -202,6 +220,7 @@ namespace AnalysisManagerBase.DataFileTools
                 AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetRawDataTypeNames", DatasetRawDataTypeNames, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetStoragePaths", DatasetStoragePaths, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
                 AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
             }
@@ -243,6 +262,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFiles.Clear();
             DatasetFileTypes.Clear();
             DatasetRawDataTypeNames.Clear();
+            DatasetStoragePaths.Clear();
             DatasetMaxQuantParamGroup.Clear();
             DatasetExperimentGroup.Clear();
         }
@@ -258,6 +278,7 @@ namespace AnalysisManagerBase.DataFileTools
             analysisResources.StorePackedJobParameterDictionary(DatasetFiles, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILES);
             analysisResources.StorePackedJobParameterDictionary(DatasetFileTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             analysisResources.StorePackedJobParameterDictionary(DatasetRawDataTypeNames, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES);
+            analysisResources.StorePackedJobParameterDictionary(DatasetStoragePaths, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS);
             analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS);
             analysisResources.StorePackedJobParameterDictionary(DatasetExperimentGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_EXPERIMENT_GROUPS);
         }
