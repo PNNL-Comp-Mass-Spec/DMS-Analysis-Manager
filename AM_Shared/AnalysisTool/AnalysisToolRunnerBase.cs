@@ -505,6 +505,21 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>Path to the remotely cached file; empty path if an error</returns>
         protected string CopyFileToServerCache(string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
         {
+            var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            return CopyFileToServerCache(datasetStoragePath, cacheDirectoryPath, sourceFilePath, purgeOldFilesIfNeeded);
+        }
+
+        /// <summary>
+        /// Copies a file (typically a mzXML or mzML file) to a server cache directory
+        /// Will store the file in a subdirectory based on job parameter OutputFolderName, and below that, in a directory with a name like 2013_2
+        /// </summary>
+        /// <param name="datasetStoragePath">Dataset storage path (i.e., the dataset directory)</param>
+        /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
+        /// <param name="sourceFilePath">Path to the data file</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <returns>Path to the remotely cached file; empty path if an error</returns>
+        protected string CopyFileToServerCache(string datasetStoragePath, string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
+        {
             try
             {
                 // mResultsDirectoryName should contain the output directory; e.g. MSXML_Gen_1_120_275966
@@ -527,7 +542,6 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 // Determine the year_quarter text for this dataset
-                var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
                 if (string.IsNullOrEmpty(datasetStoragePath))
                     datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 

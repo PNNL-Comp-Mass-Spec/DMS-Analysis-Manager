@@ -64,14 +64,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
             }
 
-            var result = CreateMSXMLFile(out var processedDatasets);
+            var result = CreateMSXMLFile(out var dataPackageInfo);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            if (!PostProcessMSXmlFiles(processedDatasets))
+            if (!PostProcessMSXmlFiles(dataPackageInfo))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -90,12 +90,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Generate the mzXML or mzML file
         /// </summary>
-        /// <param name="processedDatasets">Output: dictionary where keys are dataset names and values are raw data type names</param>
+        /// <param name="dataPackageInfo">Output: tracks the datasets that were processed</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        private CloseOutType CreateMSXMLFile(out Dictionary<string, string> processedDatasets)
+        private CloseOutType CreateMSXMLFile(out DataPackageInfo dataPackageInfo)
         {
-            processedDatasets = new Dictionary<string, string>();
-
             try
             {
                 if (mDebugLevel > 4)
@@ -153,6 +151,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
                 {
                     LogWarning("mMSXmlGeneratorAppPath is empty; this is unexpected");
+                    dataPackageInfo = new DataPackageInfo(0);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -161,7 +160,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
                 // warnIfMissingFileInfo is set to true here in case we're processing a data package where some of the datasets already have existing .mzML files
-                var dataPackageInfo = new DataPackageInfo(dataPackageID, this, false);
+                dataPackageInfo = new DataPackageInfo(dataPackageID, this, false);
                 RegisterEvents(dataPackageInfo);
 
                 if (dataPackageInfo.DatasetFiles.Count == 0)
@@ -169,6 +168,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
+
+                var processedDatasets = new SortedSet<string>();
 
                 // Process each dataset
                 foreach (var item in dataPackageInfo.Datasets)
@@ -187,9 +188,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         }
                     }
 
-                    if (processedDatasets.ContainsKey(datasetName))
+                    if (processedDatasets.Contains(datasetName))
                     {
-                        LogError(string.Format("Dictionary processedDatasets already contains dataset {0}; aborting", datasetName));
+                        LogError(string.Format("Data package {0} has multiple instances of dataset {1}; aborting", dataPackageID, datasetName));
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -200,7 +201,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         centroidMS1, centroidMS2,
                         customMSConvertArguments, centroidPeakCountToRetain);
 
-                    processedDatasets.Add(datasetName, rawDataTypeName);
+                    processedDatasets.Add(datasetName);
 
                     if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                         return resultCode;
@@ -211,6 +212,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 LogError("Exception in CreateMSXMLFile", ex);
+                dataPackageInfo = new DataPackageInfo(0);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -338,7 +340,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return string.Empty;
         }
 
-        private bool PostProcessMSXmlFiles(IReadOnlyDictionary<string, string> processedDatasets)
+        /// <summary>
+        /// Call PostProcessMSXmlFile for each dataset in dataPackageInfo
+        /// </summary>
+        /// <param name="dataPackageInfo">Tracks the datasets that were processed</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool PostProcessMSXmlFiles(DataPackageInfo dataPackageInfo)
         {
             try
             {
@@ -350,9 +357,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     _ => throw new Exception("Unrecognized MSXMLOutputType value")
                 };
 
-                foreach (var item in processedDatasets)
+                foreach (var dataset in dataPackageInfo.Datasets)
                 {
-                    var success = PostProcessMSXmlFile(item.Key, resultFileExtension);
+                    var success = PostProcessMSXmlFile(dataPackageInfo, dataset.Key, resultFileExtension);
 
                     if (!success)
                         return false;
@@ -367,10 +374,19 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private bool PostProcessMSXmlFile(string datasetName, string resultFileExtension)
+        /// <summary>
+        /// Possibly recalculate precursors, then gzip the .mzML or .mzXML file and copy to the MSXML cache directory
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetId"></param>
+        /// <param name="resultFileExtension"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool PostProcessMSXmlFile(DataPackageInfo dataPackageInfo, int datasetId,string resultFileExtension)
         {
             try
             {
+                var datasetName = dataPackageInfo.Datasets[datasetId];
+
                 var msXmlFilePath = Path.Combine(mWorkDir, datasetName + resultFileExtension);
                 var msXmlFile = new FileInfo(msXmlFilePath);
 
@@ -421,7 +437,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (storeInCache)
                 {
                     // Copy the .mzXML or .mzML file to the MSXML cache
-                    var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, msXmlFileZipped.FullName, purgeOldFilesIfNeeded: true);
+                    var datasetStoragePath = dataPackageInfo.DatasetStoragePaths[datasetId];
+
+                    var remoteCacheFilePath = CopyFileToServerCache(datasetStoragePath, mMSXmlCacheFolder.FullName, msXmlFileZipped.FullName, purgeOldFilesIfNeeded: true);
 
                     if (string.IsNullOrEmpty(remoteCacheFilePath))
                     {
