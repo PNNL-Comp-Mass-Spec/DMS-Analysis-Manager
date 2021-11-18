@@ -19,13 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDTASpectraFi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerExtractionPlugin", "Plugins\AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.csproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerICR2LSPlugIn", "Plugins\AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.csproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", "Plugins\AM_IDM_Plugin\AnalysisManagerIDMPlugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "Plugins\AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInSpecTPlugIn", "Plugins\AM_InSpecT_PlugIn\AnalysisManagerInSpecTPlugIn.csproj", "{C8422F47-9F58-4839-A211-61F763CD336C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInspResultsAssemblyPlugIn", "Plugins\AM_InspectResultsAssembly_PlugIn\AnalysisManagerInspResultsAssemblyPlugIn.csproj", "{FA91A92B-057C-4728-9A6A-774CE004AB05}"
 EndProject
@@ -58,8 +54,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEMzXMLPlugIn", "Plugins\AM_PRIDE_MzXML_PlugIn\AnalysisManagerPRIDEMzXMLPlugIn.csproj", "{9D9FFB40-9F3D-4734-8B2E-78D60363817A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerResultsXferPlugin", "Plugins\AM_ResultsXfer_PlugIn\AnalysisManagerResultsXferPlugin.csproj", "{EDDE6076-0959-40E8-8760-08B29F66AB01}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSequestPlugin", "Plugins\AM_Sequest_PlugIn\AnalysisManagerSequestPlugin.csproj", "{C79A701C-1AE4-484A-A2AF-BD9CAA56661B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn", "Plugins\AM_SMAQC_PlugIn\AnalysisManagerSMAQCPlugIn.csproj", "{0A52C911-BC1A-4AA1-83A4-3AD97EF93F31}"
 EndProject
