@@ -864,7 +864,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
             {
-                OnWarningEvent(string.Format("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH));
+                OnWarningEvent("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
                 return string.Empty;
             }
 

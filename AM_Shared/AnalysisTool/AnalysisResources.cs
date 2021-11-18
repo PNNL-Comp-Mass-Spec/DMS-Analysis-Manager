@@ -3820,9 +3820,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var orgDbDirectory = maxDirSizeFile.Directory;
                 if (orgDbDirectory == null)
                 {
-                    LogTools.LogError(string.Format(
-                        "Unable to determine the parent directory of file {0}; cannot manage drive space usage",
-                        maxDirSizeFile.FullName));
+                    LogTools.LogError("Unable to determine the parent directory of file {0}; cannot manage drive space usage", maxDirSizeFile.FullName);
 
                     return false;
                 }
@@ -3898,18 +3896,14 @@ namespace AnalysisManagerBase.AnalysisTool
                 // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (maxDirectorySizeGB <= 0)
                 {
-                    LogTools.LogWarning(string.Format(
-                        "PurgeFastaFilesUsingSpaceUsedThreshold should be called with a positive integer, not {0}; aborting",
-                        maxDirectorySizeGB));
+                    LogTools.LogWarning("PurgeFastaFilesUsingSpaceUsedThreshold should be called with a positive integer, not {0}; aborting", maxDirectorySizeGB);
 
                     return false;
                 }
 
                 if (maxDirectorySizeGB < MIN_DIRECTORY_SIZE_GB)
                 {
-                    LogTools.LogWarning(string.Format(
-                        "Max directory size sent to PurgeFastaFilesUsingSpaceUsedThreshold is too small; increasing from {0} GB to {1} GB",
-                        maxDirectorySizeGB, MIN_DIRECTORY_SIZE_GB));
+                    LogTools.LogWarning("Max directory size sent to PurgeFastaFilesUsingSpaceUsedThreshold is too small; increasing from {0} GB to {1} GB", maxDirectorySizeGB, MIN_DIRECTORY_SIZE_GB);
 
                     maxDirectorySizeGB = MIN_DIRECTORY_SIZE_GB;
                 }
@@ -3996,9 +3990,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             // Keep deleting files
                             if (debugLevel >= 2)
                             {
-                                LogTools.LogDebug(string.Format(
-                                    "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                    Global.BytesToMB(totalBytesPurged), Global.BytesToMB(bytesToPurge)));
+                                LogTools.LogDebug("Purging FASTA files: {0:F1} / {1:F1} MB deleted", Global.BytesToMB(totalBytesPurged), Global.BytesToMB(bytesToPurge));
                             }
 
                             if (Global.BytesToGB(totalBytesPurged) > 10)
@@ -4011,9 +4003,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         else
                         {
                             // Enough files have been deleted
-                            LogTools.LogMessage(string.Format(
-                                "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
+                            LogTools.LogMessage("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall));
 
                             return true;
                         }
@@ -4028,9 +4018,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!purgeSuccessful)
                 {
-                    LogTools.LogWarning(string.Format(
-                        "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall)));
+                    LogTools.LogWarning("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
+                                        "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxDirectorySizeGB, Global.BytesToGB(totalBytesPurgedOverall));
                 }
 
                 return true;

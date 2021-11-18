@@ -1179,8 +1179,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (!string.Equals(dataPkgDataset.Dataset, mAnalysisResources.DatasetName))
                     {
-                        OnWarningEvent(string.Format(
-                            "Dataset name mismatch: {0} vs. {1}", dataPkgDataset.Dataset, mAnalysisResources.DatasetName));
+                        OnWarningEvent("Dataset name mismatch: {0} vs. {1}", dataPkgDataset.Dataset, mAnalysisResources.DatasetName);
                     }
 
                     if (skipDatasetsWithExistingMzML)
@@ -1313,9 +1312,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (!success)
             {
-                OnErrorEvent(string.Format(
-                    "RetrieveCachedMzMLFile could not find the .mzML file for dataset {0}: {1}",
-                    dataPkgDataset.Dataset, errorMessage));
+                OnErrorEvent("RetrieveCachedMzMLFile could not find the .mzML file for dataset {0}: {1}", dataPkgDataset.Dataset, errorMessage);
                 return false;
             }
 
@@ -1455,8 +1452,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (!string.Equals(dataPkgJob.Dataset, mAnalysisResources.DatasetName))
                     {
-                        OnWarningEvent(string.Format(
-                            "Dataset name mismatch: {0} vs. {1}", dataPkgJob.Dataset, mAnalysisResources.DatasetName));
+                        OnWarningEvent("Dataset name mismatch: {0} vs. {1}", dataPkgJob.Dataset, mAnalysisResources.DatasetName);
                     }
 
                     if (dataPkgJob.PeptideHitResultType == PeptideHitResultTypes.Unknown)
