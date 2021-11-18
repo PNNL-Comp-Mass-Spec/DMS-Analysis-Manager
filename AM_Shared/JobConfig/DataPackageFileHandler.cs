@@ -1105,7 +1105,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <param name="skipDatasetsWithExistingMzML">
         /// When true, for each dataset in the data package, if an existing .mzML file can be found,
-        /// do not retrieve the .raw file and do not add to dataPackageInfo.DatasetFiles, dataPackageInfo.DatasetFileTypes, or dataPackageInfo.DatasetRawDataTypeNames
+        /// do not retrieve the .raw file and do not add to datasetRawFilePaths
         /// </param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackageDatasetFiles(
