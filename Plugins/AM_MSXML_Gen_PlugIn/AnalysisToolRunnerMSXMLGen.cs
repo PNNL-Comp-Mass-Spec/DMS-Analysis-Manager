@@ -64,14 +64,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
             }
 
-            var result = CreateMSXMLFile(out var dataPackageInfo);
+            var result = CreateMSXMLFile(out var dataPackageInfo, out var processedDatasetIDs);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            if (!PostProcessMSXmlFiles(dataPackageInfo))
+            if (!PostProcessMSXmlFiles(dataPackageInfo, processedDatasetIDs))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -90,10 +90,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Generate the mzXML or mzML file
         /// </summary>
-        /// <param name="dataPackageInfo">Output: tracks the datasets that were processed</param>
+        /// <param name="dataPackageInfo">Output: tracks either the dataset for this job or the datasets in the data package associated with this job</param>
+        /// <param name="processedDatasetIDs">Output: list of dataset IDs that were actually processed</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        private CloseOutType CreateMSXMLFile(out DataPackageInfo dataPackageInfo)
+        private CloseOutType CreateMSXMLFile(out DataPackageInfo dataPackageInfo, out SortedSet<int> processedDatasetIDs)
         {
+            processedDatasetIDs = new SortedSet<int>();
+
             try
             {
                 if (mDebugLevel > 4)
@@ -172,10 +175,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var processedDatasets = new SortedSet<string>();
 
                 // Process each dataset
-                foreach (var item in dataPackageInfo.Datasets)
+                foreach (var dataset in dataPackageInfo.Datasets)
                 {
-                    var datasetId = item.Key;
-                    var datasetName = item.Value;
+                    var datasetId = dataset.Key;
+                    var datasetName = dataset.Value;
 
                     if (dataPackageID > 0)
                     {
@@ -186,6 +189,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             // The .mzML file already exists for this dataset
                             continue;
                         }
+                    }
+
+                    if (processedDatasetIDs.Contains(datasetId))
+                    {
+                        LogError(string.Format("Data package {0} has multiple instances of dataset ID {1}; aborting", dataPackageID, datasetId));
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     if (processedDatasets.Contains(datasetName))
@@ -201,6 +210,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         centroidMS1, centroidMS2,
                         customMSConvertArguments, centroidPeakCountToRetain);
 
+                    processedDatasetIDs.Add(datasetId);
                     processedDatasets.Add(datasetName);
 
                     if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
@@ -343,9 +353,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <summary>
         /// Call PostProcessMSXmlFile for each dataset in dataPackageInfo
         /// </summary>
-        /// <param name="dataPackageInfo">Tracks the datasets that were processed</param>
+        /// <param name="dataPackageInfo">Tracks either the dataset for this job or the datasets in the data package associated with this job</param>
+        /// <param name="processedDatasetIDs">Tracks the dataset IDs that were actually processed</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool PostProcessMSXmlFiles(DataPackageInfo dataPackageInfo)
+        private bool PostProcessMSXmlFiles(DataPackageInfo dataPackageInfo, ICollection<int> processedDatasetIDs)
         {
             try
             {
@@ -359,6 +370,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 foreach (var dataset in dataPackageInfo.Datasets)
                 {
+                    var datasetId = dataset.Key;
+
+                    if (!processedDatasetIDs.Contains(datasetId))
+                    {
+                        // This dataset was skipped since an existing .mzML file was found
+                        continue;
+                    }
+
                     var success = PostProcessMSXmlFile(dataPackageInfo, dataset.Key, resultFileExtension);
 
                     if (!success)
@@ -392,6 +411,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (!msXmlFile.Exists)
                 {
+                    // .mzML file not found:
+                    // or
+                    // .mzXML file not found:
                     LogError(resultFileExtension + " file not found: " + Path.GetFileName(msXmlFilePath));
                     return false;
                 }
