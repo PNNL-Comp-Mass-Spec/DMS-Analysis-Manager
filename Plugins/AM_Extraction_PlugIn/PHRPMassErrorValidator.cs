@@ -333,22 +333,26 @@ namespace AnalysisManagerExtractionPlugin
                 // Log the first, last, and middle entry in largestMassErrors
                 InformLargeErrorExample(largestMassErrors.First());
 
-                if (largestMassErrors.Count > 1)
+                if (largestMassErrors.Count <= 1)
                 {
-                    InformLargeErrorExample(largestMassErrors.Last());
+                    return false;
+                }
 
-                    if (largestMassErrors.Count > 2)
+                InformLargeErrorExample(largestMassErrors.Last());
+
+                if (largestMassErrors.Count <= 2)
+                {
+                    return false;
+                }
+
+                var iterator = 0;
+                foreach (var massError in largestMassErrors)
+                {
+                    iterator++;
+                    if (iterator >= largestMassErrors.Count / 2.0)
                     {
-                        var iterator = 0;
-                        foreach (var massError in largestMassErrors)
-                        {
-                            iterator++;
-                            if (iterator >= largestMassErrors.Count / 2.0)
-                            {
-                                InformLargeErrorExample(massError);
-                                break;
-                            }
-                        }
+                        InformLargeErrorExample(massError);
+                        break;
                     }
                 }
 
