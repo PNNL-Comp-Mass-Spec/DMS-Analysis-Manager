@@ -16,26 +16,26 @@ namespace AnalysisManagerExtractionPlugin
         private readonly int mDebugLevel;
 
         /// <summary>
+        /// Error message
+        /// </summary>
+        public string ErrorMessage { get; private set; } = string.Empty;
+
+        /// <summary>
         /// Error threshold percentage (Value between 0 and 100)
         /// </summary>
         /// <remarks>
         /// If more than this percent of the data has a mass error larger than the threshold,
-        /// and if the count is greater than <see cref="mErrorThresholdCount"/>, ValidatePHRPResultMassErrors returns false
+        /// and if the count is greater than <see cref="ErrorThresholdCount"/>, ValidatePHRPResultMassErrors returns false
         /// </remarks>
-        private const double mErrorThresholdPercent = 5;
+        public double ErrorThresholdPercent { get; set; } = 5;
 
         /// <summary>
         /// Error count threshold
         /// </summary>
         /// <remarks>
-        /// Used by <see cref="ValidatePHRPResultMassErrors"/> when determining whether too many results have a large mass error
+        /// Used by ValidatePHRPResultMassErrors when determining whether too many results have a large mass error
         /// </remarks>
-        private const double mErrorThresholdCount = 25;
-
-        /// <summary>
-        /// Error message
-        /// </summary>
-        public string ErrorMessage { get; private set; } = string.Empty;
+        public int ErrorThresholdCount { get; set; } = 25;
 
         /// <summary>
         /// Constructor
@@ -279,7 +279,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="inputFilePath"></param>
         /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
-        /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
+        /// <returns>True if less than ErrorThresholdPercent of the data is bad; False otherwise</returns>
         public bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try
@@ -319,7 +319,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var warningMessage = string.Format("{0} ({1} / {2})", ErrorMessage, errorCount, psmCount);
 
-                if (percentInvalid <= mErrorThresholdPercent || errorCount <= mErrorThresholdCount)
+                if (percentInvalid <= ErrorThresholdPercent || errorCount <= ErrorThresholdCount)
                 {
                     OnWarningEvent(warningMessage + "; this value is within tolerance");
 
@@ -328,7 +328,7 @@ namespace AnalysisManagerExtractionPlugin
                     return true;
                 }
 
-                OnErrorEvent(warningMessage + "; this value is too large (over " + mErrorThresholdPercent.ToString("0.0") + "%)");
+                OnErrorEvent(warningMessage + "; this value is too large (over " + ErrorThresholdPercent.ToString("0.0") + "%)");
 
                 // Log the first, last, and middle entry in largestMassErrors
                 InformLargeErrorExample(largestMassErrors.First());
