@@ -2571,7 +2571,9 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType,
+        private bool ValidatePHRPResultMassErrors(
+            string inputFilePath,
+            PeptideHitResultTypes resultType,
             string searchEngineParamFileName)
         {
             bool success;
@@ -2583,11 +2585,16 @@ namespace AnalysisManagerExtractionPlugin
 
                 var paramFilePath = Path.Combine(mWorkDir, searchEngineParamFileName);
 
+                var toolName = mJobParams.GetJobParameter("ToolName", string.Empty);
+
+                if (toolName.StartsWith("MaxQuant"))
+                {
+                    massErrorValidator.ErrorThresholdPercent = 10;
+                }
+
                 success = massErrorValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
                 if (!success)
                 {
-                    var toolName = mJobParams.GetJobParameter("ToolName", "");
-
                     if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
                     {
                         // Ignore this error for inspect if running an unrestricted search
