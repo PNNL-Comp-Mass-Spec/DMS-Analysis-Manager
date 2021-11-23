@@ -23,8 +23,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDMPlugin", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "Plugins\AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInspResultsAssemblyPlugIn", "Plugins\AM_InspectResultsAssembly_PlugIn\AnalysisManagerInspResultsAssemblyPlugIn.csproj", "{FA91A92B-057C-4728-9A6A-774CE004AB05}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "Plugins\AM_LCMSFeatureFinder_Plugin\AnalysisManagerLCMSFeatureFinderPlugIn.csproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMagePlugIn", "Plugins\AM_Mage_PlugIn\AnalysisManagerMagePlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
