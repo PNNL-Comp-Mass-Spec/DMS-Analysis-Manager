@@ -4329,12 +4329,6 @@
             Symbol used by PHRP to indicate a protein terminus
             </summary>
         </member>
-        <member name="F:PHRPReader.ReaderFactory.mFastReadMode">
-            <summary>
-            When set to true, calls to MoveNext will read the next data line, but will skip several additional processing steps for performance reasons
-            </summary>
-            <remarks>If the peptide is a peptide of interest, you must call FinalizeCurrentPSM after calling .MoveNext()</remarks>
-        </member>
         <member name="F:PHRPReader.ReaderFactory.mDynamicMods">
             <summary>
             Keys in this dictionary are mod symbols
@@ -4346,6 +4340,24 @@
             Keys in this dictionary are amino acid names
             Values are a list of modification definitions
             </summary>
+        </member>
+        <member name="F:PHRPReader.ReaderFactory.mFastReadMode">
+            <summary>
+            When set to true, calls to MoveNext will read the next data line, but will skip several additional processing steps for performance reasons
+            </summary>
+            <remarks>If the peptide is a peptide of interest, you must call FinalizeCurrentPSM after calling .MoveNext()</remarks>
+        </member>
+        <member name="F:PHRPReader.ReaderFactory.mFindParentIonOnlyNonMsx">
+            <summary>
+            RegEx to extract parent ions from filter strings that do not have Full msx
+            </summary>
+            <remarks>Shared (aka static) only to speed up unit tests</remarks>
+        </member>
+        <member name="F:PHRPReader.ReaderFactory.mFindParentIonOnlyMsx">
+            <summary>
+            RegEx to extract parent ions from filter strings that have Full msx
+            </summary>
+            <remarks>Shared (aka static) only to speed up unit tests</remarks>
         </member>
         <member name="F:PHRPReader.ReaderFactory.mMSGFCachedResults">
             <summary>
@@ -4373,18 +4385,6 @@
             Keys are ScanNumber
             Values are ScanStatsExInfo objects
             </remarks>
-        </member>
-        <member name="F:PHRPReader.ReaderFactory.mFindParentIonOnlyNonMsx">
-            <summary>
-            RegEx to extract parent ions from filter strings that do not have Full msx
-            </summary>
-            <remarks>Shared (aka static) only to speed up unit tests</remarks>
-        </member>
-        <member name="F:PHRPReader.ReaderFactory.mFindParentIonOnlyMsx">
-            <summary>
-            RegEx to extract parent ions from filter strings that have Full msx
-            </summary>
-            <remarks>Shared (aka static) only to speed up unit tests</remarks>
         </member>
         <member name="P:PHRPReader.ReaderFactory.CanRead">
             <summary>
@@ -4465,14 +4465,14 @@
             Returns a number between 0 and 100 indicating the percentage of the source file that has been read
             </summary>
         </member>
-        <member name="P:PHRPReader.ReaderFactory.SynFileReader">
-            <summary>
-            Returns the PHRP SynFileReader object
-            </summary>
-        </member>
         <member name="P:PHRPReader.ReaderFactory.ResultToSeqMap">
             <summary>
             Returns the cached mapping between ResultID and SeqID
+            </summary>
+        </member>
+        <member name="P:PHRPReader.ReaderFactory.SynFileReader">
+            <summary>
+            Returns the PHRP SynFileReader object
             </summary>
         </member>
         <member name="P:PHRPReader.ReaderFactory.SeqInfo">
