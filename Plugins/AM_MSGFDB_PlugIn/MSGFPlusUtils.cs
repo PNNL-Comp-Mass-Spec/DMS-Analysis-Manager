@@ -25,8 +25,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Arg, Bruker, ccm, centroided, Chymotrypsin, cid, Conc, cp, defs, endopeptidase, etd, Exactive, frag
-        // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxyproline, hyperthreading, ident, iso, Lys, msn, mzid, MZIDto
-        // Ignore Spelling: na, nnet, novo, ntt, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
+        // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxyproline, hyperthreading, ident, iso, Lumos, Lys, msn, mzid, MZIDto
+        // Ignore Spelling: na, nnet, novo, ntt, Orbitrap, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
         // Ignore Spelling: tda, tims, Tryp, tryptic, Tsv, utils, Xmx
 
         // ReSharper restore CommentTypo
