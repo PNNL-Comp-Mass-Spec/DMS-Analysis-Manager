@@ -957,7 +957,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Create the peptide to protein mapping file
+        /// Create the peptide to protein mapping file, Dataset_msgfplus_PepToProtMap.txt
         /// </summary>
         /// <param name="resultsFileName"></param>
         /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
@@ -969,7 +969,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Create file Dataset_msgfplus_PepToProtMap.txt
+        /// Create the peptide to protein mapping file, Dataset_msgfplus_PepToProtMap.txt
         /// </summary>
         /// <param name="resultsFileName"></param>
         /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
@@ -2870,7 +2870,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // InstrumentID values:
             // #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID).  Do not merge spectra (FragMethod=4) when InstrumentID is 1; scores will degrade
+            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap, Lumos, and QEHFX instruments
             // #  2 means TOF
             // #  3 means Q-Exactive
 

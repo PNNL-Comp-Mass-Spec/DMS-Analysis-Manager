@@ -248,7 +248,7 @@ namespace AnalysisManager_Mage_PlugIn
                 if (lookupQ.Count > 0)
                 {
                     // Example message:
-                    // Not all entries in the t_alias table have 4 ions; edit the T_alias.txt file
+                    // Not all entries in the t_alias table have 4 ions; edit the t_alias.txt file
                     errorMessage = "Not all entries in the " + T_ALIAS_TABLE + " table have " + ionCountFirst + " ions; " +
                                    "edit the " + T_ALIAS_FILE + " file";
 

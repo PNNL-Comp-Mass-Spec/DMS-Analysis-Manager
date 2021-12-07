@@ -1218,7 +1218,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
                 currentTask = "Calling CreatePeptideToProteinMapping";
+
                 result = mMSGFPlusUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+
                 if (!AnalysisJob.SuccessOrNoData(result))
                 {
                     return result;
