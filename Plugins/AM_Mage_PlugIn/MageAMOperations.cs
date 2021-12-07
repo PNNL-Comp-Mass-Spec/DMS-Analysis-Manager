@@ -216,8 +216,6 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (matchingFiles.Count == 0)
             {
-                var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
-                if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0)
                 // Look for a file named t_alias.txt.txt
                 var misnamedFiles =
                     (from item in filesInDirectory
@@ -226,12 +224,24 @@ namespace AnalysisManager_Mage_PlugIn
 
                 if (misnamedFiles.Count > 0)
                 {
-                    // File T_alias.txt was not found in ...
-                    throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is an iTRAQ analysis",
                     // DataPackageSourceFolderName has a mis-named t_alias.txt file
                     throw new DirectoryNotFoundException(string.Format(
                         "DataPackageSourceFolderName has a mis-named {0} file; rename it to remove the duplicate .txt extension: {1}",
                         AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
+                }
+
+                var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
+                if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    var typeDescription = analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0
+                        ? "a TMT"
+                        : "an iTRAQ";
+
+                    // File t_alias.txt was not found in ... this file is required because this is an iTRAQ analysis
+                    //                                   ... this file is required because this is a TMT analysis
+                    throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is {2} analysis",
+                        AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath, typeDescription));
                 }
 
                 var msg = string.Format(
@@ -245,7 +255,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
             else
             {
-                // Validate the T_alias.txt file to remove blank rows and remove extra columns
+                // Validate the t_alias.txt file to remove blank rows and remove extra columns
                 ValidateAliasFile(matchingFiles.First());
             }
 
