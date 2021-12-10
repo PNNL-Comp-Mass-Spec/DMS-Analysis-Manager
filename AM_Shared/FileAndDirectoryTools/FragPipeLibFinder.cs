@@ -32,7 +32,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the FragPipe .jar file
         /// </summary>
-        private const string FRAGPIPE_JAR_NAME = "fragpipe-17.0.jar";
+        private const string FRAGPIPE_JAR_NAME = "fragpipe-17.1.jar";
 
         /// <summary>
         /// Name of the grppr .jar file
@@ -42,7 +42,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the IonQuant jar file
         /// </summary>
-        private const string IONQUANT_JAR_NAME = "ionquant-1.7.16.jar";
+        private const string IONQUANT_JAR_NAME = "ionquant-1.7.17.jar";
 
         /// <summary>
         /// Name of the Java C++ presets platform directory
@@ -72,7 +72,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the PTM Shepherd jar file
         /// </summary>
-        public const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-1.2.5.jar";
+        public const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-1.2.6.jar";
 
         /// <summary>
         /// Name of the smile-core library
@@ -274,7 +274,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the fragpipe .jar file
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-17.0.jar
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-17.1.jar
         /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -327,7 +327,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileIonQuant(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.16.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.17.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -350,7 +350,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFilePtmShepherd(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.5.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.6.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {

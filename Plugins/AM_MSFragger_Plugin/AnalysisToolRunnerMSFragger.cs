@@ -266,7 +266,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     // ReSharper disable CommentTypo
 
                     // Run CheckCentroid, example command line:
-                    // java -Xmx4G -cp "C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-17.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" com.dmtavt.fragpipe.util.CheckCentroid DatasetName.mzML 4
+                    // java -Xmx4G -cp "C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-17.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar" com.dmtavt.fragpipe.util.CheckCentroid DatasetName.mzML 4
 
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format(
