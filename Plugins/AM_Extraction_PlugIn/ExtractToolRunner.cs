@@ -1302,6 +1302,30 @@ namespace AnalysisManagerExtractionPlugin
             return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFilePath);
         }
 
+        private CloseOutType RunPhrpForMODa(string filteredMODaResultsFileName)
+        {
+            return RunPHRPWork(
+                "MODa",
+                filteredMODaResultsFileName,
+                PeptideHitResultTypes.MODa,
+                string.Empty,
+                true,
+                true,
+                out _);
+        }
+
+        private CloseOutType RunPhrpForMODPlus(string filteredMODPlusResultsFileName)
+        {
+            return RunPHRPWork(
+                "MODPlus",
+                filteredMODPlusResultsFileName,
+                PeptideHitResultTypes.MODPlus,
+                string.Empty,
+                false,
+                true,
+                out _);
+        }
+
         private CloseOutType RunPhrpForMSAlign()
         {
             var inputFileName = mDatasetName + "_MSAlign_ResultTable.txt";
@@ -1325,28 +1349,10 @@ namespace AnalysisManagerExtractionPlugin
             return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFilePath);
         }
 
-        private CloseOutType RunPhrpForMODa(string filteredMODaResultsFileName)
         {
-            return RunPHRPWork(
-                "MODa",
-                filteredMODaResultsFileName,
-                PeptideHitResultTypes.MODa,
-                string.Empty,
-                true,
-                true,
-                out _);
-        }
 
-        private CloseOutType RunPhrpForMODPlus(string filteredMODPlusResultsFileName)
-        {
-            return RunPHRPWork(
-                "MODPlus",
-                filteredMODPlusResultsFileName,
-                PeptideHitResultTypes.MODPlus,
-                string.Empty,
                 false,
                 true,
-                out _);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
