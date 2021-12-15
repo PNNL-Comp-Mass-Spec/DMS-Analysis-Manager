@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -77,7 +77,6 @@
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
     <Reference Include="PeptideHitResultsProcessor">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
     </Reference>
     <Reference Include="PeptideToProteinMapEngine">

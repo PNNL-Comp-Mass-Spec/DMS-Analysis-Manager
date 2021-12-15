@@ -51,8 +51,7 @@
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="SequestResultsProcessor, Version=1.8.7950.30632, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="SequestResultsProcessor">
       <HintPath>..\..\AM_Common\SequestResultsProcessor.dll</HintPath>
     </Reference>
     <Reference Include="System" />

@@ -396,7 +396,9 @@
             <summary>
             Returns true if the character is a letter between A and Z or a and z
             </summary>
-            <remarks>The Char.IsLetter() function returns True for "º" and various other Unicode ModifierLetter characters; use this function to only return True for normal letters between A and Z</remarks>
+            <remarks>
+            The Char.IsLetter() method returns True for "º" and various other Unicode ModifierLetter characters;
+            Use IsLetterAtoZ() to only return True for normal letters between A and Z</remarks>
             <param name="chChar">Character to examine</param>
         </member>
         <member name="M:PHRPReader.clsPHRPReader.IsNumber(System.String)">
@@ -470,7 +472,7 @@
         <member name="M:PHRPReader.clsPHRPReader.FinalizeCurrentPSM">
             <summary>
             When FastReadMode is True, first call MoveNext to read the peptide scores.
-            Then, if the peptide is a peptide of interest, call this function to finalize any processing steps that were skipped.
+            Then, if the peptide is a peptide of interest, call this method to finalize any processing steps that were skipped.
             </summary>
         </member>
         <member name="F:PHRPReader.clsPHRPReader.mDisposedValue">
@@ -682,7 +684,7 @@
             Andromeda score for the best MS/MS spectrum with this peptide
             </summary>
             <remarks>
-            Higher scores are better
+            Larger values are better
             </remarks>
         </member>
         <member name="F:PHRPReader.Data.MaxQuantSynFileColumns.DeltaScore">
@@ -879,6 +881,146 @@
             These columns correspond to the tab-delimited _MSGF.txt file created by the analysis manager
             </summary>
         </member>
+        <member name="T:PHRPReader.Data.MSFraggerSynFileColumns">
+            <summary>
+            MSFragger synopsis file columns
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.ResultID">
+            <summary>
+            Result ID
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Dataset">
+            <summary>
+            Dataset name (typically the .raw file name, without the extension)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.DatasetID">
+            <summary>
+            Dataset ID
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Scan">
+            <summary>
+            MS/MS scan number in the dataset
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Charge">
+            <summary>
+            Charge state of the precursor ion
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.PrecursorMZ">
+            <summary>
+            Precursor ion m/z (observed value)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.DelM">
+            <summary>
+            Mass error of the precursor ion equivalent monoisotopic mass value
+            vs. the predicted monoisotopic mass of the identified peptide sequence
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.DelM_PPM">
+            <summary>
+            Mass Error, in ppm
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.DelM_MSFragger">
+            <summary>
+            Mass error of the precursor ion equivalent monoisotopic mass value
+            vs. the predicted monoisotopic mass of the identified peptide sequence,
+            as computed by MSFragger
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.MH">
+            <summary>
+            Monoisotopic (M+H)+ value, computed from PrecursorMZ and Charge
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Mass">
+            <summary>
+            Theoretical monoisotopic mass of the identified sequence (uncharged, including mods), as computed by MSFragger
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Peptide">
+            <summary>
+            Peptide sequence, including modification symbols
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Modifications">
+            <summary>
+            Comma separated list of static and dynamic modifications in the peptide
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Protein">
+            <summary>
+            Primary protein name
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.AdditionalProteins">
+            <summary>
+            Additional protein names (comma separated list)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.NTT">
+            <summary>
+            Number of tryptic terminii
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.EValue">
+            <summary>
+            Expectation value (E-value)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.RankEValue">
+            <summary>
+            Ranked E-value
+            </summary>
+            <remarks>
+            Rank 1 means lowest (best) E-value, 2 means next higher E-value, etc. (ties get the same rank)
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Hyperscore">
+            <summary>
+            Hyperscore of the top match
+            </summary>
+            <remarks>
+            Higher scores are better
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.Nextscore">
+            <summary>
+            Hyperscore of the next best match
+            </summary>
+            <remarks>
+            Larger values are better
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.PeptideProphetProbability">
+            <summary>
+            Peptide prophet probability
+            </summary>
+            <remarks>
+            Values closer to 1 are better
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.RetentionTime">
+            <summary>
+            Elution time of the MS/MS spectrum
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.MissedCleavages">
+            <summary>
+            Number of missed enzymatic cleavages
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.MSFraggerSynFileColumns.QValue">
+            <summary>
+            Q-Value (computed by PHRP)
+            </summary>
+        </member>
         <member name="T:PHRPReader.Data.MSGFDBSynFileColumns">
             <summary>
             These columns correspond Synopsis files created for legacy tool MSGFDB
@@ -944,7 +1086,7 @@
         </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.PrecursorMZ">
             <summary>
-            Precursor m/z
+            Precursor ion m/z
             </summary>
         </member>
         <member name="F:PHRPReader.Data.MSGFPlusSynFileColumns.DelM">
@@ -1315,7 +1457,7 @@
         </member>
         <member name="P:PHRPReader.Data.PrecursorInfo.PrecursorMz">
             <summary>
-            Precursor m/z
+            Precursor ion m/z
             </summary>
             <remarks>
             For MS3 spectra, this is the m/z of the preceding MS2 scan
@@ -1506,12 +1648,12 @@
         </member>
         <member name="P:PHRPReader.Data.SICStatsInfo.MZ">
             <summary>
-            Precursor m/z
+            Precursor ion m/z value
             </summary>
         </member>
         <member name="P:PHRPReader.Data.SICStatsInfo.MzText">
             <summary>
-            Precursor m/z
+            Precursor ion m/z
             </summary>
         </member>
         <member name="P:PHRPReader.Data.SICStatsInfo.SurveyScanNumber">
@@ -1876,41 +2018,6 @@
         <member name="F:PHRPReader.Data.ModificationDefinition.INITIAL_UNKNOWN_MASS_CORRECTION_TAG_NAME">
             <summary>
             Initial unknown mass correction tag name
-            </summary>
-        </member>
-        <member name="T:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants">
-            <summary>
-            Legacy modification type constants
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.UnknownType">
-            <summary>
-            Unknown mod type on a residue; essentially treated as a dynamic mod
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.DynamicMod">
-            <summary>
-            Dynamic mod on a residue or peptide terminus; supported by SEQUEST and notated via a modification symbol; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.StaticMod">
-            <summary>
-            Static mod on a residue or peptide terminus; supported by SEQUEST but not explicitly notated; this mod is explicitly notated by X!Tandem; if a terminus mod, the mod symbol is associated with the first or last residue in the peptide
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.TerminalPeptideStaticMod">
-            <summary>
-            Peptide terminus static mod (DMS Symbol is T); used by SEQUEST and MSGFDB; note that terminal mods are always dynamic in X!Tandem
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.IsotopicMod">
-            <summary>
-            Isotopic mod, e.g. N15, or C13; supported by SEQUEST; most likely not supported by XTandem
-            </summary>
-        </member>
-        <member name="F:PHRPReader.Data.ModificationDefinition.ModificationTypeConstants.ProteinTerminusStaticMod">
-            <summary>
-            Protein terminus static mod; supported by SEQUEST; this mod is also supported by X!Tandem but modified residues are not explicitly notated; instead, all peptides have their mass implicitly modified by this amount
             </summary>
         </member>
         <member name="T:PHRPReader.Data.ModificationDefinition.ResidueModificationType">
@@ -2706,7 +2813,7 @@
             <summary>
             Peptide sequence, including any modification symbols that were assigned by the search engine
             Peptide sequence, with or without prefix and suffix residues; may contain mod symbols
-            Example, R.AAS*PQDLAGGYTSSLACHR.A
+            Example: R.AAS*PQDLAGGYTSSLACHR.A
             </summary>
         </member>
         <member name="P:PHRPReader.Data.PSM.PeptideCleanSequence">
@@ -4689,7 +4796,7 @@
         <member name="M:PHRPReader.ReaderFactory.ConvertModsToNumericMods(System.String,System.String@,System.Collections.Generic.List{PHRPReader.Data.AminoAcidModInfo}@)">
             <summary>
             Look for dynamic mod symbols in the peptide sequence; replace with the corresponding mod masses
-            Note that if the _SeqInfo.txt file is available, this function will not be used
+            Note that if the _SeqInfo.txt file is available, this method will not be used
             </summary>
             <remarks>peptideWithNumericMods will look like R.TDM+15.9949ESALPVTVLSAEDIAK.T</remarks>
             <param name="peptide"></param>
@@ -4864,7 +4971,9 @@
             <summary>
             Returns true if the character is a letter between A and Z or a and z
             </summary>
-            <remarks>The Char.IsLetter() function returns True for "º" and various other Unicode ModifierLetter characters; use this function to only return True for normal letters between A and Z</remarks>
+            <remarks>
+            The Char.IsLetter() method returns True for "º" and various other Unicode ModifierLetter characters
+            Use IsLetterAtoZ() to only return True for normal letters between A and Z</remarks>
             <param name="chChar">Character to examine</param>
         </member>
         <member name="M:PHRPReader.ReaderFactory.IsNumber(System.String)">
@@ -4944,7 +5053,7 @@
         </member>
         <member name="M:PHRPReader.ReaderFactory.ExtractParentIonMzFromFilterText(System.String,System.Double@)">
             <summary>
-            This function extracts the Parent Ion m/z from the filter string
+            This method extracts the Parent Ion m/z from the filter string
             </summary>
             <remarks>The original version of this code is in ThermoRawFileReader.FilterTextUtilities.ExtractParentIonMZFromFilterText(string, out double)</remarks>
             <param name="filterText"></param>
@@ -4954,7 +5063,7 @@
         <member name="M:PHRPReader.ReaderFactory.FinalizeCurrentPSM">
             <summary>
             When FastReadMode is True, first call MoveNext to read the peptide scores.
-            Then, if the peptide is a peptide of interest, call this function to finalize any processing steps that were skipped.
+            Then, if the peptide is a peptide of interest, call this method to finalize any processing steps that were skipped.
             </summary>
         </member>
         <member name="M:PHRPReader.ReaderFactory.ReadModSummaryFile(System.String,System.Collections.Generic.IDictionary{System.Char,PHRPReader.Data.ModificationDefinition},System.Collections.Generic.IDictionary{System.String,System.Collections.Generic.List{PHRPReader.Data.ModificationDefinition}})">
@@ -5199,6 +5308,234 @@
             <param name="psm">Output: PSM details</param>
             <param name="fastReadMode">When set to true, reads the next data line, but doesn't perform text parsing required to determine cleavage state</param>
             <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="T:PHRPReader.Reader.MSFraggerSynFileReader">
+            <summary>
+            PHRP SynFileReader for MSFragger
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.MSFraggerSynFileReader.FILENAME_SUFFIX_SYN">
+            <summary>
+            MSFragger synopsis file suffix
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.MSFraggerSynFileReader.FILENAME_SUFFIX_FHT">
+            <summary>
+            MSFragger first hits file suffix
+            </summary>
+            <remarks>
+            <para>
+            This public constant is defined for compatibility with other classes
+            </para>
+            <para>
+            We don't actually create first-hits files for MSFragger results
+            </para>
+            </remarks>
+        </member>
+        <member name="F:PHRPReader.Reader.MSFraggerSynFileReader.MSFRAGGER_SEARCH_ENGINE_NAME">
+            <summary>
+            Search engine name
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Reader.MSFraggerSynFileReader.mSynopsisFileColumn">
+            <summary>
+            Mapping from enum to synopsis file column name for MSFragger
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPFirstHitsFileName">
+            <summary>
+            First hits file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPModSummaryFileName">
+            <summary>
+            Mod summary file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPPepToProteinMapFileName">
+            <summary>
+            Peptide to protein map file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPProteinModsFileName">
+            <summary>
+            Protein mods file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPSynopsisFileName">
+            <summary>
+            Synopsis file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPResultToSeqMapFileName">
+            <summary>
+            Result to sequence map file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPSeqInfoFileName">
+            <summary>
+            Sequence info file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.PHRPSeqToProteinMapFileName">
+            <summary>
+            Sequence to protein map file
+            </summary>
+        </member>
+        <member name="P:PHRPReader.Reader.MSFraggerSynFileReader.SearchEngineName">
+            <summary>
+            Search engine name
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.#ctor(System.String,System.String)">
+            <summary>
+            Constructor; assumes loadModsAndSeqInfo=True
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="inputFilePath">Input file path</param>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.#ctor(System.String,System.String,System.Boolean)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="inputFilePath">Input file path</param>
+            <param name="loadModsAndSeqInfo">If True, load the ModSummary file and SeqInfo files</param>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.#ctor(System.String,System.String,PHRPReader.StartupOptions)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="datasetName">Dataset name</param>
+            <param name="inputFilePath">Input file path</param>
+            <param name="startupOptions">Startup Options, in particular LoadModsAndSeqInfo and MaxProteinsPerPSM</param>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetColumnHeaderNames">
+            <summary>
+            Get the header names in the PHRP synopsis or first hits file for this tool
+            </summary>
+            <returns>List of header names</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetColumnHeaderNamesAndIDs">
+            <summary>
+            Header names and enums for the PHRP synopsis file for this tool
+            </summary>
+            <returns>Dictionary of header names and enum values</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetColumnMapFromHeaderLine(System.Collections.Generic.List{System.String})">
+            <summary>
+            Compares the names in headerNames to the standard header names tracked by the dictionary returned by GetColumnHeaderNamesAndIDs
+            Populates a dictionary mapping enum MSFraggerSynFileColumns to the 0-based index in columnNames
+            </summary>
+            <param name="headerNames"></param>
+            <returns>Dictionary mapping the enum value to the column index in headerNames (0-based column index)</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetColumnNameByID(PHRPReader.Data.MSFraggerSynFileColumns)">
+            <summary>
+            Get the synopsis file column name associated with the given enum
+            </summary>
+            <param name="column"></param>
+            <returns>Column name</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPFirstHitsFileName(System.String)">
+            <summary>
+            Default first hits file for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPModSummaryFileName(System.String)">
+            <summary>
+            Default ModSummary file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPPepToProteinMapFileName(System.String)">
+            <summary>
+            Default PepToProtMap file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPProteinModsFileName(System.String)">
+            <summary>
+            Default ProteinMods file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPSynopsisFileName(System.String)">
+            <summary>
+            Default Synopsis file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPResultToSeqMapFileName(System.String)">
+            <summary>
+            Default ResultToSeq map file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPSeqInfoFileName(System.String)">
+            <summary>
+            Default SeqInfo map file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPHRPSeqToProteinMapFileName(System.String)">
+            <summary>
+            Default SeqToProtein map file name for the given dataset
+            </summary>
+            <param name="datasetName"></param>
+            <returns>Filename</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPrecursorSearchTolerances(PHRPReader.Data.SearchEngineParameters,System.Double@,System.Double@,System.Boolean@,System.Boolean@)">
+            <summary>
+            Examine the MSFragger parameters to determine the precursor mass tolerance(s)
+            </summary>
+            <param name="searchEngineParams">MSFragger search engine parameters loaded from a Key=Value parameter file</param>
+            <param name="toleranceLower">Tolerance to the left, e.g. -20</param>
+            <param name="toleranceUpper">Tolerance to the right, e.g. 20</param>
+            <param name="ppmBased">True if ppm-based tolerances</param>
+            <param name="singleTolerance"></param>
+            <returns>True if the tolerance parameters were found, false if not found or an error</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetSearchEngineName">
+            <summary>
+            Search engine name
+            </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.LoadSearchEngineParameters(System.String,PHRPReader.Data.SearchEngineParameters@)">
+            <summary>
+            Parses the specified MSFragger parameter file
+            </summary>
+            <param name="searchEngineParamFileName"></param>
+            <param name="searchEngineParams"></param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.ParsePHRPDataLine(System.String,System.Int32,PHRPReader.Data.PSM@,System.Boolean)">
+            <summary>
+            Parse the data line read from a PHRP results file
+            </summary>
+            <remarks>When fastReadMode is True, you should call FinalizePSM to populate the remaining fields</remarks>
+            <param name="line">Data line</param>
+            <param name="linesRead">Number of lines read so far (used for error reporting)</param>
+            <param name="psm">Output: PSM details</param>
+            <param name="fastReadMode">When set to true, reads the next data line, but doesn't perform text parsing required to determine cleavage state</param>
+            <returns>True if successful, false if an error</returns>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.UpdatePrecursorMassTolerance(PHRPReader.Data.SearchEngineParameters,System.Double,System.Double,System.Boolean)">
+            <summary>
+            Update PrecursorMassToleranceDa and PrecursorMassTolerancePpm in searchEngineParams
+            </summary>
+            <param name="searchEngineParams">Search engine parameters</param>
+            <param name="massToleranceLower">Tolerance to the left, e.g. -20</param>
+            <param name="massToleranceUpper">Tolerance to the right, e.g. 20</param>
+            <param name="ppmBased">True if ppm-based tolerances</param>
         </member>
         <member name="T:PHRPReader.Reader.PrecursorInfoFileReader">
             <summary>
@@ -6431,7 +6768,7 @@
             If defined, update chargeCarrierMass with the associated mass value and return True
             Otherwise return false
             </summary>
-            <remarks>This function is used by PHRPMassErrorValidator in the Analysis Manager</remarks>
+            <remarks>This method is used by PHRPMassErrorValidator in the Analysis Manager</remarks>
             <param name="searchEngineParams"></param>
             <param name="chargeCarrierMass"></param>
             <returns>True if successful, false if an error</returns>
@@ -7249,7 +7586,7 @@
             <param name="searchEngineName">Search engine name (e.g. MS-GF+)</param>
             <param name="searchEngineParamFileName">Search engine parameter file name (must exist in InputDirectoryPath)</param>
             <param name="peptideHitResultType">PeptideHitResultType (only important if reading a ModA parameter file</param>
-            <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling function)</param>
+            <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling method)</param>
             <returns>True if successful, false if an error</returns>
         </member>
         <member name="M:PHRPReader.Reader.SynFileReaderBaseClass.ReadKeyValuePairSearchEngineParamFile(System.String,System.String,PHRPReader.PeptideHitResultTypes,PHRPReader.Data.SearchEngineParameters,System.String@,System.String@)">
@@ -7259,7 +7596,7 @@
             <param name="searchEngineName">Search engine name (e.g. MS-GF+)</param>
             <param name="paramFilePath">Search engine parameter file path</param>
             <param name="peptideHitResultType">PeptideHitResultType (only important if reading a ModA parameter file</param>
-            <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling function)</param>
+            <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling method)</param>
             <param name="errorMessage">Output: error message</param>
             <param name="warningMessage">Output: warning message</param>
             <returns>True if successful, false if an error</returns>
