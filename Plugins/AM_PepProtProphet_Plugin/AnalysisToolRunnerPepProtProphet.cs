@@ -557,12 +557,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="experimentGroupDirectory"></param>
         /// <param name="datasetName"></param>
         /// <param name="options"></param>
+        /// <param name="pepXmlFile"></param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
             FileSystemInfo fragPipeLibDirectory,
             FileSystemInfo experimentGroupDirectory,
             string datasetName,
-            FragPipeOptions options)
+            FragPipeOptions options,
+            out FileInfo pepXmlFile)
         {
             try
             {
@@ -618,19 +620,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var currentStep = "PercolatorOutputToPepXML for " + datasetName;
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
+                pepXmlFile = new FileInfo(
+                    Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pin.pep.xml", datasetName)));
+
                 if (processingSuccess)
                 {
                     // Verify that Percolator created the .pin.pep.xml file
-                    var pepXmlFileFromPercolator = new FileInfo(
-                        Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pin.pep.xml", datasetName)));
-
-                    if (!pepXmlFileFromPercolator.Exists)
+                    if (!pepXmlFile.Exists)
                     {
-                        LogError("PercolatorOutputToPepXML did not create file " + pepXmlFileFromPercolator.Name);
+                        LogError("PercolatorOutputToPepXML did not create file " + pepXmlFile.Name);
                         return false;
                     }
 
-                    mJobParams.AddResultFileToSkip(pepXmlFileFromPercolator.Name);
+                    mJobParams.AddResultFileToSkip(pepXmlFile.Name);
                     return true;
                 }
 
@@ -648,6 +650,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in ConvertPercolatorOutputToPepXML", ex);
+                pepXmlFile = new FileInfo(string.Format("interact-{0}.pin.pep.xml", datasetName));
                 return false;
             }
         }
@@ -2247,11 +2250,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var percolatorToPepXMLSuccess = ConvertPercolatorOutputToPepXML(
                             fragPipeLibDirectory,
-                            experimentGroupDirectory, datasetName,
-                            options);
+                            experimentGroupDirectory,
+                            datasetName,
+                            options,
+                            out var pepXmlFile);
 
                         if (!percolatorToPepXMLSuccess)
                             continue;
+
+                        peptideProphetPepXmlFiles.Add(pepXmlFile);
 
                         // Delete the percolator PSM files, since we no longer need them
 
