@@ -124,6 +124,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (FraggerOptions.IsUndefinedOrAuto(runPeptideProphetJobParam) && FraggerOptions.IsUndefinedOrAuto(runPercolatorJobParam))
             {
                 // Use Percolator by default, unless databaseSplitCount is more than 1
+                //   FragPipe v16 defaulted to PeptideProphet for closed searches
+                //   FragPipe v17 defaults to Percolator for closed searches
+
                 // After loading the MSFragger parameter file with LoadMSFraggerOptions, if the mods include iTRAQ or if running an open search, this will be changed to PeptideProphet
                 FraggerOptions.MS1ValidationMode = databaseSplitCount == 1
                     ? MS1ValidationModes.Percolator
