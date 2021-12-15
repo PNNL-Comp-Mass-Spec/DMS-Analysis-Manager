@@ -551,6 +551,10 @@ namespace AnalysisManagerExtractionPlugin
                         result = GetMaxQuantFiles();
                         break;
 
+                    case RESULT_TYPE_MSFRAGGER:
+                        result = GetMSFraggerFiles();
+                        break;
+
                     default:
                         LogError("Invalid tool result type: " + resultTypeName);
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1205,6 +1209,31 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType GetMSFraggerFiles()
+        {
+            string fileToGet;
+
+            if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET))
+            {
+                fileToGet = AGGREGATION_JOB_DATASET + "_psm.tsv";
+            }
+            else
+            {
+                fileToGet = DatasetName + "_psm.tsv";
+            }
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            // Note that we'll obtain the MSFragger parameter file in RetrieveMiscFiles
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

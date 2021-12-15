@@ -243,6 +243,12 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPHRPForMaxQuant();
                         break;
 
+                    case AnalysisResources.RESULT_TYPE_MSFRAGGER:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for MSFragger";
+                        result = RunPHRPForMSFragger();
+                        break;
+
                     default:
                         // Should never get here - invalid result type specified
                         LogError("Invalid ResultType specified: " + resultTypeName);
@@ -1349,10 +1355,37 @@ namespace AnalysisManagerExtractionPlugin
             return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFilePath);
         }
 
+        private CloseOutType RunPHRPForMSFragger()
         {
+            string inputFileName;
 
+            if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+            {
+                inputFileName = AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv";
+            }
+            else
+            {
+                inputFileName = mDatasetName + "_psm.tsv";
+            }
+
+            var synopsisFileName = mDatasetName + "_msfragger_syn.txt";
+
+            var result = RunPHRPWork(
+                "MaxQuant",
+                inputFileName,
+                PeptideHitResultTypes.MaxQuant,
+                synopsisFileName,
                 false,
                 true,
+                out var synopsisFilePath);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
+
+            // Summarize the number of PSMs in the synopsis file
+            // This is done by this class since the MaxQuant script does not have an MSGF job step
+
+            return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFilePath);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
