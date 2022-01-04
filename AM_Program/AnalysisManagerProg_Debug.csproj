@@ -47,9 +47,6 @@
   <PropertyGroup>
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Cyclops, Version=1.1.7107.29277, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
