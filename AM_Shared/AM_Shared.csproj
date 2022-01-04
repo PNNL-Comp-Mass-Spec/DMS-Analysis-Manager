@@ -90,9 +90,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="ThermoRawFileReader">
-      <HintPath>..\AM_Common\ThermoRawFileReader.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AnalysisTool\AnalysisMgrBase.cs" />
@@ -191,6 +188,9 @@
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.111</Version>
     </PackageReference>
+    <PackageReference Include="ThermoRawFileReader">
+      <Version>4.1.23</Version>
+    </PackageReference>
     <PackageReference Include="UIMFLibrary">
       <Version>3.7.7</Version>
     </PackageReference>
@@ -206,6 +206,7 @@ xcopy "$(TargetDir)PRISMDatabaseUtils.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)ThermoRawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
