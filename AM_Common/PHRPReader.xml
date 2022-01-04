@@ -1562,6 +1562,11 @@
             Base peak m/z
             </summary>
         </member>
+        <member name="P:PHRPReader.Data.ReporterIonInfo.ParentScan">
+            <summary>
+            Parent scan number
+            </summary>
+        </member>
         <member name="P:PHRPReader.Data.ReporterIonInfo.ReporterIonIntensityMax">
             <summary>
             Maximum reporter ion intensity
