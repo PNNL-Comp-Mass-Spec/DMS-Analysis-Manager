@@ -338,7 +338,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return false;
                 }
 
-                var reader = new clsMzXMLFileReader();
+                var reader = new MzXMLFileReader();
                 reader.OpenFile(mzXmlFile.FullName);
 
                 // Read the spectra and examine the scan gaps

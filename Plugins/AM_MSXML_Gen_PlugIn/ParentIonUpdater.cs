@@ -63,7 +63,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 OnProgressUpdate("Caching parent ion info in " + mgfFilePath, 0);
 
-                var mgfFileReader = new clsMGFFileReader { ReadTextDataOnly = false };
+                var mgfFileReader = new MgfFileReader { ReadTextDataOnly = false };
 
                 // Open the MGF file
                 mgfFileReader.OpenFile(mgfFilePath);
@@ -130,7 +130,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourceDtaFile = new FileInfo(dtaFilePath);
                 var updatedDtaFile = new FileInfo(sourceDtaFile.FullName + ".new");
 
-                var dtaFileReader = new clsDtaTextFileReader(false) { ReadTextDataOnly = true };
+                var dtaFileReader = new DtaTextFileReader(false) { ReadTextDataOnly = true };
 
                 // Open the _DTA.txt file
                 dtaFileReader.OpenFile(dtaFilePath);

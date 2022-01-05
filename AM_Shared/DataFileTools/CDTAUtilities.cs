@@ -327,7 +327,7 @@ namespace AnalysisManagerBase.DataFileTools
                 var updatedFile = new FileInfo(outputFilePathTemp);
 
                 // We use the clsDtaTextFileReader to parse out the scan and charge from the header line
-                var dtaTextReader = new MSDataFileReader.clsDtaTextFileReader(false);
+                var dtaTextReader = new MSDataFileReader.DtaTextFileReader(false);
 
                 // Open the input file
                 using (var reader = new StreamReader(new FileStream(originalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))

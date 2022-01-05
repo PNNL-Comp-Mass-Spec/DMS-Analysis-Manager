@@ -95,7 +95,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 var originalFile = new FileInfo(filePath);
                 var indexedFile = new FileInfo(originalFile.FullName + ".indexed");
 
-                var reader = new clsBinaryTextReader();
+                var reader = new BinaryTextReader();
                 if (!reader.OpenFile(originalFile.FullName))
                     return false;
 
