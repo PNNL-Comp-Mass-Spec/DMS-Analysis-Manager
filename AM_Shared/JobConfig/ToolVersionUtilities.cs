@@ -167,7 +167,8 @@ namespace AnalysisManagerBase.JobConfig
                         {
                             // ProteoWizard release: 3.0.18145 (f23158c8f)
                             versionInfo = Global.AppendToComment(versionInfo, dataLine);
-                        } else if (dataLine.StartsWith("Build date", StringComparison.OrdinalIgnoreCase))
+                        }
+                        else if (dataLine.StartsWith("Build date", StringComparison.OrdinalIgnoreCase))
                         {
                             // Add the executable name to the build date text, giving, for example:
                             // MSConvert Build date: May 24 2018 22:22:11
@@ -181,6 +182,7 @@ namespace AnalysisManagerBase.JobConfig
                 if (!string.IsNullOrWhiteSpace(versionInfo))
                     return true;
 
+                // Did not find ProteoWizard release info in the help text from msconvert.exe
                 OnErrorEvent("Did not find ProteoWizard release info in the help text from " + Path.GetFileName(msConvertPath));
                 return false;
             }
