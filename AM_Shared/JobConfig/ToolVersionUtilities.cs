@@ -242,9 +242,10 @@ namespace AnalysisManagerBase.JobConfig
                     switch (key.ToLower())
                     {
                         case "filename":
-                            break;
                         case "path":
+                            // Ignore these
                             break;
+
                         case "version":
                             version = value;
                             if (string.IsNullOrWhiteSpace(version))
@@ -257,13 +258,11 @@ namespace AnalysisManagerBase.JobConfig
                                 success = true;
                             }
                             break;
+
                         case "error":
                             OnErrorEvent("Error reported by DLLVersionInspector for " + Path.GetFileName(dllFilePath) + ": " + value);
                             success = false;
                             break;
-                        // default:
-                        // Ignore the line
-
                     }
                 }
             }
