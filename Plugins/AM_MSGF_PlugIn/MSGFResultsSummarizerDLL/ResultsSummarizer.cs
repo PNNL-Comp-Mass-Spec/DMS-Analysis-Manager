@@ -319,8 +319,8 @@ namespace MSGFResultsSummarizer
         {
             try
             {
-                // Initialize the dictionary that will be used to track the number of spectra searched (grouped by dataset if MaxQuant results)
-                // Keys are dataset name or ID (empty string of not MaxQuant)
+                // Initialize the dictionary that will be used to track the number of spectra searched (grouped by dataset if MaxQuant or MSFragger results)
+                // Keys are dataset name or ID (empty string if not MaxQuant or MSFragger)
                 // Values are a dictionary where keys are Scan_Charge and values are scan number
 
                 var uniqueSpectraByDataset = new Dictionary<string, Dictionary<string, int>>();
@@ -337,7 +337,12 @@ namespace MSGFResultsSummarizer
                 {
                     var currentPSM = reader.CurrentPSM;
 
-                    var datasetIdOrName = ResultType == PeptideHitResultTypes.MaxQuant ? GetMaxQuantDatasetIdOrName(currentPSM) : string.Empty;
+                    var datasetIdOrName = ResultType switch
+                    {
+                        PeptideHitResultTypes.MaxQuant => GetMaxQuantDatasetIdOrName(currentPSM),
+                        PeptideHitResultTypes.MSFragger => GetMSFraggerDatasetIdOrName(currentPSM),
+                        _ => string.Empty
+                    };
 
                     var scanKey = currentPSM.Charge >= 0 ? currentPSM.ScanNumber + "_" + currentPSM.Charge : currentPSM.ScanNumber.ToString();
 
@@ -908,6 +913,15 @@ namespace MSGFResultsSummarizer
             return currentPSM.GetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.Dataset));
         }
 
+        private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
+        {
+            var datasetID = currentPSM.GetScoreInt(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.DatasetID));
+            if (datasetID > 0)
+                return datasetID.ToString();
+
+            return currentPSM.GetScore(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.Dataset));
+        }
+
         private StartupOptions GetMinimalMemoryPHRPStartupOptions()
         {
             var startupOptions = new StartupOptions
@@ -1282,8 +1296,9 @@ namespace MSGFResultsSummarizer
                     PeptideHitResultTypes.MaxQuant or
                     PeptideHitResultTypes.MODa or
                     PeptideHitResultTypes.MODPlus or
-                    PeptideHitResultTypes.MSPathFinder or
-                    PeptideHitResultTypes.MSAlign)
+                    PeptideHitResultTypes.MSAlign or
+                    PeptideHitResultTypes.MSFragger or
+                    PeptideHitResultTypes.MSPathFinder)
                 {
                     loadMSGFResults = false;
                 }
@@ -1351,7 +1366,7 @@ namespace MSGFResultsSummarizer
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
                 // This is used to avoid storing multiple PSMs for a given scan
-                // For MaxQuant results, we store DatasetNameOrId_ScanNumber
+                // For MaxQuant and MSFragger results, we store DatasetNameOrId_ScanNumber
                 // For all other results, we simply store scan number (as a string)
                 var scansStored = new SortedSet<string>();
 
@@ -1373,9 +1388,15 @@ namespace MSGFResultsSummarizer
 
                     string datasetIdOrName;
                     string scanKey;
+
                     if (ResultType == PeptideHitResultTypes.MaxQuant)
                     {
                         datasetIdOrName = GetMaxQuantDatasetIdOrName(currentPSM);
+                        scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                    }
+                    else if (ResultType == PeptideHitResultTypes.MSFragger)
+                    {
+                        datasetIdOrName = GetMSFraggerDatasetIdOrName(currentPSM);
                         scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
                     }
                     else
@@ -1438,6 +1459,14 @@ namespace MSGFResultsSummarizer
                             valid = double.TryParse(posteriorErrorProbabilityText, out specEValue);
                         }
                     }
+                    else if (ResultType == PeptideHitResultTypes.MSFragger)
+                    {
+                        // Use expectation score (E-Value) for specEValue
+                        if (currentPSM.TryGetScore(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.EValue), out var eValueText))
+                        {
+                            valid = double.TryParse(eValueText, out specEValue);
+                        }
+                    }
                     else
                     {
                         valid = double.TryParse(currentPSM.MSGFSpecEValue, out specEValue);
@@ -1477,6 +1506,10 @@ namespace MSGFResultsSummarizer
                             psmFDR = currentPSM.GetScoreDbl(MSAlignSynFileReader.GetColumnNameByID(MSAlignSynFileColumns.FDR), PSMInfo.UNKNOWN_FDR);
                             break;
 
+                        case PeptideHitResultTypes.MSFragger:
+                            psmFDR = currentPSM.GetScoreDbl(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
                         case PeptideHitResultTypes.MSGFPlus:
                             psmFDR = currentPSM.GetScoreDbl(MSGFPlusSynFileReader.GetColumnNameByID(MSGFPlusSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
 
@@ -1492,7 +1525,6 @@ namespace MSGFResultsSummarizer
                             break;
 
                         case PeptideHitResultTypes.Inspect:
-                        case PeptideHitResultTypes.MSFragger:
                         case PeptideHitResultTypes.Sequest:
                         case PeptideHitResultTypes.TopPIC:
                         case PeptideHitResultTypes.XTandem:
