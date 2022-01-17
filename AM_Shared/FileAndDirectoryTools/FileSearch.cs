@@ -1797,9 +1797,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
-#pragma warning disable 618
+#pragma warning disable CS0618
             sourceFilePath = FindMZXmlFile(out var hashCheckFilePath);
-#pragma warning restore 618
+#pragma warning restore CS0618
 
             if (string.IsNullOrEmpty(sourceFilePath))
             {

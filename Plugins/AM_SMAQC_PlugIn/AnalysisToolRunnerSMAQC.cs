@@ -247,7 +247,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this method");
 
-#pragma warning disable 162
+#pragma warning disable CS0162
             var datasetID = mJobParams.GetJobParameter("DatasetID", -1);
 
             if (datasetID < 0)
@@ -288,7 +288,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             return success;
 
-#pragma warning restore 162
+#pragma warning restore CS0162
 
         }
 
@@ -776,9 +776,9 @@ namespace AnalysisManagerSMAQCPlugIn
             var additionalDLLs = new List<string>();
             if (LLRC_ENABLED)
             {
-#pragma warning disable 162
+#pragma warning disable CS0162
                 additionalDLLs.Add("LLRC.dll");
-#pragma warning restore 162
+#pragma warning restore CS0162
             }
 
             var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs, false);

@@ -42,7 +42,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-#pragma warning disable 162
+#pragma warning disable CS0162
 
             // Retrieve the MSAlign_Quant parameter file
             // For example, MSAlign_Quant_Workflow_2012-07-25
@@ -142,7 +142,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
 
-#pragma warning restore 162
+#pragma warning restore CS0162
         }
     }
 }

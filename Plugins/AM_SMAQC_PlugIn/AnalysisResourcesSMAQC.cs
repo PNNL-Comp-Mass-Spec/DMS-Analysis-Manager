@@ -70,7 +70,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!AnalysisToolRunnerSMAQC.LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this method");
 
-#pragma warning disable 162
+#pragma warning disable CS0162
 
             var llrcRunnerProgLoc = mMgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
             var filesToCopy = new List<string> {
@@ -96,7 +96,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             return true;
 
-#pragma warning restore 162
+#pragma warning restore CS0162
 
         }
 

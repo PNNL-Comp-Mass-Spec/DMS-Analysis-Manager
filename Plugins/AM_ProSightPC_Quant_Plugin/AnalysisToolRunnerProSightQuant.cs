@@ -61,7 +61,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-#pragma warning disable 162
+#pragma warning disable CS0162
 
                 // Determine the path to the TargetedWorkflowConsole.exe program
                 mTargetedWorkflowsProgLoc = DetermineProgramLocation("TargetedWorkflowsProgLoc", "TargetedWorkflowConsole.exe");
@@ -235,7 +235,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-#pragma warning restore 162
+#pragma warning restore CS0162
             }
             catch (Exception ex)
             {

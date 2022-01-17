@@ -141,10 +141,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         // See if a .mzXML or .mzML file already exists for this dataset
 
-#pragma warning disable 618
+#pragma warning disable CS0618
                         // First search for a .mzXML file
                         var mzXMLFilePath = FileSearchTool.FindMZXmlFile(out var hashcheckFilePath);
-#pragma warning restore 618
+#pragma warning restore CS0618
 
                         var mzMLFilePath = string.Empty;
 

@@ -1241,9 +1241,9 @@ namespace DTASpectraFileGen
 
             try
             {
-#pragma warning disable 618
+#pragma warning disable CS0618
                 if (ZipFileSharpZipLib(inputFilePath))
-#pragma warning restore 618
+#pragma warning restore CS0618
                 {
                     var warningMsg = string.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", inputFileName);
                     LogWarning(warningMsg);

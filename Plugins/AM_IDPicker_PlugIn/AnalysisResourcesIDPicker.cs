@@ -77,13 +77,13 @@ namespace AnalysisManagerIDPickerPlugIn
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (!AnalysisToolRunnerIDPicker.ALWAYS_SKIP_IDPICKER)
                 {
-#pragma warning disable 162
+#pragma warning disable CS0162
                     // Retrieve the IDPicker parameter file specified for this job
                     if (!RetrieveIDPickerParamFile())
                     {
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
-#pragma warning restore 162
+#pragma warning restore CS0162
                 }
 
                 var rawDataTypeName = mJobParams.GetParam("RawDataType");
