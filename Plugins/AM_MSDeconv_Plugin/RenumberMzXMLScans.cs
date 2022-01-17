@@ -11,6 +11,8 @@ namespace AnalysisManagerMSDeconvPlugIn
 {
     public class RenumberMzXMLScans
     {
+        // Ignore Spelling: num
+
         private const string XML_ELEMENT_SCAN = "scan";
         private const string XML_ELEMENT_PRECURSOR_MZ = "precursorMz";
 
