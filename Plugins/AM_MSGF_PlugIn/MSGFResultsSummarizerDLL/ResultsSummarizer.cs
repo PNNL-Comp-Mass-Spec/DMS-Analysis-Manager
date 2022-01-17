@@ -37,9 +37,28 @@ namespace MSGFResultsSummarizer
 
         // ReSharper restore CommentTypo
 
-        public const double DEFAULT_MSGF_THRESHOLD = 1E-10;        // 1E-10
-        public const double DEFAULT_EVALUE_THRESHOLD = 0.0001;     // 1E-4   (only used when MSGF Scores are not available)
-        public const double DEFAULT_FDR_THRESHOLD = 0.01;          // 1% FDR
+        /// <summary>
+        /// Dataset name for aggregation jobs
+        /// </summary>
+        public const string AGGREGATION_JOB_DATASET = "Aggregation";
+
+        /// <summary>
+        /// Default MSGF score threshold, 1E-10
+        /// </summary>
+        public const double DEFAULT_MSGF_THRESHOLD = 1E-10;
+
+        /// <summary>
+        /// Default MSGF score threshold, 1E-4
+        /// </summary>
+        /// <remarks>
+        /// only used when MSGF Scores are not available
+        /// </remarks>
+        public const double DEFAULT_EVALUE_THRESHOLD = 0.0001;
+
+        /// <summary>
+        /// Default FDR threshold, 1%
+        /// </summary>
+        public const double DEFAULT_FDR_THRESHOLD = 0.01;
 
         private const string DEFAULT_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
 
@@ -161,6 +180,9 @@ namespace MSGFResultsSummarizer
 
         public string ResultTypeName => ResultType.ToString();
 
+        /// <summary>
+        /// Number of MS/MS spectra that the PSM identification tool processed
+        /// </summary>
         public int SpectraSearched { get; private set; }
 
         public int TotalPSMsFDR => mFDRBasedCounts?.TotalPSMs ?? 0;
