@@ -1932,12 +1932,12 @@ namespace MSGFResultsSummarizer
 
                 var columnNamesByIdentifier = new Dictionary<string, SortedSet<string>>();
 
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Symbol");
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Mass");
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Target_Residues");
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Modification_Type");
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Mass_Correction_Tag");
-                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, "Occurrence_Count");
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Symbol);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Mass);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Target_Residues);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Type);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Mass_Correction_Tag);
+                DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Occurrence_Count);
 
                 var reporterIonNames = new Dictionary<string, ReporterIonTypes>(StringComparer.OrdinalIgnoreCase)
                 {
@@ -1974,19 +1974,17 @@ namespace MSGFResultsSummarizer
                         }
 
                         // Missing header line; assume the order
-                        columnMap.Add("Modification_Symbol", 0);
-                        columnMap.Add("Modification_Mass", 1);
-                        columnMap.Add("Target_Residues", 2);
-                        columnMap.Add("Modification_Type", 3);
-                        columnMap.Add("Mass_Correction_Tag", 4);
+                        columnMap.Add(PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Symbol, 0);
+                        columnMap.Add(PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Mass, 1);
+                        columnMap.Add(PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Target_Residues, 2);
+                        columnMap.Add(PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Type, 3);
+                        columnMap.Add(PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Mass_Correction_Tag, 4);
                     }
 
                     var resultRow = dataLine.Split('\t');
 
-                    // var modificationSymbol = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Symbol");
-                    // var targetResidues = DataTableUtils.GetColumnValue(resultRow, columnMap, "Target_Residues");
-                    var modificationType = DataTableUtils.GetColumnValue(resultRow, columnMap, "Modification_Type");
-                    var massCorrectionTag = DataTableUtils.GetColumnValue(resultRow, columnMap, "Mass_Correction_Tag");
+                    var modificationType = DataTableUtils.GetColumnValue(resultRow, columnMap, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Type);
+                    var massCorrectionTag = DataTableUtils.GetColumnValue(resultRow, columnMap, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Mass_Correction_Tag);
 
                     if (!modificationType.Equals("D"))
                         continue;
