@@ -527,127 +527,6 @@ namespace MSGFResultsSummarizer
         }
 
         /// <summary>
-        /// Lookup dataset name using dataset ID
-        /// </summary>
-        /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
-        /// <param name="datasetID"></param>
-        /// <param name="datasetName">Output: dataset name, if found</param>
-        private bool LookupDatasetNameByID(int datasetID, out string datasetName)
-        {
-            datasetName = string.Empty;
-
-            try
-            {
-                if (datasetID <= 0)
-                    return false;
-
-                var queryDatasetID = "Select Dataset From V_Dataset_Export Where ID = " + datasetID;
-
-                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
-                RegisterEvents(dbTools);
-
-                // ReSharper disable once ExplicitCallerInfoArgument
-                var success = dbTools.GetQueryResults(queryDatasetID, out var queryResults, callingFunction: "LookupDatasetNameByID");
-
-                if (!success)
-                {
-                    OnWarningEvent("GetQueryResults returned false querying V_Dataset_Export with dataset ID: " + datasetID);
-                    return false;
-                }
-
-                if (queryResults.Count == 0)
-                {
-                    OnWarningEvent("Dataset ID {0} not found in the database; cannot determine dataset name", datasetID);
-                    return false;
-                }
-
-                datasetName = queryResults[0][0];
-                return true;
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Exception looking up dataset name using dataset ID: " + ex.Message, ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
-        /// </summary>
-        /// <remarks>True if success, false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="totalSpectra">Output: number of spectra in the dataset</param>
-        /// <param name="totalMSnSpectra">Output: number of MS/MS spectra in the dataset</param>
-        /// <param name="warnIfNotFound">When true, if the dataset is not found, show a warning message</param>
-        private bool LookupScanStats(string datasetName, out int totalSpectra, out int totalMSnSpectra, bool warnIfNotFound = true)
-        {
-            totalSpectra = 0;
-            totalMSnSpectra = 0;
-
-            try
-            {
-                if (string.IsNullOrEmpty(datasetName))
-                {
-                    SetErrorMessage("Dataset name is empty; cannot lookup scan stats");
-                    return false;
-                }
-
-                var queryScanStats = " SELECT Scan_Count_Total, " +
-                                     "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
-                                     " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + datasetName + "' GROUP BY Scan_Count_Total";
-
-                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
-                RegisterEvents(dbTools);
-
-                // ReSharper disable once ExplicitCallerInfoArgument
-                var scanStatsSuccess = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
-
-                if (scanStatsSuccess && scanStatsFromDb.Count > 0)
-                {
-                    foreach (var resultRow in scanStatsFromDb)
-                    {
-                        var scanCountTotal = resultRow[0];
-                        var scanCountMSn = resultRow[1];
-
-                        if (!int.TryParse(scanCountTotal, out totalSpectra))
-                        {
-                            break;
-                        }
-
-                        int.TryParse(scanCountMSn, out totalMSnSpectra);
-                        return true;
-                    }
-                }
-
-                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + datasetName + "'";
-
-                // ReSharper disable once ExplicitCallerInfoArgument
-                var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
-
-                if (scanCountSuccess && datasetScanCountFromDb.Count > 0)
-                {
-                    foreach (var resultRow in datasetScanCountFromDb)
-                    {
-                        var scanCountTotal = resultRow[0];
-
-                        int.TryParse(scanCountTotal, out totalSpectra);
-                        return true;
-                    }
-                }
-
-                if (warnIfNotFound)
-                    OnWarningEvent("Dataset not found in the database; cannot retrieve scan counts: " + datasetName);
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Exception retrieving scan stats from the database: " + ex.Message, ex);
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Either filter by MSGF or filter by FDR, then update the stats
         /// </summary>
         /// <param name="usingMSGFOrEValueFilter">When true, filter by MSGF or EValue, otherwise filter by FDR</param>
@@ -1851,6 +1730,130 @@ namespace MSGFResultsSummarizer
             {
                 SetErrorMessage("Error in LoadPSMs: " + ex.Message, ex);
                 Console.WriteLine(ex.StackTrace);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Lookup dataset name using dataset ID
+        /// </summary>
+        /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
+        /// <param name="datasetID"></param>
+        /// <param name="datasetName">Output: dataset name, if found</param>
+        private bool LookupDatasetNameByID(int datasetID, out string datasetName)
+        {
+            datasetName = string.Empty;
+
+            try
+            {
+                if (datasetID <= 0)
+                    return false;
+
+                var queryDatasetID = "Select Dataset From V_Dataset_Export Where ID = " + datasetID;
+
+                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
+                RegisterEvents(dbTools);
+
+                // ReSharper disable once ExplicitCallerInfoArgument
+                var success = dbTools.GetQueryResults(queryDatasetID, out var queryResults, callingFunction: "LookupDatasetNameByID");
+
+                if (!success)
+                {
+                    OnWarningEvent("GetQueryResults returned false querying V_Dataset_Export with dataset ID: " + datasetID);
+                    return false;
+                }
+
+                if (queryResults.Count == 0)
+                {
+                    OnWarningEvent("Dataset ID {0} not found in the database; cannot determine dataset name", datasetID);
+                    return false;
+                }
+
+                datasetName = queryResults[0][0];
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Exception looking up dataset name using dataset ID: " + ex.Message, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Lookup the total scans and number of MS/MS scans for the dataset defined by property DatasetName
+        /// </summary>
+        /// <remarks>True if success, false if an error, including if DatasetName is empty or if the dataset is not found in the database</remarks>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="totalSpectra">Output: number of spectra in the dataset</param>
+        /// <param name="totalMSnSpectra">Output: number of MS/MS spectra in the dataset</param>
+        /// <param name="warnIfNotFound">When true, if the dataset is not found, show a warning message</param>
+        private bool LookupScanStats(string datasetName, out int totalSpectra, out int totalMSnSpectra, bool warnIfNotFound = true)
+        {
+            totalSpectra = 0;
+            totalMSnSpectra = 0;
+
+            try
+            {
+                if (string.IsNullOrEmpty(datasetName))
+                {
+                    SetErrorMessage("Dataset name is empty; cannot lookup scan stats");
+                    return false;
+                }
+
+                var queryScanStats =
+                    " SELECT Scan_Count_Total, " +
+                    "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
+                    " FROM V_Dataset_Scans_Export DSE" +
+                    " WHERE Dataset = '" + datasetName + "'" +
+                    " GROUP BY Scan_Count_Total";
+
+                var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
+                RegisterEvents(dbTools);
+
+                // ReSharper disable once ExplicitCallerInfoArgument
+                var scanStatsSuccess = dbTools.GetQueryResults(queryScanStats, out var scanStatsFromDb, callingFunction: "LookupScanStats_V_Dataset_Scans_Export");
+
+                if (scanStatsSuccess && scanStatsFromDb.Count > 0)
+                {
+                    foreach (var resultRow in scanStatsFromDb)
+                    {
+                        var scanCountTotal = resultRow[0];
+                        var scanCountMSn = resultRow[1];
+
+                        if (!int.TryParse(scanCountTotal, out totalSpectra))
+                        {
+                            break;
+                        }
+
+                        int.TryParse(scanCountMSn, out totalMSnSpectra);
+                        return true;
+                    }
+                }
+
+                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + datasetName + "'";
+
+                // ReSharper disable once ExplicitCallerInfoArgument
+                var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");
+
+                if (scanCountSuccess && datasetScanCountFromDb.Count > 0)
+                {
+                    foreach (var resultRow in datasetScanCountFromDb)
+                    {
+                        var scanCountTotal = resultRow[0];
+
+                        int.TryParse(scanCountTotal, out totalSpectra);
+                        return true;
+                    }
+                }
+
+                if (warnIfNotFound)
+                    OnWarningEvent("Dataset not found in the database; cannot retrieve scan counts: " + datasetName);
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Exception retrieving scan stats from the database: " + ex.Message, ex);
                 return false;
             }
         }
