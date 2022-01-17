@@ -462,16 +462,16 @@ namespace MSGFResultsSummarizer
                     PercentMSnScansNoPSM = 100;
                 }
 
-                if (scanList.Count > 0)
-                {
-                    // Compare the last scan number seen to the total number of scans
-                    var scanGap = totalSpectra - scanList[scanList.Count - 1] - 1;
 
-                    if (scanGap > maximumScanGap)
                     {
-                        maximumScanGap = scanGap;
                     }
                 }
+
+                // Prior to January 2022 we also examined the difference between the last value in scanList and the total spectrum count,
+                // computed as totalSpectra - scanList[scanList.Count - 1] - 1,
+                // updating maximumScanGap if larger
+
+                // This comparison is not useful since the final MS/MS scans in a dataset are often sparse spectra
 
                 if (maximumScanGap > MaximumScanGapAdjacentMSn)
                 {
