@@ -2476,48 +2476,48 @@ namespace AnalysisManagerBase.AnalysisTool
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = jobParams.GetParam("ToolName");
 
-            if (scriptName.StartsWith("MaxQuant"))
+            if (scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MAXQUANT;
             }
 
-            if (scriptName.StartsWith("MODa"))
+            if (scriptName.StartsWith("MODa", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MODA;
             }
 
-            if (scriptName.StartsWith("MODPlus"))
+            if (scriptName.StartsWith("MODPlus", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MODPLUS;
             }
 
-            if (scriptName.StartsWith("MSAlign"))
+            if (scriptName.StartsWith("MSAlign", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSALIGN;
             }
 
-            if (scriptName.StartsWith("MSFragger"))
+            if (scriptName.StartsWith("MSFragger", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSFRAGGER;
             }
 
-            if (scriptName.StartsWith("MSPathFinder"))
+            if (scriptName.StartsWith("MSPathFinder", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSPATHFINDER;
             }
 
-            if (scriptName.StartsWith("MSGFPlus"))
+            if (scriptName.StartsWith("MSGFPlus", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSGFPLUS;
             }
 
-            if (scriptName.StartsWith("TopPIC"))
+            if (scriptName.StartsWith("TopPIC", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_TOPPIC;
             }
 
             // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (scriptName.StartsWith("XTandem"))
+            if (scriptName.StartsWith("XTandem", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_XTANDEM;
             }
