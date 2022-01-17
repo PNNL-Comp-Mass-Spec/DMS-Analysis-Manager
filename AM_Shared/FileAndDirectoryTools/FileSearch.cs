@@ -650,8 +650,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Examine the files for this directory
                 foreach (var matchingFile in targetDirectory.GetFiles(fileName))
                 {
-                    var filePathMatch = matchingFile.FullName;
-                    return filePathMatch;
+                    return matchingFile.FullName;
                 }
 
                 // Match not found
@@ -659,13 +658,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 foreach (var subdirectory in targetDirectory.GetDirectories())
                 {
-                    if (!directoryNamesToSkip.Contains(subdirectory.Name))
+                    if (directoryNamesToSkip.Contains(subdirectory.Name))
+                        continue;
+
+                    var filePathMatch = FindFileInDirectoryTree(subdirectory.FullName, fileName);
+                    if (!string.IsNullOrEmpty(filePathMatch))
                     {
-                        var filePathMatch = FindFileInDirectoryTree(subdirectory.FullName, fileName);
-                        if (!string.IsNullOrEmpty(filePathMatch))
-                        {
-                            return filePathMatch;
-                        }
+                        return filePathMatch;
                     }
                 }
             }
