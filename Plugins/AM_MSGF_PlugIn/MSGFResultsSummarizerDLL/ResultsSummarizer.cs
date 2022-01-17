@@ -315,7 +315,7 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        private void ExamineFirstHitsFile(string firstHitsFilePath)
+        private void ExamineFirstHitsFile(string firstHitsOrSynopsisFilePath, bool isFirstHitsFile)
         {
             try
             {
@@ -327,10 +327,10 @@ namespace MSGFResultsSummarizer
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(firstHitsFilePath, 80));
+                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(firstHitsOrSynopsisFilePath, 80));
                 var lastStatusTime = DateTime.UtcNow;
 
-                using var reader = new ReaderFactory(firstHitsFilePath, startupOptions);
+                using var reader = new ReaderFactory(firstHitsOrSynopsisFilePath, startupOptions);
                 RegisterEvents(reader);
 
                 while (reader.MoveNext())
@@ -1069,48 +1069,51 @@ namespace MSGFResultsSummarizer
 
                 SpectraSearched = 0;
 
-                /////////////////////
                 // Define the file paths
 
                 // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                string phrpFirstHitsFileName;
+                string firstHitsOrSynopsisFileName;
 
                 // We use the Synopsis file to count the number of peptides and proteins observed
-                string phrpSynopsisFileName;
+                string synopsisFileName;
 
                 // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
 
                 if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
                 {
-                    phrpSynopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
+                    synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
                 }
                 else
                 {
-                    phrpSynopsisFileName = synopsisFileNameFromPHRP;
+                    synopsisFileName = synopsisFileNameFromPHRP;
                 }
 
                 if (ResultType is
-                    PeptideHitResultTypes.XTandem or PeptideHitResultTypes.MSAlign or
-                    PeptideHitResultTypes.MODa or PeptideHitResultTypes.MODPlus or
-                    PeptideHitResultTypes.MSPathFinder or PeptideHitResultTypes.MaxQuant)
+                    PeptideHitResultTypes.MaxQuant or
+                    PeptideHitResultTypes.MODa or
+                    PeptideHitResultTypes.MODPlus or
+                    PeptideHitResultTypes.MSAlign or
+                    PeptideHitResultTypes.MSFragger or
+                    PeptideHitResultTypes.MSPathFinder or
+                    PeptideHitResultTypes.XTandem)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
-                    phrpFirstHitsFileName = phrpSynopsisFileName;
+                    firstHitsOrSynopsisFileName = synopsisFileName;
                 }
                 else
                 {
-                    phrpFirstHitsFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                    firstHitsOrSynopsisFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
                 }
 
                 // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
 
-                if (phrpSynopsisFileName == null)
-                    throw new NullReferenceException(nameof(phrpSynopsisFileName) + " is null");
+                if (synopsisFileName == null)
+                    throw new NullReferenceException(nameof(synopsisFileName) + " is null");
 
-                if (string.IsNullOrWhiteSpace(phrpSynopsisFileName))
-                    throw new Exception(nameof(phrpSynopsisFileName) + " is an empty string");
+                if (string.IsNullOrWhiteSpace(synopsisFileName))
+                    throw new Exception(nameof(synopsisFileName) + " is an empty string");
 
-                var modSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
+                var defaultModSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
 
                 const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
 
@@ -1136,36 +1139,34 @@ namespace MSGFResultsSummarizer
                     modSummaryFileName = baseName + MAXQ_MOD_SUMMARY_FILE_SUFFIX;
                 }
 
-                mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(phrpSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
+                mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(synopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
-                var phrpFirstHitsFilePath = Path.Combine(mWorkDir, phrpFirstHitsFileName);
-                var phrpSynopsisFilePath = Path.Combine(mWorkDir, phrpSynopsisFileName);
-                var phrpModSummaryFilePath = Path.Combine(mWorkDir, modSummaryFileName);
+                var firstHitsOrSynopsisFilePath = Path.Combine(mWorkDir, firstHitsOrSynopsisFileName);
+                var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileName);
+                var modSummaryFilePath = Path.Combine(mWorkDir, modSummaryFileName);
 
-                if (!File.Exists(phrpSynopsisFilePath))
+                if (!File.Exists(synopsisFilePath))
                 {
-                    SetErrorMessage("File not found, cannot summarize results: " + phrpSynopsisFilePath);
+                    SetErrorMessage("File not found, cannot summarize results: " + synopsisFilePath);
                     return false;
                 }
 
-                if (!File.Exists(phrpModSummaryFilePath))
+                if (!File.Exists(modSummaryFilePath))
                 {
                     OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods while summarizing results");
                 }
                 else
                 {
-                    ParseModSummaryFile(phrpModSummaryFilePath);
+                    ParseModSummaryFile(modSummaryFilePath);
                 }
 
-                /////////////////////
                 // Determine the number of MS/MS spectra searched
                 //
-                if (File.Exists(phrpFirstHitsFilePath))
+                if (File.Exists(firstHitsOrSynopsisFilePath))
                 {
-                    ExamineFirstHitsFile(phrpFirstHitsFilePath);
+                    ExamineFirstHitsFile(firstHitsOrSynopsisFilePath, isFirstHitsFile);
                 }
 
-                ////////////////////
                 // Load the PSMs and sequence info
 
                 // The keys in this dictionary are NormalizedSeqID values, which are custom-assigned
@@ -1178,13 +1179,12 @@ namespace MSGFResultsSummarizer
                 // If those files are not found, we'll simply use the protein information stored in psmResults
                 var normalizedPSMs = new Dictionary<int, PSMInfo>();
 
-                var successLoading = LoadPSMs(phrpSynopsisFilePath, normalizedPSMs, out _, out var seqToProteinMap, out var sequenceInfo);
+                var successLoading = LoadPSMs(synopsisFilePath, normalizedPSMs, out _, out var seqToProteinMap, out var sequenceInfo);
                 if (!successLoading)
                 {
                     return false;
                 }
 
-                ////////////////////
                 // Filter on MSGF or EValue and compute the stats
                 //
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = true", 3);
@@ -1193,7 +1193,6 @@ namespace MSGFResultsSummarizer
 
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
 
-                ////////////////////
                 // Filter on FDR and compute the stats
                 //
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = false", 3);
@@ -1246,14 +1245,14 @@ namespace MSGFResultsSummarizer
         /// Loads the PSMs (peptide identification for each scan)
         /// Normalizes the peptide sequence (mods are tracked, but no longer associated with specific residues) and populates normalizedPSMs
         /// </summary>
-        /// <param name="phrpSynopsisFilePath"></param>
+        /// <param name="synopsisFilePath"></param>
         /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are PSMInfo objects</param>
         /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
         /// <returns>True if success, false if an error</returns>
         private bool LoadPSMs(
-            string phrpSynopsisFilePath,
+            string synopsisFilePath,
             IDictionary<int, PSMInfo> normalizedPSMs,
             out SortedList<int, int> resultToSeqMap,
             out SortedList<int, List<ProteinInfo>> seqToProteinMap,
@@ -1356,10 +1355,10 @@ namespace MSGFResultsSummarizer
                 // For all other results, we simply store scan number (as a string)
                 var scansStored = new SortedSet<string>();
 
-                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(phrpSynopsisFilePath, 80));
+                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(synopsisFilePath, 80));
                 var lastStatusTime = DateTime.UtcNow;
 
-                using var reader = new ReaderFactory(phrpSynopsisFilePath, startupOptions);
+                using var reader = new ReaderFactory(synopsisFilePath, startupOptions);
                 RegisterEvents(reader);
 
                 while (reader.MoveNext())
@@ -1923,7 +1922,7 @@ namespace MSGFResultsSummarizer
             return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID);
         }
 
-        private void ParseModSummaryFile(string phrpModSummaryFilePath)
+        private void ParseModSummaryFile(string modSummaryFilePath)
         {
             try
             {
@@ -1955,7 +1954,7 @@ namespace MSGFResultsSummarizer
                     // ReSharper restore StringLiteralTypo
                 };
 
-                using var reader = new StreamReader(new FileStream(phrpModSummaryFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var reader = new StreamReader(new FileStream(modSummaryFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 while (!reader.EndOfStream)
                 {
