@@ -165,10 +165,35 @@ namespace MSGFResultsSummarizer
         public string OutputDirectoryPath { get; set; } = string.Empty;
 
         /// <summary>
+        /// Number of MS/MS scans that do not have a PSM
+        /// </summary>
+        /// <remarks>
+        /// For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets
+        /// </remarks>
+        private int MSnScansNoPSM { get; set; }
+
+        /// <summary>
+        /// Total number of MS/MS spectra
+        /// </summary>
+        /// <remarks>
+        /// /// <remarks>For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets</remarks>
+        /// </remarks>
+        private int TotalMSnScans { get; set; }
+
+        /// <summary>
         /// Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
         /// more than 2 scans away from an adjacent spectrum
         /// </summary>
-        public double PercentMSnScansNoPSM { get; private set; }
+        public double PercentMSnScansNoPSM
+        {
+            get
+            {
+                if (TotalMSnScans == 0)
+                    return 100;
+
+                return MSnScansNoPSM / (double)TotalMSnScans * 100;
+            }
+        }
 
         /// <summary>
         /// Store PSM results in the database for the given analysis job
@@ -373,6 +398,10 @@ namespace MSGFResultsSummarizer
 
                 Console.WriteLine();
 
+                // This value for total spectra searched is only accurate when firstHitsOrSynopsisFile is a first hits file
+                // For MaxQuant, MSFragger, and several other tools, firstHitsOrSynopsisFile will be a synopsis file, and thus only has spectra with identified PSMs
+                // Method CheckForScanGaps will update SpectraSearched when isFirstHitsFile is false
+
                 SpectraSearched = 0;
                 foreach (var item in uniqueSpectraByDataset)
                 {
@@ -381,7 +410,8 @@ namespace MSGFResultsSummarizer
 
                 // Set these to defaults for now
                 MaximumScanGapAdjacentMSn = 0;
-                PercentMSnScansNoPSM = 100;
+                MSnScansNoPSM = 0;
+                TotalMSnScans = 0;
 
                 if (!ContactDatabase)
                 {
@@ -389,12 +419,13 @@ namespace MSGFResultsSummarizer
                 }
 
                 var scanListByDataset = new Dictionary<string, List<int>>();
+
                 foreach (var item in uniqueSpectraByDataset)
                 {
                     scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
                 }
 
-                CheckForScanGaps(scanListByDataset);
+                CheckForScanGaps(scanListByDataset, !isFirstHitsFile);
             }
             catch (Exception ex)
             {
@@ -405,36 +436,25 @@ namespace MSGFResultsSummarizer
 
         /// <summary>
         /// Look for scan range gaps in the spectra list
-        /// The occurrence of large gaps indicates that a processing thread in MS-GF+ crashed and the results may be incomplete
         /// </summary>
-        /// <param name="scanListByDataset">Keys are Dataset ID or Dataset Name; values are a list of scan numbers</param>
-        private void CheckForScanGaps(Dictionary<string, List<int>> scanListByDataset)
+        /// <remarks>
+        /// The occurrence of large gaps may indicate that a processing thread in MS-GF+ crashed and the results may be incomplete.
+        /// However, large gaps can also occur due to sparse MS/MS spectra
+        /// </remarks>
+        /// <param name="scanListByDataset">Keys are Dataset ID or Dataset Name; values are a list of MS/MS scan numbers</param>
+        /// <param name="updateTotalSpectraSearched">When true, update the total spectra searched value</param>
+        private void CheckForScanGaps(Dictionary<string, List<int>> scanListByDataset, bool updateTotalSpectraSearched)
         {
             MaximumScanGapAdjacentMSn = 0;
 
-            var warnIfNotFound = ResultType != PeptideHitResultTypes.MaxQuant;
-
             foreach (var item in scanListByDataset)
             {
-                var success = LookupScanStats(DatasetName, out var totalSpectra, out var totalMSnSpectra, warnIfNotFound);
-
-                if (!success &&
-                    ResultType == PeptideHitResultTypes.MaxQuant &&
-                    int.TryParse(item.Key, out var datasetID))
-                {
-                    var lookupSuccess = LookupDatasetNameByID(datasetID, out var datasetName);
-
-                    if (lookupSuccess && !string.IsNullOrWhiteSpace(datasetName))
-                    {
-                        // Call LookupScanStats again, but with the correct dataset name
-                        success = LookupScanStats(datasetName, out totalSpectra, out totalMSnSpectra, true);
-                    }
-                }
+                var success = LookupScanStatsForCurrentDataset(item.Key, out var currentDataset, out var totalSpectra, out var totalMSnSpectra);
 
                 if (!success || totalSpectra <= 0)
                 {
                     DatasetScanStatsLookupError = true;
-                    return;
+                    continue;
                 }
 
                 var maximumScanGap = 0;
@@ -454,16 +474,22 @@ namespace MSGFResultsSummarizer
 
                 if (totalMSnSpectra > 0)
                 {
-                    PercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
-                }
-                else
-                {
-                    // Report 100% because we cannot accurately compute this value without knowing totalMSnSpectra
-                    PercentMSnScansNoPSM = 100;
-                }
-
-
+                    var msnScansNoPSM = totalMSnSpectra - scanList.Count;
+                    if (msnScansNoPSM < 0)
                     {
+                        OnWarningEvent("scanListByDataset has more MS/MS spectra than expected for Dataset {0}: {1} vs. {2}",
+                            currentDataset, scanList.Count, totalMSnSpectra);
+                    }
+                    else
+                    {
+                        MSnScansNoPSM += msnScansNoPSM;
+                    }
+
+                    TotalMSnScans += totalMSnSpectra;
+
+                    if (updateTotalSpectraSearched)
+                    {
+                        SpectraSearched = TotalMSnScans;
                     }
                 }
 
@@ -904,6 +930,36 @@ namespace MSGFResultsSummarizer
             return PSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
+        private string GetExpectedModSummaryFileName(
+            string synopsisFileName,
+            string synopsisFileNameFromPHRP,
+            string synopsisFileSuffix,
+            string modSummaryFileSuffix, out bool criticalError)
+        {
+            if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
+            {
+                SetErrorMessage("Variable synopsisFileName is an empty string for this aggregation job, cannot summarize results; this is unexpected");
+                criticalError = true;
+                return string.Empty;
+            }
+
+            var index = synopsisFileName.IndexOf(synopsisFileSuffix, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+            {
+                SetErrorMessage(string.Format(
+                    "Did not find '{0}' in synopsisFileName for this aggregation job; this is unexpected: {1}",
+                    synopsisFileSuffix, synopsisFileName));
+
+                criticalError = true;
+                return string.Empty;
+            }
+
+            criticalError = false;
+
+            var baseName = synopsisFileName.Substring(0, index);
+            return baseName + modSummaryFileSuffix;
+        }
+
         private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
         {
             var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
@@ -1102,6 +1158,8 @@ namespace MSGFResultsSummarizer
                     synopsisFileName = synopsisFileNameFromPHRP;
                 }
 
+                bool isFirstHitsFile;
+
                 if (ResultType is
                     PeptideHitResultTypes.MaxQuant or
                     PeptideHitResultTypes.MODa or
@@ -1113,10 +1171,12 @@ namespace MSGFResultsSummarizer
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     firstHitsOrSynopsisFileName = synopsisFileName;
+                    isFirstHitsFile = false;
                 }
                 else
                 {
                     firstHitsOrSynopsisFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                    isFirstHitsFile = true;
                 }
 
                 // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
@@ -1131,26 +1191,44 @@ namespace MSGFResultsSummarizer
 
                 const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
 
-                if (ResultType == PeptideHitResultTypes.MaxQuant &&
-                    modSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                const string MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX = "_msfragger_syn_ModSummary.txt";
+
+                string modSummaryFileName;
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (ResultType is PeptideHitResultTypes.MaxQuant &&
+                    defaultModSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name
+                    // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
 
-                    if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
-                    {
-                        SetErrorMessage("Variable phrpSynopsisFileName is an empty string for this aggregation job, cannot summarize results; this is unexpected");
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_maxq_syn",
+                        MAXQ_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
                         return false;
-                    }
+                }
+                else if (ResultType is PeptideHitResultTypes.MSFragger &&
+                         defaultModSummaryFileName.Equals("Aggregation" + MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_msfragger_syn_ModSummary to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
 
-                    var index = phrpSynopsisFileName.IndexOf("_maxq_syn", StringComparison.OrdinalIgnoreCase);
-                    if (index < 0)
-                    {
-                        SetErrorMessage("Did not find '_maxq_syn' in phrpSynopsisFileName for this aggregation job; this is unexpected: " + phrpSynopsisFileName);
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_msfragger_syn",
+                        MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
                         return false;
-                    }
-
-                    var baseName = phrpSynopsisFileName.Substring(0, index);
-                    modSummaryFileName = baseName + MAXQ_MOD_SUMMARY_FILE_SUFFIX;
+                }
+                else
+                {
+                    modSummaryFileName = defaultModSummaryFileName;
                 }
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(synopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
@@ -1318,10 +1396,11 @@ namespace MSGFResultsSummarizer
 
                 if (!string.IsNullOrEmpty(seqMapReader.ResultToSeqMapFilename))
                 {
-                    var resultToSeqMapFilePath = ReaderFactory.FindResultToSeqMapFile(seqMapReader.InputDirectoryPath,
-                                                                                      phrpSynopsisFilePath,
-                                                                                      seqMapReader.ResultToSeqMapFilename,
-                                                                                      out _);
+                    var resultToSeqMapFilePath = ReaderFactory.FindResultToSeqMapFile(
+                        seqMapReader.InputDirectoryPath,
+                        synopsisFilePath,
+                        seqMapReader.ResultToSeqMapFilename,
+                        out _);
 
                     if (!string.IsNullOrWhiteSpace(resultToSeqMapFilePath))
                     {
@@ -1548,7 +1627,7 @@ namespace MSGFResultsSummarizer
                             seqID = PSMInfo.UNKNOWN_SEQUENCE_ID;
 
                             // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
-                            // Look for a match in normalizedPeptidesByCleanSequence that matches this peptide's clean sequence
+                            // Look for a match in normalizedPeptidesByCleanSequence that matches the clean sequence for this peptide
 
                             if (normalizedPeptidesByCleanSequence.TryGetValue(currentPSM.PeptideCleanSequence, out var normalizedPeptides))
                             {
@@ -1887,6 +1966,46 @@ namespace MSGFResultsSummarizer
                 SetErrorMessage("Exception retrieving scan stats from the database: " + ex.Message, ex);
                 return false;
             }
+        }
+
+        private bool LookupScanStatsForCurrentDataset(
+            string datasetIdOrName,
+            out string currentDataset,
+            out int totalSpectra,
+            out int totalMSnSpectra)
+        {
+            var warnIfNotFound = ResultType != PeptideHitResultTypes.MaxQuant && ResultType != PeptideHitResultTypes.MSFragger;
+
+            if (mDatasetName.Equals(AGGREGATION_JOB_DATASET, StringComparison.OrdinalIgnoreCase))
+            {
+                if (int.TryParse(datasetIdOrName, out var datasetID))
+                {
+                    // Processing PSMs from a multi-dataset based MaxQuant or MSFragger job
+                    var lookupSuccess = LookupDatasetNameByID(datasetID, out var datasetName);
+
+                    if (lookupSuccess && !string.IsNullOrWhiteSpace(datasetName))
+                    {
+                        currentDataset = datasetName;
+
+                        // Call LookupScanStats again, but with the correct dataset name
+                        return LookupScanStats(datasetName, out totalSpectra, out totalMSnSpectra, true);
+                    }
+
+                    currentDataset = "Dataset ID " + datasetID;
+                    totalSpectra = 0;
+                    totalMSnSpectra = 0;
+
+                    return false;
+                }
+
+                currentDataset = datasetIdOrName;
+            }
+            else
+            {
+                currentDataset = DatasetName;
+            }
+
+            return LookupScanStats(currentDataset, out totalSpectra, out totalMSnSpectra, warnIfNotFound);
         }
 
         /// <summary>
