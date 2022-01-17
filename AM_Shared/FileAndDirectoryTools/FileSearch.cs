@@ -700,11 +700,38 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             const string searchPattern = "*" + PHRPReader.Reader.MaxQuantSynFileReader.FILENAME_SUFFIX_SYN;
 
+            return FindSynopsisFile(directoryPath, searchPattern, out fileCountFound, out errorMessage);
+        }
+
+        /// <summary>
+        /// Look for _msfragger_syn.txt files in the given directory
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <param name="fileCountFound">Output: number of _msfragger_syn.txt files</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>Name of the first file, if found; empty string if no match</returns>
+        public static string FindMSFraggerSynopsisFile(string directoryPath, out int fileCountFound, out string errorMessage)
+        {
+            const string searchPattern = "*" + PHRPReader.Reader.MSFraggerSynFileReader.FILENAME_SUFFIX_SYN;
+
+            return FindSynopsisFile(directoryPath, searchPattern, out fileCountFound, out errorMessage);
+        }
+
+        /// <summary>
+        /// Look for _maxq_syn.txt or _msfragger_syn.txt files in the given directory
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <param name="searchPattern"></param>
+        /// <param name="fileCountFound">Output: number of synopsis files found</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>Name of the first file, if found; empty string if no match</returns>
+        private static string FindSynopsisFile(string directoryPath, string searchPattern, out int fileCountFound, out string errorMessage)
+        {
             var directoryInfo = new DirectoryInfo(directoryPath);
 
             if (!directoryInfo.Exists)
             {
-                errorMessage = "Directory not found (in FindMaxQuantSynopsisFile): " + directoryPath;
+                errorMessage = "Directory not found (in FindSynopsisFile): " + directoryPath;
                 fileCountFound = 0;
                 return string.Empty;
             }

@@ -1371,9 +1371,9 @@ namespace AnalysisManagerExtractionPlugin
             var synopsisFileName = mDatasetName + "_msfragger_syn.txt";
 
             var result = RunPHRPWork(
-                "MaxQuant",
+                "MSFragger",
                 inputFileName,
-                PeptideHitResultTypes.MaxQuant,
+                PeptideHitResultTypes.MSFragger,
                 synopsisFileName,
                 false,
                 true,
@@ -1383,9 +1383,9 @@ namespace AnalysisManagerExtractionPlugin
                 return result;
 
             // Summarize the number of PSMs in the synopsis file
-            // This is done by this class since the MaxQuant script does not have an MSGF job step
+            // This is done by this class since the MSFragger script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFilePath);
+            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFilePath);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -1763,15 +1763,26 @@ namespace AnalysisManagerExtractionPlugin
                     // PHRP auto-named the synopsis file based on the datasets in this data package
                     // Auto-find the file
 
-                    if (resultType != PeptideHitResultTypes.MaxQuant)
+                    int fileCountFound;
+                    string errorMessage;
+
+                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                    switch (resultType)
                     {
-                        LogError("Cannot validate mass errors for this aggregation job, unsupported result type: " + resultType);
+                        case PeptideHitResultTypes.MaxQuant:
+                            synopsisFileNameFromPHRP = FileSearch.FindMaxQuantSynopsisFile(mWorkDir, out fileCountFound, out errorMessage);
+                            break;
 
-                        synopsisFileNameFromPHRP = string.Empty;
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        case PeptideHitResultTypes.MSFragger:
+                            synopsisFileNameFromPHRP = FileSearch.FindMSFraggerSynopsisFile(mWorkDir, out fileCountFound, out errorMessage);
+                            break;
+
+                        default:
+                            LogError("Cannot validate mass errors for this aggregation job, unsupported result type: " + resultType);
+
+                            synopsisFileNameFromPHRP = string.Empty;
+                            return CloseOutType.CLOSEOUT_FAILED;
                     }
-
-                    synopsisFileNameFromPHRP = FileSearch.FindMaxQuantSynopsisFile(mWorkDir, out var fileCountFound, out var errorMessage);
 
                     if (!string.IsNullOrWhiteSpace(errorMessage))
                     {

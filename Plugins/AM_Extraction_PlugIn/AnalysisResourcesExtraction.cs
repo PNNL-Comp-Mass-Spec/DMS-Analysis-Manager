@@ -105,6 +105,7 @@ namespace AnalysisManagerExtractionPlugin
                 case RESULT_TYPE_MSPATHFINDER:
                 case RESULT_TYPE_TOPPIC:
                 case RESULT_TYPE_MAXQUANT:
+                case RESULT_TYPE_MSFRAGGER:
                     LogDebug(string.Format("{0} does not support running AScore as part of data extraction", resultType));
                     runAscore = false;
                     break;
@@ -936,17 +937,17 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         baseName = DatasetName + "_msgfplus" + suffixToAdd;
 
-                        var tsvFile = baseName + ".tsv";
-                        currentStep = "Retrieving " + tsvFile;
+                        var tsvFileName = baseName + ".tsv";
+                        currentStep = "Retrieving " + tsvFileName;
 
-                        var tsvSourceDir = FileSearchTool.FindDataFile(tsvFile, false, false);
+                        var tsvSourceDir = FileSearchTool.FindDataFile(tsvFileName, false, false);
                         if (string.IsNullOrEmpty(tsvSourceDir))
                         {
-                            var fileToGetAlternative = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, DatasetName + "_msgfdb.txt");
+                            var fileToGetAlternative = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(tsvFileName, DatasetName + "_msgfdb.txt");
                             var tsvSourceDirAlt = FileSearchTool.FindDataFile(fileToGetAlternative, false, false);
                             if (!string.IsNullOrEmpty(tsvSourceDirAlt))
                             {
-                                tsvFile = fileToGetAlternative;
+                                tsvFileName = fileToGetAlternative;
                                 tsvSourceDir = tsvSourceDirAlt;
                             }
                         }
@@ -958,27 +959,27 @@ namespace AnalysisManagerExtractionPlugin
                                 // Examine the date of the TSV file
                                 // If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
-                                var tsvfile = new FileInfo(Path.Combine(tsvSourceDir, tsvFile));
-                                if (DateTime.UtcNow.Subtract(tsvfile.LastWriteTimeUtc).TotalHours < 4)
+                                var tsvFile = new FileInfo(Path.Combine(tsvSourceDir, tsvFileName));
+                                if (DateTime.UtcNow.Subtract(tsvFile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
-                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceDir, mWorkDir))
+                                    if (!CopyFileToWorkDir(tsvFileName, tsvSourceDir, mWorkDir))
                                     {
                                         // File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
                                     }
                                     else
                                     {
                                         skipMSGFResultsZipFileCopy = true;
-                                        mJobParams.AddResultFileToSkip(tsvFile);
+                                        mJobParams.AddResultFileToSkip(tsvFileName);
 
-                                        if (tsvfile.LastWriteTimeUtc > newestMzIdOrTsvFile)
+                                        if (tsvFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
                                         {
-                                            newestMzIdOrTsvFile = tsvfile.LastWriteTimeUtc;
+                                            newestMzIdOrTsvFile = tsvFile.LastWriteTimeUtc;
                                         }
                                     }
                                 }
 
-                                mJobParams.AddServerFileToDelete(tsvfile.FullName);
+                                mJobParams.AddServerFileToDelete(tsvFile.FullName);
                             }
                         }
                     }
@@ -1217,6 +1218,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             string fileToGet;
 
+            // First copy the _psm.tsv file locally
             if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET))
             {
                 fileToGet = AGGREGATION_JOB_DATASET + "_psm.tsv";
@@ -1226,12 +1228,34 @@ namespace AnalysisManagerExtractionPlugin
                 fileToGet = DatasetName + "_psm.tsv";
             }
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false, true, out var sourceDirPath))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
+
+            // Now copy the Dataset.tsv file(s), which we'll treat as optional
+            // PHRP reads data from columns num_matched_ions and tot_num_ions and includes these in the synopsis file
+
+            var sourceDirectory = new DirectoryInfo(sourceDirPath);
+
+            foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv"))
+            {
+                if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.Equals(fileToGet, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                if (FileSearchTool.FindAndRetrieveMiscFiles(tsvFile.Name, false))
+                {
+                    mJobParams.AddResultFileToSkip(tsvFile.Name);
+                }
+            }
 
             // Note that we'll obtain the MSFragger parameter file in RetrieveMiscFiles
 
@@ -1380,9 +1404,11 @@ namespace AnalysisManagerExtractionPlugin
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, we need to keep the file
                 // Otherwise, we can skip it
-                var remoteModDefsDirectory = FileSearchTool.FindDataFile(modDefsFilename,
-                                                                     searchArchivedDatasetDir: false,
-                                                                     logFileNotFound: logModFilesFileNotFound);
+                var remoteModDefsDirectory = FileSearchTool.FindDataFile(
+                    modDefsFilename,
+                    searchArchivedDatasetDir: false,
+                    logFileNotFound: logModFilesFileNotFound);
+
                 if (string.IsNullOrEmpty(remoteModDefsDirectory))
                 {
                     // ModDefs file not found on the server
