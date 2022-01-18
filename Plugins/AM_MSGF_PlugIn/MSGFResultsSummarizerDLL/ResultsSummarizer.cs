@@ -1532,12 +1532,10 @@ namespace MSGFResultsSummarizer
                         // Use SpecEValue in place of SpecProb
                         valid = true;
 
-                        if (currentPSM.TryGetScore(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.SpecEValue), out var specEValueText))
+                        if (currentPSM.TryGetScore(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.SpecEValue), out var specEValueText) &&
+                            !string.IsNullOrWhiteSpace(specEValueText))
                         {
-                            if (!string.IsNullOrWhiteSpace(specEValueText))
-                            {
-                                valid = double.TryParse(specEValueText, out specEValue);
-                            }
+                            valid = double.TryParse(specEValueText, out specEValue);
                         }
 
                         // SpecEValue was not present
@@ -1656,13 +1654,10 @@ namespace MSGFResultsSummarizer
                             }
                         }
 
-                        if (seqID != PSMInfo.UNKNOWN_SEQUENCE_ID)
+                        if (seqID != PSMInfo.UNKNOWN_SEQUENCE_ID && sequenceInfo.TryGetValue(seqID, out var seqInfo))
                         {
-                            if (sequenceInfo.TryGetValue(seqID, out var seqInfo))
-                            {
-                                normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, seqInfo, seqID);
-                                normalized = true;
-                            }
+                            normalizedPeptide = NormalizeSequence(currentPSM.PeptideCleanSequence, seqInfo, seqID);
+                            normalized = true;
                         }
                     }
 
