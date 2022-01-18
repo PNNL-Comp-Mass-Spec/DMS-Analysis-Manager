@@ -693,7 +693,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Look for the file in the various directories
             // A message will be logged if the file is not found
-            var sourceDirPath = FileSearchTool.FindDataFile(msmsFile, true, true);
+            var sourceDirPath = FileSearchTool.FindDataFile(msmsFile, true);
 
             if (string.IsNullOrWhiteSpace(sourceDirPath))
             {
@@ -791,7 +791,10 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMODPlusFiles()
         {
+            // ReSharper disable StringLiteralTypo
+
             var fileToGet = DatasetName + "_modp.zip";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
@@ -799,6 +802,8 @@ namespace AnalysisManagerExtractionPlugin
             }
             mJobParams.AddResultFileToSkip(fileToGet);
             mJobParams.AddResultFileExtensionToSkip("_modp.txt");
+
+            // ReSharper restore StringLiteralTypo
 
             // Delete the MSConvert_ConsoleOutput.txt and MODPlus_ConsoleOutput files that were in the zip file; we don't need them
 
