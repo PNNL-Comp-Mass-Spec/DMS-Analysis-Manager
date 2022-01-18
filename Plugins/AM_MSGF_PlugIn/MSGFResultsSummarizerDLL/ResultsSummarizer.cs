@@ -2190,19 +2190,11 @@ namespace MSGFResultsSummarizer
 
         private void SaveResultsToFile()
         {
-            var outputFilePath = "??";
-
             try
             {
-                if (!string.IsNullOrEmpty(OutputDirectoryPath))
-                {
-                    outputFilePath = OutputDirectoryPath;
-                }
-                else
-                {
-                    outputFilePath = mWorkDir;
-                }
-                outputFilePath = Path.Combine(outputFilePath, mDatasetName + "_PSM_Stats.txt");
+                var outputDirectoryPath = !string.IsNullOrEmpty(OutputDirectoryPath) ? OutputDirectoryPath : mWorkDir;
+
+                var outputFilePath = Path.Combine(outputDirectoryPath, mDatasetName + "_PSM_Stats.txt");
 
                 using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -2241,7 +2233,7 @@ namespace MSGFResultsSummarizer
             }
             catch (Exception ex)
             {
-                SetErrorMessage("Exception saving results to " + outputFilePath + ": " + ex.Message, ex);
+                SetErrorMessage("Exception saving results to the PSM_Stats.txt file: " + ex.Message, ex);
             }
         }
 
