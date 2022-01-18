@@ -833,9 +833,7 @@ namespace MSGFResultsSummarizer
         {
             filteredPSMs.Clear();
 
-            var filteredValues = from item in psmResults where item.Value.BestEValue <= eValueThreshold select item;
-
-            foreach (var item in filteredValues)
+            foreach (var item in from item in psmResults where item.Value.BestEValue <= eValueThreshold select item)
             {
                 foreach (var observation in item.Value.Observations)
                 {
@@ -851,9 +849,7 @@ namespace MSGFResultsSummarizer
         {
             filteredPSMs.Clear();
 
-            var filteredValues = from item in psmResults where item.Value.BestMSGF <= msgfThreshold select item;
-
-            foreach (var item in filteredValues)
+            foreach (var item in from item in psmResults where item.Value.BestMSGF <= msgfThreshold select item)
             {
                 foreach (var observation in item.Value.Observations)
                 {
@@ -1286,7 +1282,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 // Filter on MSGF or EValue and compute the stats
-                //
+
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = true", 3);
 
                 var success = FilterAndComputeStats(usingMSGFOrEValueFilter: true, normalizedPSMs, seqToProteinMap, sequenceInfo);
@@ -1294,7 +1290,7 @@ namespace MSGFResultsSummarizer
                 ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
 
                 // Filter on FDR and compute the stats
-                //
+
                 ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = false", 3);
 
                 var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter: false, normalizedPSMs, seqToProteinMap, sequenceInfo);
