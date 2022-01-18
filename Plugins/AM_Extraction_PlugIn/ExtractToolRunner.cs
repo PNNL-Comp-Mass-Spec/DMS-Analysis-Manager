@@ -51,8 +51,6 @@ namespace AnalysisManagerExtractionPlugin
 
         private const int PROGRESS_COMPLETE = 100;
 
-        public const string INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX = "_inspect_unfiltered.txt";
-
         private const string MODa_JAR_NAME = "moda.jar";
         private const string MODa_FILTER_JAR_NAME = "anal_moda.jar";
 
@@ -1418,6 +1416,7 @@ namespace AnalysisManagerExtractionPlugin
                 UpdateStatusRunning(mProgress);
 
                 string synFilePath;
+
                 try
                 {
                     // The goal:
@@ -1620,6 +1619,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Validate that the mass errors are within tolerance
                 var paramFileName = mJobParams.GetParam("ParmFileName");
+
                 if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -2637,12 +2637,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 var toolName = mJobParams.GetJobParameter("ToolName", string.Empty);
 
+                // The default error threshold is 5%
                 if (toolName.StartsWith("MaxQuant"))
                 {
                     massErrorValidator.ErrorThresholdPercent = 10;
                 }
 
                 success = massErrorValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
+
                 if (!success)
                 {
                     if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
