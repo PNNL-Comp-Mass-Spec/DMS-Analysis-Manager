@@ -514,9 +514,8 @@ namespace MSGFResultsSummarizer
             }
 
             var missedCleavages = (from item in uniqueSequences where item.Value.MissedCleavage select item.Key).Count();
-            var missedCleavageRatio = missedCleavages / (float)uniqueSequences.Count;
 
-            return missedCleavageRatio;
+            return missedCleavages / (float)uniqueSequences.Count;
         }
 
         private void ComputeMissingReporterIonPercent(Dictionary<int, PSMInfo> filteredPSMs)
@@ -2383,7 +2382,7 @@ namespace MSGFResultsSummarizer
             IDictionary<int, UniqueSeqInfo> uniquePhosphopeptides,
             IDictionary<int, UniqueSeqInfo> uniqueAcetylPeptides)
         {
-            var psmStats = new PSMStats()
+            return new PSMStats
             {
                 TotalPSMs = (from item in uniqueSequences select item.Value.ObsCount).Sum(),
                 UniquePeptideCount = uniqueSequences.Count,
@@ -2398,8 +2397,6 @@ namespace MSGFResultsSummarizer
                 UniquePhosphopeptidesCTermR = (from item in uniquePhosphopeptides where item.Value.CTermR select item.Key).Count(),
                 MissedCleavageRatioPhospho = ComputeMissedCleavageRatio(uniquePhosphopeptides)
             };
-
-            return psmStats;
         }
 
         private void ValidateReporterIonPTMs(NormalizedPeptideInfo normalizedPeptide, PSMInfo.PSMObservation observation)
