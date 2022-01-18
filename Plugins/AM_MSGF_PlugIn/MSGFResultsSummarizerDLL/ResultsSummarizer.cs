@@ -1013,11 +1013,16 @@ namespace MSGFResultsSummarizer
         /// <remarks>Used by SMAQC</remarks>
         public static Regex GetTrypsinRegEx()
         {
+            // ReSharper disable CommentTypo
+
             // RegEx to match trypsin proteins, including
             //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
             //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
             //   Contaminant_Trypa
+
             return new("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // ReSharper restore CommentTypo
         }
 
         /// <summary>
@@ -1261,17 +1266,22 @@ namespace MSGFResultsSummarizer
 
                 // Load the PSMs and sequence info
 
+                // ReSharper disable CommentTypo
+
                 // The keys in this dictionary are NormalizedSeqID values, which are custom-assigned
                 // by this class to keep track of peptide sequences on a basis where modifications are tracked with some wiggle room
+
                 // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
                 // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
-                //
+
                 // The values contain mapped protein name, FDR, and MSGF SpecEValue, and the scans that the normalized peptide was observed in
                 // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
                 // If those files are not found, we'll simply use the protein information stored in psmResults
                 var normalizedPSMs = new Dictionary<int, PSMInfo>();
 
-                var successLoading = LoadPSMs(synopsisFilePath, normalizedPSMs, out _, out var seqToProteinMap, out var sequenceInfo);
+                // ReSharper restore CommentTypo
+
+                var successLoading = LoadPSMs(synopsisFilePath, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
                 if (!successLoading)
                 {
                     return false;
@@ -1424,25 +1434,29 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
+                // ReSharper disable CommentTypo
+
                 // Keys in this dictionary are clean sequences (peptide sequence without any mod symbols)
                 // Values are lists of modified residue combinations that correspond to the given clean sequence
                 // Each combination of residues has a corresponding "best" SeqID associated with it
-                //
+
                 // When comparing a new sequence to entries in this dictionary, if the mod locations are all within one residue of an existing normalized sequence,
                 //  the new sequence and mods is not added
                 // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent, and will be tracked as LSSPATLNSR with * at index 1
+
                 // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different, and are tracked with entries:
                 //  PEPTIDES with # at index 0 and * at index 3
                 //  PEPTIDES with # at index 2 and * at index 3
                 //  PEPTIDES with # at index 0 and * at index 7
-                //
+
                 // If sequenceInfoAvailable is True, instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
                 //   For example, VGVEASEETPQT with Phosph at index 5
-                //
-                // The SeqID value tracked by normalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry
+
+                // The SeqID value tracked by NormalizedPeptideInfo is the SeqID of the first sequence to get normalized to the given entry
                 // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
-                //
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
+
+                // ReSharper restore CommentTypo
 
                 // This is used to avoid storing multiple PSMs for a given scan
                 // For MaxQuant and MSFragger results, we store DatasetNameOrId_ScanNumber
@@ -2259,12 +2273,17 @@ namespace MSGFResultsSummarizer
         {
             try
             {
+                // ReSharper disable CommentTypo
+
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
                 // Populated from data in filteredPSMs, where peptides with the same sequence and same modifications (+/- 1 residue) were collapsed
+
                 // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
                 // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
                 // (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
                 var uniqueSequences = new Dictionary<int, UniqueSeqInfo>();
+
+                // ReSharper restore CommentTypo
 
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
                 var uniquePhosphopeptides = new Dictionary<int, UniqueSeqInfo>();
