@@ -2046,35 +2046,34 @@ namespace MSGFResultsSummarizer
         {
             var modList = new List<KeyValuePair<string, int>>();
 
-            if (!string.IsNullOrWhiteSpace(seqInfo.ModDescription))
+            if (string.IsNullOrWhiteSpace(seqInfo.ModDescription))
+                return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID);
+
+            // Parse the modifications
+
+            foreach (var modDescriptor in seqInfo.ModDescription.Split(','))
             {
-                // Parse the modifications
+                var colonIndex = modDescriptor.IndexOf(':');
+                string modName;
+                var residueNumber = 0;
 
-                var sequenceMods = seqInfo.ModDescription.Split(',');
-                foreach (var modDescriptor in sequenceMods)
+                if (colonIndex > 0)
                 {
-                    var colonIndex = modDescriptor.IndexOf(':');
-                    string modName;
-                    var residueNumber = 0;
-
-                    if (colonIndex > 0)
-                    {
-                        modName = modDescriptor.Substring(0, colonIndex);
-                        int.TryParse(modDescriptor.Substring(colonIndex + 1), out residueNumber);
-                    }
-                    else
-                    {
-                        modName = modDescriptor;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(modName))
-                    {
-                        // Empty mod name; this is unexpected
-                        throw new Exception(string.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}", seqInfo.SeqID, seqInfo.ModDescription));
-                    }
-
-                    modList.Add(new KeyValuePair<string, int>(modName, residueNumber));
+                    modName = modDescriptor.Substring(0, colonIndex);
+                    int.TryParse(modDescriptor.Substring(colonIndex + 1), out residueNumber);
                 }
+                else
+                {
+                    modName = modDescriptor;
+                }
+
+                if (string.IsNullOrWhiteSpace(modName))
+                {
+                    // Empty mod name; this is unexpected
+                    throw new Exception(string.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}", seqInfo.SeqID, seqInfo.ModDescription));
+                }
+
+                modList.Add(new KeyValuePair<string, int>(modName, residueNumber));
             }
 
             return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID);
@@ -2408,20 +2407,20 @@ namespace MSGFResultsSummarizer
             // Check whether this peptide is missing the reporter ion from a required location
             foreach (var modification in normalizedPeptide.Modifications)
             {
-                if (string.Equals(modification.Key, mDynamicReporterIonName, StringComparison.OrdinalIgnoreCase))
+                if (!string.Equals(modification.Key, mDynamicReporterIonName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var residueNumber = modification.Value;
+                var currentResidue = normalizedPeptide.CleanSequence[residueNumber - 1];
+
+                if (residueNumber == 1)
                 {
-                    var residueNumber = modification.Value;
-                    var currentResidue = normalizedPeptide.CleanSequence[residueNumber - 1];
+                    labeledNTerminus = true;
+                }
 
-                    if (residueNumber == 1)
-                    {
-                        labeledNTerminus = true;
-                    }
-
-                    if (currentResidue == 'K')
-                    {
-                        labeledLysineCount++;
-                    }
+                if (currentResidue == 'K')
+                {
+                    labeledLysineCount++;
                 }
             }
 
