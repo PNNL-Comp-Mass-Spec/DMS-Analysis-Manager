@@ -1045,8 +1045,6 @@ namespace MSGFResultsSummarizer
 
         private bool PostJobPSMResults(int job)
         {
-            const int MAX_RETRY_COUNT = 3;
-
             bool success;
 
             try
@@ -1096,7 +1094,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: mFDRBasedCounts?.AcetylPeptides ?? 0);
 
                 // Execute the SP (retry the call up to 3 times)
-                var result = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage, MAX_RETRY_COUNT);
+                var result = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
 
                 if (result == 0)
                 {
@@ -1879,7 +1877,7 @@ namespace MSGFResultsSummarizer
                 RegisterEvents(dbTools);
 
                 // ReSharper disable once ExplicitCallerInfoArgument
-                var success = dbTools.GetQueryResults(queryDatasetID, out var queryResults, callingFunction: "LookupDatasetNameByID");
+                var success = dbTools.GetQueryResults(queryDatasetID, out var queryResults);
 
                 if (!success)
                 {
@@ -2002,7 +2000,7 @@ namespace MSGFResultsSummarizer
                         currentDataset = datasetName;
 
                         // Call LookupScanStats again, but with the correct dataset name
-                        return LookupScanStats(datasetName, out totalSpectra, out totalMSnSpectra, true);
+                        return LookupScanStats(datasetName, out totalSpectra, out totalMSnSpectra);
                     }
 
                     currentDataset = "Dataset ID " + datasetID;
