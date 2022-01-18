@@ -1280,6 +1280,7 @@ namespace MSGFResultsSummarizer
                 // ReSharper restore CommentTypo
 
                 var successLoading = LoadPSMs(synopsisFilePath, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
+
                 if (!successLoading)
                 {
                     return false;
@@ -1347,14 +1348,12 @@ namespace MSGFResultsSummarizer
         /// </summary>
         /// <param name="synopsisFilePath"></param>
         /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are PSMInfo objects</param>
-        /// <param name="resultToSeqMap">SortedList mapping PSM ResultID to Sequence ID</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>
         /// <returns>True if success, false if an error</returns>
         private bool LoadPSMs(
             string synopsisFilePath,
             IDictionary<int, PSMInfo> normalizedPSMs,
-            out SortedList<int, int> resultToSeqMap,
             out SortedList<int, List<ProteinInfo>> seqToProteinMap,
             out SortedList<int, SequenceInfo> sequenceInfo)
         {
@@ -1372,7 +1371,9 @@ namespace MSGFResultsSummarizer
             // RegEx to match trypsin proteins
             var trypsinProteinMatcher = GetTrypsinRegEx();
 
-            resultToSeqMap = new SortedList<int, int>();
+            // This maps PSM ResultIDs to Sequence IDs
+            var resultToSeqMap = new SortedList<int, int>();
+
             seqToProteinMap = new SortedList<int, List<ProteinInfo>>();
             sequenceInfo = new SortedList<int, SequenceInfo>();
 
