@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: dir, Lp, sid, Lewy, Fractestrecheck, remoting, smeagol, tcp, proteinseqs, svc, centroided, resourcer, Mage
+        // Ignore Spelling: centroided, dir, Fractestrecheck, Lewy, Lp, Mage, MM-dd-yyyy, proteinseqs, remoting, resourcer, sid, smeagol, svc, tcp
 
         // ReSharper restore CommentTypo
 
