@@ -1355,16 +1355,33 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
+        /// Given a log file with a name like AnalysisMgr_2009-03-25.txt or AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
         /// </summary>
         /// <param name="logFilePath"></param>
         private string DecrementLogFilePath(string logFilePath)
         {
             try
             {
-                var reLogFileName = new Regex(@"(?<BaseName>.+_)(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var nameMatcher = new Regex(@"(?<BaseName>.+_)(?<Year>\d{4,4})-(?<Month>\d+)-(?<Day>\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var nameMatcherLegacy = new Regex(@"(?<BaseName>.+_)(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d{4,4}).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                var match = reLogFileName.Match(logFilePath);
+                var match1 = nameMatcher.Match(logFilePath);
+
+                bool legacyDateCode;
+                Match match;
+
+                if (match1.Success)
+                {
+                    legacyDateCode = false;
+                    match = match1;
+                }
+                else
+                {
+                    var match2 = nameMatcherLegacy.Match(logFilePath);
+                    legacyDateCode = match2.Success;
+                    match = match2;
+
+                }
 
                 if (match.Success)
                 {
@@ -1372,11 +1389,12 @@ namespace AnalysisManagerProg
                     var day = Convert.ToInt32(match.Groups["Day"].Value);
                     var year = Convert.ToInt32(match.Groups["Year"].Value);
 
-                    var currentDate = DateTime.Parse(year + "-" + month + "-" + day);
+                    var currentDate = new DateTime(year, month, day);
                     var newDate = currentDate.AddDays(-1);
 
-                    var previousLogFilePath = match.Groups["BaseName"].Value + newDate.ToString(FileLogger.LOG_FILE_DATE_CODE) + Path.GetExtension(logFilePath);
-                    return previousLogFilePath;
+                    var dateFormat = legacyDateCode ? "MM-dd-yyyy" : FileLogger.LOG_FILE_DATE_CODE;
+
+                    return match.Groups["BaseName"].Value + newDate.ToString(dateFormat) + Path.GetExtension(logFilePath);
                 }
             }
             catch (Exception ex)
@@ -1731,8 +1749,7 @@ namespace AnalysisManagerProg
                 if (files.Length == 0)
                     return string.Empty;
 
-                var newestLogFile = (from item in files orderby item.ToLower() select item).Last();
-                return newestLogFile;
+                return (from item in files orderby item.ToLower() select item).Last();
             }
             catch (Exception)
             {
