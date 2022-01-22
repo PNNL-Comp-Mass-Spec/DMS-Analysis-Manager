@@ -2684,7 +2684,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Define the thread count; note that MSGFDBThreads could be "all"
             var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFDBThreads", string.Empty);
-            if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) || string.Equals(dmsDefinedThreadCountText, "all", StringComparison.OrdinalIgnoreCase) ||
+            if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) ||
+                string.Equals(dmsDefinedThreadCountText, "all", StringComparison.OrdinalIgnoreCase) ||
                 !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))
             {
                 dmsDefinedThreadCount = 0;

@@ -1372,6 +1372,7 @@ namespace AnalysisManagerBase.JobConfig
                         // There was an SP error
                         LogError("AnalysisJob.RequestAnalysisJob(), SP execution error " + resCode + "; " +
                                  "Message text = " + Convert.ToString(messageParam.Value));
+
                         return RequestTaskResult.ResultError;
                 }
             }
@@ -1706,7 +1707,9 @@ namespace AnalysisManagerBase.JobConfig
             {
                 // Successfully created the lock file
                 foreach (var dataLine in lockFileContents)
+                {
                     lockFileWriter.WriteLine(dataLine);
+                }
             }
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager

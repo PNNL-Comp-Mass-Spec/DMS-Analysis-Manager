@@ -1143,7 +1143,6 @@ namespace AnalysisManagerBase
 
                     // Files do not match
                     return false;
-
                 } while (!reader2.EndOfStream);
 
                 return true;
