@@ -92,7 +92,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
-        /// <param name="ex">Exception to log (allowed to be nothing)</param>
+        /// <param name="ex">Exception to log (allowed to be null)</param>
         /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
         protected virtual void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {

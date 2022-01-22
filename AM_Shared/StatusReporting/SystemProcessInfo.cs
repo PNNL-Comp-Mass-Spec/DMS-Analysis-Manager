@@ -157,7 +157,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Report an error
         /// </summary>
         /// <param name="message"></param>
-        /// <param name="ex">Exception (allowed to be nothing)</param>
+        /// <param name="ex">Exception (allowed to be null)</param>
         protected void OnWindowsProcessErrorEvent(string message, Exception ex)
         {
             var virtualMachineOnPIC = Global.UsingVirtualMachineOnPIC();

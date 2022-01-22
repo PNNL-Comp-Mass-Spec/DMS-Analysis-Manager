@@ -521,8 +521,8 @@ namespace AnalysisManagerProg
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = string.Empty
                 // Allow the console output filename to be auto-generated
+                ConsoleOutputFilePath = string.Empty
             };
             RegisterEvents(mProgRunner);
 

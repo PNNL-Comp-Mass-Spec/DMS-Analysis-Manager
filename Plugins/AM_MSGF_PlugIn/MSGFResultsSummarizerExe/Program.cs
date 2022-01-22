@@ -37,10 +37,12 @@ namespace MSGFResultsSummarizerExe
 
         private static bool mPostResultsToDb;
 
+        /// <summary>
+        /// Program entry method
+        /// </summary>
+        /// <returns>0 if no error, error code if an error</returns>
         public static int Main()
         {
-            // Returns 0 if no error, error code if an error
-
             var commandLineParser = new clsParseCommandLine();
 
             try

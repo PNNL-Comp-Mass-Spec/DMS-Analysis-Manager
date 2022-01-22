@@ -790,7 +790,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="mgrParams">Manager parameter object</param>
         /// <param name="jobParams">Job parameter object</param>
         /// <param name="statusTools">Object for status reporting</param>
-        /// <param name="myEMSLUtilities">MyEMSL download Utilities (can be nothing)</param>
+        /// <param name="myEMSLUtilities">MyEMSL download Utilities (can be null)</param>
         public virtual void Setup(
             string stepToolName,
             IMgrParams mgrParams,

@@ -23,7 +23,7 @@ namespace AnalysisManagerProg
     /// </summary>
     public class PluginLoader : EventNotifier
     {
-        // Ignore Spelling: Resourcers
+        // Ignore Spelling: Resourcer, Resourcers
 
         private enum PluginClassTypes
         {
@@ -218,11 +218,11 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads the specified dll
+        /// Loads the specified DLL
         /// </summary>
         /// <param name="className">Name of class to load (from GetPluginInfo)</param>
         /// <param name="assemblyName">Name of assembly to load (from GetPluginInfo)</param>
-        /// <returns>An object referencing the specified dll</returns>
+        /// <returns>An object referencing the specified DLL</returns>
         private object LoadObject(string className, string assemblyName)
         {
             try

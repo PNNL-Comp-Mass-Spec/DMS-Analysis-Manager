@@ -7,6 +7,8 @@ namespace AnalysisManager_Ape_PlugIn
 {
     internal class ApeAMRunWorkflow : ApeAMBase
     {
+        // Ignore Spelling: improv, msgfplus, workflow
+
         /// <summary>
         /// Constructor
         /// </summary>

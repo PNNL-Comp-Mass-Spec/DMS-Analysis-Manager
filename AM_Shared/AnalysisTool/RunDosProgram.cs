@@ -138,9 +138,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public string ConsoleOutputFilePath { get; set; } = string.Empty;
 
         /// <summary>
-        /// Determine if window should be displayed.
-        /// Will be forced to True if CacheStandardOutput = True
+        /// Determine if window should be displayed
         /// </summary>
+        /// <remarks>
+        /// Will be forced to True if CacheStandardOutput = True
+        /// </remarks>
         public bool CreateNoWindow { get; set; } = true;
 
         /// <summary>
@@ -156,7 +158,7 @@ namespace AnalysisManagerBase.AnalysisTool
         public bool EchoOutputToConsole { get; set; } = true;
 
         /// <summary>
-        /// Exit code when process completes.
+        /// Exit code when process completes
         /// </summary>
         public int ExitCode { get; private set; }
 
@@ -256,7 +258,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Working directory for process execution.
+        /// Working directory for process execution
         /// </summary>
         public string WorkDir { get; set; }
 
