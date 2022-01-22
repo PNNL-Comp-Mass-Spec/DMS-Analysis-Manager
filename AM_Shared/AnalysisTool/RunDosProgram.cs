@@ -358,6 +358,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
+        // ReSharper disable once UnusedMember.Global
         public bool RunProgram(string executablePath, string arguments, string progName)
         {
             const bool useResCode = false;

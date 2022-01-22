@@ -33,27 +33,6 @@ namespace AnalysisManagerBase
     }
 
     /// <summary>
-    /// Specialized handler for "folder not found" exception
-    /// </summary>
-    public class AMFolderNotFoundException : ApplicationException
-    {
-        /// <summary>
-        /// Path to the directory that was not found
-        /// </summary>
-        public string FolderPath { get; }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="folderPath">Path of folder not found</param>
-        /// <param name="errorMessage">Exception message</param>
-        public AMFolderNotFoundException(string folderPath, string errorMessage) : base(errorMessage)
-        {
-            FolderPath = folderPath;
-        }
-    }
-
-    /// <summary>
     /// Specialized handler for file deletion exception after multiple retries
     /// </summary>
     public class AMFileNotDeletedAfterRetryException : ApplicationException
