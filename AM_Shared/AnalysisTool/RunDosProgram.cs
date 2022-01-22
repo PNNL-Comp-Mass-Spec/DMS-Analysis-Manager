@@ -88,34 +88,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Text written to the Console by the external program (including carriage returns)
         /// </summary>
-        public string CachedConsoleOutput
-        {
-            get
-            {
-                if (mProgRunner == null)
-                {
-                    return string.Empty;
-                }
-
-                return mProgRunner.CachedConsoleOutput;
-            }
-        }
+        public string CachedConsoleOutput => mProgRunner == null ? string.Empty : mProgRunner.CachedConsoleOutput;
 
         /// <summary>
         /// Any text written to the Error buffer by the external program
         /// </summary>
-        public string CachedConsoleError
-        {
-            get
-            {
-                if (mProgRunner == null)
-                {
-                    return string.Empty;
-                }
-
-                return mProgRunner.CachedConsoleError;
-            }
-        }
+        public string CachedConsoleError => mProgRunner == null ? string.Empty : mProgRunner.CachedConsoleError;
 
         /// <summary>
         /// When true then will cache the text the external program writes to the console
@@ -123,7 +101,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
         /// <remarks>If this is true, no window will be shown, even if CreateNoWindow=False</remarks>
-        public bool CacheStandardOutput { get; set; } = false;
+        public bool CacheStandardOutput { get; set; }
 
         /// <summary>
         /// When true, the program name and command line arguments will be added to the top of the console output file
@@ -192,18 +170,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// ProcessID of an externally spawned process
         /// </summary>
         /// <remarks>0 if no external process running</remarks>
-        public int ProcessID
-        {
-            get
-            {
-                if (mProgRunner == null)
-                {
-                    return 0;
-                }
-
-                return mProgRunner.PID;
-            }
-        }
+        public int ProcessID => mProgRunner?.PID ?? 0;
 
         /// <summary>
         /// External program that the ProgRunner is running
@@ -244,18 +211,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Current monitoring state
         /// </summary>
-        public ProgRunner.States State
-        {
-            get
-            {
-                if (mProgRunner == null)
-                {
-                    return ProgRunner.States.NotMonitoring;
-                }
-
-                return mProgRunner.State;
-            }
-        }
+        public ProgRunner.States State => mProgRunner?.State ?? ProgRunner.States.NotMonitoring;
 
         /// <summary>
         /// Working directory for process execution
