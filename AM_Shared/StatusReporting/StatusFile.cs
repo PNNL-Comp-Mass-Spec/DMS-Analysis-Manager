@@ -1085,9 +1085,7 @@ namespace AnalysisManagerBase.StatusReporting
             xWriter.WriteElementString("Tool", status.Tool);
             xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
 
-            if (status.TaskStatus == TaskStatusCodes.STOPPED ||
-                status.TaskStatus == TaskStatusCodes.FAILED ||
-                status.TaskStatus == TaskStatusCodes.NO_TASK)
+            if (status.TaskStatus is TaskStatusCodes.STOPPED or TaskStatusCodes.FAILED or TaskStatusCodes.NO_TASK)
             {
                 runTimeHours = 0;
             }
