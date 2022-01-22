@@ -182,6 +182,7 @@ namespace AnalysisManagerExtractionPlugin
                 //   (will be reported mono mass or could be m/z or MH converted to neutral mass)
                 // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
                 var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
+
                 double toleranceCurrent;
 
                 if (resultType == PeptideHitResultTypes.MSGFPlus &&
@@ -209,8 +210,10 @@ namespace AnalysisManagerExtractionPlugin
                     continue;
                 }
 
-                var peptideDescription = "Scan=" + currentPSM.ScanNumberStart + ", charge=" + currentPSM.Charge + ", peptide=" +
-                                         currentPSM.PeptideWithNumericMods;
+                var peptideDescription = string.Format(
+                    "Scan={0}, charge={1}, peptide={2}",
+                    currentPSM.ScanNumberStart, currentPSM.Charge, currentPSM.PeptideWithNumericMods);
+
                 errorCount++;
 
                 // Keep track of the 100 largest mass errors

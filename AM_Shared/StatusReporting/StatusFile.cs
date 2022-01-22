@@ -1100,8 +1100,8 @@ namespace AnalysisManagerBase.StatusReporting
 
             xWriter.WriteStartElement("TaskDetails");
             xWriter.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
-            xWriter.WriteElementString("Job", Convert.ToString(status.JobNumber));
-            xWriter.WriteElementString("Step", Convert.ToString(status.JobStep));
+            xWriter.WriteElementString("Job", status.JobNumber.ToString());
+            xWriter.WriteElementString("Step", status.JobStep.ToString());
             xWriter.WriteElementString("Dataset", status.Dataset);
             xWriter.WriteElementString("WorkDirPath", status.WorkDirPath);
             xWriter.WriteElementString("MostRecentLogMessage", status.MostRecentLogMessage);
