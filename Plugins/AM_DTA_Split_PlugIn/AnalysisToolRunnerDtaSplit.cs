@@ -343,7 +343,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
         private string GetNewSplitDTAFileName(int fileNameCounter)
         {
-            var fileName = mDatasetName + "_" + Convert.ToString(fileNameCounter) + "_dta.txt";
+            var fileName = mDatasetName + "_" + fileNameCounter + "_dta.txt";
             mJobParams.AddResultFileToKeep(fileName);
 
             var filePath = Path.Combine(mWorkDir, fileName);

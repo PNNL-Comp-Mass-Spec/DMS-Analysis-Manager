@@ -63,13 +63,13 @@ namespace AnalysisManager_Ape_PlugIn
 
             // ReSharper restore CommentTypo
 
-            var apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
+            var apeWorkflowStepList = GetJobParam("ApeWorkflowStepList");
 
             if (string.IsNullOrEmpty(apeWorkflowStepList))
             {
                 // The job parameter originally was missing the "k" in workflow; try that version instead
                 // ReSharper disable once StringLiteralTypo
-                apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorflowStepList"));
+                apeWorkflowStepList = GetJobParam("ApeWorflowStepList");
             }
 
             // Check whether we should compact the database
