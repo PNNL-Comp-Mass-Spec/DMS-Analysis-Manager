@@ -443,7 +443,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             // Note: if value is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToBoolean(value);
+            return bool.Parse(value);
         }
 
         /// <summary>
@@ -498,7 +498,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             // Note: if value is not a number, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToInt32(value);
+            return int.Parse(value);
         }
 
         /// <summary>
@@ -1317,7 +1317,10 @@ namespace AnalysisManagerBase.JobConfig
                     case RET_VAL_OK:
 
                         // No errors found in SP call, so see if any step tasks were found
+
+                        // Note that Convert.ToInt32 will convert null values to 0
                         mJobId = Convert.ToInt32(jobNumberParam.Value);
+
                         var jobParamsXML = Convert.ToString(jobParamsParam.Value);
 
                         // Step task was found; get the data for it

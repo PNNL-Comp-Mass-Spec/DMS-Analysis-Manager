@@ -71,7 +71,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             // Check whether we should compact the database
-            var apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
+            var apeCompactDatabase = bool.Parse(GetJobParam("ApeCompactDatabase"));
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, progressHandler);

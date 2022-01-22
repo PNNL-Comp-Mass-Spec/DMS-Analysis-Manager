@@ -152,7 +152,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var msXmlFormat = mJobParams.GetParam("MSXMLOutputType");
 
             // Typically mzXML or mzML
-            var centroidMSXML = Convert.ToBoolean(mJobParams.GetParam("CentroidMSXML"));
+            var centroidMSXML = bool.Parse(mJobParams.GetParam("CentroidMSXML"));
 
             string compassXportProgramPath;
 

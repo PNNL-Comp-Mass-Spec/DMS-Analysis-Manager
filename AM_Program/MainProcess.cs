@@ -1380,14 +1380,13 @@ namespace AnalysisManagerProg
                     var match2 = nameMatcherLegacy.Match(logFilePath);
                     legacyDateCode = match2.Success;
                     match = match2;
-
                 }
 
                 if (match.Success)
                 {
-                    var month = Convert.ToInt32(match.Groups["Month"].Value);
-                    var day = Convert.ToInt32(match.Groups["Day"].Value);
-                    var year = Convert.ToInt32(match.Groups["Year"].Value);
+                    var month = int.Parse(match.Groups["Month"].Value);
+                    var day = int.Parse(match.Groups["Day"].Value);
+                    var year = int.Parse(match.Groups["Year"].Value);
 
                     var currentDate = new DateTime(year, month, day);
                     var newDate = currentDate.AddDays(-1);
@@ -1503,7 +1502,7 @@ namespace AnalysisManagerProg
                                     {
                                         mostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
                                             jobMatch.Groups["Date"].Value,
-                                            Convert.ToInt32(jobMatch.Groups["Job"].Value),
+                                            int.Parse(jobMatch.Groups["Job"].Value),
                                             jobMatch.Groups["Dataset"].Value,
                                             jobMatch.Groups["Tool"].Value);
                                     }

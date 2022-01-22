@@ -231,6 +231,8 @@ namespace AnalysisManager_Mage_PlugIn
                 using var cmd = new SQLiteCommand(query, conn);
 
                 var result = cmd.ExecuteScalar();
+
+                // Note that Convert.ToInt32 will convert null values to 0
                 if (Convert.ToInt32(result) > 0)
                     tableFound = true;
             }

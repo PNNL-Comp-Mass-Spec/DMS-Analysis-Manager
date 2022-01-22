@@ -191,7 +191,9 @@ namespace AnalysisManagerExtractionPlugin
                     // The integer value of massError should match psmIsotopeError
                     // However, scale up the tolerance based on the peptide mass
                     toleranceCurrent = 0.2 + currentPSM.PeptideMonoisotopicMass / 50000.0;
-                    var psmIsotopeErrorValue = Convert.ToInt32(psmIsotopeError);
+
+                    var psmIsotopeErrorValue = int.Parse(psmIsotopeError);
+
                     if (psmIsotopeErrorValue != 0)
                     {
                         massError -= psmIsotopeErrorValue;

@@ -88,7 +88,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             mWorkingDir = mMgrParams.RequireMgrParam("WorkDir");
             mSearchType = mJobParams.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, can be "_LCMSFeatures.txt" or "_isos.csv"
             mParamFilename = mJobParams.RequireJobParam("ParmFileName");
-            mDebugLevel = Convert.ToInt16(mMgrParams.RequireMgrParam("DebugLevel"));
+            mDebugLevel = short.Parse(mMgrParams.RequireMgrParam("DebugLevel"));
             mJobNum = mJobParams.RequireJobParam("Job");
         }
 

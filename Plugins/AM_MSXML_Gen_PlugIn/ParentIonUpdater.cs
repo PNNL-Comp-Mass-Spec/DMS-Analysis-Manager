@@ -395,7 +395,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                                                 if (reMatch.Success)
                                                 {
-                                                    currentScanNumber = Convert.ToInt32(reMatch.Groups["ScanNumber"].Value);
+                                                    currentScanNumber = int.Parse(reMatch.Groups["ScanNumber"].Value);
                                                 }
 
                                                 break;

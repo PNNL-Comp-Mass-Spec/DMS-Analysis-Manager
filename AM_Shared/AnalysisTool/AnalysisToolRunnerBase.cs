@@ -2286,7 +2286,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Value is similar to 90%
                     // Convert to a double, then compute the number of cores to use
-                    var coreCountPct = Convert.ToDouble(reMatch.Groups[1].Value);
+                    var coreCountPct = double.Parse(reMatch.Groups[1].Value);
                     coreCount = (int)Math.Round(coreCountPct / 100.0 * coresOnMachine);
                     if (coreCount < 1)
                         coreCount = 1;
