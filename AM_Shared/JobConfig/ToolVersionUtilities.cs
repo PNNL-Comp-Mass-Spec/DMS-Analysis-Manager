@@ -139,6 +139,10 @@ namespace AnalysisManagerBase.JobConfig
                 progRunner.StatusEvent += OnStatusEvent;
                 progRunner.WarningEvent += OnWarningEvent;
 
+                // MSConvert shows its syntax via the console error stream
+                // Instruct progRunner to treat them as normal messages
+                progRunner.RaiseConsoleErrorEvents = false;
+
                 progRunner.SkipConsoleWriteIfNoErrorListener = true;
 
                 const string args = "--help";
