@@ -328,7 +328,7 @@ namespace AnalysisManagerBase.JobConfig
                 if (thresholdHours < 1)
                     thresholdHours = 1;
 
-                var agedFileThreshold = DateTime.UtcNow.AddHours(-Math.Abs(thresholdHours));
+                var agedFileThreshold = DateTime.UtcNow.AddHours(-thresholdHours);
 
                 var agedFiles = (from item in foundFiles where item.LastWriteTimeUtc < agedFileThreshold select item).ToList();
 
