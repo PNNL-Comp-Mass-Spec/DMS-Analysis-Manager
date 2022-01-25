@@ -362,23 +362,24 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Get the DMS-compatible reporter ion name from the MASIC reporter ion mass mode
         /// </summary>
-        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/59474ab345ce7878f0646a6e83fa1bb22ee84579/ReporterIons.cs#L15
+        /// <remarks>MASIC mass modes: https://github.com/PNNL-Comp-Mass-Spec/MASIC/blob/master/Data/ReporterIons.cs#L46
         /// </remarks>
         /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         private static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
             return reporterIonMassMode switch
             {
-                1 => "iTRAQ",       // ITraqFourMZ
-                3 => "TMT2",        // TMTTwoMZ
-                4 => "TMT6",        // TMTSixMZ
-                5 => "iTRAQ8",      // ITraqEightMZHighRes
-                6 => "iTRAQ8",      // ITraqEightMZLowRes
-                10 => "TMT10",      // TMTTenMZ
-                11 => "PCGalNAz",   // OGlcNAc
-                16 => "TMT11",      // TMTElevenMZ
-                18 => "TMT16",      // TMTSixteenMZ
-                _ => "ReporterIonMassMode_" + reporterIonMassMode
+                1 => "iTRAQ",     // ITraqFourMZ
+                3 => "TMT2",      // TMTTwoMZ
+                4 => "TMT6",      // TMTSixMZ
+                5 => "iTRAQ8",    // ITraqEightMZHighRes
+                6 => "iTRAQ8",    // ITraqEightMZLowRes
+                10 => "TMT10",    // TMTTenMZ
+                11 => "PCGalNAz", // OGlcNAc
+                16 => "TMT11",    // TMTElevenMZ
+                18 => "TMT16",    // TMTSixteenMZ
+                20 => "TMT18",    // TMTEighteenMZ
+                _ => "ReporterIonMassMode_" + reporterIonMassMode + "__NeedToUpdateAnalysisManagerPlugin"
             };
         }
 
