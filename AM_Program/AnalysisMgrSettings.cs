@@ -354,7 +354,7 @@ namespace AnalysisManagerProg
         /// until the date/time is later than TaskRequestEnableTime
         /// </remarks>
         /// <param name="holdoffIntervalMinutes">Holdoff interval, in minutes</param>
-        public void PauseManagerTaskRequests(int holdoffIntervalMinutes = 60)
+        public void PauseManagerTaskRequests(int holdoffIntervalMinutes = 30)
         {
             try
             {
