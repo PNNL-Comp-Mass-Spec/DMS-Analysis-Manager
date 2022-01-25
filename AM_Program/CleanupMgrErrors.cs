@@ -220,8 +220,7 @@ namespace AnalysisManagerProg
         private bool CleanWorkDir(string workDirPath, float holdoffSeconds)
         {
             double actualHoldoffSeconds;
-
-            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) && holdoffSeconds > 1)
+            if (Global.RunningOnDeveloperComputer() && holdoffSeconds > 1)
                 holdoffSeconds = 1;
 
             try

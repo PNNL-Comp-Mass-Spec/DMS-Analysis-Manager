@@ -553,6 +553,19 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Return true if the current host is DMS developer's computer
+        /// </summary>
+        public static bool RunningOnDeveloperComputer()
+        {
+            var hostName = System.Net.Dns.GetHostName();
+
+            return hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) ||
+                   hostName.StartsWith("WE31383", StringComparison.OrdinalIgnoreCase) ||
+                   hostName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) ||
+                   hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// Get the named attribute from the given element
         /// </summary>
         /// <param name="item"></param>

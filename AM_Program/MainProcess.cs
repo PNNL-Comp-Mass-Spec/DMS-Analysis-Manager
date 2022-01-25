@@ -371,10 +371,7 @@ namespace AnalysisManagerProg
             // Make sure that the manager name matches the machine name (with a few exceptions)
             if (!hostName.StartsWith("EMSLMQ", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("EMSLPub", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("WE31383", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("WE43320", StringComparison.OrdinalIgnoreCase) &&
-                !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
+                !Global.RunningOnDeveloperComputer())
             {
                 if (!mMgrName.StartsWith(hostName, StringComparison.OrdinalIgnoreCase))
                 {
