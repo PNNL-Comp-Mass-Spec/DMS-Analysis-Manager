@@ -219,22 +219,11 @@ namespace AnalysisManagerProg
         /// <returns>True if success, false if an error</returns>
         private bool CleanWorkDir(string workDirPath, float holdoffSeconds)
         {
-            double actualHoldoffSeconds;
             if (Global.RunningOnDeveloperComputer() && holdoffSeconds > 1)
                 holdoffSeconds = 1;
 
-            try
-            {
-                actualHoldoffSeconds = holdoffSeconds;
-                if (actualHoldoffSeconds < 0.1)
-                    actualHoldoffSeconds = 0.1;
-                if (actualHoldoffSeconds > 300)
-                    actualHoldoffSeconds = 300;
-            }
-            catch (Exception)
-            {
-                actualHoldoffSeconds = 10;
-            }
+            // Assure that the holdoff is between 0.1 and 300 seconds
+            var actualHoldoffSeconds = Math.Min(300, Math.Max(0.1, holdoffSeconds));
 
             // Try to ensure there are no open objects with file handles
             PRISM.ProgRunner.GarbageCollectNow();
