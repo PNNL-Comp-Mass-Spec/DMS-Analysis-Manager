@@ -16,6 +16,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 using PRISM.AppSettings;
 
 namespace AnalysisManagerMSFraggerPlugIn
@@ -927,6 +928,19 @@ namespace AnalysisManagerMSFraggerPlugIn
                     string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB));
             }
 
+            if (Global.RunningOnDeveloperComputer())
+            {
+                var freeMemoryMB = Global.GetFreeMemoryMB();
+                if (javaMemorySizeMB > freeMemoryMB * 0.9)
+                {
+                    ConsoleMsgUtils.ShowWarning(
+                        "Decreasing Java memory size from {0:N0} MB to {1:N0} MB since running on developer machine and not enough free memory",
+                        javaMemorySizeMB, freeMemoryMB * 0.9);
+
+                    javaMemorySizeMB = (int)Math.Round(freeMemoryMB * 0.9, 0);
+                }
+
+            }
             var arguments = new StringBuilder();
 
             arguments.AppendFormat("-Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);

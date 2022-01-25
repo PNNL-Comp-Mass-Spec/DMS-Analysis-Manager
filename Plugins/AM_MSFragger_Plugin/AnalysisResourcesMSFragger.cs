@@ -13,6 +13,7 @@ using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
@@ -208,6 +209,16 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mMessage = string.Format(
                     "Not enough free memory to run MSFragger; need {0:N0} MB due to a {1:N0} MB FASTA file",
                     recommendedMemorySizeMB, fastaFileSizeMB);
+
+                if (Global.RunningOnDeveloperComputer())
+                {
+                    ConsoleMsgUtils.ShowWarning(mMessage);
+                    ConsoleMsgUtils.ShowWarning("However, running on development machine, so will ignore this error");
+                    ConsoleMsgUtils.SleepSeconds(2);
+
+                    mMessage = string.Empty;
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
 
                 mInsufficientFreeMemory = true;
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
