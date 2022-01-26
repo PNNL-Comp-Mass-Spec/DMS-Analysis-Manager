@@ -1081,11 +1081,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            var copySuccess = string.IsNullOrWhiteSpace(transferDirectoryPathOverride)
+            return string.IsNullOrWhiteSpace(transferDirectoryPathOverride)
                 ? CopyResultsFolderToServer()
                 : CopyResultsFolderToServer(transferDirectoryPathOverride);
-
-            return copySuccess;
         }
 
         /// <summary>
@@ -2097,12 +2095,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     }
                 }
 
-                if (is64Bit)
-                {
-                    return Path.Combine(bin, "x64");
-                }
-
-                return Path.Combine(bin, "i386");
+                return Path.Combine(bin, is64Bit ? "x64" : "i386");
             }
             catch (Exception ex)
             {
@@ -2446,10 +2439,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
             mMessage = paramFileReader.ErrorMessage;
 
-            if (paramFileReader.ParamFileNotFound)
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-
-            return CloseOutType.CLOSEOUT_FAILED;
+            return paramFileReader.ParamFileNotFound
+                ? CloseOutType.CLOSEOUT_NO_PARAM_FILE
+                : CloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>
