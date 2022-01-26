@@ -528,6 +528,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Rename and update the report files created by Philosopher
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory,
+        /// updating the strings in columns Spectrum, Spectrum File, and Protein ID
+        /// </para>
+        /// <para>
+        /// If experiment group working directories are present, will move the updated files to the main working directory
+        /// </para>
+        /// </remarks>
+        /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
+        /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
@@ -3404,6 +3418,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Update the .pin file to remove the spectrum ID from the first column (though it is retained for the first 10 PSMs)
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This is done to reduce the file size, since the dataset name can be inferred from the filename,
+        /// and since the scan number and charge are already listed in other columns
+        /// </para>
+        /// <para>
+        /// Example spectrum ID that is removed:
+        /// SampleName_06May21_20-11-16.501.501.2_1
+        /// </para>
+        /// </remarks>
+        /// <param name="sourcePinFile"></param>
+        /// <returns>True if successful, false if an error</returns>
         private bool UpdatePinFileStripDataset(FileInfo sourcePinFile)
         {
             const string TRASH_EXTENSION = ".trash2";

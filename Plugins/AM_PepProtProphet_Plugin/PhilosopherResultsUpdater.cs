@@ -98,7 +98,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Rename and update the report files created by Philosopher
         /// </summary>
-        /// <remarks>Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory</remarks>
+        /// <remarks>
+        /// <para>
+        /// Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory,
+        /// updating the strings in columns Spectrum, Spectrum File, and Protein ID (<see cref="UpdatePhilosopherPSMFile"/>)
+        /// </para>
+        /// <para>
+        /// If experiment group working directories are present, will move the updated files to the main working directory
+        /// </para>
+        /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
         /// <param name="totalPeptideCount">Output: total number of result lines in the peptide.tsv file(s)</param>
         /// <returns>True if successful, false if an error</returns>
@@ -346,7 +354,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Rename protein.tsv to DatasetName_protein.tsv or ExperimentGroupName_protein.tsv
+        /// Rename protein.tsv to DatasetName_protein.tsv or ExperimentGroupName_protein.tsv, moving the file to the working directory if necessary
         /// </summary>
         /// <param name="datasetOrExperimentGroupName"></param>
         /// <param name="workingDirectory"></param>
