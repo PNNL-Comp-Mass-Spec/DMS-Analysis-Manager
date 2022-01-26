@@ -2965,7 +2965,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  min_pep_prob: 0.9");
                     writer.WriteLine("  psm_norm: false");
                     writer.WriteLine("  outlier_removal: true");
-                    writer.WriteLine("  output: {0}", Path.Combine(mWorkingDirectory.FullName, "tmt-report"));
+                    writer.WriteLine("  output: {0}", mWorkingDirectory.FullName);
                     writer.WriteLine("  path: {0}", mTmtIntegratorProgLoc);
                     writer.WriteLine("  channel_num: {0}", plex);
                     writer.WriteLine("  ms1_int: true");
@@ -3019,13 +3019,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    // ToDo: Customize this check for a results file
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "TMT_Integrator_Results.txt"));
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("IonQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
+                    var abundanceFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "abundance_gene_MD.tsv"));
+                    var ratioFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ratio_gene_MD.tsv"));
+
+                    if (!abundanceFile.Exists)
+                    {
+                        LogError("TMT Integrator abundance file not found: " + abundanceFile.Name);
+                        return false;
+                    }
+
+                    if (!ratioFile.Exists)
+                    {
+                        LogError("TMT Integrator ratio file not found: " + ratioFile.Name);
+                        return false;
+                    }
 
                     return true;
                 }
