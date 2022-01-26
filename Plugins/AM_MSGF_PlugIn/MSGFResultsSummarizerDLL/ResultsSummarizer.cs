@@ -32,7 +32,8 @@ namespace MSGFResultsSummarizer
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acetyl, Cntm, gi, itrac, MODa, peptides, phosph, phosphopeptide, phosphopeptides, psm
+        // Ignore Spelling: Acetyl, Cntm, gi, itrac, MODa,
+        // Ignore Spelling: peptides, phosph, phosphopeptide, phosphopeptides, plex, psm
         // Ignore Spelling: sp, structs, Tpro, Trypa, tryptic, udt, uni, xxx
 
         // ReSharper restore CommentTypo
@@ -68,10 +69,29 @@ namespace MSGFResultsSummarizer
 
         private enum ReporterIonTypes
         {
+            /// <summary>
+            /// Reporter ions not in use
+            /// </summary>
             None = 0,
+
+            /// <summary>
+            /// 4-plex iTRAQ
+            /// </summary>
             iTRAQ4plex = 1,
+
+            /// <summary>
+            /// 8-plex iTRAQ
+            /// </summary>
             iTRAQ8plex = 2,
+
+            /// <summary>
+            /// Modification mass used by 6-plex, 10-plex, and 11-plex TMT
+            /// </summary>
             TMT6plex = 3,
+
+            /// <summary>
+            /// Modification mass used by 16-plex and 18-plex TMT
+            /// </summary>
             TMT16plex = 4
         }
 
@@ -2090,6 +2110,9 @@ namespace MSGFResultsSummarizer
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Modification_Type);
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Mass_Correction_Tag);
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Occurrence_Count);
+
+                // Note that 6-plex, 10-plex, and 11-plex TMT all have the same modification mass, and thus parameter files should have TMT6Tag or TMT6plex for the mod name
+                // Also, 16-plex and 18-plex TMT both have the same modification mass, and thus parameter files should have TMT16Tag or TMT16plex for the mod name
 
                 var reporterIonNames = new Dictionary<string, ReporterIonTypes>(StringComparer.OrdinalIgnoreCase)
                 {
