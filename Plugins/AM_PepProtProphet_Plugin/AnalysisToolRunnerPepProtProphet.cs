@@ -892,6 +892,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 ReporterIonModes.Tmt10 => 10,
                 ReporterIonModes.Tmt11 => 11,
                 ReporterIonModes.Tmt16 => 16,
+                ReporterIonModes.Tmt18 => 18,
                 ReporterIonModes.Disabled => 0,
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -912,7 +913,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     reporterIonNames.Add("131");
                     return reporterIonNames;
 
-                case ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16:
+                case ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16 or ReporterIonModes.Tmt18:
                     reporterIonNames.Add("126");
                     reporterIonNames.Add("127N");
                     reporterIonNames.Add("127C");
@@ -927,19 +928,25 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (reporterIonMode == ReporterIonModes.Tmt10)
                         return reporterIonNames;
 
-                    // TMT 11 and TMT 16
+                    // TMT 11, TMT 16, and TMT 18
                     reporterIonNames.Add("131C");
 
                     if (reporterIonMode == ReporterIonModes.Tmt11)
                         return reporterIonNames;
 
-                    // TMT 16
-                    reporterIonNames.Add("131C");
+                    // TMT 16 and TMT 18
                     reporterIonNames.Add("132N");
                     reporterIonNames.Add("132C");
                     reporterIonNames.Add("133N");
                     reporterIonNames.Add("133C");
                     reporterIonNames.Add("134N");
+
+                    if (reporterIonMode == ReporterIonModes.Tmt16)
+                        return reporterIonNames;
+
+                    // TMT 18
+                    reporterIonNames.Add("134C");
+                    reporterIonNames.Add("135N");
 
                     return reporterIonNames;
             }
@@ -1954,6 +1961,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     ReporterIonModes.Tmt10 => "TMT",
                     ReporterIonModes.Tmt11 => "TMT",
                     ReporterIonModes.Tmt16 => "TMT",
+                    ReporterIonModes.Tmt18 => "TMT",
                     _ => throw new ArgumentOutOfRangeException()
                 };
 

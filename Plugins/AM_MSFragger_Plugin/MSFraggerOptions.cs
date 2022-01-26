@@ -27,7 +27,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         Tmt6 = 3,
         Tmt10 = 4,
         Tmt11 = 5,
-        Tmt16 = 6
+        Tmt16 = 6,
+        Tmt18 = 7
     }
 
     public class MSFraggerOptions : EventNotifier
@@ -198,18 +199,29 @@ namespace AnalysisManagerMSFraggerPlugIn
         }
 
         /// <summary>
-        /// <see cref="GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT
-        /// When ReporterIonMode is Tmt11, this method looks for job parameter ReporterIonMode to attempt to determine the actual TMT mode in use
-        /// Otherwise, this method simply returns reporterIonMode
+        /// <para>
+        /// <see cref="GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT.
+        /// For both 16-plex and 18-plex TMT, it sets ReporterIonMode to Tmt16.
+        /// </para>
+        /// <para>
+        /// When ReporterIonMode is Tmt11 or Tmt16, this method looks for job parameter ReporterIonMode to attempt to determine the actual TMT mode in use.
+        /// By default, that job parameter is "auto", but it can be customized by editing a DMS settings file
+        /// </para>
         /// </summary>
+        /// <remarks>
+        /// This method will return reporterIonMode if it is not Tmt11 or Tmt16, or if job parameter ReporterIonMode is undefined to "auto"
+        /// </remarks>
         /// <param name="reporterIonMode"></param>
         private ReporterIonModes DetermineReporterIonMode(ReporterIonModes reporterIonMode)
         {
-            if (reporterIonMode != ReporterIonModes.Tmt11)
+            if (reporterIonMode != ReporterIonModes.Tmt11 && reporterIonMode != ReporterIonModes.Tmt16)
                 return reporterIonMode;
 
             // Look for a job parameter that specifies the reporter ion mode
             var reporterIonModeName = mJobParams.GetJobParameter("ReporterIonMode", string.Empty);
+
+            // The standard settings files have <item key="ReporterIonMode" value="auto">
+            // Check for this, and if found, simply return reporterIonMode
             if (IsUndefinedOrAuto(reporterIonModeName))
             {
                 return reporterIonMode;
@@ -226,7 +238,13 @@ namespace AnalysisManagerMSFraggerPlugIn
                 "tmt11" => ReporterIonModes.Tmt11,
                 "11-plex" => ReporterIonModes.Tmt11,
                 "11plex" => ReporterIonModes.Tmt11,
-                _ => ReporterIonModes.Tmt11
+                "tmt16" => ReporterIonModes.Tmt16,
+                "16-plex" => ReporterIonModes.Tmt16,
+                "16plex" => ReporterIonModes.Tmt16,
+                "tmt18" => ReporterIonModes.Tmt18,
+                "18-plex" => ReporterIonModes.Tmt18,
+                "18plex" => ReporterIonModes.Tmt18,
+                _ => ReporterIonModes.Tmt16
             };
         }
 
@@ -281,7 +299,12 @@ namespace AnalysisManagerMSFraggerPlugIn
         private ReporterIonModes GetReporterIonModeFromModMass(double modMass)
         {
             if (Math.Abs(modMass - 304.207146) < 0.001)
+            {
+                // 16-plex and 18-plex TMT
+                // Use TMT 16 for now, though method DetermineReporterIonMode(ReporterIonModes reporterIonMode)
+                // will look for a job parameter to override this
                 return ReporterIonModes.Tmt16;
+            }
 
             if (Math.Abs(modMass - 304.205353) < 0.001)
                 return ReporterIonModes.Itraq8;
@@ -389,7 +412,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                         }
 
                         if (MS1ValidationMode == MS1ValidationModes.PeptideProphet &&
-                            ReporterIonMode is ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16)
+                            ReporterIonMode is
+                                ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or
+                                ReporterIonModes.Tmt16 or ReporterIonModes.Tmt18)
                         {
                             MS1ValidationMode = MS1ValidationModes.Percolator;
                         }

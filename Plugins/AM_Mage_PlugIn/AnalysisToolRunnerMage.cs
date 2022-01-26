@@ -90,6 +90,13 @@ namespace AnalysisManager_Mage_PlugIn
             ionColumns.Add("Ion_133.145");
             ionColumns.Add("Ion_133.151");
             ionColumns.Add("Ion_134.148");
+
+            if (plex < 18)
+                return;
+
+            // Add the extra 18-plex TMT ions
+            ionColumns.Add("Ion_134.155");
+            ionColumns.Add("Ion_135.152");
         }
 
         /// <summary>
@@ -314,6 +321,13 @@ namespace AnalysisManager_Mage_PlugIn
                     // 16-plex TMT
                     labelingScheme = "TMT16Plex";
                     AddTMTReporterIons(ionColumns, 16);
+                }
+
+                if (workFlowSteps.Contains("TMT18Plex"))
+                {
+                    // 18-plex TMT
+                    labelingScheme = "TMT18Plex";
+                    AddTMTReporterIons(ionColumns, 18);
                 }
 
                 if (ionColumns.Count > 0)
