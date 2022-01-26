@@ -1450,15 +1450,26 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var success = RunPhilosopher(PhilosopherToolType.Abacus, arguments.ToString(), "run abacus");
 
-                // ToDo: Verify that the Abacus results file exists
-                var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Abacus_Results.txt"));
-                //if (!outputFile.Exists)
-                //{
-                //    LogError("Abacus results file not found: " + outputFile.Name);
-                //    return false;
-                //}
+                // Verify that the Abacus result files exists
+                var outputFiles = new List<FileInfo>
+                {
+                    new(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")),
+                    new(Path.Combine(mWorkingDirectory.FullName, "reprint.spc.tsv")),
+                    new(Path.Combine(mWorkingDirectory.FullName, "reprint.int.tsv"))
+                };
 
-                return success;
+                var missingFileCount = 0;
+
+                foreach (var outputFile in outputFiles)
+                {
+                    if (outputFile.Exists)
+                        continue;
+
+                    LogError("Abacus results file not found: " + outputFile.Name);
+                    missingFileCount++;
+                }
+
+                return missingFileCount == 0 && success;
             }
             catch (Exception ex)
             {
