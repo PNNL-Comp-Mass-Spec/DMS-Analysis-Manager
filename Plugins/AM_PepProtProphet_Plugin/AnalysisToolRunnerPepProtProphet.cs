@@ -2338,8 +2338,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
 
-                var targetPsmFile = new FileInfo(Path.Combine(mCmdRunner.WorkDir, targetPsmFileName));
-                var decoyPsmFile = new FileInfo(Path.Combine(mCmdRunner.WorkDir, decoyPsmFileName));
+                var targetPsmFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, targetPsmFileName));
+                var decoyPsmFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, decoyPsmFileName));
 
                 percolatorPsmFiles.Add(targetPsmFile);
                 percolatorPsmFiles.Add(decoyPsmFile);
@@ -2910,7 +2910,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // Verify that psm.bin was created
 
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, ".meta", "psm.bin"));
+                    var outputFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, ".meta", "psm.bin"));
                     if (!outputFile.Exists)
                     {
                         LogError("Filtered results file not found in the .meta directory: " + outputFile.Name);
