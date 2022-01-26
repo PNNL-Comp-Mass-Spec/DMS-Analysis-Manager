@@ -3039,11 +3039,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("Java returned a non-zero exit code while calling PercolatorOutputToPepXML: " + mCmdRunner.ExitCode);
+                    LogWarning("Java returned a non-zero exit code while calling tmt-integrator: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
-                    LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
+                    LogWarning("Call to Java failed while calling tmt-integrator (but exit code is 0)");
                 }
 
                 return false;
