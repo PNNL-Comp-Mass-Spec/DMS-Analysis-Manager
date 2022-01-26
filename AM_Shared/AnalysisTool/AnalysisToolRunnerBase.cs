@@ -1865,10 +1865,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!string.IsNullOrEmpty(javaProgLoc))
                 return javaProgLoc;
 
-            if (string.IsNullOrWhiteSpace(errorMessage))
-                LogError("GetJavaProgLoc could not find Java");
-            else
-                LogError(errorMessage);
+            LogError(string.IsNullOrWhiteSpace(errorMessage) ? "GetJavaProgLoc could not find Java" : errorMessage);
 
             return string.Empty;
         }
@@ -2374,7 +2371,10 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var fileName = mJobParams.GetParam("SettingsFileName");
             if (fileName.Equals("na", StringComparison.OrdinalIgnoreCase))
+            {
+                // Settings file wasn't required
                 return true;
+            }
 
             var filePath = Path.Combine(mWorkDir, fileName);
 
@@ -2386,8 +2386,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Settings file wasn't found
             return false;
-
-            // Settings file wasn't required
         }
 
         /// <summary>
