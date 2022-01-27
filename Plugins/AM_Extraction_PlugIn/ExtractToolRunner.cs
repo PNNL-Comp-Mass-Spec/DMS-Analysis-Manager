@@ -2661,13 +2661,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        /// <summary>
-        /// Examine the synopsis (and optionally first hits) files to summarize PSMs
-        /// </summary>
-        /// <param name="resultType">Result type</param>
-        /// <param name="synopsisFileNameFromPHRP">Synopsis file path, as reported by PHRP</param>
-        /// <returns>CloseOutType representing success or failure</returns>
-        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP)
+        private ResultsSummarizer GetPsmResultsSummarizer(PeptideHitResultTypes resultType)
         {
             var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
             RegisterEvents(summarizer);
@@ -2679,11 +2673,33 @@ namespace AnalysisManagerExtractionPlugin
             summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
             summarizer.ContactDatabase = true;
-            summarizer.PostJobPSMResultsToDB = true;
             summarizer.SaveResultsToTextFile = false;
             summarizer.DatasetName = mDatasetName;
 
+            return summarizer;
+        }
+
+        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP)
+        {
+            return SummarizePSMs(resultType, synopsisFileNameFromPHRP, true, out _);
+        }
+
+        /// <summary>
+        /// Examine the synopsis (and optionally first hits) files to summarize PSMs
+        /// </summary>
+        /// <param name="resultType">Result type</param>
+        /// <param name="synopsisFileNameFromPHRP">Synopsis file path, as reported by PHRP</param>
+        /// <param name="postJobPSMResultsToDB">When true, post the PSM results for this job to the database</param>
+        /// <param name="psmResults">Output: PSM Results</param>
+        /// <returns>CloseOutType representing success or failure</returns>
+        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP, bool postJobPSMResultsToDB, out PSMResults psmResults)
+        {
+            var summarizer = GetPsmResultsSummarizer(resultType);
+            summarizer.PostJobPSMResultsToDB = postJobPSMResultsToDB;
+
             var success = summarizer.ProcessPSMResults(synopsisFileNameFromPHRP);
+
+            psmResults = summarizer.GetPsmResults();
 
             if (success)
             {
