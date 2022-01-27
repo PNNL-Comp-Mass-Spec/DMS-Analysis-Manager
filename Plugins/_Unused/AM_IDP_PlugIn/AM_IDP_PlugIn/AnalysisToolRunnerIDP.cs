@@ -152,54 +152,6 @@ namespace AnalysisManager_IDP_PlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private void CopyFailedResultsToArchiveDirectory()
-        {
-            string failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(failedResultsFolderPath))
-                failedResultsFolderPath = "??Not Defined??";
-
-            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (mDebugLevel < 2)
-                mDebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string folderPathToArchive;
-            folderPathToArchive = string.Copy(mWorkDir);
-
-            // If necessary, delete extra files with the following
-            /*
-                try
-                {
-                    System.IO.File.Delete(System.IO.Path.Combine(mWorkDir, mDatasetName + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(mWorkDir, mDatasetName + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-
-            // Make the results folder
-            var success = MakeResultsDirectory();
-            if (success)
-            {
-                // Move the result files into the result folder
-                success = MoveResultFiles();
-                if (success)
-                {
-                    // Move was a success; update folderPathToArchive
-                    folderPathToArchive = System.IO.Path.Combine(mWorkDir, mResultsDirectoryName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            AnalysisResults analysisResults = new AnalysisResults(mMgrParams, mJobParams);
-            analysisResults.CopyFailedResultsToArchiveDirectory(folderPathToArchive);
-
-        }
-
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
