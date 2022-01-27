@@ -357,13 +357,21 @@ namespace AnalysisManagerExtractionPlugin
             {
                 string toolName;
                 string fileNameSuffix;
+
+                // ReSharper disable IdentifierTypo
+
                 string modxProgJarName;
                 string modxFilterJarName;
+
+                // ReSharper restore IdentifierTypo
 
                 if (isModPlus)
                 {
                     toolName = "MODPlus";
+
+                    // ReSharper disable once StringLiteralTypo
                     fileNameSuffix = "_modp.txt";
+
                     modxProgJarName = MODPlus_JAR_NAME;
                     modxFilterJarName = MODPlus_FILTER_JAR_NAME;
                 }
@@ -452,6 +460,8 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Determine the path to the MODa or MODPlus program
+
+                // ReSharper disable once IdentifierTypo
                 var modxProgLoc = DetermineProgramLocation(toolName + "ProgLoc", modxProgJarName);
 
                 var modXProgram = new FileInfo(modxProgLoc);
@@ -476,6 +486,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 arguments += " -fdr " + fdrThreshold;
                 arguments += " -d " + decoyPrefixJobParam;
+
+                // ReSharper disable once CommentTypo
 
                 // Example command line:
                 // "C:\DMS_Programs\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar
@@ -2170,8 +2182,13 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("Running peptide prophet on file " + synFileNameAndSize);
                 }
 
-                // Note that the PeptideProphet DLL compiled in 2021 require .NET 4.8 and the
+                // ReSharper disable CommentTypo
+
+                // Note that the PeptideProphet DLL compiled in 2021 requires .NET 4.8 and the
                 // Microsoft Visual C++ 2015-2019 Redistributable (x86) (files msvcp140.dll and msvcr140)
+
+                // ReSharper restore CommentTypo
+
                 result = peptideProphet.CallPeptideProphet();
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
