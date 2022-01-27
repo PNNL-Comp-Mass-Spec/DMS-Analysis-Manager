@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.StatusReporting;
 using PHRPReader;
+using PRISM;
 using PRISM.Logging;
 using PRISMDatabaseUtils;
 
@@ -129,7 +131,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
 
-            var sqlStr = new System.Text.StringBuilder();
+            var sqlStr = new StringBuilder();
 
             // Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
             // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
@@ -191,7 +193,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             dataPackageJobs = new Dictionary<int, DataPackageJobInfo>();
 
-            var sqlStr = new System.Text.StringBuilder();
+            var sqlStr = new StringBuilder();
 
             // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
             // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
@@ -313,7 +315,7 @@ namespace AnalysisManagerBase.JobConfig
             // Throttle the calls to this method to avoid overloading the database for data packages with hundreds of jobs
             while (DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50)
             {
-                PRISM.ProgRunner.SleepMilliseconds(25);
+                ProgRunner.SleepMilliseconds(25);
             }
 
             mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
