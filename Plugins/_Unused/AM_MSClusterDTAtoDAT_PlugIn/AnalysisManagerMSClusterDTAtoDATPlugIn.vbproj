@@ -143,8 +143,8 @@
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
-copy "$(TargetName).dll" "$(ProjectDir)..\..\AM_Program\bin"
-copy "$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
+    <PostBuildEvent>echo copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
+echo copy "$(TargetName).dll" "$(ProjectDir)..\..\AM_Program\bin"
+echo copy "$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
 </Project>
