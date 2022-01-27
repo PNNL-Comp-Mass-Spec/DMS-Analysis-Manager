@@ -268,6 +268,40 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
+        /// Obtain a dictionary with information about this data package's datasets
+        /// </summary>
+        /// <remarks>
+        /// Will include dataset name, ID, experiment dataset directory path, MaxQuant parameter group ID,
+        /// and dataset experiment group (from the data package comment field for each dataset)
+        /// </remarks>
+        /// <returns>Dictionary where keys are Dataset IDs and values are dataset info</returns>
+        public Dictionary<int, DataPackageDatasetInfo> GetDataPackageDatasets()
+        {
+            var dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+
+            foreach (var dataset in Datasets)
+            {
+                var datasetId = dataset.Key;
+
+                var datasetInfo = new DataPackageDatasetInfo(dataset.Value, datasetId)
+                {
+                    DatasetDirectoryPath = DatasetStoragePaths[datasetId],
+                    DatasetExperimentGroup = DatasetExperimentGroup[datasetId],
+                    Experiment = Experiments[datasetId],
+                    IsDirectoryBased = DatasetFileTypes[datasetId].Equals("Directory"),
+                    MaxQuantParamGroup = DatasetMaxQuantParamGroup[datasetId],
+                    RawDataType = DatasetRawDataTypeNames[datasetId]
+                };
+
+                // Skip: datasetInfo.DatasetFileName = DatasetFiles[datasetId];
+
+                dataPackageDatasets.Add(datasetId, datasetInfo);
+            }
+
+            return dataPackageDatasets;
+        }
+
+        /// <summary>
         /// Store data package info a packed job parameters
         /// </summary>
         /// <param name="analysisResources"></param>
