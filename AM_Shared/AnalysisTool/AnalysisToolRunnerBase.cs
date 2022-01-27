@@ -1797,7 +1797,12 @@ namespace AnalysisManagerBase.AnalysisTool
             return false;
         }
 
-        private static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel, [CallerMemberName] string callingFunction = "")
+        private static short GetManagerDebugLevel(
+            string connectionString,
+            string managerName,
+            short currentDebugLevel,
+            int recursionLevel,
+            [CallerMemberName] string callerName = "")
         {
             if (Global.OfflineMode)
             {
@@ -1824,11 +1829,11 @@ namespace AnalysisManagerBase.AnalysisTool
                 "FROM V_MgrParams " +
                 "WHERE ManagerName = '" + managerName + "' AND ParameterName IN ('DebugLevel', 'MgrSettingGroupName')";
 
-            var callingFunctions = Global.AppendToComment(callingFunction, "GetManagerDebugLevel");
+            var callingMethods = Global.AppendToComment(callerName, "GetManagerDebugLevel");
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: false);
 
-            var success = dbTools.GetQueryResults(sqlQuery, out var mgrParamsFromDb, callingFunction: callingFunctions);
+            var success = dbTools.GetQueryResults(sqlQuery, out var mgrParamsFromDb, callingFunction: callingMethods);
 
             if (!success || mgrParamsFromDb.Count == 0)
                 return currentDebugLevel;
@@ -1847,7 +1852,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
 
-                    return GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callingFunction);
+                    return GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callerName);
                 }
             }
 

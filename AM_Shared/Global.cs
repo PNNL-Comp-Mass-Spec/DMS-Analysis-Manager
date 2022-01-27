@@ -381,16 +381,16 @@ namespace AnalysisManagerBase
         /// <param name="sqlQuery">Query to run</param>
         /// <param name="firstQueryResult">Results, as a list of columns (first row only if multiple rows)</param>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <param name="callingFunction">Name of the calling method (for logging purposes)</param>
+        /// <param name="callerName">Name of the calling method (for logging purposes)</param>
         /// <returns>True if success, false if an error</returns>
         public static bool GetQueryResultsTopRow(
             IDBTools dbTools,
             string sqlQuery,
             out List<string> firstQueryResult,
             short retryCount = 3,
-            [CallerMemberName] string callingFunction = "UnknownMethod")
+            [CallerMemberName] string callerName = "UnknownMethod")
         {
-            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount, callingFunction: callingFunction);
+            var success = dbTools.GetQueryResults(sqlQuery, out var queryResults, retryCount, callingFunction: callerName);
 
             if (success)
             {
