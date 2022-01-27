@@ -3094,6 +3094,68 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
+        /// Retrieve the metadata for the datasets associated with the given data package
+        /// </summary>
+        /// <param name="dataPackageID"></param>
+        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="storeJobParameters">When true, store the data package info as packed dictionary job parameters</param>
+        /// <returns>True if the data package is defined and it has datasets associated with it</returns>
+        protected bool LookupDataPackageInfo(
+            int dataPackageID,
+            out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            bool storeJobParameters)
+        {
+            try
+            {
+                // Gigasax.DMS_Pipeline
+                var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);
+                RegisterEvents(dataPackageFileHandler);
+
+                var dataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPackageID);
+
+                var success = dataPackageInfoLoader.LoadDataPackageDatasetInfo(out var dataPackageDatasets);
+
+                if (success && dataPackageDatasets.Count > 0)
+                {
+                    datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+
+                    if (storeJobParameters)
+                    {
+                        var dataPackageInfo = new DataPackageInfo(dataPackageID, dataPackageDatasets);
+                        RegisterEvents(dataPackageInfo);
+
+                        dataPackageInfo.StorePackedDictionaries(this);
+                    }
+
+                    return true;
+                }
+
+                var errorMessage = string.Format(
+                    "Did not find any datasets associated with this job's data package (ID {0})",
+                    dataPackageInfoLoader.DataPackageID);
+
+                LogError(errorMessage);
+
+                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LookupDataPackageInfo calling LoadDataPackageDatasetInfo", ex);
+
+                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Retrieve the information for the specified analysis job
         /// </summary>
         /// <remarks>This procedure is used by AnalysisResourcesQCART</remarks>
