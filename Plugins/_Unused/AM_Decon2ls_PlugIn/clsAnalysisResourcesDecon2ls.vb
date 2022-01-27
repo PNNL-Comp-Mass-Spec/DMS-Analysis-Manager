@@ -2,36 +2,39 @@
 Option Strict On
 
 Imports AnalysisManagerBase
+Imports AnalysisManagerBase.AnalysisTool
+Imports AnalysisManagerBase.JobConfig
+Imports PRISM.Logging
 
 Public Class clsAnalysisResourcesDecon2ls
-    Inherits clsAnalysisResources
+    Inherits AnalysisResources
 
 #Region "Methods"
     ''' <summary>
     ''' Retrieves files necessary for performance of Decon2ls analysis
     ''' </summary>
-    ''' <returns>IJobParams.CloseOutType indicating success or failure</returns>
+    ''' <returns>CloseOutType indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         'Retrieve param file
-        If Not RetrieveFile( _
-          m_jobParams.GetParam("ParmFileName"), _
-          m_jobParams.GetParam("ParmFileStoragePath")) _
-        Then Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not FileSearchTool.RetrieveFile( _
+          mJobParams.GetParam("ParmFileName"), _
+          mJobParams.GetParam("ParmFileStoragePath")) _
+        Then Return CloseOutType.CLOSEOUT_FAILED
 
         'Get input data file
-        Dim rawDataType As String = m_jobParams.GetParam("RawDataType")
-        If Not RetrieveSpectra(rawDataType) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Dim rawDataType As String = mJobParams.GetParam("RawDataType")
+        If Not FileSearchTool.RetrieveSpectra(rawDataType) Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.")
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        If Not MyBase.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories) Then
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 #End Region

@@ -36,9 +36,6 @@
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared">
-      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="MSDataFileReader">
       <HintPath>..\..\AM_Common\MSDataFileReader.dll</HintPath>
     </Reference>
@@ -72,12 +69,18 @@
       <Version>1.3.3</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /Y
-xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin" /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin" /Y</PostBuildEvent>
+    <PostBuildEvent>echo xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /Y
+echo xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /Y
+echo xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin" /Y
+echo xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin" /Y</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

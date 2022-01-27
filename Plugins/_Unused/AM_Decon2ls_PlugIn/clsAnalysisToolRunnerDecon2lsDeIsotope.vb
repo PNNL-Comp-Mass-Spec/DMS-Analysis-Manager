@@ -7,6 +7,7 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 Imports AnalysisManagerBase
+Imports PRISM.Logging
 
 Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
     Inherits clsAnalysisToolRunnerDecon2lsBase
@@ -27,14 +28,14 @@ Public Class clsAnalysisToolRunnerDecon2lsDeIsotope
 
     Protected Overrides Sub StartDecon2LS()
 
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(), Starting deconvolution")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(), Starting deconvolution")
         End If
 
         Try
             m_ToolObj.DeConvolute()
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception from m_ToolObj.DeConvolute in clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(): " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception from m_ToolObj.DeConvolute in clsAnalysisToolRunnerDecon2lsDeIsotope.StartDecon2LS(): " & ex.Message)
         End Try
 
     End Sub

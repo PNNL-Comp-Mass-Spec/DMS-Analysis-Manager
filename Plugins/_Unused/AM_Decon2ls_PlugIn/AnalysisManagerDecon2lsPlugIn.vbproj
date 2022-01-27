@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -93,15 +93,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared">
-      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="Decon2LSRemoter, Version=1.0.3350.30516, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\Decon2LSRemoter.dll</HintPath>
@@ -113,6 +104,9 @@
     <Reference Include="DMSDecon2LS, Version=1.0.2697.16978, Culture=neutral">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>bin\DMSDecon2LS.dll</HintPath>
+    </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
@@ -171,6 +165,17 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.6.45</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

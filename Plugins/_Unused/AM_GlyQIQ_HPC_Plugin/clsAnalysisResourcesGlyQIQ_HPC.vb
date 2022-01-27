@@ -1,4 +1,4 @@
-﻿' Written by Matthew Monroe for the US Department of Energy 
+﻿' Written by Matthew Monroe for the US Department of Energy
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 05/29/2014
 '
@@ -8,9 +8,14 @@ Option Strict On
 
 Imports AnalysisManagerBase
 Imports System.IO
+Imports AnalysisManagerBase.AnalysisTool
+Imports AnalysisManagerBase.FileAndDirectoryTools
+Imports AnalysisManagerBase.JobConfig
+Imports MyEMSLReader
+Imports PRISM.Logging
 
 Public Class clsAnalysisResourcesGlyQIQ_HPC
-    Inherits clsAnalysisResources
+    Inherits AnalysisResources
 
     Public Const GLYQ_IQ_LAUNCHER_FILE_PARAM_NAME As String = "GlyQIQLauncherFilePath"
 
@@ -39,23 +44,23 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
     Private mGlyQIQParams As udtGlyQIQParams
 #End Region
 
-    Public Overrides Function GetResources() As IJobParams.CloseOutType
+    Public Overrides Function GetResources() As CloseOutType
 
         mGlyQIQParams = New udtGlyQIQParams()
 
         If Not CreateSubFolders() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If Not RetrieveGlyQIQParameters() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
         If Not RetrievePeaksAndRawData() Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FILE_NOT_FOUND
+            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -71,15 +76,15 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             lstSubFolders.Add(WORKING_PARAMETERS_FOLDER_NAME)
 
             For Each folderName In lstSubFolders
-                Dim diTargetFolder = New DirectoryInfo(Path.Combine(m_WorkingDir, folderName))
+                Dim diTargetFolder = New DirectoryInfo(Path.Combine(mWorkDir, folderName))
                 If Not diTargetFolder.Exists Then diTargetFolder.Create()
             Next
 
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in CreateSubFolders"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateSubFolders"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
@@ -102,8 +107,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return numTargets
 
         Catch ex As Exception
-            m_message = "Exception counting the targets in " & Path.GetFileName(targetsFilePath)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception counting the targets in " & Path.GetFileName(targetsFilePath)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return 0
         End Try
 
@@ -117,7 +122,7 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             ' Define the output file path
             mGlyQIQParams.ConsoleOperatingParametersFileName = "GlyQIQ_Params_" & mGlyQIQParams.DatasetNameTruncated & ".txt"
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Creating the Operating Parameters file, " & mGlyQIQParams.ConsoleOperatingParametersFileName)
 
             Dim outputFilePath = Path.Combine(mGlyQIQParams.WorkingParametersFolderPathLocal, mGlyQIQParams.ConsoleOperatingParametersFileName)
 
@@ -138,8 +143,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in CreateConsoleOperatingParametersFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateConsoleOperatingParametersFile"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
@@ -155,8 +160,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Const NUM_CORES As Integer = 16
 
             ' Example path: \\winhpcfs\Projects\DMS\DMS_Work_Dir\Pub-61-3\0x_Launch_DatasetName_201405291749.bat
-            Dim outputFilePath As String = Path.Combine(m_WorkingDir, "1x_FrankenDelete_" & mGlyQIQParams.DatasetNameTruncated & ".bat")
-            m_jobParams.AddResultFileToSkip(Path.GetFileName(outputFilePath))
+            Dim outputFilePath As String = Path.Combine(mWorkDir, "1x_FrankenDelete_" & mGlyQIQParams.DatasetNameTruncated & ".bat")
+            mJobParams.AddResultFileToSkip(Path.GetFileName(outputFilePath))
 
             Using swOutFile = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swOutFile.WriteLine(
@@ -171,8 +176,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             End Using
 
             ' Example path: \\winhpcfs\Projects\DMS\DMS_Work_Dir\Pub-61-3\0x_Launch_DatasetName_201405291749.bat
-            outputFilePath = Path.Combine(m_WorkingDir, "2x_DeleteResultsFolder_" & mGlyQIQParams.DatasetNameTruncated & ".bat")
-            m_jobParams.AddResultFileToSkip(Path.GetFileName(outputFilePath))
+            outputFilePath = Path.Combine(mWorkDir, "2x_DeleteResultsFolder_" & mGlyQIQParams.DatasetNameTruncated & ".bat")
+            mJobParams.AddResultFileToSkip(Path.GetFileName(outputFilePath))
 
             Using swOutFile = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
                 swOutFile.WriteLine(
@@ -183,8 +188,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in CreateCleanupBatchFiles"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateCleanupBatchFiles"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
@@ -194,13 +199,13 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
 
         Try
             If String.IsNullOrEmpty(mGlyQIQParams.TimeStamp) Then
-                m_message = "Logic error, call CreateOperationsParametersFile before calling CreateLauncherBatchFile"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Logic error, call CreateOperationsParametersFile before calling CreateLauncherBatchFile"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
 
             Dim launcherFileName = "0x_Launch_" & mGlyQIQParams.DatasetNameTruncated & "_" & mGlyQIQParams.TimeStamp & ".bat"
-            Dim outputFilePath As String = Path.Combine(m_WorkingDir, launcherFileName)
+            Dim outputFilePath As String = Path.Combine(mWorkDir, launcherFileName)
 
             Dim commentText As String = String.Empty
             If DISABLE_HPC_JOB_SUBMISSION Then
@@ -242,13 +247,13 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             ' Example path: \\winhpcfs\Projects\DMS\DMS_Work_Dir\Pub-61-3\0x_Launch_DatasetName_201405291749.bat
 
             Dim remoteBatchFilePath = Path.Combine(mGlyQIQParams.WorkingDirectoryRemote, launcherFileName)
-            m_jobParams.AddAdditionalParameter("StepParameters", GLYQ_IQ_LAUNCHER_FILE_PARAM_NAME, remoteBatchFilePath)
+            mJobParams.AddAdditionalParameter("StepParameters", GLYQ_IQ_LAUNCHER_FILE_PARAM_NAME, remoteBatchFilePath)
 
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in CreateLauncherBatchFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateLauncherBatchFile"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
@@ -257,7 +262,7 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
     Private Function CreateLockFiles() As Boolean
 
         Try
-            Dim diTargetFolder = New DirectoryInfo(Path.Combine(m_WorkingDir, WORKING_PARAMETERS_FOLDER_NAME, "LocksFolder"))
+            Dim diTargetFolder = New DirectoryInfo(Path.Combine(mWorkDir, WORKING_PARAMETERS_FOLDER_NAME, "LocksFolder"))
             If Not diTargetFolder.Exists Then diTargetFolder.Create()
 
             ' Yes, we're creating one extra lock file here (not sure if it's really needed)
@@ -270,35 +275,35 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
 
             Return True
         Catch ex As Exception
-            m_message = "Exception in CreateLockFiles"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateLockFiles"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
     End Function
 
-    Private Function CreateOperationsParametersFile(ByVal udtHpcOptions As udtHPCOptionsType) As Boolean
+    Private Function CreateOperationsParametersFile(ByVal udtHpcOptions As HPCUtilities.udtHPCOptionsType) As Boolean
 
         Try
 
-            Dim datasetNameTruncated = TruncateDatasetNameIfRequired(m_DatasetName)
+            Dim datasetNameTruncated = TruncateDatasetNameIfRequired(DatasetName)
 
             mGlyQIQParams.TimeStamp = DateTime.Now.ToString("yyyyMMddhhmm")
             mGlyQIQParams.OperationParametersFileName = "0y_HPC_OperationParameters_" & mGlyQIQParams.TimeStamp & ".txt"
 
             ' Example path: \\winhpcfs\Projects\DMS\DMS_Work_Dir\Pub-61-3\0y_HPC_OperationParameters_201405291749.bat
-            Dim operationParametersFilePath As String = Path.Combine(m_WorkingDir, mGlyQIQParams.OperationParametersFileName)
+            Dim operationParametersFilePath As String = Path.Combine(mWorkDir, mGlyQIQParams.OperationParametersFileName)
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Operation Parameters file, " & mGlyQIQParams.OperationParametersFileName)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Creating the Operation Parameters file, " & mGlyQIQParams.OperationParametersFileName)
 
-            mGlyQIQParams.CoreCountActual = m_jobParams.GetJobParameter("HPCMaxCores", 500)
+            mGlyQIQParams.CoreCountActual = mJobParams.GetJobParameter("HPCMaxCores", 500)
 
             If mGlyQIQParams.CoreCountActual > mGlyQIQParams.NumTargets Then
                 mGlyQIQParams.CoreCountActual = mGlyQIQParams.NumTargets
             End If
 
-            Dim sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "")
-            Dim sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "")
+            Dim sPICHPCUsername = mMgrParams.GetParam("PICHPCUser", "")
+            Dim sPICHPCPassword = mMgrParams.GetParam("PICHPCPassword", "")
 
             Using swOutFile = New StreamWriter(New FileStream(operationParametersFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
@@ -327,8 +332,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
                 swOutFile.WriteLine("DivideTargetsParameterFile,HPC-Parameters_DivideTargetsPIC_Asterisks.txt")
 
                 If String.IsNullOrEmpty(mGlyQIQParams.ConsoleOperatingParametersFileName) Then
-                    m_message = "Logic error; call CreateConsoleOperatingParametersFile before calling this function"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                    mMessage = "Logic error; call CreateConsoleOperatingParametersFile before calling this function"
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                     Return False
                 End If
 
@@ -358,14 +363,14 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in CreateOperationsParametersFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in CreateOperationsParametersFile"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
     End Function
 
-    Public Shared Function GetGlyQIQAppFilesPath(ByVal udtHpcOptions As udtHPCOptionsType) As String
+    Public Shared Function GetGlyQIQAppFilesPath(ByVal udtHpcOptions As HPCUtilities.udtHPCOptionsType) As String
         Return Path.Combine(udtHpcOptions.SharePath, "GlyQ_ApplicationFiles")
     End Function
 
@@ -377,25 +382,25 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Dim sourceFileName As String
 
             ' Make sure the dataset name is, at most, 25 characters
-            mGlyQIQParams.DatasetNameTruncated = TruncateDatasetNameIfRequired(m_DatasetName)
+            mGlyQIQParams.DatasetNameTruncated = TruncateDatasetNameIfRequired(DatasetName)
 
             ' Lookup the HPC options
-            Dim udtHPCOptions As udtHPCOptionsType = GetHPCOptions(m_jobParams, m_MgrName)
+            Dim udtHPCOptions As HPCUtilities.udtHPCOptionsType = HPCUtilities.GetHPCOptions(mJobParams, mMgrName)
             mGlyQIQParams.WorkingDirectoryRemote = String.Copy(udtHPCOptions.WorkDirPath)
 
-            mGlyQIQParams.WorkingParametersFolderPathLocal = Path.Combine(m_WorkingDir, WORKING_PARAMETERS_FOLDER_NAME)
+            mGlyQIQParams.WorkingParametersFolderPathLocal = Path.Combine(mWorkDir, WORKING_PARAMETERS_FOLDER_NAME)
             mGlyQIQParams.WorkingParametersFolderPathRemote = Path.Combine(udtHPCOptions.WorkDirPath, WORKING_PARAMETERS_FOLDER_NAME)
 
             mGlyQIQParams.ApplicationsFolderPath = GetGlyQIQAppFilesPath(udtHPCOptions)
 
             ' Define the base source folder path
             ' Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ
-            Dim paramFileStoragePathBase = m_jobParams.GetParam("ParmFileStoragePath")
+            Dim paramFileStoragePathBase = mJobParams.GetParam("ParmFileStoragePath")
 
-            mGlyQIQParams.IQParamFileName = m_jobParams.GetJobParameter("ParmFileName", "")
+            mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParmFileName", "")
             If String.IsNullOrEmpty(mGlyQIQParams.IQParamFileName) Then
-                m_message = "Job Parameter File name is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Job Parameter File name is empty"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
 
@@ -405,26 +410,26 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             sourceFileName = String.Copy(mGlyQIQParams.IQParamFileName)
 
             If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, mGlyQIQParams.WorkingParametersFolderPathLocal) Then
-                m_message &= " (IQ Parameter File)"
+                mMessage &= " (IQ Parameter File)"
                 Return False
             End If
 
-            mGlyQIQParams.FactorsName = m_jobParams.GetJobParameter("Factors", String.Empty)
-            mGlyQIQParams.TargetsName = m_jobParams.GetJobParameter("Targets", String.Empty)
+            mGlyQIQParams.FactorsName = mJobParams.GetJobParameter("Factors", String.Empty)
+            mGlyQIQParams.TargetsName = mJobParams.GetJobParameter("Targets", String.Empty)
 
             ' Make sure factor name and target name do not have an extension
             mGlyQIQParams.FactorsName = Path.GetFileNameWithoutExtension(mGlyQIQParams.FactorsName)
             mGlyQIQParams.TargetsName = Path.GetFileNameWithoutExtension(mGlyQIQParams.TargetsName)
 
             If String.IsNullOrEmpty(mGlyQIQParams.FactorsName) Then
-                m_message = "Factors parameter is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Factors parameter is empty"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
 
             If String.IsNullOrEmpty(mGlyQIQParams.TargetsName) Then
-                m_message = "Targets parameter is empty"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Targets parameter is empty"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
 
@@ -433,7 +438,7 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             sourceFileName = mGlyQIQParams.FactorsName & ".txt"
 
             If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, mGlyQIQParams.WorkingParametersFolderPathLocal) Then
-                m_message &= " (Factors File)"
+                mMessage &= " (Factors File)"
                 Return False
             End If
 
@@ -442,15 +447,15 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             sourceFileName = mGlyQIQParams.TargetsName & ".txt"
 
             If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, mGlyQIQParams.WorkingParametersFolderPathLocal) Then
-                m_message &= " (Targets File)"
+                mMessage &= " (Targets File)"
                 Return False
             End If
 
             ' Count the number of targets
             mGlyQIQParams.NumTargets = CountTargets(Path.Combine(mGlyQIQParams.WorkingParametersFolderPathLocal, sourceFileName))
             If mGlyQIQParams.NumTargets < 1 Then
-                m_message = "Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName)
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Targets file is empty: " & Path.Combine(sourceFolderPath, sourceFileName)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
 
@@ -459,7 +464,7 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             sourceFileName = "AlignmentParameters.xml"
 
             If Not CopyFileToWorkDir(sourceFileName, sourceFolderPath, mGlyQIQParams.WorkingParametersFolderPathLocal) Then
-                m_message &= " (AlignmentParameters File)"
+                mMessage &= " (AlignmentParameters File)"
                 Return False
             End If
 
@@ -498,8 +503,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in RetrieveGlyQIQParameters"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in RetrieveGlyQIQParameters"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 
@@ -508,13 +513,13 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
     Private Function RetrievePeaksAndRawData() As Boolean
 
         Try
-            Dim rawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
+            Dim rawDataType As String = mJobParams.GetJobParameter("RawDataType", "")
             Dim eRawDataType = GetRawDataType(rawDataType)
 
-            If eRawDataType = eRawDataTypeConstants.ThermoRawFile Then
-                m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
+            If eRawDataType = AnalysisResources.RawDataTypeConstants.ThermoRawFile Then
+                mJobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
             Else
-                m_message = "GlyQ-IQ presently only supports Thermo .Raw files"
+                mMessage = "GlyQ-IQ presently only supports Thermo .Raw files"
                 Return False
             End If
 
@@ -522,33 +527,35 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Dim fileToFind As String
             Dim sourceFolderPath As String = String.Empty
 
-            fileToFind = m_DatasetName & "_peaks.txt"
-            If Not FindAndRetrieveMiscFiles(fileToFind, Unzip:=False, SearchArchivedDatasetFolder:=False, sourceFolderPath:=sourceFolderPath) Then
+            fileToFind = DatasetName & "_peaks.txt"
+
+            If Not FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, Unzip:=False, False, sourceFolderPath) Then
                 'Errors were reported in function call, so just return
                 Return False
             End If
-            m_jobParams.AddResultFileToSkip(fileToFind)
-            m_jobParams.AddResultFileExtensionToSkip("_peaks.txt")
+            mJobParams.AddResultFileToSkip(fileToFind)
+            mJobParams.AddResultFileExtensionToSkip("_peaks.txt")
 
-            Dim diTransferFolder = New DirectoryInfo(m_jobParams.GetParam("transferFolderPath"))
+            Dim diTransferFolder = New DirectoryInfo(mJobParams.GetParam("transferFolderPath"))
             Dim diSourceFolder = New DirectoryInfo(sourceFolderPath)
             If String.Compare(diTransferFolder.FullName, diSourceFolder.FullName, True) = 0 Then
                 ' The Peaks.txt file is in the transfer folder
                 ' If the analysis finishes successfully, then we can delete the file from the transfer folder
-                m_jobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind))
+                mJobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind))
             End If
 
             ' Retrieve the instrument data file
-            If Not RetrieveSpectra(rawDataType) Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Error retrieving instrument data file"
+
+            If Not FileSearchTool.RetrieveSpectra(rawDataType) Then
+                If String.IsNullOrEmpty(mMessage) Then
+                    mMessage = "Error retrieving instrument data file"
                 End If
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesGlyQIQ_HPC.GetResources: " & m_message)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisResourcesGlyQIQ_HPC.GetResources: " & mMessage)
                 Return False
             End If
 
-            If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
+            If Not MyBase.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories) Then
                 Return False
             End If
 
@@ -556,24 +563,24 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
 
             ' Move the instrument data files into the RawData subfolder
             ' We will rename the files at this time to match the truncated dataset name
-            Dim strTargetFolderPath = Path.Combine(m_WorkingDir, "RawData")
+            Dim strTargetFolderPath = Path.Combine(mWorkDir, "RawData")
 
             Dim fiSourceFile As FileInfo
             Dim targetFilePath As String
 
-            fiSourceFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & DOT_RAW_EXTENSION))
+            fiSourceFile = New FileInfo(Path.Combine(mWorkDir, DatasetName & DOT_RAW_EXTENSION))
             If Not fiSourceFile.Exists Then
-                m_message = "Thermo raw file not found: " & fiSourceFile.Name
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Thermo raw file not found: " & fiSourceFile.Name
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
             targetFilePath = Path.Combine(strTargetFolderPath, mGlyQIQParams.DatasetNameTruncated) & fiSourceFile.Extension
             fiSourceFile.MoveTo(targetFilePath)
 
-            fiSourceFile = New FileInfo(Path.Combine(m_WorkingDir, m_DatasetName & "_peaks.txt"))
+            fiSourceFile = New FileInfo(Path.Combine(mWorkDir, DatasetName & "_peaks.txt"))
             If Not fiSourceFile.Exists Then
-                m_message = "Peaks file not found: " & fiSourceFile.Name
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
+                mMessage = "Peaks file not found: " & fiSourceFile.Name
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage)
                 Return False
             End If
             targetFilePath = Path.Combine(strTargetFolderPath, mGlyQIQParams.DatasetNameTruncated) & "_peaks.txt"
@@ -582,8 +589,8 @@ Public Class clsAnalysisResourcesGlyQIQ_HPC
             Return True
 
         Catch ex As Exception
-            m_message = "Exception in RetrievePeaksAndRawData"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
+            mMessage = "Exception in RetrievePeaksAndRawData"
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
             Return False
         End Try
 

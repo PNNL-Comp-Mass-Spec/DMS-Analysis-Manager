@@ -7,10 +7,13 @@
 
 Option Strict On
 
-Imports AnalysisManagerBase
+Imports System.IO
+Imports AnalysisManagerBase.AnalysisTool
+Imports AnalysisManagerBase.JobConfig
+Imports PRISM.Logging
 
 Public Class clsAnalysisToolRunnerMSGFDB_IMS
-    Inherits clsAnalysisToolRunnerBase
+    Inherits AnalysisToolRunnerBase
 
     '*********************************************************************************************************
     'Class for running MSGFDB_IMS analysis
@@ -44,9 +47,9 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
     Protected mResultsIncludeAutoAddedDecoyPeptides As Boolean = False
     Protected mIonMobilityMsMsConsoleOutputErrorMsg As String = String.Empty
 
-    Protected WithEvents mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils
+    Protected mMSGFDBUtils As AnalysisManagerMSGFDBPlugIn.MSGFPlusUtils
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected WithEvents CmdRunner As RunDosProgram
 
 #End Region
 
@@ -56,12 +59,11 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
         Dim CmdStr As String
         Dim intJavaMemorySize As Integer
         Dim strMSGFDbCmdLineOptions As String = String.Empty
 
-        Dim result As IJobParams.CloseOutType
         Dim blnProcessingError As Boolean = False
 
         Dim blnSuccess As Boolean
@@ -77,12 +79,12 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
         Try
             'Call base class for initial setup
-            If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSGFDB_IMS.RunTool(): Enter")
+            If mDebugLevel > 4 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerMSGFDB_IMS.RunTool(): Enter")
             End If
 
             ' Verify that program files exist
@@ -91,14 +93,12 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             ' Note that we need to run MSGFDB with a 64-bit version of Java since it prefers to use 2 or more GB of ram
             Dim JavaProgLoc = GetJavaProgLoc()
             If String.IsNullOrEmpty(JavaProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             Dim blnUseLegacyMSGFDB As Boolean
             Dim strMSGFJarfile As String
             Dim strSearchEngineName As String
-
-            blnUseLegacyMSGFDB = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.UseLegacyMSGFDB(m_jobParams)
 
             ' Always set blnUseLegacyMSGFDB=True since the IonMobilityMSMS software is hard-coded to use MSGFDB.jar
             blnUseLegacyMSGFDB = True
@@ -109,7 +109,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
                 strSearchEngineName = "MS-GFDB"
             Else
                 mMSGFPlus = True
-                strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils.MSGFPLUS_JAR_NAME
+                strMSGFJarfile = AnalysisManagerMSGFDBPlugIn.MSGFPlusUtils.MSGFPLUS_JAR_NAME
                 strSearchEngineName = "MSGF+"
             End If
 
@@ -117,16 +117,16 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             mIonMobilityMsMsProgLoc = DetermineProgramLocation("IonMobilityMsMs", "IonMobilityMsMsProgLoc", ION_MOBILITY_MSMS_CONSOLE_NAME)
 
             If String.IsNullOrWhiteSpace(mIonMobilityMsMsProgLoc) Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Determine the path to the MSGFDB program
             ' Note that we're using a copy of MSGFDB.jar that resides in the same folder as the IonMobilityMsMsConsole application
             mMSGFDbProgLoc = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(mIonMobilityMsMsProgLoc), strMSGFJarfile)
             If Not System.IO.File.Exists(mMSGFDbProgLoc) Then
-                m_message = strMSGFJarfile & " not found in the IonMobilityMsMs folder"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & mMSGFDbProgLoc)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                mMessage = strMSGFJarfile & " not found in the IonMobilityMsMs folder"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & mMSGFDbProgLoc)
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' Note: we will store the IonMobilityMSMS and MSGFDB version info in the database after the first line is written to file MSGFDB_ConsoleOutput.txt
@@ -136,28 +136,38 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             strScanTypeFilePath = String.Empty
 
             ' Initialize mMSGFDBUtils
-            mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus)
+            mMSGFDBUtils = New AnalysisManagerMSGFDBPlugIn.MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel)
+            RegisterEvents(mMSGFDBUtils)
+
+            AddHandler mMSGFDBUtils.IgnorePreviousErrorEvent, AddressOf mMSGFDBUtils_IgnorePreviousErrorEvent
 
             ' Get the FASTA file and index it if necessary
+            ' Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
             ' Note that InitializeFastaFile() calls objIndexedDBCreator.CreateSuffixArrayFiles() to index the fasta file
             ' Legacy MSGFDB and MSGF+ have different index file formats, but .CreateSuffixArrayFiles() knows how to handle this
-            result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+
+            Dim parameterFilePath = IO.Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE))
+
+            Dim result = mMSGFDBUtils.InitializeFastaFile(JavaProgLoc, mMSGFDbProgLoc, FastaFileSizeKB, FastaFileIsDecoy, FastaFilePath, parameterFilePath)
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             End If
 
-            Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
-            Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
+            Dim strInstrumentGroup As String = mJobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
 
             ' Read the MSGFDB Parameter File
-            result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+
+            Dim sourceParamFile As IO.FileInfo = Nothing
+            Dim finalParameterFile as IO.FileInfo = Nothing
+
+            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, parameterFilePath, sourceParamFile, finalParameterFile)
+            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
             ElseIf String.IsNullOrEmpty(strMSGFDbCmdLineOptions) Then
-                If String.IsNullOrEmpty(m_message) Then
-                    m_message = "Problem parsing " & strSearchEngineName & " parameter file"
+                If String.IsNullOrEmpty(mMessage) Then
+                    mMessage = "Problem parsing " & strSearchEngineName & " parameter file"
                 End If
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             ' This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
@@ -166,14 +176,14 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
             ' Note that the IonMobilityMsMs program creates a file named Results_MSGFDB
             ' After IonMobilityMsMs finishes, we will rename that file to be ResultsFileName
-            ResultsFileName = m_Dataset & "_msgfdb.txt"
+            ResultsFileName = mDatasetName & "_msgfdb.txt"
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running IonMobilityMsMs")
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Running IonMobilityMsMs")
 
             ' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
             ' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             ' (job 611216 succeeded with a value of 5000)
-            intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
+            intJavaMemorySize = mJobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
             If intJavaMemorySize < 512 Then intJavaMemorySize = 512
 
             ' Set up and execute a program runner to run IonMobilityMsMsConsole.exe
@@ -190,14 +200,14 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             ' For example,
             '  -t 20ppm -m 3 -inst 1 -e 1 -c13 0 -nnet 2 -tda 1 -minLength 6 -maxLength 50 -n 1 -uniformAAProb 0 -thread 4 -mod C:\DMS_WorkDir1\MSGFDB_Mods.txt
 
-            Dim intPrecursorMassTolPPM As Integer = m_jobParams.GetJobParameter("PrecursorMassTolPPM", 20)
-            Dim intFragmentMassTolPPM As Integer = m_jobParams.GetJobParameter("FragmentMassTolPPM", 20)
-            Dim intNumMsMsBetweenEachMS1 As Integer = m_jobParams.GetJobParameter("NumMsMsBetweenEachMS1", 3)
-            Dim intParentToFragmentIMSScanDiffMax As Integer = m_jobParams.GetJobParameter("ParentToFragmentIMSScanDiffMax", 3)
-            Dim intParentToFragmentLCScanDiffMax As Integer = m_jobParams.GetJobParameter("ParentToFragmentLCScanDiffMax", 10)
+            Dim intPrecursorMassTolPPM As Integer = mJobParams.GetJobParameter("PrecursorMassTolPPM", 20)
+            Dim intFragmentMassTolPPM As Integer = mJobParams.GetJobParameter("FragmentMassTolPPM", 20)
+            Dim intNumMsMsBetweenEachMS1 As Integer = mJobParams.GetJobParameter("NumMsMsBetweenEachMS1", 3)
+            Dim intParentToFragmentIMSScanDiffMax As Integer = mJobParams.GetJobParameter("ParentToFragmentIMSScanDiffMax", 3)
+            Dim intParentToFragmentLCScanDiffMax As Integer = mJobParams.GetJobParameter("ParentToFragmentLCScanDiffMax", 10)
 
             CmdStr = mIonMobilityMsMsProgLoc
-            CmdStr &= " -isos:" & PossiblyQuotePath(System.IO.Path.Combine(m_WorkDir, m_Dataset & "_isos.csv"))
+            CmdStr &= " -isos:" & PossiblyQuotePath(System.IO.Path.Combine(mWorkDir, mDatasetName & "_isos.csv"))
             CmdStr &= " -fasta:" & PossiblyQuotePath(FastaFilePath)
             CmdStr &= " -db false"
             CmdStr &= " -ppmp " & intPrecursorMassTolPPM
@@ -211,16 +221,16 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
             ' Make sure the machine has enough free memory to run MSGFDB
             Dim blnLogFreeMemoryOnSuccess As Boolean = True
-            If m_DebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
+            If mDebugLevel < 1 Then blnLogFreeMemoryOnSuccess = False
 
-            If Not clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
-                m_message = "Not enough free memory to run " & strSearchEngineName
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If Not AnalysisResources.ValidateFreeMemorySize(intJavaMemorySize, strSearchEngineName, blnLogFreeMemoryOnSuccess) Then
+                mMessage = "Not enough free memory to run " & strSearchEngineName
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mIonMobilityMsMsProgLoc & " " & CmdStr)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, mIonMobilityMsMsProgLoc & " " & CmdStr)
 
-            CmdRunner = New clsRunDosProgram(m_WorkDir)
+            CmdRunner = New RunDosProgram(mWorkDir)
 
             With CmdRunner
                 .CreateNoWindow = True
@@ -228,10 +238,10 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
                 .EchoOutputToConsole = True
 
                 .WriteConsoleOutputToFile = True
-                .ConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, ION_MOBILITY_CONSOLE_OUTPUT)
+                .ConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, ION_MOBILITY_CONSOLE_OUTPUT)
             End With
 
-            m_progress = PROGRESS_PCT_STARTING
+            mProgress = PROGRESS_PCT_STARTING
 
             blnSuccess = CmdRunner.RunProgram(mIonMobilityMsMsProgLoc, CmdStr, "IonMobilityMsMs", True)
 
@@ -241,137 +251,152 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             End If
 
             If Not mToolVersionWritten Then
-                If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
-                    mMSGFDBUtils.ParseMSGFDBConsoleOutputFile()
+                If String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
+                    mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir)
                 End If
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
             If Not String.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg)
             End If
 
 
             If Not blnSuccess Then
                 Dim Msg As String
                 Msg = "Error running IonMobilityMsMs"
-                m_message = clsGlobal.AppendToComment(m_message, Msg)
+                mMessage = AnalysisManagerBase.Global.AppendToComment(mMessage, Msg)
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg & ", job " & m_JobNum)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, Msg & ", job " & mJob)
 
                 If CmdRunner.ExitCode <> 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "IonMobilityMsMs returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "IonMobilityMsMs returned a non-zero exit code: " & CmdRunner.ExitCode.ToString)
                 Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to IonMobilityMsMs failed (but exit code is 0)")
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Call to IonMobilityMsMs failed (but exit code is 0)")
                 End If
 
                 blnProcessingError = True
 
             Else
-                m_progress = PROGRESS_PCT_ION_MOBILITY_MSMS_COMPLETE
-                m_StatusTools.UpdateAndWrite(m_progress)
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "IonMobilityMsMs Search Complete")
+                mProgress = PROGRESS_PCT_ION_MOBILITY_MSMS_COMPLETE
+                mStatusTools.UpdateAndWrite(mProgress)
+                If mDebugLevel >= 3 Then
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "IonMobilityMsMs Search Complete")
                 End If
             End If
 
             If Not blnProcessingError Then
                 result = PostProcessMSGFDBResults(ResultsFileName)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                    If String.IsNullOrEmpty(m_message) Then
-                        m_message = "Unknown error post-processing the MSGFDB results"
+                If result <> CloseOutType.CLOSEOUT_SUCCESS Then
+                    If String.IsNullOrEmpty(mMessage) Then
+                        mMessage = "Unknown error post-processing the MSGFDB results"
                     End If
                     Return result
                 End If
             End If
 
-            m_progress = PROGRESS_PCT_COMPLETE
+            mProgress = PROGRESS_PCT_COMPLETE
 
             'Stop the job timer
-            m_StopTime = System.DateTime.UtcNow
+            mStopTime = System.DateTime.UtcNow
 
             'Add the current job data to the summary file
             If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Error creating summary file, job " & mJob & ", step " & mJobParams.GetParam("Step"))
             End If
 
             'Make sure objects are released
             System.Threading.Thread.Sleep(500)         ' 1 second delay
-            PRISM.Processes.ProgRunner.GarbageCollectNow()
+            PRISM.ProgRunner.GarbageCollectNow()
 
-            If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            If blnProcessingError Or result <> CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Something went wrong
                 ' In order to help diagnose things, we will move whatever files were created into the result folder,
-                '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
-                CopyFailedResultsToArchiveFolder()
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                '  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveDirectory()
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            result = MakeResultsFolder()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Dim success = MakeResultsDirectory()
+            If Not success Then
+                'MakeResultsDirectory handles posting to local log, so set database error message and exit
+                mMessage = "Error making results folder"
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            result = MoveResultFiles()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder"
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            success = MoveResultFiles()
+            If Not success Then
+                ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveDirectory
+                mMessage = "Error moving files into results folder"
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
-            result = CopyResultsFolderToServer()
-            If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                Return result
+            success = CopyResultsFolderToServer()
+            If Not success Then
+                ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveDirectory
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
         Catch ex As Exception
-            m_message = "Error in MSGFDbPlugin->RunTool: " & ex.Message
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            mMessage = "Error in MSGFDbPlugin->RunTool: " & ex.Message
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS    'No failures so everything must have succeeded
+        Return CloseOutType.CLOSEOUT_SUCCESS    'No failures so everything must have succeeded
 
     End Function
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+    Protected Sub CopyFailedResultsToArchiveDirectory()
 
-        Dim result As IJobParams.CloseOutType
-
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
+        Dim strFailedResultsFolderPath As String = mMgrParams.GetParam("FailedResultsFolderPath")
         If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
 
         ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
+        If mDebugLevel < 2 Then mDebugLevel = 2
 
         ' Try to save whatever files are in the work directory (however, delete the several files first)
         Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
+        strFolderPathToArchive = String.Copy(mWorkDir)
 
-        mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset & "_dta.txt")
-        mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset & "_dta.zip")
-        mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset & "_peaks.txt")
-        mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset & "_peaks.zip")
-        mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset & "_isos.csv")
+        DeleteFileInWorkDir(mDatasetName & "_dta.txt")
+        DeleteFileInWorkDir(mDatasetName & "_dta.zip")
+        DeleteFileInWorkDir(mDatasetName & "_peaks.txt")
+        DeleteFileInWorkDir(mDatasetName & "_peaks.zip")
+        DeleteFileInWorkDir(mDatasetName & "_isos.csv")
 
         ' Make the results folder
-        result = MakeResultsFolder()
-        If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        Dim success = MakeResultsDirectory()
+        If success Then
             ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+            success = MoveResultFiles()
+            If success Then
                 ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName)
+                strFolderPathToArchive = System.IO.Path.Combine(mWorkDir, mResultsDirectoryName)
             End If
         End If
 
         ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+        Dim objAnalysisResults As AnalysisResults = New AnalysisResults(mMgrParams, mJobParams)
+        objAnalysisResults.CopyFailedResultsToArchiveDirectory(strFolderPathToArchive)
+
+    End Sub
+
+    Sub DeleteFileInWorkDir(strFilename As String)
+
+        Dim fiFile As FileInfo
+
+        Try
+            fiFile = New FileInfo(Path.Combine(mWorkDir, strFilename))
+
+            If fiFile.Exists Then
+                fiFile.Delete()
+            End If
+
+        Catch ex As Exception
+            ' Ignore errors here
+        End Try
 
     End Sub
 
@@ -407,17 +432,17 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
         Try
 
-            strConsoleOutputFilePath = System.IO.Path.Combine(m_WorkDir, ION_MOBILITY_CONSOLE_OUTPUT)
+            strConsoleOutputFilePath = System.IO.Path.Combine(mWorkDir, ION_MOBILITY_CONSOLE_OUTPUT)
             If Not System.IO.File.Exists(strConsoleOutputFilePath) Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
+                If mDebugLevel >= 4 Then
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Console output file not found: " & strConsoleOutputFilePath)
                 End If
 
                 Exit Sub
             End If
 
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
+            If mDebugLevel >= 4 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Parsing file " & strConsoleOutputFilePath)
             End If
 
             Dim strLineIn As String
@@ -465,7 +490,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             End Using
 
             If Not mMSGFDBUtils Is Nothing Then
-                sngMSGFBProgress = mMSGFDBUtils.ParseMSGFDBConsoleOutputFile()
+                sngMSGFBProgress = mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir)
 
                 If sngMSGFBProgress > 0 Then
                     sngEffectiveProgress = PROGRESS_PCT_RUNNING_MSGFDB + CSng((PROGRESS_PCT_ION_MOBILITY_MSMS_COMPLETE - PROGRESS_PCT_RUNNING_MSGFDB) * sngMSGFBProgress / 100.0)
@@ -473,88 +498,90 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
             End If
 
-            If m_progress < sngEffectiveProgress Then
-                m_progress = sngEffectiveProgress
+            If mProgress < sngEffectiveProgress Then
+                mProgress = sngEffectiveProgress
             End If
 
         Catch ex As Exception
             ' Ignore errors here
-            If m_DebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
+            If mDebugLevel >= 2 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error parsing console output file (" & strConsoleOutputFilePath & "): " & ex.Message)
             End If
         End Try
 
     End Sub
 
-    Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String) As IJobParams.CloseOutType
+    Protected Function PostProcessMSGFDBResults(ByVal ResultsFileName As String) As CloseOutType
 
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
         ' Rename the Results_dta.txt file that IonMobilityMsMs created
-        Dim ioDtaFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "Results_dta.txt"))
-        Dim strDtaFilenameFinal As String = m_Dataset & "_dta.txt"
+        Dim ioDtaFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(mWorkDir, "Results_dta.txt"))
+        Dim strDtaFilenameFinal As String = mDatasetName & "_dta.txt"
 
         If Not ioDtaFile.Exists Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Results_dta.txt file not found; this is unexpected: " & ioDtaFile.FullName)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Results_dta.txt file not found; this is unexpected: " & ioDtaFile.FullName)
         Else
             Try
-                ioDtaFile.MoveTo(System.IO.Path.Combine(m_WorkDir, strDtaFilenameFinal))
+                ioDtaFile.MoveTo(System.IO.Path.Combine(mWorkDir, strDtaFilenameFinal))
             Catch ex As Exception
-                m_message = "Error renaming the Results_dta.txt file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                mMessage = "Error renaming the Results_dta.txt file"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
         End If
 
         'Zip the DTA.txt file
         result = mMSGFDBUtils.ZipOutputFile(Me, strDtaFilenameFinal)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
         ' Rename the output file that IonMobilityMsMs created
-        Dim ioIonMobilityMsMsResults As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, ION_MOBILITY_MSMS_RESULTS_FILE_NAME))
+        Dim ioIonMobilityMsMsResults As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(mWorkDir, ION_MOBILITY_MSMS_RESULTS_FILE_NAME))
         If Not ioIonMobilityMsMsResults.Exists Then
-            m_message = "IonMobilityMsMsResults file not found: " & ION_MOBILITY_MSMS_RESULTS_FILE_NAME
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
+            mMessage = "IonMobilityMsMsResults file not found: " & ION_MOBILITY_MSMS_RESULTS_FILE_NAME
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ", job " & mJob)
+            Return CloseOutType.CLOSEOUT_NO_OUT_FILES
         Else
             Try
-                ioIonMobilityMsMsResults.MoveTo(System.IO.Path.Combine(m_WorkDir, ResultsFileName))
+                ioIonMobilityMsMsResults.MoveTo(System.IO.Path.Combine(mWorkDir, ResultsFileName))
             Catch ex As Exception
-                m_message = "Error renaming the IonMobilityMsMsResults file"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                mMessage = "Error renaming the IonMobilityMsMsResults file"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage & ": " & ex.Message)
+                Return CloseOutType.CLOSEOUT_FAILED
             End Try
         End If
 
         'Zip the output file
         result = mMSGFDBUtils.ZipOutputFile(Me, ResultsFileName)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             Return result
         End If
 
-        m_jobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
-        m_jobParams.AddResultFileToSkip("Results_MSGFDB.txt")
-        m_jobParams.AddResultFileToSkip("Results_MSGFDB.txt.temp.tsv")
+        mJobParams.AddResultFileToSkip(ResultsFileName & ".temp.tsv")
+        mJobParams.AddResultFileToSkip("Results_MSGFDB.txt")
+        mJobParams.AddResultFileToSkip("Results_MSGFDB.txt.temp.tsv")
 
-        m_jobParams.AddResultFileToSkip(m_Dataset & "_FeatureFinder_Log.txt")
-        m_jobParams.AddResultFileToSkip("Run_MSGFDB.bat")
+        mJobParams.AddResultFileToSkip(mDatasetName & "_FeatureFinder_Log.txt")
+        mJobParams.AddResultFileToSkip("Run_MSGFDB.bat")
 
         ' Delete the PeptideToProteinMapEngine_log file
-        For Each fiFile As System.IO.FileInfo In New System.IO.DirectoryInfo(m_WorkDir).GetFiles("PeptideToProteinMapEngine_log*.txt")
-            mMSGFDBUtils.DeleteFileInWorkDir(fiFile.Name)
+        For Each fiFile As System.IO.FileInfo In New System.IO.DirectoryInfo(mWorkDir).GetFiles("PeptideToProteinMapEngine_log*.txt")
+            DeleteFileInWorkDir(fiFile.Name)
         Next
 
         ' Create the Peptide to Protein map file
         UpdateStatusRunning(PROGRESS_PCT_MSGFDB_MAPPING_PEPTIDES_TO_PROTEINS)
 
-        result = mMSGFDBUtils.CreatePeptideToProteinMapping(ResultsFileName, mResultsIncludeAutoAddedDecoyPeptides)
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS And result <> IJobParams.CloseOutType.CLOSEOUT_NO_DATA Then
+        Dim localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR)
+
+        result = mMSGFDBUtils.CreatePeptideToProteinMapping(ResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder)
+        If result <> CloseOutType.CLOSEOUT_SUCCESS And result <> CloseOutType.CLOSEOUT_NO_DATA Then
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -568,17 +595,17 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
         Dim ioIonMobilityMsMs As System.IO.FileInfo
         Dim blnSuccess As Boolean
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        If mDebugLevel >= 2 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Determining tool version info")
         End If
 
         ioIonMobilityMsMs = New System.IO.FileInfo(mIonMobilityMsMsProgLoc)
         If Not ioIonMobilityMsMs.Exists Then
             Try
                 strToolVersionInfo = "Unknown"
-                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of System.IO.FileInfo), blnSaveToolVersionTextFile:=False)
+                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of System.IO.FileInfo), saveToolVersionTextFile:=False)
             Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
                 Return False
             End Try
 
@@ -586,13 +613,13 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
         End If
 
         ' Store the MSGFDb Version
-        strToolVersionInfo = mMSGFDBUtils.MSGFDbVersion
+        strToolVersionInfo = mMSGFDBUtils.MSGFPlusVersion
         If String.IsNullOrEmpty(strToolVersionInfo) Then
             strToolVersionInfo = "MSGFDB v???? (??/??/????)"
         End If
 
         ' Append the version of the IonMobilityMsMs program
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioIonMobilityMsMs.FullName)
+        blnSuccess = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioIonMobilityMsMs.FullName)
         If Not blnSuccess Then Return False
 
         ' Store paths to key files in ioToolFiles
@@ -601,9 +628,9 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
         ioToolFiles.Add(ioIonMobilityMsMs)
 
         Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile:=False)
         Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
 
@@ -627,7 +654,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             dtLastConsoleOutputParse = System.DateTime.UtcNow
 
             ParseConsoleOutputFile()
-            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFDbVersion) Then
+            If Not mToolVersionWritten AndAlso Not String.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion) Then
                 mToolVersionWritten = StoreToolVersionInfo()
             End If
 
@@ -637,26 +664,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
     End Sub
 
-    Private Sub mMSGFDBUtils_ErrorEvent(Message As String, DetailedMessage As String) Handles mMSGFDBUtils.ErrorEvent
-        m_message = String.Copy(Message)
-        If String.IsNullOrEmpty(DetailedMessage) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message)
-        Else
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, DetailedMessage)
-        End If
-
-    End Sub
-
-    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent() Handles mMSGFDBUtils.IgnorePreviousErrorEvent
-        m_message = String.Empty
-    End Sub
-
-    Private Sub mMSGFDBUtils_MessageEvent(Message As String) Handles mMSGFDBUtils.MessageEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, Message)
-    End Sub
-
-    Private Sub mMSGFDBUtils_WarningEvent(Message As String) Handles mMSGFDBUtils.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message)
+    Private Sub mMSGFDBUtils_IgnorePreviousErrorEvent(messageToIgnore as string)
+        mMessage = mMessage.Replace(messageToIgnore, string.Empty).Trim(";"c, " "c)
     End Sub
 
 #End Region

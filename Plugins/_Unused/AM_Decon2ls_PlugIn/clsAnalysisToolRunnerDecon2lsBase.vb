@@ -1,5 +1,5 @@
 '*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
+' Written by Dave Clark for the US Department of Energy
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 09/14/2006
@@ -7,15 +7,18 @@
 ' Last modified 06/11/2009 JDS - Added logging using log4net
 '*********************************************************************************************************
 
-Imports AnalysisManagerBase
+Imports AnalysisManagerBase.AnalysisTool
+Imports AnalysisManagerBase.JobConfig
+Imports AnalysisManagerBase.StatusReporting
 Imports Decon2LS.Readers
 Imports Decon2LSRemoter
+Imports PRISM.Logging
 
 Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
-    Inherits clsAnalysisToolRunnerBase
+    Inherits AnalysisToolRunnerBase
 
     '*********************************************************************************************************
-    'Base class for Decon2LS-specific tasks. Handles tasks common to using Decon2LS for deisotoping and TIC 
+    'Base class for Decon2LS-specific tasks. Handles tasks common to using Decon2LS for deisotoping and TIC
     'generation
     '
     'This version uses .Net remoting to communicate with a separate process that runs Decon2LS. The separate
@@ -60,7 +63,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     Private Function AssembleFiles(ByVal strCombinedFileName As String, _
                                    ByVal resFileType As Decon2LSResultFileType, _
-                                   ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
+                                   ByVal intNumResultFiles As Integer) As CloseOutType
 
         Dim tr As System.IO.StreamReader = Nothing
         Dim tw As System.IO.StreamWriter
@@ -75,40 +78,40 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Try
 
-            tw = CreateNewExportFile(System.IO.Path.Combine(m_WorkDir, strCombinedFileName))
+            tw = CreateNewExportFile(System.IO.Path.Combine(mWorkDir, strCombinedFileName))
             If tw Is Nothing Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
 
             For fileNameCounter = 1 To intNumResultFiles
                 Select Case resFileType
                     Case Decon2LSResultFileType.DECON2LS_ISOS
-                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
-                        m_jobParams.AddResultFileToSkip(ResultsFile)
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_ISOS_FILE_SUFFIX
+                        mJobParams.AddResultFileToSkip(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Decon2LSResultFileType.DECON2LS_SCANS
-                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
-                        m_jobParams.AddResultFileToSkip(ResultsFile)
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_SCANS_FILE_SUFFIX
+                        mJobParams.AddResultFileToSkip(ResultsFile)
                         blnFilesContainHeaderLine = True
 
                     Case Else
                         ' Unknown Decon2LSResultFileType
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase->AssembleFiles: Unknown Decon2ls Result File Type: " & resFileType.ToString)
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase->AssembleFiles: Unknown Decon2ls Result File Type: " & resFileType.ToString)
                         Exit For
                 End Select
 
-                If Not System.IO.File.Exists(System.IO.Path.Combine(m_WorkDir, ResultsFile)) Then
+                If Not System.IO.File.Exists(System.IO.Path.Combine(mWorkDir, ResultsFile)) Then
                     ' Isos or Scans file is not found
                     If resFileType = Decon2LSResultFileType.DECON2LS_SCANS Then
                         ' Be sure to delete the _#_peaks.dat file (which Decon2LS likely created, but it doesn't contain any useful information)
-                        ResultsFile = m_Dataset & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
-                        m_jobParams.AddResultFileToSkip(ResultsFile)
+                        ResultsFile = mDatasetName & "_" & fileNameCounter & DECON2LS_PEAKS_FILE_SUFFIX
+                        mJobParams.AddResultFileToSkip(ResultsFile)
                     End If
                 Else
                     intLinesRead = 0
 
-                    tr = New System.IO.StreamReader(System.IO.Path.Combine(m_WorkDir, ResultsFile))
+                    tr = New System.IO.StreamReader(System.IO.Path.Combine(mWorkDir, ResultsFile))
 
                     intLinesRead = 0
                     Do While tr.Peek() >= 0
@@ -147,16 +150,16 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             tw.Close()
 
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.AssembleFiles, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.AssembleFiles, job " & mJob & ", step " & mJobParams.GetParam("Step") & ": " & ex.Message)
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
-    Private Function AssembleResults(ByVal blnLoopingEnabled As Boolean, ByVal intNumResultFiles As Integer) As IJobParams.CloseOutType
-        Dim result As IJobParams.CloseOutType
+    Private Function AssembleResults(ByVal blnLoopingEnabled As Boolean, ByVal intNumResultFiles As Integer) As CloseOutType
+        Dim result As CloseOutType
 
         Dim ScansFilePath As String
         Dim IsosFilePath As String
@@ -164,40 +167,40 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         Try
 
-            ScansFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_SCANS_FILE_SUFFIX)
-            IsosFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_ISOS_FILE_SUFFIX)
-            PeaksFilePath = System.IO.Path.Combine(m_WorkDir, m_Dataset & DECON2LS_PEAKS_FILE_SUFFIX)
+            ScansFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & DECON2LS_SCANS_FILE_SUFFIX)
+            IsosFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & DECON2LS_ISOS_FILE_SUFFIX)
+            PeaksFilePath = System.IO.Path.Combine(mWorkDir, mDatasetName & DECON2LS_PEAKS_FILE_SUFFIX)
 
-            m_jobParams.AddResultFileToKeep(ScansFilePath)
-            m_jobParams.AddResultFileToKeep(IsosFilePath)
-            m_jobParams.AddResultFileToKeep(PeaksFilePath)
+            mJobParams.AddResultFileToKeep(ScansFilePath)
+            mJobParams.AddResultFileToKeep(IsosFilePath)
+            mJobParams.AddResultFileToKeep(PeaksFilePath)
 
             If blnLoopingEnabled Then
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling Decon2LS " & DECON2LS_SCANS_FILE_SUFFIX & " files")
+                If mDebugLevel >= 3 Then
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Assembling Decon2LS " & DECON2LS_SCANS_FILE_SUFFIX & " files")
                 End If
 
                 result = AssembleFiles(ScansFilePath, Decon2LSResultFileType.DECON2LS_SCANS, intNumResultFiles)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     Return result
                 End If
 
-                If m_DebugLevel >= 3 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling Decon2LS " & DECON2LS_ISOS_FILE_SUFFIX & " files")
+                If mDebugLevel >= 3 Then
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Assembling Decon2LS " & DECON2LS_ISOS_FILE_SUFFIX & " files")
                 End If
 
                 result = AssembleFiles(IsosFilePath, Decon2LSResultFileType.DECON2LS_ISOS, intNumResultFiles)
-                If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+                If result <> CloseOutType.CLOSEOUT_SUCCESS Then
                     Return result
                 End If
             End If
 
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step") & ": " & ex.Message)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.AssembleResults, job " & mJob & ", step " & mJobParams.GetParam("Step") & ": " & ex.Message)
+            Return CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -206,7 +209,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         If System.IO.File.Exists(exportFileName) Then
             'post error to log
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase->createNewExportFile: Export file already exists (" & exportFileName & "); this is unexpected")
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase->createNewExportFile: Export file already exists (" & exportFileName & "); this is unexpected")
             Return Nothing
         End If
 
@@ -215,94 +218,96 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
     End Function
 
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         'Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
 
-        Dim result As IJobParams.CloseOutType
-        Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
+        Dim result As CloseOutType
+        Dim RawDataType As String = mJobParams.GetParam("RawDataType")
+        Dim TcpPort As Integer = CInt(mMgrParams.GetParam("tcpport"))
 
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.RunTool()")
         End If
 
         'Call base class for initial setup
-        If Not MyBase.RunTool = IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
             'Error message is generated in base class, so just exit with error
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Store the Decon2LS version info in the database
         If Not StoreToolVersionInfo() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-            m_message = "Error determining Decon2LS version"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            mMessage = "Error determining Decon2LS version"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         mDecon2LSFailedMidLooping = False
 
         result = RunDecon2Ls()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
             'Run Decon2LS
-            m_message = "Error running Decon2LS"
+            mMessage = "Error running Decon2LS"
 
             ' Only return Closeout_Failed if mDecon2LSFailedMidLooping is False
             If Not mDecon2LSFailedMidLooping Then
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
         'Delete the raw data files
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Deleting raw data file")
         End If
-        If DeleteRawDataFiles(m_jobParams.GetParam("RawDataType")) <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & m_message)
-            m_message = "Error deleting raw data files"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+
+        If Not DeleteRawDataFiles(mJobParams.GetParam("RawDataType")) Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " & mMessage)
+            mMessage = "Error deleting raw data files"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Update the job summary file
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file")
         End If
         UpdateSummaryFile()
 
         'Make the results folder
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder")
         End If
 
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-            'MakeResultsFolder handles posting to local log, so set database error message and exit
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        Dim success As Boolean = MakeResultsDirectory()
+
+        If Not success Then
+            'MakeResultsDirectory handles posting to local log, so set database error message and exit
+            mMessage = "Error making results folder"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        success = MoveResultFiles()
+        If Not success Then
             'MoveResultFiles moves the result files to the result folder
-            m_message = "Error making results folder"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            mMessage = "Error making results folder"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         If mDecon2LSFailedMidLooping Then
             ' Try to save whatever files were moved into the results folder
-            Dim objAnalysisResults As clsAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(System.IO.Path.Combine(m_WorkDir, m_ResFolderName))
+            Dim objAnalysisResults As AnalysisResults = New AnalysisResults(mMgrParams, mJobParams)
+            objAnalysisResults.CopyFailedResultsToArchiveDirectory(System.IO.Path.Combine(mWorkDir, mResultsDirectoryName))
 
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        success = CopyResultsFolderToServer()
+        If Not success Then
             'TODO: What do we do here?
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+        Return CloseOutType.CLOSEOUT_SUCCESS
 
     End Function
 
@@ -311,11 +316,11 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Protected Overridable Sub CalculateNewStatus()
 
         'Get the percent complete status from Decon2LS
-        m_progress = CSng(m_ToolObj.PercentDone)
+        mProgress = CSng(m_ToolObj.PercentDone)
 
     End Sub
 
-    Protected Function RunDecon2Ls() As IJobParams.CloseOutType
+    Protected Function RunDecon2Ls() As CloseOutType
         Const DEFAULT_LOOPING_CHUNK_SIZE As Integer = 25000
         Const PARAM_FILE_NAME_TEMP As String = "Decon2LSParamsCurrentLoop.xml"
         Const MAX_SCAN_STOP As Integer = 10000000       ' 10 million
@@ -327,22 +332,22 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim blnLoopingEnabled As Boolean = False
         Dim intLoopChunkSize As Integer = DEFAULT_LOOPING_CHUNK_SIZE
 
-        Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
-        Dim TcpPort As Integer = CInt(m_mgrParams.GetParam("tcpport"))
+        Dim RawDataType As String = mJobParams.GetParam("RawDataType")
+        Dim TcpPort As Integer = CInt(mMgrParams.GetParam("tcpport"))
 
-        Dim strParamFile As String = System.IO.Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-        Dim strParamFileCurrentLoop As String = System.IO.Path.Combine(m_WorkDir, PARAM_FILE_NAME_TEMP)
+        Dim strParamFile As String = System.IO.Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"))
+        Dim strParamFileCurrentLoop As String = System.IO.Path.Combine(mWorkDir, PARAM_FILE_NAME_TEMP)
 
         Dim strOutFileCurrentLoop As String
         Dim intLoopNum As Integer
         Dim blnDecon2LSError As Boolean
 
-        m_jobParams.AddResultFileToSkip(PARAM_FILE_NAME_TEMP)
+        mJobParams.AddResultFileToSkip(PARAM_FILE_NAME_TEMP)
 
-        If m_jobParams.GetJobParameter("UseDecon2LSLooping", False) Then
+        If mJobParams.GetJobParameter("UseDecon2LSLooping", False) Then
             blnLoopingEnabled = True
 
-            intLoopChunkSize = clsGlobal.CIntSafe(m_jobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
+            intLoopChunkSize = AnalysisManagerBase.Global.CIntSafe(mJobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
             If intLoopChunkSize < 100 Then intLoopChunkSize = 100
 
             ' Read the ScanStart and ScanStop values from the parameter file
@@ -365,8 +370,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 LocScanStop = ScanStop
             End If
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
+            If mDebugLevel >= 1 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
             End If
 
         Else
@@ -375,22 +380,22 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         End If
 
         ' Get file type of the raw data file
-        Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType) 'Decon2LS.Readers.FileType.BRUKER 
+        Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType) 'Decon2LS.Readers.FileType.BRUKER
         If filetype = filetype.UNDEFINED Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)
-            m_message = "Invalid raw data type specified"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while getting file type: " & RawDataType)
+            mMessage = "Invalid raw data type specified"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Specify output file name
-        Dim OutFileName As String = System.IO.Path.Combine(m_WorkDir, m_Dataset)
+        Dim OutFileName As String = System.IO.Path.Combine(mWorkDir, mDatasetName)
 
         ' Specify Input file or folder
         Dim InpFileName As String = SpecifyInputFileName(RawDataType)
         If InpFileName = "" Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & RawDataType)
-            m_message = "Invalid raw data type specified"
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specifed while input file name: " & RawDataType)
+            mMessage = "Invalid raw data type specified"
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         intLoopNum = 0
@@ -399,10 +404,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             intLoopNum += 1
 
             'Create an object to handle the .Net Remoting tasks
-            m_RemotingTools = New clsRemotingTools(m_DebugLevel, TcpPort)
+            m_RemotingTools = New clsRemotingTools(mDebugLevel, TcpPort)
 
             If blnLoopingEnabled Then
-                ' Save as a new temporary parameter file, strParamFile  
+                ' Save as a new temporary parameter file, strParamFile
                 WriteTempParamFile(strParamFile, strParamFileCurrentLoop, LocScanStart, LocScanStop)
                 strOutFileCurrentLoop = OutFileName & "_" & intLoopNum.ToString
             Else
@@ -410,14 +415,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 strOutFileCurrentLoop = OutFileName
             End If
 
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Processing scans " & LocScanStart.ToString & " to " & LocScanStop.ToString)
+            If mDebugLevel >= 1 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Processing scans " & LocScanStart.ToString & " to " & LocScanStop.ToString)
             End If
 
             'Start the remoting server
             If Not m_RemotingTools.StartSvr Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Remoting server startup failed")
-                m_message = "Remoting server startup problem"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Remoting server startup failed")
+                mMessage = "Remoting server startup problem"
                 blnDecon2LSError = True
                 Exit Do
             End If
@@ -437,15 +442,15 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                     .ParamFile = strParamFileCurrentLoop
                 End With
             Catch ex As System.Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Error initializing Decon2LS: " & _
-                 ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex))
-                m_message = "Error initializing Decon2LS"
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Error initializing Decon2LS: " & _
+                 ex.Message & "; " & AnalysisManagerBase.Global.GetExceptionStackTrace(ex))
+                mMessage = "Error initializing Decon2LS"
                 If ex.Message.Contains("No connection could be made because the target machine actively refused it") Then
-                    m_message &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
+                    mMessage &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
                 ElseIf ex.Message.Contains("Requested Service not found") Then
-                    m_message &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
+                    mMessage &= " (" & DECON2LS_FATAL_REMOTING_ERROR & ")"
                 ElseIf ex.Message.Contains("memory is corrupt") Then
-                    m_message &= " (" & DECON2LS_CORRUPTED_MEMORY_ERROR & ")"
+                    mMessage &= " (" & DECON2LS_CORRUPTED_MEMORY_ERROR & ")"
                 End If
 
                 blnDecon2LSError = True
@@ -461,10 +466,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             WaitForDecon2LSFinish()
 
             ' Stop the analysis timer
-            m_StopTime = System.DateTime.UtcNow
+            mStopTime = System.DateTime.UtcNow
 
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished")
+            If mDebugLevel >= 3 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS finished")
             End If
 
             ' Determine reason for Decon2LS finish
@@ -472,14 +477,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 Case DMSDecon2LS.DeconState.DONE
                     'This is normal, do nothing else
                 Case DMSDecon2LS.DeconState.ERROR
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & m_ToolObj.ErrMsg)
-                    m_message = "Decon2LS error"
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS error: " & m_ToolObj.ErrMsg)
+                    mMessage = "Decon2LS error"
                     blnDecon2LSError = True
 
                 Case DMSDecon2LS.DeconState.IDLE
                     'Shouldn't ever get here
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
-                    m_message = "Decon2LS error"
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS invalid state: IDLE")
+                    mMessage = "Decon2LS error"
                     blnDecon2LSError = True
             End Select
 
@@ -498,7 +503,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 ' If it wasn't, then we've most likely processed all of the scans in this file and thus should stop looping
 
                 If Not System.IO.File.Exists(strOutFileCurrentLoop) Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Could not find file '" & System.IO.Path.GetFileName(strOutFileCurrentLoop) & "' for scan range" & LocScanStart.ToString & " to " & LocScanStop.ToString & "; assuming that the full scan range has been processed")
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Could not find file '" & System.IO.Path.GetFileName(strOutFileCurrentLoop) & "' for scan range" & LocScanStart.ToString & " to " & LocScanStop.ToString & "; assuming that the full scan range has been processed")
                     Exit Do
                 End If
             End If
@@ -515,26 +520,26 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Loop While blnLoopingEnabled AndAlso (LocScanStart <= ScanStop)
 
         If blnDecon2LSError AndAlso intLoopNum > 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS ended in error but we completed " & (intLoopNum - 1).ToString & " chunks; setting mDecon2LSFailedMidLooping to True")
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LS ended in error but we completed " & (intLoopNum - 1).ToString & " chunks; setting mDecon2LSFailedMidLooping to True")
 
             mDecon2LSFailedMidLooping = True
         End If
 
         If Not blnDecon2LSError OrElse mDecon2LSFailedMidLooping Then
             ' Either no error, or we had an error but at least one loop finished successfully
-            Dim eResult As IJobParams.CloseOutType
+            Dim eResult As CloseOutType
             eResult = AssembleResults(blnLoopingEnabled, intLoopNum)
 
-            If eResult <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), AssembleResults returned " & eResult.ToString)
-                Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), AssembleResults returned " & eResult.ToString)
+                Return CloseOutType.CLOSEOUT_FAILED
             End If
         End If
 
         If blnDecon2LSError Then
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            Return CloseOutType.CLOSEOUT_FAILED
         Else
-            Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
+            Return CloseOutType.CLOSEOUT_SUCCESS
         End If
 
 
@@ -551,8 +556,8 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Case "dot_raw_folder"
                 Return FileType.MICROMASSRAWDATA
             Case "zipped_s_folders"
-                If m_jobParams.GetParam("instClass").ToLower = "brukerftms" Then
-                    Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                If mJobParams.GetParam("instClass").ToLower = "brukerftms" Then
+                    Dim NewSourceFolder As String = AnalysisResources.ResolveSerStoragePath(mWorkDir)
                     'Check for "0.ser" folder
                     If Not String.IsNullOrEmpty(NewSourceFolder) Then
                         ' _StoragePathInfo.txt file is present
@@ -563,7 +568,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                         'Data off of Bruker FTICR, in zipped s-folder format
                         Return FileType.ICR2LSRAWDATA
                     End If
-                ElseIf m_jobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
+                ElseIf mJobParams.GetParam("instClass").ToLower = "finnigan_fticr" Then
                 'Data from old Finnigan FTICR
                 Return FileType.SUNEXTREL
                 Else
@@ -591,7 +596,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
             If Not System.IO.File.Exists(strParamFileCurrent) Then
                 ' Parameter file not found
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFileCurrent)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFileCurrent)
 
                 Return False
             Else
@@ -622,7 +627,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                 End If
             End If
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in GetScanValues: " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error in GetScanValues: " & ex.Message)
             Return False
         End Try
 
@@ -652,18 +657,18 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         'Based on the raw data type, assembles a string telling Decon2LS the name of the input file or folder
         Select Case RawDataType.ToLower
             Case "dot_raw_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".raw")
+                Return System.IO.Path.Combine(mWorkDir, mDatasetName & ".raw")
             Case "dot_wiff_files"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset & ".wiff")
+                Return System.IO.Path.Combine(mWorkDir, mDatasetName & ".wiff")
             Case "dot_raw_folder"
-                Return System.IO.Path.Combine(m_WorkDir, m_Dataset) & ".raw/_FUNC001.DAT"
+                Return System.IO.Path.Combine(mWorkDir, mDatasetName) & ".raw/_FUNC001.DAT"
             Case "zipped_s_folders"
-                Dim NewSourceFolder As String = clsAnalysisResources.ResolveSerStoragePath(m_WorkDir)
+                Dim NewSourceFolder As String = AnalysisResources.ResolveSerStoragePath(mWorkDir)
                 'Check for "0.ser" folder
                 If Not String.IsNullOrEmpty(NewSourceFolder) Then
                     Return NewSourceFolder
                 Else
-                    Return System.IO.Path.Combine(m_WorkDir, m_Dataset)
+                    Return System.IO.Path.Combine(mWorkDir, mDatasetName)
                 End If
 
             Case Else
@@ -680,10 +685,10 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
+        Dim strAppFolderPath As String = AnalysisManagerBase.Global.GetAppDirectoryPath()
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
+        If mDebugLevel >= 2 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Determining tool version info")
         End If
 
         ' Lookup the version of DMSDecon2LS
@@ -704,7 +709,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Try
             Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
             Return False
         End Try
 
@@ -717,22 +722,20 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Dim CurState As DMSDecon2LS.DeconState = m_ToolObj.DeconState
         While (CurState = DMSDecon2LS.DeconState.RUNNING_DECON) Or (CurState = DMSDecon2LS.DeconState.RUNNING_TIC)
 
-            ' Synchronize the stored Debug level with the value stored in the database
-            Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-            MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
-
             'Update the % completion
             CalculateNewStatus()
 
+            LogProgress("Decon2LS")
+
             'Update the status file
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, m_progress)
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING,TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, mProgress)
 
             'Wait 5 seconds, then get a new Decon2LS state
             System.Threading.Thread.Sleep(5000)
             CurState = m_ToolObj.DeconState
             Debug.WriteLine("Current Scan: " & m_ToolObj.CurrentScan)
-            If m_DebugLevel >= 5 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
+            If mDebugLevel >= 5 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.WaitForDecon2LSFinish(), Scan " & m_ToolObj.CurrentScan)
             End If
 
         End While
@@ -747,7 +750,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
         Try
             If Not System.IO.File.Exists(strParamFile) Then
                 ' Parameter file not found
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFile)
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Decon2LS param file not found: " & strParamFile)
 
                 Return False
             Else
@@ -779,14 +782,14 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
                     swTempParamFile.Close()
 
                 Catch ex As System.Exception
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error writing new param file in WriteTempParamFile: " & ex.Message)
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error writing new param file in WriteTempParamFile: " & ex.Message)
                     Return False
 
                 End Try
 
             End If
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error reading existing param file in WriteTempParamFile: " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error reading existing param file in WriteTempParamFile: " & ex.Message)
             Return False
         End Try
 

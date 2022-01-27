@@ -8,19 +8,22 @@
 
 Option Strict On
 
-Imports AnalysisManagerBase
+Imports AnalysisManagerBase.AnalysisTool
+Imports AnalysisManagerBase.JobConfig
+Imports AnalysisManagerBase.StatusReporting
+Imports PRISM.Logging
 
 ''' <summary>
 ''' Class for running MSCluster DTAtoDAT analysis
 ''' </summary>
 ''' <remarks></remarks>
 Public Class clsAnalysisToolRunnerDTAtoDAT
-    Inherits clsAnalysisToolRunnerBase
+    Inherits AnalysisToolRunnerBase
 
 #Region "Module Variables"
     Protected Const PROGRESS_PCT_TOOL_RUNNING As Single = 5
 
-    Protected WithEvents CmdRunner As clsRunDosProgram
+    Protected WithEvents CmdRunner As RunDosProgram
     '--------------------------------------------------------------------------------------------
     'Future section to monitor MSCluster log file for progress determination
     '--------------------------------------------------------------------------------------------
@@ -36,7 +39,7 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
     ''' </summary>
     ''' <returns>CloseOutType enum indicating success or failure</returns>
     ''' <remarks></remarks>
-    Public Overrides Function RunTool() As IJobParams.CloseOutType
+    Public Overrides Function RunTool() As CloseOutType
 
         Dim CmdStr As String
         Dim DtaTxtFilename As String
@@ -44,57 +47,57 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
 
         Dim strQualityScoreThreshold As String
         Dim strPostTranslationalMods As String
-        Dim result As IJobParams.CloseOutType
+        Dim result As CloseOutType
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSCluster")
+        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Running MSCluster")
 
         'Start the job timer
-        m_StartTime = System.DateTime.UtcNow
+        mStartTime = System.DateTime.UtcNow
 
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDTAtoDAT.RunTool(): Enter")
+        If mDebugLevel > 4 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDTAtoDAT.RunTool(): Enter")
         End If
 
         ' verify that program file exists
-        Dim progLoc As String = m_mgrParams.GetParam("MSClusterprogloc")
+        Dim progLoc As String = mMgrParams.GetParam("MSClusterprogloc")
         If Not System.IO.File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error, cannot find MSCluster program file: " & progLoc)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error, cannot find MSCluster program file: " & progLoc)
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         ' Verify that the "models" folder exists in the MSCluster folder
         Dim ModelsFolderPath As String
         ModelsFolderPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(progLoc), "Models")
         If Not System.IO.Directory.Exists(ModelsFolderPath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error, the Models folder is missing from the MSCluster folder: " & ModelsFolderPath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error, the Models folder is missing from the MSCluster folder: " & ModelsFolderPath)
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         '--------------------------------------------------------------------------------------------
         'Future section to monitor MSCluster log file for progress determination
         '--------------------------------------------------------------------------------------------
         ''Get the MSCluster log file name for a File Watcher to monitor
-        'Dim MSClusterLogFileName As String = GetMSClusterLogFileName(Path.Combine(m_WorkDir, m_MSClusterSetupFile))
+        'Dim MSClusterLogFileName As String = GetMSClusterLogFileName(Path.Combine(mWorkDir, m_MSClusterSetupFile))
         'If MSClusterLogFileName = "" Then
         '    m_logger.PostEntry("Error getting MSCluster log file name", ILogger.logMsgType.logError, True)
-        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    Return CloseOutType.CLOSEOUT_FAILED
         'End If
 
         ''Setup and start a File Watcher to monitor the MSCluster log file
-        'StartFileWatcher(m_workdir, MSClusterLogFileName)
+        'StartFileWatcher(mWorkDir, MSClusterLogFileName)
         '--------------------------------------------------------------------------------------------
         'End future section
         '--------------------------------------------------------------------------------------------
 
         'Set up and execute a program runner to run MSCluster
 
-        If String.IsNullOrEmpty(m_Dataset) Then
+        If String.IsNullOrEmpty(mDatasetName) Then
             ' Undefined Dataset; unable to continue
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset name is undefined; unable to continue")
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Dataset name is undefined; unable to continue")
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
-        DtaTxtFilename = System.IO.Path.Combine(m_WorkDir, m_Dataset) & "_dta.txt"
+        DtaTxtFilename = System.IO.Path.Combine(mWorkDir, mDatasetName) & "_dta.txt"
 
         ' Possibly make these adjustable in the future
         strQualityScoreThreshold = "0.05"
@@ -105,22 +108,22 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
         CmdStr &= " --PTMs " & strPostTranslationalMods
         CmdStr &= " --sqs " & strQualityScoreThreshold
         CmdStr &= " --convert dat"
-        CmdStr &= " --out-dir " & m_WorkDir
+        CmdStr &= " --out-dir " & mWorkDir
 
         ' Need to make sure CmdStr does not end in a slash (since MSCluster doesn't allow that)
         If CmdStr.EndsWith("\") Then
             CmdStr = CmdStr.TrimEnd("\"c)
         End If
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling MSCluster with command string " & CmdStr)
+        If mDebugLevel >= 2 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Calling MSCluster with command string " & CmdStr)
         End If
 
-        CmdRunner = New clsRunDosProgram(System.IO.Path.GetDirectoryName(progLoc))
+        CmdRunner = New RunDosProgram(System.IO.Path.GetDirectoryName(progLoc))
 
         If Not CmdRunner.RunProgram(progLoc, CmdStr, "MSCluster", True) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSCluster" & m_JobNum)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, "Error running MSCluster" & mJob)
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         '--------------------------------------------------------------------------------------------
@@ -133,43 +136,44 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
         '--------------------------------------------------------------------------------------------
 
         'Stop the job timer
-        m_StopTime = System.DateTime.UtcNow
+        mStopTime = System.DateTime.UtcNow
 
         ' Make sure a .DAT file was created
-        DATResultFilePath = System.IO.Path.Combine(m_WorkDir, System.IO.Path.GetFileNameWithoutExtension(DtaTxtFilename) & ".dat")
+        DATResultFilePath = System.IO.Path.Combine(mWorkDir, System.IO.Path.GetFileNameWithoutExtension(DtaTxtFilename) & ".dat")
         If Not System.IO.File.Exists(DATResultFilePath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSCluster output file not found: " & DATResultFilePath)
-            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "MSCluster output file not found: " & DATResultFilePath)
+            Return CloseOutType.CLOSEOUT_FAILED
         End If
 
         'Add the current job data to the summary file
         If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
+            LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.WARN, "Error creating summary file, job " & mJob & ", step " & mJobParams.GetParam("Step"))
         End If
 
         'Make sure objects are released
         System.Threading.Thread.Sleep(2000)        '2 second delay
-        PRISM.Processes.ProgRunner.GarbageCollectNow()
+        PRISM.ProgRunner.GarbageCollectNow()
 
-        result = MakeResultsFolder()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        Dim success as boolean = MakeResultsDirectory()
+
+        If Not success Then
             'TODO: What do we do here?
             Return result
         End If
 
-        result = MoveResultFiles()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        success = MoveResultFiles()
+        If Not success Then
             'TODO: What do we do here?
             Return result
         End If
 
-        result = CopyResultsFolderToServer()
-        If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
+        success = CopyResultsFolderToServer()
+        If Not success Then
             'TODO: What do we do here?
             Return result
         End If
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
+        Return CloseOutType.CLOSEOUT_SUCCESS 'ZipResult
 
     End Function
 
@@ -180,14 +184,12 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
     Private Sub CmdRunner_LoopWaiting() Handles CmdRunner.LoopWaiting
         Static dtLastStatusUpdate As System.DateTime = System.DateTime.UtcNow
 
-        ' Synchronize the stored Debug level with the value stored in the database
-        Const MGR_SETTINGS_UPDATE_INTERVAL_SECONDS As Integer = 300
-        MyBase.GetCurrentMgrSettingsFromDB(MGR_SETTINGS_UPDATE_INTERVAL_SECONDS)
+        LogProgress("DTAtoDAT")
 
-        'Update the status file (limit the updates to every 5 seconds)
+        ' Update the status file (limit the updates to every 5 seconds)
         If System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5 Then
             dtLastStatusUpdate = System.DateTime.UtcNow
-            m_StatusTools.UpdateAndWrite(IStatusFile.EnumMgrStatus.RUNNING, IStatusFile.EnumTaskStatus.RUNNING, IStatusFile.EnumTaskStatusDetail.RUNNING_TOOL, PROGRESS_PCT_TOOL_RUNNING, 0, "", "", "", False)
+            mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING,TaskStatusCodes.RUNNING, TaskStatusDetailCodes.RUNNING_TOOL, PROGRESS_PCT_TOOL_RUNNING, 0, "", "", "", False)
         End If
 
     End Sub

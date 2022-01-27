@@ -14,6 +14,8 @@ Imports System.Runtime.Remoting
 Imports System.Runtime.Remoting.Channels
 Imports System.Runtime.Remoting.Channels.tcp
 Imports Decon2LSRemoter
+Imports PRISM
+Imports PRISM.Logging
 
 Public Class clsRemotingTools
 
@@ -32,7 +34,7 @@ Public Class clsRemotingTools
     Protected m_ToolObj As clsDecon2LSRemoter     'Remote class for execution of Decon2LS via .Net remoting
     Protected m_Decon2LSRunner As ProgRunner
     Protected m_Channel As TcpClientChannel
-    Protected m_DebugLevel As Integer
+    Protected mDebugLevel As Integer
     Protected m_ErrMsg As String = ""
     Protected m_TcpPort As Integer = 0
 #End Region
@@ -48,7 +50,7 @@ Public Class clsRemotingTools
 #Region "Methods"
     Public Sub New(ByVal DebugLevel As Integer, ByVal TcpPort As Integer)
 
-        m_DebugLevel = DebugLevel
+        mDebugLevel = DebugLevel
         m_TcpPort = TcpPort
 
     End Sub
@@ -59,8 +61,8 @@ Public Class clsRemotingTools
 
         'Starts the .Net Remoting CAO server
 
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); initializing Remoting")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); initializing Remoting")
         End If
 
         'Initialize the remoting setup
@@ -79,7 +81,7 @@ Public Class clsRemotingTools
         'Start the remoting service via a ProgRunner
         Try
             m_Decon2LSRunner = New ProgRunner
-            strOutputFolderPath = clsGlobal.GetAppFolderPath()
+            strOutputFolderPath = AnalysisManagerBase.Global.GetAppDirectoryPath()
             If strOutputFolderPath.IndexOf(" ") >= 0 Then
                 strOutputFolderPath = """" & strOutputFolderPath & """"
             End If
@@ -88,21 +90,21 @@ Public Class clsRemotingTools
                 .Arguments = "-o" & strOutputFolderPath & " -p" & m_TcpPort.ToString
                 .CreateNoWindow = False
                 .MonitoringInterval = 100                'Milliseconds
-                .Program = Path.Combine(clsGlobal.GetAppFolderPath(), SVR_FILE_NAME)
+                .Program = Path.Combine(AnalysisManagerBase.Global.GetAppDirectoryPath(), SVR_FILE_NAME)
                 '                .RegisterEventLogger(m_Logger)
                 'Research                .RegisterExceptionLogger()
                 .Repeat = False
                 .RepeatHoldOffTime = 0
-                .WorkDir = clsGlobal.GetAppFolderPath()
+                .WorkDir = AnalysisManagerBase.Global.GetAppDirectoryPath()
                 .NotifyOnException = True
             End With
             m_Decon2LSRunner.StartAndMonitorProgram()
-            If m_DebugLevel > 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server started")
+            If mDebugLevel > 3 Then
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server started")
             End If
             Return True
         Catch Ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server startup error: " & Ex.Message & "; " & clsGlobal.GetExceptionStackTrace(Ex))
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsAnalysisToolRunnerDecon2LSBase.Setup(); Remoting server startup error: " & Ex.Message & "; " & AnalysisManagerBase.Global.GetExceptionStackTrace(Ex))
             Return False
         End Try
 
@@ -118,9 +120,9 @@ Public Class clsRemotingTools
         'Stop the remoting server process, which releases file lock on raw data file
         'Stopping server is accomplished by deleting the flag file that was created by the server process
         Try
-            File.Delete(Path.Combine(clsGlobal.GetAppFolderPath(), FLAG_FILE_NAME))
+            File.Delete(Path.Combine(AnalysisManagerBase.Global.GetAppDirectoryPath(), FLAG_FILE_NAME))
         Catch ex As System.Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsRemotingTools.StopSvr(), Problem deleting remoting server flag file: " & ex.Message)
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "clsRemotingTools.StopSvr(), Problem deleting remoting server flag file: " & ex.Message)
             Return False
         End Try
 

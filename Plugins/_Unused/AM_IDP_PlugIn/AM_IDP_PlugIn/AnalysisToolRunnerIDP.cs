@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 
 using AnalysisManagerBase;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using IDP;
 using log4net;
+using PRISM.Logging;
 
 namespace AnalysisManager_IDP_PlugIn
 {
@@ -16,164 +19,161 @@ namespace AnalysisManager_IDP_PlugIn
         private const float PROGRESS_PCT_IDP_START = 5;
         private const float PROGRESS_PCT_IDP_DONE = 95;
 
-        public override IJobParams.CloseOutType RunTool()
+        public override CloseOutType RunTool()
         {
             try
             {
-                IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-                bool success = false;
+                var success = false;
 
                 //Do the base class stuff
-                if (base.RunTool() != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.INFO, "Running IDP");
-                m_progress = PROGRESS_PCT_IDP_START;
-                UpdateStatusRunning(m_progress);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Running IDP");
+                mProgress = PROGRESS_PCT_IDP_START;
+                UpdateStatusRunning(mProgress);
 
-                if (m_DebugLevel > 4)
+                if (mDebugLevel > 4)
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.DEBUG, "AnalysisToolRunnerIDP.RunTool(): Enter");
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "AnalysisToolRunnerIDP.RunTool(): Enter");
                 }
 
                 // Store the Cyclops version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
-                    m_message = "Error determining IDP version";
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    mMessage = "Error determining IDP version";
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
 
                 Dictionary<string, string> d_Params = new Dictionary<string, string>();
-                d_Params.Add("Job", m_jobParams.GetParam("Job"));
-                d_Params.Add("IDPWorkflowName", m_jobParams.GetParam("IDPWorkflowName"));
-                d_Params.Add("workDir", m_WorkDir);
+                d_Params.Add("Job", mJobParams.GetParam("Job"));
+                d_Params.Add("IDPWorkflowName", mJobParams.GetParam("IDPWorkflowName"));
+                d_Params.Add("workDir", mWorkDir);
 
                 //Change the name of the log file for the local log file to the plug in log filename
-                String LogFileName = Path.Combine(m_WorkDir, "IDP_Log");
+                String LogFileName = Path.Combine(mWorkDir, "IDP_Log");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                LogTools.ChangeLogFileName(LogFileName);
+                LogTools.ChangeLogFileBaseName(LogFileName, true);
 
                 try
                 {
-                    IDP idp = new IDP(d_Params);
+                    var idp = new IDP.clsIDP(d_Params);
 
                     // if a workflow is not passed to IDPicker, then do not run the program.
                     if (!string.IsNullOrEmpty(d_Params["IDPWorkflowName"]))
                         success = idp.Run();
 
                     //Change the name of the log file for the local log file to the plug in log filename
-                    LogFileName = m_mgrParams.GetParam("logfilename");
+                    LogFileName = mMgrParams.GetParam("logfilename");
                     log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    LogTools.ChangeLogFileName(LogFileName);
+                    LogTools.ChangeLogFileBaseName(LogFileName, true);
                 }
                 catch (Exception ex)
                 {
                     //Change the name of the log file for the local log file to the plug in log filename
-                    LogFileName = m_mgrParams.GetParam("logfilename");
+                    LogFileName = mMgrParams.GetParam("logfilename");
                     log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    LogTools.ChangeLogFileName(LogFileName);
+                    LogTools.ChangeLogFileBaseName(LogFileName, true);
 
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Error running IDP: " + ex.Message);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error running IDP: " + ex.Message);
                     success = false;
                 }
 
                 //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
-                m_progress = PROGRESS_PCT_IDP_DONE;
+                mStopTime = System.DateTime.UtcNow;
+                mProgress = PROGRESS_PCT_IDP_DONE;
 
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Error creating summary file, job " + mJob + ", step " + mJobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
                 //2 second delay
                 System.Threading.Thread.Sleep(2000);
-                PRISM.Processes.ProgRunner.GarbageCollectNow();
+                PRISM.ProgRunner.GarbageCollectNow();
 
                 if (!success)
                 {
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MultiAlign problems
-                    CopyFailedResultsToArchiveFolder();
-                    return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                    CopyFailedResultsToArchiveDirectory();
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam("OutputFolderName");
-                m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+                mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
+                mDatasetName = mJobParams.GetParam("OutputFolderName");
+                mJobParams.SetParam("StepParameters", "OutputFolderName", mResultsDirectoryName);
 
-                result = MakeResultsFolder();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                success = MakeResultsDirectory();
+                if (!success)
                 {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    return result;
+                    // MakeResultsDirectory handles posting to local log, so set database error message and exit
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MoveResultFiles();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                success = MoveResultFiles();
+                if (!success)
                 {
-                    // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
+                    // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Move the Plots folder to the result files folder
                 System.IO.DirectoryInfo plotsFolder = default(System.IO.DirectoryInfo);
-                plotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(m_WorkDir, "IDPickerResults"));
+                plotsFolder = new System.IO.DirectoryInfo(System.IO.Path.Combine(mWorkDir, "IDPickerResults"));
 
                 if (plotsFolder.Exists)
                 {
-                    string targetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(m_WorkDir, m_ResFolderName), "IDPickerResults");
+                    string targetFolderPath = System.IO.Path.Combine(System.IO.Path.Combine(mWorkDir, mResultsDirectoryName), "IDPickerResults");
                     plotsFolder.MoveTo(targetFolderPath);
                 }
 
-                result = CopyResultsFolderToServer();
-                if (result != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                success = CopyResultsFolderToServer();
+                if (!success)
                 {
-                    // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
+                    // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
             }
             catch (Exception ex)
             {
-                m_message = "Error in IDPsPlugin->RunTool";
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, m_message, ex);
-                return IJobParams.CloseOutType.CLOSEOUT_FAILED;
+                mMessage = "Error in IDPsPlugin->RunTool";
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mMessage, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return IJobParams.CloseOutType.CLOSEOUT_SUCCESS;
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private void CopyFailedResultsToArchiveFolder()
+        private void CopyFailedResultsToArchiveDirectory()
         {
-            IJobParams.CloseOutType result = default(IJobParams.CloseOutType);
-
-            string failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            string failedResultsFolderPath = mMgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(failedResultsFolderPath))
                 failedResultsFolderPath = "??Not Defined??";
 
-            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
 
             // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
+            if (mDebugLevel < 2)
+                mDebugLevel = 2;
 
             // Try to save whatever files are in the work directory
             string folderPathToArchive;
-            folderPathToArchive = string.Copy(m_WorkDir);
+            folderPathToArchive = string.Copy(mWorkDir);
 
             // If necessary, delete extra files with the following
             /*
                 try
                 {
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+                    System.IO.File.Delete(System.IO.Path.Combine(mWorkDir, mDatasetName + ".UIMF"));
+                    System.IO.File.Delete(System.IO.Path.Combine(mWorkDir, mDatasetName + "*.csv"));
                 }
                 catch
                 {
@@ -182,21 +182,21 @@ namespace AnalysisManager_IDP_PlugIn
             */
 
             // Make the results folder
-            result = MakeResultsFolder();
-            if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            var success = MakeResultsDirectory();
+            if (success)
             {
                 // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+                success = MoveResultFiles();
+                if (success)
                 {
                     // Move was a success; update folderPathToArchive
-                    folderPathToArchive = System.IO.Path.Combine(m_WorkDir, m_ResFolderName);
+                    folderPathToArchive = System.IO.Path.Combine(mWorkDir, mResultsDirectoryName);
                 }
             }
 
             // Copy the results folder to the Archive folder
-            AnalysisResults analysisResults = new AnalysisResults(m_mgrParams, m_jobParams);
-            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive);
+            AnalysisResults analysisResults = new AnalysisResults(mMgrParams, mJobParams);
+            analysisResults.CopyFailedResultsToArchiveDirectory(folderPathToArchive);
 
         }
 
@@ -208,9 +208,9 @@ namespace AnalysisManager_IDP_PlugIn
 
             string toolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            if (mDebugLevel >= 2)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Determining tool version info");
             }
 
             try
@@ -223,7 +223,7 @@ namespace AnalysisManager_IDP_PlugIn
             }
             catch (Exception ex)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Exception determining Assembly info for IDP: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception determining Assembly info for IDP: " + ex.Message);
                 return false;
             }
 
@@ -237,7 +237,7 @@ namespace AnalysisManager_IDP_PlugIn
             }
             catch (Exception ex)
             {
-                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, LogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
 

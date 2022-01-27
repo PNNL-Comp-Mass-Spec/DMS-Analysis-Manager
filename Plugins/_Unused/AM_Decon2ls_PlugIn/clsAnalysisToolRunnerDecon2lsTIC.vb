@@ -8,6 +8,7 @@
 '*********************************************************************************************************
 
 Imports AnalysisManagerBase
+Imports PRISM.Logging
 
 Public Class clsAnalysisToolRunnerDecon2lsTIC
     Inherits clsAnalysisToolRunnerDecon2lsBase
@@ -32,8 +33,8 @@ Public Class clsAnalysisToolRunnerDecon2lsTIC
         m_ToolObj.OutFile = m_ToolObj.OutFile & "_scans.csv"
 
         'Start Decon2LS
-        If m_DebugLevel > 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsTIC.StartDecon2LS(), Starting TIC processing")
+        If mDebugLevel > 3 Then
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsTIC.StartDecon2LS(), Starting TIC processing")
         End If
         m_ToolObj.CreateTIC()
 

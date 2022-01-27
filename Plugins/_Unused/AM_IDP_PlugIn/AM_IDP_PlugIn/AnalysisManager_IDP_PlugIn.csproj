@@ -56,9 +56,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared">
-      <HintPath>..\..\..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="IDP">
       <HintPath>..\..\..\AM_Common\IDP.dll</HintPath>
     </Reference>
@@ -83,10 +80,16 @@
       <Version>2.6.45</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Common"
-copy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Program\bin"</PostBuildEvent>
+    <PostBuildEvent>echo copy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Common"
+echo copy "$(TargetPath)" "$(ProjectDir)..\..\..\AM_Program\bin"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

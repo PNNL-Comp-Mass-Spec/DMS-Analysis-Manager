@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <ProjectType>Local</ProjectType>
@@ -96,18 +96,14 @@
     <OptionInfer>On</OptionInfer>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="CondenseCDTAFile">
-      <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
-    <Reference Include="ParamFileGenerator, Version=1.0.3183.22386, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+    <Reference Include="ParamFileGenerator">
+      <HintPath>..\..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
@@ -164,6 +160,11 @@
       <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.6.45</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>

@@ -54,14 +54,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared">
-      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -82,7 +76,19 @@
   <ItemGroup>
     <Compile Include="clsAnalysisResourcesGlyQIQ_HPC.vb" />
     <Compile Include="clsAnalysisToolRunnerGlyQIQ_HPC.vb" />
+    <Compile Include="HPCUtilities.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.6.45</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
