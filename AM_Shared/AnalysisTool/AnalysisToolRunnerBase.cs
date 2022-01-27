@@ -274,7 +274,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="jobParams">Object holding job parameters</param>
         /// <param name="statusTools">Object for status reporting</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
-        /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
+        /// <param name="myEMSLUtilities">MyEMSL download utilities (if null, a new instance will be created)</param>
         public virtual void Setup(
             string stepToolName,
             IMgrParams mgrParams,

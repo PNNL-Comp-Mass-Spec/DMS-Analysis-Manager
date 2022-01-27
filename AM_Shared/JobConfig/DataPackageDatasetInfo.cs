@@ -137,7 +137,7 @@ namespace AnalysisManagerBase.JobConfig
         public string DatasetArchivePath { get; set; }
 
         /// <summary>
-        /// Instrument data type name
+        /// Instrument data type name description, e.g. dot_raw_files
         /// </summary>
         public string RawDataType { get; set; }
 

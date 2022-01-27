@@ -713,6 +713,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
+                // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
                 var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
                 RegisterEvents(dataPackageInfo);
 
@@ -939,8 +940,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     javaMemorySizeMB = (int)Math.Round(freeMemoryMB * 0.9, 0);
                 }
-
             }
+
             var arguments = new StringBuilder();
 
             arguments.AppendFormat("-Xmx{0}M -jar {1}", javaMemorySizeMB, mMSFraggerProgLoc);

@@ -245,5 +245,3 @@ namespace AnalysisManager_AScore_PlugIn
         }
     }
 }
-
-

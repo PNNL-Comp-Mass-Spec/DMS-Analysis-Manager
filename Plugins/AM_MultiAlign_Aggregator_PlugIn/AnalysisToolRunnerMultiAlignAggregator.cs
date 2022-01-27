@@ -337,5 +337,3 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
     }
 }
-
-

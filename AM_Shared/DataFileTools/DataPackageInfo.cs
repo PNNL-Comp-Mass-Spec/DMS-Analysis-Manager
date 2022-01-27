@@ -122,7 +122,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         /// <summary>
         /// Keys are dataset IDs
-        /// Values are either File or Directory, indicating the file system type of the dataset file/directory
+        /// Values are instrument data type name description, e.g. dot_raw_files
         /// </summary>
         public Dictionary<int, string> DatasetRawDataTypeNames { get; }
 
@@ -182,7 +182,7 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Constructor
+        /// Constructor that loads metadata from packaged job parameter dictionaries
         /// </summary>
         /// <param name="dataPackageID"></param>
         /// <param name="toolRunner"></param>
