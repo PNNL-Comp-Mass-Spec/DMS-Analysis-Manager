@@ -1221,27 +1221,58 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMSFraggerFiles()
         {
-            string fileToGet;
+            var filesToGet = new List<string>();
 
             // First copy the _psm.tsv file locally
             if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET))
             {
-                fileToGet = AGGREGATION_JOB_DATASET + "_psm.tsv";
+                // The results directory will have a file named Aggregation_psm.tsv if no experiment groups were defined
+                // However, if experiment groups were defined, there will be one _psm.tsv file for each experiment group
+
+                // Retrieve metadata about the datasets in this data package
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, true);
+
+                if (!success || datasetIDsByExperimentGroup.Count <= 1)
+                {
+                    // Retrieve file Aggregation_psm.tsv
+                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
+                }
+                else
+                {
+                    // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+                    foreach (var item in datasetIDsByExperimentGroup)
+                    {
+                        var experimentGroupName = item.Key;
+                        filesToGet.Add(experimentGroupName + "_psm.tsv");
+                    }
+                }
             }
             else
             {
-                fileToGet = DatasetName + "_psm.tsv";
+                filesToGet.Add(DatasetName + "_psm.tsv");
             }
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false, true, out var sourceDirPath))
+            var sourceDirPath = string.Empty;
+            var retrievedFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var fileName in filesToGet)
             {
-                // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))
+                {
+                    // Errors were reported in method call, so just return
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                if (string.IsNullOrWhiteSpace(sourceDirPath))
+                    sourceDirPath = sourceDirPathCurrent;
+
+                mJobParams.AddResultFileToSkip(fileName);
+                retrievedFiles.Add(fileName);
             }
 
-            mJobParams.AddResultFileToSkip(fileToGet);
-
-            // Now copy the Dataset.tsv file(s), which we'll treat as optional
+            // Now copy the individual Dataset.tsv file(s), which we'll treat as optional
             // PHRP reads data from columns num_matched_ions and tot_num_ions and includes these in the synopsis file
 
             var sourceDirectory = new DirectoryInfo(sourceDirPath);
@@ -1251,7 +1282,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
-                    tsvFile.Name.Equals(fileToGet, StringComparison.OrdinalIgnoreCase))
+                    retrievedFiles.Contains(tsvFile.Name))
                 {
                     continue;
                 }
