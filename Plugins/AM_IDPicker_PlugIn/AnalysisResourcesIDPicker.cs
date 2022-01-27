@@ -185,7 +185,9 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             if (directoryToCheck.Exists)
             {
-                synopsisFileName = FileSearchTool.FindMaxQuantSynopsisFile(directoryToCheck.FullName, out fileCountFound);
+                var synopsisFiles = FileSearchTool.FindMaxQuantSynopsisFiles(directoryToCheck.FullName);
+                fileCountFound = synopsisFiles.Count;
+                synopsisFileName = synopsisFiles.Count > 0 ? synopsisFiles[0].Name : string.Empty;
                 return;
             }
 
