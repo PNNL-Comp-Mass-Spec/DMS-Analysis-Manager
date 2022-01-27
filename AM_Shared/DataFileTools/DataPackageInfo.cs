@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
 using PRISM;
 
 namespace AnalysisManagerBase.DataFileTools
@@ -224,8 +225,41 @@ namespace AnalysisManagerBase.DataFileTools
             AddKeysIfMissing(warnIfMissingFileInfo);
         }
 
+        /// <summary>
+        /// Constructor that loads metadata from dictionary dataPackageDatasets
+        /// </summary>
+        /// <param name="dataPackageID"></param>
+        /// <param name="dataPackageDatasets"></param>
+        /// <param name="warnIfMissingFileInfo">When true, warn if dataset file info is missing</param>
+        public DataPackageInfo(int dataPackageID, Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets, bool warnIfMissingFileInfo = true)
+        {
+            DataPackageID = dataPackageID;
+
+            Datasets = new Dictionary<int, string>();
+            Experiments = new Dictionary<int, string>();
+            DatasetFiles = new Dictionary<int, string>();
+            DatasetFileTypes = new Dictionary<int, string>();
+            DatasetRawDataTypeNames = new Dictionary<int, string>();
+            DatasetStoragePaths = new Dictionary<int, string>();
+            DatasetMaxQuantParamGroup = new Dictionary<int, int>();
+            DatasetExperimentGroup = new Dictionary<int, string>();
+
+            foreach (var item in dataPackageDatasets)
             {
+                var datasetId = item.Key;
+                var datasetInfo = item.Value;
+
+                Datasets.Add(datasetId, datasetInfo.Dataset);
+                Experiments.Add(datasetId, datasetInfo.Experiment);
+                DatasetFiles.Add(datasetId, string.Empty);
+                DatasetFileTypes.Add(datasetId, datasetInfo.IsDirectoryBased ? DIRECTORY_DATASET : FILE_DATASET);
+                DatasetRawDataTypeNames.Add(datasetId, datasetInfo.RawDataType);
+                DatasetStoragePaths.Add(datasetId, datasetInfo.DatasetDirectoryPath);
+                DatasetMaxQuantParamGroup.Add(datasetId, datasetInfo.MaxQuantParamGroup);
+                DatasetExperimentGroup.Add(datasetId, datasetInfo.DatasetExperimentGroup);
             }
+
+            AddKeysIfMissing(warnIfMissingFileInfo);
         }
 
         private void AddKeyIfMissing(string dictionaryName, IDictionary<int, int> targetDictionary, int datasetId, bool warnIfMissing = true)
