@@ -445,7 +445,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Prior to calling this method, add files to ignore using
         /// mJobParams.AddResultFileToSkip and mJobParams.AddResultFileExtensionToSkip
         /// Step tools may override this method if additional steps are required
-        /// The override method should then call base.CopyFailedResultsToArchiveFolder as the last step
+        /// The override method should then call base.CopyFailedResultsToArchiveDirectory as the last step
         /// </remarks>
         public virtual void CopyFailedResultsToArchiveDirectory()
         {
@@ -1076,7 +1076,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var moveSucceed = MoveResultFiles(includeSubdirectories, subdirectoriesToSkip);
             if (!moveSucceed)
             {
-                // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
+                // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
                 mMessage = "Error moving files into results directory";
                 return false;
             }

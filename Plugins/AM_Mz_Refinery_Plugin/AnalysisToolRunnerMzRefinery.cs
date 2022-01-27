@@ -337,7 +337,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         // Move the source files and any results to the Failed Job folder
                         // Useful for debugging problems
-                        CopyFailedResultsToArchiveFolder(msXmlFileExtension);
+                        CopyFailedResultsToArchiveDirectory(msXmlFileExtension);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -671,7 +671,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             return true;
         }
 
-        private void CopyFailedResultsToArchiveFolder(string msXmlFileExtension)
+        private void CopyFailedResultsToArchiveDirectory(string msXmlFileExtension)
         {
             try
             {

@@ -121,7 +121,7 @@ namespace AnalysisManagerProg
             var copySuccess = CopyResultsFolderToServer();
             if (!copySuccess)
             {
-                // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveFolder
+                // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

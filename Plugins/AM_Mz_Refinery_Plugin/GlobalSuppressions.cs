@@ -5,7 +5,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Silently ignore a file deletion error in this case", Scope = "member", Target = "~M:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery.CopyFailedResultsToArchiveFolder(System.String)")]
+[assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Silently ignore a file deletion error in this case", Scope = "member", Target = "~M:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery.CopyFailedResultsToArchiveDirectory(System.String)")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisResourcesMzRefinery")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery.MzRefinerProgRunnerMode")]
