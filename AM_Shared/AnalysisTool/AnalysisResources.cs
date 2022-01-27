@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -2560,7 +2561,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="fileMissingFromCache"></param>
         /// <param name="errorMessage"></param>
         /// <param name="msXmlExtension"></param>
-        protected CloseOutType HandleMsXmlRetrieveFailure(bool fileMissingFromCache, string errorMessage, string msXmlExtension)
+        /// <param name="callerName"></param>
+        protected CloseOutType HandleMsXmlRetrieveFailure(
+            bool fileMissingFromCache,
+            string errorMessage,
+            string msXmlExtension,
+            [CallerMemberName] string callerName = "")
         {
             if (fileMissingFromCache)
             {
@@ -2578,7 +2584,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (string.IsNullOrEmpty(errorMessage))
             {
-                errorMessage = "Unknown error in RetrieveCached" + msXmlExtension.TrimStart('.') + "File";
+                errorMessage = "Unknown error in " + callerName;
             }
 
             LogMessage(errorMessage, 0, true);
