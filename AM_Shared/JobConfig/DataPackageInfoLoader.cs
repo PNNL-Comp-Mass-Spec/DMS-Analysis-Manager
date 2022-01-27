@@ -17,6 +17,11 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public sealed class DataPackageInfoLoader : LoggerBase
     {
+        /// <summary>
+        /// Experiment group name to use when an experiment group is not defined in the data package comment of a dataset in a data package
+        /// </summary>
+        private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
+
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
         /// <summary>
@@ -39,6 +44,59 @@ namespace AnalysisManagerBase.JobConfig
         {
             DBTools = dbTools;
             DataPackageID = dataPackageID;
+        }
+
+        /// <summary>
+        /// Group the datasets in this data package by experiment group name
+        /// </summary>
+        /// <remarks>
+        /// Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
+        /// </remarks>
+        /// <returns>Dictionary where keys are experiment group name and values are dataset ID</returns>
+        public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperimentGroup(
+            Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
+        {
+            // Keys in this dictionary are experiment group name; values are a list of dataset IDs
+            // If a dataset does not have an experiment group name, it will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
+            var datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
+
+            foreach (var item in dataPackageDatasets)
+            {
+                var datasetId = item.Key;
+                var datasetInfo = item.Value;
+
+                var experimentGroup = datasetInfo.DatasetExperimentGroup;
+
+                if (string.IsNullOrWhiteSpace(experimentGroup) && dataPackageDatasets.Count == 1)
+                {
+                    var experimentName = datasetInfo.Experiment;
+
+                    var singleDatasetGroup = new SortedSet<int>
+                    {
+                        datasetId
+                    };
+
+                    datasetIDsByExperimentGroup.Add(experimentName, singleDatasetGroup);
+                    continue;
+                }
+
+                var experimentGroupToUse = string.IsNullOrWhiteSpace(experimentGroup) ? UNDEFINED_EXPERIMENT_GROUP : experimentGroup;
+
+                if (datasetIDsByExperimentGroup.TryGetValue(experimentGroupToUse, out var matchedDatasetsForGroup))
+                {
+                    matchedDatasetsForGroup.Add(datasetId);
+                    continue;
+                }
+
+                var datasetsForGroup = new SortedSet<int>
+                {
+                    datasetId
+                };
+
+                datasetIDsByExperimentGroup.Add(experimentGroupToUse, datasetsForGroup);
+            }
+
+            return datasetIDsByExperimentGroup;
         }
 
         /// <summary>

@@ -88,8 +88,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.2.1.jar";
 
-        private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
-
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
         /// <summary>
@@ -809,55 +807,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroupName));
         }
 
-        /// <summary>
-        /// Group the datasets in dataPackageInfo by experiment group name
-        /// </summary>
-        /// <remarks>Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__</remarks>
-        /// <param name="dataPackageInfo"></param>
-        /// <returns>Dictionary where keys are experiment group name and values are dataset ID</returns>
-        public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperimentGroup(DataPackageInfo dataPackageInfo)
-        {
-            // Keys in this dictionary are Experiment Group name
-            // Values are a list of dataset IDs
-            var datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
-
-            foreach (var item in dataPackageInfo.Datasets)
-            {
-                var datasetId = item.Key;
-                var experimentGroup = dataPackageInfo.DatasetExperimentGroup[datasetId];
-
-                if (string.IsNullOrWhiteSpace(experimentGroup) && dataPackageInfo.Datasets.Count == 1)
-                {
-                    var experimentName = dataPackageInfo.Experiments[datasetId];
-
-                    var singleDatasetGroup = new SortedSet<int>
-                    {
-                        datasetId
-                    };
-
-                    datasetIDsByExperimentGroup.Add(experimentName, singleDatasetGroup);
-                    continue;
-                }
-
-                var experimentGroupToUse = string.IsNullOrWhiteSpace(experimentGroup) ? UNDEFINED_EXPERIMENT_GROUP : experimentGroup;
-
-                if (datasetIDsByExperimentGroup.TryGetValue(experimentGroupToUse, out var matchedDatasetsForGroup))
-                {
-                    matchedDatasetsForGroup.Add(datasetId);
-                    continue;
-                }
-
-                var datasetsForGroup = new SortedSet<int>
-                {
-                    datasetId
-                };
-
-                datasetIDsByExperimentGroup.Add(experimentGroupToUse, datasetsForGroup);
-            }
-
-            return datasetIDsByExperimentGroup;
-        }
-
         private static int GetLongestWorkingDirectoryName(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             return GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories.Values.ToList());
@@ -1354,9 +1303,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             dataPackageInfo = new DataPackageInfo(dataPackageID, this);
             RegisterEvents(dataPackageInfo);
 
-            // Keys in this dictionary are experiment group name; values are a list of dataset IDs
-            // If a dataset does not have an experiment group name, it will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
-            datasetIDsByExperimentGroup = GetDataPackageDatasetsByExperimentGroup(dataPackageInfo);
+            var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
+
+            datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
 
             // Initialize the Philosopher workspace (creates a hidden directory named .meta)
             // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
