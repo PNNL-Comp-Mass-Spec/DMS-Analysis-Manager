@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSGFDBPlugIn;
@@ -1355,18 +1356,84 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPHRPForMSFragger()
         {
-            string inputFileName;
+            CloseOutType result;
 
             if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
             {
-                inputFileName = AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv";
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
+                var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+                RegisterEvents(dataPackageInfo);
+
+                var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
+
+                var datasetIDsByExperimentGroup= DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+
+                if (datasetIDsByExperimentGroup.Count <= 1)
+                {
+                    result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _);
+                }
+                else
+                {
+                    // Multiple experiment groups
+                    // Run PHRP on each _psm.tsv file
+                    // Keep track of overall PSM results by merging in the PSM results from each experiment group
+
+                    var psmResultsOverall = new PSMResults();
+                    var groupsProcessed = 0;
+                    var resultOverall = CloseOutType.CLOSEOUT_SUCCESS;
+
+                    foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
+                    {
+                        var experimentGroupResult = RunPHRPForMSFragger(
+                            experimentGroup,
+                            experimentGroup + "_psm.tsv",
+                            false,
+                            out var psmResults);
+
+                        if (experimentGroupResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            resultOverall = experimentGroupResult;
+                        }
+
+                        groupsProcessed++;
+
+                        // Delay 1.5 seconds to assure that the synopsis file for each experiment group has a different timestamp
+                        Global.IdleLoop(1.5);
+
+                        if (groupsProcessed == 1)
+                        {
+                            psmResultsOverall = psmResults;
+                            continue;
+                        }
+
+                        psmResultsOverall.AppendResults(psmResults);
+                    }
+
+                    if (resultOverall == CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        var summarizer = GetPsmResultsSummarizer(PeptideHitResultTypes.MSFragger);
+
+                        var psmResultsPosted = summarizer.PostJobPSMResults(mJob, psmResultsOverall);
+
+                        LogDebug("PostJobPSMResults returned " + psmResultsPosted);
+                    }
+
+                    result = resultOverall;
+                }
             }
             else
             {
-                inputFileName = mDatasetName + "_psm.tsv";
+                result = RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _);
             }
 
-            var synopsisFileName = mDatasetName + "_msfragger_syn.txt";
+            return result;
+        }
+
+        private CloseOutType RunPHRPForMSFragger(string baseDatasetName, string inputFileName, bool postJobPSMResultsToDB, out PSMResults psmResults)
+        {
+            var synopsisFileName = baseDatasetName + "_msfragger_syn.txt";
 
             var result = RunPHRPWork(
                 "MSFragger",
@@ -1378,12 +1445,15 @@ namespace AnalysisManagerExtractionPlugin
                 out var synopsisFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                psmResults = new PSMResults();
                 return result;
+            }
 
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MSFragger script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFilePath);
+            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFilePath, postJobPSMResultsToDB, out psmResults);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -1763,18 +1833,19 @@ namespace AnalysisManagerExtractionPlugin
                     // PHRP auto-named the synopsis file based on the datasets in this data package
                     // Auto-find the file
 
-                    int fileCountFound;
                     string errorMessage;
+
+                    List<FileInfo> synopsisFiles;
 
                     // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
                     switch (resultType)
                     {
                         case PeptideHitResultTypes.MaxQuant:
-                            synopsisFileNameFromPHRP = FileSearch.FindMaxQuantSynopsisFile(mWorkDir, out fileCountFound, out errorMessage);
+                            synopsisFiles = FileSearch.FindMaxQuantSynopsisFiles(mWorkDir, out errorMessage);
                             break;
 
                         case PeptideHitResultTypes.MSFragger:
-                            synopsisFileNameFromPHRP = FileSearch.FindMSFraggerSynopsisFile(mWorkDir, out fileCountFound, out errorMessage);
+                            synopsisFiles = FileSearch.FindMSFraggerSynopsisFiles(mWorkDir, out errorMessage);
                             break;
 
                         default:
@@ -1791,11 +1862,21 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (fileCountFound == 0)
+                    switch (synopsisFiles.Count)
                     {
-                        LogError("PHRP did not create a synopsis file for this aggregation job");
-                        synopsisFileNameFromPHRP = string.Empty;
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        case 0:
+                            LogError("PHRP did not create a synopsis file for this aggregation job");
+                            synopsisFileNameFromPHRP = string.Empty;
+                            return CloseOutType.CLOSEOUT_FAILED;
+
+                        case 1:
+                            synopsisFileNameFromPHRP = synopsisFiles[0].Name;
+                            break;
+
+                        default:
+                            // Find the newest synopsis file
+                            synopsisFileNameFromPHRP = (from item in synopsisFiles orderby item.LastWriteTime descending select item.Name).First();
+                            break;
                     }
                 }
                 else
@@ -1902,7 +1983,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var inputFileName = mDatasetName + "_inspect.txt";
 
-                var resultFht = RunPHRPWork(
+                RunPHRPWork(
                     "Inspect",
                     inputFileName,
                     PeptideHitResultTypes.Inspect,
@@ -1969,7 +2050,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType RunPeptideProphet()
+        private void RunPeptideProphet()
         {
             const int SYN_FILE_MAX_SIZE_MB = 200;
             const string PEP_PROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt";
@@ -1995,7 +2076,8 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     LogError("Cannot find PeptideProphetRunner program file: " + progLoc);
                 }
-                return CloseOutType.CLOSEOUT_FAILED;
+
+                return;
             }
 
             var peptideProphet = new PeptideProphetWrapper(progLoc);
@@ -2014,7 +2096,7 @@ namespace AnalysisManagerExtractionPlugin
             if (!synopsisFile.Exists)
             {
                 LogError("ExtractToolRunner.RunPeptideProphet(); Syn file " + synFilePath + " not found; unable to run peptide prophet");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return;
             }
 
             List<string> splitFileList;

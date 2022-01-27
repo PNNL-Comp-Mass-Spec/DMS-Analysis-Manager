@@ -676,45 +676,42 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Look for _maxq_syn.txt files in the given directory
         /// </summary>
         /// <param name="directoryPath"></param>
-        /// <param name="fileCountFound">Output: number of _maxq_syn.txt files</param>
-        /// <returns>Name of the first file, if found; empty string if no match</returns>
-        public string FindMaxQuantSynopsisFile(string directoryPath, out int fileCountFound)
+        /// <returns>List of found files; empty list if no match</returns>
+        public List<FileInfo> FindMaxQuantSynopsisFiles(string directoryPath)
         {
-            var synopsisFileName = FindMaxQuantSynopsisFile(directoryPath, out fileCountFound, out var errorMessage);
+            var synopsisFileNames = FindMaxQuantSynopsisFiles(directoryPath, out var errorMessage);
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
                 OnErrorEvent(errorMessage);
             }
 
-            return synopsisFileName;
+            return synopsisFileNames;
         }
 
         /// <summary>
         /// Look for _maxq_syn.txt files in the given directory
         /// </summary>
         /// <param name="directoryPath"></param>
-        /// <param name="fileCountFound">Output: number of _maxq_syn.txt files</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <returns>Name of the first file, if found; empty string if no match</returns>
-        public static string FindMaxQuantSynopsisFile(string directoryPath, out int fileCountFound, out string errorMessage)
+        /// <returns>List of found files; empty list if no match</returns>
+        public static List<FileInfo> FindMaxQuantSynopsisFiles(string directoryPath, out string errorMessage)
         {
             const string searchPattern = "*" + PHRPReader.Reader.MaxQuantSynFileReader.FILENAME_SUFFIX_SYN;
 
-            return FindSynopsisFile(directoryPath, searchPattern, out fileCountFound, out errorMessage);
+            return FindSynopsisFiles(directoryPath, searchPattern, out errorMessage);
         }
 
         /// <summary>
         /// Look for _msfragger_syn.txt files in the given directory
         /// </summary>
         /// <param name="directoryPath"></param>
-        /// <param name="fileCountFound">Output: number of _msfragger_syn.txt files</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <returns>Name of the first file, if found; empty string if no match</returns>
-        public static string FindMSFraggerSynopsisFile(string directoryPath, out int fileCountFound, out string errorMessage)
+        /// <returns>List of found files; empty list if no match</returns>
+        public static List<FileInfo> FindMSFraggerSynopsisFiles(string directoryPath,out string errorMessage)
         {
             const string searchPattern = "*" + PHRPReader.Reader.MSFraggerSynFileReader.FILENAME_SUFFIX_SYN;
 
-            return FindSynopsisFile(directoryPath, searchPattern, out fileCountFound, out errorMessage);
+            return FindSynopsisFiles(directoryPath, searchPattern,  out errorMessage);
         }
 
         /// <summary>
@@ -722,26 +719,22 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="directoryPath"></param>
         /// <param name="searchPattern"></param>
-        /// <param name="fileCountFound">Output: number of synopsis files found</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <returns>Name of the first file, if found; empty string if no match</returns>
-        private static string FindSynopsisFile(string directoryPath, string searchPattern, out int fileCountFound, out string errorMessage)
+        /// <returns>List of found files; empty list if no match</returns>
+        private static List<FileInfo> FindSynopsisFiles(string directoryPath, string searchPattern, out string errorMessage)
         {
             var directoryInfo = new DirectoryInfo(directoryPath);
 
             if (!directoryInfo.Exists)
             {
-                errorMessage = "Directory not found (in FindSynopsisFile): " + directoryPath;
-                fileCountFound = 0;
-                return string.Empty;
+                errorMessage = "Directory not found (in FindSynopsisFiles): " + directoryPath;
+                return new List<FileInfo>();
             }
 
             var synopsisFileCandidates = directoryInfo.GetFiles(searchPattern).ToList();
 
-            fileCountFound = synopsisFileCandidates.Count;
-
             errorMessage = string.Empty;
-            return synopsisFileCandidates.Count == 0 ? string.Empty : synopsisFileCandidates[0].Name;
+            return synopsisFileCandidates;
         }
 
         /// <summary>
