@@ -445,7 +445,11 @@ namespace MSGFResultsSummarizer
                     scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
                 }
 
-                CheckForScanGaps(scanListByDataset, !isFirstHitsFile);
+                // If isFirstHitsFile is true, we use the number of PSMs in that file as an estimate for the total spectra searched
+                // Thus, when isFirstHitsFile is true, set updateTotalSpectraSearched to false when calling CheckForScanGaps
+                var updateTotalSpectraSearched = !isFirstHitsFile;
+
+                CheckForScanGaps(scanListByDataset, updateTotalSpectraSearched);
             }
             catch (Exception ex)
             {
