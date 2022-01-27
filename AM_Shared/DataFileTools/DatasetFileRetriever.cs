@@ -209,7 +209,11 @@ namespace AnalysisManagerBase.DataFileTools
                         mResourceClass.AddResultFileToSkip(datasetFileName);
 
                         dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileName);
-                        dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased ? "Directory" : "File");
+
+                        dataPackageInfo.DatasetFileTypes.Add(datasetID, dataset.Value.IsDirectoryBased
+                            ? DataPackageInfo.DIRECTORY_DATASET
+                            : DataPackageInfo.FILE_DATASET);
+
                         dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, dataset.Value.RawDataType);
                         dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataset.Value.DatasetDirectoryPath);
                     }
@@ -366,7 +370,7 @@ namespace AnalysisManagerBase.DataFileTools
                     }
 
                     dataPackageInfo.DatasetFiles.Add(datasetID, mResourceClass.DatasetName + AnalysisResources.DOT_MZML_EXTENSION);
-                    dataPackageInfo.DatasetFileTypes.Add(datasetID, "File");
+                    dataPackageInfo.DatasetFileTypes.Add(datasetID, DataPackageInfo.FILE_DATASET);
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, AnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES);
                     dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
 
@@ -451,7 +455,7 @@ namespace AnalysisManagerBase.DataFileTools
                     var datasetFileOrDirectoryName = GetDatasetFileOrDirectoryName(rawDataType, out var isDirectory);
 
                     dataPackageInfo.DatasetFiles.Add(datasetID, datasetFileOrDirectoryName);
-                    dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : "File");
+                    dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : DataPackageInfo.FILE_DATASET);
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, rawDataTypeName);
                     dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
 

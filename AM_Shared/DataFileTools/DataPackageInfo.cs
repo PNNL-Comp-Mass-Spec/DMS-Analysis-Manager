@@ -10,6 +10,16 @@ namespace AnalysisManagerBase.DataFileTools
     public class DataPackageInfo : EventNotifier
     {
         /// <summary>
+        /// Value to store in dictionary DatasetFileTypes when the primary instrument data is a single file
+        /// </summary>
+        public const string FILE_DATASET = "File";
+
+        /// <summary>
+        /// Value to store in dictionary DatasetFileTypes when the primary instrument data is a directory of files
+        /// </summary>
+        public const string DIRECTORY_DATASET = "Directory";
+
+        /// <summary>
         /// Packed parameter DataPackageDatasets
         /// </summary>
         /// <remarks>
