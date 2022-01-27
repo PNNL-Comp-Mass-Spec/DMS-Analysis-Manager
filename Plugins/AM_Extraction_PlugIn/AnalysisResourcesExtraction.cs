@@ -27,8 +27,10 @@ namespace AnalysisManagerExtractionPlugin
     public class AnalysisResourcesExtraction : AnalysisResources
     {
         // ReSharper disable once CommentTypo
+
         // Ignore Spelling: bioml, Defs, diff, dta, foreach, gzipped
-        // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml, Parm, phospho, phosphorylation, txt
+        // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml
+        // Ignore Spelling: Parm, phospho, phosphorylation, resourcer, txt
 
         /// <summary>
         /// ModDefs file suffix
@@ -466,26 +468,24 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
-            if (!skipProteinMods || createPepToProtMapFile)
+            if (skipProteinMods && !createPepToProtMapFile)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            // Examine the FASTA file size
+            // If it is over 2 GB in size, do not retrieve the file, and force skipProteinMods to false
+            const float MAX_LEGACY_FASTA_SIZE_GB = 2;
+
+            // Retrieve the FASTA file; required to create the _ProteinMods.txt file
+            var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+            if (RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            if (fastaFileSizeGB < MAX_LEGACY_FASTA_SIZE_GB)
             {
-                // Examine the FASTA file size
-                // If it is over 2 GB in size, do not retrieve the file, and force skipProteinMods to false
-                const float MAX_LEGACY_FASTA_SIZE_GB = 2;
-
-                // Retrieve the FASTA file; required to create the _ProteinMods.txt file
-                var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
-                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
-                {
-                    if (fastaFileSizeGB >= MAX_LEGACY_FASTA_SIZE_GB)
-                    {
-                        mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
-                        return CloseOutType.CLOSEOUT_SUCCESS;
-                    }
-
-                    return resultCode;
-                }
+                return resultCode;
             }
 
+            mJobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
