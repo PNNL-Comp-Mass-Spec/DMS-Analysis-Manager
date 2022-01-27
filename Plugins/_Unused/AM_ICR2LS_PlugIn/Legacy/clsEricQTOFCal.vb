@@ -23,7 +23,7 @@ Public Class clsEricQTOFCal
     'Variables
     Private m_TimedOut As Boolean = False
     Private WithEvents m_Timer As System.Timers.Timer
-    Private m_TimeoutSetting As Single = 10.0	'Value in seconds
+    Private m_TimeoutSetting As Single = 10.0    'Value in seconds
 #End Region
 
 
@@ -65,7 +65,7 @@ Public Class clsEricQTOFCal
         'Set up the timer that prevents infinite wait
         m_Timer = New Timers.Timer()
         m_Timer.Enabled = False
-        m_Timer.Interval = m_TimeoutSetting * 1000.0		'Convert interval to milliseconds
+        m_Timer.Interval = m_TimeoutSetting * 1000.0        'Convert interval to milliseconds
 
         'Start the cal process
         Try
@@ -75,9 +75,9 @@ Public Class clsEricQTOFCal
 
             'Wait for the calibration to exit
             Do
-                Thread.Sleep(1000)			 'Delay for 1 second
+                Thread.Sleep(1000)             'Delay for 1 second
                 Rtn = WaitForSingleObject(Hndl, 10)
-                ''				Application.DoEvents() '' grk 8/13/2005
+                ''                Application.DoEvents() '' grk 8/13/2005
             Loop While (Rtn = WAIT_TIMEOUT) And (Not m_TimedOut)
 
             'Check for timeout

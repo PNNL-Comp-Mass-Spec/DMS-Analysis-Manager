@@ -1,5 +1,5 @@
 '*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
+' Written by Matt Monroe for the US Department of Energy
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 05/23/2009
@@ -76,8 +76,8 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
         ''Get the MSCluster log file name for a File Watcher to monitor
         'Dim MSClusterLogFileName As String = GetMSClusterLogFileName(Path.Combine(m_WorkDir, m_MSClusterSetupFile))
         'If MSClusterLogFileName = "" Then
-        '	m_logger.PostEntry("Error getting MSCluster log file name", ILogger.logMsgType.logError, True)
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    m_logger.PostEntry("Error getting MSCluster log file name", ILogger.logMsgType.logError, True)
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         'End If
 
         ''Setup and start a File Watcher to monitor the MSCluster log file
@@ -195,25 +195,25 @@ Public Class clsAnalysisToolRunnerDTAtoDAT
     '--------------------------------------------------------------------------------------------
     'Future section to monitor MSCluster log file for progress determination
     '--------------------------------------------------------------------------------------------
-    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
+    '    Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
 
     ''Watches the MSCluster status file and reports changes
 
     ''Setup
     'm_StatFileWatch = New FileSystemWatcher
     'With m_StatFileWatch
-    '	.BeginInit()
-    '	.Path = DirToWatch
-    '	.IncludeSubdirectories = False
-    '	.Filter = FileToWatch
-    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-    '	.EndInit()
+    '    .BeginInit()
+    '    .Path = DirToWatch
+    '    .IncludeSubdirectories = False
+    '    .Filter = FileToWatch
+    '    .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
+    '    .EndInit()
     'End With
 
     ''Start monitoring
     'm_StatFileWatch.EnableRaisingEvents = True
 
-    '	End Sub
+    '    End Sub
     '--------------------------------------------------------------------------------------------
     'End future section
     '--------------------------------------------------------------------------------------------

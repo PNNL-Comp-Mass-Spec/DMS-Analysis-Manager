@@ -79,7 +79,7 @@ Public Class clsAnalysisToolRunnerQTOFPek
         'Deletes the .wiff file from the working directory
 
         Try
-            System.Threading.Thread.Sleep(5000)			 'Allow extra time for ICR2LS to release file locks
+            System.Threading.Thread.Sleep(5000)             'Allow extra time for ICR2LS to release file locks
             DeleteFileWithRetries(Path.Combine(m_workdir, m_JobParams.GetParam("datasetNum") & ".wiff"))
             Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
         Catch Err As Exception
@@ -101,7 +101,7 @@ Public Class clsAnalysisToolRunnerQTOFPek
         If PekFiles.Length = 0 Then Return False
 
         'Initialize cal process timeout
-        CalTools.TimeoutSetting = 600		'10 minutes
+        CalTools.TimeoutSetting = 600        '10 minutes
 
         'Process all pek files
         For Each InputFile In PekFiles

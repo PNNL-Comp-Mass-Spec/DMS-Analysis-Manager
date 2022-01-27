@@ -1,5 +1,5 @@
 '*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
+' Written by Matthew Monroe for the US Department of Energy
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Created 10/12/2011
 '
@@ -149,7 +149,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             Dim strInstrumentGroup As String = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", String.Empty)
             Dim udtHPCOptions = New clsAnalysisResources.udtHPCOptionsType
 
-            ' Read the MSGFDB Parameter File	
+            ' Read the MSGFDB Parameter File
             result = mMSGFDBUtils.ParseMSGFDBParameterFile(FastaFileSizeKB, FastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, udtHPCOptions, strMSGFDbCmdLineOptions)
             If result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 Return result
@@ -170,8 +170,8 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running IonMobilityMsMs")
 
-            ' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java 
-            ' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file 
+            ' If an MSGFDB analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
+            ' Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             ' (job 611216 succeeded with a value of 5000)
             intJavaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 2000)
             If intJavaMemorySize < 512 Then intJavaMemorySize = 512
@@ -187,7 +187,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             '  -d c:\DMS_Temp_Org\ID_003649_C4CE0EAB.fasta
 
             ' This plugin provides the remaining switches to the program via strMSGFDBArgsAddon
-            ' For example, 
+            ' For example,
             '  -t 20ppm -m 3 -inst 1 -e 1 -c13 0 -nnet 2 -tda 1 -minLength 6 -maxLength 50 -n 1 -uniformAAProb 0 -thread 4 -mod C:\DMS_WorkDir1\MSGFDB_Mods.txt
 
             Dim intPrecursorMassTolPPM As Integer = m_jobParams.GetJobParameter("PrecursorMassTolPPM", 20)
@@ -301,7 +301,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
 
             If blnProcessingError Or result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then
                 ' Something went wrong
-                ' In order to help diagnose things, we will move whatever files were created into the result folder, 
+                ' In order to help diagnose things, we will move whatever files were created into the result folder,
                 '  archive it using CopyFailedResultsToArchiveFolder, then return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveFolder()
                 Return IJobParams.CloseOutType.CLOSEOUT_FAILED
@@ -332,7 +332,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
-        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS	'No failures so everything must have succeeded
+        Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS    'No failures so everything must have succeeded
 
     End Function
 
@@ -382,7 +382,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
     Private Sub ParseConsoleOutputFile()
 
         ' Example Console output:
-        '		
+        '
         ' 8/23/2012 8:14:15 PM:   Multiplexed Ion Mobility MS/MS Version: 0.2.12226.34622
         ' 8/23/2012 8:14:15 PM:   Loading MS Peaks
         ' 8/23/2012 8:15:45 PM:   # Peaks = 36054872
@@ -494,7 +494,7 @@ Public Class clsAnalysisToolRunnerMSGFDB_IMS
         Dim ioDtaFile As System.IO.FileInfo = New System.IO.FileInfo(System.IO.Path.Combine(m_WorkDir, "Results_dta.txt"))
         Dim strDtaFilenameFinal As String = m_Dataset & "_dta.txt"
 
-        If Not ioDtaFile.Exists Then			
+        If Not ioDtaFile.Exists Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Results_dta.txt file not found; this is unexpected: " & ioDtaFile.FullName)
         Else
             Try

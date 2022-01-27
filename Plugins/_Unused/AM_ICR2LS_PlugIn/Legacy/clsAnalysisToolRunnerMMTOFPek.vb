@@ -14,7 +14,7 @@ Public Class clsAnalysisToolRunnerMMTOFPek
         Dim ResCode As IJobParams.CloseOutType
         Dim PekRes As Boolean
         Dim ParamFilePath As String
-    
+
         'Start with base class function to get settings information
         ResCode = MyBase.RunTool()
         If ResCode <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS Then Return ResCode
@@ -77,7 +77,7 @@ Public Class clsAnalysisToolRunnerMMTOFPek
 
         While RetryCount < 3
             Try
-                System.Threading.Thread.Sleep(5000)				'Allow time for ICR2LS to release file locks
+                System.Threading.Thread.Sleep(5000)                'Allow time for ICR2LS to release file locks
                 Dim FoundFolders() As String = Directory.GetDirectories(m_workdir, "*.raw")
                 If FoundFolders.GetLength(0) < 1 Then Return IJobParams.CloseOutType.CLOSEOUT_SUCCESS
                 For Each WorkFldr As String In FoundFolders

@@ -233,12 +233,12 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-		' Store the Decon2LS version info in the database
-		If Not StoreToolVersionInfo() Then
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-			m_message = "Error determining Decon2LS version"
-			Return IJobParams.CloseOutType.CLOSEOUT_FAILED
-		End If
+        ' Store the Decon2LS version info in the database
+        If Not StoreToolVersionInfo() Then
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
+            m_message = "Error determining Decon2LS version"
+            Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        End If
 
         mDecon2LSFailedMidLooping = False
 
@@ -339,40 +339,40 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
 
         m_jobParams.AddResultFileToSkip(PARAM_FILE_NAME_TEMP)
 
-		If m_jobParams.GetJobParameter("UseDecon2LSLooping", False) Then
-			blnLoopingEnabled = True
+        If m_jobParams.GetJobParameter("UseDecon2LSLooping", False) Then
+            blnLoopingEnabled = True
 
-			intLoopChunkSize = clsGlobal.CIntSafe(m_jobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
-			If intLoopChunkSize < 100 Then intLoopChunkSize = 100
+            intLoopChunkSize = clsGlobal.CIntSafe(m_jobParams.GetParam("Decon2LSLoopingChunkSize"), DEFAULT_LOOPING_CHUNK_SIZE)
+            If intLoopChunkSize < 100 Then intLoopChunkSize = 100
 
-			' Read the ScanStart and ScanStop values from the parameter file
-			If Not GetScanValues(strParamFile, ScanStart, ScanStop) Then
-				ScanStart = 0
-				ScanStop = MAX_SCAN_STOP
-			End If
+            ' Read the ScanStart and ScanStop values from the parameter file
+            If Not GetScanValues(strParamFile, ScanStart, ScanStop) Then
+                ScanStart = 0
+                ScanStop = MAX_SCAN_STOP
+            End If
 
-			If ScanStart < 0 Then ScanStart = 0
-			If ScanStop > MAX_SCAN_STOP Then
-				ScanStop = MAX_SCAN_STOP
-			End If
+            If ScanStart < 0 Then ScanStart = 0
+            If ScanStop > MAX_SCAN_STOP Then
+                ScanStop = MAX_SCAN_STOP
+            End If
 
-			'Set up parameters to loop through scan ranges
-			LocScanStart = ScanStart
+            'Set up parameters to loop through scan ranges
+            LocScanStart = ScanStart
 
-			If ScanStop > (LocScanStart + intLoopChunkSize - 1) Then
-				LocScanStop = LocScanStart + intLoopChunkSize - 1
-			Else
-				LocScanStop = ScanStop
-			End If
+            If ScanStop > (LocScanStart + intLoopChunkSize - 1) Then
+                LocScanStop = LocScanStart + intLoopChunkSize - 1
+            Else
+                LocScanStop = ScanStop
+            End If
 
-			If m_DebugLevel >= 1 Then
-				clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
-			End If
+            If m_DebugLevel >= 1 Then
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Decon2LSLooping is enabled with chunk size " & intLoopChunkSize.ToString)
+            End If
 
-		Else
-			LocScanStart = 0
-			LocScanStop = MAX_SCAN_STOP
-		End If
+        Else
+            LocScanStart = 0
+            LocScanStop = MAX_SCAN_STOP
+        End If
 
         ' Get file type of the raw data file
         Dim filetype As Decon2LS.Readers.FileType = GetInputFileType(RawDataType) 'Decon2LS.Readers.FileType.BRUKER 
@@ -453,7 +453,7 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
             End Try
 
             'Start Decon2LS via the subclass in a separate thread
-			Dim Decon2LSThread As New System.Threading.Thread(AddressOf StartDecon2LS)
+            Dim Decon2LSThread As New System.Threading.Thread(AddressOf StartDecon2LS)
             Decon2LSThread.Start()
 
             'Wait for Decon2LS to finish
@@ -680,33 +680,33 @@ Public MustInherit Class clsAnalysisToolRunnerDecon2lsBase
     Protected Function StoreToolVersionInfo() As Boolean
 
         Dim strToolVersionInfo As String = String.Empty
-		Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
+        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
 
         If m_DebugLevel >= 2 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
         End If
 
-		' Lookup the version of DMSDecon2LS
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DMSDecon2LS") Then
-			Return False
-		End If
+        ' Lookup the version of DMSDecon2LS
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DMSDecon2LS") Then
+            Return False
+        End If
 
         ' Lookup the version of DeconEngine
-		If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DeconEngine") Then
-			Return False
-		End If
+        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "DeconEngine") Then
+            Return False
+        End If
 
-		' Store paths to key DLLs in ioToolFiles
-		Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DMSDecon2LS.dll")))
-		ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DeconEngine.dll")))
+        ' Store paths to key DLLs in ioToolFiles
+        Dim ioToolFiles As New System.Collections.Generic.List(Of System.IO.FileInfo)
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DMSDecon2LS.dll")))
+        ioToolFiles.Add(New System.IO.FileInfo(System.IO.Path.Combine(strAppFolderPath, "DeconEngine.dll")))
 
-		Try
-			Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-		Catch ex As System.Exception
-			clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-			Return False
-		End Try
+        Try
+            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
+        Catch ex As System.Exception
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
+            Return False
+        End Try
 
     End Function
 

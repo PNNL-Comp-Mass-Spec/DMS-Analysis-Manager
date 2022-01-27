@@ -10,34 +10,34 @@
 Imports AnalysisManagerBase
 
 Public Class clsAnalysisToolRunnerDecon2lsTIC
-	Inherits clsAnalysisToolRunnerDecon2lsBase
+    Inherits clsAnalysisToolRunnerDecon2lsBase
 
-	'*********************************************************************************************************
-	'Subclass for using Decon2LS to generate TIC files
-	'
-	'Establishes tool type for results folder and calls TIC creation method of Decon2LS
-	'*********************************************************************************************************
+    '*********************************************************************************************************
+    'Subclass for using Decon2LS to generate TIC files
+    '
+    'Establishes tool type for results folder and calls TIC creation method of Decon2LS
+    '*********************************************************************************************************
 
 #Region "Methods"
-	Sub New()
+    Sub New()
 
-		MyBase.New()
-		m_AnalysisType = "TDL"
+        MyBase.New()
+        m_AnalysisType = "TDL"
 
-	End Sub
+    End Sub
 
-	Protected Overrides Sub StartDecon2LS()
+    Protected Overrides Sub StartDecon2LS()
 
-		'TIC generation requires its own file extension creation
-		m_ToolObj.OutFile = m_ToolObj.OutFile & "_scans.csv"
+        'TIC generation requires its own file extension creation
+        m_ToolObj.OutFile = m_ToolObj.OutFile & "_scans.csv"
 
-		'Start Decon2LS
-		If m_DebugLevel > 3 Then
+        'Start Decon2LS
+        If m_DebugLevel > 3 Then
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDecon2lsTIC.StartDecon2LS(), Starting TIC processing")
         End If
-		m_ToolObj.CreateTIC()
+        m_ToolObj.CreateTIC()
 
-	End Sub
+    End Sub
 #End Region
 
 End Class

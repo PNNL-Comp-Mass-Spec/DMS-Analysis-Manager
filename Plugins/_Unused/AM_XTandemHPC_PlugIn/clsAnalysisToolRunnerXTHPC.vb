@@ -1,5 +1,5 @@
 '*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
+' Written by Matt Monroe for the US Department of Energy
 ' Pacific Northwest National Laboratory, Richland, WA
 ' Copyright 2006, Battelle Memorial Institute
 ' Created 03/02/2010
@@ -112,8 +112,8 @@ Public Class clsAnalysisToolRunnerXTHPC
         ''Get the XTandem log file name for a File Watcher to monitor
         'Dim XtLogFileName As String = GetXTLogFileName(System.IO.Path.Combine(m_WorkDir, m_XtSetupFile))
         'If XtLogFileName = "" Then
-        '	m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    m_logger.PostEntry("Error getting XTandem log file name", ILogger.logMsgType.logError, True)
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         'End If
 
         ''Setup and start a File Watcher to monitor the XTandem log file
@@ -295,13 +295,13 @@ Public Class clsAnalysisToolRunnerXTHPC
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End If
 
-        ' Now we need to wait for the status to change to complete for each job submitted.  
+        ' Now we need to wait for the status to change to complete for each job submitted.
         ' If status other than Completed, Idle, or Running appear, then quit job
         ' Increase MonitorInterval to 30 seconds
         MonitorInterval = 30000
 
-        ' This where we will monitor the status of the job(s), cancel assigned jobs if an error occurs, and copy 
-        ' result files if job(s) are successful.  A status could still indicate 'Complete' so we need to 
+        ' This where we will monitor the status of the job(s), cancel assigned jobs if an error occurs, and copy
+        ' result files if job(s) are successful.  A status could still indicate 'Complete' so we need to
         ' check for errors. We'll also check to make sure the error file is empty
         HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
         While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS
@@ -570,7 +570,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -686,7 +686,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="progSftpLoc"></param>
     ''' <param name="progloc"></param>
@@ -748,7 +748,7 @@ Public Class clsAnalysisToolRunnerXTHPC
                         If lineText.Length > 0 AndAlso LineCnt > 2 Then
                             ' Parse this to determine the account name and available hours
 
-                            
+
                             sngBalanceHours = RetrieveGBalanceData(lineText, strAccountName)
                             If sngBalanceHours < 0 Then
                                 ' Error parsing out the available hours; a warning has already been logged
@@ -1106,7 +1106,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <remarks></remarks>
     Protected Sub DeleteZeroByteErrorFiles()
@@ -1127,7 +1127,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Sub
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <remarks></remarks>
     Protected Sub DeleteDTATextFilesInTransferFolder()
@@ -1165,7 +1165,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Sub
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -1257,7 +1257,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -1289,7 +1289,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="inputFilename"></param>
     ''' <param name="HPCJobNumber"></param>
@@ -1326,7 +1326,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="swOut"></param>
     ''' <remarks></remarks>
@@ -1335,7 +1335,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Sub
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="swOut"></param>
     ''' <param name="inputString"></param>
@@ -1347,7 +1347,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Sub
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -1446,14 +1446,14 @@ Public Class clsAnalysisToolRunnerXTHPC
                 If Not MyBase.ZipFile(TmpFilePath, True) Then
                     Dim Msg As String = "Error zipping output files, job " & m_JobNum
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-					m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
+                    m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
                     Return IJobParams.CloseOutType.CLOSEOUT_FAILED
                 End If
             Next
         Catch ex As Exception
             Dim Msg As String = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " & m_JobNum & ": " & ex.Message
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-			m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
+            m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files")
             Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         End Try
 
@@ -1474,7 +1474,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -1641,7 +1641,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="lineText"></param>
     ''' <param name="strOldValue"></param>
@@ -1660,7 +1660,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Sub
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="srCurrentResultFile"></param>
     ''' <param name="intSegment"></param>
@@ -1702,7 +1702,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="LineOfText"></param>
     ''' <returns></returns>
@@ -1861,7 +1861,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="LineOfText"></param>
     ''' <param name="CurrentMaxNum"></param>
@@ -1882,7 +1882,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <param name="intGroupID"></param>
     ''' <param name="CurrentMaxNum"></param>
@@ -1905,7 +1905,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -1944,7 +1944,7 @@ Public Class clsAnalysisToolRunnerXTHPC
     End Function
 
     ''' <summary>
-    ''' 
+    '''
     ''' </summary>
     ''' <returns></returns>
     ''' <remarks></remarks>
@@ -2004,25 +2004,25 @@ Public Class clsAnalysisToolRunnerXTHPC
     '--------------------------------------------------------------------------------------------
     'Future section to monitor XTandem log file for progress determination
     '--------------------------------------------------------------------------------------------
-    '	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
+    '    Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
 
     ''Watches the XTandem status file and reports changes
 
     ''Setup
     'm_StatFileWatch = New FileSystemWatcher
     'With m_StatFileWatch
-    '	.BeginInit()
-    '	.Path = DirToWatch
-    '	.IncludeSubdirectories = False
-    '	.Filter = FileToWatch
-    '	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-    '	.EndInit()
+    '    .BeginInit()
+    '    .Path = DirToWatch
+    '    .IncludeSubdirectories = False
+    '    .Filter = FileToWatch
+    '    .NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
+    '    .EndInit()
     'End With
 
     ''Start monitoring
     'm_StatFileWatch.EnableRaisingEvents = True
 
-    '	End Sub
+    '    End Sub
     '--------------------------------------------------------------------------------------------
     'End future section
     '--------------------------------------------------------------------------------------------
@@ -2031,7 +2031,7 @@ Public Class clsAnalysisToolRunnerXTHPC
 
 
 
-    ' '' Result files should now be available.  A status could still indicate 'Complete' so we need to 
+    ' '' Result files should now be available.  A status could still indicate 'Complete' so we need to
     ' '' check for errors. We'll also check to make sure the error file is empty
     ''HPC_Result = IJobParams.CloseOutType.CLOSEOUT_NO_OUT_FILES
     ''While HPC_Result <> IJobParams.CloseOutType.CLOSEOUT_SUCCESS

@@ -118,8 +118,8 @@ Public Class clsAnalysisToolRunnerDeNovoID
 
     Protected Overrides Sub CalculateNewStatus()
 
-        'Calculates percent complete for job. Denovo processing generates two output files for each .dta, 
-        '	so total non-dta file count is divided by two for percentage calculation
+        'Calculates percent complete for job. Denovo processing generates two output files for each .dta,
+        '    so total non-dta file count is divided by two for percentage calculation
 
         Dim FileArray() As String
         Dim AnnFileCount As Integer
@@ -150,7 +150,7 @@ Public Class clsAnalysisToolRunnerDeNovoID
     Protected Function PerformDeNovoAnalysis() As IJobParams.CloseOutType
 
         'Runs a denovo analysis using BSI PEAKS software
-        '	PEAKS software must be installed and registered on analysis machine
+        '    PEAKS software must be installed and registered on analysis machine
 
         Dim CmdStr As String
         Dim OutputPath As String
@@ -180,9 +180,9 @@ Public Class clsAnalysisToolRunnerDeNovoID
         'Run the denovo program
         'TODO: Fix for final version
         'If Not RunProgram("java", CmdStr, "DeNovoID", True) Then
-        '	m_logger.PostEntry("Error running denovo calc, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
-        '	m_message = AppendToComment(m_message, "Error running denovo calc")
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    m_logger.PostEntry("Error running denovo calc, job " & m_JobNum, ILogger.logMsgType.logError, LOG_DATABASE)
+        '    m_message = AppendToComment(m_message, "Error running denovo calc")
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         'End If
 
         'Verify at least one .ann file has been created
@@ -218,18 +218,18 @@ Public Class clsAnalysisToolRunnerDeNovoID
         CmdStr = m_WorkDir
         'TODO: Fix for final version
         'If Not RunProgram(m_mgrParams.GetParam("denovoid", "denovosummary"), CmdStr, "Summary", True) Then
-        '	m_logger.PostEntry("Error packaging results, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
-        '	m_message = AppendToComment(m_message, "Error packaging results")
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    m_logger.PostEntry("Error packaging results, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+        '    m_message = AppendToComment(m_message, "Error packaging results")
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         'End If
 
         'Run Gary packager to produce concatenated dta file
         CmdStr = "-d " & CheckTerminator(m_WorkDir) & " -r " & m_JobParams.GetParam("datasetNum") & " -c dta"
         'TODO: Fix for final version
         'If Not RunProgram(m_mgrParams.GetParam("commonfileandfolderlocations", "packerloc"), CmdStr, "Pkgr", True) Then
-        '	m_logger.PostEntry("Error packaging results, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
-        '	m_message = AppendToComment(m_message, "Error packaging results")
-        '	Return IJobParams.CloseOutType.CLOSEOUT_FAILED
+        '    m_logger.PostEntry("Error packaging results, job " & m_jobnum, ILogger.logMsgType.logError, LOG_DATABASE)
+        '    m_message = AppendToComment(m_message, "Error packaging results")
+        '    Return IJobParams.CloseOutType.CLOSEOUT_FAILED
         'End If
 
         'Setup zipper

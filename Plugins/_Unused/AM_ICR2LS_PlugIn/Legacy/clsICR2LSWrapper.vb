@@ -210,7 +210,7 @@ Public Class clsICR2LSWrapper
                 Return False
             Else
                 'If m_DebugLevel > 0 Then
-                '	m_Logger.PostEntry("MakeICRPEKFile, ResCode = " & ResCode.ToString, ILogger.logMsgType.logDebug, True)
+                '    m_Logger.PostEntry("MakeICRPEKFile, ResCode = " & ResCode.ToString, ILogger.logMsgType.logDebug, True)
                 'End If
                 Return True
             End If
@@ -228,7 +228,7 @@ Public Class clsICR2LSWrapper
      As Boolean
 
         'Note: the SGFilter parameter was deleted by ICR2LS V2.30.0.87, but has been left in this function
-        '	parameter list in case it comes back in the future
+        '    parameter list in case it comes back in the future
 
         'Makes a PEK file from a QTOF input file
         Dim ResCode As Short
@@ -329,7 +329,7 @@ Public Class clsICR2LSWrapper
      As Boolean
 
         'Note: the SGFilter parameter was deleted by ICR2LS V2.30.0.87, but has been left in this function
-        '	parameter list in case it comes back in the future
+        '    parameter list in case it comes back in the future
 
         'Makes a PEK file from a QTOF input file
         Dim ResCode As Short

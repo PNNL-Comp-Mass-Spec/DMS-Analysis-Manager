@@ -661,7 +661,7 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Verifies specified database is present on the node. If present, compares date and size. If not
-        ///	present, copies database from master
+        ///    present, copies database from master
         /// </summary>
         /// <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
         /// <param name="sourceFastaPath">Full path to the source file</param>
