@@ -221,18 +221,10 @@ namespace AnalysisManagerBase.DataFileTools
                 DatasetExperimentGroup.Add(item.Key, item.Value);
             }
 
-            var hasDataPackage = DataPackageID > 0;
+            AddKeysIfMissing(warnIfMissingFileInfo);
+        }
 
-            // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
-            foreach (var datasetId in Datasets.Keys)
             {
-                AddKeyIfMissing("Experiments", Experiments, datasetId);
-                AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId, warnIfMissingFileInfo);
-                AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId, warnIfMissingFileInfo);
-                AddKeyIfMissing("DatasetRawDataTypeNames", DatasetRawDataTypeNames, datasetId, warnIfMissingFileInfo);
-                AddKeyIfMissing("DatasetStoragePaths", DatasetStoragePaths, datasetId, warnIfMissingFileInfo);
-                AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
-                AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
             }
         }
 
@@ -260,6 +252,23 @@ namespace AnalysisManagerBase.DataFileTools
             }
 
             targetDictionary.Add(datasetId, string.Empty);
+        }
+
+        private void AddKeysIfMissing(bool warnIfMissingFileInfo)
+        {
+            var hasDataPackage = DataPackageID > 0;
+
+            // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
+            foreach (var datasetId in Datasets.Keys)
+            {
+                AddKeyIfMissing("Experiments", Experiments, datasetId);
+                AddKeyIfMissing("DatasetFiles", DatasetFiles, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetRawDataTypeNames", DatasetRawDataTypeNames, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetStoragePaths", DatasetStoragePaths, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
+                AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
+            }
         }
 
         /// <summary>
