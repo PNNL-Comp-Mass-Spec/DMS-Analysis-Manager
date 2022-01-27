@@ -2133,16 +2133,16 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    var msg = string.Format("Error splitting synopsis file that is over {0} MB in size", SYN_FILE_MAX_SIZE_MB);
+                    var splitErrorMessage = string.Format("Error splitting synopsis file that is over {0} MB in size", SYN_FILE_MAX_SIZE_MB);
 
                     if (ignorePeptideProphetErrors)
                     {
-                        LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
-                        return CloseOutType.CLOSEOUT_SUCCESS;
+                        LogWarning(splitErrorMessage + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
+                        return;
                     }
 
-                    LogError(msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    LogError(splitErrorMessage);
+                    return;
                 }
             }
 
@@ -2228,10 +2228,10 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS && !ignorePeptideProphetErrors)
-                return result;
+                return;
 
             if (splitFileList.Count <= 1)
-                return result;
+                return;
 
             // Delete each of the temporary synopsis files
             DeleteTemporaryFiles(splitFileList);
@@ -2266,25 +2266,19 @@ namespace AnalysisManagerExtractionPlugin
 
             if (success)
             {
-                result = CloseOutType.CLOSEOUT_SUCCESS;
+                return;
+            }
+
+            var msg = string.Format("Error interleaving the peptide prophet result files (FileCount={0})", splitFileList.Count);
+
+            if (ignorePeptideProphetErrors)
+            {
+                LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
             }
             else
             {
-                var msg = string.Format("Error interleaving the peptide prophet result files (FileCount={0})", splitFileList.Count);
-
-                if (ignorePeptideProphetErrors)
-                {
-                    LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
-                    result = CloseOutType.CLOSEOUT_SUCCESS;
-                }
-                else
-                {
-                    LogError(msg);
-                    result = CloseOutType.CLOSEOUT_FAILED;
-                }
+                LogError(msg);
             }
-
-            return result;
         }
 
         /// <summary>
