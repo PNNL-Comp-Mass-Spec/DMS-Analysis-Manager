@@ -19,6 +19,8 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public sealed class DataPackageInfoLoader : LoggerBase
     {
+        // Ignore Spelling: quantitation
+
         /// <summary>
         /// Experiment group name to use when an experiment group is not defined in the data package comment of a dataset in a data package
         /// </summary>
@@ -381,6 +383,9 @@ namespace AnalysisManagerBase.JobConfig
             var datasetName = curRow["Dataset"].CastDBVal<string>();
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
+            // Look for an Experiment Group name in the data package comment for a dataset
+            // This applies to both MaxQuant and MSFragger jobs
+
             var packageComment = curRow["PackageComment"].CastDBVal<string>();
 
             // Examine the comment to look for "MSFragger Group GroupName" (or similar)
@@ -391,6 +396,8 @@ namespace AnalysisManagerBase.JobConfig
             //   MSFrag Group 10
             //   FragPipe Group CohortA
             //   FragPipe Group 5
+
+            // Also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant
             //   MaxQuant Group CohortA
             //   MaxQuant Group 5
             //   Maxq Group: CohortA
@@ -403,7 +410,10 @@ namespace AnalysisManagerBase.JobConfig
 
             var datasetExperimentGroup = match1.Success ? match1.Groups["GroupName"].Value : string.Empty;
 
-            // Examine the comment to look for "MaxQuant Group 0" (or similar)
+            // Examine the comment to look for MaxQuant parameter groups (must be numeric)
+            // Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ).
+            // Datasets grouped together will be normalized together.
+
             // Example allowed comments:
             //   MaxQuant Group 1
             //   Maxq Group: 3

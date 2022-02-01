@@ -29,7 +29,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: \andromeda, andromeda, apar, apl, aplfiles, deisotoping, dotnet, dryrun, fasta
-        // Ignore Spelling: proc, ptms, Quant, resourcer, sdk, secpepFiles, txt
+        // Ignore Spelling: proc, ptms, Quant, quantitation, resourcer, sdk, secpepFiles, txt
 
         // ReSharper restore CommentTypo
 
@@ -1363,10 +1363,16 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     // Check whether datasets in this data package have non-zero values for MaxQuant Parameter Group
 
-                    // If any are found, determine the group indices to use (auto adjusting from group 1 and group 2 to groupIndex 0 and groupIndex 1 if necessary)
+                    // Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ)
+                    // Datasets grouped together will be normalized together
+
+                    // Parameter groups can also be used to define different search settings for different groups of datasets
+                    // (different enzyme, different search tolerances)
+
+                    // If any parameter group IDs are found, determine the group indices to use (auto adjusting from group 1 and group 2 to groupIndex 0 and groupIndex 1 if necessary)
                     // We will use this information to duplicate the first <parameterGroup></parameterGroup> section from the master parameter file to add the necessary number of <parameterGroup> sections (if the file already has the extras, use them)
                     // The groupIndex values are used when adding datasets
-                    // See: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-
+                    // See: https://dms2.pnl.gov/data_package_dataset/report/3887/-/-/-/-/-
 
                     // Keys in this dictionary are MaxQuant group index values (0-based)
                     // Values are a list of dataset IDs

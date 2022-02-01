@@ -6,7 +6,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class DataPackageDatasetInfo
     {
-        // Ignore Spelling: Maxq
+        // Ignore Spelling: Maxq, quantitation
 
         /// <summary>
         /// Dataset name
@@ -101,18 +101,19 @@ namespace AnalysisManagerBase.JobConfig
         /// </remarks>
         /// <example>
         /// The following are example dataset comments that include the experiment group name (CohortA, 1, 10, or 5):
-        /// MSFragger Group CohortA
-        /// MSFragger Group 1
-        /// MSFrag Group CohortA
-        /// MSFrag Group 10
-        /// FragPipe Group CohortA
-        /// FragPipe Group 5
-        /// MaxQuant Group CohortA
-        /// MaxQuant Group 5
-        /// Maxq Group: CohortA
-        /// Maxq Group: 5
-        /// MQ Group CohortA
-        /// MQ Group 5
+        ///   MSFragger Group CohortA
+        ///   MSFragger Group 1
+        ///   MSFrag Group CohortA
+        ///   MSFrag Group 10
+        ///   FragPipe Group CohortA
+        ///   FragPipe Group 5
+        /// We also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant:
+        ///   MaxQuant Group CohortA
+        ///   MaxQuant Group 5
+        ///   Maxq Group: CohortA
+        ///   Maxq Group: 5
+        ///   MQ Group CohortA
+        ///   MQ Group 5
         /// </example>
         public string DatasetExperimentGroup { get; set; }
 
@@ -120,10 +121,16 @@ namespace AnalysisManagerBase.JobConfig
         /// MaxQuant parameter group index or number (or 0 if undefined)
         /// </summary>
         /// <remarks>
-        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3833/-/-/-/-/-
+        /// <para>
+        /// Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ).
+        /// Datasets grouped together will be normalized together.
+        /// </para>
+        /// <para>
+        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3887/-/-/-/-/-
+        /// </para>
         /// </remarks>
         /// <example>
-        /// The following are example dataset comments that include the experiment group name (1, 3, or 10):
+        /// The following are example dataset comments that include the parameter group ID (1, 3, or 10):
         /// MaxQuant Group 1
         /// Maxq Group: 3
         /// MQ Group 10

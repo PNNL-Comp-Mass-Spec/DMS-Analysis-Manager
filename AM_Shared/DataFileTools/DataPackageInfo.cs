@@ -10,6 +10,8 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class DataPackageInfo : EventNotifier
     {
+        // Ignore Spelling: quantitation
+
         /// <summary>
         /// Value to store in dictionary DatasetFileTypes when the primary instrument data is a single file
         /// </summary>
@@ -153,6 +155,10 @@ namespace AnalysisManagerBase.DataFileTools
         /// </para>
         /// <para>
         /// Group Index is defined with "MaxQuant Group 0" or "MaxQuant Group 1" in the Package Comment field
+        /// </para>
+        /// <para>
+        /// Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ).
+        /// Datasets grouped together will be normalized together.
         /// </para>
         /// </remarks>
         public Dictionary<int, int> DatasetMaxQuantParamGroup { get; }
