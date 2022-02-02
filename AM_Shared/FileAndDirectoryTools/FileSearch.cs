@@ -445,7 +445,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 var inputDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME);
 
-                var sharedResultDirNames = GetSharedResultDirList().ToList();
+                var sharedResultDirNames = GetSharedResultDirList();
 
                 var parentDirPaths = new List<string>
                 {
@@ -1064,7 +1064,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// but it can contain a comma-separated list of directory paths.
         /// </remarks>
         /// <returns>List of directory names</returns>
-        private IEnumerable<string> GetSharedResultDirList()
+        private List<string> GetSharedResultDirList()
         {
             var sharedResultDirNames = new List<string>();
 
@@ -1316,16 +1316,41 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
-            var directoriesToSearch = new List<string> {
-                mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME, string.Empty)
-            };
+            var directoriesToSearch = new List<string>();
 
-            if (directoriesToSearch[0].Length == 0)
+            var inputDirectoryName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME, string.Empty);
+            var jobStep = mJobParams.GetJobParameter("StepParameters", "Step", 0);
+
+            var sharedResultDirNames = GetSharedResultDirList();
+
+            if (!string.IsNullOrWhiteSpace(inputDirectoryName))
             {
-                directoriesToSearch.Clear();
+                // Step 3 of MSFragger jobs needs the .mzML file, but the input directory name will be of the form MSF202111161124_Auto1977726
+                // Only add the input directory to directoriesToSearch if this is step 1 or 2, or if the name starts with MSXML_Gen
+
+                if (jobStep <= 2)
+                {
+                    directoriesToSearch.Add(inputDirectoryName);
+                }
+                else
+                {
+                    if (inputDirectoryName.StartsWith("MSXML_Gen", StringComparison.OrdinalIgnoreCase))
+                    {
+                        directoriesToSearch.Add(inputDirectoryName);
+                    }
+                    else if (sharedResultDirNames.Count == 0)
+                    {
+                        errorMessage = string.Format("Input directory {0} (defined by job parameter {1}) does not start with MSXML_Gen; cannot retrieve the {2} file",
+                            inputDirectoryName,
+                            AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                            resultFileExtension);
+
+                        return false;
+                    }
+                }
             }
 
-            foreach (var sharedResultDirectory in GetSharedResultDirList())
+            foreach (var sharedResultDirectory in sharedResultDirNames)
             {
                 if (string.IsNullOrWhiteSpace(sharedResultDirectory))
                     continue;
