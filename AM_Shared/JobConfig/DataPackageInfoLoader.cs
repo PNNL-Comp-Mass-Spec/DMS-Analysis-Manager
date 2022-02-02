@@ -404,11 +404,34 @@ namespace AnalysisManagerBase.JobConfig
             //   Maxq Group: 5
             //   MQ Group CohortA
             //   MQ Group 5
-            var experimentGroupMatcher = new Regex("(MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var experimentGroupMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match1 = experimentGroupMatcher.Match(packageComment);
 
-            var datasetExperimentGroup = match1.Success ? match1.Groups["GroupName"].Value : string.Empty;
+            string datasetExperimentGroup;
+
+            if (match1.Success)
+            {
+                var prefixName = match1.Groups["PrefixName"].Value;
+                var groupNameOrId = match1.Groups["GroupName"].Value;
+
+                if ((prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                    prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase)) &&
+                    int.TryParse(groupNameOrId, out _))
+                {
+                    // Matched a MaxQuant Group ID
+                    // To avoid integer-based result file names, store Group1, Group2, etc.
+                    datasetExperimentGroup = "Group" + groupNameOrId;
+                }
+                else
+                {
+                    datasetExperimentGroup = groupNameOrId;
+                }
+            }
+            else
+            {
+                datasetExperimentGroup = string.Empty;
+            }
 
             // Examine the comment to look for MaxQuant parameter groups (must be numeric)
             // Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ).
