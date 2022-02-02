@@ -2353,7 +2353,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mCmdRunner.RaiseConsoleErrorEvents = true;
 
                 // ReSharper disable once ConvertIfStatementToSwitchStatement
-                if (processingSuccess && mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains("Error: no decoy PSMs were provided."))
+                if (processingSuccess &&
+                    mConsoleOutputFileParser.ConsoleOutputErrorMsg.IndexOf("Error: no decoy PSMs were provided", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // The error should have already been logged (and stored in mMessage)
                     return false;
