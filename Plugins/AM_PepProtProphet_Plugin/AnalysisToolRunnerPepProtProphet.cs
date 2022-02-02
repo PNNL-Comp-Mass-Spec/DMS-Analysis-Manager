@@ -3062,6 +3062,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
+                // Version will be of the form
+                // Philosopher v4.1.0; philosopher.exe: 2021-11-02 05:18:30 PM; tmt-integrator-3.2.1.jar: 2021-11-17 02:01:34 PM
                 return SetStepTaskToolVersion(mConsoleOutputFileParser.PhilosopherVersion, toolFiles);
             }
             catch (Exception ex)

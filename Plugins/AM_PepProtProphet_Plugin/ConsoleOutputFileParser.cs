@@ -35,7 +35,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public short DebugLevel { get; }
 
         /// <summary>
-        /// Philosopher version, as parsed from the program's console output text
+        /// Philosopher version, as parsed from the program's console output text, in the form Philosopher v4.1.0
         /// </summary>
         public string PhilosopherVersion { get; private set; }
 
@@ -313,7 +313,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         var match = PhilosopherVersionMatcher.Match(dataLine);
                         if (match.Success)
                         {
-                            PhilosopherVersion = match.Groups["Version"].ToString();
+                            PhilosopherVersion = "Philosopher " + match.Groups["Version"];
                         }
                     }
 
@@ -450,8 +450,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var versionTextStartIndex = dataLine.IndexOf(BUILD_AND_VERSION, StringComparison.OrdinalIgnoreCase);
 
-                        if (string.IsNullOrEmpty(PhilosopherVersion) &&
-                            versionTextStartIndex >= 0)
+                        if (string.IsNullOrEmpty(PhilosopherVersion) && versionTextStartIndex >= 0)
                         {
                             if (DebugLevel >= 2)
                             {
