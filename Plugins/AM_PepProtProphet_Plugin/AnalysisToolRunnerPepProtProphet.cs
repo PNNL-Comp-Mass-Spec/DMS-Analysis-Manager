@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
@@ -1308,6 +1309,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
             var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
 
             datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+
+            // ProteinProphet needs the FASTA file data, and it uses the information in the .pepXML file to find the FASTA file
+            // However, when MSFragger was run, the FASTA file was copied to the working directory (so that MSFragger can index it)
+            // and thus the .pepXML files have the wrong path to the FASTA file
+
+            // Update the FASTA file paths in the .pepXML files
+            var success = UpdateFASTAPathInPepXMLFiles();
+
+            if (!success)
+            {
+                experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+                workingDirectoryPadWidth = 64;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
             // Initialize the Philosopher workspace (creates a hidden directory named .meta)
             // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
@@ -3118,6 +3133,113 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep, PhilosopherToolType toolType)
         {
             UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep, toolType);
+        }
+
+        /// <summary>
+        /// Replace the FASTA file path in the data line with mFastaFilePath
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="match"></param>
+        /// <param name="matchPattern"></param>
+        /// <returns>Updated line if a successful RegEx match, otherwise logs a warning and returns the original line</returns>
+        private string UpdateFASTAFilePath(string dataLine, Match match, string matchPattern)
+        {
+            if (match.Success)
+            {
+                var fastaFilePath = match.Groups["FilePath"].Value;
+                return dataLine.Replace(fastaFilePath, mFastaFilePath);
+            }
+
+            LogWarning("RegEx search for {0} failed in line: {1}", matchPattern, dataLine);
+            return dataLine;
+        }
+
+        /// <summary>
+        /// Update FASTA file paths in the .pepXML files
+        /// </summary>
+        /// <remarks>
+        /// This is required because ProteinProphet needs the FASTA file data, and it uses the information in the .pepXML file to find the FASTA file
+        /// </remarks>
+        private bool UpdateFASTAPathInPepXMLFiles()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(mFastaFilePath))
+                {
+                    LogError("Cannot update FASTA file paths in .pepXML files because variable mFastaFilePath is empty in AnalysisToolRunnerPepProtProphet");
+                    return false;
+                }
+
+                // This extracts the FASTA file path from lines of the form
+                // <search_database local_path="D:\DMS_WorkDir1\ID_008098_4E97840F.fasta" type="AA"/>
+                var localPathMatcher = new Regex("local_path *= *\"(?<FilePath>[^\"]+)\"", RegexOptions.Compiled);
+
+                var databaseNameMatcher = new Regex("value *= *\"(?<FilePath>[^\"]+)\"", RegexOptions.Compiled);
+
+                foreach (var pepXmlFile in mWorkingDirectory.GetFileSystemInfos(string.Format("*{0}", PEPXML_EXTENSION)))
+                {
+                    var finalFilePath = pepXmlFile.FullName;
+                    var tempFile = new FileInfo(pepXmlFile.FullName + ".tmp");
+
+                    LogDebug("Updating FASTA file paths in file " + pepXmlFile.Name);
+
+                    // Once this reaches 2, simply write out all of the remaining data lines
+                    var matchesFound = 0;
+
+                    using (var reader = new StreamReader(new FileStream(pepXmlFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    using (var writer = new StreamWriter(new FileStream(tempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            var dataLine = reader.ReadLine();
+
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                            {
+                                writer.WriteLine();
+                                continue;
+                            }
+
+                            if (matchesFound >= 2)
+                            {
+                                writer.WriteLine(dataLine);
+                                continue;
+                            }
+
+                            string lineToWrite;
+
+                            if (dataLine.Contains("search_database") && dataLine.Contains("local_path"))
+                            {
+                                var match = localPathMatcher.Match(dataLine);
+                                lineToWrite = UpdateFASTAFilePath(dataLine, match, "local_path=\"FilePath.fasta\"");
+                                matchesFound++;
+                            }
+                            else if (dataLine.Contains("database_name") && dataLine.Contains("value"))
+                            {
+                                var match = databaseNameMatcher.Match(dataLine);
+                                lineToWrite = UpdateFASTAFilePath(dataLine, match, "value=\"FilePath.fasta\"");
+                                matchesFound++;
+                            }
+                            else
+                            {
+                                lineToWrite = dataLine;
+                            }
+
+                            writer.WriteLine(lineToWrite);
+                        }
+                    }
+
+                    // Replace the original file
+                    pepXmlFile.Delete();
+                    tempFile.MoveTo(finalFilePath);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in UpdateFASTAPathInPepXMLFiles", ex);
+                return false;
+            }
         }
 
         /// <summary>
