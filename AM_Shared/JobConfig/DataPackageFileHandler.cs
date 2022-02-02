@@ -995,9 +995,9 @@ namespace AnalysisManagerBase.JobConfig
                     if (targetMzMLFile.Exists)
                         return true;
 
-                    const BaseLogger.LogLevels eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
+                    const BaseLogger.LogLevels logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
 
-                    var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localDirectoryPath, eLogMsgTypeIfNotFound);
+                    var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localDirectoryPath, logMsgTypeIfNotFound);
 
                     if (fileCopied)
                     {

@@ -51,7 +51,7 @@ namespace AnalysisManagerProg
         /// <returns>CloseOutType value indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+            var returnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             // Create some dummy results files
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerProg
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
                 //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                returnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Add the current job data to the summary file
@@ -99,7 +99,7 @@ namespace AnalysisManagerProg
             {
                 // MoveResultFiles moves the result files to the result folder
                 mMessage = "Error moving files into results folder";
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                returnCode = CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Move the Plots folder to the result files folder
@@ -109,7 +109,7 @@ namespace AnalysisManagerProg
             if (plotsFolder.Exists && !Directory.Exists(targetFolderPath))
                 plotsFolder.MoveTo(targetFolderPath);
 
-            if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
+            if (!success || returnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results directory
                 var analysisResults = new AnalysisResults(mMgrParams, mJobParams);

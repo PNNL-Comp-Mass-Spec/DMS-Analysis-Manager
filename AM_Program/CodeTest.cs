@@ -1098,11 +1098,11 @@ namespace AnalysisManagerProg
             }
 
             Console.ResetColor();
-            foreach (ConsoleColor eColor in Enum.GetValues(typeof(ConsoleColor)))
+            foreach (ConsoleColor color in Enum.GetValues(typeof(ConsoleColor)))
             {
-                Console.Write("{0,-12} [", eColor);
+                Console.Write("{0,-12} [", color);
 
-                Console.ForegroundColor = eColor;
+                Console.ForegroundColor = color;
                 Console.Write("test message");
                 Console.ResetColor();
                 Console.WriteLine("]");

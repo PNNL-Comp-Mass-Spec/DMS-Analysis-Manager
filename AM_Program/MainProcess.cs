@@ -1172,9 +1172,9 @@ namespace AnalysisManagerProg
 
             try
             {
-                var eJobStatus = remoteMonitor.GetRemoteJobStatus();
+                var jobStatus = remoteMonitor.GetRemoteJobStatus();
 
-                switch (eJobStatus)
+                switch (jobStatus)
                 {
                     case RemoteMonitor.RemoteJobStatusCodes.Undefined:
                         LogError(Global.AppendToComment("Undefined remote job status; check the logs", remoteMonitor.Message));
@@ -1209,7 +1209,7 @@ namespace AnalysisManagerProg
                         return false;
 
                     default:
-                        mMostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
+                        mMostRecentErrorMessage = "Unrecognized remote job status: " + jobStatus;
                         LogError(Global.AppendToComment(mMostRecentErrorMessage, remoteMonitor.Message));
 
                         resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;

@@ -284,11 +284,11 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates status file
         /// </summary>
-        /// <param name="eMgrStatus">Job status code</param>
-        /// <param name="eTaskStatus">Task status code</param>
-        /// <param name="eTaskStatusDetail">Detailed task status</param>
+        /// <param name="mgrStatus">Job status code</param>
+        /// <param name="taskStatus">Task status code</param>
+        /// <param name="taskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        void UpdateAndWrite(MgrStatusCodes eMgrStatus, TaskStatusCodes eTaskStatus, TaskStatusDetailCodes eTaskStatusDetail, float percentComplete);
+        void UpdateAndWrite(MgrStatusCodes mgrStatus, TaskStatusCodes taskStatus, TaskStatusDetailCodes taskStatusDetail, float percentComplete);
 
         /// <summary>
         /// Updates status file
@@ -301,9 +301,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates status file
         /// </summary>
-        /// <param name="eMgrStatus">Job status code</param>
-        /// <param name="eTaskStatus">Task status code</param>
-        /// <param name="eTaskStatusDetail">Detailed task status</param>
+        /// <param name="mgrStatus">Job status code</param>
+        /// <param name="taskStatus">Task status code</param>
+        /// <param name="taskStatusDetail">Detailed task status</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="dtaCount">Number of DTA files (i.e., spectra files); relevant for SEQUEST, X!Tandem, and Inspect</param>
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
@@ -311,9 +311,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         void UpdateAndWrite(
-            MgrStatusCodes eMgrStatus,
-            TaskStatusCodes eTaskStatus,
-            TaskStatusDetailCodes eTaskStatusDetail,
+            MgrStatusCodes mgrStatus,
+            TaskStatusCodes taskStatus,
+            TaskStatusDetailCodes taskStatusDetail,
             float percentComplete,
             int dtaCount,
             string mostRecentLogMessage,

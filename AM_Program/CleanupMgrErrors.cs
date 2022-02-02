@@ -129,16 +129,16 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Automatically clean old files from the work directory if eManagerErrorCleanupMode is not CleanupModes.Disabled
+        /// Automatically clean old files from the work directory if managerErrorCleanupMode is not CleanupModes.Disabled
         /// </summary>
-        /// <param name="eManagerErrorCleanupMode"></param>
+        /// <param name="managerErrorCleanupMode"></param>
         /// <param name="debugLevel"></param>
-        public bool AutoCleanupManagerErrors(CleanupModes eManagerErrorCleanupMode, int debugLevel)
+        public bool AutoCleanupManagerErrors(CleanupModes managerErrorCleanupMode, int debugLevel)
         {
             if (!mInitialized)
                 return false;
 
-            if (eManagerErrorCleanupMode == CleanupModes.Disabled)
+            if (managerErrorCleanupMode == CleanupModes.Disabled)
                 return false;
 
             LogMessage("Attempting to automatically clean the work directory");
@@ -488,12 +488,12 @@ namespace AnalysisManagerProg
             }
         }
 
-        private void ReportManagerErrorCleanup(CleanupActionCodes eMgrCleanupActionCode)
+        private void ReportManagerErrorCleanup(CleanupActionCodes mgrCleanupActionCode)
         {
-            ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
+            ReportManagerErrorCleanup(mgrCleanupActionCode, string.Empty);
         }
 
-        private void ReportManagerErrorCleanup(CleanupActionCodes eMgrCleanupActionCode, string failureMessage)
+        private void ReportManagerErrorCleanup(CleanupActionCodes mgrCleanupActionCode, string failureMessage)
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
@@ -518,7 +518,7 @@ namespace AnalysisManagerProg
                 var cmd = dbTools.CreateCommand(SP_NAME_REPORT_MGR_ERROR_CLEANUP, System.Data.CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
-                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = eMgrCleanupActionCode;
+                dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = mgrCleanupActionCode;
                 dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, ParameterDirection.Output);
 
