@@ -707,11 +707,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="directoryPath"></param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>List of found files; empty list if no match</returns>
-        public static List<FileInfo> FindMSFraggerSynopsisFiles(string directoryPath,out string errorMessage)
+        public static List<FileInfo> FindMSFraggerSynopsisFiles(string directoryPath, out string errorMessage)
         {
             const string searchPattern = "*" + PHRPReader.Reader.MSFraggerSynFileReader.FILENAME_SUFFIX_SYN;
 
-            return FindSynopsisFiles(directoryPath, searchPattern,  out errorMessage);
+            return FindSynopsisFiles(directoryPath, searchPattern, out errorMessage);
         }
 
         /// <summary>
@@ -1365,9 +1365,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 // Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the .mzML file
                 errorMessage = string.Format("Job parameters {0} and {1} are empty; cannot retrieve the {2} file",
-                                             AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
-                                             AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
-                                             resultFileExtension);
+                    AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                    AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
+                    resultFileExtension);
+
                 return false;
             }
 
