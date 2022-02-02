@@ -3096,9 +3096,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Retrieve the metadata for the datasets associated with the given data package
         /// </summary>
-        /// <param name="dataPackageID"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="storeJobParameters">When true, store the data package info as packed dictionary job parameters</param>
+        /// <param name="dataPackageID">Data package ID</param>
+        /// <param name="datasetIDsByExperimentGroup">
+        /// Output: dictionary where keys are experiment group name and values are dataset ID (this is used by MSFragger)
+        /// </param>
+        /// <param name="storeJobParameters">
+        /// When true, store the data package info as packed dictionary job parameters
+        /// </param>
         /// <returns>True if the data package is defined and it has datasets associated with it</returns>
         protected bool LookupDataPackageInfo(
             int dataPackageID,

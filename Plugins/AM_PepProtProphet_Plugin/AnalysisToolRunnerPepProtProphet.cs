@@ -266,7 +266,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Skip the filtered FASTA file, created when method RunReportGeneration is called
                 mJobParams.AddResultFileToSkip("protein.fas");
 
-                // Also skip these files
+                // Also skip these files (since they're small and do not contain useful info)
                 mJobParams.AddResultFileToSkip("reprint.int.tsv");
                 mJobParams.AddResultFileToSkip("reprint.spc.tsv");
 
@@ -974,7 +974,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Create the temporary directories used by PeptideProphet
         /// </summary>
         /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <returns>Dictionary where keys are dataset names and values are DirectoryInfo instances</returns>
         private Dictionary<int, DirectoryInfo> InitializePeptideProphetWorkspaceDirectories(
@@ -1287,6 +1287,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="workingDirectoryPadWidth">Longest directory path in experimentGroupWorkingDirectories</param>
+        /// <returns>Result code</returns>
         private CloseOutType OrganizePepXmlAndPinFiles(
             out DataPackageInfo dataPackageInfo,
             out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -1573,6 +1574,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create a db.bin file in the .meta subdirectory of the working directory and in any experiment directories
         /// </summary>
+        /// <remarks>
+        /// The files will have the same size but are not identical, and thus we need to run the annotation command on each directory
+        /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         private bool RunDatabaseAnnotation(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
@@ -3123,7 +3127,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
         /// </remarks>
         /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
@@ -3436,6 +3440,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return false;
             }
         }
+
         private bool ValidateFastaFile()
         {
             // Define the path to the FASTA file
@@ -3483,6 +3488,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                     else
                     {
+                        // The .pin file will not exist for split FASTA searches; this is expected
                         pinFileUpdated = true;
                     }
 

@@ -1220,7 +1220,9 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Copy the FASTA file to the working directory
             // This is done because MSFragger indexes the file based on the dynamic and static mods,
             // and we want that index file to be in the working directory
-            // Example filename: ID_007564_FEA6EC69.fasta.1.pepindex
+
+            // Example index file name: ID_007564_FEA6EC69.fasta.1.pepindex
+
             mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
 
             fastaFile.CopyTo(mLocalFASTAFilePath, true);

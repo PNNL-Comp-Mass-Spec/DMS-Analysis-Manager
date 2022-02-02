@@ -51,7 +51,7 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Group the datasets in this data package by experiment group name
+        /// Group the datasets in this data package by experiment group name (MSFragger experiment group)
         /// </summary>
         /// <remarks>
         /// Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
@@ -384,7 +384,7 @@ namespace AnalysisManagerBase.JobConfig
             var datasetId = curRow["DatasetID"].CastDBVal<int>();
 
             // Look for an Experiment Group name in the data package comment for a dataset
-            // This applies to both MaxQuant and MSFragger jobs
+            // This only applies to MSFragger jobs, but could be in the MaxQuant parameter group ID format
 
             var packageComment = curRow["PackageComment"].CastDBVal<string>();
 
