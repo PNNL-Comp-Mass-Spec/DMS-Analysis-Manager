@@ -2939,8 +2939,34 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var plex = GetReporterIonChannelCount(options.ReporterIonMode);
 
+                int memoryToReserveGB;
+
+                var freeMemoryMB = Global.GetFreeMemoryMB();
+
+                if (TMT_INTEGRATOR_MEMORY_SIZE_GB * 1024 < freeMemoryMB)
+                {
+                    memoryToReserveGB = TMT_INTEGRATOR_MEMORY_SIZE_GB;
+                }
+                else if (Global.RunningOnDeveloperComputer())
+                {
+                    memoryToReserveGB = (int)Math.Floor(freeMemoryMB * 0.9 / 1024);
+
+                    LogWarning(
+                        "We typically allocate {0} GB for TMT-Integrator, but system free memory is currently {1:F1} GB; " +
+                        "adjusting value to {2} GB since running on a developer computer",
+                        TMT_INTEGRATOR_MEMORY_SIZE_GB, freeMemoryMB / 1024, memoryToReserveGB);
+                }
+                else
+                {
+                    LogWarning(
+                        "We typically allocate {0} GB for TMT-Integrator, but system free memory is currently {1:F1} GB; Java might end with an error",
+                        TMT_INTEGRATOR_MEMORY_SIZE_GB, freeMemoryMB / 1024);
+
+                    memoryToReserveGB = TMT_INTEGRATOR_MEMORY_SIZE_GB;
+                }
+
                 var arguments = new StringBuilder();
-                arguments.AppendFormat("-Xmx{0}G -cp \"{1}\" TMTIntegrator", TMT_INTEGRATOR_MEMORY_SIZE_GB, mTmtIntegratorProgLoc);
+                arguments.AppendFormat("-Xmx{0}G -cp \"{1}\" TMTIntegrator", memoryToReserveGB, mTmtIntegratorProgLoc);
 
                 // Create the TMT-Integrator config file
                 var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "tmt-integrator-conf.yml"));
