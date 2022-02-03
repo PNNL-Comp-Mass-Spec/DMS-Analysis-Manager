@@ -251,13 +251,27 @@ namespace AnalysisManager_Mage_PlugIn
 
                 // Make sure all of the ion counts are the same
                 var ionCountFirst = ionCounts.First();
+
                 var lookupQ = (from item in ionCounts where item != ionCountFirst select item).ToList();
+
                 if (lookupQ.Count > 0)
                 {
+                    var otherIonCounts = new SortedSet<int>();
+
+                    foreach (var item in lookupQ)
+                    {
+                        otherIonCounts.Add(item);
+                    }
+
                     // Example message:
-                    // Not all entries in the t_alias table have 4 ions; edit the t_alias.txt file
-                    errorMessage = "Not all entries in the " + T_ALIAS_TABLE + " table have " + ionCountFirst + " ions; " +
-                                   "edit the " + T_ALIAS_FILE + " file";
+                    // The first plex in the T_alias table has 9 ions, but the other plexes have a different number of ions (10); edit the t_alias.txt file in the data package directory
+                    errorMessage = string.Format(
+                        "The first plex in the {0} table has {1} ions, but the other plexes have a different number of ions ({2}); " +
+                        "edit the {3} file in the data package directory",
+                        T_ALIAS_TABLE,
+                        ionCountFirst,
+                        string.Join(", ", otherIonCounts),
+                        T_ALIAS_FILE);
 
                     return false;
                 }
