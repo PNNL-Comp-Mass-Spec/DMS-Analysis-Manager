@@ -806,7 +806,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Define the path to the FASTA file
                 var organismDbDirectory = mMgrParams.GetParam("OrgDbDir");
-                var fastaFilePath = Path.Combine(organismDbDirectory, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var fastaFilePath = Path.Combine(organismDbDirectory, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
 
                 var fastaFile = new FileInfo(fastaFilePath);
 

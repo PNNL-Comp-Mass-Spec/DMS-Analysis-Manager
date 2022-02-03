@@ -35,7 +35,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         public override CloseOutType RunTool()
         {
             CloseOutType result;
-            var orgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var orgDBName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
             var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
             // Do the base class stuff

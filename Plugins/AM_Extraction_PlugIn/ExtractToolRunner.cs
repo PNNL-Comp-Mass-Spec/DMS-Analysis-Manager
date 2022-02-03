@@ -97,7 +97,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
                 // However, if job parameter SkipProteinMods is True, the FASTA file will not have been retrieved
-                var fastaFileName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var fastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
+
                 if (string.IsNullOrWhiteSpace(fastaFileName))
                 {
                     mGeneratedFastaFilePath = string.Empty;

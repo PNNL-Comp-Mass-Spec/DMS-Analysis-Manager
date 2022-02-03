@@ -396,7 +396,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             try
             {
                 var localOrgDbDirectory = new DirectoryInfo(mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR));
-                var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
+                var generatedFastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME);
 
                 var generatedFastaFile = new FileInfo(Path.Combine(localOrgDbDirectory.FullName, generatedFastaFileName));
 

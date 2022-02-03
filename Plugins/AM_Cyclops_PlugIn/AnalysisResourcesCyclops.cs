@@ -86,7 +86,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                         if (proteinOptions.Length > 0 && !proteinOptions.Equals("na", StringComparison.OrdinalIgnoreCase))
                         {
                             // Override the Protein Options to force forward direction only
-                            mJobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");
+                            mJobParams.SetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "ProteinOptions", "seq_direction=forward,filetype=fasta");
                         }
 
                         // Generate the path FASTA File

@@ -305,7 +305,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
-                        mJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
 
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _, true))
                         {
@@ -315,7 +315,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             return false;
                         }
 
-                        proteinCollectionListOrLegacyFastaName = mJobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        proteinCollectionListOrLegacyFastaName = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
 
                         if (string.IsNullOrEmpty(proteinCollectionListOrLegacyFastaName))
                         {
@@ -331,7 +331,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Add a new job parameter that associates proteinCollectionListOrLegacyFastaName with this job
                     // This value was previously used by method CreateMSGFReportFile in AnalysisToolRunnerPRIDEConverter,
                     // but that method (and related methods) were deprecated in September 2020
-                    mJobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(dataPkgJob.Job), proteinCollectionListOrLegacyFastaName);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, GetGeneratedFastaParamNameForJob(dataPkgJob.Job), proteinCollectionListOrLegacyFastaName);
                 }
 
                 // Restore the dataset and job info for this aggregation job

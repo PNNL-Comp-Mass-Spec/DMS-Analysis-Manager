@@ -873,7 +873,7 @@ namespace AnalysisManagerProg
             if (success)
             {
                 IJobParams jobParams = InitializeManagerParams();
-                jobParams.AddAdditionalParameter("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
+                jobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName);
 
                 //const bool msgfPlus = true;
                 //var jobNum = "12345";
@@ -1172,10 +1172,10 @@ namespace AnalysisManagerProg
             jobParams.SetParam("ParallelMSGFPlus", "CloneStepRenumberStart", "50");
             jobParams.SetParam("ParallelMSGFPlus", "SplitFasta", "True");
 
-            jobParams.SetParam("PeptideSearch", "legacyFastaFileName", "Uniprot_ArchaeaBacteriaFungi_SprotTrembl_2014-4-16.fasta");
-            jobParams.SetParam("PeptideSearch", "OrganismName", "Combined_Organism_Rifle_SS");
-            jobParams.SetParam("PeptideSearch", "ProteinCollectionList", "na");
-            jobParams.SetParam("PeptideSearch", "ProteinOptions", "na");
+            jobParams.SetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "legacyFastaFileName", "Uniprot_ArchaeaBacteriaFungi_SprotTrembl_2014-4-16.fasta");
+            jobParams.SetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "OrganismName", "Combined_Organism_Rifle_SS");
+            jobParams.SetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "ProteinCollectionList", "na");
+            jobParams.SetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "ProteinOptions", "na");
 
             const int debugLevel = 2;
             var resourcer = GetResourcesObject(debugLevel, jobParams);

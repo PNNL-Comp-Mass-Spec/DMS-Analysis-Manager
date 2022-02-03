@@ -156,7 +156,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Define the path to the FASTA file
                 var orgDbDir = mMgrParams.GetParam("OrgDbDir");
-                var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
 
                 var fastaFile = new FileInfo(fastaFilePath);
 

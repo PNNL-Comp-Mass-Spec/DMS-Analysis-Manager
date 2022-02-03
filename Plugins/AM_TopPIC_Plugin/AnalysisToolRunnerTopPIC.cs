@@ -1134,7 +1134,7 @@ namespace AnalysisManagerTopPICPlugIn
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            mValidatedFASTAFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             var fastaFile = new FileInfo(mValidatedFASTAFilePath);
 

@@ -963,7 +963,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         private CloseOutType UpdateAndromedaParameterFiles(DirectoryInfo workingDirectory, IEnumerable<string> andromedaParameterFiles)
         {
             var localOrgDbDirectory = new DirectoryInfo(mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR));
-            var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+            var generatedFastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             var generatedFastaFilePath = Path.Combine(localOrgDbDirectory.FullName, generatedFastaFileName);
 
@@ -1679,7 +1679,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         {
             // Define the path to the FASTA file
             var localOrgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            var generatedFastaFileName = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+            var generatedFastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var fastaFilePath = Path.Combine(localOrgDbDirectory, generatedFastaFileName);

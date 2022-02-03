@@ -865,7 +865,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         protected bool CopyGeneratedOrgDBToRemote(RemoteTransferUtility transferUtility)
         {
-            var dbFilename = mJobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
+            var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME);
             if (string.IsNullOrWhiteSpace(dbFilename))
             {
                 LogError("Cannot copy the generated FASTA remotely; parameter " + JOB_PARAM_GENERATED_FASTA_NAME + " is empty");
@@ -1843,6 +1843,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected DataPackageJobInfo GetCurrentDatasetAndJobInfo()
         {
             const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
+            const string peptideSearchSection = AnalysisJob.PEPTIDE_SEARCH_SECTION;
 
             var jobNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             var dataset = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, mDatasetName);
@@ -1862,11 +1863,11 @@ namespace AnalysisManagerBase.AnalysisTool
                 NumberOfClonedSteps = mJobParams.GetJobParameter("NumberOfClonedSteps", 0),
                 ResultType = mJobParams.GetJobParameter(jobParamsSection, "ResultType", string.Empty),
                 SettingsFileName = mJobParams.GetJobParameter(jobParamsSection, "SettingsFileName", string.Empty),
-                ParameterFileName = mJobParams.GetJobParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, string.Empty),
+                ParameterFileName = mJobParams.GetJobParameter(peptideSearchSection, JOB_PARAM_PARAMETER_FILE, string.Empty),
                 GeneratedFASTAFileName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_GENERATED_FASTA_NAME, string.Empty),
-                LegacyFastaFileName = mJobParams.GetJobParameter("PeptideSearch", "LegacyFastaFileName", string.Empty),
-                ProteinCollectionList = mJobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty),
-                ProteinOptions = mJobParams.GetJobParameter("PeptideSearch", "ProteinOptions", string.Empty),
+                LegacyFastaFileName = mJobParams.GetJobParameter(peptideSearchSection, "LegacyFastaFileName", string.Empty),
+                ProteinCollectionList = mJobParams.GetJobParameter(peptideSearchSection, "ProteinCollectionList", string.Empty),
+                ProteinOptions = mJobParams.GetJobParameter(peptideSearchSection, "ProteinOptions", string.Empty),
                 ServerStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty),
                 ArchiveStoragePath = mJobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty),
                 ResultsFolderName = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_INPUT_FOLDER_NAME, string.Empty),
@@ -3504,6 +3505,7 @@ namespace AnalysisManagerBase.AnalysisTool
             DatasetName = dataPkgJob.Dataset;
 
             const string jobParamsSection = AnalysisJob.JOB_PARAMETERS_SECTION;
+            const string peptideSearchSection = AnalysisJob.PEPTIDE_SEARCH_SECTION;
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, dataPkgJob.Dataset);
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgJob.DatasetID.ToString());
@@ -3517,12 +3519,12 @@ namespace AnalysisManagerBase.AnalysisTool
             mJobParams.AddAdditionalParameter(jobParamsSection, "ResultType", dataPkgJob.ResultType);
             mJobParams.AddAdditionalParameter(jobParamsSection, "SettingsFileName", dataPkgJob.SettingsFileName);
 
-            mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, dataPkgJob.ParameterFileName);
+            mJobParams.AddAdditionalParameter(peptideSearchSection, JOB_PARAM_PARAMETER_FILE, dataPkgJob.ParameterFileName);
 
-            mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.GeneratedFASTAFileName);
-            mJobParams.AddAdditionalParameter("PeptideSearch", "LegacyFastaFileName", dataPkgJob.LegacyFastaFileName);
-            mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
-            mJobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", dataPkgJob.ProteinOptions);
+            mJobParams.AddAdditionalParameter(peptideSearchSection, JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.GeneratedFASTAFileName);
+            mJobParams.AddAdditionalParameter(peptideSearchSection, "LegacyFastaFileName", dataPkgJob.LegacyFastaFileName);
+            mJobParams.AddAdditionalParameter(peptideSearchSection, "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
+            mJobParams.AddAdditionalParameter(peptideSearchSection, "ProteinOptions", dataPkgJob.ProteinOptions);
 
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgJob.ServerStoragePath);
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
@@ -4729,7 +4731,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // FASTA file was successfully generated.
                 // Put the name of the generated FASTA file in the job data class for other methods to use
-                if (!mJobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName))
+                if (!mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to mJobParams");
                     resultCode = CloseOutType.CLOSEOUT_FAILED;
@@ -4802,7 +4804,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
-                var fastaFilePath = Path.Combine(mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR), mJobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME));
+                var fastaFilePath = Path.Combine(mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR), mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME));
 
                 // Gigasax.DMS5
                 var connectionString = mMgrParams.GetParam("ConnectionString");

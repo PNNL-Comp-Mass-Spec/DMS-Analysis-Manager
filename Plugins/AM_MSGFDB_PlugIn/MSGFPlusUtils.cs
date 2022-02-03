@@ -982,7 +982,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants peptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-            var dbFilename = mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
+            var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             string msg;
 
@@ -1571,7 +1571,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-            fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             fastaFileSizeKB = 0;
             fastaFileIsDecoy = false;

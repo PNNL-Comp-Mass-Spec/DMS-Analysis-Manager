@@ -3834,7 +3834,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 mSummaryFile.Add("Legacy Organism Db Name" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
                 mSummaryFile.Add("Protein Collection List" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
                 mSummaryFile.Add("Protein Options List" + '\t' + mJobParams.GetParam("ProteinOptions"));
-                mSummaryFile.Add("FASTA File Name" + '\t' + mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+                mSummaryFile.Add("FASTA File Name" + '\t' + mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
                 if (mStopTime < mStartTime)
                     mStopTime = DateTime.UtcNow;

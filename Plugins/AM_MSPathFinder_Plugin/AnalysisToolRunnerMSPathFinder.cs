@@ -185,7 +185,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
 
             var fastaFile = new FileInfo(fastaFilePath);
 
@@ -734,7 +734,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
 
             var paramFilePath = Path.Combine(mWorkDir, parameterFileName);
 

@@ -384,7 +384,7 @@ namespace AnalysisManagerBase.AnalysisTool
             writer.WriteLine("LegacyOrganismDBName" + '\t' + mJobParams.GetParam("LegacyFastaFileName"));
             writer.WriteLine("ProteinCollectionList" + '\t' + mJobParams.GetParam("ProteinCollectionList"));
             writer.WriteLine("ProteinOptionsList" + '\t' + mJobParams.GetParam("ProteinOptions"));
-            writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+            writer.WriteLine("FastaFileName" + '\t' + mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
         }
 
         /// <summary>

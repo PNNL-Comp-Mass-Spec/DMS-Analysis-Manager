@@ -111,7 +111,7 @@ namespace AnalysisManagerOMSSAPlugIn
             try
             {
                 // set up formatdb.exe to reference the organism DB file (FASTA)
-                var organismDbName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var organismDbName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
                 var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
 
                 LogMessage("Running formatdb.exe");
@@ -209,7 +209,7 @@ namespace AnalysisManagerOMSSAPlugIn
             var omssaInput = Path.Combine(mWorkDir, OMSSA_INPUT_FILE);
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
-            var searchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var searchSettings = Path.Combine(mMgrParams.GetParam("OrgDbDir"), mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
             var msInFileName = Path.Combine(mWorkDir, DatasetName + ".xml");
             var msOmxOutFilename = Path.Combine(mWorkDir, DatasetName + "_om.omx");
             var msOmxLargeOutFilename = Path.Combine(mWorkDir, DatasetName + "_om_large.omx");

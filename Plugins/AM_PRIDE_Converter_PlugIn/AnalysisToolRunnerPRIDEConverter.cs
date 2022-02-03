@@ -1721,7 +1721,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 var templateFileName = AnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(mJobParams, warnIfJobParamMissing: false);
 
-                var orgDBNameGenerated = mJobParams.GetJobParameter("PeptideSearch",
+                var orgDBNameGenerated = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION,
                                                                      AnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
                 if (string.IsNullOrEmpty(orgDBNameGenerated))
                 {

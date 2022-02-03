@@ -36,6 +36,11 @@ namespace AnalysisManagerBase.JobConfig
         public const string JOB_PARAMETERS_SECTION = "JobParameters";
 
         /// <summary>
+        /// Peptide search section
+        /// </summary>
+        public const string PEPTIDE_SEARCH_SECTION = "PeptideSearch";
+
+        /// <summary>
         /// Step parameters section
         /// </summary>
         public const string STEP_PARAMETERS_SECTION = "StepParameters";
@@ -1941,7 +1946,7 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 512, evalMsg.Trim('\r', '\n'));
             var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
-            if (!TryGetParam("PeptideSearch", AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
+            if (!TryGetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
                 orgDbName = string.Empty;
             }

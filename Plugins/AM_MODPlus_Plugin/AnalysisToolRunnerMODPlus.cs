@@ -511,7 +511,7 @@ namespace AnalysisManagerMODPlusPlugin
         {
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
 
             var fastaFile = new FileInfo(fastaFilePath);
 
@@ -859,7 +859,7 @@ namespace AnalysisManagerMODPlusPlugin
                 // Define the path to the FASTA file
                 // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
                 var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-                var dbFilename = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
                 var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
                 var paramFileName = mJobParams.GetParam("ParmFileName");

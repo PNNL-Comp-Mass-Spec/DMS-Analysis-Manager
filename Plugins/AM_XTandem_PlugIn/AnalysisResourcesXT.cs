@@ -136,7 +136,7 @@ namespace AnalysisManagerXTandemPlugIn
             // set up taxonomy file to reference the organism DB file (FASTA)
 
             var workingDir = mMgrParams.GetParam("WorkDir");
-            var orgDBName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var orgDBName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
             var organismName = mJobParams.GetParam("OrganismName");
             var localOrgDBFolder = mMgrParams.GetParam("OrgDbDir");
             var orgFilePath = Path.Combine(localOrgDBFolder, orgDBName);
