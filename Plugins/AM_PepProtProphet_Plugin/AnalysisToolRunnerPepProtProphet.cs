@@ -1965,7 +1965,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     FileInfo aliasFile;
 
-                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("AliasNames_{0}.txt", experimentGroup.Key)));
+                    var aliasNameSuffix = experimentGroup.Key.Equals(DataPackageInfoLoader.UNDEFINED_EXPERIMENT_GROUP)
+                        ? string.Empty
+                        : "_" + experimentGroup.Key;
+
+                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("AliasNames{0}.txt", aliasNameSuffix)));
                     var genericAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasNames.txt"));
                     var genericAliasFile2 = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasName.txt"));
 

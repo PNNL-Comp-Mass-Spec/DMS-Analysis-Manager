@@ -24,7 +24,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Experiment group name to use when an experiment group is not defined in the data package comment of a dataset in a data package
         /// </summary>
-        private const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
+        public const string UNDEFINED_EXPERIMENT_GROUP = "__UNDEFINED_EXPERIMENT_GROUP__";
 
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
