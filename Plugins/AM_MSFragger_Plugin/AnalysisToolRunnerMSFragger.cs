@@ -939,6 +939,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                         javaMemorySizeMB, freeMemoryMB * 0.9);
 
                     javaMemorySizeMB = (int)Math.Round(freeMemoryMB * 0.9, 0);
+                    ConsoleMsgUtils.SleepSeconds(2);
                 }
             }
 
