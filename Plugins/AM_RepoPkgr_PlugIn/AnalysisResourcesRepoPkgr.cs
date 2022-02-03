@@ -367,14 +367,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     else
                     {
                         OverrideCurrentDatasetAndJobInfo(analysisJob);
-                        mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
+                        mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
                             if (string.IsNullOrEmpty(mMessage))
                                 mMessage = "Call to RetrieveOrgDB returned false in AnalysisResourcesRepoPkgr.RetrieveFastaFiles";
                             return false;
                         }
-                        orgDbNameGenerated = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
+                        orgDbNameGenerated = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
                         if (string.IsNullOrEmpty(orgDbNameGenerated))
                         {
                             mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";

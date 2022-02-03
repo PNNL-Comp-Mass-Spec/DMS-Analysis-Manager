@@ -159,7 +159,7 @@ namespace AnalysisManagerMODPlusPlugin
         private bool FastaHasDecoyProteins()
         {
             var localOrgDbFolder = mMgrParams.GetParam("OrgDbDir");
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
+            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName"));
 
             var fastaFile = new FileInfo(fastaFilePath);
 

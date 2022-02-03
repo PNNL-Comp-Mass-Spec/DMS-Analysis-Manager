@@ -1681,7 +1681,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             var localOrgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
             var generatedFastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
-            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var fastaFilePath = Path.Combine(localOrgDbDirectory, generatedFastaFileName);
 
             var fastaFile = new FileInfo(fastaFilePath);

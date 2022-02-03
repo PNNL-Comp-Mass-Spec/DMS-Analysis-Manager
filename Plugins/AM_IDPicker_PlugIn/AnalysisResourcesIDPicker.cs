@@ -156,7 +156,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", mFastaFileName);
+                    mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", mFastaFileName);
                 }
                 else
                 {

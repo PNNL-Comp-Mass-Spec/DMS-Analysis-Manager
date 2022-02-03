@@ -3597,7 +3597,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Define the path to the FASTA file
             var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
 
-            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             var fastaFile = new FileInfo(fastaFilePath);

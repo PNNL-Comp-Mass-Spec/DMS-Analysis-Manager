@@ -384,7 +384,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Job parameter to track the auto-generated FASTA file name
         /// </summary>
-        public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
+        public const string JOB_PARAM_GENERATED_FASTA_NAME = "GeneratedFastaName";
 
         /// <summary>
         /// Job parameter of the directory with cached .mzML (and .mzXML) files
@@ -4589,7 +4589,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
-        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "GeneratedFastaName" in section "PeptideSearch"</remarks>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
@@ -4603,7 +4603,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create a FASTA file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
-        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "GeneratedFastaName" in section "PeptideSearch"</remarks>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where FASTA files are stored</param>
         /// <param name="resultCode">Output: status code</param>
         /// <param name="maxLegacyFASTASizeGB">
@@ -4733,7 +4733,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Put the name of the generated FASTA file in the job data class for other methods to use
                 if (!mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME, mFastaFileName))
                 {
-                    LogError("Error adding parameter 'generatedFastaName' to mJobParams");
+                    LogError("Error adding parameter 'GeneratedFastaName' to mJobParams");
                     resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
@@ -4786,7 +4786,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     TemplateFilePath = mMgrParams.GetParam("ParamTemplateLoc")
                 };
 
-                // Note that job parameter "generatedFastaName" gets defined by RetrieveOrgDB
+                // Note that job parameter "GeneratedFastaName" gets defined by RetrieveOrgDB
                 // Furthermore, the full path to the FASTA file is only necessary when creating SEQUEST parameter files
 
                 // Job parameter ToolName tracks the pipeline script name (whose name is based on the primary analysis tool for the script)

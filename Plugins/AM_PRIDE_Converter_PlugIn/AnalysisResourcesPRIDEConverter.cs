@@ -287,7 +287,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 // This dictionary is used to avoid calling RetrieveOrgDB() for every job
                 // The dictionary keys are LegacyFastaFileName, ProteinOptions, and ProteinCollectionList combined with underscores
-                // The dictionary values are the value stored in generatedFastaName by RetrieveOrgDB
+                // The dictionary values are the value stored in GeneratedFastaName by RetrieveOrgDB
                 var orgDBParamsToGeneratedFileNameMap = new Dictionary<string, string>();
 
                 // Cache the current dataset and job info
@@ -305,7 +305,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
-                        mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
+                        mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
 
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _, true))
                         {
@@ -315,7 +315,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             return false;
                         }
 
-                        proteinCollectionListOrLegacyFastaName = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName", string.Empty);
+                        proteinCollectionListOrLegacyFastaName = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
 
                         if (string.IsNullOrEmpty(proteinCollectionListOrLegacyFastaName))
                         {

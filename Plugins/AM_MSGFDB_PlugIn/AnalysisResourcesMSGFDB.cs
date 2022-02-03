@@ -255,7 +255,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Save job parameters to XML file JobParams.xml
                 // Required because the tool runner needs to load various info, including the RemoteTimestamp,
-                // the name of the generated parameter file, and the generated OrgDB name (generatedFastaName)
+                // the name of the generated parameter file, and the generated OrgDB name (GeneratedFastaName)
                 SaveCurrentJobParameters();
             }
             catch (Exception ex)

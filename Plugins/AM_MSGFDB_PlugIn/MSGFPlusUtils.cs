@@ -981,7 +981,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             string localOrgDbFolder,
             clsPeptideToProteinMapEngine.PeptideInputFileFormatConstants peptideInputFileFormat)
         {
-            // Note that job parameter "generatedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
+            // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
             var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
 
             string msg;

@@ -82,7 +82,7 @@ namespace AnalysisManager_AScore_PlugIn
             mFastaFilePath = string.Empty;
 
             var localOrgDbDirectory = mMgrParams.RequireMgrParam("OrgDbDir");
-            var fastaFileName = jobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName");
+            var fastaFileName = jobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName");
             if (!string.IsNullOrEmpty(fastaFileName))
             {
                 var fastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);

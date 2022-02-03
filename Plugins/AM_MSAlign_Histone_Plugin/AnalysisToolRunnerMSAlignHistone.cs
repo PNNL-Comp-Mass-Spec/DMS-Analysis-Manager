@@ -683,7 +683,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Define the path to the FASTA file
                 var orgDbDir = mMgrParams.GetParam("OrgDbDir");
-                var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "generatedFastaName"));
+                var fastaFilePath = Path.Combine(orgDbDir, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName"));
 
                 var fastaFile = new FileInfo(fastaFilePath);
 
