@@ -156,7 +156,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Confirms that the table has 1 or more rows and has the specified columns
+        /// Confirms that the table has one or more rows and has the specified columns
         /// </summary>
         /// <param name="sqlLiteDatabase"></param>
         /// <param name="tableName"></param>

@@ -11,7 +11,7 @@ namespace AnalysisManager_Mage_PlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMage : AnalysisToolRunnerMAC
     {
-        // Ignore Spelling: iTraq, mage, plex
+        // Ignore Spelling: iTraq, mage, plex, plexes
 
         public const string T_ALIAS_FILE = "t_alias.txt";
         public const string T_ALIAS_TABLE = "T_alias";
@@ -126,7 +126,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         private bool ValidateFactors(FileInfo resultsDB, out string errorMessage, out string exceptionDetail)
         {
-            const string FACTOR_URL = "http://dms2.pnl.gov/requested_run_factors/param";
+            const string FACTOR_URL = "https://dms2.pnl.gov/requested_run_factors/param";
 
             try
             {
