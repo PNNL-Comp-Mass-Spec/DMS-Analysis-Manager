@@ -427,7 +427,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATA_PACKAGE_PATH);
+                var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATA_PACKAGE_PATH, string.Empty);
 
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
