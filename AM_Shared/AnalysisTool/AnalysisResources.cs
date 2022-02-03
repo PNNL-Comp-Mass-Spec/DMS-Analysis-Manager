@@ -5294,6 +5294,13 @@ namespace AnalysisManagerBase.AnalysisTool
                     "Not enough free memory to run {0}; need {1:N0} MB but system has {2:N0} MB available",
                     stepToolName, freeMemoryRequiredMB, freeMemoryMB);
 
+                if (Global.RunningOnDeveloperComputer())
+                {
+                    LogTools.LogWarning(errMsg);
+                    ConsoleMsgUtils.SleepSeconds(2);
+                    return true;
+                }
+
                 LogTools.LogError(errMsg);
                 return false;
             }
