@@ -437,6 +437,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var dataPackageDirectory = new DirectoryInfo(dataPackagePath);
 
+                if (!dataPackageDirectory.Exists)
+                {
+                    LogError("The directory path defined in the DataPackagePath job parameter does not exist; " +
+                             "unable to look for the AliasNames.txt file: " + dataPackagePath);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
                 foreach (var aliasNameFile in dataPackageDirectory.GetFiles("AliasName*.txt"))
                 {
                     LogDebug(string.Format("Copying {0} to the working directory", aliasNameFile));
