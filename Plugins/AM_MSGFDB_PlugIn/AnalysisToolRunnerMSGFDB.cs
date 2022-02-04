@@ -12,6 +12,7 @@ using System.IO;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
+using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -115,6 +116,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Run MS-GF+ (includes indexing the FASTA file)
 
                 var processingResult = RunMSGFPlus(javaProgLoc, out var mzidResultsFile, out var processingError, out var tooManySkippedSpectra);
+
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -263,25 +265,38 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             mzidResultsFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_msgfplus.mzid"));
 
+            processingError = false;
+            tooManySkippedSpectra = false;
+
             var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
             if (splitFastaEnabled)
             {
                 var iteration = AnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    mMessage = errorMessage;
+                {
+                    mMessage = Global.AppendToComment(mMessage, errorMessage);
+                    processingError = true;
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 var splitFastaMzidFile = new FileInfo(
                     Path.Combine(mWorkDir, Dataset + "_msgfplus_Part" + iteration + ".mzid"));
 
                 if (!mzidResultsFile.Exists && splitFastaMzidFile.Exists)
                 {
-                    splitFastaMzidFile.MoveTo(mzidResultsFile.FullName);
+                    var renamed = mFileTools.RenameFileWithRetry(splitFastaMzidFile, mzidResultsFile, out var errorMessageForRename);
+                    if (!renamed)
+                    {
+                        mMessage = Global.AppendToComment(mMessage, errorMessageForRename);
+                        LogError(errorMessageForRename);
+                        processingError = true;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
                     mzidResultsFile.Refresh();
                 }
             }
-
-            processingError = false;
-            tooManySkippedSpectra = false;
 
             // Determine the path to MS-GF+
             // Manager parameter MSGFPlusProgLoc will either come from the Manager Control database,
@@ -1067,7 +1082,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Renames the results file created by a Parallel MS-GF+ instance to have _Part##.mzid as a suffix
         /// </summary>
-        /// <param name="resultsFileName"></param>
+        /// <param name="resultsFileName">File to rename</param>
         /// <returns>The path to the new file if success, otherwise the original filename</returns>
         private string ParallelMSGFPlusRenameFile(string resultsFileName)
         {
@@ -1086,14 +1101,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!resultsFile.Exists)
                     return resultsFileName;
 
-                filePathNew = Path.Combine(mWorkDir, fileNameNew);
+                var newFileInfo = new FileInfo(Path.Combine(mWorkDir, fileNameNew));
+                filePathNew = newFileInfo.FullName;
 
-                if (File.Exists(filePathNew))
-                    File.Delete(filePathNew);
+                if (newFileInfo.Exists)
+                    newFileInfo.Delete();
 
-                resultsFile.MoveTo(filePathNew);
+                // The file rename occasionally fails due to another process accessing the file
+                // Try up to 4 times
+                var success = mFileTools.RenameFileWithRetry(resultsFile, newFileInfo, out var errorMessageForRename, 4);
+                if (!success)
+                {
+                    LogError(errorMessageForRename);
+                }
 
-                return fileNameNew;
+                return success ? fileNameNew : resultsFileName;
             }
             catch (Exception ex)
             {
