@@ -799,11 +799,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (experimentGroupCount <= 1)
                 return mWorkingDirectory;
 
-            foreach (var invalidChar in Path.GetInvalidPathChars())
-            {
-                if (experimentGroupName.Contains(invalidChar))
-                    experimentGroupName = experimentGroupName.Replace(invalidChar, '_');
-            }
+            experimentGroupName = Global.ReplaceInvalidPathChars(experimentGroupName);
 
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroupName));
         }

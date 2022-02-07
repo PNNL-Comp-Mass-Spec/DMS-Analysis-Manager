@@ -543,6 +543,41 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Replace invalid characters in the given file name
+        /// </summary>
+        /// <remarks>
+        /// If validating a file name, use false for allowPathSeparators
+        /// If validating a full path, use true for allowPathSeparators
+        /// </remarks>
+        /// <param name="fileNameOrPath">File name or file path to examine</param>
+        /// <param name="allowPathSeparators">When true, allow backslash and forward slash characters</param>
+        /// <param name="replaceSpaces">When true, replace spaces with underscores</param>
+        /// <returns>Updated file name</returns>
+        public static string ReplaceInvalidPathChars(string fileNameOrPath, bool allowPathSeparators = false, bool replaceSpaces = true)
+        {
+            var updatedValue = replaceSpaces
+                ? fileNameOrPath.Replace(" ", "_")
+                : fileNameOrPath;
+
+            foreach (var invalidChar in Path.GetInvalidPathChars())
+            {
+                if (updatedValue.Contains(invalidChar))
+                    updatedValue = updatedValue.Replace(invalidChar, '_');
+            }
+
+            if (allowPathSeparators)
+                return updatedValue;
+
+            foreach (var invalidChar in Path.GetInvalidFileNameChars())
+            {
+                if (updatedValue.Contains(invalidChar))
+                    updatedValue = updatedValue.Replace(invalidChar, '_');
+            }
+
+            return updatedValue;
+        }
+
+        /// <summary>
         /// Examines filePath to look for spaces
         /// </summary>
         /// <param name="filePath"></param>
