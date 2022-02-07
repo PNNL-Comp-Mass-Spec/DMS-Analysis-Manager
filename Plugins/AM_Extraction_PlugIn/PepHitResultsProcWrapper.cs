@@ -59,20 +59,6 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Converts SEQUEST, X!Tandem, Inspect, MS-GF+, MSAlign, MODa, or MODPlus output file to a flat file
-        /// </summary>
-        /// <param name="peptideSearchResultsFileName"></param>
-        /// <param name="fastaFilePath"></param>
-        /// <param name="resultType"></param>
-        /// <returns>Enum indicating success or failure</returns>
-        public CloseOutType ExtractDataFromResults(
-            string peptideSearchResultsFileName,
-            string fastaFilePath,
-            PeptideHitResultTypes resultType)
-        {
-            //  Let the DLL auto-determines the input filename, based on the dataset name
-            return ExtractDataFromResults(peptideSearchResultsFileName, true, true, fastaFilePath, resultType);
-        }
         /// Converts MSFragger, MaxQuant, MS-GF+, MSAlign, MODa, MODPlus, X!Tandem, etc. output file to a flat file
         /// </summary>
         /// <param name="peptideSearchResultsFilePath"></param>
