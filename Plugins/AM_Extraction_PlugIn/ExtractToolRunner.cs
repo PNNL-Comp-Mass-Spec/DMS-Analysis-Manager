@@ -1752,6 +1752,9 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Run the Peptide Hit Results Processor
         /// </summary>
+        /// <remarks>
+        /// Note that for data package based MSFragger jobs that have multiple experiment groups, this method is called once for each experiment group
+        /// </remarks>
         /// <param name="toolName"></param>
         /// <param name="inputFileName"></param>
         /// <param name="resultType"></param>
@@ -1886,6 +1889,7 @@ namespace AnalysisManagerExtractionPlugin
                             break;
 
                         default:
+                            // For data package based MSFragger jobs that have multiple experiment groups, this method is called once for each experiment group
                             // Find the newest synopsis file
                             synopsisFileNameFromPHRP = (from item in synopsisFiles orderby item.LastWriteTime descending select item.Name).First();
                             break;
@@ -2699,7 +2703,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Examine the synopsis (and optionally first hits) files to summarize PSMs
         /// </summary>
         /// <param name="resultType">Result type</param>
-        /// <param name="synopsisFileNameFromPHRP">Synopsis file path, as reported by PHRP</param>
+        /// <param name="synopsisFileNameFromPHRP">Synopsis file name, as reported by PHRP</param>
         /// <param name="postJobPSMResultsToDB">When true, post the PSM results for this job to the database</param>
         /// <param name="psmResults">Output: PSM Results</param>
         /// <returns>CloseOutType representing success or failure</returns>

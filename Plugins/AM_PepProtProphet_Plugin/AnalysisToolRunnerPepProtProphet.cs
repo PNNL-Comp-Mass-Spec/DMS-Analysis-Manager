@@ -723,7 +723,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var reporterIonNames = GetReporterIonNames(reporterIonMode);
 
-                // Example output:
+                // Example output (space-delimited):
                 // 126 sample-01
                 // 127N sample-02
                 // 127C sample-03

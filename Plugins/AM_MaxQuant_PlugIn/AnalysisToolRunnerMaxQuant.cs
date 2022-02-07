@@ -1358,7 +1358,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     var paramGroupIndexNodes = new List<XElement>();
                     var referenceChannelNodes = new List<XElement>();
 
-                    // If the experiment ends in text similar to "_f22", assume this is a fractionated sample and this is fraction 22
+                    // If the experiment ends in text similar to "_f01" or "_f22", assume this is a fractionated sample
                     var fractionMatcher = new Regex(@"_f(?<FractionNumber>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                     // Check whether datasets in this data package have non-zero values for MaxQuant Parameter Group
