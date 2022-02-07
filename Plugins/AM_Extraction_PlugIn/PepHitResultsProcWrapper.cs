@@ -73,22 +73,22 @@ namespace AnalysisManagerExtractionPlugin
             //  Let the DLL auto-determines the input filename, based on the dataset name
             return ExtractDataFromResults(peptideSearchResultsFileName, true, true, fastaFilePath, resultType);
         }
-
-        /// <summary>
-        /// Converts SEQUEST, X!Tandem, Inspect, MS-GF+, MSAlign, MODa, or MODPlus output file to a flat file
+        /// Converts MSFragger, MaxQuant, MS-GF+, MSAlign, MODa, MODPlus, X!Tandem, etc. output file to a flat file
         /// </summary>
         /// <param name="peptideSearchResultsFilePath"></param>
         /// <param name="createFirstHitsFile"></param>
         /// <param name="createSynopsisFile"></param>
         /// <param name="fastaFilePath"></param>
         /// <param name="resultType"></param>
+        /// <param name="outputFileBaseName">Base name to use for output files; PHRP will auto-determine the name if this is an empty string</param>
         /// <returns>Enum indicating success or failure</returns>
         public CloseOutType ExtractDataFromResults(
             string peptideSearchResultsFilePath,
             bool createFirstHitsFile,
             bool createSynopsisFile,
             string fastaFilePath,
-            PeptideHitResultTypes resultType)
+            PeptideHitResultTypes resultType,
+            string outputFileBaseName = "")
         {
             var paramFileName = mJobParams.GetParam("ParmFileName");
 
@@ -202,6 +202,11 @@ namespace AnalysisManagerExtractionPlugin
                 if (ignorePeptideToProteinMapErrors)
                 {
                     arguments += " /IgnorePepToProtMapErrors";
+                }
+
+                if (!string.IsNullOrWhiteSpace(outputFileBaseName))
+                {
+                    arguments += " /OutputFileBaseName:" + Global.ReplaceInvalidPathChars(outputFileBaseName);
                 }
 
                 if (mDebugLevel >= 1)
