@@ -271,20 +271,13 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    if (resultType == PeptideHitResultTypes.XTandem)
-                    {
-                        filesToCheck.Add("_xt.txt");
-                    }
-                    else
-                    {
-                        filesToCheck.Add("_syn.txt");
-                    }
+                    filesToCheck.Add(resultType == PeptideHitResultTypes.XTandem ? "_xt.txt" : "_syn.txt");
 
                     fileDescription = "synopsis";
                 }
 
                 // Check for an empty first hits or synopsis file
-                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, filesToCheck.First(), fileDescription);
+                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, filesToCheck[0], fileDescription);
 
                 if (validationResult != CloseOutType.CLOSEOUT_SUCCESS && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     return validationResult;
