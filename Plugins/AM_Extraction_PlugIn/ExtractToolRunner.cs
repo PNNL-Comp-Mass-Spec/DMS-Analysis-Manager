@@ -1309,7 +1309,7 @@ namespace AnalysisManagerExtractionPlugin
                 synopsisFileName,
                 false,
                 true,
-                out var synopsisFilePath);
+                out var synopsisFileNameFromPHRP);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
@@ -1317,7 +1317,7 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MaxQuant script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFilePath);
+            return SummarizePSMs(PeptideHitResultTypes.MaxQuant, synopsisFileNameFromPHRP);
         }
 
         private CloseOutType RunPhrpForMODa(string filteredMODaResultsFileName)
@@ -1356,7 +1356,7 @@ namespace AnalysisManagerExtractionPlugin
                 synopsisFileName,
                 false,
                 true,
-                out var synopsisFilePath);
+                out var synopsisFileNameFromPHRP);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
@@ -1364,7 +1364,7 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MSAlign script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFilePath);
+            return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFileNameFromPHRP);
         }
 
         private CloseOutType RunPHRPForMSFragger()
@@ -1381,7 +1381,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
 
-                var datasetIDsByExperimentGroup= DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+                var datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
 
                 if (datasetIDsByExperimentGroup.Count <= 1)
                 {
@@ -1455,7 +1455,7 @@ namespace AnalysisManagerExtractionPlugin
                 synopsisFileName,
                 false,
                 true,
-                out var synopsisFilePath);
+                out var synopsisFileNameFromPHRP);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -1466,7 +1466,7 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MSFragger script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFilePath, postJobPSMResultsToDB, out psmResults);
+            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFileNameFromPHRP, postJobPSMResultsToDB, out psmResults);
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -1863,7 +1863,6 @@ namespace AnalysisManagerExtractionPlugin
 
                         default:
                             LogError("Cannot validate mass errors for this aggregation job, unsupported result type: " + resultType);
-
                             synopsisFileNameFromPHRP = string.Empty;
                             return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -2704,7 +2703,11 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="postJobPSMResultsToDB">When true, post the PSM results for this job to the database</param>
         /// <param name="psmResults">Output: PSM Results</param>
         /// <returns>CloseOutType representing success or failure</returns>
-        private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP, bool postJobPSMResultsToDB, out PSMResults psmResults)
+        private CloseOutType SummarizePSMs(
+            PeptideHitResultTypes resultType,
+            string synopsisFileNameFromPHRP,
+            bool postJobPSMResultsToDB,
+            out PSMResults psmResults)
         {
             var summarizer = GetPsmResultsSummarizer(resultType);
             summarizer.PostJobPSMResultsToDB = postJobPSMResultsToDB;
