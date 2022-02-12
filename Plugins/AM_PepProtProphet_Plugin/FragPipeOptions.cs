@@ -10,8 +10,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // Ignore Spelling: quantitation
 
-        private readonly IJobParams mJobParams;
-
         /// <summary>
         /// Number of datasets in the data package for this job
         /// </summary>
@@ -102,8 +100,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetCount"></param>
         public FragPipeOptions(IJobParams jobParams, FileInfo philosopherExe, int datasetCount)
         {
-            mJobParams = jobParams;
-
             FraggerOptions = new MSFraggerOptions(jobParams);
             RegisterEvents(FraggerOptions);
 
@@ -114,12 +110,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             LibraryFinder = new FragPipeLibFinder(philosopherExe);
             RegisterEvents(LibraryFinder);
 
-            MatchBetweenRuns = mJobParams.GetJobParameter("MatchBetweenRuns", false);
+            MatchBetweenRuns = jobParams.GetJobParameter("MatchBetweenRuns", false);
 
-            var runPeptideProphetJobParam = mJobParams.GetJobParameter("RunPeptideProphet", string.Empty);
-            var runPercolatorJobParam = mJobParams.GetJobParameter("RunPercolator", string.Empty);
+            var runPeptideProphetJobParam = jobParams.GetJobParameter("RunPeptideProphet", string.Empty);
+            var runPercolatorJobParam = jobParams.GetJobParameter("RunPercolator", string.Empty);
 
-            var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+            var databaseSplitCount = jobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
 
             if (FraggerOptions.IsUndefinedOrAuto(runPeptideProphetJobParam) && FraggerOptions.IsUndefinedOrAuto(runPercolatorJobParam))
             {
@@ -167,8 +163,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             else
             {
-                var runFreeQuantJobParam = mJobParams.GetJobParameter("RunFreeQuant", string.Empty);
-                var runIonQuantJobParam = mJobParams.GetJobParameter("RunIonQuant", string.Empty);
+                var runFreeQuantJobParam = jobParams.GetJobParameter("RunFreeQuant", string.Empty);
+                var runIonQuantJobParam = jobParams.GetJobParameter("RunIonQuant", string.Empty);
 
                 if (datasetCount > 1)
                 {
