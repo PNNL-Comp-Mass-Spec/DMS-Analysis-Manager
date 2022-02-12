@@ -1235,7 +1235,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             return true;
         }
 
-        private bool ValidateFastaHasDecoyProteins(FileSystemInfo fastaFile)
+        private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
         {
             const string DECOY_PREFIX = "XXX_";
 
@@ -1257,17 +1257,19 @@ namespace AnalysisManagerMSFraggerPlugIn
                         forwardCount++;
                 }
 
+                var fileSizeMB = fastaFile.Length / 1024.0 / 1024;
+
                 if (decoyCount == 0)
                 {
                     LogDebug(string.Format(
-                        "FASTA file {0} has {1:N0} forward proteins, but no decoy proteins",
-                        fastaFile.Name, forwardCount));
+                        "FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins",
+                        fastaFile.Name, fileSizeMB, forwardCount));
                     return false;
                 }
 
                 LogDebug(string.Format(
-                    "FASTA file {0} has {1:N0} forward proteins and {2:N0} decoy proteins",
-                    fastaFile.Name, forwardCount, decoyCount));
+                    "FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins",
+                    fastaFile.Name, fileSizeMB, forwardCount, decoyCount));
 
                 return true;
             }
