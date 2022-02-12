@@ -2648,7 +2648,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     foreach (var experimentGroup in experimentGroupWorkingDirectories)
                     {
-                        // dataset = ExperimentGroupA C:\FragPipe_Test3\Results\ExperimentGroupA\psm.tsv WorkingDirectoryPath");
+                        // dataset = ExperimentGroupA C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv WorkingDirectoryPath");
 
                         writer.WriteLine("dataset = {0} {1} {2}",
                             experimentGroup.Key,

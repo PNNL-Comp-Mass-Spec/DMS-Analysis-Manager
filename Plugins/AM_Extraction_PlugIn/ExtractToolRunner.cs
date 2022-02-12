@@ -1751,7 +1751,6 @@ namespace AnalysisManagerExtractionPlugin
                 true);
         }
 
-
         /// <summary>
         /// Run the Peptide Hit Results Processor
         /// </summary>

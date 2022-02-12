@@ -26,9 +26,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public FragPipeLibFinder LibraryFinder { get; set; }
 
         /// <summary>
-        /// Whether to use match-between runs with running IonQuant
+        /// Whether to use match-between runs when running IonQuant
         /// </summary>
-        /// <remarks>Defaults to true, but ignored if RunIonQuant is false</remarks>
+        /// <remarks>Defaults to false; use a settings file to set to true</remarks>
         public bool MatchBetweenRuns { get; set; }
 
         /// <summary>
@@ -54,7 +54,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Whether or not to run Abacus
         /// </summary>
-        /// <remarks>Defaults to true, but is ignored if we only have a single experiment group (or no experiment groups)</remarks>
+        /// <remarks>
+        /// <para>Is set to True if job parameters GeneratePeptideLevelSummary or GenerateProteinLevelSummary are true</para>
+        /// <para>Ignored if we only have a single experiment group (or no experiment groups)</para>
+        /// </remarks>
         public bool RunAbacus { get; set; }
 
         /// <summary>
