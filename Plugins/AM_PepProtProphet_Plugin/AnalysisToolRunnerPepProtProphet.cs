@@ -1820,9 +1820,43 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 arguments.AppendFormat(" --threads {0} --ionmobility 0 --mbr {1}", ION_QUANT_THREAD_COUNT, matchBetweenRunsFlag);
 
-                arguments.Append(" --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000");
-                arguments.Append(" --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1");
-                arguments.Append(" --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --locprob 0.75");
+                // Feature detection m/z tolerance, in ppm
+                var featureDetectionMZTolerance = mJobParams.GetJobParameter("IonQuant", "FeatureDetectionMZTolerance", 10.0f);
+
+                // Feature detection retention time tolerance, in minutes
+                var featureDetectionRTTolerance = mJobParams.GetJobParameter("IonQuant", "FeatureDetectionRTTolerance", 0.4f);
+
+                // Minimum correlation between two runs for match between runs
+                var mbrMinimumCorrelation = mJobParams.GetJobParameter("IonQuant", "MbrMinimumCorrelation", 0f);
+
+                // Match between runs retention time tolerance, in minutes
+                var mbrRTTolerance = mJobParams.GetJobParameter("IonQuant", "MbrRTTolerance", 1.0f);
+
+                // Match between runs ion FDR
+                var mbrIonFdr = mJobParams.GetJobParameter("IonQuant", "MbrIonFdr", 0.01f);
+
+                var mbrPeptideFdr = mJobParams.GetJobParameter("IonQuant", "MbrPeptideFdr", 1.0f);
+
+                var mbrProteinFdr = mJobParams.GetJobParameter("IonQuant", "MbrProteinFdr", 1.0f);
+
+                // When 1, normalize ion intensities among experiments; 0 to disable normalization
+                var normalizeIonIntensities = mJobParams.GetJobParameter("IonQuant", "NormalizeIonIntensities", 1);
+
+                // Minimum ions required to quantify a protein
+                var minIonsForProteinQuant = mJobParams.GetJobParameter("IonQuant", "MinIonsForProteinQuant", 2);
+
+                arguments.AppendFormat(
+                    " --maxlfq 1 --requantify 1 --mztol {0} --imtol 0.05 --rttol {1} --mbrmincorr {2} --mbrrttol {3} --mbrimtol 0.05 --mbrtoprun 100000",
+                    featureDetectionMZTolerance, featureDetectionRTTolerance,
+                    mbrMinimumCorrelation, mbrRTTolerance);
+
+                arguments.AppendFormat(
+                    " --ionfdr {0} --proteinfdr {1} --peptidefdr {2} --normalization {3}",
+                    mbrIonFdr, mbrProteinFdr, mbrPeptideFdr, normalizeIonIntensities);
+
+                arguments.AppendFormat(
+                    " --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions {0} --minexps 1 --locprob 0.75",
+                    minIonsForProteinQuant);
 
                 if (experimentGroupWorkingDirectories.Count <= 1)
                 {
