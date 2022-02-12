@@ -2869,14 +2869,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper restore CommentTypo
 
-                    arguments.Append("filter --sequential");
+                    arguments.Append("filter");
+
+                    if (usedProteinProphet)
+                    {
+                        arguments.Append(" --sequential");
+                    }
 
                     if (!options.MatchBetweenRuns && !options.OpenSearch)
                     {
                         arguments.Append(" --picked");
                     }
 
-                    arguments.Append(" --prot 0.01");
+                    if (usedProteinProphet)
+                    {
+                        arguments.Append(" --prot 0.01");
+                    }
 
                     if (options.OpenSearch)
                     {
