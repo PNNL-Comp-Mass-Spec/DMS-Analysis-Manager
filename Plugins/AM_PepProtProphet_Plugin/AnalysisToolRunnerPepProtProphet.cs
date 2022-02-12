@@ -2834,17 +2834,29 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Filtering MSFragger Results", 2);
 
                 var successCount = 0;
+                var iteration = 0;
 
                 var arguments = new StringBuilder();
 
-                // Note that each time we call philosopher.exe with the filter command, we use the same, shared razor.bin file
+                // ReSharper disable CommentTypo
+
+                // The first time we call philosopher.exe with the filter command, use argument --razor
+                // That will create file .meta\razor.bin in the first experiment group's working directory
+                // On subsequent calls, use --razorbin and reference this file
+
                 var razorBinFilePath = Path.Combine(experimentGroupWorkingDirectories.Values.First().FullName, @".meta\razor.bin");
+
+                // ReSharper restore CommentTypo
 
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     arguments.Clear();
+                    iteration++;
 
                     // ReSharper disable CommentTypo
+
+                    // Closed search, proteinprophet disabled
+                    // filter --tag XXX_ --pepxml
 
                     // Closed search, without match between runs:
                     // filter --sequential --picked --prot 0.01
@@ -2882,8 +2894,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         arguments.AppendFormat(" --protxml {0}", Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
 
-                        // Each invocation of filter uses the same razor.bin file
-                        arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
+                        if (iteration == 1)
+                        {
+                            // This will create file razor.bin in the .meta directory of the first experiment group
+                            arguments.AppendFormat(" --razor");
+                        }
+                        else
+                        {
+                            // Use the existing razor.bin file
+                            arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
+                        }
 
                         // ReSharper restore StringLiteralTypo
                     }
