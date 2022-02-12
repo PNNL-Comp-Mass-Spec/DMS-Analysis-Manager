@@ -417,7 +417,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 bool usedProteinProphet;
 
-                if (peptideProphetPepXmlFiles.Count > 0)
+                if (peptideProphetPepXmlFiles.Count > 0 && options.RunProteinProphet)
                 {
                     // Run ProteinProphet
                     var proteinProphetSuccess = RunProteinProphet(peptideProphetPepXmlFiles, options);
