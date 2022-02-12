@@ -296,6 +296,32 @@ namespace AnalysisManagerMSFraggerPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Examines the value for the given job parameter
+        /// If missing or "auto", returns the default value
+        /// Otherwise, parses as a boolean and returns the result if "true" or "false" or "1" or "0"
+        /// If not a boolean or 0 or 1, logs a warning and returns the default value
+        /// </summary>
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="defaultValue">Default value</param>
+        /// <returns>Parameter value, or the default if missing, "auto", or invalid</returns>
+        public bool GetParameterValueOrDefault(string parameterName, bool defaultValue)
+        {
+            var value = mJobParams.GetJobParameter(parameterName, string.Empty);
+
+            if (IsUndefinedOrAuto(value))
+                return defaultValue;
+
+            if (bool.TryParse(value, out var parsedBoolean))
+                return parsedBoolean;
+
+            if (int.TryParse(value, out var parsedInteger))
+                return parsedInteger != 0;
+
+            OnWarningEvent("Parameter {0} should be True, False, 1, 0, or Auto, but it is {1}", parameterName, value);
+            return defaultValue;
+        }
+
         private ReporterIonModes GetReporterIonModeFromModMass(double modMass)
         {
             if (Math.Abs(modMass - 304.207146) < 0.001)
