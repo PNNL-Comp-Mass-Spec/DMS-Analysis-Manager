@@ -1415,10 +1415,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 //     arguments.Append(" --labels");
                 // }
 
+                var generatePeptideLevelSummary = options.FraggerOptions.GetParameterValueOrDefault("GeneratePeptideLevelSummary", true);
+                var generateProteinLevelSummary = options.FraggerOptions.GetParameterValueOrDefault("GenerateProteinLevelSummary", true);
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (generatePeptideLevelSummary && !generateProteinLevelSummary)
+                {
+                    arguments.Append(" --peptide");
+                }
+                else if (!generatePeptideLevelSummary && generateProteinLevelSummary)
+                {
+                    arguments.Append(" --protein");
+                }
+                else
+                {
+                    // Either both are true or both are false
+
+                    if (!generatePeptideLevelSummary)
+                    {
+                        // Both are false; options.RunAbacus should be false and this method should not have even been called
+                        // Log a warning, and use "--protein --peptide" anyway
+
+                        LogWarning(
+                            "Method RunAbacus was called when job parameters GeneratePeptideLevelSummary and GenerateProteinLevelSummary are both false; " +
+                            "this indicates a logic bug");
+                    }
+
+                    arguments.Append(" --protein --peptide");
+                }
+
                 // Append the experiment group working directory names
-
-                arguments.Append(" --protein");
-
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     arguments.AppendFormat(" {0}", experimentGroupDirectory.Name);
