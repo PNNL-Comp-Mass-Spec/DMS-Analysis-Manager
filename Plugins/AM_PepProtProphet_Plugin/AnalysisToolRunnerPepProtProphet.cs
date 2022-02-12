@@ -30,8 +30,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, dir, expectscore
-        // Ignore Spelling: fasta, filelist, fragpipe, freequant, glyco, groupby, itraq, java, javacpp, labelquant, linux, locprob
-        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, multidir, nocheck, nonparam, num, openblas
+        // Ignore Spelling: fasta, filelist, fragpipe, freequant, glyco, groupby, iprophet, itraq, java, javacpp, labelquant, linux, locprob
+        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, multidir, nocheck, nonparam, nonsp, num, openblas
         // Ignore Spelling: peptideprophet, pepxml, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot
         // Ignore Spelling: razorbin, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
@@ -106,7 +106,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             FreeQuant = 7,
             LabelQuant = 8,
             GenerateReport = 9,
-            Abacus = 10
+            IProphet = 10,
+            Abacus = 11
         }
 
         /// <summary>
@@ -124,6 +125,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             ResultsFilterComplete = 60,
             FreeQuantOrLabelQuantComplete = 75,
             ReportGenerated = 85,
+            IProphetComplete = 86,
             AbacusComplete = 87,
             IonQuantComplete = 90,
             TmtIntegratorComplete = 93,
@@ -470,6 +472,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
+                if (experimentGroupWorkingDirectories.Count > 1 && options.RunIProphet)
+                {
+                    var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+                    if (!iProphetSuccess)
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    mProgress = (int)ProgressPercentValues.IProphetComplete;
+                }
+
                 if (experimentGroupWorkingDirectories.Count > 1 && options.RunAbacus)
                 {
                     var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
@@ -780,6 +791,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 PhilosopherToolType.FreeQuant => "FreeQuant",
                 PhilosopherToolType.LabelQuant => "LabelQuant",
                 PhilosopherToolType.GenerateReport => "Generate Report",
+                PhilosopherToolType.IProphet => "iProphet",
                 PhilosopherToolType.Abacus => "Abacus",
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -1941,6 +1953,86 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in RunIonQuant", ex);
+                return false;
+            }
+        }
+
+        private bool RunIProphet(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            FragPipeOptions options)
+        {
+            try
+            {
+                LogDebug("Running iProphet", 2);
+
+                // ReSharper disable CommentTypo
+
+                // Example command line:
+                // philosopher.exe iprophet --decoy XXX_ --nonsp --output combined --threads 4 C:\DMS_WorkDir\Results\ExperimentGroupA\interact-Dataset1.pep.xml C:\DMS_WorkDir\Results\ExperimentGroupB\interact-Dataset2.pep.xml C:\DMS_WorkDir\Results\ExperimentGroupB\interact-Dataset3.pep.xml
+
+                // ReSharper restore CommentTypo
+
+                var arguments = new StringBuilder();
+
+                // ReSharper disable StringLiteralTypo
+
+                arguments.Append("iprophet --decoy XXX_ --nonsp --output combined --threads 4");
+
+                // ReSharper restore StringLiteralTypo
+
+                var generatePeptideLevelSummary = options.FraggerOptions.GetParameterValueOrDefault("GeneratePeptideLevelSummary", true);
+
+                if (!generatePeptideLevelSummary)
+                {
+                    LogWarning("Method RunIProphet was called when job parameter GeneratePeptideLevelSummary is false; this indicates a logic bug");
+                }
+
+                // Append the .pep.xml file for each dataset in each experiment group
+
+                // ReSharper disable ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = item.Key;
+                    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                        var pepXmlFile = new FileInfo(Path.Combine(experimentWorkingDirectory.FullName, string.Format("interact-{0}.pep.xml", datasetName)));
+                        arguments.AppendFormat(" {0}", pepXmlFile.FullName);
+                    }
+                }
+
+                // ReSharper restore ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+
+                var success = RunPhilosopher(PhilosopherToolType.IProphet, arguments.ToString(), "run iProphet");
+
+                // ToDo: Verify that the iProphet result files exists
+                var outputFiles = new List<FileInfo>
+                {
+                    new(Path.Combine(mWorkingDirectory.FullName, "FileToFind.tsv")),
+                };
+
+                var missingFileCount = 0;
+
+                foreach (var outputFile in outputFiles)
+                {
+                    if (outputFile.Exists)
+                        continue;
+
+                    LogError("iProphet results file not found: " + outputFile.Name);
+                    missingFileCount++;
+                }
+
+                return missingFileCount == 0 && success;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunIProphet", ex);
                 return false;
             }
         }
