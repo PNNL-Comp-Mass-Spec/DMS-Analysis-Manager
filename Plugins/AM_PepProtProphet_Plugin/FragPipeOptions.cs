@@ -217,10 +217,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return;
             }
 
-            // ReSharper disable once SimplifyConditionalTernaryExpression
-            var runFreeQuant = FraggerOptions.IsUndefinedOrAuto(runFreeQuantJobParam)
-                ? false
-                : mJobParams.GetJobParameter("RunFreeQuant", false);
+            var runFreeQuant = FraggerOptions.GetParameterValueOrDefault("RunFreeQuant", false);
 
             if (runFreeQuant)
             {
@@ -230,11 +227,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             else
             {
                 FraggerOptions.RunFreeQuant = false;
-
-                // ReSharper disable once SimplifyConditionalTernaryExpression
-                FraggerOptions.RunIonQuant = FraggerOptions.IsUndefinedOrAuto(runIonQuantJobParam)
-                    ? false
-                    : mJobParams.GetJobParameter("RunIonQuant", false);
+                FraggerOptions.RunIonQuant = FraggerOptions.GetParameterValueOrDefault("RunIonQuant", false);
             }
 
             FraggerOptions.QuantModeAutoDefined = false;
