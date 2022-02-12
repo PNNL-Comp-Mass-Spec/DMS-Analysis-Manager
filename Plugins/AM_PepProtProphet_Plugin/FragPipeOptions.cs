@@ -169,9 +169,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 FraggerOptions.MS1ValidationModeAutoDefined = false;
             }
 
-            RunAbacus = mJobParams.GetJobParameter("RunAbacus", true);
+            var generatePeptideLevelSummary = FraggerOptions.GetParameterValueOrDefault("GeneratePeptideLevelSummary", true);
 
-            var ms1QuantDisabled = mJobParams.GetJobParameter("MS1QuantDisabled", false);
+            var generateProteinLevelSummary = FraggerOptions.GetParameterValueOrDefault("GenerateProteinLevelSummary", true);
+
+            // Run iProphet if generating a peptide level summary is true (or auto)
+            // This only applies if there are multiple experiment groups
+            RunIProphet = generatePeptideLevelSummary;
+
+            // Run Abacus if generating a peptide level summary and/or a protein level summary
+            // This only applies if there are multiple experiment groups
+            RunAbacus = generatePeptideLevelSummary || generateProteinLevelSummary;
+
+            var ms1QuantDisabled = jobParams.GetJobParameter("MS1QuantDisabled", false);
 
             if (ms1QuantDisabled)
             {
