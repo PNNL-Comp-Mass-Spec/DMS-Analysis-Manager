@@ -76,6 +76,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIonQuant => FraggerOptions.RunIonQuant;
 
         /// <summary>
+        /// Whether or not to run iProphet
+        /// </summary>
+        /// <remarks>
+        /// <para>Is set to True if job parameter GeneratePeptideLevelSummary true</para>
+        /// <para>Ignored if we only have a single experiment group (or no experiment groups)</para>
+        /// </remarks>
+        public bool RunIProphet { get; set; }
+
+        /// <summary>
+        /// Whether to run protein prophet (if peptide prophet was used)
+        /// </summary>
+        /// <remarks>
+        /// Defaults to true
+        /// </remarks>
+        public bool RunProteinProphet { get; set; }
+
+        /// <summary>
         /// Whether to run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
