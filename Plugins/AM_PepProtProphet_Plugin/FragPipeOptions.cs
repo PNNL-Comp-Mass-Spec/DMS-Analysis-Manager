@@ -149,7 +149,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             else
             {
-                var runPeptideProphet = !string.IsNullOrWhiteSpace(runPeptideProphetJobParam) && bool.Parse(runPeptideProphetJobParam);
+                var runPeptideProphet = FraggerOptions.GetParameterValueOrDefault("RunPeptideProphet", true);
 
                 var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorJobParam) && bool.Parse(runPercolatorJobParam);
 
@@ -220,7 +220,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
             }
 
-            RunPTMShepherd = mJobParams.GetJobParameter("RunPTMShepherd", true);
+            RunPTMShepherd = FraggerOptions.GetParameterValueOrDefault("RunPTMShepherd", true);
+
+            RunProteinProphet = FraggerOptions.GetParameterValueOrDefault("RunProteinProphet", true);
         }
 
         /// <summary>
