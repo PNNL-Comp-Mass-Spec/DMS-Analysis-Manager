@@ -2699,9 +2699,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 else
                     LogCommandToExecute(workingDirectory, mPhilosopherProgLoc, arguments, workingDirectoryPadWidth);
 
-                if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet)
+                if (toolType is PhilosopherToolType.PeptideProphet or PhilosopherToolType.ProteinProphet or PhilosopherToolType.IProphet)
                 {
-                    // PeptideProphet reports numerous warnings via the console error stream
+                    // PeptideProphet and ProteinProphet report numerous warnings via the console error stream
+                    // iProphet reports status messages using the console error stream
                     // Instruct mCmdRunner to treat them as normal messages
                     mCmdRunner.RaiseConsoleErrorEvents = false;
                 }
