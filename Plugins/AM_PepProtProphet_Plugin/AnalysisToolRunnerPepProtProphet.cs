@@ -3046,7 +3046,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
 
                     // Verify that report files were created
-                    var reportFiles = new List<FileInfo>
+                    var outputFiles = new List<FileInfo>
                     {
                         new(Path.Combine(experimentGroupDirectory.FullName, "psm.tsv")),
                         new(Path.Combine(experimentGroupDirectory.FullName, "ion.tsv")),
@@ -3054,21 +3054,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         new(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv"))
                     };
 
-                    var missingFiles = new List<string>();
+                    var outputFilesExist = ValidateOutputFilesExist("Philosopher report", outputFiles);
 
-                    foreach (var reportFile in reportFiles.Where(item => !item.Exists))
+                    if (outputFilesExist)
                     {
-                        LogWarning("Philosopher report file not found: " + reportFile.Name);
-                        missingFiles.Add(reportFile.Name);
+                        successCount++;
                     }
-
-                    if (missingFiles.Count > 1)
-                    {
-                        LogError("Multiple Philosopher report files were missing: " + string.Join(", ", missingFiles));
-                        continue;
-                    }
-
-                    successCount++;
                 }
 
                 return successCount == experimentGroupWorkingDirectories.Count;
@@ -3894,6 +3885,26 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // FASTA file not found
             LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
+            return false;
+        }
+
+        /// <summary>
+        /// Verify that each output file exists
+        /// </summary>
+        /// <param name="toolName"></param>
+        /// <param name="outputFiles"></param>
+        /// <returns>True if all of the files are found, false if any are missing</returns>
+        private bool ValidateOutputFilesExist(string toolName, IEnumerable<FileInfo> outputFiles)
+        {
+            var missingFiles = (from outputFile in outputFiles where !outputFile.Exists select outputFile.Name).ToList();
+
+            if (missingFiles.Count == 0)
+                return true;
+
+            LogError(string.Format(
+                "{0} results file{1} not found: {2}",
+                toolName, missingFiles.Count > 1 ? "s" : string.Empty, string.Join(", ", missingFiles)));
+
             return false;
         }
 
