@@ -1833,8 +1833,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var arguments = new StringBuilder();
 
                 arguments.AppendFormat(
-                    "{0} -Xmx{1}G -Dlibs.bruker.dir=\"{2}\" -Dlibs.thermo.dir=\"{3}\" -cp \"{4};{5};{6};{7}\\*;{8}\" ionquant.IonQuant",
-                    options.JavaProgLoc,
+                    "-Xmx{0}G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4};{5};{6}\\*;{7}\" ionquant.IonQuant",
                     ION_QUANT_MEMORY_SIZE_GB,
                     brukerLibDirectory.FullName,
                     thermoLibDirectory.FullName,
