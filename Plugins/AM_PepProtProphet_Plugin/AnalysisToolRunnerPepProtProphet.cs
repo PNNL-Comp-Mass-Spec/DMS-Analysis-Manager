@@ -1883,9 +1883,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     " --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions {0} --minexps 1 --locprob 0.75",
                     minIonsForProteinQuant);
 
-                if (experimentGroupWorkingDirectories.Count <= 1)
+                var datasetCount = 0;
+
+                if (experimentGroupWorkingDirectories.Count <= 1 && !options.MatchBetweenRuns)
                 {
                     arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkingDirectory.FullName);
+
+                    // ReSharper disable ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
 
                     foreach (var datasetIDs in datasetIDsByExperimentGroup.Values)
                     {
@@ -1894,8 +1898,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             var datasetName = dataPackageInfo.Datasets[datasetId];
 
                             arguments.AppendFormat(" {0}.pepXML", datasetName);
+                            datasetCount++;
                         }
                     }
+
+                    // ReSharper restore ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                 }
                 else
                 {
@@ -1935,28 +1942,45 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // Header line
                         writer.WriteLine("flag{0}value", '\t');
 
-                        foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                        if (experimentGroupWorkingDirectories.Count <= 1)
                         {
-                            writer.WriteLine(@"--psm{0}{1}\psm.tsv", '\t', experimentGroupWorkingDirectory.Name);
+                            writer.WriteLine("--psm\tpsm.tsv");
+                        }
+                        else
+                        {
+                            foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                            {
+                                writer.WriteLine("--psm\t{0}", Path.Combine(experimentGroupWorkingDirectory.Name, "psm.tsv"));
+                            }
                         }
 
-                        writer.WriteLine("--specdir{0}{1}", '\t', mWorkingDirectory.FullName);
+                        writer.WriteLine("--specdir\t{0}", mWorkingDirectory.FullName);
 
                         foreach (var item in datasetIDsByExperimentGroup)
                         {
                             var experimentGroupName = item.Key;
                             var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
+                            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                             foreach (var datasetId in item.Value)
                             {
                                 var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                                writer.WriteLine(@"--pepxml{0}{1}\{2}.pepXML", '\t', experimentWorkingDirectory.Name, datasetName);
+                                if (experimentGroupWorkingDirectories.Count <= 1)
+                                {
+                                    writer.WriteLine("--pepxml\t{0}", datasetName + ".pepXML");
+                                }
+                                else
+                                {
+                                    writer.WriteLine("--pepxml\t{0}", Path.Combine(experimentWorkingDirectory.Name, datasetName + ".pepXML"));
+                                }
+
+                                datasetCount++;
                             }
                         }
                     }
 
-                    arguments.AppendFormat("--multidir . --filelist {0}", fileListFile.FullName);
+                    arguments.AppendFormat(" --multidir . --filelist {0}", fileListFile.FullName);
 
                     mJobParams.AddResultFileToSkip(fileListFile.Name);
                 }
