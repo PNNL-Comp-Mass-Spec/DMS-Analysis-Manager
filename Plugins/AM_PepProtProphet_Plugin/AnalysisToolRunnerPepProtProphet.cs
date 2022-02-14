@@ -2046,6 +2046,43 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "protein.tsv")));
                     }
 
+                    try
+                    {
+                        LogDebug("Moving _quant.csv files created by IonQuant to the working directory");
+
+                        foreach (var quantFile in quantFiles)
+                        {
+                            if (quantFile.Directory?.FullName.Equals(mWorkingDirectory.FullName) == true)
+                                continue;
+
+                            var targetPath = Path.Combine(mWorkingDirectory.FullName, quantFile.Name);
+                            quantFile.MoveTo(targetPath);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Error moving IonQuant _quant.csv files to the working directory", ex);
+                    }
+
+                    try
+                    {
+                        LogDebug("Moving .png files created by IonQuant files to the working directory");
+
+                        foreach (var pngFile in mWorkingDirectory.GetFiles("*.png", SearchOption.AllDirectories))
+                        {
+                            if (pngFile.Directory?.FullName.Equals(mWorkingDirectory.FullName) == true)
+                                continue;
+
+                            var targetPath = Path.Combine(mWorkingDirectory.FullName, pngFile.Name);
+                            pngFile.MoveTo(targetPath);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("Error moving IonQuant .png files to the working directory", ex);
+                    }
+
+                    return outputFilesExist;
                 }
 
                 if (mCmdRunner.ExitCode != 0)
