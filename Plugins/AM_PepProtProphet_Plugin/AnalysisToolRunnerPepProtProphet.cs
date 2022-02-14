@@ -2085,7 +2085,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         LogError("Error moving IonQuant .png files to the working directory", ex);
                     }
 
-                    return outputFilesExist;
+                    bool success;
+
+                    if (creatingCombinedFile && experimentGroupWorkingDirectories.Count <= 1)
+                    {
+                        // IonQuant assumes that the experiment group name is the parent directory name
+                        // This will be valid when multiple experiment groups are present, but is not valid if a single experiment group is present
+                        // Edit the header line of the combined*.tsv files to replace the working directory name with either the dataset name or "Aggregation"
+                        success = UpdateCombinedTsvFiles(datasetCount);
+                    }
+                    else
+                    {
+                        success = true;
+                    }
+
+                    return outputFilesExist && success;
                 }
 
                 if (mCmdRunner.ExitCode != 0)
@@ -3441,6 +3455,97 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep, PhilosopherToolType toolType)
         {
             UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep, toolType);
+        }
+
+        /// <summary>
+        /// Edit the header line of the combined .tsv files to replace the working directory name with either the dataset name or "Aggregation"
+        /// </summary>
+        /// <param name="datasetCount"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool UpdateCombinedTsvFiles(int datasetCount)
+        {
+            var filesToUpdate = new List<string>
+            {
+                "combined_ion.tsv",
+                "combined_modified_peptide.tsv",
+                "combined_peptide.tsv",
+                "combined_protein.tsv"
+            };
+
+            var successCount = 0;
+
+            foreach (var tsvFile in filesToUpdate)
+            {
+                var success = UpdateCombinedTsvFileHeaders(new FileInfo(Path.Combine(mWorkingDirectory.FullName, tsvFile)), datasetCount);
+
+                if (success)
+                    successCount++;
+            }
+
+            return successCount == filesToUpdate.Count;
+        }
+
+        private bool UpdateCombinedTsvFileHeaders(FileSystemInfo tsvFile, int datasetCount)
+        {
+            try
+            {
+                if (!tsvFile.Exists)
+                {
+                    LogWarning("File not found; cannot update: " + tsvFile.FullName);
+                }
+
+                var temporaryFile = new FileInfo(tsvFile.FullName + ".updatedHeaders");
+
+                using (var reader = new StreamReader(new FileStream(tsvFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(temporaryFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    var headerParsed = false;
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        if (headerParsed)
+                        {
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        var updatedHeaders = new List<string>();
+                        foreach (var header in dataLine.Split('\t'))
+                        {
+                            if (!header.StartsWith(mWorkingDirectory.Name))
+                            {
+                                updatedHeaders.Add(header);
+                                continue;
+                            }
+
+                            var datasetName = datasetCount > 1 ? "Aggregation" : mDatasetName;
+                            updatedHeaders.Add(header.Replace(mWorkingDirectory.Name, datasetName));
+                        }
+
+                        writer.WriteLine(string.Join("\t", updatedHeaders));
+
+                        headerParsed = true;
+                    }
+                }
+
+                var finalFilePath = tsvFile.FullName;
+
+                // Replace the source file
+                tsvFile.Delete();
+
+                temporaryFile.MoveTo(finalFilePath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in UpdateCombinedTsvFileHeaders for " + tsvFile.FullName, ex);
+                return false;
+            }
         }
 
         /// <summary>
