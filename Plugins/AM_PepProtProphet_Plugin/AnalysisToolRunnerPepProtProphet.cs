@@ -633,13 +633,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "{2} " +               // DatasetName
                     "{3} " +               // DatasetName_percolator_target_psms.tsv
                     "{4} " +               // DatasetName_percolator_decoy_psms.tsv
-                    "interact-{1} " +      // interact-DatasetName
+                    "interact-{5} " +      // interact-DatasetName
                     "DDA",
                     fragPipeLibDirectory.FullName,
                     pinFile,
                     datasetName,
                     targetPsmFile,
-                    decoyPsmFile);
+                    decoyPsmFile,
+                    datasetName);
 
                 // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
@@ -670,11 +671,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                 pepXmlFile = new FileInfo(
-                    Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pin.pep.xml", datasetName)));
+                    Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pep.xml", datasetName)));
 
                 if (processingSuccess)
                 {
-                    // Verify that Percolator created the .pin.pep.xml file
+                    // Verify that Percolator created the .pep.xml file
                     if (!pepXmlFile.Exists)
                     {
                         LogError("PercolatorOutputToPepXML did not create file " + pepXmlFile.Name);
@@ -699,7 +700,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in ConvertPercolatorOutputToPepXML", ex);
-                pepXmlFile = new FileInfo(string.Format("interact-{0}.pin.pep.xml", datasetName));
+                pepXmlFile = new FileInfo(string.Format("interact-{0}.pep.xml", datasetName));
                 return false;
             }
         }
