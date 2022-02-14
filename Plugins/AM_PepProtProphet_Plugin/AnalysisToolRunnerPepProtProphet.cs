@@ -2157,24 +2157,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var success = RunPhilosopher(PhilosopherToolType.IProphet, arguments.ToString(), "run iProphet");
 
-                // ToDo: Verify that the iProphet result files exists
+                // Verify that the iProphet result file exists
                 var outputFiles = new List<FileInfo>
                 {
-                    new(Path.Combine(mWorkingDirectory.FullName, "FileToFind.tsv")),
+                    new(Path.Combine(mWorkingDirectory.FullName, "combined.pep.xml")),
                 };
 
-                var missingFileCount = 0;
+                var outputFilesExist = ValidateOutputFilesExist("iProphet", outputFiles);
 
-                foreach (var outputFile in outputFiles)
-                {
-                    if (outputFile.Exists)
-                        continue;
-
-                    LogError("iProphet results file not found: " + outputFile.Name);
-                    missingFileCount++;
-                }
-
-                return missingFileCount == 0 && success;
+                return success && outputFilesExist;
             }
             catch (Exception ex)
             {
