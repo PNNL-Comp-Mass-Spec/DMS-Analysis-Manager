@@ -1268,6 +1268,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var experimentGroupName = item.Key;
                     var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
 
+                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var datasetId in item.Value)
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
@@ -1671,6 +1672,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Next process each of the experiment directories
                 var successCount = 0;
 
+                // ReSharper disable once LoopCanBeConvertedToQuery
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     var success = RunDatabaseAnnotation(experimentGroupDirectory, options.WorkingDirectoryPadWidth);
@@ -2493,6 +2495,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     LogDebug("Running Percolator in " + experimentGroupDirectory.FullName);
 
+                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var datasetId in item.Value)
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetId];
@@ -3028,6 +3031,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var successCount = 0;
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+                // ReSharper disable once LoopCanBeConvertedToQuery
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable once ConvertToConstant.Local
@@ -3607,6 +3611,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     arguments.AppendFormat("-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1}", libDirectory.FullName, pepXmlFile.FullName);
 
                     // Append the .mzML files
+
+                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var datasetId in item.Value)
                     {
                         var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
@@ -3928,6 +3934,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var pinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PIN_EXTENSION));
 
                     bool pinFileUpdated;
+
+                    // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                     if (pinFile.Exists)
                     {
                         pinFileUpdated = UpdatePinFileStripDataset(pinFile);
