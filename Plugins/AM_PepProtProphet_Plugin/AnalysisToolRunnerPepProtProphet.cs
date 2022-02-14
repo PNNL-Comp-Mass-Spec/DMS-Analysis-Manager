@@ -2011,15 +2011,41 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    // ToDo: Customize this check for a results file
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "IonQuant_Results.txt"));
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("IonQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
+                    // Confirm that _quant.csv files were created
+                    var quantFiles = mWorkingDirectory.GetFiles("*_quant.csv", SearchOption.AllDirectories);
+                    if (quantFiles.Length == 0)
+                    {
+                        LogError("IonQuant did not create any _quant.csv files");
+                        return false;
+                    }
 
-                    return true;
+                    // Confirm that the output files were created
+                    var outputFiles = new List<FileInfo>();
+
+                    if (options.MatchBetweenRuns)
+                    {
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "mbr_ion.tsv")));
+                    }
+
+                    if (datasetCount > 0)
+                    {
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_ion.tsv")));
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_peptide.tsv")));
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")));
+                    }
+
+                    var outputFilesExist = ValidateOutputFilesExist("IonQuant", outputFiles);
+
+                    if (!outputFilesExist)
+                    {
+                        // Likely just a single dataset
+                        // Look for these files instead
+                        outputFiles.Clear();
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ion.tsv")));
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "peptide.tsv")));
+                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "protein.tsv")));
+                    }
+
                 }
 
                 if (mCmdRunner.ExitCode != 0)
