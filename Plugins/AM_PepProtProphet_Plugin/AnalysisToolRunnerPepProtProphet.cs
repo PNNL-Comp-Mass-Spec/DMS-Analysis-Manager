@@ -472,22 +472,47 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
-                if (experimentGroupWorkingDirectories.Count > 1 && options.RunIProphet)
+                if (experimentGroupWorkingDirectories.Count <= 1)
                 {
-                    var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
-                    if (!iProphetSuccess)
-                        return CloseOutType.CLOSEOUT_FAILED;
+                    if (dataPackageInfo.DataPackageID > 0 && (options.RunIProphet || options.RunAbacus))
+                    {
+                        string skipList;
 
-                    mProgress = (int)ProgressPercentValues.IProphetComplete;
+                        // ReSharper disable once ConvertIfStatementToSwitchStatement
+                        // ReSharper disable once ConvertIfStatementToSwitchExpression
+                        if (options.RunIProphet && options.RunAbacus)
+                            skipList = "iProphet and Abacus";
+                        else if (options.RunIProphet && !options.RunAbacus)
+                            skipList = "iProphet";
+                        else
+                            skipList = "Abacus";
+
+                        mMessage = Global.AppendToComment(mMessage, string.Format(
+                            "Skipping {0} since data package {1} does not contain two or more experiment group names; see {2}",
+                            skipList,
+                            dataPackageInfo.DataPackageID,
+                            "https://prismwiki.pnl.gov/wiki/MSFragger_Experiment_Groups"));
+                    }
                 }
-
-                if (experimentGroupWorkingDirectories.Count > 1 && options.RunAbacus)
+                else
                 {
-                    var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
-                    if (!abacusSuccess)
-                        return CloseOutType.CLOSEOUT_FAILED;
+                    if (options.RunIProphet)
+                    {
+                        var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+                        if (!iProphetSuccess)
+                            return CloseOutType.CLOSEOUT_FAILED;
 
-                    mProgress = (int)ProgressPercentValues.AbacusComplete;
+                        mProgress = (int)ProgressPercentValues.IProphetComplete;
+                    }
+
+                    if (options.RunAbacus)
+                    {
+                        var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
+                        if (!abacusSuccess)
+                            return CloseOutType.CLOSEOUT_FAILED;
+
+                        mProgress = (int)ProgressPercentValues.AbacusComplete;
+                    }
                 }
 
                 if (options.RunIonQuant)
