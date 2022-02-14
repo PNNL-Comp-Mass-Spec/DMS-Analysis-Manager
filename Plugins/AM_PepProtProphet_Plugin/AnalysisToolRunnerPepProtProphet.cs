@@ -1886,10 +1886,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     minIonsForProteinQuant);
 
                 var datasetCount = 0;
+                bool creatingCombinedFile;
 
                 if (experimentGroupWorkingDirectories.Count <= 1 && !options.MatchBetweenRuns)
                 {
                     arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkingDirectory.FullName);
+
+                    creatingCombinedFile = false;
 
                     // ReSharper disable ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
 
@@ -1984,6 +1987,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     arguments.AppendFormat(" --multidir . --filelist {0}", fileListFile.FullName);
 
+                    creatingCombinedFile = true;
+
                     mJobParams.AddResultFileToSkip(fileListFile.Name);
                 }
 
@@ -2029,24 +2034,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "mbr_ion.tsv")));
                     }
 
-                    if (datasetCount > 0)
+                    if (creatingCombinedFile)
                     {
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_ion.tsv")));
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_peptide.tsv")));
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")));
                     }
-
-                    var outputFilesExist = ValidateOutputFilesExist("IonQuant", outputFiles);
-
-                    if (!outputFilesExist)
+                    else
                     {
-                        // Likely just a single dataset
-                        // Look for these files instead
-                        outputFiles.Clear();
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ion.tsv")));
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "peptide.tsv")));
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "protein.tsv")));
                     }
+
+                    var outputFilesExist = ValidateOutputFilesExist("IonQuant", outputFiles);
 
                     try
                     {
