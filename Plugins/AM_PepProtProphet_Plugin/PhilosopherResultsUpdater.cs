@@ -181,6 +181,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return false;
                 }
 
+                OnDebugEvent("Creating {0} using {1}", updatedFile.FullName, inputFile.FullName);
+
                 var headerNames = new List<string>
                 {
                     "Spectrum",
