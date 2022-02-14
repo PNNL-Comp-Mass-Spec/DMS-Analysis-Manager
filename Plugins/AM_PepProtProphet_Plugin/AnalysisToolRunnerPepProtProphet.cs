@@ -1493,23 +1493,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Verify that the Abacus result files exists
                 var outputFiles = new List<FileInfo>
                 {
-                    new(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")),
                     new(Path.Combine(mWorkingDirectory.FullName, "reprint.spc.tsv")),
                     new(Path.Combine(mWorkingDirectory.FullName, "reprint.int.tsv"))
                 };
 
-                var missingFileCount = 0;
-
-                foreach (var outputFile in outputFiles)
+                if (generatePeptideLevelSummary)
                 {
-                    if (outputFile.Exists)
-                        continue;
-
-                    LogError("Abacus results file not found: " + outputFile.Name);
-                    missingFileCount++;
+                    outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_peptide.tsv")));
                 }
 
-                return missingFileCount == 0 && success;
+                if (generateProteinLevelSummary)
+                {
+                    outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")));
+                }
+
+                var outputFilesExist = ValidateOutputFilesExist("Abacus", outputFiles);
+
+                return success && outputFilesExist;
             }
             catch (Exception ex)
             {
