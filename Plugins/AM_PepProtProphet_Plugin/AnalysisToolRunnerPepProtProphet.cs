@@ -487,11 +487,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         else
                             skipList = "Abacus";
 
-                        mMessage = Global.AppendToComment(mMessage, string.Format(
+                        var msg = string.Format(
                             "Skipping {0} since data package {1} does not contain two or more experiment group names; see {2}",
                             skipList,
                             dataPackageInfo.DataPackageID,
-                            "https://prismwiki.pnl.gov/wiki/MSFragger_Experiment_Groups"));
+                            "https://prismwiki.pnl.gov/wiki/MSFragger_Experiment_Groups");
+
+                        LogMessage(msg);
+
+                        mMessage = Global.AppendToComment(mMessage, msg);
                     }
                 }
                 else
@@ -3007,7 +3011,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    // ToDo: Customize this check for a results file
+                    // ToDo: Verify that the PTM Shepherd results file was created
                     var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Shepherd_Results.txt"));
                     //if (!outputFile.Exists)
                     //{

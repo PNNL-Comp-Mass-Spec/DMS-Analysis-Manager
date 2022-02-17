@@ -925,8 +925,10 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
             {
-                mEvalMessage = Global.AppendToComment(mEvalMessage,
-                    string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB));
+                var msg = string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB);
+                LogMessage(msg);
+
+                mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
             }
 
             if (Global.RunningOnDeveloperComputer())
@@ -987,9 +989,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
 
-            mEvalMessage = Global.AppendToComment(mEvalMessage,
-                string.Format("Allocating {0:N0} MB to Java, splitting the {1:N0} MB FASTA file into {2} parts",
-                    msFraggerJavaMemorySizeMB, fastaFileSizeMB, databaseSplitCount));
+            var msg = string.Format(
+                "Allocating {0:N0} MB to Java, splitting the {1:N0} MB FASTA file into {2} parts",
+                msFraggerJavaMemorySizeMB, fastaFileSizeMB, databaseSplitCount);
+
+            LogMessage(msg);
+
+            mEvalMessage = Global.AppendToComment(mEvalMessage,msg);
 
             // ReSharper disable CommentTypo
 

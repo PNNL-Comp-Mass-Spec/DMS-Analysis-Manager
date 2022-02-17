@@ -153,7 +153,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (result == CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         currentTask = "GetMasicFiles";
+
                         result = GetMasicFiles();
+
                         if (result == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                         {
                             Global.AppendToComment(mMessage, "Use a settings file with parameter AssumedScanType");
@@ -196,6 +198,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private void AppendSharedResultDirectoriesToComment()
         {
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
                 mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
@@ -434,6 +437,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         mMessage += " do not contain detailed CID, ETD, or HCD information; MS-GF+ could use the wrong scoring model; fix this problem before running MS-GF+";
 
+                        LogWarning(mMessage);
+
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
                 }
@@ -460,6 +465,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 mMessage = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
                     "MS-GF+ could use the wrong scoring model; fix this problem before running MS-GF+";
+
+                LogWarning(mMessage);
+
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
