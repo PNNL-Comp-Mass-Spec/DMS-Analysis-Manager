@@ -97,7 +97,12 @@ namespace AnalysisManagerBase.JobConfig
         /// Dataset experiment group name (used by MSFragger); empty string if not defined
         /// </summary>
         /// <remarks>
+        /// <para>
         /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3871/-/-/-/-/-
+        /// </para>
+        /// <para>
+        /// aka ExperimentGroup or ExperimentGroupName
+        /// </para>
         /// </remarks>
         /// <example>
         /// The following are example dataset comments that include the experiment group name (CohortA, 1, 10, or 5):
