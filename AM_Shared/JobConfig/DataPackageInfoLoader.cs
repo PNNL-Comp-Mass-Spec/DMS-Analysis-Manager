@@ -28,6 +28,8 @@ namespace AnalysisManagerBase.JobConfig
 
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
+        private readonly IJobParams mJobParams;
+
         /// <summary>
         /// Instance of IDBTools
         /// </summary>
@@ -42,12 +44,14 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="jobParams"></param>
         /// <param name="dbTools"></param>
         /// <param name="dataPackageID"></param>
-        public DataPackageInfoLoader(IDBTools dbTools, int dataPackageID)
+        public DataPackageInfoLoader(IJobParams jobParams, IDBTools dbTools, int dataPackageID)
         {
             DBTools = dbTools;
             DataPackageID = dataPackageID;
+            mJobParams = jobParams;
         }
 
         /// <summary>
@@ -116,17 +120,19 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(DBTools, DataPackageID, out dataPackageDatasets);
+            return LoadDataPackageDatasetInfo(mJobParams, DBTools, DataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
+        /// <param name="jobParams">Job parameters</param>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         public static bool LoadDataPackageDatasetInfo(
+            IJobParams jobParams,
             IDBTools dbTools,
             int dataPackageID,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
@@ -164,9 +170,21 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
+            var autoDefineExperimentGroupWithDatasetName = jobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithDatasetName", false);
+            var autoDefineExperimentGroupWithExperimentName = jobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithExperimentName", false);
+
             foreach (DataRow curRow in resultSet.Rows)
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
+
+                if (autoDefineExperimentGroupWithDatasetName)
+                {
+                    datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset;
+                }
+                else if (autoDefineExperimentGroupWithExperimentName)
+                {
+                    datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
+                }
 
                 if (!dataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
                 {

@@ -2334,7 +2334,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(mJobParams, dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>

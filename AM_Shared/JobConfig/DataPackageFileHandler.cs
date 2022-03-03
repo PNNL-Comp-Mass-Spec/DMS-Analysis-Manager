@@ -124,7 +124,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             mAnalysisResources = resourcesClass;
 
-            mDataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPackageID);
+            mDataPackageInfoLoader = new DataPackageInfoLoader(resourcesClass.JobParams, dbTools, dataPackageID);
 
             mDbTools = dbTools;
         }
@@ -1185,10 +1185,10 @@ namespace AnalysisManagerBase.JobConfig
                     if (skipDatasetsWithExistingMzML)
                     {
                         var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out _);
+
                         if (!string.IsNullOrWhiteSpace(existingMzMLFilePath))
                         {
                             OnStatusEvent("Skipping dataset {0} since an existing .mzML file was found (RetrieveDataPackageDatasetFiles)", dataPkgDataset.Dataset);
-
                             continue;
                         }
                     }
