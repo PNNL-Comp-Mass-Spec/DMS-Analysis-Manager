@@ -121,19 +121,19 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(mJobParams, DBTools, DataPackageID, out dataPackageDatasets);
+            return LoadDataPackageDatasetInfo(mCallingClass, DBTools, DataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="jobParams">Job parameters</param>
+        /// <param name="callingClass">Analysis resources or analysis tools class</param>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         public static bool LoadDataPackageDatasetInfo(
-            IJobParams jobParams,
+            AnalysisMgrBase callingClass,
             IDBTools dbTools,
             int dataPackageID,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
@@ -171,8 +171,17 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
-            var autoDefineExperimentGroupWithDatasetName = jobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithDatasetName", false);
-            var autoDefineExperimentGroupWithExperimentName = jobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithExperimentName", false);
+            var autoDefineExperimentGroupWithDatasetName = callingClass.JobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithDatasetName", false);
+            var autoDefineExperimentGroupWithExperimentName = callingClass.JobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithExperimentName", false);
+
+            if (autoDefineExperimentGroupWithDatasetName)
+            {
+                callingClass.LogMessage("Auto defining MSFragger experiment group names using dataset names");
+            }
+            else if (autoDefineExperimentGroupWithExperimentName)
+            {
+                callingClass.LogMessage("Auto defining MSFragger experiment group names using experiment names");
+            }
 
             foreach (DataRow curRow in resultSet.Rows)
             {

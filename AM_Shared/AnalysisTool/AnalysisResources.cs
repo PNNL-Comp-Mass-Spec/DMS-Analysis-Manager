@@ -3057,7 +3057,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(mJobParams, dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets);
         }
 
         /// <summary>
@@ -3144,7 +3144,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var dataPackageFileHandler = new DataPackageFileHandler(dbTools, dataPackageID, this);
                 RegisterEvents(dataPackageFileHandler);
 
-                var dataPackageInfoLoader = new DataPackageInfoLoader(mJobParams, dbTools, dataPackageID);
+                var dataPackageInfoLoader = new DataPackageInfoLoader(this, dbTools, dataPackageID);
 
                 var success = dataPackageInfoLoader.LoadDataPackageDatasetInfo(out var dataPackageDatasets);
 
