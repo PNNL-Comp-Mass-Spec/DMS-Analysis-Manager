@@ -846,7 +846,11 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             if (!processingSuccess)
             {
-                if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core 2.1"))
+                if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core 3.1"))
+                {
+                    LogError("Install 64-bit .NET Core SDK 3.1 (file dotnet-sdk-3.1.416-win-x64.exe) from https://dotnet.microsoft.com/en-us/download/dotnet/3.1");
+                }
+                else if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core 2.1"))
                 {
                     LogError("Install 64-bit .NET Core SDK 2.1 (file dotnet-sdk-2.1.813-win-x64.exe) from https://dotnet.microsoft.com/download/dotnet/2.1");
                 }
