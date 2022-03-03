@@ -22,14 +22,10 @@ namespace AnalysisManagerBase.AnalysisTool
         private const string FAILED_RESULTS_FOLDER_INFO_TEXT = "FailedResultsFolderInfo_";
 
         private const int FAILED_RESULTS_FOLDER_RETAIN_DAYS = 31;
+
         private const int DEFAULT_RETRY_COUNT = 3;
 
         private const int DEFAULT_RETRY_HOLDOFF_SEC = 15;
-
-        /// <summary>
-        /// Job parameters
-        /// </summary>
-        private readonly IJobParams mJobParams;
 
         /// <summary>
         /// Manager parameters

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM;
 using PRISM.Logging;
@@ -26,6 +27,12 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool mInsufficientFreeMemory;
 
         /// <summary>
+        /// Job parameters
+        /// </summary>
+        /// <remarks>Instance of class AnalysisJob</remarks>
+        protected IJobParams mJobParams;
+
+        /// <summary>
         /// Status message
         /// </summary>
         /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
@@ -42,6 +49,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// status tools
         /// </summary>
         protected IStatusFile mStatusTools;
+
+        /// <summary>
+        /// Job Parameters
+        /// </summary>
+        public IJobParams JobParams => mJobParams;
 
         /// <summary>
         /// When true, show additional messages at the console

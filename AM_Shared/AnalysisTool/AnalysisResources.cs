@@ -543,12 +543,6 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Job parameters
-        /// </summary>
-        /// <remarks>Instance of class AnalysisJob</remarks>
-        protected IJobParams mJobParams;
-
-        /// <summary>
         /// Manager parameters
         /// </summary>
         /// <remarks>Instance of class AnalysisMgrSettings</remarks>
@@ -679,11 +673,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// File search utility
         /// </summary>
         public FileSearch FileSearchTool { get; private set; }
-
-        /// <summary>
-        /// Job Parameters
-        /// </summary>
-        public IJobParams JobParams => mJobParams;
 
         /// <summary>
         /// Manager parameters
