@@ -540,6 +540,17 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                var rawDataType = GetRawDataType(rawDataTypeName);
+                if (rawDataType == RawDataTypeConstants.AgilentDFolder)
+                {
+                    // The ScanStatsGenerator class uses the MSFileInfoScanner to generate the ScanStats files
+                    // The logic for determining parent ion m/z values only works for Thermo .raw files
+                    // Thus, no point in creating the ScanStats files for Agilent datasets
+                    LogMessage("Not creating ScanStats files for Agilent dataset {0}", DatasetName);
+                    continue;
+                }
+
                 var retrieveResult = GetScanStatsFiles(dataPkgDataset);
 
                 if (retrieveResult != CloseOutType.CLOSEOUT_SUCCESS)
