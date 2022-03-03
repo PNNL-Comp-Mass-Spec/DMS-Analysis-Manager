@@ -598,8 +598,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 // ScanStats files not found
-                // If processing a .Raw file or .UIMF file, we can create the file using the MSFileInfoScanner
-                if (!GenerateScanStatsFiles(false))
+                // If processing a .Raw file, .UIMF file, or Agilent .D directory, we can create the file using the MSFileInfoScanner
+
+                var rawDataTypeName = mJobParams.GetParam("RawDataType");
+                var rawDataType = GetRawDataType(rawDataTypeName);
+                var deleteLocalDatasetFileOrDirectory = rawDataType == RawDataTypeConstants.AgilentDFolder;
+
+                if (!GenerateScanStatsFiles(deleteLocalDatasetFileOrDirectory))
                 {
                     // Error message should already have been logged and stored in mMessage
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

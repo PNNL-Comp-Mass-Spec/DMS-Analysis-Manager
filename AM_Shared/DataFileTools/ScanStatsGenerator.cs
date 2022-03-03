@@ -74,11 +74,11 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
-        /// <param name="inputFilePath">Dataset file</param>
+        /// <param name="inputFileOrDirectoryPath">Dataset file or directory</param>
         /// <param name="outputDirectoryPath">Output directory</param>
         /// <param name="datasetID">Dataset ID</param>
         /// <returns>True if success, false if an error</returns>
-        public bool GenerateScanStatsFiles(string inputFilePath, string outputDirectoryPath, int datasetID)
+        public bool GenerateScanStatsFiles(string inputFileOrDirectoryPath, string outputDirectoryPath, int datasetID)
         {
             try
             {
@@ -106,12 +106,12 @@ namespace AnalysisManagerBase.DataFileTools
                     mMSFileInfoScanner.Options.ScanEnd = ScanEnd;
                 }
 
-                var success = mMSFileInfoScanner.ProcessMSFileOrDirectory(inputFilePath, outputDirectoryPath);
+                var success = mMSFileInfoScanner.ProcessMSFileOrDirectory(inputFileOrDirectoryPath, outputDirectoryPath);
 
                 if (success)
                     return true;
 
-                ErrorMessage = "Error generating ScanStats file using " + inputFilePath;
+                ErrorMessage = "Error generating ScanStats file using " + inputFileOrDirectoryPath;
                 var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
                 if (!string.IsNullOrEmpty(msgAddnl))

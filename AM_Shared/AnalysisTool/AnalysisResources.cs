@@ -1723,21 +1723,30 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
-        /// <remarks>Only valid for Thermo .Raw files and .UIMF files.  Will delete the .Raw (or .UIMF) after creating the ScanStats file</remarks>
+        /// <remarks>
+        /// <para>
+        /// Only valid for Thermo .Raw files, .UIMF files, and Agilent .d directories
+        /// </para>
+        /// <para>
+        /// Will delete the .Raw (or .UIMF or .d) after creating the ScanStats file
+        /// </para>
+        /// </remarks>
         /// <returns>True if success, false if a problem</returns>
         protected bool GenerateScanStatsFiles()
         {
-            const bool deleteRawDataFile = true;
-            return GenerateScanStatsFiles(deleteRawDataFile);
+            const bool DELETE_LOCAL_FILE_OR_DIRECTORY = true;
+            return GenerateScanStatsFiles(DELETE_LOCAL_FILE_OR_DIRECTORY);
         }
 
         /// <summary>
         /// Create files _ScanStats.txt and _ScanStatsEx.txt for the given dataset
         /// </summary>
-        /// <remarks>Only valid for Thermo .Raw files and .UIMF files</remarks>
-        /// <param name="deleteRawDataFile">True to delete the .raw (or .uimf) file after creating the ScanStats file </param>
+        /// <remarks>
+        /// Only valid for Thermo .Raw files, .UIMF files, and Agilent .d directories
+        /// </remarks>
+        /// <param name="deleteLocalDatasetFileOrDirectory">True to delete the .raw file, .UIMF file, or .d directory after creating the ScanStats file</param>
         /// <returns>True if success, false if a problem</returns>
-        protected bool GenerateScanStatsFiles(bool deleteRawDataFile)
+        protected bool GenerateScanStatsFiles(bool deleteLocalDatasetFileOrDirectory)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
@@ -1756,17 +1765,25 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            string inputFilePath;
+            string inputFileOrDirectoryPath;
+            bool directoryBasedDataset;
 
-            // Confirm that this dataset is a Thermo .Raw file or a .UIMF file
+            // Confirm that this dataset is a Thermo .Raw file, .UIMF file or Agilent .d directory
             switch (GetRawDataType(rawDataTypeName))
             {
                 case RawDataTypeConstants.ThermoRawFile:
-                    inputFilePath = mDatasetName + DOT_RAW_EXTENSION;
+                    inputFileOrDirectoryPath = mDatasetName + DOT_RAW_EXTENSION;
+                    directoryBasedDataset = false;
                     break;
 
                 case RawDataTypeConstants.UIMF:
-                    inputFilePath = mDatasetName + DOT_UIMF_EXTENSION;
+                    inputFileOrDirectoryPath = mDatasetName + DOT_UIMF_EXTENSION;
+                    directoryBasedDataset = false;
+                    break;
+
+                case RawDataTypeConstants.AgilentDFolder:
+                    inputFileOrDirectoryPath = mDatasetName + DOT_D_EXTENSION;
+                    directoryBasedDataset = true;
                     break;
 
                 default:
@@ -1774,51 +1791,66 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
             }
 
-            inputFilePath = Path.Combine(mWorkDir, inputFilePath);
+            inputFileOrDirectoryPath = Path.Combine(mWorkDir, inputFileOrDirectoryPath);
 
-            if (!File.Exists(inputFilePath))
+            if (!directoryBasedDataset && !File.Exists(inputFileOrDirectoryPath) ||
+                directoryBasedDataset && !Directory.Exists(inputFileOrDirectoryPath))
             {
                 if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     var extraMsg = mMessage;
-                    mMessage = "Error retrieving spectra file";
+                    mMessage = string.Format("Error retrieving spectra {0}", directoryBasedDataset ? "directory" : "file");
+
                     if (!string.IsNullOrWhiteSpace(extraMsg))
                     {
                         mMessage += "; " + extraMsg;
                     }
+
                     LogMessage(mMessage, 0, true);
                     return false;
                 }
 
                 // ReSharper disable once RedundantNameQualifier
-                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                if (!mMyEMSLUtilities.ProcessMyEMSLDownloadQueue(mWorkDir, Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return false;
                 }
             }
 
-            // Make sure the raw data file does not get copied to the results directory
-            mJobParams.AddResultFileToSkip(Path.GetFileName(inputFilePath));
+            if (!directoryBasedDataset)
+            {
+                // Make sure the raw data file does not get copied to the results directory
+                mJobParams.AddResultFileToSkip(Path.GetFileName(inputFileOrDirectoryPath));
+            }
 
             var scanStatsGenerator = new ScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
             RegisterEvents(scanStatsGenerator);
 
-            LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFilePath));
+            LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFileOrDirectoryPath));
 
             // Create files _ScanStats.txt and _ScanStatsEx.txt
-            var success = scanStatsGenerator.GenerateScanStatsFiles(inputFilePath, mWorkDir, datasetID);
+            var success = scanStatsGenerator.GenerateScanStatsFiles(inputFileOrDirectoryPath, mWorkDir, datasetID);
 
             if (success)
             {
-                LogMessage("Generated ScanStats file using " + inputFilePath);
+                LogMessage("Generated ScanStats file using " + inputFileOrDirectoryPath);
 
-                if (!deleteRawDataFile)
+                if (!deleteLocalDatasetFileOrDirectory)
                     return true;
 
                 ProgRunner.GarbageCollectNow();
+
                 try
                 {
-                    File.Delete(inputFilePath);
+                    if (directoryBasedDataset)
+                    {
+                        var directoryToDelete = new DirectoryInfo(inputFileOrDirectoryPath);
+                        directoryToDelete.Delete(true);
+                    }
+                    else
+                    {
+                        File.Delete(inputFileOrDirectoryPath);
+                    }
                 }
                 catch (Exception)
                 {
