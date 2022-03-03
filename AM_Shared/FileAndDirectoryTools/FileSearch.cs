@@ -2194,7 +2194,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var subdirectories = datasetDirectory.GetDirectories("SIC*");
             if (subdirectories.Length == 0)
             {
-                OnErrorEvent("Dataset directory does not contain any MASIC results directories");
+                OnWarningEvent("Dataset directory does not contain any MASIC results directories");
                 OnWarningEvent("Dataset directory path: " + datasetDirectory.FullName);
                 return false;
             }
