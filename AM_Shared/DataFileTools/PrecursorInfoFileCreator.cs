@@ -104,6 +104,9 @@ namespace AnalysisManagerBase.DataFileTools
 
                 writer.WriteLine(string.Join("\t", columnData));
 
+                var warningCount = 0;
+                var warningCountLogTarget = 20;
+
                 foreach (var item in scanStats)
                 {
                     var scanInfo = item.Value;
@@ -117,9 +120,35 @@ namespace AnalysisManagerBase.DataFileTools
                     if (scanInfo.ScanType == 1)
                         continue;
 
-                    if (!ThermoRawFileReader.XRawFileIO.ExtractParentIonMZFromFilterText(extendedScanStatsInfo.ScanFilterText, out var parentIonMz))
+                    string warningMessage;
+                    double parentIonMz;
+
+                    if (string.IsNullOrWhiteSpace(extendedScanStatsInfo.ScanFilterText))
                     {
-                        OnWarningEvent("Unable to determine the parent ion m/z for scan {0} using {1}", scanInfo.ScanNumber, extendedScanStatsInfo.ScanFilterText);
+                        parentIonMz = 0;
+                        warningMessage = string.Format("Unable to determine the parent ion m/z for scan {0} since the scan filter is empty", scanInfo.ScanNumber);
+                    }
+                    else
+                    {
+                        var success = ThermoRawFileReader.XRawFileIO.ExtractParentIonMZFromFilterText(extendedScanStatsInfo.ScanFilterText, out parentIonMz);
+
+                        warningMessage = success
+                            ? string.Empty
+                            : string.Format("Unable to determine the parent ion m/z for scan {0} using {1}", scanInfo.ScanNumber, extendedScanStatsInfo.ScanFilterText);
+                    }
+
+                    if (warningMessage.Length > 0)
+                    {
+                        warningCount++;
+                        if (warningCount < 10)
+                        {
+                            OnWarningEvent(warningMessage);
+                        }
+                        else if (warningCount == warningCountLogTarget)
+                        {
+                            warningCountLogTarget *= 2;
+                            OnWarningEvent(warningMessage);
+                        }
 
                         continue;
                     }
