@@ -124,7 +124,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             mAnalysisResources = resourcesClass;
 
-            mDataPackageInfoLoader = new DataPackageInfoLoader(resourcesClass.JobParams, dbTools, dataPackageID);
+            mDataPackageInfoLoader = new DataPackageInfoLoader(resourcesClass, dbTools, dataPackageID);
 
             mDbTools = dbTools;
         }

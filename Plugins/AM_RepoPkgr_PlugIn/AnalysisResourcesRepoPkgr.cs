@@ -58,7 +58,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            var dataPackageInfoLoader = new DataPackageInfoLoader(dbTools, dataPkgId);
+            var dataPackageInfoLoader = new DataPackageInfoLoader(this, dbTools, dataPkgId);
 
             var dataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs);
             var success = RetrieveFastaFiles(localOrgDBDirectory, dataPackagePeptideHitJobs);

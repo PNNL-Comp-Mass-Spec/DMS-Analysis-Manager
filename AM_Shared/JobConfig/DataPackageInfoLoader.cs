@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.StatusReporting;
 using PHRPReader;
 using PRISM;
@@ -28,7 +29,7 @@ namespace AnalysisManagerBase.JobConfig
 
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
-        private readonly IJobParams mJobParams;
+        private readonly AnalysisMgrBase mCallingClass;
 
         /// <summary>
         /// Instance of IDBTools
@@ -44,14 +45,14 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParams"></param>
+        /// <param name="callingClass"></param>
         /// <param name="dbTools"></param>
         /// <param name="dataPackageID"></param>
-        public DataPackageInfoLoader(IJobParams jobParams, IDBTools dbTools, int dataPackageID)
+        public DataPackageInfoLoader(AnalysisMgrBase callingClass, IDBTools dbTools, int dataPackageID)
         {
             DBTools = dbTools;
             DataPackageID = dataPackageID;
-            mJobParams = jobParams;
+            mCallingClass = callingClass;
         }
 
         /// <summary>
