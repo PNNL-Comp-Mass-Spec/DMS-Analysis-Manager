@@ -5458,7 +5458,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (mDebugLevel < 1 ||
                 mDebugLevel == 1 && DateTime.UtcNow.Subtract(mSplitFastaLastUpdateTime).TotalSeconds < 60 ||
                 mDebugLevel > 1 && DateTime.UtcNow.Subtract(mSplitFastaLastUpdateTime).TotalSeconds < 20 ||
-                !(percentComplete >= 100 && mSplitFastaLastPercentComplete < 100))
+                percentComplete >= 100 && mSplitFastaLastPercentComplete >= 100)
             {
                 return;
             }
