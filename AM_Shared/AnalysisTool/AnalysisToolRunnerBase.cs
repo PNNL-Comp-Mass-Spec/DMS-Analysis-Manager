@@ -63,12 +63,6 @@ namespace AnalysisManagerBase.AnalysisTool
         private const int CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS = 3;
 
         /// <summary>
-        /// Job parameters
-        /// </summary>
-        /// <remarks>Instance of class AnalysisJob</remarks>
-        protected IJobParams mJobParams;
-
-        /// <summary>
         /// Manager parameters
         /// </summary>
         /// <remarks>Instance of class AnalysisMgrSettings</remarks>
