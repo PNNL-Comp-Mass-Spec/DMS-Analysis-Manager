@@ -349,7 +349,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Get the expected start and end values that MaxQuant processing will represent
         /// </summary>
-        /// <param name="processingSteps">Keys are step name, values are the approximate percent complete at the start of the step</param>
+        /// <param name="processingSteps">Keys are step name, values are the approximate percent complete at the start of the step (value between 0 and 100)</param>
         /// <param name="progressAtStart">Output: progress at start</param>
         /// <param name="progressAtEnd">Output: progress at end</param>
         private void GetIncrementalProgressRange(IReadOnlyDictionary<string, int> processingSteps, out float progressAtStart, out float progressAtEnd)
@@ -1789,7 +1789,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         LogError(string.Format(
                             "In the MaxQuant parameter file, DMS step {0} has startStepName '{1}', " +
-                            "which did not match any of the tasks messages shown by MaxQuant during the dry run",
+                            "which did not match any of the task messages shown by MaxQuant during the dry run",
                             dmsStep.Key, dmsStep.Value.StartStepName));
 
                         unresolvedStepCount++;
