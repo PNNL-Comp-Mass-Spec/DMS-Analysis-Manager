@@ -38,7 +38,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <summary>
         /// Percent complete to report when the tool starts
         /// </summary>
-        public const int PROGRESS_PCT_TOOL_RUNNER_STARTING = 5;
+        public const int PROGRESS_PCT_TOOL_RUNNER_STARTING = 1;
 
         private const int PROGRESS_PCT_COMPLETE = 99;
 
@@ -388,10 +388,10 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// </remarks>
         private static SortedList<string, int> GetMaxQuantProcessingSteps()
         {
-            return new()
+            return new SortedList<string, int>
             {
-                { "Configuring", 0 },
-                { "Feature detection", 1 },
+                { "Configuring", 1 },
+                { "Feature detection", 2 },
                 { "Deisotoping", 3 },
                 { "MS/MS preparation", 4 },
                 { "Combining apl files for first search", 5 },
