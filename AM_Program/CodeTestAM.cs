@@ -15,7 +15,7 @@ using AnalysisManagerBase.StatusReporting;
 namespace AnalysisManagerProg
 {
     /// <summary>
-    /// Base class for Sequest analysis
+    /// Test tool runner class
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class CodeTestAM : AnalysisToolRunnerBase
