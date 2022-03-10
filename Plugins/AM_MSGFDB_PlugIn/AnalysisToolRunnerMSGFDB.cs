@@ -859,7 +859,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var scriptName = mJobParams.GetParam("ToolName");
             scanTypeFilePath = string.Empty;
 
-            if (scriptName.IndexOf("mzxml", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            if (scriptName.IndexOf("mzXML", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 inputFileFormat = InputFileFormatTypes.MzXML;

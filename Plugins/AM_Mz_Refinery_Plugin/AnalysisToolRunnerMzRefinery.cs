@@ -170,7 +170,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 else
                 {
                     var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
-                    if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(msXmlOutputType, "mzXML", StringComparison.OrdinalIgnoreCase))
                     {
                         msXmlFileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
                     }

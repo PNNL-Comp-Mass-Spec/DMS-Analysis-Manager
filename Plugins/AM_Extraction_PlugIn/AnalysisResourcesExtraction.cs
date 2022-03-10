@@ -1504,12 +1504,12 @@ namespace AnalysisManagerExtractionPlugin
                 // The ToolName job parameter holds the name of the job script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
-                if (scriptName.IndexOf("mzxml", StringComparison.OrdinalIgnoreCase) >= 0 || scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (scriptName.IndexOf("mzXML", StringComparison.OrdinalIgnoreCase) >= 0 || scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return GetMzXMLFile();
                 }
 
-                if (scriptName.IndexOf("mzml", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (scriptName.IndexOf("mzML", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return GetMzMLFile();
                 }
