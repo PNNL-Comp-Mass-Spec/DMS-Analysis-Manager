@@ -106,9 +106,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// or for the jobs associated with a data package
         /// </summary>
         /// <param name="dataPackageID">0 to use the current job and dataset, non-zero to use jobs in a data package</param>
-        /// <param name="retrieveMzML">
+        /// <param name="retrieveMsXmlFiles">
         /// <para>
-        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// True if this job's settings file indicates to use .mzML (or .mzXML) files instead of the original instrument file
         /// </para>
         /// <para>
         /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
@@ -123,7 +123,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         public CloseOutType RetrieveInstrumentFilesForJobDatasets(
             int dataPackageID,
-            bool retrieveMzML,
+            bool retrieveMsXmlFiles,
             float progressPercentAtFinish,
             bool skipDatasetsWithExistingMzML,
             out DataPackageInfo dataPackageInfo,
@@ -141,10 +141,10 @@ namespace AnalysisManagerBase.DataFileTools
                 // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (dataPackageID > 0)
                 {
-                    return RetrieveDataPackageDatasets(dataPackageInfo, retrieveMzML, progressPercentAtFinish, skipDatasetsWithExistingMzML, out dataPackageDatasets);
+                    return RetrieveDataPackageDatasets(dataPackageInfo, retrieveMsXmlFiles, progressPercentAtFinish, skipDatasetsWithExistingMzML, out dataPackageDatasets);
                 }
 
-                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, retrieveMzML, out dataPackageDatasets);
+                return RetrieveSingleDataset(workingDirectory, dataPackageInfo, retrieveMsXmlFiles, out dataPackageDatasets);
             }
             catch (Exception ex)
             {
@@ -158,9 +158,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// Determine the dataset files associated with the current data package
         /// </summary>
         /// <param name="dataPackageInfo">Data package info</param>
-        /// <param name="retrieveMzML">
+        /// <param name="retrieveMsXmlFiles">
         /// <para>
-        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// True if this job's settings file indicates to use .mzML (or .mzXML) files instead of the original instrument file
         /// </para>
         /// <para>
         /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
@@ -174,7 +174,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <param name="dataPackageDatasets">Output: keys are Dataset ID, values are dataset info</param>
         private CloseOutType RetrieveDataPackageDatasets(
             DataPackageInfo dataPackageInfo,
-            bool retrieveMzML,
+            bool retrieveMsXmlFiles,
             float progressPercentAtFinish,
             bool skipDatasetsWithExistingMzML,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
@@ -184,7 +184,7 @@ namespace AnalysisManagerBase.DataFileTools
                 // Keys in dictionary datasetRawFilePaths are dataset name, values are paths to the local file or directory for the dataset
 
                 var filesRetrieved = RetrieveDataPackageDatasetFiles(
-                    retrieveMzML,
+                    retrieveMsXmlFiles,
                     out dataPackageDatasets, out var datasetRawFilePaths,
                     0, progressPercentAtFinish,
                     skipDatasetsWithExistingMzML
@@ -192,7 +192,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 if (!filesRetrieved)
                 {
-                   return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 foreach (var dataset in dataPackageDatasets)
@@ -239,12 +239,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
         /// </summary>
-        /// <param name="retrieveMzMLFiles">
+        /// <param name="retrieveMsXmlFiles">
         /// <para>
-        /// Set to true to obtain mzML files for the datasets
+        /// Set to true to obtain .mzML (or .mzXML) files for the datasets
         /// </para>
         /// <para>
-        /// This method will return false if a .mzML file cannot be found for any of the datasets
+        /// This method will return false if a .mzML or .mzXML file cannot be found for any of the datasets
         /// </para>
         /// </param>
         /// <param name="dataPackageDatasets">
@@ -266,7 +266,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// </param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackageDatasetFiles(
-            bool retrieveMzMLFiles,
+            bool retrieveMsXmlFiles,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out Dictionary<string, string> datasetRawFilePaths,
             float progressPercentAtStart,
@@ -289,7 +289,7 @@ namespace AnalysisManagerBase.DataFileTools
             RegisterEvents(dataPackageFileHandler);
 
             var success = dataPackageFileHandler.RetrieveDataPackageDatasetFiles(
-                retrieveMzMLFiles, out dataPackageDatasets, out datasetRawFilePaths,
+                retrieveMsXmlFiles, out dataPackageDatasets, out datasetRawFilePaths,
                 progressPercentAtStart, progressPercentAtFinish, skipDatasetsWithExistingMzML);
 
             if (!success)
@@ -305,9 +305,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="workingDirectory">Working directory</param>
         /// <param name="dataPackageInfo">Data package info</param>
-        /// <param name="retrieveMzML">
+        /// <param name="retrieveMsXmlFile">
         /// <para>
-        /// True if this job's settings file indicates to use .mzML files instead of the original instrument file
+        /// True if this job's settings file indicates to use .mzML (or .mzXML) files instead of the original instrument file
         /// </para>
         /// <para>
         /// In addition, classes AnalysisResourcesPepProtProphet and AnalysisResourcesMSFragger set this to true, regardless of the settings file
@@ -317,7 +317,7 @@ namespace AnalysisManagerBase.DataFileTools
         private CloseOutType RetrieveSingleDataset(
             FileSystemInfo workingDirectory,
             DataPackageInfo dataPackageInfo,
-            bool retrieveMzML,
+            bool retrieveMsXmlFile,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
         {
             var currentTask = "Initializing";
@@ -358,20 +358,42 @@ namespace AnalysisManagerBase.DataFileTools
 
                 dataPackageDatasets.Add(datasetID, dataPackageDatasetInfo);
 
-                if (retrieveMzML)
+                if (retrieveMsXmlFile)
                 {
-                    currentTask = "GetMzMLFile";
+                    currentTask = "GetMsXmlFile";
 
-                    var mzMLResultCode = mResourceClass.GetMzMLFile();
+                    var msXMLOutputType = mResourceClass.JobParams.GetJobParameter("MSXMLOutputType", string.Empty);
 
-                    if (mzMLResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                    var msXmlType = msXMLOutputType.Equals("mzXML", StringComparison.OrdinalIgnoreCase)
+                        ? AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                        : AnalysisResources.MSXMLOutputTypeConstants.mzML;
+
+                    var resultCode = msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                        ? mResourceClass.GetMzXMLFile()
+                        : mResourceClass.GetMzMLFile();
+
+                    if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        return mzMLResultCode;
+                        return resultCode;
                     }
 
-                    dataPackageInfo.DatasetFiles.Add(datasetID, mResourceClass.DatasetName + AnalysisResources.DOT_MZML_EXTENSION);
+                    string fileExtension;
+                    string msXmlDataType;
+
+                    if (msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML)
+                    {
+                        fileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
+                        msXmlDataType = AnalysisResources.RAW_DATA_TYPE_DOT_MZXML_FILES;
+                    }
+                    else
+                    {
+                        fileExtension = AnalysisResources.DOT_MZML_EXTENSION;
+                        msXmlDataType = AnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES;
+                    }
+
+                    dataPackageInfo.DatasetFiles.Add(datasetID, mResourceClass.DatasetName + fileExtension);
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, DataPackageInfo.FILE_DATASET);
-                    dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, AnalysisResources.RAW_DATA_TYPE_DOT_MZML_FILES);
+                    dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, msXmlDataType);
                     dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;

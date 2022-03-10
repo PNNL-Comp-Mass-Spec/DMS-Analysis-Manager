@@ -1089,7 +1089,10 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieves the instrument files for the datasets defined for the data package associated with this aggregation job
         /// </summary>
-        /// <param name="retrieveMzMLFiles">Set to true to obtain mzML files for the datasets; will return false if a .mzML file cannot be found for any of the datasets</param>
+        /// <param name="retrieveMsXmlFiles">
+        /// Set to true to obtain mzML (or .mzXML) files for the datasets;
+        /// will return false if a .mzML (or .mzXML) file cannot be found for any of the datasets
+        /// </param>
         /// <param name="dataPackageDatasets">
         /// Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
         /// </param>
@@ -1109,7 +1112,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </param>
         /// <returns>True if success, false if an error</returns>
         public bool RetrieveDataPackageDatasetFiles(
-            bool retrieveMzMLFiles,
+            bool retrieveMsXmlFiles,
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out Dictionary<string, string> datasetRawFilePaths,
             float progressPercentAtStart,
@@ -1166,6 +1169,12 @@ namespace AnalysisManagerBase.JobConfig
 
                 var datasetsProcessed = 0;
 
+                var msXMLOutputType = mAnalysisResources.JobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+
+                var msXmlType = msXMLOutputType.Equals("mzXML", StringComparison.OrdinalIgnoreCase)
+                    ? AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                    : AnalysisResources.MSXMLOutputTypeConstants.mzML;
+
                 foreach (var item in dataPackageDatasets)
                 {
                     var dataPkgDataset = item.Value;
@@ -1184,11 +1193,13 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (skipDatasetsWithExistingMzML)
                     {
-                        var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out _);
+                        var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(msXmlType, out _);
 
                         if (!string.IsNullOrWhiteSpace(existingMzMLFilePath))
                         {
-                            OnStatusEvent("Skipping dataset {0} since an existing .mzML file was found (RetrieveDataPackageDatasetFiles)", dataPkgDataset.Dataset);
+                            OnStatusEvent(
+                                "Skipping dataset {0} since an existing {1} file was found (RetrieveDataPackageDatasetFiles)",
+                                dataPkgDataset.Dataset, msXmlType);
                             continue;
                         }
                     }
@@ -1196,9 +1207,9 @@ namespace AnalysisManagerBase.JobConfig
                     bool success;
 
                     // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                    if (retrieveMzMLFiles)
+                    if (retrieveMsXmlFiles)
                     {
-                        success = RetrieveDataPackageDatasetMzMLFile(datasetRawFilePaths, dataPkgDataset, workingDir);
+                        success = RetrieveDataPackageDatasetMsXMLFile(datasetRawFilePaths, dataPkgDataset, workingDir, msXmlType);
                     }
                     else
                     {
@@ -1301,25 +1312,38 @@ namespace AnalysisManagerBase.JobConfig
             return true;
         }
 
-        private bool RetrieveDataPackageDatasetMzMLFile(
+        private bool RetrieveDataPackageDatasetMsXMLFile(
             IDictionary<string, string> datasetRawFilePaths,
             DataPackageDatasetInfo dataPkgDataset,
-            string workingDir)
+            string workingDir,
+            AnalysisResources.MSXMLOutputTypeConstants msXmlType)
         {
             const bool unzipFile = true;
 
-            var success = mAnalysisResources.FileSearchTool.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out _, out _);
+            var success = msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                ? mAnalysisResources.FileSearchTool.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out _, out _)
+                : mAnalysisResources.FileSearchTool.RetrieveCachedMzMLFile(unzipFile, out errorMessage, out _, out _);
 
             if (!success)
             {
-                OnErrorEvent("RetrieveCachedMzMLFile could not find the .mzML file for dataset {0}: {1}", dataPkgDataset.Dataset, errorMessage);
+                var methodName = msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                    ? "RetrieveCachedMzXMLFile"
+                    : "RetrieveCachedMzMLFile";
+
+                // RetrieveCachedMzMLFile could not find the mzML file for dataset
+                OnErrorEvent("{0} could not find the {1} file for dataset {2}: {3}", methodName, msXmlType, dataPkgDataset.Dataset, errorMessage);
                 return false;
             }
 
-            var localMzMLFilePath = Path.Combine(workingDir, dataPkgDataset.Dataset + AnalysisResources.DOT_MZML_EXTENSION);
+            var fileExtension = msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                ? AnalysisResources.DOT_MZXML_EXTENSION
+                : AnalysisResources.DOT_MZML_EXTENSION;
+
+            var localMsXMLFilePath = Path.Combine(workingDir, dataPkgDataset.Dataset + fileExtension);
 
             dataPkgDataset.IsDirectoryBased = false;
-            datasetRawFilePaths.Add(dataPkgDataset.Dataset, localMzMLFilePath);
+            datasetRawFilePaths.Add(dataPkgDataset.Dataset, localMsXMLFilePath);
+
             return true;
         }
 

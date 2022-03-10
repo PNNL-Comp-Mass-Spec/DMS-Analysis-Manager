@@ -2432,7 +2432,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Instead, use FindAndRetrieveMiscFiles
         /// </remarks>
         /// <returns>Closeout code</returns>
-        protected CloseOutType GetMzXMLFile()
+        public CloseOutType GetMzXMLFile()
         {
             LogMessage("Getting mzXML file");
 

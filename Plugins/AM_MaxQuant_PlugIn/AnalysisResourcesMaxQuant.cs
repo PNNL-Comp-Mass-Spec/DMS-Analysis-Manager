@@ -53,19 +53,19 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-                var retrieveMzML = mJobParams.GetJobParameter("CreateMzMLFiles", false);
+                var retrieveMsXmlFiles = mJobParams.GetJobParameter("CreateMzMLFiles", false);
 
                 // Determine the transfer directory path
 
-                // Caveats for retrieveMzML:
-                //   When true, we want useInputDirectory to be true so that the resourcer will look for .mzML files in a MSXML_Gen directory
-                //   When retrieveMzML is false, we want useInputDirectory to be false so that the resourcer will look for .Raw files in the dataset directory
+                // Caveats for retrieveMsXmlFiles:
+                //   When true, we want useInputDirectory to be true so that the resourcer will look for .mzML (or .mzXML) files in a MSXML_Gen directory
+                //   When retrieveMsXmlFiles is false, we want useInputDirectory to be false so that the resourcer will look for .Raw files in the dataset directory
 
                 // Caveats for dataPackageID
                 //   When 0, we are processing a single dataset, and we thus need to include the dataset name, generating a path like \\proto-4\DMS3_Xfer\QC_Dataset\MXQ202103151122_Auto1880613
                 //   When positive, we are processing datasets in a data package, and we thus want a path without the dataset name, generating a path like \\proto-9\MaxQuant_Staging\MXQ202103161252_Auto1880833
 
-                var useInputDirectory = retrieveMzML;
+                var useInputDirectory = retrieveMsXmlFiles;
                 var includeDatasetName = dataPackageID <= 0;
 
                 var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory, includeDatasetName);
@@ -181,7 +181,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
-                    retrieveMzML,
+                    retrieveMsXmlFiles,
                     AnalysisToolRunnerMaxQuant.PROGRESS_PCT_TOOL_RUNNER_STARTING,
                     false,
                     out var dataPackageInfo,

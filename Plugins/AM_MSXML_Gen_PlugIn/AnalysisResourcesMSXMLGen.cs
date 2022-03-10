@@ -12,7 +12,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     public class AnalysisResourcesMSXMLGen : AnalysisResources
     {
         /// <summary>
-        /// Retrieves files necessary for creating the .mzXML file
+        /// Retrieves files necessary for creating the .mzML or .mzXML file
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
@@ -82,7 +82,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     }
                 }
 
-                const bool retrieveMzML = false;
+                const bool retrieveMsXmlFiles = false;
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
@@ -93,7 +93,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
-                    retrieveMzML,
+                    retrieveMsXmlFiles,
                     1,
                     skipDatasetsWithExistingMzML,
                     out var dataPackageInfo,
@@ -111,7 +111,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (skipDatasetsWithExistingMzML && dataPackageInfo.DatasetFiles.Count == 0)
                 {
-                    EvalMessage = string.Format("Skipping MSXMLGen since all {0} datasets in data package {1} already have a .mzML file", dataPackageInfo.Datasets.Count, dataPackageID);
+                    var msXMLOutputType = mJobParams.GetJobParameter("MSXMLOutputType", "mzML");
+
+                    EvalMessage = string.Format(
+                        "Skipping MSXMLGen since all {0} datasets in data package {1} already have a {2} file",
+                        dataPackageInfo.Datasets.Count,
+                        dataPackageID,
+                        msXMLOutputType);
+
                     LogMessage(EvalMessage);
                     return CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN;
                 }
