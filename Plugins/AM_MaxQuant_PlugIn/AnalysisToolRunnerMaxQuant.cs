@@ -736,7 +736,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return;
                 }
 
-                mProgress = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(progressAtStart, progressAtEnd, currentProgress);
+                var progressRange = progressAtEnd - progressAtStart;
+                var currentProgressAdjusted = currentProgress - progressAtStart;
+
+                if (progressRange > 0)
+                {
+                    mProgress = currentProgressAdjusted / progressRange * 100;
+                }
             }
             catch (Exception ex)
             {
