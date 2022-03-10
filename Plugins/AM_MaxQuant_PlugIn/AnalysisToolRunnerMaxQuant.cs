@@ -1863,6 +1863,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
 
                     RuntimeOptions.StepRangeValidated = true;
+                    break;
                 }
 
                 if (!RuntimeOptions.StepRangeValidated)
