@@ -724,17 +724,19 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
                 }
 
-                mProgress = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(progressAtStart, progressAtEnd, currentProgress);
-
-                if (!RuntimeOptions.DryRun)
-                    return;
-
-                StepToTaskMap.Clear();
-
-                foreach (var item in stepToTaskMap.Where(item => !StepToTaskMap.ContainsKey(item.Key)))
+                if (RuntimeOptions.DryRun)
                 {
-                    StepToTaskMap.Add(item.Key, item.Value);
+                    StepToTaskMap.Clear();
+
+                    foreach (var item in stepToTaskMap.Where(item => !StepToTaskMap.ContainsKey(item.Key)))
+                    {
+                        StepToTaskMap.Add(item.Key, item.Value);
+                    }
+
+                    return;
                 }
+
+                mProgress = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.ComputeIncrementalProgress(progressAtStart, progressAtEnd, currentProgress);
             }
             catch (Exception ex)
             {
