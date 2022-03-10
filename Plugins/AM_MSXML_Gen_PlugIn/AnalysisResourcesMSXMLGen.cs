@@ -87,8 +87,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
 
-                // If processing datasets in a data package, if an existing .mzML file is found,
-                // do not retrieve the .raw file (or .d directory) and thus do not re-create the .mzML file
+                // If processing datasets in a data package, if an existing .mzML (or .mzXML) file is found,
+                // do not retrieve the .raw file (or .d directory) and thus do not re-create the .mzML or .mzXML file
                 var skipDatasetsWithExistingMzML = dataPackageID > 0;
 
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
