@@ -880,7 +880,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             UpdateStatusFile();
 
-            if (!(DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE))
+            if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
                 return;
 
             mLastConsoleOutputParse = DateTime.UtcNow;

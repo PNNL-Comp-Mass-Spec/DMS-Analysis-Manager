@@ -1150,7 +1150,7 @@ namespace AnalysisManagerBase.StatusReporting
         {
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
-            if (!(DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds >= MIN_FILE_WRITE_INTERVAL_SECONDS))
+            if (DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds < MIN_FILE_WRITE_INTERVAL_SECONDS)
                 return;
 
             // We will write out the Status XML to a temporary file, then rename the temp file to the primary file

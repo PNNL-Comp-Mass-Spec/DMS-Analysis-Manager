@@ -2821,7 +2821,7 @@ namespace AnalysisManagerProg
         /// <param name="minutesBetweenUpdates"></param>
         private bool UpdateManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
-            if (!(DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes >= minutesBetweenUpdates))
+            if (DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes < minutesBetweenUpdates)
                 return true;
 
             lastConfigDBUpdate = DateTime.UtcNow;
