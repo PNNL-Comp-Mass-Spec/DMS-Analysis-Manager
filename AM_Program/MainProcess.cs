@@ -403,7 +403,12 @@ namespace AnalysisManagerProg
             }
             else
             {
+                // SQL Server:
                 // Data Source=proteinseqs;Initial Catalog=manager_control
+
+                // PostgreSQL:
+                // Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;
+
                 mgrConfigDBConnectionString = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
