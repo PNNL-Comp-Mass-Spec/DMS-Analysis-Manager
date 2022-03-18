@@ -54,9 +54,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const string PTM_SHEPHERD_CONSOLE_OUTPUT = "PTMShepherd_ConsoleOutput.txt";
 
         /// <summary>
-        /// Reserve 14 GB when running Crystal-C with Java
+        /// Reserve 16 GB when running Crystal-C with Java
         /// </summary>
-        public const int CRYSTALC_MEMORY_SIZE_GB = 14;
+        public const int CRYSTALC_MEMORY_SIZE_GB = 16;
 
         /// <summary>
         /// Interval, in milliseconds, for monitoring programs run via <see cref="mCmdRunner"/>
@@ -64,14 +64,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const int DEFAULT_MONITOR_INTERVAL_MSEC = 2000;
 
         /// <summary>
-        /// Reserve 4 GB when running IonQuant with Java
+        /// Reserve 16 GB when running IonQuant with Java
         /// </summary>
-        public const int ION_QUANT_MEMORY_SIZE_GB = 4;
+        public const int ION_QUANT_MEMORY_SIZE_GB = 16;
 
         /// <summary>
-        /// Reserve 14 GB when running TMT-Integrator
+        /// Reserve 16 GB when running TMT-Integrator
         /// </summary>
-        public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 14;
+        public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 16;
 
         /// <summary>
         /// Extension for peptide XML files
