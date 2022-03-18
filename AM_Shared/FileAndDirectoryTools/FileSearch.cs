@@ -1569,8 +1569,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             bool useHashCheckFile;
 
-            // ReSharper disable once MergeIntoPattern
-            if (sourceDirectory != null && sourceDirectory.Exists)
+            if (sourceDirectory?.Exists == true)
             {
                 useHashCheckFile = true;
             }
