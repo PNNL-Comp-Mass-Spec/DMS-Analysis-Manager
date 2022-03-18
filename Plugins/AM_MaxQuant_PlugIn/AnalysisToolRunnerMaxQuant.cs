@@ -1766,6 +1766,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 RuntimeOptions.DryRun = false;
                 foreach (var dmsStep in dmsSteps.Where(item => !item.Value.StartStepID.HasValue))
                 {
+                    // In the MaxQuant parameter file, DMS step 1 has an undefined startStepID; running a dry run of MaxQuant to determine step IDs
                     LogMessage(string.Format(
                         "In the MaxQuant parameter file, DMS step {0} has an undefined startStepID; " +
                         "running a dry run of MaxQuant to determine step IDs", dmsStep.Key));
