@@ -41,7 +41,7 @@ namespace AnalysisManagerBase
         bool TraceMode { get; }
 
         /// <summary>
-        /// Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
+        /// Calls stored procedure ack_manager_update_required in the Manager Control DB
         /// </summary>
         void AckManagerUpdateRequired();
 

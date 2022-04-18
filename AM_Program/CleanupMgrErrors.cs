@@ -17,7 +17,7 @@ namespace AnalysisManagerProg
     {
         // Ignore Spelling: holdoff
 
-        private const string SP_NAME_REPORT_MGR_ERROR_CLEANUP = "ReportManagerErrorCleanup";
+        private const string SP_NAME_REPORT_MGR_ERROR_CLEANUP = "report_manager_error_cleanup";
 
         private const int DEFAULT_HOLDOFF_SECONDS = 3;
 
@@ -60,7 +60,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Cleanup status codes for stored procedure ReportManagerErrorCleanup
+        /// Cleanup status codes for stored procedure report_manager_error_cleanup
         /// </summary>
         public enum CleanupActionCodes
         {
@@ -143,7 +143,7 @@ namespace AnalysisManagerProg
 
             LogMessage("Attempting to automatically clean the work directory");
 
-            // Call SP ReportManagerErrorCleanup @ActionCode=1
+            // Call SP report_manager_error_cleanup with @ActionCode=1
             ReportManagerErrorCleanup(CleanupActionCodes.Start);
 
             // Delete all directories and subdirectories in the work directory
@@ -177,8 +177,8 @@ namespace AnalysisManagerProg
                 }
             }
 
-            // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
-            // Otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // If successful, call SP report_manager_error_cleanup with @ActionCode=2
+            // Otherwise call SP report_manager_error_cleanup with @ActionCode=3
 
             if (success)
             {

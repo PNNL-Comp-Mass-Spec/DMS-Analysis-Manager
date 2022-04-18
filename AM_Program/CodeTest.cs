@@ -1143,7 +1143,7 @@ namespace AnalysisManagerProg
                 EchoMessagesToFileLogger = true
             };
 
-            sqlServerLogger.ChangeConnectionInfo("CodeTest2", connectionStringToUse, "PostLogEntry", "type", "message", "postedBy");
+            sqlServerLogger.ChangeConnectionInfo("CodeTest2", connectionStringToUse, "post_log_entry", "type", "message", "postedBy");
             sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
 
             var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connectionStringToUse);
@@ -1151,7 +1151,7 @@ namespace AnalysisManagerProg
             {
                 EchoMessagesToFileLogger = true
             };
-            odbcLogger.ChangeConnectionInfo("CodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
+            odbcLogger.ChangeConnectionInfo("CodeTest2", odbcConnectionString, "post_log_entry", "type", "message", "postedBy", 128, 4096, 128);
 
             odbcLogger.WriteLog(BaseLogger.LogLevels.INFO, "ODBC Log Test");
             odbcLogger.WriteLog(BaseLogger.LogLevels.WARN, "ODBC Warning Test");

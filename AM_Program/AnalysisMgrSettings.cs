@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Stored procedure used to acknowledge that a manager update is required
         /// </summary>
-        private const string SP_NAME_ACK_MANAGER_UPDATE = "AckManagerUpdateRequired";
+        private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
         private const string SP_NAME_PAUSE_MANAGER_TASK_REQUESTS = "PauseManagerTaskRequests";
         /// <summary>
@@ -110,7 +110,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
+        /// Calls stored procedure ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
         /// </summary>
         public void AckManagerUpdateRequired()
         {
