@@ -1286,6 +1286,7 @@ namespace AnalysisManagerProg
             const int timeoutSeconds = 30;
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_TestRunSP");
+            var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(connectionStringToUse);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, debugMode: true);
             RegisterEvents(dbTools);
@@ -1294,7 +1295,10 @@ namespace AnalysisManagerProg
 
             dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = 1026591;
             dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 3;
-            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512).Direction = ParameterDirection.Output;
+            dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512).Direction =
+                dbServerType == DbServerTypes.PostgreSQL
+                    ? ParameterDirection.InputOutput
+                    : ParameterDirection.Output;
 
             var success = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
 

@@ -510,6 +510,7 @@ namespace AnalysisManagerProg
                 failureMessage ??= string.Empty;
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(mMgrConfigDBConnectionString, mManagerName);
+                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(connectionStringToUse);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
@@ -520,7 +521,11 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@ManagerName", SqlType.VarChar, 128, mManagerName);
                 dbTools.AddParameter(cmd, "@State", SqlType.Int).Value = mgrCleanupActionCode;
                 dbTools.AddParameter(cmd, "@FailureMsg", SqlType.VarChar, 512, failureMessage);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, ParameterDirection.Output);
+
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128,
+                    dbServerType == DbServerTypes.PostgreSQL
+                        ? ParameterDirection.InputOutput
+                        : ParameterDirection.Output);
 
                 // Execute the SP
                 dbTools.ExecuteSP(cmd);
