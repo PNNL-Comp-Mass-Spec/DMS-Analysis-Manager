@@ -1118,7 +1118,15 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test database logging
         /// </summary>
-        /// <param name="connectionString">SQL Server style connection string</param>
+        /// <remarks>
+        /// <para>
+        /// SQL Server connection string: "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI"
+        /// </para>
+        /// <para>
+        /// PostgreSQL connection string: "Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;"
+        /// </para>
+        /// </remarks>
+        /// <param name="connectionString">Database connection string</param>
         public void TestDatabaseLogging(string connectionString)
         {
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "AnalysisManager_CodeTest");
@@ -1137,6 +1145,11 @@ namespace AnalysisManagerProg
             {
                 LogError("Test exception", ex, true);
             }
+
+            var serverType = DbToolsFactory.GetServerTypeFromConnectionString(connectionStringToUse);
+
+            if (serverType != DbServerTypes.MSSQLServer)
+                return;
 
             var sqlServerLogger = new SQLServerDatabaseLogger
             {
@@ -1158,9 +1171,25 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Determine the size of a legacy FASTA file
+        /// Call post_log_entry in the dms database on prismdb1
         /// </summary>
-        public void GetLegacyFastaFileSize()
+        public void TestDatabaseLoggingPostgres()
+        {
+            TestDatabaseLogging("Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;");
+        }
+
+        /// <summary>
+        /// Call post_log_entry in the DMS5 database on Gigasax
+        /// </summary>
+        public void TestDatabaseLoggingSqlServer()
+        {
+            TestDatabaseLogging("Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
+        }
+
+        /// <summary>
+            /// Determine the size of a legacy FASTA file
+            /// </summary>
+            public void GetLegacyFastaFileSize()
         {
             var jobParams = new AnalysisJob(mMgrSettings, 0);
 
