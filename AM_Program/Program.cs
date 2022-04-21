@@ -30,7 +30,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "April 18, 2022";
+        public const string PROGRAM_DATE = "April 21, 2022";
 
         private static bool mTraceMode;
 
@@ -118,6 +118,9 @@ namespace AnalysisManagerProg
 
                         // var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
                         // testHarness.TestDatabaseLogging(connString);
+
+                        // testHarness.TestDatabaseLoggingPostgres();
+                        // testHarness.TestDatabaseLoggingSqlServer();
 
                         // testHarness.TestGetProcesses();
 
