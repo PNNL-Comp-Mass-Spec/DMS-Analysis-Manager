@@ -475,6 +475,29 @@ namespace AnalysisManagerBase.JobConfig
 
             var paramGroupIndexOrNumber = match2.Success ? int.Parse(match2.Groups["GroupIndex"].Value) : 0;
 
+            // Examine the comment to look for MaxQuant fraction numbers (must be numeric)
+            // Fraction numbers are used during Match Between Runs to determine which datasets to examine to find additional PSMs
+            // From the documentation:
+            //   Fraction 1 will be matched with all fractions 1 and 2
+            //   Fraction 2 will be matched against all fractions 1, 2, and 3
+            //   Fraction 3 will be matched against all fractions 2, 3, and 4
+
+            //   Furthermore, if only the fractions of one sample are to be matched against each other,
+            //   but not to the fractions of another sample, introduce gaps between the different groups, e.g.:
+            //   - Use fractions  1,  2,  3, etc. for the first sample group
+            //   - Use fractions 11, 12, 13, etc. for the second sample group
+            //   - Use fractions 21, 22, 23, etc. for the third sample group
+
+            // Example allowed comments:
+            //   MaxQuant Fraction 1
+            //   Maxq Fraction: 3
+            //   MQ Fraction 10
+            var maxQuantFractionMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Fraction[_ :]*(?<FractionNumber>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            var match3 = maxQuantFractionMatcher.Match(packageComment);
+
+            var fractionNumber = match3.Success ? int.Parse(match3.Groups["FractionNumber"].Value) : 0;
+
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
@@ -492,7 +515,8 @@ namespace AnalysisManagerBase.JobConfig
                 RawDataType = curRow["RawDataType"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
                 DatasetExperimentGroup = datasetExperimentGroup,
-                MaxQuantParamGroup = paramGroupIndexOrNumber
+                MaxQuantParamGroup = paramGroupIndexOrNumber,
+                MaxQuantFractionNumber = fractionNumber
             };
         }
 

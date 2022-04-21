@@ -1438,7 +1438,14 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                             var match = fractionMatcher.Match(experiment);
 
-                            var fractionNumber = match.Success ? match.Groups["FractionNumber"].Value : "32767";
+                            var fractionNumberFromExperiment = match.Success ? match.Groups["FractionNumber"].Value : "32767";
+
+                            var fractionNumberFromPackageComment = dataPackageInfo.DatasetMaxQuantFractionNumber[datasetId];
+
+                            var fractionNumber = fractionNumberFromPackageComment > 0
+                                ? fractionNumberFromPackageComment.ToString()
+                                : fractionNumberFromExperiment;
+
                             fractionNodes.Add(new XElement("short", fractionNumber));
 
                             ptmNodes.Add(new XElement("boolean", "False"));

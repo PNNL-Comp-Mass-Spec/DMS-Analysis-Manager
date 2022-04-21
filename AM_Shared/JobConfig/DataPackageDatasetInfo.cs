@@ -123,6 +123,35 @@ namespace AnalysisManagerBase.JobConfig
         public string DatasetExperimentGroup { get; set; }
 
         /// <summary>
+        /// MaxQuant fraction number (or 0 if undefined)
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Fraction numbers are used during Match Between Runs to determine which datasets to examine to find additional PSMs
+        /// </para>
+        /// <para>
+        /// Matching logic:
+        ///   Fraction 1 will be matched with all fractions 1 and 2
+        ///   Fraction 2 will be matched against all fractions 1, 2, and 3
+        ///   Fraction 3 will be matched against all fractions 2, 3, and 4
+        /// </para>
+        /// <para>
+        /// If only the fractions of one sample are to be matched against each other,
+        /// but not to the fractions of another sample, introduce gaps between the different groups, e.g.:
+        ///   - Use fractions  1,  2,  3, etc. for the first sample group
+        ///   - Use fractions 11, 12, 13, etc. for the second sample group
+        ///   - Use fractions 21, 22, 23, etc. for the third sample group
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// The following are example dataset comments that include the fraction number (1, 3, or 10):
+        ///   MaxQuant Fraction 1
+        ///   Maxq Fraction: 3
+        ///   MQ Fraction 10
+        /// </example>
+        public int MaxQuantFractionNumber { get; set; }
+
+        /// <summary>
         /// MaxQuant parameter group index or number (or 0 if undefined)
         /// </summary>
         /// <remarks>
@@ -136,9 +165,9 @@ namespace AnalysisManagerBase.JobConfig
         /// </remarks>
         /// <example>
         /// The following are example dataset comments that include the parameter group ID (1, 3, or 10):
-        /// MaxQuant Group 1
-        /// Maxq Group: 3
-        /// MQ Group 10
+        ///   MaxQuant Group 1
+        ///   Maxq Group: 3
+        ///   MQ Group 10
         /// </example>
         public int MaxQuantParamGroup { get; set; }
 
@@ -180,6 +209,7 @@ namespace AnalysisManagerBase.JobConfig
             DataPackageComment = string.Empty;
             DatasetExperimentGroup = string.Empty;
             MaxQuantParamGroup = 0;
+            MaxQuantFractionNumber = 0;
 
             RawDataType = string.Empty;
         }

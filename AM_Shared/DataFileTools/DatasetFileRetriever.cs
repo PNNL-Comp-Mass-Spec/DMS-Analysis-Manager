@@ -223,6 +223,7 @@ namespace AnalysisManagerBase.DataFileTools
                     }
 
                     dataPackageInfo.DatasetExperimentGroup.Add(datasetID, dataset.Value.DatasetExperimentGroup);
+                    dataPackageInfo.DatasetMaxQuantFractionNumber.Add(datasetID, dataset.Value.MaxQuantFractionNumber);
                     dataPackageInfo.DatasetMaxQuantParamGroup.Add(datasetID, dataset.Value.MaxQuantParamGroup);
                 }
 
