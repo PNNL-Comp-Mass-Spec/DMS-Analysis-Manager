@@ -1432,9 +1432,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                             var datasetFileOrDirectoryName = dataPackageInfo.DatasetFiles[datasetId];
                             var experiment = dataPackageInfo.Experiments[datasetId];
 
+                            var experimentGroup = dataPackageInfo.DatasetExperimentGroup[datasetId];
+
                             filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
 
-                            experimentNodes.Add(new XElement("string", experiment));
+                            // If Dataset Experiment Group is an empty string, use the dataset's experiment name as the experiment name in the parameter file
+                            // Dataset Experiment Group is parsed from the data package comment field for datasets in a Data Package
+                            experimentNodes.Add(new XElement("string", string.IsNullOrWhiteSpace(experimentGroup) ? experiment : experimentGroup));
 
                             var match = fractionMatcher.Match(experiment);
 
