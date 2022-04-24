@@ -425,6 +425,7 @@ namespace AnalysisManagerBase.JobConfig
             // Example allowed comments:
             //   MSFragger Group CohortA
             //   MSFragger Group 1
+            //   MSFragger Experiment CohortA
             //   MSFrag Group CohortA
             //   MSFrag Group 10
             //   FragPipe Group CohortA
@@ -433,11 +434,12 @@ namespace AnalysisManagerBase.JobConfig
             // Also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant
             //   MaxQuant Group CohortA
             //   MaxQuant Group 5
+            //   MaxQuant Experiment CohortA
             //   Maxq Group: CohortA
             //   Maxq Group: 5
             //   MQ Group CohortA
             //   MQ Group 5
-            var experimentGroupMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var experimentGroupMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*(Group|Experiment)[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match1 = experimentGroupMatcher.Match(packageComment);
 

@@ -94,20 +94,27 @@ namespace AnalysisManagerBase.JobConfig
         public string DataPackageComment { get; set; }
 
         /// <summary>
-        /// Dataset experiment group name (used by MSFragger); empty string if not defined
+        /// Dataset experiment group name; empty string if not defined
         /// </summary>
         /// <remarks>
         /// <para>
-        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3871/-/-/-/-/-
+        /// For MaxQuant, overrides the experiment name for the given dataset (in the MaxQuant parameter file)
+        /// </para>
+        /// <para>
+        /// For MSFragger, used to roll up quantitation info amongst datasets in the same group
         /// </para>
         /// <para>
         /// aka ExperimentGroup or ExperimentGroupName
+        /// </para>
+        /// <para>
+        /// Example usage: https://dms2.pnl.gov/data_package_dataset/report/3871/-/-/-/-/-
         /// </para>
         /// </remarks>
         /// <example>
         /// The following are example dataset comments that include the experiment group name (CohortA, 1, 10, or 5):
         ///   MSFragger Group CohortA
         ///   MSFragger Group 1
+        ///   MSFragger Experiment CohortA
         ///   MSFrag Group CohortA
         ///   MSFrag Group 10
         ///   FragPipe Group CohortA
@@ -115,6 +122,7 @@ namespace AnalysisManagerBase.JobConfig
         /// We also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant:
         ///   MaxQuant Group CohortA
         ///   MaxQuant Group 5
+        ///   MaxQuant Experiment CohortA
         ///   Maxq Group: CohortA
         ///   Maxq Group: 5
         ///   MQ Group CohortA
