@@ -187,9 +187,11 @@ namespace AnalysisManagerBase.JobConfig
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
 
-                if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup))
+                if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup) || int.TryParse(datasetInfo.DatasetExperimentGroup, out _))
                 {
                     // The data package did not have a custom experiment group name defined in the dataset comment of the data package
+                    // Or, the dataset experiment group is an integer
+
                     // Optionally use the dataset name or experiment name for Dataset Experiment Group
                     if (autoDefineExperimentGroupWithDatasetName)
                     {
@@ -425,7 +427,6 @@ namespace AnalysisManagerBase.JobConfig
             // Example allowed comments:
             //   MSFragger Group CohortA
             //   MSFragger Group 1
-            //   MSFragger Experiment CohortA
             //   MSFrag Group CohortA
             //   MSFrag Group 10
             //   FragPipe Group CohortA
@@ -434,12 +435,11 @@ namespace AnalysisManagerBase.JobConfig
             // Also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant
             //   MaxQuant Group CohortA
             //   MaxQuant Group 5
-            //   MaxQuant Experiment CohortA
             //   Maxq Group: CohortA
             //   Maxq Group: 5
             //   MQ Group CohortA
             //   MQ Group 5
-            var experimentGroupMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*(Group|Experiment)[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var experimentGroupMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Group[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match1 = experimentGroupMatcher.Match(packageComment);
 
@@ -465,7 +465,23 @@ namespace AnalysisManagerBase.JobConfig
             }
             else
             {
-                datasetExperimentGroup = string.Empty;
+                // Repeat the search but look for "Experiment" instead of "Group"
+                // This will match
+                //   MSFragger Experiment CohortA
+                //   MaxQuant Experiment CohortA
+
+                var experimentNameMatcher = new Regex("(?<PrefixName>MSFragger|MSFrag|FragPipe|MaxQuant|Maxq|MQ)[_ ]*Experiment[_ :]+(?<GroupName>[a-z0-9][a-z0-9_-]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                var match2 = experimentNameMatcher.Match(packageComment);
+
+                if (match2.Success)
+                {
+                    datasetExperimentGroup = match2.Groups["GroupName"].Value;
+                }
+                else
+                {
+                    datasetExperimentGroup = string.Empty;
+                }
             }
 
             // Examine the comment to look for MaxQuant parameter groups (must be numeric)
@@ -478,9 +494,11 @@ namespace AnalysisManagerBase.JobConfig
             //   MQ Group 10
             var maxQuantGroupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ :]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var match2 = maxQuantGroupMatcher.Match(packageComment);
+            var match3 = maxQuantGroupMatcher.Match(packageComment);
 
-            var paramGroupIndexOrNumber = match2.Success ? int.Parse(match2.Groups["GroupIndex"].Value) : 0;
+            var paramGroupIndexOrNumber = match3.Success
+                ? int.Parse(match3.Groups["GroupIndex"].Value)
+                : 0;
 
             // Examine the comment to look for MaxQuant fraction numbers (must be numeric)
             // Fraction numbers are used during Match Between Runs to determine which datasets to examine to find additional PSMs
@@ -501,9 +519,11 @@ namespace AnalysisManagerBase.JobConfig
             //   MQ Fraction 10
             var maxQuantFractionMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Fraction[_ :]*(?<FractionNumber>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            var match3 = maxQuantFractionMatcher.Match(packageComment);
+            var match4 = maxQuantFractionMatcher.Match(packageComment);
 
-            var fractionNumber = match3.Success ? int.Parse(match3.Groups["FractionNumber"].Value) : 0;
+            var fractionNumber = match4.Success
+                ? int.Parse(match4.Groups["FractionNumber"].Value)
+                : 0;
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
