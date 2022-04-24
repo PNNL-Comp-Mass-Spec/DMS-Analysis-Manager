@@ -1436,9 +1436,12 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                             filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
 
-                            // If Dataset Experiment Group is an empty string, use the dataset's experiment name as the experiment name in the parameter file
+                            // If Dataset Experiment Group is an empty string or an integer, use the dataset's experiment name as the experiment name in the parameter file
                             // Dataset Experiment Group is parsed from the data package comment field for datasets in a Data Package
-                            experimentNodes.Add(new XElement("string", string.IsNullOrWhiteSpace(experimentGroup) ? experiment : experimentGroup));
+                            experimentNodes.Add(new XElement("string",
+                                string.IsNullOrWhiteSpace(experimentGroup) || int.TryParse(experimentGroup, out _)
+                                    ? experiment
+                                    : experimentGroup));
 
                             var match = fractionMatcher.Match(experiment);
 
