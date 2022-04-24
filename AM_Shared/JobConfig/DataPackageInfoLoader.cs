@@ -187,13 +187,18 @@ namespace AnalysisManagerBase.JobConfig
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
 
-                if (autoDefineExperimentGroupWithDatasetName)
+                if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup))
                 {
-                    datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset;
-                }
-                else if (autoDefineExperimentGroupWithExperimentName)
-                {
-                    datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
+                    // The data package did not have a custom experiment group name defined in the dataset comment of the data package
+                    // Optionally use the dataset name or experiment name for Dataset Experiment Group
+                    if (autoDefineExperimentGroupWithDatasetName)
+                    {
+                        datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset;
+                    }
+                    else if (autoDefineExperimentGroupWithExperimentName)
+                    {
+                        datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
+                    }
                 }
 
                 if (!dataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
