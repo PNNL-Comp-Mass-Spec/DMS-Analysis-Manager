@@ -758,7 +758,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath) {
+                using var zipper = new ZipFile(zipFilePath)
+                {
                     UseZip64WhenSaving = Zip64Option.AsNecessary
                 };
 
@@ -963,7 +964,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath) {
+                using var zipper = new ZipFile(zipFilePath)
+                {
                     UseZip64WhenSaving = Zip64Option.AsNecessary
                 };
 
