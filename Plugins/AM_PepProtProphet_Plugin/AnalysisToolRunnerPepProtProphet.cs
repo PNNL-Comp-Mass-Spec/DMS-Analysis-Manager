@@ -91,6 +91,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
+        public const string ZIPPED_QUANT_CSV_FILES = "Dataset_quant_csv.zip";
+
         /// <summary>
         /// Philosopher tool type
         /// </summary>
@@ -556,9 +558,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!moveSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var zipSuccess = ZipPepXmlAndPinFiles(dataPackageInfo);
+                var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo);
+                if (!zipSuccessPepXml)
+                    return CloseOutType.CLOSEOUT_FAILED;
 
-                return zipSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                var zipSuccessPsmTsv = ZipPsmTsvFiles(experimentGroupWorkingDirectories);
+
+                return zipSuccessPsmTsv ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -579,7 +585,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// If experiment group working directories are present, will move the updated files to the main working directory
         /// </para>
         /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
@@ -1095,9 +1101,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // Since we have multiple experiment groups, initialize the workspace for each one
-                foreach (var workingDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
-                    var success = InitializePhilosopherWorkspaceWork(workingDirectory, workingDirectoryPadWidth);
+                    var success = InitializePhilosopherWorkspaceWork(experimentGroupDirectory, workingDirectoryPadWidth);
 
                     if (success != CloseOutType.CLOSEOUT_SUCCESS)
                         return success;
@@ -2064,6 +2070,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                             var targetPath = Path.Combine(mWorkingDirectory.FullName, quantFile.Name);
                             quantFile.MoveTo(targetPath);
+                        }
+
+                        if (quantFiles.Length > 3)
+                        {
+                            // Zip the _quant.csv files, creating Dataset_quant_csv.zip
+
+                            var zipSuccess = ZipFiles("_quant .csv files", quantFiles, ZIPPED_QUANT_CSV_FILES);
+
+                            if (!zipSuccess)
+                                return false;
                         }
                     }
                     catch (Exception ex)
@@ -4025,6 +4041,35 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
+        /// Store the list of files in a zip file (overwriting any existing zip file),
+        /// then call AddResultFileToSkip() for each file
+        /// </summary>
+        /// <param name="fileListDescription"></param>
+        /// <param name="filesToZip"></param>
+        /// <param name="zipFileName"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ZipFiles(string fileListDescription, IReadOnlyList<FileInfo> filesToZip, string zipFileName)
+        {
+            var zipFilePath = Path.Combine(mWorkingDirectory.FullName, zipFileName);
+
+            var success = mDotNetZipTools.ZipFiles(filesToZip, zipFilePath);
+
+            if (success)
+            {
+                foreach (var item in filesToZip)
+                {
+                    mJobParams.AddResultFileToSkip(item.Name);
+                }
+            }
+            else
+            {
+                LogError("Error zipping " + fileListDescription + " to create " + zipFileName);
+            }
+
+            return success;
+        }
+
+        /// <summary>
         /// Zip each .pepXML file
         /// Also store the .pin files in the zip files
         /// </summary>
@@ -4070,6 +4115,69 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in ZipPepXmlFiles", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Zip the _ion.tsv, _peptide.tsv, and _protein.tsv files created for each experiment group,
+        /// but only if there are more than three experiment groups
+        /// </summary>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ZipPsmTsvFiles(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            try
+            {
+                if (experimentGroupWorkingDirectories.Count <= 3)
+                    return true;
+
+                var validExperimentGroupCount = 0;
+                var filesToZip = new List<FileInfo>();
+
+                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                {
+                    var experimentGroup = experimentGroupDirectory.Name;
+
+                    var ionFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_ion.tsv"));
+                    var peptideFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_peptide.tsv"));
+                    var proteinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_protein.tsv"));
+                    var psmFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_psm.tsv"));
+
+                    if (ionFile.Exists)
+                        filesToZip.Add(ionFile);
+                    else
+                        LogError("File not found: " + ionFile.Name);
+
+                    if (peptideFile.Exists)
+                        filesToZip.Add(peptideFile);
+                    else
+                        LogError("File not found: " + peptideFile.Name);
+
+                    if (proteinFile.Exists)
+                        filesToZip.Add(proteinFile);
+                    else
+                        LogError("File not found: " + proteinFile.Name);
+
+                    if (psmFile.Exists)
+                        filesToZip.Add(psmFile);
+                    else
+                        LogError("File not found: " + psmFile.Name);
+
+                    if (ionFile.Exists && peptideFile.Exists && proteinFile.Exists && psmFile.Exists)
+                    {
+                        validExperimentGroupCount++;
+                    }
+                }
+
+                // Zip the files to create Dataset_PSM_tsv.zip
+                var zipSuccess = ZipFiles("PSM .tsv files", filesToZip, AnalysisResources.ZIPPED_MSFRAGGER_PSM_TSV_FILES);
+
+                return zipSuccess && validExperimentGroupCount == experimentGroupWorkingDirectories.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipPsmTsvFiles", ex);
                 return false;
             }
         }

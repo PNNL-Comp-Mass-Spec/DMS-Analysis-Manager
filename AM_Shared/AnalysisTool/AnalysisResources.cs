@@ -429,6 +429,11 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 
         /// <summary>
+        /// Zip file with _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files
+        /// </summary>
+        public const string ZIPPED_MSFRAGGER_PSM_TSV_FILES = "Dataset_PSM_tsv.zip";
+
+        /// <summary>
         /// Instrument data file type enum
         /// </summary>
         public enum RawDataTypeConstants
