@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Ionic.Zip;
 using PRISM;
 
@@ -370,37 +371,95 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Update Message with stats on the most recent zip file created
         /// </summary>
         /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
-        /// <param name="fileOrFolderZippedOrUnzipped"></param>
-        /// <param name="startTime"></param>
-        /// <param name="endTime"></param>
-        /// <param name="fileWasZipped"></param>
+        /// <param name="zippedFiles">List of paths to the files that were added to the zip file</param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="endTime">End time</param>
         /// <param name="zipProgramName"></param>
         private void ReportZipStats(
-            FileSystemInfo fileOrFolderZippedOrUnzipped,
+            IReadOnlyList<string> zippedFiles,
+            DateTime startTime,
+            DateTime endTime,
+            string zipProgramName)
+        {
+            var totalSizeBytes = zippedFiles.Select(item => new FileInfo(item)).Where(sourceFile => sourceFile.Exists).Sum(sourceFile => sourceFile.Length);
+
+            var descriptionOfZippedItems = zippedFiles.Count == 1
+                ? "file " + zippedFiles[0]
+                : string.Format("{0} files", zippedFiles.Count);
+
+            ReportZipStats(descriptionOfZippedItems, totalSizeBytes, startTime, endTime, true, zipProgramName);
+        }
+
+        /// <summary>
+        /// Update Message with stats on the most recent zip file created
+        /// </summary>
+        /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
+        /// <param name="fileOrDirectoryZippedOrUnzipped">File or directory that was zipped</param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="endTime">End time</param>
+        /// <param name="fileWasZipped">True if creating a zip file, false if extracting files from an existing zip file</param>
+        /// <param name="zipProgramName">Zip program name</param>
+        /// <param name="includedAllSubdirectories">
+        /// When fileOrDirectoryZippedOrUnzipped is a directory, set this to true if subdirectories were added to the .zip file
+        /// </param>
+        private void ReportZipStats(
+            FileSystemInfo fileOrDirectoryZippedOrUnzipped,
+            DateTime startTime,
+            DateTime endTime,
+            bool fileWasZipped,
+            string zipProgramName,
+            bool includedAllSubdirectories = false)
+        {
+            long totalSizeBytes;
+            string descriptionOfZippedItems;
+
+            switch (fileOrDirectoryZippedOrUnzipped)
+            {
+                case FileInfo processedFile:
+                    totalSizeBytes = processedFile.Length;
+                    descriptionOfZippedItems = "file " + processedFile.Name;
+                    break;
+
+                case DirectoryInfo processedDirectory:
+                    var searchOption = includedAllSubdirectories ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                    totalSizeBytes = processedDirectory.GetFiles("*", searchOption).Sum(item => item.Length);
+
+                    descriptionOfZippedItems = "directory " + processedDirectory.Name;
+                    break;
+
+                default:
+                    totalSizeBytes = 0;
+                    descriptionOfZippedItems = "unknown item";
+                    break;
+            }
+
+            ReportZipStats(descriptionOfZippedItems, totalSizeBytes, startTime, endTime, fileWasZipped, zipProgramName);
+        }
+
+        /// <summary>
+        /// Update Message with stats on the most recent zip file created
+        /// </summary>
+        /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
+        /// <param name="descriptionOfZippedItems"></param>
+        /// <param name="totalSizeBytes"></param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="endTime">End time</param>
+        /// <param name="fileWasZipped">True if creating a zip file, false if extracting files from an existing zip file</param>
+        /// <param name="zipProgramName">Zip program name</param>
+        private void ReportZipStats(
+            string descriptionOfZippedItems,
+            long totalSizeBytes,
             DateTime startTime,
             DateTime endTime,
             bool fileWasZipped,
             string zipProgramName)
         {
-            long totalSizeBytes = 0;
             double unzipSpeedMBPerSec;
 
             zipProgramName ??= "??";
 
             var unzipTimeSeconds = endTime.Subtract(startTime).TotalSeconds;
-
-            if (fileOrFolderZippedOrUnzipped is FileInfo processedFile)
-            {
-                totalSizeBytes = processedFile.Length;
-            }
-            else if (fileOrFolderZippedOrUnzipped is DirectoryInfo processedDirectory)
-            {
-                totalSizeBytes = 0;
-                foreach (var item in processedDirectory.GetFiles("*", SearchOption.AllDirectories))
-                {
-                    totalSizeBytes += item.Length;
-                }
-            }
 
             if (unzipTimeSeconds > 0)
             {
@@ -411,17 +470,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 unzipSpeedMBPerSec = 0;
             }
 
-            string zipAction;
-            if (fileWasZipped)
-            {
-                zipAction = "Zipped ";
-            }
-            else
-            {
-                zipAction = "Unzipped ";
-            }
+            var zipAction = fileWasZipped ? "Zipped " : "Unzipped ";
 
-            Message = zipAction + fileOrFolderZippedOrUnzipped.Name + " using " + zipProgramName + "; " +
+            Message = zipAction + descriptionOfZippedItems + " using " + zipProgramName + "; " +
                 "elapsed time = " + unzipTimeSeconds.ToString("0.0") + " seconds; " +
                 "rate = " + unzipSpeedMBPerSec.ToString("0.0") + " MB/sec";
 
@@ -938,7 +989,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
+                    ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME, recurse);
                 }
             }
             catch (Exception ex)
