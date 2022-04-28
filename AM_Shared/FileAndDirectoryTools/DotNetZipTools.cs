@@ -743,6 +743,113 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return true;
         }
 
+        // ReSharper disable once UnusedMember.Global
+
+        /// <summary>
+        /// Stores a list of files in a zip file named zipFilePath
+        /// </summary>
+        /// <param name="filePaths">List of file paths to store in the zip file</param>
+        /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
+        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
+        /// <returns>True if success, false if an error</returns>
+        public bool ZipFiles(IReadOnlyList<string> filePaths, string zipFilePath)
+        {
+            var filesToZip = filePaths.Select(item => new FileInfo(item)).ToList();
+
+            return ZipFiles(filesToZip, zipFilePath);
+        }
+
+        /// <summary>
+        /// Stores a list of files in a zip file named zipFilePath
+        /// </summary>
+        /// <param name="filesToZip">List of file paths to store in the zip file</param>
+        /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
+        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
+        /// <returns>True if success, false if an error</returns>
+        public bool ZipFiles(IReadOnlyList<FileInfo> filesToZip, string zipFilePath)
+        {
+            Message = string.Empty;
+            MostRecentZipFilePath = zipFilePath;
+
+            try
+            {
+                if (File.Exists(zipFilePath))
+                {
+                    if (DebugLevel >= 3)
+                    {
+                        OnStatusEvent("Deleting target .zip file: " + zipFilePath);
+                    }
+
+                    File.Delete(zipFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error deleting target .zip file prior to zipping a list of files using " + DOTNET_ZIP_NAME, ex);
+                return false;
+            }
+
+            try
+            {
+                if (DebugLevel >= 3)
+                {
+                    OnStatusEvent("Creating .zip file: " + zipFilePath);
+                }
+
+                var filePaths = new List<string>();
+                var parentDirectories = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var item in filesToZip)
+                {
+                    filePaths.Add(item.FullName);
+
+                    if (item.Directory == null)
+                        continue;
+
+                    if (parentDirectories.Contains(item.Directory.FullName))
+                        continue;
+
+                    parentDirectories.Add(item.Directory.FullName);
+                }
+
+                // Ionic.Zip.ZipFile
+                using var zipper = new ZipFile(zipFilePath)
+                {
+                    UseZip64WhenSaving = Zip64Option.AsNecessary
+                };
+
+                var startTime = DateTime.UtcNow;
+
+                if (parentDirectories.Count > 1)
+                {
+                    zipper.AddFiles(filePaths);
+                }
+                else
+                {
+                    zipper.AddFiles(filePaths, string.Empty);
+                }
+
+                zipper.Save();
+
+                var endTime = DateTime.UtcNow;
+
+                if (DebugLevel >= 2)
+                {
+                    ReportZipStats(filePaths, startTime, endTime, DOTNET_ZIP_NAME);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error zipping the list of files", ex);
+                return false;
+            }
+
+            // Verify that the zip file is not corrupt
+            // Files less than 4 GB get a full CRC check
+            // Large files get a quick check
+            return VerifyZipFile(zipFilePath);
+        }
+
         /// <summary>
         /// Zip all files in a directory
         /// </summary>
