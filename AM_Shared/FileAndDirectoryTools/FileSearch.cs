@@ -257,7 +257,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if an error</returns>
-        private bool FindAndRetrieveMiscFiles(
+        public bool FindAndRetrieveMiscFiles(
             string fileName, bool unzip, bool searchArchivedDatasetDir,
             out string sourceDirPath, bool logFileNotFound)
         {

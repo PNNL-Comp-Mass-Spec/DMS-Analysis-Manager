@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
@@ -1241,6 +1242,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
+                    // The results directory may have a file named Dataset_PSM_tsv.zip with _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files
+                    // This file is only created if more than three experiment groups exist, and was not created prior to 2022-04-28
+
+                    filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
+
                     // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var item in datasetIDsByExperimentGroup)
                     {
@@ -1259,6 +1265,39 @@ namespace AnalysisManagerExtractionPlugin
 
             foreach (var fileName in filesToGet)
             {
+                if (fileName.Equals(ZIPPED_MSFRAGGER_PSM_TSV_FILES))
+                {
+                    // Zip file Dataset_PSM_tsv.zip is optional
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathZipFile, logFileNotFound: false))
+                    {
+                        if (string.IsNullOrWhiteSpace(sourceDirPath))
+                            sourceDirPath = sourceDirPathZipFile;
+
+                        mJobParams.AddResultFileToSkip(fileName);
+
+                        // Extract the TSV files from the zip file
+                        var zipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
+                        RegisterEvents(zipTools);
+
+                        var zipFilePath = Path.Combine(mWorkDir, fileName);
+                        zipTools.UnzipFile(zipFilePath, mWorkDir);
+
+                        foreach (var tsvFile in zipTools.MostRecentUnzippedFiles)
+                        {
+                            mJobParams.AddResultFileToSkip(tsvFile.Key);
+                            retrievedFiles.Add(tsvFile.Key);
+                        }
+                    }
+
+                    continue;
+                }
+
+                if (retrievedFiles.Contains(fileName))
+                {
+                    // File already retrieved (via zip file Dataset_PSM_tsv.zip)
+                    continue;
+                }
+
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))
                 {
                     // Errors were reported in method call, so just return
@@ -1284,6 +1323,7 @@ namespace AnalysisManagerExtractionPlugin
                     tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
                     retrievedFiles.Contains(tsvFile.Name))
                 {
+                    // Either this is not a Dataset_psm.tsv file, or the file was already retrieved (via Dataset_PSM_tsv.zip)
                     continue;
                 }
 
