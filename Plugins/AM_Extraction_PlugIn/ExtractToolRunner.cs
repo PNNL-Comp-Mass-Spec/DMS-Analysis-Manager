@@ -1383,7 +1383,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (datasetIDsByExperimentGroup.Count <= 1)
                 {
-                    result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _);
+                    result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
                 }
                 else
                 {
@@ -1391,6 +1391,7 @@ namespace AnalysisManagerExtractionPlugin
                     // Run PHRP on each _psm.tsv file
                     // Keep track of overall PSM results by merging in the PSM results from each experiment group
 
+                    var synopsisFileNames = new List<string>();
                     var psmResultsOverall = new PSMResults();
                     var groupsProcessed = 0;
                     var resultOverall = CloseOutType.CLOSEOUT_SUCCESS;
@@ -1401,9 +1402,14 @@ namespace AnalysisManagerExtractionPlugin
                             experimentGroup,
                             experimentGroup + "_psm.tsv",
                             false,
+                            out var synopsisFileNameFromPHRP,
                             out var psmResults);
 
-                        if (experimentGroupResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            synopsisFileNames.Add(synopsisFileNameFromPHRP);
+                        }
+                        else
                         {
                             resultOverall = experimentGroupResult;
                         }
@@ -1429,6 +1435,31 @@ namespace AnalysisManagerExtractionPlugin
                         var psmResultsPosted = summarizer.PostJobPSMResults(mJob, psmResultsOverall);
 
                         LogDebug("PostJobPSMResults returned " + psmResultsPosted);
+
+                        if (datasetIDsByExperimentGroup.Keys.Count > 3)
+                        {
+                            // Zip the PHRP result files to create Dataset_syn_txt.zip
+
+                            var filesToZip = new List<FileInfo>();
+                            var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                            foreach (var synopsisFile in synopsisFileNames)
+                            {
+                                var searchPattern = string.Format("{0}*.txt", Path.GetFileNameWithoutExtension(synopsisFile));
+
+                                var filesToAppend = workingDirectory.GetFiles(searchPattern);
+                                filesToZip.AddRange(filesToAppend);
+                            }
+
+                            var pepProtMapFiles = workingDirectory.GetFiles("*_msfragger_PepToProtMapMTS.txt");
+                            filesToZip.AddRange(pepProtMapFiles);
+
+                            // Zip the files to create Dataset_syn_txt.zip
+                            var zipSuccess = ZipFiles("PHRP _syn.txt files", filesToZip, "Dataset_syn_txt.zip");
+
+                            if (!zipSuccess)
+                                resultOverall = CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+                        }
                     }
 
                     result = resultOverall;
@@ -1436,7 +1467,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             else
             {
-                result = RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _);
+                result = RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
             }
 
             return result;
@@ -1446,6 +1477,7 @@ namespace AnalysisManagerExtractionPlugin
             string baseDatasetName,
             string inputFileName,
             bool postJobPSMResultsToDB,
+            out string synopsisFileNameFromPHRP,
             out PSMResults psmResults)
         {
             var synopsisFileName = baseDatasetName + "_msfragger_syn.txt";
@@ -1458,7 +1490,7 @@ namespace AnalysisManagerExtractionPlugin
                 false,
                 true,
                 baseDatasetName,
-                out var synopsisFileNameFromPHRP);
+                out synopsisFileNameFromPHRP);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -2007,6 +2039,35 @@ namespace AnalysisManagerExtractionPlugin
                 var targetPath = Path.Combine(transferDirPath, mDatasetName, mResultsDirectoryName, consoleOutputFile);
                 mJobParams.AddServerFileToDelete(targetPath);
             }
+        }
+
+        /// <summary>
+        /// Store the list of files in a zip file (overwriting any existing zip file),
+        /// then call AddResultFileToSkip() for each file
+        /// </summary>
+        /// <param name="fileListDescription"></param>
+        /// <param name="filesToZip"></param>
+        /// <param name="zipFileName"></param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ZipFiles(string fileListDescription, IReadOnlyList<FileInfo> filesToZip, string zipFileName)
+        {
+            var zipFilePath = Path.Combine(mWorkDir, zipFileName);
+
+            var success = mDotNetZipTools.ZipFiles(filesToZip, zipFilePath);
+
+            if (success)
+            {
+                foreach (var item in filesToZip)
+                {
+                    mJobParams.AddResultFileToSkip(item.Name);
+                }
+            }
+            else
+            {
+                LogError("Error zipping " + fileListDescription + " to create " + zipFileName);
+            }
+
+            return success;
         }
 
         private CloseOutType RunPhrpForInSpecT()
