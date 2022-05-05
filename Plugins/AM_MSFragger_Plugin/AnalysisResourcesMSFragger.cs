@@ -108,6 +108,20 @@ namespace AnalysisManagerMSFraggerPlugIn
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, maxLegacyFASTASizeGB, out var fastaFileSizeGB))
                     return resultCode;
 
+                // Abort the job if a split FASTA search is enabled and the FASTA file is less than 0.1 MB (which is around 250 proteins)
+                // The user probably chose the wrong settings file
+
+                var fastaFileSizeMB = fastaFileSizeGB * 1024;
+
+                if (databaseSplitCount > 1 && fastaFileSizeMB < 0.1)
+                {
+                    LogError(string.Format(
+                        "FASTA file is too small to be used in a split FASTA search ({0:F0} KB); update the job to use a different settings file",
+                        fastaFileSizeMB * 1024.0));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Possibly require additional system memory, based on the size of the FASTA file
                 // However, when FASTA file splitting is enabled, use the memory size defined by the settings file
                 var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024, databaseSplitCount);

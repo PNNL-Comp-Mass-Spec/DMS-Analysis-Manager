@@ -82,6 +82,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
+                var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
+                // Abort the job if a split FASTA search is enabled and the FASTA file is less than 0.1 MB (which is around 250 proteins)
+                // The user probably chose the wrong settings file
+
+                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
+
+                if (splitFastaEnabled && fastaFileSizeMB < 0.1)
+                {
+                    LogError(string.Format(
+                        "FASTA file is too small to be used in a split FASTA search ({0:F0} KB); make a new job that does not use MSGFPlus_MzML_SplitFasta",
+                        fastaFileSizeMB * 1024.0));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // We reserve more memory for large FASTA files
                 var javaMemorySizeMB = AnalysisToolRunnerMSGFDB.GetMemoryRequiredForFASTA(mJobParams, fastaFile, out _);
 
