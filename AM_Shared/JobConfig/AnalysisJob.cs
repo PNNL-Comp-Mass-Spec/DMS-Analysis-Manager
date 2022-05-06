@@ -573,11 +573,8 @@ namespace AnalysisManagerBase.JobConfig
         public string GetJobParameter(string section, string name, string valueIfMissing)
         {
             var value = GetParam(section, name);
-            if (string.IsNullOrEmpty(value))
-            {
-                return valueIfMissing;
-            }
-            return value;
+
+            return string.IsNullOrEmpty(value) ? valueIfMissing : value;
         }
 
         /// <summary>
@@ -611,11 +608,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <returns>Value for specified parameter; empty string if not found</returns>
         public string GetParam(string name)
         {
-            if (TryGetParam(name, out var value))
-            {
-                return value;
-            }
-            return string.Empty;
+            return TryGetParam(name, out var value) ? value : string.Empty;
         }
 
         /// <summary>
@@ -632,11 +625,7 @@ namespace AnalysisManagerBase.JobConfig
                 return GetParam(section);
             }
 
-            if (TryGetParam(section, name, out var value))
-            {
-                return value;
-            }
-            return string.Empty;
+            return TryGetParam(section, name, out var value) ? value : string.Empty;
         }
 
         /// <summary>
@@ -904,9 +893,8 @@ namespace AnalysisManagerBase.JobConfig
                     doc.Save(writer);
                 }
 
-                var filteredXML = builder.ToString();
-
-                return filteredXML;
+                // Return the filtered XML
+                return builder.ToString();
             }
             catch (Exception ex)
             {
