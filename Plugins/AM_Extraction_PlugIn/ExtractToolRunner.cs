@@ -1391,47 +1391,121 @@ namespace AnalysisManagerExtractionPlugin
             // Run PHRP on each _psm.tsv file
             // Keep track of overall PSM results by merging in the PSM results from each experiment group
 
-            // In order to accurately determine unique peptide and protein counts, we need to create a combined _psm.tsv file, call PHRP using the combined file
+            // In order to accurately determine unique peptide and protein counts, we need to create a combined _psm.tsv file,
+            // then call PHRP using the combined file (named Combined_Results_AllExperimentGroups_psm.tsv)
+
+            const string COMBINED_TSV_BASE_NAME = "Combined_Results_AllExperimentGroups";
+
+            var combinedPsmTsvFilePath = Path.Combine(mWorkDir, COMBINED_TSV_BASE_NAME + "_psm.tsv");
 
             var synopsisFileNames = new List<string>();
             var psmResultsOverall = new PSMResults();
-            var groupsProcessed = 0;
             var resultOverall = CloseOutType.CLOSEOUT_SUCCESS;
 
-            foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
+            using (var combinedPsmTsvWriter = new StreamWriter(new FileStream(combinedPsmTsvFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
             {
-                var experimentGroupResult = RunPHRPForMSFragger(
-                    experimentGroup,
-                    experimentGroup + "_psm.tsv",
-                    false,
-                    out var synopsisFileNameFromPHRP,
-                    out var psmResults);
+                var groupsProcessed = 0;
 
-                if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
+                foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
                 {
-                    synopsisFileNames.Add(synopsisFileNameFromPHRP);
+                    var inputFileName = experimentGroup + "_psm.tsv";
+
+                    var experimentGroupResult = RunPHRPForMSFragger(
+                        experimentGroup,
+                        inputFileName,
+                        false,
+                        out var synopsisFileNameFromPHRP,
+                        out var psmResults);
+
+                    if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        synopsisFileNames.Add(synopsisFileNameFromPHRP);
+                    }
+                    else
+                    {
+                        resultOverall = experimentGroupResult;
+                    }
+
+                    groupsProcessed++;
+
+                    var linesRead = 0;
+
+                    using (var tsvReader = new StreamReader(new FileStream(Path.Combine(mWorkDir, inputFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    {
+                        while (!tsvReader.EndOfStream)
+                        {
+                            var dataLine = tsvReader.ReadLine();
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                                continue;
+
+                            linesRead++;
+
+                            if (linesRead == 1 && groupsProcessed > 1)
+                            {
+                                // Skip the header line since this is not the first _psm.tsv file
+                                continue;
+                            }
+
+                            combinedPsmTsvWriter.WriteLine(dataLine);
+                        }
+                    }
+
+                    // Delay 1.5 seconds to assure that the synopsis file for each experiment group has a different timestamp
+                    Global.IdleLoop(1.5);
+
+                    if (groupsProcessed == 1)
+                    {
+                        psmResultsOverall = psmResults;
+                        continue;
+                    }
+
+                    psmResultsOverall.AppendResults(psmResults);
                 }
-                else
-                {
-                    resultOverall = experimentGroupResult;
-                }
-
-                groupsProcessed++;
-
-                // Delay 1.5 seconds to assure that the synopsis file for each experiment group has a different timestamp
-                Global.IdleLoop(1.5);
-
-                if (groupsProcessed == 1)
-                {
-                    psmResultsOverall = psmResults;
-                    continue;
-                }
-
-                psmResultsOverall.AppendResults(psmResults);
             }
 
             if (resultOverall != CloseOutType.CLOSEOUT_SUCCESS)
                 return resultOverall;
+
+            // Process combinedPsmTsvFilePath
+            var combinedTsvResult = RunPHRPForMSFragger(
+                COMBINED_TSV_BASE_NAME,
+                Path.GetFileName(combinedPsmTsvFilePath),
+                false,
+                out _,
+                out var combinedTsvPsmResults);
+
+            if (combinedTsvResult == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                psmResultsOverall.UniquePeptides = combinedTsvPsmResults.UniquePeptides;
+                psmResultsOverall.UniqueProteins = combinedTsvPsmResults.UniqueProteins;
+                psmResultsOverall.UniquePeptidesFDRFilter = combinedTsvPsmResults.UniquePeptidesFDRFilter;
+                psmResultsOverall.UniqueProteinsFDRFilter = combinedTsvPsmResults.UniqueProteinsFDRFilter;
+                psmResultsOverall.UniquePhosphopeptideCountFDR = combinedTsvPsmResults.UniquePhosphopeptideCountFDR;
+                psmResultsOverall.UniquePhosphopeptidesCTermK = combinedTsvPsmResults.UniquePhosphopeptidesCTermK;
+                psmResultsOverall.UniquePhosphopeptidesCTermR = combinedTsvPsmResults.UniquePhosphopeptidesCTermR;
+
+                psmResultsOverall.TrypticPeptides = combinedTsvPsmResults.TrypticPeptides;
+                psmResultsOverall.KeratinPeptides = combinedTsvPsmResults.KeratinPeptides;
+                psmResultsOverall.TrypsinPeptides = combinedTsvPsmResults.TrypsinPeptides;
+                psmResultsOverall.UniqueAcetylPeptidesFDR = combinedTsvPsmResults.UniqueAcetylPeptidesFDR;
+                psmResultsOverall.UniquePeptides = combinedTsvPsmResults.UniquePeptides;
+
+                // Method AppendResults used UpdatePercent() to estimate the following percentages
+                // Update them using the accurate results from the combined _psm.tsv file
+                psmResultsOverall.PercentMSnScansNoPSM = combinedTsvPsmResults.PercentMSnScansNoPSM;
+                psmResultsOverall.MissedCleavageRatio = combinedTsvPsmResults.MissedCleavageRatio;
+                psmResultsOverall.MissedCleavageRatioPhospho = combinedTsvPsmResults.MissedCleavageRatioPhospho;
+                psmResultsOverall.PercentPSMsMissingNTermReporterIon = combinedTsvPsmResults.PercentPSMsMissingNTermReporterIon;
+                psmResultsOverall.PercentPSMsMissingReporterIon = combinedTsvPsmResults.PercentPSMsMissingReporterIon;
+
+                mJobParams.AddResultFileToSkip(combinedPsmTsvFilePath);
+
+                var workDirInfo = new DirectoryInfo(mWorkDir);
+                foreach (var phrpFile in workDirInfo.GetFileSystemInfos(COMBINED_TSV_BASE_NAME + "*"))
+                {
+                    mJobParams.AddResultFileToSkip(phrpFile.Name);
+                }
+            }
 
             var summarizer = GetPsmResultsSummarizer(PeptideHitResultTypes.MSFragger);
 
@@ -1447,6 +1521,7 @@ namespace AnalysisManagerExtractionPlugin
             var filesToZip = new List<FileInfo>();
             var workingDirectory = new DirectoryInfo(mWorkDir);
 
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
             foreach (var synopsisFile in synopsisFileNames)
             {
                 var searchPattern = string.Format("{0}*.txt", Path.GetFileNameWithoutExtension(synopsisFile));
@@ -1455,8 +1530,14 @@ namespace AnalysisManagerExtractionPlugin
                 filesToZip.AddRange(filesToAppend);
             }
 
-            var pepProtMapFiles = workingDirectory.GetFiles("*_msfragger_PepToProtMapMTS.txt");
-            filesToZip.AddRange(pepProtMapFiles);
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var pepProtMapFile in workingDirectory.GetFiles("*_msfragger_PepToProtMapMTS.txt"))
+            {
+                if (pepProtMapFile.Name.StartsWith(COMBINED_TSV_BASE_NAME))
+                    continue;
+
+                filesToZip.Add(pepProtMapFile);
+            }
 
             // Zip the files to create Dataset_syn_txt.zip
             var zipSuccess = ZipFiles("PHRP _syn.txt files", filesToZip, "Dataset_syn_txt.zip");
