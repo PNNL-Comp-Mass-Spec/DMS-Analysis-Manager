@@ -804,8 +804,7 @@ namespace AnalysisManagerBase.JobConfig
                 // Note that XDocument supersedes XmlDocument and can often be easier to use since XDocument is LINQ-based
                 var doc = XDocument.Parse(paramXml);
 
-                var sections = doc.Elements("sections").Elements("section");
-                foreach (var section in sections)
+                foreach (var section in doc.Elements("sections").Elements("section"))
                 {
                     if (!section.HasAttributes)
                         continue;
