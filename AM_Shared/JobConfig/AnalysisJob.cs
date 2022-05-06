@@ -357,13 +357,11 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     var baseName = Path.GetFileName(agedFile.Name);
 
-                    if (jobStatusFiles.TryGetValue(baseName, out var jobStatusFile))
+                    if (jobStatusFiles.TryGetValue(baseName, out var jobStatusFile) &&
+                        DateTime.UtcNow.Subtract(jobStatusFile.LastWriteTimeUtc).TotalHours < 12)
                     {
-                        if (DateTime.UtcNow.Subtract(jobStatusFile.LastWriteTimeUtc).TotalHours < 12)
-                        {
-                            // The file is aged, but the job status file is less than 12 hours old
-                            continue;
-                        }
+                        // The file is aged, but the job status file is less than 12 hours old
+                        continue;
                     }
 
                     var fileAgeHours = DateTime.UtcNow.Subtract(agedFile.LastWriteTimeUtc).TotalHours;
@@ -761,16 +759,14 @@ namespace AnalysisManagerBase.JobConfig
         {
             paramValue = string.Empty;
 
-            if (mJobParams.TryGetValue(section, out var parameters))
+            if (mJobParams.TryGetValue(section, out var parameters) &&
+                parameters.TryGetValue(paramName, out paramValue))
             {
-                if (parameters.TryGetValue(paramName, out paramValue))
+                if (string.IsNullOrWhiteSpace(paramValue))
                 {
-                    if (string.IsNullOrWhiteSpace(paramValue))
-                    {
-                        paramValue = string.Empty;
-                    }
-                    return true;
+                    paramValue = string.Empty;
                 }
+                return true;
             }
 
             if (searchAllSectionsIfNotFound)
@@ -1974,10 +1970,10 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
             // Note: leave remoteTimestampParam.Value as null if job parameter RemoteTimestamp is empty
-            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
+            if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false) &&
+                string.IsNullOrWhiteSpace(remoteTimestamp))
             {
-                if (string.IsNullOrWhiteSpace(remoteTimestamp))
-                    remoteTimestamp = null;
+                remoteTimestamp = null;
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
 
