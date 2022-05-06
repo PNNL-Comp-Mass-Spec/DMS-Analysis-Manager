@@ -152,7 +152,9 @@
 
             PercentMSnScansNoPSM = UpdatePercent(PercentMSnScansNoPSM, originalScanCount, scanCountAdded, psmResults.PercentMSnScansNoPSM);
 
-            MaximumScanGapAdjacentMSn += psmResults.MaximumScanGapAdjacentMSn;
+            if (psmResults.MaximumScanGapAdjacentMSn > MaximumScanGapAdjacentMSn)
+                MaximumScanGapAdjacentMSn = psmResults.MaximumScanGapAdjacentMSn;
+
             UniquePhosphopeptideCountFDR += psmResults.UniquePhosphopeptideCountFDR;
             UniquePhosphopeptidesCTermK += psmResults.UniquePhosphopeptidesCTermK;
             UniquePhosphopeptidesCTermR += psmResults.UniquePhosphopeptidesCTermR;
