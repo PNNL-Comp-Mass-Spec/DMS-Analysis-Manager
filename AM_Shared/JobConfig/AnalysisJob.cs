@@ -864,25 +864,19 @@ namespace AnalysisManagerBase.JobConfig
                             }
                         }
 
-                        if (paramsToAddAsAttribute.ContainsKey(paramName.Value))
-                        {
-                            // Add an attribute to the section with the value for this parameter
-                            // This is most commonly used to add attribute step="1"
+                        if (!paramsToAddAsAttribute.ContainsKey(paramName.Value))
+                            continue;
 
-                            var attribName = paramsToAddAsAttribute[paramName.Value];
-                            if (string.IsNullOrWhiteSpace(attribName))
-                                attribName = paramName.Value;
+                        // Add an attribute to the section with the value for this parameter
+                        // This is most commonly used to add attribute step="1"
 
-                            var paramValue = paramItem.Attribute("value");
-                            if (paramValue == null)
-                            {
-                                attributesToAdd.Add(attribName, string.Empty);
-                            }
-                            else
-                            {
-                                attributesToAdd.Add(attribName, paramValue.Value);
-                            }
-                        }
+                        var attribName = paramsToAddAsAttribute[paramName.Value];
+                        if (string.IsNullOrWhiteSpace(attribName))
+                            attribName = paramName.Value;
+
+                        var paramValue = paramItem.Attribute("value");
+
+                        attributesToAdd.Add(attribName, paramValue == null ? string.Empty : paramValue.Value);
                     }
 
                     foreach (var paramItem in paramsToRemove)
