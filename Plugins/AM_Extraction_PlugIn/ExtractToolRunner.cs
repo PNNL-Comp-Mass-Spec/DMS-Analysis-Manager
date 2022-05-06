@@ -1369,108 +1369,105 @@ namespace AnalysisManagerExtractionPlugin
         {
             CloseOutType result;
 
-            if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+            if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
             {
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+                return RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
+            }
 
-                // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
-                var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
-                RegisterEvents(dataPackageInfo);
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-                var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
+            // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
+            var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+            RegisterEvents(dataPackageInfo);
 
-                var datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+            var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
 
-                if (datasetIDsByExperimentGroup.Count <= 1)
+            var datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+
+            if (datasetIDsByExperimentGroup.Count <= 1)
+            {
+                result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
+                return result;
+            }
+
+            // Multiple experiment groups
+            // Run PHRP on each _psm.tsv file
+            // Keep track of overall PSM results by merging in the PSM results from each experiment group
+
+            // In order to accurately determine unique peptide and protein counts, we need to create a combined _psm.tsv file, call PHRP using the combined file
+
+            var synopsisFileNames = new List<string>();
+            var psmResultsOverall = new PSMResults();
+            var groupsProcessed = 0;
+            var resultOverall = CloseOutType.CLOSEOUT_SUCCESS;
+
+            foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
+            {
+                var experimentGroupResult = RunPHRPForMSFragger(
+                    experimentGroup,
+                    experimentGroup + "_psm.tsv",
+                    false,
+                    out var synopsisFileNameFromPHRP,
+                    out var psmResults);
+
+                if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
+                    synopsisFileNames.Add(synopsisFileNameFromPHRP);
                 }
                 else
                 {
-                    // Multiple experiment groups
-                    // Run PHRP on each _psm.tsv file
-                    // Keep track of overall PSM results by merging in the PSM results from each experiment group
-
-                    var synopsisFileNames = new List<string>();
-                    var psmResultsOverall = new PSMResults();
-                    var groupsProcessed = 0;
-                    var resultOverall = CloseOutType.CLOSEOUT_SUCCESS;
-
-                    foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
-                    {
-                        var experimentGroupResult = RunPHRPForMSFragger(
-                            experimentGroup,
-                            experimentGroup + "_psm.tsv",
-                            false,
-                            out var synopsisFileNameFromPHRP,
-                            out var psmResults);
-
-                        if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            synopsisFileNames.Add(synopsisFileNameFromPHRP);
-                        }
-                        else
-                        {
-                            resultOverall = experimentGroupResult;
-                        }
-
-                        groupsProcessed++;
-
-                        // Delay 1.5 seconds to assure that the synopsis file for each experiment group has a different timestamp
-                        Global.IdleLoop(1.5);
-
-                        if (groupsProcessed == 1)
-                        {
-                            psmResultsOverall = psmResults;
-                            continue;
-                        }
-
-                        psmResultsOverall.AppendResults(psmResults);
-                    }
-
-                    if (resultOverall == CloseOutType.CLOSEOUT_SUCCESS)
-                    {
-                        var summarizer = GetPsmResultsSummarizer(PeptideHitResultTypes.MSFragger);
-
-                        var psmResultsPosted = summarizer.PostJobPSMResults(mJob, psmResultsOverall);
-
-                        LogDebug("PostJobPSMResults returned " + psmResultsPosted);
-
-                        if (datasetIDsByExperimentGroup.Keys.Count > 3)
-                        {
-                            // Zip the PHRP result files to create Dataset_syn_txt.zip
-
-                            var filesToZip = new List<FileInfo>();
-                            var workingDirectory = new DirectoryInfo(mWorkDir);
-
-                            foreach (var synopsisFile in synopsisFileNames)
-                            {
-                                var searchPattern = string.Format("{0}*.txt", Path.GetFileNameWithoutExtension(synopsisFile));
-
-                                var filesToAppend = workingDirectory.GetFiles(searchPattern);
-                                filesToZip.AddRange(filesToAppend);
-                            }
-
-                            var pepProtMapFiles = workingDirectory.GetFiles("*_msfragger_PepToProtMapMTS.txt");
-                            filesToZip.AddRange(pepProtMapFiles);
-
-                            // Zip the files to create Dataset_syn_txt.zip
-                            var zipSuccess = ZipFiles("PHRP _syn.txt files", filesToZip, "Dataset_syn_txt.zip");
-
-                            if (!zipSuccess)
-                                resultOverall = CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
-                        }
-                    }
-
-                    result = resultOverall;
+                    resultOverall = experimentGroupResult;
                 }
-            }
-            else
-            {
-                result = RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
+
+                groupsProcessed++;
+
+                // Delay 1.5 seconds to assure that the synopsis file for each experiment group has a different timestamp
+                Global.IdleLoop(1.5);
+
+                if (groupsProcessed == 1)
+                {
+                    psmResultsOverall = psmResults;
+                    continue;
+                }
+
+                psmResultsOverall.AppendResults(psmResults);
             }
 
-            return result;
+            if (resultOverall != CloseOutType.CLOSEOUT_SUCCESS)
+                return resultOverall;
+
+            var summarizer = GetPsmResultsSummarizer(PeptideHitResultTypes.MSFragger);
+
+            var psmResultsPosted = summarizer.PostJobPSMResults(mJob, psmResultsOverall);
+
+            LogDebug("PostJobPSMResults returned " + psmResultsPosted);
+
+            if (datasetIDsByExperimentGroup.Keys.Count <= 3)
+                return resultOverall;
+
+            // Zip the PHRP result files to create Dataset_syn_txt.zip
+
+            var filesToZip = new List<FileInfo>();
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+
+            foreach (var synopsisFile in synopsisFileNames)
+            {
+                var searchPattern = string.Format("{0}*.txt", Path.GetFileNameWithoutExtension(synopsisFile));
+
+                var filesToAppend = workingDirectory.GetFiles(searchPattern);
+                filesToZip.AddRange(filesToAppend);
+            }
+
+            var pepProtMapFiles = workingDirectory.GetFiles("*_msfragger_PepToProtMapMTS.txt");
+            filesToZip.AddRange(pepProtMapFiles);
+
+            // Zip the files to create Dataset_syn_txt.zip
+            var zipSuccess = ZipFiles("PHRP _syn.txt files", filesToZip, "Dataset_syn_txt.zip");
+
+            if (!zipSuccess)
+                resultOverall = CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+
+            return resultOverall;
         }
 
         private CloseOutType RunPHRPForMSFragger(
