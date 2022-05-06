@@ -233,6 +233,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             if (string.IsNullOrWhiteSpace(datasetName))
                 return;
+
             if (!mDatasetInfoList.ContainsKey(datasetName))
             {
                 mDatasetInfoList.Add(datasetName, datasetID);
@@ -265,6 +266,7 @@ namespace AnalysisManagerBase.JobConfig
                 return;
 
             fileName = Path.GetFileName(fileName);
+
             if (!mResultFilesToKeep.Contains(fileName))
             {
                 mResultFilesToKeep.Add(fileName);
@@ -281,6 +283,7 @@ namespace AnalysisManagerBase.JobConfig
                 return;
 
             fileName = Path.GetFileName(fileName);
+
             if (!mResultFilesToSkip.Contains(fileName))
             {
                 mResultFilesToSkip.Add(fileName);
@@ -368,7 +371,10 @@ namespace AnalysisManagerBase.JobConfig
 
                     // Example message:
                     // Deleting aged lock file modified 26 hours ago: /file1/temp/DMSTasks/Test_MSGFPlus/Job1451055_Step3_20180308_2148.lock
-                    LogWarning(string.Format("Deleting aged {0} file modified {1:F0} hours ago: {2}", targetFileDescription, fileAgeHours, agedFile.FullName));
+                    LogWarning(string.Format(
+                        "Deleting aged {0} file modified {1:F0} hours ago: {2}",
+                        targetFileDescription, fileAgeHours, agedFile.FullName));
+
                     agedFile.Delete();
                 }
             }
@@ -758,12 +764,14 @@ namespace AnalysisManagerBase.JobConfig
                 return true;
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (searchAllSectionsIfNotFound)
             {
                 // Parameter not found in the specified section
                 // Search for the entry in other sections
                 return TryGetParam(paramName, out paramValue);
             }
+
             return false;
         }
 
@@ -820,6 +828,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     // Construct a list of the parameter names in this section
                     var paramNames = new List<string>();
+
                     foreach (var item in parameterItems)
                     {
                         if (!item.HasAttributes) continue;
@@ -1233,6 +1242,7 @@ namespace AnalysisManagerBase.JobConfig
             var dotNetVersion = Global.GetDotNetVersion();
 
             string managerVersion;
+
             if (!string.IsNullOrWhiteSpace(dotNetVersion))
             {
                 if (!dotNetVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
@@ -1807,12 +1817,9 @@ namespace AnalysisManagerBase.JobConfig
                 var succeeded = SuccessOrNoData(closeOut);
                 OfflineProcessing.FinalizeJob(mOfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
             }
-            else
+            else if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
             {
-                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
-                {
-                    LogError("Error setting job complete in database, job " + mJobId);
-                }
+                LogError("Error setting job complete in database, job " + mJobId);
             }
         }
 
