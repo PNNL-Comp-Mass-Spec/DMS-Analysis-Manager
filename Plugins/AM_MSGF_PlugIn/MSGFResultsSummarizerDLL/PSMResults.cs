@@ -100,7 +100,7 @@
         public int KeratinPeptides { get; set; }
 
         /// <summary>
-        /// umber of unique peptides (filtered by FDR) that come from Trypsin proteins
+        /// Number of unique peptides (filtered by FDR) that come from Trypsin proteins
         /// </summary>
         public int TrypsinPeptides { get; set; }
 
@@ -133,6 +133,10 @@
         /// <summary>
         /// Update the cached PSM result stats using additional PSM result stats
         /// </summary>
+        /// <remarks>
+        /// Stats are updated by adding the new counts to the existing counts. This is valid for SpectraSearched, TotalPSMs, and TotalPSMsFDRFilter,
+        /// but is misleading for UniquePeptides, UniqueProteins, UniquePeptidesFDRFilter, and UniqueProteinsFDRFilter.
+        /// </remarks>
         /// <param name="psmResults"></param>
         public void AppendResults(PSMResults psmResults)
         {

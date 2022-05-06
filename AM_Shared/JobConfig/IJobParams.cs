@@ -222,7 +222,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Add a filename to not move to the results directory
         /// </summary>
-        /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToSkip</remarks>
+        /// <remarks>FileName can be a full path to a file; only the filename will be stored in ResultFilesToSkip</remarks>
         /// <param name="fileName"></param>
         void AddResultFileToSkip(string fileName);
 
