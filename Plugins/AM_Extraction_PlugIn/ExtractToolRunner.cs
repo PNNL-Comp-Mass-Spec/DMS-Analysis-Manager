@@ -1367,8 +1367,6 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPHRPForMSFragger()
         {
-            CloseOutType result;
-
             if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
             {
                 return RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
@@ -1386,8 +1384,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (datasetIDsByExperimentGroup.Count <= 1)
             {
-                result = RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
-                return result;
+                return RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
             }
 
             // Multiple experiment groups
