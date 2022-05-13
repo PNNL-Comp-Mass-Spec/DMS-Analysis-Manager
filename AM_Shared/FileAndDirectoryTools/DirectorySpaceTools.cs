@@ -21,6 +21,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="useLogTools">
+        /// When true, log errors and warnings using the LogTools class; otherwise, use EventNotifier events
+        /// </param>
         public DirectorySpaceTools(bool useLogTools = false)
         {
             UseLogTools = useLogTools;
@@ -30,6 +33,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Convert Bytes to Gigabytes
         /// </summary>
         /// <param name="bytes"></param>
+        // ReSharper disable once UnusedMember.Global
         public static double BytesToGB(long bytes)
         {
             return bytes / 1024.0 / 1024.0 / 1024.0;
@@ -140,7 +144,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 else
                 {
                     // Windows system, with a path like C:\DMS_Temp_Org
-                    // Alternatively, a Windows share like \\proto-7\MSGFPlus_Index_Files
+                    // Alternatively, a Windows share like \\proto-4\DMS_Organism_Files
 
                     var driveLetter = targetDirectory.FullName.Substring(0, 2);
                     if (driveLetter.EndsWith(":"))
