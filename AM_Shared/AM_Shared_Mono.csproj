@@ -202,14 +202,19 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
+    <PostBuildEvent>echo Skip: xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
 
-xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)PRISMDatabaseUtils.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
-xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
-xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
+echo Skip: xcopy "$(TargetDir)CsvHelper.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)MathNet.Numerics.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)ThermoRawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+
+echo Skip: xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
+echo Skip: xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
 </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
