@@ -10,8 +10,22 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// <summary>
     /// Methods for determining free disk space, either on a local drive or a remote network share
     /// </summary>
-    public static class DirectorySpaceTools
+    public class DirectorySpaceTools : EventNotifier
     {
+        /// <summary>
+        /// When true, log errors and warnings using the LogTools class
+        /// Otherwise, use EventNotifier events
+        /// </summary>
+        public bool UseLogTools { get; set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public DirectorySpaceTools(bool useLogTools = false)
+        {
+            UseLogTools = useLogTools;
+        }
+
         /// <summary>
         /// Convert Bytes to Gigabytes
         /// </summary>
@@ -34,7 +48,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
         /// <param name="targetDirectory"></param>
-        private static double GetFreeDiskSpaceLinux(DirectoryInfo targetDirectory)
+        private double GetFreeDiskSpaceLinux(DirectoryInfo targetDirectory)
         {
             var driveInfo = GetLocalDriveInfo(targetDirectory);
             if (driveInfo == null)
@@ -49,7 +63,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         /// <param name="targetDirectory"></param>
         /// <returns>Free space, in MB</returns>
-        private static double GetFreeDiskSpaceWindows(DirectoryInfo targetDirectory)
+        private double GetFreeDiskSpaceWindows(DirectoryInfo targetDirectory)
         {
             double freeSpaceMB;
 
@@ -67,7 +81,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
                 else
                 {
-                    LogTools.LogWarning(errorMessage);
+                    if (UseLogTools)
+                        LogTools.LogWarning(errorMessage);
+                    else
+                        OnWarningEvent(errorMessage);
+
                     freeSpaceMB = 0;
                 }
             }
@@ -86,7 +104,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Supports both Windows and Linux paths
         /// </summary>
         /// <param name="targetDirectory"></param>
-        public static DriveInfo GetLocalDriveInfo(DirectoryInfo targetDirectory)
+        public DriveInfo GetLocalDriveInfo(DirectoryInfo targetDirectory)
         {
             var baseWarningMsg = "Unable to instantiate a DriveInfo object for " + targetDirectory.FullName;
 
@@ -133,10 +151,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                LogTools.LogWarning("{0}: {1}", baseWarningMsg, ex);
+                var warningMessage = string.Format("{0}: {1}", baseWarningMsg, ex);
+
+                if (UseLogTools)
+                    LogTools.LogWarning(warningMessage);
+                else
+                    OnWarningEvent(warningMessage);
             }
 
-            LogTools.LogWarning(baseWarningMsg);
+            if (UseLogTools)
+                LogTools.LogWarning(baseWarningMsg);
+            else
+                OnWarningEvent(baseWarningMsg);
+
             return null;
         }
 
@@ -150,7 +177,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logToDatabase"></param>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
-        public static bool ValidateFreeDiskSpace(
+        public bool ValidateFreeDiskSpace(
             string directoryDescription,
             string directoryPath,
             int minFreeSpaceMB,
@@ -164,7 +191,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
                 errorMessage = directoryDescription + " not found: " + directoryPath;
-                LogTools.LogError(errorMessage, null, logToDatabase);
+
+                if (UseLogTools)
+                    LogTools.LogError(errorMessage, null, logToDatabase);
+                else
+                    OnErrorEvent(errorMessage);
+
                 return false;
             }
 
