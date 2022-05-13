@@ -176,8 +176,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
                 var minFreeSpaceMB = (int)(Global.BytesToMB(fileSizeTotalBytes) + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
-                diskFreeSpaceBelowThreshold =
-                    !Global.ValidateFreeDiskSpace("Organism DB directory", fastaFile.Directory.FullName, minFreeSpaceMB, out mErrorMessage);
+                diskFreeSpaceBelowThreshold = !DirectorySpaceTools.ValidateFreeDiskSpace(
+                    "Organism DB directory",
+                    fastaFile.Directory.FullName,
+                    minFreeSpaceMB,
+                    out mErrorMessage);
 
                 if (diskFreeSpaceBelowThreshold)
                 {
