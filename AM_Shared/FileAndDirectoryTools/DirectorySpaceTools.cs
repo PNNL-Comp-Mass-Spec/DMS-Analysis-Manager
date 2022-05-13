@@ -168,7 +168,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Check the free space on the drive with the given directory
+        /// Check the free space on the drive with the given directory, logging a message if insufficient space
         /// </summary>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         /// <param name="directoryDescription"></param>
@@ -181,6 +181,31 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string directoryDescription,
             string directoryPath,
             int minFreeSpaceMB,
+            out string errorMessage,
+            bool logToDatabase = false)
+        {
+            return ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, true, out errorMessage, logToDatabase);
+        }
+
+        /// <summary>
+        /// Check the free space on the drive with the given directory
+        /// </summary>
+        /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
+        /// <param name="directoryDescription"></param>
+        /// <param name="directoryPath"></param>
+        /// <param name="minFreeSpaceMB"></param>
+        /// <param name="logFreeSpaceBelowThreshold">
+        /// When true, if insufficient free space, either log a message with LogTools or raise an error event
+        /// When false, if insufficient free space simply return false
+        /// </param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logToDatabase"></param>
+        /// <returns>True if the drive has sufficient free space, otherwise false</returns>
+        public bool ValidateFreeDiskSpace(
+            string directoryDescription,
+            string directoryPath,
+            int minFreeSpaceMB,
+            bool logFreeSpaceBelowThreshold,
             out string errorMessage,
             bool logToDatabase = false)
         {
@@ -211,16 +236,22 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 freeSpaceMB = GetFreeDiskSpaceWindows(targetDirectory);
             }
 
-            if (freeSpaceMB < minFreeSpaceMB)
-            {
-                // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
-                errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {(int)freeSpaceMB} MB";
-                Console.WriteLine(errorMessage);
-                LogTools.LogError(errorMessage);
-                return false;
-            }
+            if (freeSpaceMB >= minFreeSpaceMB)
+                return true;
 
-            return true;
+            // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
+            errorMessage = string.Format("{0} drive has less than {1} MB free: {2} MB", directoryDescription, minFreeSpaceMB, (int)freeSpaceMB);
+            Console.WriteLine(errorMessage);
+
+            if (!logFreeSpaceBelowThreshold)
+                return false;
+
+            if (UseLogTools)
+                LogTools.LogError(errorMessage);
+            else
+                OnErrorEvent(errorMessage);
+
+            return false;
         }
     }
 }
