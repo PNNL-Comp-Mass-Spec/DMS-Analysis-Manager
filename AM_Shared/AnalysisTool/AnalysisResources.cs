@@ -3733,7 +3733,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     PurgeFastaFilesUsingSpaceUsedThreshold(orgDbDirectory, maxDirectorySizeGB, legacyFastaFileBaseName, mDebugLevel, preview);
                 }
 
-                var localDriveInfo = Global.GetLocalDriveInfo(orgDbDirectory);
+                var localDriveInfo = DirectorySpaceTools.GetLocalDriveInfo(orgDbDirectory);
 
                 if (localDriveInfo == null)
                 {

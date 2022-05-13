@@ -116,6 +116,7 @@
     <Compile Include="DBTask.cs" />
     <Compile Include="ExceptionClasses.cs" />
     <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
+    <Compile Include="FileAndDirectoryTools\DirectorySpaceTools.cs" />
     <Compile Include="FileAndDirectoryTools\DotNetZipTools.cs" />
     <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
     <Compile Include="FileAndDirectoryTools\FileSearch.cs" />

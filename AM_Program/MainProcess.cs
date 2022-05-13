@@ -18,6 +18,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
@@ -3054,7 +3055,7 @@ namespace AnalysisManagerProg
             out string errorMessage,
             bool logToDatabase = false)
         {
-            return Global.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
+            return DirectorySpaceTools.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
         /// <summary>
