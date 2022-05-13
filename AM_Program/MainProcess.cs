@@ -66,6 +66,8 @@ namespace AnalysisManagerProg
 
         private bool mConfigChanged;
 
+        private readonly DirectorySpaceTools mDirectorySpaceTools;
+
         private bool mDMSProgramsSynchronized;
 
         private bool mInsufficientFreeMemory;
@@ -174,6 +176,7 @@ namespace AnalysisManagerProg
             TraceMode = options.TraceMode;
 
             mConfigChanged = false;
+            mDirectorySpaceTools = new DirectorySpaceTools(true);
             mDebugLevel = 0;
             mDMSProgramsSynchronized = false;
             mInsufficientFreeMemory = false;
@@ -3055,7 +3058,7 @@ namespace AnalysisManagerProg
             out string errorMessage,
             bool logToDatabase = false)
         {
-            return DirectorySpaceTools.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
+            return mDirectorySpaceTools.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
         /// <summary>

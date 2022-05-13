@@ -574,6 +574,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </remarks>
         private string mDatasetName;
 
+        protected readonly DirectorySpaceTools mDirectorySpaceTools;
+
         /// <summary>
         /// Manager name
         /// </summary>
@@ -766,6 +768,8 @@ namespace AnalysisManagerBase.AnalysisTool
             RegisterEvents(mCDTAUtilities);
             mCDTAUtilities.ProgressUpdate -= ProgressUpdateHandler;
             mCDTAUtilities.ProgressUpdate += CDTAUtilities_ProgressEvent;
+
+            mDirectorySpaceTools = new DirectorySpaceTools(true);
         }
 
         /// <summary>
@@ -3733,7 +3737,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     PurgeFastaFilesUsingSpaceUsedThreshold(orgDbDirectory, maxDirectorySizeGB, legacyFastaFileBaseName, mDebugLevel, preview);
                 }
 
-                var localDriveInfo = DirectorySpaceTools.GetLocalDriveInfo(orgDbDirectory);
+                var localDriveInfo = mDirectorySpaceTools.GetLocalDriveInfo(orgDbDirectory);
 
                 if (localDriveInfo == null)
                 {
