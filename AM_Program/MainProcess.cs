@@ -58,10 +58,8 @@ namespace AnalysisManagerProg
 
         private AnalysisJob mAnalysisTask;
 
-        private PluginLoader mPluginLoader;
-
-        private SummaryFile mSummaryFile;
         private FileSystemWatcher mConfigFileWatcher;
+
         private FileSystemWatcher mLocalSettingsFileWatcher;
 
         private bool mConfigChanged;
@@ -82,9 +80,13 @@ namespace AnalysisManagerProg
 
         private string mMostRecentErrorMessage = string.Empty;
 
+        private PluginLoader mPluginLoader;
+
         private int mPluginLoaderErrorCount;
 
         private string mPluginLoaderStepTool = string.Empty;
+
+        private SummaryFile mSummaryFile;
 
         /// <summary>
         /// When true, do not log messages to the manager status message queue
