@@ -243,8 +243,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             if (freeSpaceMB >= minFreeSpaceMB)
                 return true;
 
-            // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
-            errorMessage = string.Format("{0} drive has less than {1} MB free: {2} MB", directoryDescription, minFreeSpaceMB, (int)freeSpaceMB);
+            // Example error messages:
+            //   Organism DB directory drive has less than 6,858 MB free: 5,794 MB
+            //   Spectrum cache directory on the F: drive has less than 152,071 MB free: 96,021 MB
+
+            errorMessage = string.Format("{0} drive has less than {1:N0} MB free: {2:N0} MB", directoryDescription, minFreeSpaceMB, (int)freeSpaceMB);
             Console.WriteLine(errorMessage);
 
             if (!logFreeSpaceBelowThreshold)
