@@ -29,6 +29,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         private const string CRYSTALC_JAR_NAME = "original-crystalc-1.4.4.jar";
 
+        /// <summary>
+        /// Relative path to the Data-Independent Acquisition by Neural Networks (DIA-NN) executable
+        /// (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
+        /// </summary>
+        public const string DIANN_RELATIVE_PATH = @"fragpipe\tools\diann\1.8.1\win\DiaNN.exe";
 
         /// <summary>
         /// Name of the FragPipe .jar file
@@ -49,6 +54,16 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Name of the Java C++ presets platform directory
         /// </summary>
         private const string JAVA_CPP_PRESETS_DIRECTORY_NAME = "javacpp-presets-platform-1.5.6-bin";
+
+        /// <summary>
+        /// Name of the JFreeChart jar file
+        /// </summary>
+        private const string JFREECHART_JAR_NAME = "jfreechart-1.5.3.jar";
+
+        /// <summary>
+        /// Name of the MSBooster jar file
+        /// </summary>
+        private const string MSBOOSTER_JAR_NAME = "msbooster-1.1.4.jar";
 
         /// <summary>
         /// Relative path to the directory with the MSFragger .jar file
@@ -84,6 +99,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Name of the smile-math library
         /// </summary>
         private const string SMILE_MATH_JAR_NAME = "smile-math-2.6.0.jar";
+
+        /// <summary>
+        /// Relative path to the TMT integrator jar file
+        /// </summary>
+        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.3.3.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
@@ -341,6 +361,52 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return true;
 
             OnErrorEvent("IonQuant .jar file not found: " + jarFile.FullName);
+            return false;
+        }
+
+        /// <summary>
+        /// Find the JFreeChart .jar file
+        /// </summary>
+        /// <param name="jarFile"></param>
+        /// <returns>True if found, otherwise false</returns>
+        public bool FindJarFileJFreeChart(out FileInfo jarFile)
+        {
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar
+
+            if (!FindFragPipeToolsDirectory(out var toolsDirectory))
+            {
+                jarFile = null;
+                return false;
+            }
+
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, JFREECHART_JAR_NAME));
+            if (jarFile.Exists)
+                return true;
+
+            OnErrorEvent("JFreeChart .jar file not found: " + jarFile.FullName);
+            return false;
+        }
+
+        /// <summary>
+        /// Find the MSBooster .jar file
+        /// </summary>
+        /// <param name="jarFile"></param>
+        /// <returns>True if found, otherwise false</returns>
+        public bool FindJarFileMSBooster(out FileInfo jarFile)
+        {
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.4.jar
+
+            if (!FindFragPipeToolsDirectory(out var toolsDirectory))
+            {
+                jarFile = null;
+                return false;
+            }
+
+            jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, MSBOOSTER_JAR_NAME));
+            if (jarFile.Exists)
+                return true;
+
+            OnErrorEvent("MSBooster .jar file not found: " + jarFile.FullName);
             return false;
         }
 
