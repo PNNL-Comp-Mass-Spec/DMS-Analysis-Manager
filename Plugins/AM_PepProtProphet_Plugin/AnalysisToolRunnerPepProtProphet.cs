@@ -258,6 +258,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
 
+                // Move the retention time plot files to the working directory
+                MoveRetentionTimePlotFiles();
+
                 mCmdRunner = null;
                 mCmdRunnerMode = CmdRunnerModes.Undefined;
 
@@ -1431,6 +1434,30 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogError("Error in MoveResultsIntoSubdirectories", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Move the retention time .png files to the working directory
+        /// </summary>
+        /// <remarks>
+        /// The plots show observed vs. predicted retention time (aka elution time)
+        /// </remarks>
+        private void MoveRetentionTimePlotFiles()
+        {
+            try
+            {
+                foreach (var plotFile in mWorkingDirectory.GetFiles("*.png", SearchOption.AllDirectories))
+                {
+                    if ((plotFile.DirectoryName ?? string.Empty).Equals(mWorkingDirectory.FullName))
+                        continue;
+
+                    plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, plotFile.Name));
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MoveRetentionTimePlotFiles", ex);
             }
         }
 
