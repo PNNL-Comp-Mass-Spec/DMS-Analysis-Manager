@@ -69,6 +69,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public const int ION_QUANT_MEMORY_SIZE_GB = 16;
 
         /// <summary>
+        /// Reserve 16 GB when running MSBooster with Java
+        /// </summary>
+        public const int MSBOOSTER_MEMORY_SIZE_GB = 16;
+
+        /// <summary>
         /// Reserve 16 GB when running TMT-Integrator
         /// </summary>
         public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 16;
@@ -119,6 +124,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             Initializing = 1,
             ProcessingStarted = 2,
             CrystalCComplete = 5,
+            MSBoosterComplete = 10,
             PeptideProphetOrPercolatorComplete = 15,
             ProteinProphetComplete = 30,
             DBAnnotationComplete = 45,
@@ -147,11 +153,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
             TmtIntegrator = 5,
             PtmShepherd = 6,
             RewritePepXml = 7,
-            IonQuant = 8
+            IonQuant = 8,
+            MSBooster = 9
         }
 
         private string mFastaFilePath;
 
+        private string mDiaNNProgLoc;
         private string mPercolatorProgLoc;
         private string mPhilosopherProgLoc;
         private string mTmtIntegratorProgLoc;
@@ -209,7 +217,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mFastaFilePath = string.Empty;
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
-                // Determine the path to Percolator, Philosopher, and TMT Integrator
+                // Determine the path to DiaNN, Percolator, Philosopher, and TMT Integrator
+
+                mDiaNNProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.DIANN_RELATIVE_PATH);
 
                 mPercolatorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PERCOLATOR_RELATIVE_PATH);
 
@@ -217,6 +227,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mTmtIntegratorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.TMT_INTEGRATOR_JAR_RELATIVE_PATH);
 
+                if (string.IsNullOrWhiteSpace(mDiaNNProgLoc) ||
+                    string.IsNullOrWhiteSpace(mPercolatorProgLoc) ||
+                    string.IsNullOrWhiteSpace(mPhilosopherProgLoc) ||
+                    string.IsNullOrWhiteSpace(mTmtIntegratorProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -376,6 +390,34 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Split FASTA search
                     // Cannot run Percolator since we don't have .pin files
                     options.FraggerOptions.MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+
+                    if (options.RunMSBooster)
+                    {
+                        LogWarning("Disabling MSBooster since the FASTA file was split into multiple parts and we're thus using Peptide Prophet");
+                        options.RunMSBooster = false;
+                    }
+                }
+
+                if (options.RunMSBooster)
+                {
+                    if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                    {
+                        LogMessage("Disabling MSBooster since the reporter ion mode is {0}", options.ReporterIonMode);
+                        options.RunMSBooster = false;
+                    }
+                    else if (options.FraggerOptions.OpenSearch)
+                    {
+                        LogMessage("Disabling MSBooster since running an open search");
+                        options.RunMSBooster = false;
+                    }
+                    else
+                    {
+                        var msBoosterSuccess = RunMSBooster(dataPackageInfo, datasetIDsByExperimentGroup, options, paramFilePath);
+                        if (!msBoosterSuccess)
+                            return CloseOutType.CLOSEOUT_FAILED;
+
+                        mProgress = (int)ProgressPercentValues.MSBoosterComplete;
+                    }
                 }
 
                 if (options.MS1ValidationMode == MS1ValidationModes.PeptideProphet)
@@ -756,6 +798,77 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogError("Error in CreateCrystalCParamFile", ex);
                 crystalcParamFile = new FileInfo("NonExistentFile.params");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Create the MSBooster parameter file
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="paramFilePath"></param>
+        /// <param name="msBoosterParamFile"></param>
+        /// <returns>True if success, false if an error</returns>
+        private bool CreateMSBoosterParamFile(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            string paramFilePath,
+            out FileInfo msBoosterParamFile)
+        {
+            // Future: Possibly customize this
+            const int MSBOOSTER_THREAD_COUNT = 4;
+
+            try
+            {
+                // This list tracks the .pin file for each dataset (as a relative path)
+                // GroupA\Dataset1.pin
+                // GroupB\Dataset2.pin
+                // GroupB\Dataset3.pin
+                var pinFiles = new List<string>();
+
+                // ReSharper disable ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = item.Key;
+
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                        if (datasetIDsByExperimentGroup.Count == 1)
+                            pinFiles.Add(datasetName + ".pin");
+                        else
+                            pinFiles.Add(Path.Combine(experimentGroupName, datasetName + ".pin"));
+                    }
+                }
+
+                // ReSharper restore ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+
+                msBoosterParamFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "msbooster_params.txt"));
+
+                using var writer = new StreamWriter(new FileStream(msBoosterParamFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine("useDetect = false");
+                writer.WriteLine("numThreads = {0}", MSBOOSTER_THREAD_COUNT);
+                writer.WriteLine("DiaNN = {0}", mDiaNNProgLoc);
+                writer.WriteLine("renamePin = 1");
+                writer.WriteLine("useRT = true");
+                writer.WriteLine("useSpectra = true");
+                writer.WriteLine("fragger = {0}", paramFilePath);
+                writer.WriteLine("mzmlDirectory = {0}", mWorkingDirectory.FullName);
+                writer.WriteLine("pinPepXMLDirectory = {0}", string.Join(" ", pinFiles));
+                writer.WriteLine("useMultipleCorrelatedFeatures = false");
+
+                writer.WriteLine();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateMSBoosterParamFile", ex);
+                msBoosterParamFile = new FileInfo("NonExistentFile.params");
                 return false;
             }
         }
@@ -1405,6 +1518,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 case CmdRunnerModes.CrystalC:
                 case CmdRunnerModes.IonQuant:
+                case CmdRunnerModes.MSBooster:
                 case CmdRunnerModes.PercolatorOutputToPepXml:
                 case CmdRunnerModes.TmtIntegrator:
                 case CmdRunnerModes.PtmShepherd:
@@ -1813,6 +1927,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
+                // Find the JFreeChart jar file
+                // Find the JFreeChart jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar
+                if (!options.LibraryFinder.FindJarFileJFreeChart(out var jarFileJFreeChart))
                     return false;
 
                 // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.0.jar
@@ -2364,6 +2481,105 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private bool RunMSBooster(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            FragPipeOptions options,
+            string paramFilePath)
+        {
+            try
+            {
+                LogDebug("Running MSBooster", 2);
+
+                // ReSharper disable CommentTypo
+                // ReSharper disable IdentifierTypo
+
+                // Run MSBooster for this dataset; example command line:
+                // java -Xmx13G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
+
+                // Find the MSBooster jar file
+                if (!options.LibraryFinder.FindJarFileMSBooster(out var jarFileMSBooster))
+                    return false;
+
+                // Find the smile-core jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;
+                if (!options.LibraryFinder.FindJarFileSmileCore(out var jarFileSmileCore))
+                    return false;
+
+                // Find the smile-math jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;
+                if (!options.LibraryFinder.FindJarFileSmileMath(out var jarFileSmileMath))
+                    return false;
+
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar
+                if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
+                    return false;
+
+                // ReSharper restore CommentTypo
+                // ReSharper restore IdentifierTypo
+
+                // Create the MSBooster parameter file
+
+                if (!CreateMSBoosterParamFile(dataPackageInfo, datasetIDsByExperimentGroup, paramFilePath, out var msBoosterParamFile))
+                    return false;
+
+                var arguments = new StringBuilder();
+
+                // ReSharper disable StringLiteralTypo
+                arguments.AppendFormat("-Xmx{0}G -cp \"{1};{2};{3};{4}\" Features.MainClass",
+                    MSBOOSTER_MEMORY_SIZE_GB, jarFileMSBooster.FullName, jarFileSmileCore.FullName, jarFileSmileMath.FullName, jarFileBatmassIO.FullName);
+
+                arguments.AppendFormat(" --paramsList {0}", msBoosterParamFile.FullName);
+
+                InitializeCommandRunner(
+                    mWorkingDirectory,
+                    Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
+                    CmdRunnerModes.MSBooster);
+
+                LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments.ToString(), options.WorkingDirectoryPadWidth);
+
+                var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
+
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
+                var currentStep = "MSBooster";
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                if (!processingSuccess)
+                {
+                    if (mCmdRunner.ExitCode != 0)
+                    {
+                        LogWarning("Java returned a non-zero exit code while running MSBooster: " + mCmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        LogWarning("Call to Java failed while running MSBooster (but exit code is 0)");
+                    }
+                }
+
+                var newPinFiles = mWorkingDirectory.GetFiles("*_edited.pin");
+
+                if (newPinFiles.Length == 0)
+                {
+                    LogError("MSBooster did not create any _edited.pin files");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunMSBooster", ex);
+                return false;
+            }
+        }
+
         private bool RunPeptideProphet(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -2573,7 +2789,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         var percolatorSuccess = RunPercolatorOnDataset(
                             experimentGroupDirectory, datasetName,
-                            options.WorkingDirectoryPadWidth,
+                            options,
                             out var percolatorPsmFiles);
 
                         if (!percolatorSuccess)
@@ -2626,7 +2842,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunPercolatorOnDataset(
             FileSystemInfo experimentGroupDirectory,
             string datasetName,
-            int workingDirectoryPadWidth,
+            FragPipeOptions options,
             out List<FileInfo> percolatorPsmFiles)
         {
             // Future: possibly adjust this
@@ -2642,11 +2858,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // percolator-v3-05.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
+                // percolator-305\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
+
+                // If MSBooster was used, it will have created _edited.pin files
+                // percolator-305\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName_edited.pin
 
                 var targetPsmFileName = GetPercolatorFileName(datasetName, false);
                 var decoyPsmFileName = GetPercolatorFileName(datasetName, true);
-                var pinFile = string.Format("{0}.pin", datasetName);
+
+                // The .pin file will be DatasetName_edited.pin if MSBooster was used
+                // Otherwise, it is DatasetName.pin
+                var pinFile = string.Format("{0}{1}", datasetName, options.RunMSBooster ? "_edited.pin" : ".pin");
 
                 var arguments = string.Format(
                     "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
@@ -2676,7 +2898,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Instruct mCmdRunner to treat them as normal messages
                 mCmdRunner.RaiseConsoleErrorEvents = false;
 
-                LogCommandToExecute(experimentGroupDirectory, mPercolatorProgLoc, arguments, workingDirectoryPadWidth);
+                LogCommandToExecute(experimentGroupDirectory, mPercolatorProgLoc, arguments, options.WorkingDirectoryPadWidth);
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events

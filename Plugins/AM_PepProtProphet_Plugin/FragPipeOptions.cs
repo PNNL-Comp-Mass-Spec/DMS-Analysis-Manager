@@ -88,6 +88,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIProphet { get; set; }
 
         /// <summary>
+        /// Whether or not to run MSBooster
+        /// </summary>
+        /// <remarks>When MSBooster is used, Percolator must be used (and peptide prophet should not be used)</remarks>
+        public bool RunMSBooster { get; set; }
+
+        /// <summary>
         /// Whether to run protein prophet (if peptide prophet was used)
         /// </summary>
         /// <remarks>
@@ -132,6 +138,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             MatchBetweenRuns = jobParams.GetJobParameter("MatchBetweenRuns", false);
 
+            // Class AnalysisToolRunnerPepProtProphet will set this to false if the MSFragger parameter file includes iTRAQ or TMT
+            // Additionally, MSBooster is set to false if running an open search
+            RunMSBooster = FraggerOptions.GetParameterValueOrDefault("RunMSBooster", true);
+
             var runPeptideProphetJobParam = jobParams.GetJobParameter("RunPeptideProphet", string.Empty);
             var runPercolatorJobParam = jobParams.GetJobParameter("RunPercolator", string.Empty);
 
@@ -170,6 +180,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 FraggerOptions.MS1ValidationModeAutoDefined = false;
+            }
+
+            if (FraggerOptions.MS1ValidationMode == MS1ValidationModes.PeptideProphet && RunMSBooster)
+            {
+                OnWarningEvent("Disabling MSBooster since Peptide Prophet is enabled");
+                RunMSBooster = false;
             }
 
             var generatePeptideLevelSummary = FraggerOptions.GetParameterValueOrDefault("GeneratePeptideLevelSummary", true);
