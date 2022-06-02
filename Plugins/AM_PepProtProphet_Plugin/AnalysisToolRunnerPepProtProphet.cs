@@ -30,8 +30,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: accmass, annot, antivirus, batmass-io, bruker, ccee, clevel, cp, crystalc, decoyprobs, dir, expectscore
-        // Ignore Spelling: fasta, filelist, fragpipe, freequant, glyco, groupby, iprophet, itraq, java, javacpp, labelquant, linux, locprob
-        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, multidir, nocheck, nonparam, nonsp, num, openblas
+        // Ignore Spelling: fasta, filelist, fragger, fragpipe, freequant, glyco, groupby, iprophet, itraq, java, javacpp, jfreechart, labelquant, linux, locprob
+        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, msbooster, multidir, nocheck, nonparam, nonsp, num, openblas
         // Ignore Spelling: peptideprophet, pepxml, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot
         // Ignore Spelling: razorbin, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools

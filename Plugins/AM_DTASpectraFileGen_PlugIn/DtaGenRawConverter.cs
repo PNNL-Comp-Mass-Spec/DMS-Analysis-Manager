@@ -17,6 +17,8 @@ namespace DTASpectraFileGen
 {
     public class DtaGenRawConverter : DtaGenThermoRaw
     {
+        // Ignore Spelling: mgf
+
         /// <summary>
         /// Returns the default path to the DTA generator tool
         /// </summary>

@@ -2,6 +2,8 @@
 {
     public class UniqueSeqInfo
     {
+        // Ignore Spelling: acetylated, tryptic
+
         private int mObsCount;
 
         /// <summary>

@@ -6,6 +6,8 @@ namespace MSGFResultsSummarizer
 {
     public sealed class PSMInfo : UniqueSeqInfo
     {
+        // Ignore Spelling: phosphopeptide
+
         public const double UNKNOWN_MSGF_SPEC_EVALUE = 10;
 
         public const double UNKNOWN_EVALUE = double.MaxValue;

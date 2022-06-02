@@ -24,6 +24,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public abstract class AnalysisToolRunnerMASICBase : AnalysisToolRunnerBase
     {
+        // ReSharper disable once CommentTypo
         // Ignore Spelling: Traq, labelling, Glc, Az
 
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
