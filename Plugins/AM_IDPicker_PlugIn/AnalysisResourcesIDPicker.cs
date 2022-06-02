@@ -65,7 +65,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     return sharedResourceResult;
                 }
 
-                // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MSGF+, etc.)
+                // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MS-GF+, etc.)
                 var paramFileName = mJobParams.GetParam("ParmFileName");
 
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFileName, false))

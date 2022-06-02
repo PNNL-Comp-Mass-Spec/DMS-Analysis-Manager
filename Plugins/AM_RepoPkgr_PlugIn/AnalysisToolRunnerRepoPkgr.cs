@@ -147,15 +147,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (dataPkgJobCountMatch == 0)
                 {
-                    LogWarning("Did not find any MSGF+ jobs in data package " + mRepoPackager.DataPkgId + "; auto-setting mIncludeSequestResults to True");
+                    LogWarning("Did not find any MS-GF+ jobs in data package " + mRepoPackager.DataPkgId + "; auto-setting mIncludeSequestResults to true");
                     mIncludeSequestResults = true;
                 }
                 else
                 {
                     if (dataPkgFileCountMatch == 0)
-                        LogWarning("Found " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + mRepoPackager.DataPkgId + " but did not find any candidate files to copy");
+                        LogWarning("Found " + dataPkgJobCountMatch + " MS-GF+ jobs in data package " + mRepoPackager.DataPkgId + " but did not find any candidate files to copy");
                     else
-                        LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + mRepoPackager.DataPkgId);
+                        LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MS-GF+ jobs in data package " + mRepoPackager.DataPkgId);
                 }
             }
             mProgress = PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED;

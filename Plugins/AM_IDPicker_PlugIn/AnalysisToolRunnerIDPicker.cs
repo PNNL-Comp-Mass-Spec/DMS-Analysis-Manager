@@ -304,7 +304,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (phrpResultType == PeptideHitResultTypes.MSGFPlus)
             {
-                // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
+                // If we run MS-GF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
                 success = LookForDecoyProteinsInMSGFPlusResults(synFilePath, phrpResultType, ref decoyPrefix);
                 if (!success)
@@ -587,7 +587,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     "scrambled_",                                  // MTS scrambled proteins                // scrambled[_]%'
                     "xxx.",                                        // Inspect reversed/scrambled proteins   // xxx.%'
                     MSGFDB_DECOY_PROTEIN_PREFIX.ToLower(),         // MSGFDB reversed proteins              // rev[_]%'
-                    MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()        // MSGF+ reversed proteins               // xxx[_]%'
+                    MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()        // MS-GF+ reversed proteins              // xxx[_]%'
                 };
 
                 // Note that X!Tandem decoy proteins end with ":reversed"
@@ -774,7 +774,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (mDebugLevel >= 3)
                 {
-                    LogDebug("Looking for decoy proteins in the MSGF+ synopsis file");
+                    LogDebug("Looking for decoy proteins in the MS-GF+ synopsis file");
                 }
 
                 using var reader = new ReaderFactory(synFilePath, resultType, false, false, false);

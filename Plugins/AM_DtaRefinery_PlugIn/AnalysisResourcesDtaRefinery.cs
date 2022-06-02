@@ -130,7 +130,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (scriptName.StartsWith("MSGFPlus", StringComparison.OrdinalIgnoreCase))
             {
                 LogMessage(
-                    "Validating that the _dta.txt file has centroided spectra (required by MSGF+)");
+                    "Validating that the _dta.txt file has centroided spectra (required by MS-GF+)");
                 if (!ValidateCDTAFileIsCentroided(cdtaPath))
                 {
                     // mMessage is already updated
