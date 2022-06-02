@@ -87,8 +87,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
-        private const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.2.1.jar";
-
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
         public const string ZIPPED_QUANT_CSV_FILES = "Dataset_quant_csv.zip";
@@ -217,9 +215,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mPhilosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
 
-                mTmtIntegratorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", TMT_INTEGRATOR_JAR_RELATIVE_PATH);
+                mTmtIntegratorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.TMT_INTEGRATOR_JAR_RELATIVE_PATH);
 
-                if (string.IsNullOrWhiteSpace(mPhilosopherProgLoc) || string.IsNullOrWhiteSpace(mTmtIntegratorProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -644,7 +641,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "{3} " +               // DatasetName_percolator_target_psms.tsv
                     "{4} " +               // DatasetName_percolator_decoy_psms.tsv
                     "interact-{5} " +      // interact-DatasetName
-                    "DDA",
+                    "DDA " +
+                    "0.5",                 // Minimum probability threshold
                     fragPipeLibDirectory.FullName,
                     pinFile,
                     datasetName,
@@ -1437,24 +1435,24 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Running Abacus", 2);
 
                 // Example command line:
-                // philosopher.exe abacus --razor --picked --reprint --tag XXX_ --protein ExperimentGroupA ExperimentGroupB
+                // philosopher.exe abacus --picked --razor --reprint --tag XXX_ --protein ExperimentGroupA ExperimentGroupB
 
                 var arguments = new StringBuilder();
 
                 // When Match Between Runs or Open Search is not in use:
-                // --razor --picked --reprint --tag XXX_ --protein
+                // --picked --razor --reprint --tag XXX_ --protein
 
                 // Otherwise, remove --picked, giving:
                 // --razor --reprint --tag XXX_ --protein
 
-                arguments.Append("abacus --razor");
+                arguments.Append("abacus");
 
                 if (!options.MatchBetweenRuns && !options.OpenSearch)
                 {
                     arguments.Append(" --picked");
                 }
 
-                arguments.Append(" --reprint --tag XXX_");
+                arguments.Append(" --razor --reprint --tag XXX_");
 
                 // Version 15 of FragPipe would append --labels if reporter ions were in use
                 // This has been disabled in version 16
@@ -1543,7 +1541,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable IdentifierTypo
 
                 // Run Crystal-C for this dataset; example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
 
                 // Find the thermo lib directory
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
@@ -1802,33 +1800,41 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.17.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\javacpp.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\javacpp-windows-x86_64.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\javacpp-linux-x86_64.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\openblas.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\openblas-windows-x86_64.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\openblas-linux-x86_64.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.6.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --maxlfq 1       --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --locprob 0.75 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
 
                 // v17, use wildcard for javacpp-presets
-                // java -Xmx4G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.17.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\*;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.6.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --maxlfq 1       --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --locprob 0.75 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
+                // java -Xmx4G  -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.7.17.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\*;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.6.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --mbr 1 --maxlfq 1       --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions 2 --minexps 1 --locprob 0.75 --multidir . --filelist C:\DMS_WorkDir\Results\filelist_ionquant.txt
 
-                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\bruker
+                // v18
+                // java -Xmx10G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.0.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
+
+                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
                     return false;
 
-                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo
+                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
-                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\ionquant-1.5.5.jar
+                    return false;
+
+                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.0.jar
                 if (!options.LibraryFinder.FindJarFileIonQuant(out var jarFileIonQuant))
                     return false;
 
-                // Find the smile-core jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;
-                if (!options.LibraryFinder.FindJarFileSmileCore(out var jarFileSmileCore))
-                    return false;
+                // Old, prior to v18:
+                // Find the smile-core jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar
+                // if (!options.LibraryFinder.FindJarFileSmileCore(out var jarFileSmileCore))
+                //     return false;
 
-                // Find the smile-math jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;
-                if (!options.LibraryFinder.FindJarFileSmileMath(out var jarFileSmileMath))
-                    return false;
+                // Old, prior to v18:
+                // Find the smile-math jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar
+                // if (!options.LibraryFinder.FindJarFileSmileMath(out var jarFileSmileMath))
+                //     return false;
 
+                // Old, prior to v18:
                 // Find the Java C++ presets directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin\*
-                if (!options.LibraryFinder.FindCppPresetsPlatformDirectory(out var cppPresetsPlatformDirectory))
-                    return false;
+                // if (!options.LibraryFinder.FindCppPresetsPlatformDirectory(out var cppPresetsPlatformDirectory))
+                //     return false;
 
-                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar
                 if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
                     return false;
 
@@ -1844,6 +1850,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var arguments = new StringBuilder();
 
+                // ReSharper disable CommentTypo
+
+                /*
+                ** v17, use wildcard for javacpp-presets
+                *
                 arguments.AppendFormat(
                     "-Xmx{0}G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4};{5};{6}\\*;{7}\" ionquant.IonQuant",
                     ION_QUANT_MEMORY_SIZE_GB,
@@ -1854,8 +1865,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     jarFileSmileMath,
                     cppPresetsPlatformDirectory,
                     jarFileBatmassIO.FullName);
+                */
 
-                arguments.AppendFormat(" --threads {0} --ionmobility 0 --mbr {1}", ION_QUANT_THREAD_COUNT, matchBetweenRunsFlag);
+                // ReSharper restore CommentTypo
+
+                // v18
+                arguments.AppendFormat(
+                   "-Xmx{0}G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4};{5}\" ionquant.IonQuant",
+                   ION_QUANT_MEMORY_SIZE_GB,
+                   brukerLibDirectory.FullName,
+                   thermoLibDirectory.FullName,
+                   jarFileJFreeChart.FullName,
+                   jarFileBatmassIO.FullName,
+                   jarFileIonQuant.FullName);
+
+                arguments.AppendFormat(" --threads {0} --ionmobility 0 --minexps 1 --mbr {1}", ION_QUANT_THREAD_COUNT, matchBetweenRunsFlag);
 
                 // Feature detection m/z tolerance, in ppm
                 var featureDetectionMZTolerance = mJobParams.GetJobParameter("FeatureDetectionMZTolerance", 10.0f);
@@ -1892,7 +1916,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mbrIonFdr, mbrProteinFdr, mbrPeptideFdr, normalizeIonIntensities);
 
                 arguments.AppendFormat(
-                    " --minisotopes 2 --minscans 3 --writeindex 0 --tp 3 --minfreq 0.5 --minions {0} --minexps 1 --locprob 0.75",
+                    " --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions {0} --locprob 0.75 --uniqueness 0",
                     minIonsForProteinQuant);
 
                 var datasetCount = 0;
@@ -2825,13 +2849,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // --maxppmdiff 2000000 --output combined
 
                 // Closed search, with TMT or iTRAQ:
-                // --maxppmdiff 2000000 --minprob 0.9 --output combined
+                // --maxppmdiff 2000000 --minprob 0.5 --output combined
 
                 arguments.Append("proteinprophet --maxppmdiff 2000000");
 
                 if (options.ReporterIonMode != ReporterIonModes.Disabled && !options.OpenSearch)
                 {
-                    arguments.Append(" --minprob 0.9");
+                    arguments.Append(" --minprob 0.5");
                 }
 
                 arguments.Append(" --output combined");
@@ -2925,9 +2949,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable StringLiteralTypo
 
                 // Run PTMShepherd, example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.6.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.6.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
 
-                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.4\ext\thermo
+                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -2935,7 +2959,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindJarFilePtmShepherd(out var jarFilePtmShepherd))
                     return false;
 
-                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.23.4.jar
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar
 
                 // ReSharper disable once IdentifierTypo
                 if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
@@ -3259,7 +3283,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.2.1.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
+                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-3.3.3.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
 
                 // ReSharper restore CommentTypo
 
