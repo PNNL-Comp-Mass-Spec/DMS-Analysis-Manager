@@ -141,8 +141,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Set up command
-                var arguments = " " + Global.PossiblyQuotePath(rawFilePath) +
-                                " --mgf";
+                var arguments = " " + Global.PossiblyQuotePath(rawFilePath) + " --mgf";
 
                 if (mDebugLevel > 0)
                 {

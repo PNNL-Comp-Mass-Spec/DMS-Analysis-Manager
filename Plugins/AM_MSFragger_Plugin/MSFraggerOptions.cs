@@ -38,7 +38,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Whether to run PeptideProphet, Percolator, or nothing
         /// </summary>
-        /// <remarks>Defaults to PeptideProphet, but auto-set to Percolator if MatchBetweenRuns is true or TMT is in use</remarks>
+        /// <remarks>Defaults to Percolator, but auto-set to PeptideProphet if iTRAQ is in use</remarks>
         public MS1ValidationModes MS1ValidationMode { get; set; }
 
         /// <summary>
@@ -434,6 +434,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                         if (MS1ValidationMode == MS1ValidationModes.Percolator &&
                             ReporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
                         {
+                            // Switch from Percolator to PeptideProphet since using iTRAQ
                             MS1ValidationMode = MS1ValidationModes.PeptideProphet;
                         }
 
@@ -442,6 +443,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                                 ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or
                                 ReporterIonModes.Tmt16 or ReporterIonModes.Tmt18)
                         {
+                            // Switch from PeptideProphet to Percolator  since using TMT
                             MS1ValidationMode = MS1ValidationModes.Percolator;
                         }
                     }
