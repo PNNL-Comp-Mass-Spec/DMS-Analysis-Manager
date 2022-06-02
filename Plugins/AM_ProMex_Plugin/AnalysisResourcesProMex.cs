@@ -125,7 +125,7 @@ namespace AnalysisManagerProMexPlugIn
         }
 
         /// <summary>
-        /// Returns True if this is a ProMex_Bruker job
+        /// Returns true if this is a ProMex_Bruker job
         /// </summary>
         /// <param name="jobParams"></param>
         public static bool IsProMexBrukerJob(IJobParams jobParams)

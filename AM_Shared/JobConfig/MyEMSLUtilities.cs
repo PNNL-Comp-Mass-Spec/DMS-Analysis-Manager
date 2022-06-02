@@ -284,7 +284,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieve queued files from MyEMSL
         /// </summary>
-        /// <remarks>Returns True if the download queue is empty</remarks>
+        /// <remarks>Returns true if the download queue is empty</remarks>
         /// <param name="downloadDirectoryPath">Target directory path (ignored for files defined in destinationFilePathOverride)</param>
         /// <param name="directoryLayout">Directory Layout (ignored for files defined in destinationFilePathOverride)</param>
         /// <returns>True if success, false if an error</returns>

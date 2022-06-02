@@ -163,7 +163,7 @@ namespace AnalysisManagerBase.JobConfig
         SortedSet<string> ServerFilesToDelete { get; }
 
         /// <summary>
-        /// Flag set to True when .CloseTask is called
+        /// Flag set to true when .CloseTask is called
         /// </summary>
         bool TaskClosed { get; set; }
 
@@ -177,7 +177,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         bool AddAdditionalParameter(string sectionName, string paramName, string paramValue);
 
         /// <summary>
@@ -186,7 +186,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Boolean value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue);
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Integer value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         bool AddAdditionalParameter(string sectionName, string paramName, int paramValue);
 
         /// <summary>
@@ -292,7 +292,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Gets a job parameter with the given name (in any parameter section); names are not case sensitive
         /// </summary>
         /// <remarks>
-        /// If the value associated with the parameter is found, yet is not True or False, an exception will occur;
+        /// If the value associated with the parameter is found, yet is not true or false, an exception will occur;
         /// the calling procedure must handle this exception
         /// </remarks>
         /// <param name="name">Key name for parameter</param>

@@ -435,7 +435,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Set this to true for now
-            // It will be changed to False if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
+            // It will be changed to false if processing Inspect results and the _PepToProtMap.txt file is successfully retrieved
             mRetrieveOrganismDB = true;
 
             var resultTypeName = GetResultType(mJobParams);
@@ -661,11 +661,11 @@ namespace AnalysisManagerExtractionPlugin
             {
                 // Errors were reported in method call
 
-                // See if IgnorePeptideToProteinMapError=True
+                // See if IgnorePeptideToProteinMapError is true
                 if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                 {
                     LogWarning(
-                        "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
+                        "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' is true");
                 }
                 else
                 {
@@ -1062,16 +1062,16 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (!ignorePepToProtMapErrors)
                         {
-                            // See if IgnorePeptideToProteinMapError=True
+                            // See if IgnorePeptideToProteinMapError is true
                             if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                             {
                                 LogWarning(
-                                    "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
+                                    "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' is true");
                             }
                             else if (mJobParams.GetJobParameter("SkipProteinMods", false))
                             {
                                 LogWarning(
-                                    "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True");
+                                    "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' is true");
                             }
                             else
                             {
@@ -1528,7 +1528,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (mzidGzFiles.Length == 0 && mzidFiles.Length == 0)
                     {
-                        LogWarning(string.Format("Changing job parameter {0} back to False because no .mzid files were found",
+                        LogWarning(string.Format("Changing job parameter {0} back to false because no .mzid files were found",
                                                  JOB_PARAM_SKIP_PHRP));
                         mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
                     }

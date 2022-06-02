@@ -1409,7 +1409,7 @@ namespace AnalysisManagerProg
             var resourcer = GetResourcesObject(debugLevel);
 
             var success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip");
-            // success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
+            // success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", true)
 
             return success;
         }
@@ -1485,7 +1485,7 @@ namespace AnalysisManagerProg
 
             var success = resourceTester.FileSearchTool.RetrieveBrukerMALDIImagingFolders(true);
 
-            // success = resourceTester.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
+            // success = resourceTester.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", true)
 
             return success;
         }

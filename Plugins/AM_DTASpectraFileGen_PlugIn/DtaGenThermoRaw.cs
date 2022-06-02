@@ -483,7 +483,7 @@ namespace DTASpectraFileGen
                 {
                     // If we are using extract_msn.exe, need to loop through .dta creation until no more files are created
                     // Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
-                    // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
+                    // (only used if selected in manager settings, but "UseDTALooping" is typically set to true)
 
                     var locScanStart = scanStart;
                     int locScanStop;
@@ -578,9 +578,9 @@ namespace DTASpectraFileGen
 
                         if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "DTA_LCQ", true))
                         {
-                            // .RunProgram returned False
+                            // .RunProgram returned false
                             LogDTACreationStats("DtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(mDtaToolNameLoc),
-                                "m_RunProgTool.RunProgram returned False");
+                                "m_RunProgTool.RunProgram returned false");
 
                             LogError("Error running " + Path.GetFileNameWithoutExtension(mDtaToolNameLoc));
                             return false;

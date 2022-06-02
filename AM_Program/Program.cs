@@ -218,7 +218,7 @@ namespace AnalysisManagerProg
         /// Enable offline mode
         /// </summary>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
-        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <param name="runningLinux">Set to true if running Linux</param>
         private static void EnableOfflineMode(bool runningLinux)
         {
             MainProcess.EnableOfflineMode(runningLinux);

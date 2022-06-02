@@ -325,7 +325,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <remarks>
         /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure UpdateManagerAndTaskStatus
-        /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
+        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
         /// </remarks>
         /// <param name="logStatusToBrokerDB"></param>
         /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
@@ -367,7 +367,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Configure the Message Queue logging settings
         /// </summary>
         /// <remarks>
-        /// Analysis managers typically have logStatusToBrokerDB=False and logStatusToMessageQueue=True
+        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
         /// </remarks>
         /// <param name="logStatusToMessageQueue"></param>
         /// <param name="msgQueueURI"></param>
@@ -387,7 +387,7 @@ namespace AnalysisManagerBase.StatusReporting
 
         /// <summary>
         /// Looks for file "AbortProcessingNow.txt"
-        /// If found, sets property AbortProcessingNow to True
+        /// If found, sets property AbortProcessingNow to true
         /// </summary>
         public void CheckForAbortProcessingFile()
         {
@@ -1002,7 +1002,7 @@ namespace AnalysisManagerBase.StatusReporting
             if (mBrokerDBLogger != null)
             {
                 // Send the status info to the Broker DB
-                // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB = True)
+                // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB is true)
                 LogStatusToBrokerDatabase(forceLogToBrokerDB);
             }
         }

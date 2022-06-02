@@ -422,7 +422,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// </summary>
         /// <param name="isosFilePath"></param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
-        /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
+        /// <returns>True if it has one or more lines of data, otherwise, returns false</returns>
         private bool IsosFileHasData(string isosFilePath, double maxFitValue = 0.15)
         {
             return IsosFileHasData(isosFilePath, out _, false, maxFitValue);
@@ -435,7 +435,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="dataLineCount">Output parameter: total data line count</param>
         /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
-        /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
+        /// <returns>True if it has one or more lines of data, otherwise, returns false</returns>
         private bool IsosFileHasData(string isosFilePath, out int dataLineCount, bool countTotalDataLines, double maxFitValue = 0.15)
         {
             dataLineCount = 0;

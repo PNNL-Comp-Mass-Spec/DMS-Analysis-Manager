@@ -495,7 +495,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="sourceFilePath">Path to the data file</param>
-        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>Path to the remotely cached file; empty path if an error</returns>
         protected string CopyFileToServerCache(string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
         {
@@ -510,7 +510,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="datasetStoragePath">Dataset storage path (i.e., the dataset directory)</param>
         /// <param name="cacheDirectoryPath">Cache directory base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="sourceFilePath">Path to the data file</param>
-        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>Path to the remotely cached file; empty path if an error</returns>
         protected string CopyFileToServerCache(string datasetStoragePath, string cacheDirectoryPath, string sourceFilePath, bool purgeOldFilesIfNeeded)
         {
@@ -585,7 +585,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Dataset year quarter text (optional)
         /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
-        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
@@ -614,7 +614,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Dataset year quarter text (optional)
         /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
-        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this method)</param>
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
@@ -735,7 +735,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFilePath"></param>
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
-        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
         {
@@ -1006,7 +1006,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             // Recursively call this method for each subdirectory
-            // If any of the subdirectories have an error, we'll continue copying, but will set errorEncountered to True
+            // If any of the subdirectories have an error, we'll continue copying, but will set errorEncountered to true
             var success = true;
 
             foreach (var subdirectory in sourceDirectory.GetDirectories())
@@ -1751,7 +1751,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="updateIntervalSeconds">Update interval, in seconds</param>
         /// <param name="mgrParams">Manager params</param>
         /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
-        /// <returns>True for success; False for error</returns>
+        /// <returns>True for success; false for error</returns>
         public static bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
             try
@@ -2155,7 +2155,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Gzip sourceFilePath, creating a new file in the same directory, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If true, will delete the file after zipping it</param>
         /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
@@ -2177,7 +2177,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetDirectoryPath">Output directory for the unzipped file</param>
-        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If true, will delete the file after zipping it</param>
         /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
@@ -2209,7 +2209,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// GZip the given file
         /// </summary>
         /// <param name="fileToCompress">File to compress</param>
-        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If true, will delete the file after zipping it</param>
         /// <returns>FileInfo object of the new .gz file or null if an error</returns>
         public FileInfo GZipFile(FileInfo fileToCompress, bool deleteSourceAfterZip)
         {
@@ -2379,7 +2379,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var filePath = Path.Combine(mWorkDir, fileName);
 
-            // XML tool LoadSettings returns True even if file is not found, so a separate check is required
+            // XML tool LoadSettings returns true even if file is not found, so a separate check is required
             if (File.Exists(filePath))
             {
                 return mSettingsFileParams.LoadSettings(filePath);
@@ -3539,7 +3539,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
-        /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
+        /// <param name="includeRevision">Set to true to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success, false if an error</returns>
         protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {
@@ -4186,7 +4186,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Stores sourceFilePath in a zip file with the same name, but extension .zip
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If true, will delete the file after zipping it</param>
         /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
@@ -4251,7 +4251,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Stores sourceFilePath in a zip file named zipFilePath
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If true, will delete the file after zipping it</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
         /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)

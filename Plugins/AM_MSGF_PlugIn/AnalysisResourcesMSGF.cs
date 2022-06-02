@@ -269,11 +269,11 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                     {
-                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' = True");
+                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' is true");
                     }
                     else if (mJobParams.GetJobParameter("SkipProteinMods", false))
                     {
-                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' = True");
+                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' is true");
                     }
                     else
                     {

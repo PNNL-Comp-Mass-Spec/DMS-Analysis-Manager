@@ -243,7 +243,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// <param name="skipReason">Output: skip reason</param>
         /// <param name="dmsSteps">Output: </param>
         /// <param name="proteinDescriptionParseRule">Output: protein description parse rule (RegEx for extracting protein descriptions from the FASTA file)</param>
-        /// <returns>True if this job step should be skipped, otherwise False</returns>
+        /// <returns>True if this job step should be skipped, otherwise false</returns>
         private bool CheckSkipMaxQuant(
             FileSystemInfo workingDirectory,
             string maxQuantParameterFileName,

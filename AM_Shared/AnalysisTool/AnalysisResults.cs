@@ -245,7 +245,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     if (!overwrite && File.Exists(destinationFilePath))
                     {
-                        throw new IOException("Tried to overwrite an existing file when overwrite = False: " + destinationFilePath);
+                        throw new IOException("Tried to overwrite an existing file when overwrite = false: " + destinationFilePath);
                     }
 
                     if (attemptCount > maxRetryCount)
@@ -588,7 +588,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
             }
 
-            // Exception occurred; return False
+            // Exception occurred; return false
             return false;
         }
     }

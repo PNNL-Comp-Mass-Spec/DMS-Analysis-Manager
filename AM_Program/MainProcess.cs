@@ -104,7 +104,7 @@ namespace AnalysisManagerProg
         /// When true, only push analysis manager files to the remote host using the DMSUpdateManager
         /// Do not request a new analysis job
         /// </summary>
-        /// <remarks>Only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB</remarks>
+        /// <remarks>Only valid if the manager has parameter RunJobsRemotely set to true in the Manager Control DB</remarks>
         public bool PushRemoteMgrFilesOnly { get; set; }
 
         /// <summary>
@@ -247,7 +247,7 @@ namespace AnalysisManagerProg
 
             // Get the manager settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
             // If you get an exception here while debugging in Visual Studio, be sure
-            //   that "UsingDefaults" is set to False in AppName.exe.config
+            // that "UsingDefaults" is set to false in AppName.exe.config
             try
             {
                 ShowTrace("Reading application config file");
@@ -1708,7 +1708,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Sets the local mgr_active flag to False for serious problems
+        /// Sets the local mgr_active flag to false for serious problems
         /// </summary>
         private void DisableManagerLocally()
         {
@@ -1724,7 +1724,7 @@ namespace AnalysisManagerProg
         /// Enable offline mode
         /// </summary>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
-        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <param name="runningLinux">Set to true if running Linux</param>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
             Global.EnableOfflineMode(runningLinux);
@@ -1842,13 +1842,13 @@ namespace AnalysisManagerProg
                     string.Equals(mAnalysisTask.GetParam("StepTool"), "SEQUEST", StringComparison.OrdinalIgnoreCase))
                 {
                     // This was a SEQUEST job, but no .DTA files were found
-                    // Return True; do not count this as a manager failure
+                    // Return true; do not count this as a manager failure
                     return true;
                 }
 
                 if (resultCode == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    // Return True; do not count this as a manager failure
+                    // Return true; do not count this as a manager failure
                     return true;
                 }
 
@@ -2109,7 +2109,7 @@ namespace AnalysisManagerProg
 
             if (mNeedToAbortProcessing)
             {
-                LogError("Analysis manager has encountered a fatal error - aborting processing (mNeedToAbortProcessing is True)");
+                LogError("Analysis manager has encountered a fatal error - aborting processing (mNeedToAbortProcessing is true)");
                 return true;
             }
 
@@ -2375,7 +2375,7 @@ namespace AnalysisManagerProg
                 {
                     mInsufficientFreeMemory = toolResourcer.InsufficientFreeMemory;
                     mNeedToAbortProcessing = true;
-                    ShowTrace("toolResourcer.NeedToAbortProcessing = True; closing job step task");
+                    ShowTrace("toolResourcer.NeedToAbortProcessing is true; closing job step task");
 
                     var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
                     mAnalysisTask.CloseTask(closeOut, toolResourcer.Message);
@@ -2499,7 +2499,7 @@ namespace AnalysisManagerProg
                 {
                     mInsufficientFreeMemory = toolRunner.InsufficientFreeMemory;
                     mNeedToAbortProcessing = true;
-                    ShowTrace("toolRunner.NeedToAbortProcessing = True; closing job step task");
+                    ShowTrace("toolRunner.NeedToAbortProcessing is true; closing job step task");
 
                     var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
                     mAnalysisTask.CloseTask(closeOut, mMostRecentErrorMessage, toolRunner);
@@ -2894,7 +2894,7 @@ namespace AnalysisManagerProg
             var logMemoryUsage = mMgrParams.GetParam("LogMemoryUsage", false);
             float minimumMemoryUsageLogInterval = mMgrParams.GetParam("MinimumMemoryUsageLogInterval", 1);
 
-            // Analysis managers typically have logStatusToBrokerDb=False and logStatusToMessageQueue=True
+            // Analysis managers typically have logStatusToBrokerDb = false and logStatusToMessageQueue = true
             var logStatusToBrokerDb = mMgrParams.GetParam("LogStatusToBrokerDB", false);
 
             // Gigasax.DMS_Pipeline

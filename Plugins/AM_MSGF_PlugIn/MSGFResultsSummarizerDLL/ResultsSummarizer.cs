@@ -1380,7 +1380,7 @@ namespace MSGFResultsSummarizer
 
                 if (!ContactDatabase)
                 {
-                    SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
+                    SetErrorMessage("Cannot post results to the database because ContactDatabase is false");
                     return false;
                 }
 
@@ -1512,11 +1512,11 @@ namespace MSGFResultsSummarizer
                 //  PEPTIDES with # at index 2 and * at index 3
                 //  PEPTIDES with # at index 0 and * at index 7
 
-                // If sequenceInfoAvailable is True, instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
+                // If sequenceInfoAvailable is true, instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
                 //   For example, VGVEASEETPQT with Phosph at index 5
 
                 // The SeqID value tracked by NormalizedPeptideInfo is the SeqID of the first sequence to get normalized to the given entry
-                // If sequenceInfoAvailable is False, values are the ResultID value of the first peptide to get normalized to the given entry
+                // If sequenceInfoAvailable is false, values are the ResultID value of the first peptide to get normalized to the given entry
                 var normalizedPeptidesByCleanSequence = new Dictionary<string, List<NormalizedPeptideInfo>>();
 
                 // ReSharper restore CommentTypo

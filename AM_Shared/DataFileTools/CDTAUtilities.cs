@@ -214,13 +214,13 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Replaces the original file with a new CDTA file if newCDTAFileHasUpdates=True; deletes the new CDTA file if newCDTAFileHasUpdates=false
+        /// Replaces the original file with a new CDTA file if newCDTAFileHasUpdates is true; deletes the new CDTA file if newCDTAFileHasUpdates=false
         /// </summary>
         /// <param name="newCDTAFileHasUpdates">True if the new CDTA file has updated info</param>
-        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If true, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
-        /// Only valid if replaceSourceFile=True;
-        /// If True, the source file is deleted if an updated version is created.
+        /// Only valid if replaceSourceFile is true;
+        /// If true, the source file is deleted if an updated version is created.
         /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="originalFile">File handle to the original CDTA file</param>
@@ -276,18 +276,17 @@ namespace AnalysisManagerBase.DataFileTools
         /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
         /// </summary>
         /// <param name="sourceFilePath">Input _DTA.txt file to parse</param>
-        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If true, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
-        /// Only valid if replaceSourceFile=True;
-        /// If True, the source file is deleted if an updated version is created.
+        /// Only valid if replaceSourceFile is true;
+        /// If true, the source file is deleted if an updated version is created.
         /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="outputFilePath">
-        /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
+        /// Output file path to use for the updated file; required if replaceSourceFile is false; ignored if replaceSourceFile is true
         /// </param>
         /// <returns>True if success, false if an error</returns>
-        public bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated,
-                                                  string outputFilePath)
+        public bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated, string outputFilePath)
         {
             var parentIonLineIsNext = false;
             var parentIonLineUpdated = false;
@@ -318,7 +317,7 @@ namespace AnalysisManagerBase.DataFileTools
                     if (string.IsNullOrEmpty(outputFilePath))
                     {
                         OnErrorEvent(
-                            "Error in ValidateCDTAFileScanAndCSTags: variable outputFilePath must define a file path when replaceSourceFile=False");
+                            "Error in ValidateCDTAFileScanAndCSTags: variable outputFilePath must define a file path when replaceSourceFile is false");
                         return false;
                     }
                     outputFilePathTemp = outputFilePath;

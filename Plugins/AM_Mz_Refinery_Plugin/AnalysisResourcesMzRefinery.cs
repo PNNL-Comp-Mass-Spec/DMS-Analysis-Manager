@@ -171,7 +171,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Check for existing MS-GF+ results in the transfer directory
         /// </summary>
-        /// <remarks>Will return True even if existing results are not found</remarks>
+        /// <remarks>Will return true even if existing results are not found</remarks>
         /// <returns>True if no errors, false if a problem</returns>
         private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
         {

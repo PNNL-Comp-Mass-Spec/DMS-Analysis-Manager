@@ -45,7 +45,7 @@ namespace AnalysisManagerBase.JobConfig
             /// Set to true to create a text file for each job listing the full path to the files that would be retrieved for that job
             /// Example filename: FilePathInfo_Job950000.txt
             /// </summary>
-            /// <remarks>No files are actually retrieved when this is set to True</remarks>
+            /// <remarks>No files are actually retrieved when this is set to true</remarks>
             public bool CreateJobPathFiles;
 
             /// <summary>
@@ -55,28 +55,28 @@ namespace AnalysisManagerBase.JobConfig
             public bool RetrieveMzXMLFile;
 
             /// <summary>
-            /// Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
+            /// Set to true to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
             /// </summary>
             /// <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML.gz file will be retrieved</remarks>
             public bool RetrieveDTAFiles;
 
             /// <summary>
-            /// Set to True to obtain MS-GF+ .mzid.gz files
+            /// Set to true to obtain MS-GF+ .mzid.gz files
             /// </summary>
             public bool RetrieveMzidFiles;
 
             /// <summary>
-            /// Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
+            /// Set to true to obtain .pepXML files (typically stored as _pepXML.zip)
             /// </summary>
             public bool RetrievePepXMLFiles;
 
             /// <summary>
-            /// Set to True to obtain the _syn.txt file and related PHRP files
+            /// Set to true to obtain the _syn.txt file and related PHRP files
             /// </summary>
             public bool RetrievePHRPFiles;
 
             /// <summary>
-            /// When True, assume that the instrument file (e.g. .raw file) exists in the dataset storage directory
+            /// When true, assume that the instrument file (e.g. .raw file) exists in the dataset storage directory
             /// and do not search in MyEMSL or in the archive for the file
             /// </summary>
             /// <remarks>Even if the instrument file has been purged from the storage directory, still report "success" when searching for the instrument file</remarks>
@@ -549,7 +549,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             try
             {
-                // Keys in this list are filenames; values are True if the file is required and False if not required
+                // Keys in this list are filenames; values are true if the file is required and false if not required
                 var filesToGet = new SortedList<string, bool>();
                 string localDirectoryPath;
 
@@ -778,7 +778,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="retrievalOptions">File retrieval options</param>
         /// <param name="localDirectoryPath"></param>
         /// <param name="prefixRequired"></param>
-        /// <param name="filesToGet">Keys in this list are filenames; values are True if the file is required and False if not required</param>
+        /// <param name="filesToGet">Keys in this list are filenames; values are true if the file is required and false if not required</param>
         /// <param name="foundFiles"></param>
         /// <param name="pendingFileRenames"></param>
         private bool ProcessPeptideHitJobFiles(
@@ -895,7 +895,7 @@ namespace AnalysisManagerBase.JobConfig
                         {
                             if (logMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
-                                OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using directory " + sourceDirectoryPath);
+                                OnErrorEvent("CopyFileToWorkDir returned false for " + sourceFilename + " using directory " + sourceDirectoryPath);
                                 mAnalysisResources.RestoreCachedDataAndJobInfo();
                                 return false;
                             }
@@ -1600,7 +1600,7 @@ namespace AnalysisManagerBase.JobConfig
                 if (retrievalOptions.RetrieveMzXMLFile)
                 {
                     // All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
-                    // If retrievalOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
+                    // If retrievalOptions.CreateJobPathFiles is true, create StoragePathInfo files
                     return RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
                 }
 
@@ -1733,7 +1733,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieve the .mzXML files for the jobs in instrumentDataToRetrieve
         /// </summary>
-        /// <remarks>If retrievalOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
+        /// <remarks>If retrievalOptions.CreateJobPathFiles is true, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         /// <param name="instrumentDataToRetrieve">
         /// The keys in this dictionary are JobInfo entries
         /// The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any).

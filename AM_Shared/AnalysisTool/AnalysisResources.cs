@@ -1695,8 +1695,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
-        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
-        /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
+        /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
+        /// <param name="validDirectoryFound">Output parameter: true if a valid directory is ultimately found, otherwise false</param>
         /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
         /// <param name="directoryNotFoundMessage"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
@@ -2924,7 +2924,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Get the input or output transfer directory path specific to this job step
         /// </summary>
-        /// <param name="useInputDirectory">True to use "InputFolderName", False to use "OutputFolderName"</param>
+        /// <param name="useInputDirectory">True to use "InputFolderName", false to use "OutputFolderName"</param>
         /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
         protected string GetTransferDirectoryPathForJobStep(bool useInputDirectory, bool includeDatasetName = true)
         {
@@ -2938,7 +2938,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Get the input or output transfer directory path specific to this job step
         /// </summary>
         /// <param name="jobParams">Job parameters</param>
-        /// <param name="useInputDirectory">True to use "InputFolderName", False to use "OutputFolderName"</param>
+        /// <param name="useInputDirectory">True to use "InputFolderName", false to use "OutputFolderName"</param>
         /// <param name="missingJobParamTransferDirectoryPath"></param>
         /// <param name="missingJobParamResultsDirectoryName"></param>
         /// <param name="includeDatasetName">When true, insert the dataset name between the base transfer directory path and the job directory</param>
@@ -4510,7 +4510,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                             if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
                             {
-                                mMessage = "CopyFileToWorkDir returned False for " + sourceFileName + " using directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key;
+                                mMessage = "CopyFileToWorkDir returned false for " + sourceFileName + " using directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key;
                                 if (mDebugLevel >= 1)
                                 {
                                     LogMessage(mMessage, 0, true);
@@ -4638,9 +4638,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="resultCode">Output: status code</param>
         /// <param name="maxLegacyFASTASizeGB">
         /// Maximum FASTA file size to retrieve when retrieving a legacy (standalone) FASTA file
-        /// Returns False if the file was not copied because it is too large</param>
+        /// Returns false if the file was not copied because it is too large</param>
         /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
-        /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to True as of April 2019)</param>
+        /// <param name="decoyProteinsUseXXX">When true, decoy protein names start with XXX_ (defaults to true as of April 2019)</param>
         /// <param name="previewMode">Set to true to show the filename that would be retrieved</param>
         /// <returns>True if success, false if an error</returns>
         protected bool RetrieveOrgDB(
@@ -5077,7 +5077,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var success = mCDTAUtilities.RemoveSparseSpectra(workDir, inputFileName);
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.RemoveSparseSpectra returned False";
+                mMessage = "mCDTAUtilities.RemoveSparseSpectra returned false";
             }
 
             return success;
@@ -5087,14 +5087,14 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
         /// </summary>
         /// <param name="sourceFilePath">Input _DTA.txt file to parse</param>
-        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If true, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
-        /// Only valid if replaceSourceFile=True;
-        /// If True, the source file is deleted if an updated version is created.
+        /// Only valid if replaceSourceFile is true;
+        /// If true, the source file is deleted if an updated version is created.
         /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="outputFilePath">
-        /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
+        /// Output file path to use for the updated file; required if replaceSourceFile is false; ignored if replaceSourceFile is true
         /// </param>
         /// <returns>True if success, false if an error</returns>
         protected bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated, string outputFilePath)
@@ -5102,7 +5102,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var success = mCDTAUtilities.ValidateCDTAFileScanAndCSTags(sourceFilePath, replaceSourceFile, deleteSourceFileIfUpdated, outputFilePath);
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.ValidateCDTAFileScanAndCSTags returned False";
+                mMessage = "mCDTAUtilities.ValidateCDTAFileScanAndCSTags returned false";
             }
 
             return success;
@@ -5118,7 +5118,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var success = mCDTAUtilities.ValidateCDTAFileSize(workDir, inputFileName);
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.ValidateCDTAFileSize returned False";
+                mMessage = "mCDTAUtilities.ValidateCDTAFileSize returned false";
             }
 
             return success;
@@ -5287,7 +5287,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
         /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-        /// <param name="logFreeMemoryOnSuccess">If True, post a log entry if sufficient memory is, in fact, available</param>
+        /// <param name="logFreeMemoryOnSuccess">If true, post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         protected bool ValidateFreeMemorySize(string memorySizeJobParamName, bool logFreeMemoryOnSuccess = true)
         {

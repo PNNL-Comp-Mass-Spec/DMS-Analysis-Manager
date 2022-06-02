@@ -319,7 +319,7 @@ namespace MSGFResultsSummarizerExe
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
-            // Returns True if no problems; otherwise, returns false
+            // Returns true if no problems; otherwise, returns false
 
             var validParameters = new List<string>
             {

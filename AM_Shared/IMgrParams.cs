@@ -46,7 +46,7 @@ namespace AnalysisManagerBase
         void AckManagerUpdateRequired();
 
         /// <summary>
-        /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
+        /// Disable the manager by changing MgrActive_Local to false in AnalysisManagerProg.exe.config
         /// </summary>
         bool DisableManagerLocally();
 

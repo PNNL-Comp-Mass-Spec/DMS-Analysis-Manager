@@ -62,7 +62,7 @@ namespace AnalysisManagerProg
         /// </summary>
         [Option("PushRemote", HelpShowsDefault = false,
             HelpText = "Use the DMSUpdateManager to push new/updated files to the remote host associated with this manager. " +
-                       "This is only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB. " +
+                       "This is only valid if the manager has parameter RunJobsRemotely set to true in the Manager Control DB. " +
                        "Ignored if /Offline is used.")]
         public bool PushRemoteMgrFilesOnly { get; set; }
 

@@ -55,7 +55,7 @@ namespace AnalysisManagerGlyQIQPlugin
         }
 
         /// <summary>
-        /// Dictionary tracking target names, and True/False for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
+        /// Dictionary tracking target names, and true/false for whether the target has been reported as being searched in the GlyQ-IQ Console Output window
         /// </summary>
         private readonly Dictionary<string, bool> mTargets;
 

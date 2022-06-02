@@ -643,8 +643,8 @@ namespace AnalysisManagerTopPICPlugIn
                 cmdLineOptions += " --thread-number " + threadsToUse;
             }
 
-            // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy True" or "--keep-temp-files True"
-            // Append these if set to True in the parameter file
+            // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy true" or "--keep-temp-files true"
+            // Append these if set to true in the parameter file
             var extraArguments = new List<string> { "Decoy", "KeepTempFiles" };
 
             foreach (var optionalArgument in extraArguments)

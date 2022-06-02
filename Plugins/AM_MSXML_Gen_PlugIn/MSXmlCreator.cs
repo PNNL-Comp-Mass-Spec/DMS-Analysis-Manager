@@ -115,7 +115,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (!progRunner.RunProgram(progLoc, arguments, "MSConvert", true))
             {
-                // .RunProgram returned False
+                // .RunProgram returned false
                 ErrorMessage = "Error running " + Path.GetFileNameWithoutExtension(progLoc) + " to convert the .mzML file to a .mzXML file";
                 OnErrorEvent(ErrorMessage);
                 return false;

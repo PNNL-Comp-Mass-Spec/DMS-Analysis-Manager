@@ -111,7 +111,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
                         if (noScanStats)
                         {
-                            LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is True");
+                            LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is true");
                         }
                         else
                         {

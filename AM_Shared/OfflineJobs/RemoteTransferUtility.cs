@@ -227,11 +227,11 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFiles">Dictionary where keys are source file names (no wildcards), and values are true if the file is required, false if optional</param>
         /// <param name="localDirectoryPath">Local target directory</param>
-        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
+        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; false to use RemoteInfo associated with the job (useful if checking on a running job)</param>
         /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
         /// <returns>
         /// True on success, false if an error
-        /// Returns False if any files were missing, even if warnIfMissing is false
+        /// Returns false if any files were missing, even if warnIfMissing is false
         /// </returns>
         public bool CopyFilesFromRemote(
             string sourceDirectoryPath,
@@ -289,7 +289,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
+        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; false to use RemoteInfo associated with the job (typically should be true)</param>
         /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         public bool CopyFilesToRemote(
@@ -512,7 +512,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="fileMatchSpec">Filename to find, or files to find if wildcards are used</param>
         /// <param name="recurse">True to </param>
-        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
+        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; false to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>List of matching files (full paths)</returns>
         // ReSharper disable once UnusedMember.Global
         public Dictionary<string, SftpFile> GetRemoteFileListing(
@@ -585,7 +585,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Find all status files for the current job and job step
         /// </summary>
-        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
+        /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; false to use RemoteInfo associated with the job (useful if checking on a running job)</param>
         /// <returns>Dictionary of matching files, where keys are full file paths and values are instances of SFtpFile</returns>
         public Dictionary<string, SftpFile> GetStatusFiles(bool useDefaultManagerRemoteInfo = false)
         {

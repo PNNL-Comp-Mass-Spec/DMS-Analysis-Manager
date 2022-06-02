@@ -284,7 +284,7 @@ namespace AnalysisManagerProg
 
                             try
                             {
-                                // To remove existing permissions, use this: directoryAcl.SetAccessRuleProtection(True, False)
+                                // To remove existing permissions, use this: directoryAcl.SetAccessRuleProtection(true, false)
 
                                 // Add the new access rule
                                 subdirectory.SetAccessControl(directoryAcl);

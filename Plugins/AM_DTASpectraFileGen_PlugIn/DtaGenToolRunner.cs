@@ -556,7 +556,7 @@ namespace DTASpectraFileGen
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
-                        mMessage = "MergeCDTAs returned False in CentroidCDTA";
+                        mMessage = "MergeCDTAs returned false in CentroidCDTA";
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -763,7 +763,7 @@ namespace DTASpectraFileGen
                             cdtaReaderFragIonData = new clsDtaTextFileReader(true);
                             if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                             {
-                                LogError("Error re-opening CDTA file with the fragment ion data (when nextSpectrumAvailable = False)");
+                                LogError("Error re-opening CDTA file with the fragment ion data (when nextSpectrumAvailable is false)");
                                 return false;
                             }
 

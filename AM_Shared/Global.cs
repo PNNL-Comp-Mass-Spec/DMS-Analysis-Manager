@@ -272,7 +272,7 @@ namespace AnalysisManagerBase
         /// Enable offline mode
         /// </summary>
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
-        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <param name="runningLinux">Set to true if running Linux</param>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
             OfflineMode = true;
@@ -774,7 +774,7 @@ namespace AnalysisManagerBase
         /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
         /// <param name="dataFilePath"></param>
-        /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
+        /// <param name="computeMD5Hash">If true, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
         {
@@ -1113,7 +1113,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Returns True if the computer name is Pub-1000 or higher
+        /// Returns true if the computer name is Pub-1000 or higher
         /// </summary>
         public static bool UsingVirtualMachineOnPIC()
         {

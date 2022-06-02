@@ -384,7 +384,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
+        /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         public string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir)
         {
@@ -401,7 +401,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>Although fileNameToFind could be empty, you are highly encouraged to filter by either fileNameToFind or by directoryNameToFind when using FindValidDirectory</remarks>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
+        /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         private string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir, bool assumeUnpurged)
@@ -442,7 +442,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
-        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
+        /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         public string FindValidDirectory(
             string dsName, string fileNameToFind, string directoryNameToFind,
@@ -464,7 +464,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="directoryNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
-        /// <param name="retrievingInstrumentDataDir">Set to True when retrieving an instrument data directory</param>
+        /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
         /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
         /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
@@ -482,7 +482,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             var bestPath = string.Empty;
 
-            // The tuples in this list are the path to check, and True if we should warn that the directory was not found
+            // The tuples in this list are the path to check, and true if we should warn that the directory was not found
             var pathsToCheck = new List<Tuple<string, bool>>();
 
             var validDirectory = false;

@@ -385,8 +385,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="msgfPlusProgLoc">Path to the MS-GF+ .jar file</param>
         /// <param name="fastaFilePath">FASTA file path (on the local computer)</param>
         /// <param name="fastaFileIsDecoy">
-        /// When True, only creates the forward-based index files.
-        /// When False, creates both the forward and reverse index files
+        /// When true, only creates the forward-based index files.
+        /// When false, creates both the forward and reverse index files
         /// </param>
         /// <param name="msgfPlusIndexFilesDirPathBase">Directory path from which to copy (or store) the index files</param>
         /// <param name="msgfPlusIndexFilesDirPathLegacyDB">

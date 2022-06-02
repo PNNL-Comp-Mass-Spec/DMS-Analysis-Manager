@@ -1150,7 +1150,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (ignorePeptideToProteinMapperErrors)
                     {
-                        OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                        OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' is true");
 
                         if (File.Exists(pepToProtMapFilePath))
                         {
@@ -1180,7 +1180,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (ignorePeptideToProteinMapperErrors)
                 {
-                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' is true");
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
@@ -1627,7 +1627,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // Large FASTA file (over 1 GB in size)
                         // TDA is 0, so we're performing a forward-only search
-                        // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
+                        // Auto-change fastaFileIsDecoy to true to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
                         if (mDebugLevel >= 1)
@@ -1638,7 +1638,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else if (msgfPlusParameterFilePath.EndsWith("_NoDecoy.txt", StringComparison.OrdinalIgnoreCase))
                     {
                         // Parameter file ends in _NoDecoy.txt and TDA = 0, thus we're performing a forward-only search
-                        // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
+                        // Auto-change fastaFileIsDecoy to true to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
                         if (mDebugLevel >= 1)
@@ -2244,7 +2244,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var modFilePath = Path.Combine(parameterFile.DirectoryName, MOD_FILE_NAME);
 
-                // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
+                // Note that ParseMSGFPlusValidateMod will set this to true if a dynamic or static mod is STY phosphorylation
                 PhosphorylationSearch = false;
 
                 options.Append(" -mod " + MOD_FILE_NAME);
@@ -2423,7 +2423,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Keys are the parameter name, values are the parameter line(s) and associated MSGFPlusParameter(s)
             var paramFileParamToLineMapping = new Dictionary<string, List<MSGFPlusKeyValueParamFileLine>>(StringComparer.OrdinalIgnoreCase);
 
-            // This will be set to True if the parameter file has TDA=1, meaning MS-GF+ will auto-added decoy proteins to its list of candidate proteins
+            // This will be set to true if the parameter file has TDA=1, meaning MS-GF+ will auto-added decoy proteins to its list of candidate proteins
             // When TDA is 1, the FASTA must only contain normal (forward) protein sequences
             ResultsIncludeAutoAddedDecoyPeptides = false;
 
@@ -2793,7 +2793,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Validate the modifications
-            // Also set PhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
+            // Also set PhosphorylationSearch to true if a dynamic or static mod is STY phosphorylation
             if (!ValidateMSGFPlusModifications(staticMods, dynamicMods, customAminoAcids))
             {
                 WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
@@ -3393,7 +3393,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                // Note that ParseMSGFPlusValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
+                // Note that ParseMSGFPlusValidateMod will set this to true if a dynamic or static mod is STY phosphorylation
                 PhosphorylationSearch = false;
 
                 // Examine custom amino acid definitions
@@ -3529,7 +3529,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (ignorePeptideToProteinMapperErrors)
                 {
-                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                    OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' is true");
                     return true;
                 }
 

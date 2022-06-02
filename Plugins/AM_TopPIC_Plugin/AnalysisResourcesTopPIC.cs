@@ -81,7 +81,7 @@ namespace AnalysisManagerTopPICPlugIn
             // TopPIC 1.2 and earlier created a .feature file
             // TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
 
-            // Keys in this dictionary are filenames, values are True if the file needs to be unzipped
+            // Keys in this dictionary are filenames, values are true if the file needs to be unzipped
             var filesToRetrieve = new Dictionary<string, bool>();
 
             var htmlFileName = DatasetName + "_html.zip";

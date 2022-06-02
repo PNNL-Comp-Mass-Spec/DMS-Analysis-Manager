@@ -22,7 +22,7 @@ namespace AnalysisManagerIDPickerPlugIn
         // ReSharper restore CommentTypo
 
         /// <summary>
-        /// If True, always skip IDPicker
+        /// If true, always skip IDPicker
         /// </summary>
         public const bool ALWAYS_SKIP_IDPICKER = true;
 
@@ -408,7 +408,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="optionName">Key name to lookup in mIDPickerOptions</param>
         /// <param name="argumentName">Argument Name</param>
         /// <param name="valueIfMissing">Value to append if not defined in mIDPickerOptions</param>
-        /// <param name="appendIfMissing">If True, append the argument using valueIfMissing if not found in mIDPickerOptions; if false, and not found, does not append the argument</param>
+        /// <param name="appendIfMissing">If true, append the argument using valueIfMissing if not found in mIDPickerOptions; if false, and not found, does not append the argument</param>
         /// <returns>The new argument list</returns>
         private string AppendArgument(string arguments, string optionName, string argumentName, string valueIfMissing, bool appendIfMissing)
         {

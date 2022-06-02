@@ -89,7 +89,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (!progRunner.RunProgram(rawConverter.FullName, arguments, "RawConverter", true))
                 {
-                    // .RunProgram returned False
+                    // .RunProgram returned false
                     OnErrorEvent("Error running " + Path.GetFileNameWithoutExtension(rawConverter.Name));
                     return false;
                 }

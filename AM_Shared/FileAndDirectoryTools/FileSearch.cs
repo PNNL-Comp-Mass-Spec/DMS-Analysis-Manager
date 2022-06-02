@@ -383,7 +383,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (string.IsNullOrEmpty(sourceDirPath))
             {
-                // No directory found containing the zipped DTA files; return False
+                // No directory found containing the zipped DTA files; return false
                 // (the FindDataFile procedure should have already logged an error)
                 errorMessage = "Could not find " + sourceFileName + " using FindDataFile";
                 return string.Empty;
@@ -562,8 +562,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 // Data file not found
-                // Log this as an error if searchArchivedDatasetDir=True
-                // Log this as a warning if searchArchivedDatasetDir=False
+                // Log this as an error if searchArchivedDatasetDir is true
+                // Log this as a warning if searchArchivedDatasetDir is false
 
                 if (logFileNotFound)
                 {
@@ -1225,7 +1225,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1247,7 +1247,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1268,7 +1268,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1305,7 +1305,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMSXMLFile(
@@ -1838,7 +1838,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     {
                         if (mDebugLevel >= 2)
                         {
-                            OnStatusEvent("CopyFileToWorkDir returned False for " + sourceFile.Name + " using directory " + sourceFile.Directory.FullName);
+                            OnStatusEvent("CopyFileToWorkDir returned false for " + sourceFile.Name + " using directory " + sourceFile.Directory.FullName);
                         }
                         return false;
                     }
@@ -1990,7 +1990,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>The retrieved file might be gzipped</remarks>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
 #pragma warning disable CS0618
@@ -2186,7 +2186,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
         {
             return RetrieveScanAndSICStatsFiles(
@@ -2201,9 +2201,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile)
         {
             const bool retrieveSICStatsFile = false;
@@ -2218,11 +2218,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
-        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanAndSICStatsFiles(
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
@@ -2245,13 +2245,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
-        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-        /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
+        /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveReporterIonsFile">If true, retrieves the ReporterIons.txt file</param>
         /// <param name="nonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanAndSICStatsFiles(
             bool retrieveSICStatsFile,
             bool createStoragePathInfoOnly,
@@ -2397,13 +2397,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves the MASIC results for this dataset using the specified directory
         /// </summary>
         /// <param name="masicResultsDirPath">Source directory to copy files from</param>
-        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
-        /// <param name="retrieveReporterIonsFile">If True, retrieves the ReporterIons.txt file</param>
+        /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveReporterIonsFile">If true, retrieves the ReporterIons.txt file</param>
         /// <param name="nonCriticalFileSuffixes">Filename suffixes that can be missing.  For example, "ScanStatsEx.txt"</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
+        /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanAndSICStatsFiles(
             string masicResultsDirPath,
             bool retrieveSICStatsFile,
@@ -3047,7 +3047,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         continue;
 
                     // Unzip the file to the Chameleon cached data directory
-                    // If unzipOverNetwork=True, we want to copy the file locally first
+                    // If unzipOverNetwork is true, we want to copy the file locally first
 
                     string zipFilePathToExtract;
                     if (unzipOverNetwork)
@@ -3302,7 +3302,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Returns True if the filename ends with any of the suffixes in nonCriticalFileSuffixes
+        /// Returns true if the filename ends with any of the suffixes in nonCriticalFileSuffixes
         /// </summary>
         /// <param name="fileName"></param>
         /// <param name="nonCriticalFileSuffixes"></param>

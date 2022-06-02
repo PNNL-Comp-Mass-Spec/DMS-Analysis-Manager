@@ -228,7 +228,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             // New parameters:
             mIncludeMSGFPlusResults = mJobParams.GetJobParameter("IncludeMSGFResults", true);
             mIncludeMZidFiles = mIncludeMSGFPlusResults;
-            mIncludeSequestResults = mJobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to True if no MSGF+ jobs are found in the data package
+            mIncludeSequestResults = mJobParams.GetJobParameter("IncludeSequestResults", false);	// This will get auto-changed to true if no MS-GF+ jobs are found in the data package
             mIncludeInstrumentData = mJobParams.GetJobParameter("IncludeInstrumentData", true);
             mIncludeMzXMLFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
         }

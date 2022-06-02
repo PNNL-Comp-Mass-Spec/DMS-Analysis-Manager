@@ -75,7 +75,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly List<string> mResultFilesToSkipIfNoError = new();
 
         /// <summary>
-        /// This will be set to True if the parameter file has TDA=1, meaning MS-GF+ auto-added decoy proteins to its list of candidate proteins
+        /// This will be set to true if the parameter file has TDA=1, meaning MS-GF+ auto-added decoy proteins to its list of candidate proteins
         /// When TDA is 1, the FASTA must only contain normal (forward) protein sequences
         /// </summary>
         private bool mResultsIncludeAutoAddedDecoyPeptides;
@@ -390,7 +390,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 AddResultFileToSkipIfNoError(sourceParamFile.Name);
             }
 
-            // This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
+            // This will be set to true if the parameter file contains both TDA=1 and showDecoy=1
             mResultsIncludeAutoAddedDecoyPeptides = mMSGFPlusUtils.ResultsIncludeAutoAddedDecoyPeptides;
 
             LogMessage("Running MS-GF+");
@@ -662,7 +662,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Compute the fraction of all potential spectra that were skipped
                     // If over 20% of the spectra were skipped, and if the source spectra were not centroided,
-                    //   then tooManySkippedSpectra will be set to True and the job step will be marked as failed
+                    //   then tooManySkippedSpectra will be set to true and the job step will be marked as failed
 
                     var spectraAreCentroided =
                         mJobParams.GetJobParameter("CentroidMSXML", false) ||
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (skipPeptideToProteinMapping)
                 {
-                    LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
+                    LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is true");
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
@@ -1421,7 +1421,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                // Need to pass saveToolVersionTextFile to True so that the ToolVersionInfo file gets created
+                // Need to pass saveToolVersionTextFile to true so that the ToolVersionInfo file gets created
                 // The PeptideListToXML program uses that file when creating .pepXML files
                 return SetStepTaskToolVersion(toolVersionInfo, toolFiles);
             }

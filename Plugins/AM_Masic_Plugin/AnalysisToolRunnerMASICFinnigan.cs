@@ -62,7 +62,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (!string.IsNullOrEmpty(parameterFilePath))
             {
-                // Make sure the parameter file has IncludeHeaders defined and set to True
+                // Make sure the parameter file has IncludeHeaders defined and set to true
                 ValidateParameterFile(parameterFilePath);
             }
 

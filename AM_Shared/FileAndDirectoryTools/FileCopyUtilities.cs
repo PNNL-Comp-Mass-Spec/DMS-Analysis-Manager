@@ -372,7 +372,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (!overwrite && File.Exists(destinationFilePath))
                     {
-                        OnErrorEvent("Tried to overwrite an existing file when Overwrite = False: " + destinationFilePath);
+                        OnErrorEvent("Tried to overwrite an existing file when Overwrite is false: " + destinationFilePath);
                         return false;
                     }
 

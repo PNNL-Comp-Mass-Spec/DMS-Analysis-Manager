@@ -96,7 +96,7 @@ namespace AnalysisManagerExtractionPlugin
                 var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
 
                 // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-                // However, if job parameter SkipProteinMods is True, the FASTA file will not have been retrieved
+                // However, if job parameter SkipProteinMods is true, the FASTA file will not have been retrieved
                 var fastaFileName = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName");
 
                 if (string.IsNullOrWhiteSpace(fastaFileName))
@@ -604,7 +604,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
-                        LogError("mMSGFPlusUtilsError is True after call to ConvertMZIDToTSV");
+                        LogError("mMSGFPlusUtilsError is true after call to ConvertMZIDToTSV");
                     }
                     return string.Empty;
                 }
@@ -680,7 +680,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (string.IsNullOrWhiteSpace(mMessage))
                 {
-                    LogError("mMSGFPlusUtilsError is True after call to CreatePeptideToProteinMapping");
+                    LogError("mMSGFPlusUtilsError is true after call to CreatePeptideToProteinMapping");
                 }
 
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -938,7 +938,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 if (!string.Equals(lastPeptideFull, peptideFull))
                                 {
-                                    // Done processing the last peptide; we can now update pepProtMappingWritten to True for this peptide
+                                    // Done processing the last peptide; we can now update pepProtMappingWritten to true for this peptide
                                     // to prevent it from getting added to the merged file again in the future
 
                                     if (!string.IsNullOrWhiteSpace(lastPeptideFull))
@@ -1696,7 +1696,7 @@ namespace AnalysisManagerExtractionPlugin
                                 if (skipWarned)
                                     continue;
 
-                                LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
+                                LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is true");
                                 skipWarned = true;
                             }
                             else if (string.IsNullOrWhiteSpace(mGeneratedFastaFilePath))
@@ -2315,7 +2315,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (ignorePeptideProphetErrors)
                     {
-                        LogWarning(splitErrorMessage + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
+                        LogWarning(splitErrorMessage + "; Ignoring the error since 'IgnorePeptideProphetErrors' is true");
                         return;
                     }
 
@@ -2375,12 +2375,12 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (ignorePeptideProphetErrors)
                         {
-                            LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
+                            LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' is true");
                         }
                         else
                         {
                             LogWarning(
-                                "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
+                                "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to true");
                             result = CloseOutType.CLOSEOUT_FAILED;
                             break;
                         }
@@ -2400,7 +2400,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (ignorePeptideProphetErrors)
                     {
-                        LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
+                        LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' is true");
                     }
                     else
                     {
@@ -2456,7 +2456,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (ignorePeptideProphetErrors)
             {
-                LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' = True");
+                LogWarning(msg + "; Ignoring the error since 'IgnorePeptideProphetErrors' is true");
             }
             else
             {

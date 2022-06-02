@@ -360,7 +360,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (mDebugLevel >= 4)
                         {
-                            LogDebug("GenerateFinniganScanStatsFiles returned False");
+                            LogDebug("GenerateFinniganScanStatsFiles returned false");
                         }
 
                         mFilterStatus = ProcessStatus.SF_ERROR;
@@ -369,7 +369,7 @@ namespace MSMSSpectrumFilterAM
 
                     if (mDebugLevel >= 4)
                     {
-                        LogDebug("GenerateFinniganScanStatsFiles returned True");
+                        LogDebug("GenerateFinniganScanStatsFiles returned true");
                     }
                 }
 
@@ -460,7 +460,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (mDebugLevel >= 3)
                         {
-                            LogDebug("ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile");
+                            LogDebug("ProcessFilesWildcard returned true; now calling .SortSpectrumQualityTextFile");
                         }
 
                         // Sort the report file (this also closes the file)
@@ -593,13 +593,13 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (mDebugLevel >= 3)
                     {
-                        LogDebug("GenerateFinniganScanStatsFiles returned False");
+                        LogDebug("GenerateFinniganScanStatsFiles returned false");
                     }
 
                     mErrMsg = mMsMsSpectrumFilter.GetErrorMessage();
                     if (string.IsNullOrEmpty(mErrMsg))
                     {
-                        mErrMsg = "GenerateFinniganScanStatsFiles returned False; _ScanStats.txt files not generated";
+                        mErrMsg = "GenerateFinniganScanStatsFiles returned false; _ScanStats.txt files not generated";
                     }
 
                     LogErrors("GenerateFinniganScanStatsFiles", mErrMsg);
@@ -608,7 +608,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (mDebugLevel >= 4)
                 {
-                    LogDebug("GenerateFinniganScanStatsFiles returned True");
+                    LogDebug("GenerateFinniganScanStatsFiles returned true");
                 }
                 return true;
             }

@@ -340,7 +340,7 @@ namespace AnalysisManagerMSGFPlugin
                     break;
 
                 case PeptideHitResultTypes.Inspect:
-                    LogDebug("Inspect does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("Inspect does not support ETD data processing; will set mETDMode to false");
                     success = true;
                     break;
 
@@ -349,17 +349,17 @@ namespace AnalysisManagerMSGFPlugin
                     break;
 
                 case PeptideHitResultTypes.MODa:
-                    LogDebug("MODa does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("MODa does not support ETD data processing; will set mETDMode to false");
                     success = true;
                     break;
 
                 case PeptideHitResultTypes.MODPlus:
-                    LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("MODPlus does not support ETD data processing; will set mETDMode to false");
                     success = true;
                     break;
 
                 case PeptideHitResultTypes.MSPathFinder:
-                    LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to false");
                     success = true;
                     break;
             }
@@ -374,7 +374,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// Examines the MS-GF+ param file to determine if ETD mode is enabled
-        /// If it is, sets mETDMode to True
+        /// If it is, sets mETDMode to true
         /// </summary>
         /// <param name="searchToolParamFilePath">MS-GF+ parameter file to read</param>
         /// <returns>True if success, false if an error</returns>
@@ -454,7 +454,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// Examines the SEQUEST param file to determine if ETD mode is enabled
-        /// If it is, sets mETDMode to True
+        /// If it is, sets mETDMode to true
         /// </summary>
         /// <param name="searchToolParamFilePath">SEQUEST parameter file to read</param>
         /// <returns>True if success, false if an error</returns>
@@ -547,7 +547,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// Examines the X!Tandem param file to determine if ETD mode is enabled
-        /// If it is, sets mETDMode to True
+        /// If it is, sets mETDMode to true
         /// </summary>
         /// <param name="searchToolParamFilePath">X!Tandem XML parameter file to read</param>
         /// <returns>True if success, false if an error</returns>
@@ -739,7 +739,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!success)
             {
-                LogError("mMSGFInputCreator.MSGFDataFileLineCount returned False");
+                LogError("mMSGFInputCreator.MSGFDataFileLineCount returned false");
             }
             else
             {
@@ -993,8 +993,8 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                // If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
-                // then set tooManyPrecursorMassMismatches to True
+                // If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)",
+                // set tooManyPrecursorMassMismatches to true
 
                 if (linesRead >= 2 && precursorMassErrorCount > 0)
                 {
@@ -1157,8 +1157,8 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="msgfResultsFilePath">MSGF Results file path</param>
         /// <param name="msgfSynopsisResults">MSGF synopsis file path</param>
         /// <param name="mgfInstrumentData">True when the instrument data file is a .mgf file</param>
-        /// <param name="firstHitsDataPresent">Will be set to True if First-hits data is present</param>
-        /// <param name="tooManyErrors">Will be set to True if too many errors occur</param>
+        /// <param name="firstHitsDataPresent">Will be set to true if First-hits data is present</param>
+        /// <param name="tooManyErrors">Will be set to true if too many errors occur</param>
         private bool PostProcessMSGFResultsWork(string msgfResultsFilePath, string msgfSynopsisResults, bool mgfInstrumentData,
             out bool firstHitsDataPresent, out bool tooManyErrors)
         {
@@ -1375,7 +1375,7 @@ namespace AnalysisManagerMSGFPlugin
                 tooManyErrors = true;
             }
 
-            // If we get here, return True
+            // If we get here, return true
             return true;
         }
 
@@ -1477,7 +1477,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (mDebugLevel >= 1)
                     {
-                        LogDebug("UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
+                        LogDebug("UseExistingMSGFResults is true; will look for pre-generated MSGF results file in the transfer folder");
                     }
 
                     if (RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)))

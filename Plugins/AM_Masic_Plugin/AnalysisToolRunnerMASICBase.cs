@@ -240,7 +240,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 if (mDebugLevel > 1)
                 {
-                    LogError("WaitForJobToFinish returned False");
+                    LogError("WaitForJobToFinish returned false");
                 }
 
                 if (!string.IsNullOrEmpty(mErrorMessage))
@@ -395,7 +395,7 @@ namespace AnalysisManagerMasicPlugin
                 return stepResult;
             }
 
-            // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
+            // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing is true in the parameter file)
             var foundFiles = Directory.GetFiles(mWorkDir, "*" + SICS_XML_FILE_SUFFIX);
 
             if (foundFiles.Length > 0)
@@ -809,8 +809,6 @@ namespace AnalysisManagerMasicPlugin
 
             LogError("AnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
             return false;
-
-            // Return False for any other exit codes
         }
     }
 }

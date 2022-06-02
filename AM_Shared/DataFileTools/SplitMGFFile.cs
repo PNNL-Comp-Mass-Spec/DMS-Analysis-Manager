@@ -58,7 +58,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <remarks>Exceptions will be reported using event ErrorEvent</remarks>
         /// <param name="mgfFilePath">.mgf file path</param>
         /// <param name="splitCount">Number of parts; minimum is 2</param>
-        /// <returns>True if success, False is an error</returns>
+        /// <returns>True if success, false is an error</returns>
         public List<FileInfo> SplitMgfFile(string mgfFilePath, int splitCount)
         {
             return SplitMgfFile(mgfFilePath, splitCount, "_Part");

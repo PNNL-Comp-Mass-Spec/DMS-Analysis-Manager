@@ -618,7 +618,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="assemblyName">Assembly Name</param>
-        /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
+        /// <param name="includeRevision">Set to true to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision = true)
         {

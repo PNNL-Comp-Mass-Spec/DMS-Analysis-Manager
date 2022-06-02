@@ -59,7 +59,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public string Value { get; private set; }
 
         /// <summary>
-        /// When True the text stored in the Value property will not be changed via a call to UpdateValue
+        /// When true, the text stored in the Value property will not be changed via a call to UpdateValue
         /// </summary>
         /// <remarks>
         /// When reading the MS-GF+ (or MzRefinery) parameter file, if a value ends with an exclamation mark,
@@ -162,7 +162,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <remarks>
         /// If value ends with an exclamation mark, the exclamation mark will be removed and ValueLocked will be set to true
-        /// This method will return True in this case, since the value was likely changed (but cannot be changed again)
+        /// This method will return true in this case, since the value was likely changed (but cannot be changed again)
         /// </remarks>
         /// <param name="value"></param>
         /// <param name="callerName"></param>

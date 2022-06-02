@@ -344,8 +344,8 @@ namespace DTASpectraFileGen
 
                 if (!mCmdRunner.RunProgram(mDtaToolNameLoc, arguments, "MSConvert", true))
                 {
-                    // .RunProgram returned False
-                    LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "mCmdRunner.RunProgram returned False");
+                    // .RunProgram returned false
+                    LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(mDtaToolNameLoc), "mCmdRunner.RunProgram returned false");
 
                     mErrMsg = "Error running " + Path.GetFileNameWithoutExtension(mDtaToolNameLoc);
                     return false;

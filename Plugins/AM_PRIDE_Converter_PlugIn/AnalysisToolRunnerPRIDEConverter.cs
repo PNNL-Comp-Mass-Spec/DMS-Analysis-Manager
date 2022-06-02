@@ -1269,7 +1269,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     mzXMLFilename = matchingFiles[0].Name;
                 }
                 // else
-                // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
+                // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly is true)
 
                 var synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
 
@@ -3418,10 +3418,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         /// <summary>
-        /// Returns True if the there are multiple jobs in mDataPackagePeptideHitJobs for the dataset for the specified job
+        /// Returns true if the there are multiple jobs in mDataPackagePeptideHitJobs for the dataset for the specified job
         /// </summary>
         /// <param name="job"></param>
-        /// <returns>True if this job's dataset has multiple jobs in mDataPackagePeptideHitJobs, otherwise False</returns>
+        /// <returns>True if this job's dataset has multiple jobs in mDataPackagePeptideHitJobs, otherwise false</returns>
         private bool JobFileRenameRequired(int job)
         {
             if (!mDataPackagePeptideHitJobs.TryGetValue(job, out var dataPkgJob))

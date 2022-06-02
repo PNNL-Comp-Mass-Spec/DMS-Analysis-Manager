@@ -139,7 +139,7 @@ namespace AnalysisManagerBase.JobConfig
         public SortedSet<string> ServerFilesToDelete => mServerFilesToDelete;
 
         /// <summary>
-        /// Flag set to True when .CloseTask is called
+        /// Flag set to true when .CloseTask is called
         /// </summary>
         public bool TaskClosed { get; set; }
 
@@ -165,7 +165,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Boolean value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue)
         {
             try
@@ -186,7 +186,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Integer value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool AddAdditionalParameter(string sectionName, string paramName, int paramValue)
         {
             try
@@ -207,7 +207,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
         /// <param name="paramValue">Value for parameter</param>
-        /// <returns>True if success, False if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool AddAdditionalParameter(string sectionName, string paramName, string paramValue)
         {
             try
@@ -427,7 +427,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
         /// <remarks>
-        /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
+        /// If the value associated with the parameter is found, yet is not true or false, an exception will be occur;
         /// the calling procedure must handle this exception
         /// </remarks>
         /// <param name="name">Key name for parameter</param>
@@ -451,7 +451,7 @@ namespace AnalysisManagerBase.JobConfig
                 return valueIfMissing;
             }
 
-            // Note: if value is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+            // Note: if value is not true or false, this will throw an exception; the calling procedure will need to handle that exception
             return bool.Parse(value);
         }
 
@@ -710,7 +710,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
-        /// <returns>True if success, False if not found</returns>
+        /// <returns>True if success, false if not found</returns>
         public bool TryGetParam(string paramName, out string paramValue)
         {
             paramValue = string.Empty;
@@ -736,7 +736,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="section">Section Name</param>
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
-        /// <returns>True if success, False if not found</returns>
+        /// <returns>True if success, false if not found</returns>
         public bool TryGetParam(string section, string paramName, out string paramValue)
         {
             return TryGetParam(section, paramName, out paramValue, true);
@@ -748,8 +748,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="section">Section Name</param>
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
-        /// <param name="searchAllSectionsIfNotFound">If True, searches other sections for the parameter if not found in the specified section</param>
-        /// <returns>True if success, False if not found</returns>
+        /// <param name="searchAllSectionsIfNotFound">If true, searches other sections for the parameter if not found in the specified section</param>
+        /// <returns>True if success, false if not found</returns>
         public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)
         {
             paramValue = string.Empty;

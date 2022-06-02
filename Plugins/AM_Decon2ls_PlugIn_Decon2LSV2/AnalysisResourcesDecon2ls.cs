@@ -138,7 +138,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Read the setting for ProcessMSMS from the DeconTools parameter file
         /// </summary>
         /// <param name="paramFile"></param>
-        /// <param name="processMSMS">Output parameter: true if ProcessMSMS is True in the parameter file</param>
+        /// <param name="processMSMS">Output parameter: true if ProcessMSMS is true in the parameter file</param>
         /// <returns>True if success, false if an error</returns>
         private bool IsMSMSProcessingEnabled(FileSystemInfo paramFile, out bool processMSMS)
         {
@@ -168,7 +168,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
 
                 // Parameter file formatting error
-                LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
+                LogError("Invalid entry for ProcessMSMS in the parameter file; should be true or false");
                 return false;
             }
             catch (Exception ex)
@@ -360,7 +360,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         }
 
         /// <summary>
-        /// Update the parameter file to have ProcessMSMS set to True
+        /// Update the parameter file to have ProcessMSMS set to true
         /// </summary>
         /// <param name="paramFile"></param>
         private bool EnableMSMSProcessingInParamFile(FileInfo paramFile)

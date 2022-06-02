@@ -43,7 +43,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// This dictionary holds a mapping between Scan_Charge to the spectrum index in the MGF file (first spectrum has index=1)
-        /// It is only used if MGFInstrumentData=True
+        /// It is only used if MGFInstrumentData is true
         /// </summary>
         private SortedDictionary<string, int> mScanAndChargeToMGFIndex;
 
@@ -52,7 +52,7 @@ namespace AnalysisManagerMSGFPlugin
         /// </summary>
         /// <remarks>
         /// mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
-        /// It is only used if MGFInstrumentData=True
+        /// It is only used if MGFInstrumentData is true
         /// </remarks>
         private SortedDictionary<int, int> mMGFIndexToScan;
 

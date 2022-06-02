@@ -83,7 +83,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 }
 
                 // Note: splitToEqualScanCounts is no longer used
-                // splitToEqualScanCounts = mJobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
+                // splitToEqualScanCounts = mJobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", true)
 
                 // Start the job timer
                 mStartTime = DateTime.UtcNow;

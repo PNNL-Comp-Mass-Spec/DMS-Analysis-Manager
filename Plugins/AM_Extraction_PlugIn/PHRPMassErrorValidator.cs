@@ -284,7 +284,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="inputFilePath"></param>
         /// <param name="resultType"></param>
         /// <param name="searchEngineParamFilePath"></param>
-        /// <returns>True if less than ErrorThresholdPercent of the data is bad; False otherwise</returns>
+        /// <returns>True if less than ErrorThresholdPercent of the data is bad; false otherwise</returns>
         public bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {
             try

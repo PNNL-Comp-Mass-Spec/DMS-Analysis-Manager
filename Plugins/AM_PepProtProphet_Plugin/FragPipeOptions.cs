@@ -55,7 +55,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Whether or not to run Abacus
         /// </summary>
         /// <remarks>
-        /// <para>Is set to True if job parameters GeneratePeptideLevelSummary or GenerateProteinLevelSummary are true</para>
+        /// <para>Is set to true if job parameters GeneratePeptideLevelSummary or GenerateProteinLevelSummary are true</para>
         /// <para>Ignored if we only have a single experiment group (or no experiment groups)</para>
         /// </remarks>
         public bool RunAbacus { get; set; }
@@ -82,7 +82,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Whether or not to run iProphet
         /// </summary>
         /// <remarks>
-        /// <para>Is set to True if job parameter GeneratePeptideLevelSummary true</para>
+        /// <para>Is set to true if job parameter GeneratePeptideLevelSummary true</para>
         /// <para>Ignored if we only have a single experiment group (or no experiment groups)</para>
         /// </remarks>
         public bool RunIProphet { get; set; }

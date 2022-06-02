@@ -156,7 +156,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
+        /// Disable the manager by changing MgrActive_Local to false in AnalysisManagerProg.exe.config
         /// </summary>
         public bool DisableManagerLocally()
         {
@@ -177,7 +177,7 @@ namespace AnalysisManagerProg
         /// Gets global settings from Broker DB (typically DMS_Pipeline)
         /// </summary>
         /// <param name="retryCount">Number of times to retry (in case of a problem)</param>
-        /// <returns>True for success; False for error</returns>
+        /// <returns>True for success; false for error</returns>
         private bool LoadBrokerDBSettings(short retryCount = 6)
         {
             // Retrieves global settings from the Broker DB. Performs retries if necessary.

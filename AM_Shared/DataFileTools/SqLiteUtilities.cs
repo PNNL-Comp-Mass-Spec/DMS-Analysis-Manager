@@ -31,7 +31,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
-        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, missing tables will be appended to the database; if False, the target DB will be deleted</param>
+        /// <param name="appendToExistingDB">
+        /// Behavior when the target DB exists; if true, missing tables will be appended to the database; if false, the target DB will be deleted
+        /// </param>
         /// <returns>True if success, false if a problem</returns>
         public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB)
         {
@@ -44,7 +46,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
-        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, missing tables will be appended to the database; if False, the target DB will be deleted</param>
+        /// <param name="appendToExistingDB">
+        /// Behavior when the target DB exists; if true, missing tables will be appended to the database; if false, the target DB will be deleted
+        /// </param>
         /// <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
         /// <returns>True if success, false if a problem</returns>
         public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB, List<string> tablesToSkip)
