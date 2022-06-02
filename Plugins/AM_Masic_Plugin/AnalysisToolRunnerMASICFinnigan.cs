@@ -78,7 +78,7 @@ namespace AnalysisManagerMasicPlugin
         /// <returns>Path to the newly created .mzXML file</returns>
 #pragma warning disable IDE0051 // Remove unused private members
 #pragma warning disable RCS1213 // Remove unused member declaration.
-        private string ConvertRawToMzXML(FileInfo thermoRawFile)
+        private string ConvertRawToMzXML(FileSystemInfo thermoRawFile)
 #pragma warning restore RCS1213 // Remove unused member declaration.
 #pragma warning restore IDE0051 // Remove unused private members
         {
