@@ -2221,11 +2221,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Confirm that the output files were created
                     var outputFiles = new List<FileInfo>();
 
-                    if (options.MatchBetweenRuns)
-                    {
-                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "mbr_ion.tsv")));
-                    }
-
                     if (creatingCombinedFile)
                     {
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_ion.tsv")));
@@ -2240,6 +2235,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
 
                     var outputFilesExist = ValidateOutputFilesExist("IonQuant", outputFiles);
+
+                    if (options.MatchBetweenRuns)
+                    {
+                        // IonQuant 1.7 always created file mbr_ion.tsv
+                        // IonQuant 1.8 only creates it if at least 10 data points are found in the training data
+                        // Thus, only log a warning if mbr_ion.tsv is missing
+
+                        var mbrIonFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "mbr_ion.tsv"));
+
+                        if (!mbrIonFile.Exists)
+                        {
+                            // IonQuant results file not found: mbr_ion.tsv
+                            LogWarning(string.Format("IonQuant did not create file {0}; this indicates that insufficient training data could be found and match-between-runs could thus not be performed", mbrIonFile.Name));
+
+                            mEvalMessage = Global.AppendToComment(mEvalMessage, "IonQuant did not create match-between-runs file mbr_ion.tsv");
+                        }
+                    }
 
                     try
                     {
@@ -4336,6 +4348,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (missingFiles.Count == 0)
                 return true;
+
+            // Example error messages:
+
+            // Abacus results file not found: reprint.spc.tsv
+            // IonQuant results file not found: combined_ion.tsv
+            // iProphet results file not found: combined.pep.xml
+            // Philosopher report file not found: psm.tsv
 
             LogError(string.Format(
                 "{0} results file{1} not found: {2}",
