@@ -1438,7 +1438,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Move the retention time .png files to the working directory
+        /// Move the retention time .png files to the working directory, renaming to end with _RTplot.png
         /// </summary>
         /// <remarks>
         /// The plots show observed vs. predicted retention time (aka elution time)
@@ -1449,10 +1449,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 foreach (var plotFile in mWorkingDirectory.GetFiles("*.png", SearchOption.AllDirectories))
                 {
-                    if ((plotFile.DirectoryName ?? string.Empty).Equals(mWorkingDirectory.FullName))
+                    if (plotFile.Directory == null)
+                    {
+                        plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, plotFile.Name));
+                        continue;
+                    }
+
+                    if (plotFile.Directory.FullName.Equals(mWorkingDirectory.FullName))
                         continue;
 
-                    plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, plotFile.Name));
+                    var targetFileName = plotFile.Directory.Name.Equals("RTPlots", StringComparison.OrdinalIgnoreCase)
+                        ? string.Format("{0}_RTplot.png", Path.GetFileNameWithoutExtension(plotFile.Name))
+                        : plotFile.Name;
+
+                    plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, targetFileName));
                 }
             }
             catch (Exception ex)
