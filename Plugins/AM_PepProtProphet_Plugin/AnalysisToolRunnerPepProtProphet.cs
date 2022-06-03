@@ -1437,6 +1437,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Move the retention time .png files to the working directory, renaming to end with _RTplot.png
         /// </summary>
@@ -1457,6 +1459,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (plotFile.Directory.FullName.Equals(mWorkingDirectory.FullName))
                         continue;
+
+                    // ReSharper disable once StringLiteralTypo
 
                     var targetFileName = plotFile.Directory.Name.Equals("RTPlots", StringComparison.OrdinalIgnoreCase)
                         ? string.Format("{0}_RTplot.png", Path.GetFileNameWithoutExtension(plotFile.Name))
