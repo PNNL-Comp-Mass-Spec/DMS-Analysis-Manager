@@ -2604,13 +2604,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                var newPinFiles = mWorkingDirectory.GetFiles("*_edited.pin");
+                var newPinFiles = mWorkingDirectory.GetFiles("*_edited.pin", SearchOption.AllDirectories);
 
-                if (newPinFiles.Length > 0)
-                    return true;
+                if (newPinFiles.Length == 0)
+                {
+                    LogError("MSBooster did not create any _edited.pin files");
+                    return false;
+                }
 
-                LogError("MSBooster did not create any _edited.pin files");
-                return false;
+                LogMessage(
+                    "MSBooster created {0} _edited.pin {1}",
+                    newPinFiles.Length,
+                    Global.CheckPlural(newPinFiles.Length, "file", "files"));
+
+                return true;
             }
             catch (Exception ex)
             {
