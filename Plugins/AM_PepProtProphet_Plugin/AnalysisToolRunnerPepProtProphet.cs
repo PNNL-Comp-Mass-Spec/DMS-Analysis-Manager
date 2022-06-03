@@ -2602,13 +2602,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var newPinFiles = mWorkingDirectory.GetFiles("*_edited.pin");
 
-                if (newPinFiles.Length == 0)
-                {
-                    LogError("MSBooster did not create any _edited.pin files");
-                    return false;
-                }
+                if (newPinFiles.Length > 0)
+                    return true;
 
-                return true;
+                LogError("MSBooster did not create any _edited.pin files");
+                return false;
             }
             catch (Exception ex)
             {
