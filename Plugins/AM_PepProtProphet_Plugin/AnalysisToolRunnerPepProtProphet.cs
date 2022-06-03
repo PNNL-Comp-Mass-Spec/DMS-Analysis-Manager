@@ -258,9 +258,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                // Move the retention time plot files to the working directory
-                MoveRetentionTimePlotFiles();
-
                 mCmdRunner = null;
                 mCmdRunnerMode = CmdRunnerModes.Undefined;
 
@@ -420,6 +417,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             return CloseOutType.CLOSEOUT_FAILED;
 
                         mProgress = (int)ProgressPercentValues.MSBoosterComplete;
+
+                        // Move the retention time plot files to the working directory
+                        MoveRetentionTimePlotFiles();
                     }
                 }
 
