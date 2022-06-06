@@ -41,9 +41,11 @@ namespace AnalysisManagerMasicPlugin
         private string mReporterIonName = string.Empty;
         private int mReporterIonObservationRateTopNPct;
 
-        private void ExtractErrorsFromMASICLogFile(FileSystemInfo logFile)
+        private void ExtractErrorsFromMASICLogFile(FileSystemInfo logFile, out int errorCount)
         {
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
+
+            errorCount = 0;
 
             try
             {
@@ -52,7 +54,7 @@ namespace AnalysisManagerMasicPlugin
 
                 using var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                var errorCount = 0;
+                errorCount = 0;
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
@@ -65,6 +67,11 @@ namespace AnalysisManagerMasicPlugin
                         if (errorCount == 0)
                         {
                             LogError("Errors found in the MASIC Log File");
+
+                            if (string.IsNullOrWhiteSpace(mErrorMessage))
+                            {
+                                mErrorMessage = dataLine;
+                            }
                         }
 
                         if (errorCount <= 10)
@@ -81,7 +88,13 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
+                if (string.IsNullOrWhiteSpace(mErrorMessage))
+                {
+                    mErrorMessage = string.Format("Error reading MASIC Log File ({0}): {1}", logFile.Name, ex.Message);
+                }
+
                 LogError("Error reading MASIC Log File at '" + logFile.FullName + "'; " + ex.Message, ex);
+                errorCount++;
             }
         }
 
@@ -109,8 +122,8 @@ namespace AnalysisManagerMasicPlugin
             mStartTime = DateTime.UtcNow;
             mMessage = string.Empty;
 
-            // Make the SIC's
             LogMessage("Calling MASIC to create the SIC files, job " + mJob);
+
             try
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
@@ -230,10 +243,10 @@ namespace AnalysisManagerMasicPlugin
             Global.IdleLoop(3);
 
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
-            ExtractErrorsFromMASICLogFile(logFile);
+            ExtractErrorsFromMASICLogFile(logFile, out var errorCount);
 
             // Verify MASIC exited due to job completion
-            if (success)
+            if (success && errorCount == 0)
             {
                 mJobParams.AddResultFileToSkip(logFile.Name);
             }
