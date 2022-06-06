@@ -2601,8 +2601,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
-                var currentStep = "MSBooster";
-                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, "MSBooster");
 
                 if (!processingSuccess)
                 {
