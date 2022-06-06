@@ -39,11 +39,6 @@ namespace AnalysisManagerBase.JobConfig
         CLOSEOUT_NO_OUT_FILES = 3,
 
         /// <summary>
-        /// No ann files
-        /// </summary>
-        CLOSEOUT_NO_ANN_FILES = 5,
-
-        /// <summary>
         /// FASTA file not defined or not found
         /// </summary>
         CLOSEOUT_NO_FAS_FILES = 6,
@@ -57,11 +52,6 @@ namespace AnalysisManagerBase.JobConfig
         /// No settings file
         /// </summary>
         CLOSEOUT_NO_SETTINGS_FILE = 8,
-
-        /// <summary>
-        /// No ModDefs.txt file
-        /// </summary>
-        CLOSEOUT_NO_MODDEFS_FILE = 9,
 
         /// <summary>
         /// No X!Tandem files
