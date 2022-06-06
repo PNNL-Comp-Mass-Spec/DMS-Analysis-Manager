@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICFinnigan : AnalysisToolRunnerMASICBase
     {
-        // Ignore Spelling: parm
+        // Ignore Spelling: na, parm
 
         private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 
@@ -68,9 +68,7 @@ namespace AnalysisManagerMasicPlugin
                 ValidateParameterFile(parameterFilePath);
             }
 
-            var eCloseout = StartMASICAndWait(inputFilePath, mWorkDir, parameterFilePath);
-
-            return eCloseout;
+            return StartMASICAndWait(inputFilePath, mWorkDir, parameterFilePath);
         }
 
         /// <summary>

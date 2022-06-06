@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICAgilent : AnalysisToolRunnerMASICBase
     {
-        // Ignore Spelling: ParmFile
+        // Ignore Spelling: na, ParmFile
 
         protected override CloseOutType RunMASIC()
         {

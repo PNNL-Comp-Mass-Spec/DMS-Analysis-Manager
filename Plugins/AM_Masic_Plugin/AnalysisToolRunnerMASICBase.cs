@@ -115,10 +115,10 @@ namespace AnalysisManagerMasicPlugin
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
                 //  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
-                var eProcessingResult = RunMASIC();
-                if (eProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var processingResult = RunMASIC();
+                if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eProcessingResult;
+                    return processingResult;
                 }
             }
             catch (Exception ex)
