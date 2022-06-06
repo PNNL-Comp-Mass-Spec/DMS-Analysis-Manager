@@ -642,7 +642,7 @@ namespace AnalysisManagerExtractionPlugin
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_NO_INSP_FILES;
+                return CloseOutType.CLOSEOUT_NO_INSPECT_FILES;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
 
@@ -651,7 +651,7 @@ namespace AnalysisManagerExtractionPlugin
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_NO_INSP_FILES;
+                return CloseOutType.CLOSEOUT_NO_INSPECT_FILES;
             }
             mJobParams.AddResultFileToSkip(fileToGet);
 
@@ -669,7 +669,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    return CloseOutType.CLOSEOUT_NO_INSP_FILES;
+                    return CloseOutType.CLOSEOUT_NO_INSPECT_FILES;
                 }
             }
             else

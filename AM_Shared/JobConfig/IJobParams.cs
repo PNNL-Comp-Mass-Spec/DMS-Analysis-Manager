@@ -61,7 +61,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// No inspect files
         /// </summary>
-        CLOSEOUT_NO_INSP_FILES = 13,
+        CLOSEOUT_NO_INSPECT_FILES = 13,
 
         /// <summary>
         /// File not found or file verification failed
