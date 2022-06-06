@@ -8,6 +8,9 @@ using AnalysisManagerBase.AnalysisTool;
 // Created 12/18/2007
 //*********************************************************************************************************
 
+// ReSharper disable UnusedMemberInSuper.Global
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerBase.JobConfig
 {
     // Ignore Spelling: ann, bool, Quant, Sequest

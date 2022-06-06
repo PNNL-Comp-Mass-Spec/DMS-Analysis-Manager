@@ -5,6 +5,8 @@ using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMasicPlugin
 {
+    // ReSharper disable once UnusedMember.Global
+
     /// <summary>
     /// Retrieve resources for the MASIC plugin
     /// </summary>
@@ -42,7 +44,7 @@ namespace AnalysisManagerMasicPlugin
                     // located, then create a text file named "DatasetName.raw_StoragePathInfo.txt"
                     // This file would contain just one line of text: the full path to the actual file
 
-                    // However, we have found that this can create undo strain on the storage servers (or NWFS Archive)
+                    // However, we have found that this can create undo strain on the storage servers
                     // Thus, we are now setting this to false
                     createStoragePathInfoOnly = false;
                     break;

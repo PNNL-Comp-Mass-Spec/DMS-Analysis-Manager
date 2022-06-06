@@ -23,6 +23,8 @@ using PRISM.Logging;
 using PRISMDatabaseUtils;
 using Renci.SshNet;
 
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerProg
 {
     /// <summary>

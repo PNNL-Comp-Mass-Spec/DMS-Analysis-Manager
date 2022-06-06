@@ -4,6 +4,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 using PRISM;
 
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 
+// ReSharper disable UnusedMember.Global
+
 namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>

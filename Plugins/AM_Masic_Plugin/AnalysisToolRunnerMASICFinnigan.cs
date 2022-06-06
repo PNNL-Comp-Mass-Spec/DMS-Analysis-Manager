@@ -13,6 +13,8 @@ using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManagerMasicPlugin
 {
+    // ReSharper disable once UnusedMember.Global
+
     /// <summary>
     /// Derived class for performing MASIC analysis on Thermo datasets
     /// </summary>
