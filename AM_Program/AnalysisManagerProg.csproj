@@ -196,11 +196,12 @@ xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D 
 xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
 
-xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.BackgroundSubtraction.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.Data.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.MassPrecisionEstimator.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.RawFileReader.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
+echo Copying Thermo DLLs from bin to AM_Common
+xcopy "$(TargetDir)\ThermoFisher.CommonCore.BackgroundSubtraction.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)\ThermoFisher.CommonCore.Data.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)\ThermoFisher.CommonCore.MassPrecisionEstimator.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)\ThermoFisher.CommonCore.RawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)\ThermoRawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y

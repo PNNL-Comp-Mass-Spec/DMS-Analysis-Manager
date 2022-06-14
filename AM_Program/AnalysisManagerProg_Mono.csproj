@@ -197,11 +197,11 @@ echo Skip: xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(Targ
 echo Skip: xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 echo Skip: xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
 
-echo Skip: xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.BackgroundSubtraction.dll" "$(TargetDir)" /D /Y
-echo Skip: xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.Data.dll" "$(TargetDir)" /D /Y
-echo Skip: xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.MassPrecisionEstimator.dll" "$(TargetDir)" /D /Y
-echo Skip: xcopy "$(ProjectDir)..\AM_Common\ThermoFisher.CommonCore.RawFileReader.dll" "$(TargetDir)" /D /Y
-echo Skip: xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
+echo Skip: xcopy "$(TargetDir)\ThermoFisher.CommonCore.BackgroundSubtraction.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)\ThermoFisher.CommonCore.Data.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)\ThermoFisher.CommonCore.MassPrecisionEstimator.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)\ThermoFisher.CommonCore.RawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)\ThermoRawFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 echo Skip: xcopy "$(TargetPath)" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
