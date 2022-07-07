@@ -55,7 +55,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
 
             // Retrieve param file
-            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParmFileName"), mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("ParamFileName"), mJobParams.GetParam("ParamFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Retrieve FASTA file

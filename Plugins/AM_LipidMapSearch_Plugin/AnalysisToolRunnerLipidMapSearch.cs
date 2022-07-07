@@ -16,7 +16,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisToolRunnerLipidMapSearch : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: hashcheck, ParmFile, pn, rn, rp, yyyy-MM-dd
+        // Ignore Spelling: hashcheck, pn, rn, rp, yyyy-MM-dd
 
         private const string LIPID_MAPS_DB_FILENAME_PREFIX = "LipidMapsDB_";
         private const int LIPID_MAPS_STALE_DB_AGE_DAYS = 5;
@@ -102,7 +102,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the values to pass to LipidTools.exe at the command line
-                var parameterFileName = mJobParams.GetParam("ParmFileName");
+                var parameterFileName = mJobParams.GetParam("ParamFileName");
                 var parameterFilePath = Path.Combine(mWorkDir, parameterFileName);
 
                 LogMessage("Running LipidTools");
@@ -475,11 +475,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             try
             {
-                var paramFileFolderPath = mJobParams.GetJobParameter("ParmFileStoragePath", string.Empty);
+                var paramFileFolderPath = mJobParams.GetJobParameter("ParamFileStoragePath", string.Empty);
 
                 if (string.IsNullOrEmpty(paramFileFolderPath))
                 {
-                    mMessage = "Parameter 'ParmFileStoragePath' is empty";
+                    mMessage = "Parameter 'ParamFileStoragePath' is empty";
                     LogError(mMessage + "; unable to get the LipidMaps database");
                     return false;
                 }

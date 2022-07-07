@@ -62,7 +62,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 currentTask = "RetrieveParamFile " + paramFileName;
 
                 // Retrieve param file
-                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+                if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParamFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
                 currentTask = "Get DataPackageID";

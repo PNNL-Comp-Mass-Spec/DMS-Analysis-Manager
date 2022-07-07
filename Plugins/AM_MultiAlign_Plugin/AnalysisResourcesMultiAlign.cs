@@ -62,10 +62,10 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Retrieve the MultiAlign Parameter .xml file specified for this job
-            var multialignParamFileName = mJobParams.GetParam("ParmFileName");
+            var multialignParamFileName = mJobParams.GetParam("ParamFileName");
             if (string.IsNullOrEmpty(multialignParamFileName))
             {
-                LogError("MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
+                LogError("MultiAlign ParamFileName not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 

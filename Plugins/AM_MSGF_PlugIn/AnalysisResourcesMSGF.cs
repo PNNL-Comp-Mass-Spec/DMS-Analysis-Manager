@@ -20,7 +20,7 @@ namespace AnalysisManagerMSGFPlugin
     /// </summary>
     public class AnalysisResourcesMSGF : AnalysisResources
     {
-        // Ignore Spelling: MODa, ModDefs, msgfdb, ParmFile
+        // Ignore Spelling: MODa, ModDefs, msgfdb
 
         /// <summary>
         /// ModDefs file suffix
@@ -171,7 +171,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!onlyCopyFirstHitsAndSynopsisFiles)
             {
                 // Get the SEQUEST, X!Tandem, Inspect, MS-GF+, MODa, MODPlus, or MSPathFinder parameter file
-                var paramFile = mJobParams.GetParam("ParmFileName");
+                var paramFile = mJobParams.GetParam("ParamFileName");
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFile, false))
                 {
                     // Errors were reported in method call, so just return
@@ -307,7 +307,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
 
-                    var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
+                    var modDefsFile = Path.GetFileNameWithoutExtension(mJobParams.GetParam("ParamFileName")) + PHRP_MOD_DEFS_SUFFIX;
 
                     if (FileSearchTool.FindAndRetrieveMiscFiles(modDefsFile, false))
                     {

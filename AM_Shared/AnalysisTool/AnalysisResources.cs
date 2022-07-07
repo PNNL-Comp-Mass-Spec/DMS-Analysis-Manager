@@ -399,7 +399,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Parameter file name
         /// </summary>
-        public const string JOB_PARAM_PARAMETER_FILE = "ParmFileName";
+        public const string JOB_PARAM_PARAMETER_FILE = "ParamFileName";
 
         /// <summary>
         /// Step tool parameter file from the previous job step

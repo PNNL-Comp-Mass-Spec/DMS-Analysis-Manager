@@ -22,7 +22,7 @@ namespace AnalysisManagerMSFraggerPlugIn
     /// </summary>
     public class AnalysisResourcesMSFragger : AnalysisResources
     {
-        // Ignore Spelling: centroided, Fragger, numpy, ParmFile, resourcer, Xmx
+        // Ignore Spelling: centroided, Fragger, numpy, resourcer, Xmx
 
         /// <summary>
         /// Initialize options

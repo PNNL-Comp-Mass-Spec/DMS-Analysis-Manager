@@ -16,7 +16,7 @@ namespace AnalysisManager_AScore_PlugIn
 {
     public class AScoreMagePipeline : EventNotifier
     {
-        // Ignore Spelling: const, Mage, msgfdb, msgfplus, ParmFile
+        // Ignore Spelling: const, Mage, msgfdb, msgfplus
 
         private string mResultsDBFileName = string.Empty;
         private string mWorkingDir;
@@ -128,7 +128,7 @@ namespace AnalysisManager_AScore_PlugIn
         {
             if (string.IsNullOrEmpty(mParamFilename))
             {
-                mErrorMessage = "AScore ParmFileName not defined in the settings for this job; unable to continue";
+                mErrorMessage = "AScore ParamFileName not defined in the settings for this job; unable to continue";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }

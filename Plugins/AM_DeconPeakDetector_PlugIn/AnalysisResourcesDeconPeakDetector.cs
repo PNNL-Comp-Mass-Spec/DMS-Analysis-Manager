@@ -16,7 +16,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
     /// </summary>
     public class AnalysisResourcesDeconPeakDetector : AnalysisResources
     {
-        // Ignore Spelling: decon, ParmFile
+        // Ignore Spelling: decon
 
         /// <summary>
         /// Retrieve required files
@@ -36,7 +36,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             // Retrieve the peak detector parameter file
 
             var peakDetectorParamFileName = mJobParams.GetJobParameter("PeakDetectorParamFile", "");
-            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             paramFileStoragePath = Path.Combine(paramFileStoragePath, "PeakDetection");
 

@@ -16,7 +16,7 @@ namespace AnalysisManagerSMAQCPlugIn
     /// </summary>
     public class AnalysisToolRunnerSMAQC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: mscorlib, ParmFile, utf
+        // Ignore Spelling: mscorlib, utf
 
         private const string SMAQC_CONSOLE_OUTPUT = "SMAQC_ConsoleOutput.txt";
         private const int PROGRESS_PCT_SMAQC_STARTING = 1;
@@ -75,7 +75,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // The parameter file name specifies the name of the .XML file listing the Measurements to run
-                var parameterFileName = mJobParams.GetParam("ParmFileName");
+                var parameterFileName = mJobParams.GetParam("ParamFileName");
                 var parameterFilePath = Path.Combine(mWorkDir, parameterFileName);
 
                 // Lookup the InstrumentID for this dataset

@@ -21,7 +21,7 @@ namespace AnalysisManagerMODaPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: datasest, fasta, Hanyang, moda, MODa, msms, ParmFile, Xmx
+        // Ignore Spelling: datasest, fasta, Hanyang, moda, MODa, msms, Xmx
 
         // ReSharper restore CommentTypo
 
@@ -164,7 +164,7 @@ namespace AnalysisManagerMODaPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             // Customize the parameter file
-            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParamFileName");
 
             var spectrumFileName = mDatasetName + ".mgf";
 

@@ -28,7 +28,7 @@ namespace AnalysisManagerGlyQIQPlugin
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: glycan, glycans, isotpe, Lc, ParmFile, Pre, Procssing
+        // Ignore Spelling: glycan, glycans, isotpe, Lc, Pre, Procssing
 
         // ReSharper restore CommentTypo
 
@@ -426,7 +426,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     targetWorkingParametersDirectory.Create();
                 }
 
-                var iqParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
+                var iqParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
                 foreach (var file in sourceWorkingParametersDirectory.GetFiles())
                 {
                     var moveFile = false;

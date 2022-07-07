@@ -57,7 +57,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Retrieve param file
             var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
 
-            if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParmFileStoragePath")))
+            if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParamFileStoragePath")))
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve the FASTA file

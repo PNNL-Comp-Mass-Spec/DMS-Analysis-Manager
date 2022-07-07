@@ -16,8 +16,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
     /// </summary>
     public class AnalysisResourcesMetaboliteDetector : AnalysisResources
     {
-        // Ignore Spelling: ParmFile
-
         /// <summary>
         /// Retrieve required files
         /// </summary>
@@ -39,8 +37,8 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = mJobParams.GetParam("ParmFileName");
-                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 var success = FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)

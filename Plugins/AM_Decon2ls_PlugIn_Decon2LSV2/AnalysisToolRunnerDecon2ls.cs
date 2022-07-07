@@ -21,7 +21,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class AnalysisToolRunnerDecon2ls : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ascii, baf, Bruker, CmdRunner, deconvolute, deisotope, Finnigan, fticr, HighAbu, Isos, ParmFile
+        // Ignore Spelling: ascii, baf, Bruker, CmdRunner, deconvolute, deisotope, Finnigan, fticr, HighAbu, Isos
 
         private const string DECON2LS_SCANS_FILE_SUFFIX = "_scans.csv";
         private const string DECON2LS_ISOS_FILE_SUFFIX = "_isos.csv";
@@ -648,7 +648,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             string paramFileName;
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
-                paramFileName = mJobParams.GetParam("ParmFileName");
+                paramFileName = mJobParams.GetParam("ParamFileName");
             }
             else
             {

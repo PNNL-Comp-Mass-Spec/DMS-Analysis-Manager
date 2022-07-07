@@ -40,7 +40,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 {

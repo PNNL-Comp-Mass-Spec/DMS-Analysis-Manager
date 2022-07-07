@@ -23,7 +23,7 @@ namespace AnalysisManagerFormularityPlugin
     /// </summary>
     public class AnalysisResourcesFormularity : AnalysisResources
     {
-        // Ignore Spelling: cia, Formularity, ParmFile
+        // Ignore Spelling: cia, Formularity
 
         public const string JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE = "CalibrationPeaksFile";
 
@@ -54,7 +54,7 @@ namespace AnalysisManagerFormularityPlugin
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
                 var paramFileName = mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
-                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
                 {

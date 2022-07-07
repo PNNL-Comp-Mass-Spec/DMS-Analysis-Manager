@@ -48,7 +48,7 @@ namespace AnalysisManagerXTandemPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParmFileName")))
+            if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParamFileName")))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -86,21 +86,21 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            var success = CopyFileToWorkDir("taxonomy_base.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
+            var success = CopyFileToWorkDir("taxonomy_base.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            success = CopyFileToWorkDir("input_base.txt", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
+            success = CopyFileToWorkDir("input_base.txt", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            success = CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParmFileStoragePath"), mWorkDir);
+            success = CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
@@ -181,7 +181,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             var workingDir = mMgrParams.GetParam("WorkDir");
             var organismName = mJobParams.GetParam("OrganismName");
-            var paramFilePath = Path.Combine(workingDir, mJobParams.GetParam("parmFileName"));
+            var paramFilePath = Path.Combine(workingDir, mJobParams.GetParam("ParamFileName"));
             var spectrumFilePath = Path.Combine(workingDir, DatasetName + "_dta.txt");
             var taxonomyFilePath = Path.Combine(workingDir, "taxonomy.xml");
             var outputFilePath = Path.Combine(workingDir, DatasetName + "_xt.xml");

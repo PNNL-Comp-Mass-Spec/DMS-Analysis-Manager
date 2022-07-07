@@ -87,7 +87,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             mResultsDBFileName = mJobParams.RequireJobParam("ResultsBaseName", "Results") + ".db3";
             mWorkingDir = mMgrParams.RequireMgrParam("WorkDir");
             mSearchType = mJobParams.RequireJobParam("MultiAlignSearchType");					// File extension of input data files, can be "_LCMSFeatures.txt" or "_isos.csv"
-            mParamFilename = mJobParams.RequireJobParam("ParmFileName");
+            mParamFilename = mJobParams.RequireJobParam("ParamFileName");
             mDebugLevel = short.Parse(mMgrParams.RequireMgrParam("DebugLevel"));
             mJobNum = mJobParams.RequireJobParam("Job");
         }
@@ -195,7 +195,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Retrieve the MultiAlign Parameter .xml file specified for this job
                 if (string.IsNullOrEmpty(mParamFilename))
                 {
-                    mMessage = "Job parameter ParmFileName not defined in the settings for this MultiAlign job; unable to continue";
+                    mMessage = "Job parameter ParamFileName not defined in the settings for this MultiAlign job; unable to continue";
                     OnErrorEvent(mMessage);
                     return false;
                 }

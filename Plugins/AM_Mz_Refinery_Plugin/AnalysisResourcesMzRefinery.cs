@@ -103,16 +103,16 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Mz_Refinery";
 
-                var mzRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
-                if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
+                var mzRefineryParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrWhiteSpace(mzRefineryParamFileStoragePath))
                 {
-                    mzRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
+                    mzRefineryParamFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
                     LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
                         "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                        "will assume: " + mzRefineryParmFileStoragePath);
+                        "will assume: " + mzRefineryParamFileStoragePath);
                 }
 
-                if (!FileSearchTool.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(mzRefParamFile, mzRefineryParamFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }

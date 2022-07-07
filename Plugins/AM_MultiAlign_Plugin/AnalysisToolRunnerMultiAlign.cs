@@ -18,8 +18,6 @@ namespace AnalysisManagerMultiAlignPlugIn
     /// </summary>
     public class AnalysisToolRunnerMultiAlign : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: ParmFile
-
         private const int PROGRESS_PCT_MULTIALIGN_RUNNING = 5;
         private const int PROGRESS_PCT_MULTI_ALIGN_DONE = 95;
 
@@ -69,7 +67,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Set up and execute a program runner to run MultiAlign
             var arguments = " input.txt" +
-                            " " + Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName")) +
+                            " " + Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName")) +
                             " " + mWorkDir +
                             " " + multiAlignDatabaseName;
 

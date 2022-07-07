@@ -14,7 +14,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class AnalysisResourcesDecon2ls : AnalysisResources
     {
-        // Ignore Spelling: Formularity, mzml, mzxml, ParmFile
+        // Ignore Spelling: Formularity, mzml, mzxml
 
         /// <summary>
         /// Job parameter to track that MS/MS processing has been auto-enabled
@@ -109,15 +109,18 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             string paramFileName;
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
-                paramFileName = mJobParams.GetParam("ParmFileName");
+                paramFileName = mJobParams.GetParam("ParamFileName");
             }
             else
             {
                 paramFileName = paramFileNameOverride;
             }
 
-            // ParmFileStoragePath has the parameter file storage path for the primary step tool of this job script
-            // ParamFileStoragePath has the parameter file storage path for the current step tool
+            // Prior to July 2022, ParmFileStoragePath had the parameter file storage path for the primary step tool of the job script
+            // That field was renamed in July 22 to ParamFileStoragePath
+
+            // When the analysis manager retrieves the parameters for the current job step, the database customizes
+            // the value of ParamFileStoragePath to be the storage path for the current step tool
             var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))

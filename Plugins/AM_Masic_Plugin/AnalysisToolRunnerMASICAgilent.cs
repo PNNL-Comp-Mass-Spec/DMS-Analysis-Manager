@@ -20,17 +20,17 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICAgilent : AnalysisToolRunnerMASICBase
     {
-        // Ignore Spelling: na, ParmFile
+        // Ignore Spelling: na
 
         protected override CloseOutType RunMASIC()
         {
             string parameterFilePath;
 
-            var parameterFileName = mJobParams.GetParam("ParmFileName");
+            var parameterFileName = mJobParams.GetParam("ParamFileName");
 
             if (parameterFileName != null && !string.Equals(parameterFileName.Trim(), "na", StringComparison.OrdinalIgnoreCase))
             {
-                parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParmFileName"));
+                parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
             }
             else
             {

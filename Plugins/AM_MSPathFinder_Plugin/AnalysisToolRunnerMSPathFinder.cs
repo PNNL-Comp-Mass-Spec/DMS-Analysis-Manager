@@ -554,13 +554,13 @@ namespace AnalysisManagerMSPathFinderPlugin
         {
             tdaEnabled = false;
 
-            parameterFileName = mJobParams.GetParam("ParmFileName");
+            parameterFileName = mJobParams.GetParam("ParamFileName");
 
             // Although ParseKeyValueParameterFile checks for paramFileName being an empty string,
             // we check for it here since the name comes from the settings file, so we want to customize the error message
             if (string.IsNullOrWhiteSpace(parameterFileName))
             {
-                LogError("MSPathFinder parameter file not defined in the job settings (param name ParmFileName)");
+                LogError("MSPathFinder parameter file not defined in the job settings (param name ParamFileName)");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 

@@ -16,7 +16,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
     /// </summary>
     public class AnalysisResourcesUIMFtoMassHunter : AnalysisResources
     {
-        // Ignore Spelling: ParmFile, UIMFtoMass
+        // Ignore Spelling: UIMFtoMass
 
         /// <summary>
         /// Retrieve required files
@@ -42,8 +42,8 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 // Retrieve the parameter file
                 currentTask = "Retrieve the parameter file";
-                var paramFileName = mJobParams.GetParam("ParmFileName");
-                var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
+                var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
                 if (!success)

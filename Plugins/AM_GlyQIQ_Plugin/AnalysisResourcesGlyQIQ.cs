@@ -20,7 +20,7 @@ namespace AnalysisManagerGlyQIQPlugin
     /// </summary>
     public class AnalysisResourcesGlyQIQ : AnalysisResources
     {
-        // Ignore Spelling: Gly, Iq, ParmFile
+        // Ignore Spelling: Gly, Iq
 
         /// <summary>
         /// Locks folder name
@@ -296,9 +296,9 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Define the base source folder path
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ
-                var paramFileStoragePathBase = mJobParams.GetParam("ParmFileStoragePath");
+                var paramFileStoragePathBase = mJobParams.GetParam("ParamFileStoragePath");
 
-                mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParmFileName", "");
+                mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
                 if (string.IsNullOrEmpty(mGlyQIQParams.IQParamFileName))
                 {
                     LogError("Job Parameter File name is empty");

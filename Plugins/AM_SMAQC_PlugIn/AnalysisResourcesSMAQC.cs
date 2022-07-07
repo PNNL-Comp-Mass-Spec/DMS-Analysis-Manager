@@ -28,8 +28,8 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             // Retrieve the parameter file
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {
@@ -200,7 +200,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset QC_Shew_10_07_pt5_1_21Sep10_Earth_10-07-45 using Special_Processing of
-            //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
+            //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Param File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
             var inputFolder = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");

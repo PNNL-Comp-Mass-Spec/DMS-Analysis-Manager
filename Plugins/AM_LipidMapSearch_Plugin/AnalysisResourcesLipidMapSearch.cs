@@ -12,7 +12,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
     /// </summary>
     public class AnalysisResourcesLipidMapSearch : AnalysisResources
     {
-        // Ignore Spelling: centroided, dmsarch, Lipidomics, Parm, ParmFile, Pos
+        // Ignore Spelling: centroided, dmsarch, Lipidomics, Pos
 
         /// <summary>
         /// DeconTools peaks file suffix
@@ -33,8 +33,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Retrieve the parameter file
-            var paramFileName = mJobParams.GetParam("ParmFileName");
-            var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+            var paramFileName = mJobParams.GetParam("ParamFileName");
+            var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
             if (!FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath))
             {
@@ -73,8 +73,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset XG_lipid_pt5a using Special_Processing of
-            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
-            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
+            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
             //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
             //
             // Gives these parameters:
@@ -137,8 +137,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         {
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset XG_lipid_pt5a using Special_Processing of
-            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
-            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
+            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
             //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
             //
             // Gives these parameters:

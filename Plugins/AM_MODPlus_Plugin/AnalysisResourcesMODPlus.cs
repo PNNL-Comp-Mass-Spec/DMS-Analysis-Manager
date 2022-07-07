@@ -141,7 +141,7 @@ namespace AnalysisManagerMODPlusPlugin
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
 
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 

@@ -17,7 +17,7 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class AnalysisResourcesIDPicker : AnalysisResources
     {
-        // Ignore Spelling: ParmFileName, msgfdb
+        // Ignore Spelling: msgfdb
 
         /// <summary>
         /// ID Picker parameter file name
@@ -66,7 +66,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Retrieve the parameter file for the associated peptide search tool (SEQUEST, XTandem, MS-GF+, etc.)
-                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
 
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(paramFileName, false))
                 {

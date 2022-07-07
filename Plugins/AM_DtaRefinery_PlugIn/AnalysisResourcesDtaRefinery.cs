@@ -50,7 +50,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             LogMessage("Getting param file");
 
             // Retrieve param file
-            var paramFileName = mJobParams.GetParam("ParmFileName");
+            var paramFileName = mJobParams.GetParam("ParamFileName");
 
             if (!RetrieveGeneratedParamFile(paramFileName))
             {
@@ -59,28 +59,28 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
 
-            var dtaRefineryParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(dtaRefineryParmFileStoragePath))
+            var dtaRefineryParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(dtaRefineryParamFileStoragePath))
             {
-                dtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
+                dtaRefineryParamFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
                 LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                    "will assume: " + dtaRefineryParmFileStoragePath);
+                    "will assume: " + dtaRefineryParamFileStoragePath);
             }
 
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
             // Stored in same location as parameter file
-            if (!FileSearchTool.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, dtaRefineryParamFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearchTool.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, dtaRefineryParamFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), dtaRefineryParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(mJobParams.GetParam("DTARefineryXMLFile"), dtaRefineryParamFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }

@@ -63,16 +63,16 @@ namespace AnalysisManagerTopFDPlugIn
 
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "TopFD";
 
-                var topFdParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
-                if (string.IsNullOrWhiteSpace(topFdParmFileStoragePath))
+                var topFdParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrWhiteSpace(topFdParamFileStoragePath))
                 {
-                    topFdParmFileStoragePath = @"\\gigasax\dms_parameter_Files\TopFD";
+                    topFdParamFileStoragePath = @"\\gigasax\dms_parameter_Files\TopFD";
                     LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
                                "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                               "will assume: " + topFdParmFileStoragePath);
+                               "will assume: " + topFdParamFileStoragePath);
                 }
 
-                if (!FileSearchTool.RetrieveFile(topFdParamFile, topFdParmFileStoragePath))
+                if (!FileSearchTool.RetrieveFile(topFdParamFile, topFdParamFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }

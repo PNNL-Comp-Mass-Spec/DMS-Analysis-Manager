@@ -44,13 +44,13 @@ namespace AnalysisManagerProMexPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "ProMex";
 
-            var proMexParmFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(proMexParmFileStoragePath))
+            var proMexParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(proMexParamFileStoragePath))
             {
-                proMexParmFileStoragePath = @"C:\DMS_Programs\ProMex";
+                proMexParamFileStoragePath = @"C:\DMS_Programs\ProMex";
                 LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                    "will assume: " + proMexParmFileStoragePath);
+                    "will assume: " + proMexParamFileStoragePath);
             }
 
             string paramFileName;
@@ -66,7 +66,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (proMexScript)
             {
-                paramFileName = mJobParams.GetJobParameter("ParmFileName", "");
+                paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
 
                 if (string.IsNullOrEmpty(paramFileName))
                 {
@@ -89,7 +89,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
             }
 
-            if (!FileSearchTool.RetrieveFile(paramFileName, proMexParmFileStoragePath))
+            if (!FileSearchTool.RetrieveFile(paramFileName, proMexParamFileStoragePath))
             {
                 if (proMexScript)
                 {

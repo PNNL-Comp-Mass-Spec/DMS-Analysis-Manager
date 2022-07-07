@@ -432,7 +432,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
                 var resultsFilePath = Path.Combine(mWorkDir, mDatasetName + fileNameSuffix);
@@ -1812,7 +1812,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                var paramFileName = mJobParams.GetParam("ParmFileName");
+                var paramFileName = mJobParams.GetParam("ParamFileName");
 
                 if (!ValidatePHRPResultMassErrors(synFilePath, PeptideHitResultTypes.MSGFPlus, paramFileName))
                 {
@@ -2038,7 +2038,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Validate that the mass errors are within tolerance
                 var parameterFileName = resultType == PeptideHitResultTypes.XTandem
                     ? "input.xml"
-                    : mJobParams.GetParam("ParmFileName");
+                    : mJobParams.GetParam("ParamFileName");
 
                 var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileNameFromPHRP);
 
@@ -2929,7 +2929,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
                     {
                         // Ignore this error for inspect if running an unrestricted search
-                        var paramFileName = mJobParams.GetJobParameter("ParmFileName", "");
+                        var paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
 
                         // ReSharper disable once StringLiteralTypo
                         if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)

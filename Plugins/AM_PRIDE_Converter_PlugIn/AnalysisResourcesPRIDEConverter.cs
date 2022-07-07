@@ -391,7 +391,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
                     templateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
                     LogWarning(
@@ -482,7 +482,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!matchFound)
                 {
-                    var paramFileStoragePath = mJobParams.GetParam("ParmFileStoragePath");
+                    var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
                     if (string.IsNullOrEmpty(paramFileStoragePath))
                     {
                         paramFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
