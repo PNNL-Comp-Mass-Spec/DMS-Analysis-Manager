@@ -201,19 +201,19 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
-                var maparameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
-                if (string.IsNullOrEmpty(maparameterFileStoragePath))
+                var parameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+                if (string.IsNullOrEmpty(parameterFileStoragePath))
                 {
-                    maparameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
+                    parameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
                     OnWarningEvent("Parameter " + paramFileStoragePathKeyName +
-                        " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + maparameterFileStoragePath);
+                        " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + parameterFileStoragePath);
                 }
 
-                var sourceFilePath = Path.Combine(maparameterFileStoragePath, mParamFilename);
+                var sourceFilePath = Path.Combine(parameterFileStoragePath, mParamFilename);
 
                 if (!File.Exists(sourceFilePath))
                 {
-                    mMessage = "MultiAlign parameter file not found: " + maparameterFileStoragePath;
+                    mMessage = "MultiAlign parameter file not found: " + parameterFileStoragePath;
                     OnErrorEvent(mMessage);
                     return false;
                 }

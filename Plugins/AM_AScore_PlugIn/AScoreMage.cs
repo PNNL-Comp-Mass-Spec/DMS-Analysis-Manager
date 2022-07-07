@@ -134,18 +134,18 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
-            var maparameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
-            if (string.IsNullOrEmpty(maparameterFileStoragePath))
+            var parameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+            if (string.IsNullOrEmpty(parameterFileStoragePath))
             {
-                maparameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
+                parameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                     "Parameter " + paramFileStoragePathKeyName + " is not defined " +
                     "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
-                    "will assume: " + maparameterFileStoragePath);
+                    "will assume: " + parameterFileStoragePath);
             }
 
             // Find all parameter files that match the base name and copy to working directory
-            var paramFileDirectory = new DirectoryInfo(maparameterFileStoragePath);
+            var paramFileDirectory = new DirectoryInfo(parameterFileStoragePath);
 
             // Define the file mask to search for
             var fileMask = Path.GetFileNameWithoutExtension(mParamFilename) + "*.xml";
