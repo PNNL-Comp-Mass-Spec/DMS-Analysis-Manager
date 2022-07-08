@@ -3624,10 +3624,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  protein_database: {0}", mFastaFilePath);
                     writer.WriteLine("  groupby: 0");
                     writer.WriteLine("  top3_pep: true");
+                    writer.WriteLine("  use_glycan_composition: false");    // Introduced with TMT-Integrator 3.3.3
                     writer.WriteLine("  min_ntt: 0");
                     writer.WriteLine("  aggregation_method: 0");
                     writer.WriteLine("  allow_overlabel: true");
                     writer.WriteLine("  allow_unlabeled: false");
+                    writer.WriteLine("  glyco_qval: -1");                   // Introduced with TMT-Integrator 3.3.3
                     writer.WriteLine("  print_RefInt: false");
                     writer.WriteLine("  prot_exclude: none");
                     writer.WriteLine("  unique_pep: false");
