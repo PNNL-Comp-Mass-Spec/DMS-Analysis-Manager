@@ -1860,6 +1860,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="workingDirectoryPadWidth"></param>
         private bool RunDatabaseAnnotation(DirectoryInfo workingDirectory, int workingDirectoryPadWidth)
         {
+            // Note: If the FASTA file does not have Decoy proteins, use this command:
+            // philosopher database --custom <file_name> --contam
+
+            // Since our FASTA files have both forward and reverse sequences, we use "--annotate" and "--prefix"
             var arguments = string.Format("database --annotate {0} --prefix XXX_", mFastaFilePath);
 
             var success = RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
