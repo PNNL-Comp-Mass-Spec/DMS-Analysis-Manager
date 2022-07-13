@@ -103,11 +103,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the TMT integrator jar file
         /// </summary>
-        /// <remarks>
-        /// Newer version is tmt-integrator-3.3.3.jar
-        /// However, we are not using it due to an exception when parsing FASTA files (see https://github.com/Nesvilab/FragPipe/issues/754)
-        /// </remarks>
-        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-3.2.1.jar";
+        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.0-rc.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
