@@ -195,8 +195,8 @@ xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\RangerLib.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\SequestResultsProcessor.dll" "$(TargetDir)" /D /Y /F
+xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
 
 echo Copying Thermo DLLs from bin to AM_Common
