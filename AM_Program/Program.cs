@@ -126,7 +126,9 @@ namespace AnalysisManagerProg
 
                         // testHarness.TestCopyToLocalWithHashCheck();
 
-                        testHarness.TestRunQuery();
+                        // testHarness.TestRunQuery();
+
+                        testHarness.TestGetUniquePrefixes();
                     }
                     catch (Exception ex)
                     {

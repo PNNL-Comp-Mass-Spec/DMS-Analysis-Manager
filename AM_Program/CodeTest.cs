@@ -1056,6 +1056,41 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Test obtaining unique list of abbreviated names
+        /// </summary>
+        public void TestGetUniquePrefixes()
+        {
+            var datasets = new List<string>
+            {
+                "MCF10A_EGF_Plex_2_G_f05_28Jan21_Rage_Rep-21-01-01",
+                "MCF10A_EGF_Plex_2_G_f06_28Jan21_Rage_Rep-21-01-01",
+                "MCF10A_EGF_Plex_1_G_f05_28Jan21_Rage_Rep-21-01-01",
+                "MCF10A_EGF_Plex_1_G_f06_28Jan21_Rage_Rep-21-01-01",
+                "QC_Shew_21_01_Run-03_11Jul22_Oak_Jup-22-07-01",
+                "QC_Shew_21_01_Run-01_08Jul22_Oak_Jup-22-07-01",
+                "QC_Shew_21_01_TMT_R03_Bane_21Jun22_22-03-01",
+                "QC_Shew_21_01_10ng_nanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r1",
+                "QC_Shew_21_01_10ng_nanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r2",
+                "QC_Shew_21_01_10ng_NanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r1",
+            };
+
+            var uniquePrefixTool = new ShortestUniquePrefix();
+
+            // Keys in this dictionary are experiment group names
+            // Values are the abbreviated name to use
+            var datasetAbbreviations = uniquePrefixTool.GetShortestUniquePrefix(datasets, true);
+
+            Console.WriteLine("{0,-61} {1}", "Name", "Abbreviation");
+
+            foreach (var dataset in datasets)
+            {
+                Console.WriteLine("{0,-61} {1}", dataset, datasetAbbreviations[dataset]);
+            }
+
+            Console.WriteLine();
+        }
+
+        /// <summary>
         /// Create a log file
         /// </summary>
         public void TestLogging()
