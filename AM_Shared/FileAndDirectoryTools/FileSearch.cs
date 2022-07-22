@@ -231,7 +231,21 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success, false if an error</returns>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath: false);
+        }
+
+        /// <summary>
+        /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
+        /// </summary>
+        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
+        /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
+        /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound, bool logRemoteFilePath)
+        {
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath);
         }
 
         /// <summary>
@@ -242,10 +256,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath)
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath, bool logFileNotFound = true)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out sourceDirPath, logFileNotFound: true);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out sourceDirPath, logFileNotFound, logRemoteFilePath: false);
         }
 
         /// <summary>
@@ -256,10 +271,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
+        /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
         /// <returns>True if success, false if an error</returns>
         public bool FindAndRetrieveMiscFiles(
             string fileName, bool unzip, bool searchArchivedDatasetDir,
-            out string sourceDirPath, bool logFileNotFound)
+            out string sourceDirPath, bool logFileNotFound, bool logRemoteFilePath)
         {
             const bool CreateStoragePathInfoFile = false;
 
@@ -280,10 +296,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return mMyEMSLUtilities.AddFileToDownloadQueue(sourceDirPath);
             }
 
+            var remoteFilePath = Path.Combine(sourceDirPath, fileName);
+
             // Copy the file
             if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirPath, mWorkDir, BaseLogger.LogLevels.ERROR, CreateStoragePathInfoFile))
             {
                 return false;
+            }
+
+            if (logRemoteFilePath)
+            {
+                OnStatusEvent("Retrieved file " + remoteFilePath);
             }
 
             // Check whether unzipping was requested
@@ -311,15 +334,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="synopsisFileName">Synopsis file name, if known</param>
         /// <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result directory</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
+        /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
         /// <returns>True if success, false if not found</returns>
         public bool FindAndRetrievePHRPDataFile(
             ref string fileToGet,
             string synopsisFileName,
             bool addToResultFileSkipList = true,
-            bool logFileNotFound = true)
+            bool logFileNotFound = true,
+            bool logRemoteFilePath= false)
         {
             var success = FindAndRetrieveMiscFiles(
-                fileToGet, unzip: false, searchArchivedDatasetDir: true, logFileNotFound: logFileNotFound);
+                fileToGet, unzip: false, searchArchivedDatasetDir: true, logFileNotFound, logRemoteFilePath);
 
             if (!success && fileToGet.IndexOf("msgfplus", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -330,7 +355,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 if (!string.Equals(alternativeName, fileToGet))
                 {
                     success = FindAndRetrieveMiscFiles(
-                        alternativeName, unzip: false, searchArchivedDatasetDir: true, logFileNotFound: logFileNotFound);
+                        alternativeName, unzip: false, searchArchivedDatasetDir: true, logFileNotFound);
 
                     if (success)
                     {
@@ -2313,6 +2338,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                             NotifyInvalidParentDirectory(scanStatsFile);
                             return false;
                         }
+
                         bestSICDirName = scanStatsFile.Directory.Name;
                         bestScanStatsFileTransactionID = myEmslFile.FileInfo.TransactionID;
                     }
@@ -2325,6 +2351,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 var bestSICDirPath = Path.Combine(MYEMSL_PATH_FLAG, bestSICDirName);
+
                 return RetrieveScanAndSICStatsFiles(
                     bestSICDirPath, retrieveSICStatsFile, createStoragePathInfoOnly,
                     retrieveScanStatsFile: retrieveScanStatsFile,
@@ -2422,6 +2449,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 OnErrorEvent("MASIC results directory path not defined in RetrieveScanAndSICStatsFiles");
                 return false;
             }
+
+            OnStatusEvent("Retrieving MASIC result files from " + masicResultsDirPath);
 
             if (masicResultsDirPath.StartsWith(MYEMSL_PATH_FLAG))
             {

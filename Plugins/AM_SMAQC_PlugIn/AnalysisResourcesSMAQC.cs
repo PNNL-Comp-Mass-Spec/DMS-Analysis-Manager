@@ -240,7 +240,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var msgfplusSynopsisFile = ReaderFactory.GetPHRPSynopsisFileName(resultType, DatasetName);
             var synFileToFind = msgfplusSynopsisFile;
 
-            var success = FileSearchTool.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
+            var success = FileSearchTool.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true, logFileNotFound: true, logRemoteFilePath: true);
             if (!success)
             {
                 // Errors were reported in method call, so just return
