@@ -3697,6 +3697,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  use_glycan_composition: false            # (optional) for multi-mass report, create index using glycan composition (from observed mod column) instead of mass");                             // Introduced with TMT-Integrator 3.3.3
                     writer.WriteLine("  glyco_qval: -1                           # (optional) filter modified PSMs to those with glycan q-value less than provided value. 0 <= value <= 1. Value of -1 or not specified ignores");   // Introduced with TMT-Integrator 3.3.3
                     writer.WriteLine("  prefix: XXX_                             # the prefix for decoy sequences");                                                                                                                 // Introduced with TMT-Integrator 4.0
+                    writer.WriteLine("  log2transformed: true                    # report ratio and abundance reports in the log2 scale");                                                                                           // Introduced with TMT-Integrator 4.0
 
                     // ReSharper restore StringLiteralTypo
                 }

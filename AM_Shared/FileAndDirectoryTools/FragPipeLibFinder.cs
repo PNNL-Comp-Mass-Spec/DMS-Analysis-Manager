@@ -103,7 +103,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the TMT integrator jar file
         /// </summary>
-        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.0-rc.jar";
+        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.0.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
