@@ -574,6 +574,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </remarks>
         private string mDatasetName;
 
+        /// <summary>
+        /// Directory space tools
+        /// </summary>
         protected readonly DirectorySpaceTools mDirectorySpaceTools;
 
         /// <summary>
