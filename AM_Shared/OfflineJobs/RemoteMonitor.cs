@@ -81,6 +81,11 @@ namespace AnalysisManagerBase.OfflineJobs
         private IJobParams JobParams { get; }
 
         /// <summary>
+        /// Manager parameters
+        /// </summary>
+        private IMgrParams MgrParams { get; }
+
+        /// <summary>
         /// Remote processing progress
         /// </summary>
         public float RemoteProgress { get; private set; }
@@ -132,6 +137,7 @@ namespace AnalysisManagerBase.OfflineJobs
             IToolRunner toolRunner,
             StatusFile statusTools)
         {
+            MgrParams = mgrParams;
             JobParams = jobParams;
 
             WorkDir = mgrParams.GetParam("WorkDir");
@@ -458,7 +464,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
                 var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
 
-                var status = new StatusFile(localStatusFilePath, DebugLevel)
+                var status = new StatusFile(MgrParams, localStatusFilePath, DebugLevel)
                 {
                     MgrName = XMLUtils.GetXmlValue(managerInfo, "MgrName")
                 };
@@ -828,7 +834,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
                 var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
 
-                var status = new StatusFile(localStatusFilePath, DebugLevel)
+                var status = new StatusFile(MgrParams, localStatusFilePath, DebugLevel)
                 {
                     MgrName = remoteMgrName
                 };

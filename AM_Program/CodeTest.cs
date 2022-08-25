@@ -309,7 +309,7 @@ namespace AnalysisManagerProg
 
             jobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
 
-            var statusTools = new StatusFile("Status.xml", DEBUG_LEVEL);
+            var statusTools = new StatusFile(mMgrSettings, "Status.xml", DEBUG_LEVEL);
             RegisterEvents(statusTools);
 
             var summaryFile = new SummaryFile();
@@ -334,7 +334,7 @@ namespace AnalysisManagerProg
         {
             var resourceTester = new ResourceTestClass();
 
-            var statusTools = new StatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile(mMgrSettings, "Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
             var myEMSLUtilities = new MyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
@@ -822,7 +822,7 @@ namespace AnalysisManagerProg
 
             var jobParams = InitializeMgrAndJobParams(debugLevel);
 
-            var statusTools = new StatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile(mMgrSettings, "Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
             var myEMSLUtilities = new MyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
@@ -1500,7 +1500,7 @@ namespace AnalysisManagerProg
 
             var resourceTester = new ResourceTestClass();
 
-            var statusTools = new StatusFile("Status.xml", debugLevel);
+            var statusTools = new StatusFile(mMgrSettings, "Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
             if (string.IsNullOrEmpty(sourceDatasetFolder))
@@ -1532,7 +1532,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestStatusLogging()
         {
-            var statusTools = new StatusFile("Status.xml", 2);
+            var statusTools = new StatusFile(mMgrSettings, "Status.xml", 2);
             RegisterEvents(statusTools);
 
             statusTools.MgrName = mMgrSettings.ManagerName;

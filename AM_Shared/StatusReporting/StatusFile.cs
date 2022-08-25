@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using PRISM;
+using PRISMDatabaseUtils;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -42,6 +43,9 @@ namespace AnalysisManagerBase.StatusReporting
         private readonly string[] mRecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
         private readonly int mDebugLevel;
+
+        // Instance of class AnalysisMgrSettings
+        private IMgrParams mMgrParams;
 
         /// <summary>
         /// Used to log the memory usage to a status file
@@ -259,10 +263,13 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Constructor
         /// </summary>
+        /// <param name="mgrParams">Manager parameters</param>
         /// <param name="statusFilePath">Full path to status file</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
-        public StatusFile(string statusFilePath, int debugLevel)
+        public StatusFile(IMgrParams mgrParams, string statusFilePath, int debugLevel)
         {
+            mMgrParams = mgrParams;
+
             mMgrStatusMap = new Dictionary<MgrStatusCodes, string>();
             mTaskStatusMap = new Dictionary<TaskStatusCodes, string>();
             mTaskStatusDetailMap = new Dictionary<TaskStatusDetailCodes, string>();

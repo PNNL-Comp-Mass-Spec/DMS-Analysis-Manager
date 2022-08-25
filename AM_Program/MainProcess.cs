@@ -1999,7 +1999,7 @@ namespace AnalysisManagerProg
 
             ShowTrace("Initialize mStatusTools using " + statusFileLoc);
 
-            mStatusTools = new StatusFile(statusFileLoc, mDebugLevel)
+            mStatusTools = new StatusFile(mMgrParams, statusFileLoc, mDebugLevel)
             {
                 TaskStartTime = DateTime.UtcNow,
                 Dataset = string.Empty,

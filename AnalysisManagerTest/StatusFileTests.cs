@@ -12,6 +12,17 @@ namespace AnalysisManagerTest
     [TestFixture]
     public class StatusFileTests
     {
+
+        private readonly IMgrParams mMgrSettings;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        private StatusFileTests()
+        {
+            mMgrSettings = new ManagerParameters();
+        }
+
         /// <summary>
         /// Test writing the status file
         /// </summary>
@@ -31,7 +42,7 @@ namespace AnalysisManagerTest
             const int debugLevel = 2;
 
             // StatusTools inherits EventNotifier, which will show messages at the console if an event does not have a subscriber
-            var statusTools = new StatusFile(statusFile.FullName, debugLevel) {
+            var statusTools = new StatusFile(mMgrSettings, statusFile.FullName, debugLevel) {
                 WriteToConsoleIfNoListener = true
             };
 
