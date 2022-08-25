@@ -150,7 +150,7 @@ namespace AnalysisManagerBase.StatusReporting
                     }
 
                     // Sleep for 3 seconds
-                    Global.IdleLoop(3);
+                    ConsoleMsgUtils.SleepSeconds(3);
                 }
 
                 retriesRemaining--;
