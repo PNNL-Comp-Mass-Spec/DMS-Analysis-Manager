@@ -10,18 +10,34 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     internal class MessageSender
     {
-        private readonly string mTopicName;
         private readonly string mBrokerUri;
 
-        private readonly string mProcessorName;
         private IConnection mConnection;
-        private ISession mSession;
-
-        private IMessageProducer mProducer;
-        private bool mIsDisposed;
 
         private bool mHasConnection;
 
+        private bool mIsDisposed;
+
+        private readonly string mProcessorName;
+
+        private IMessageProducer mProducer;
+
+        private ISession mSession;
+
+        private readonly string mTopicName;
+
+        /// <summary>
+        /// This is incremented each time this class is unable to connect to the message broker
+        /// It is reset to 0 when a successful connection is made
+        /// </summary>
+        public int BrokerConnectionFailures { get; private set; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="brokerUri"></param>
+        /// <param name="topicName"></param>
+        /// <param name="processorName"></param>
         public MessageSender(string brokerUri, string topicName, string processorName)
         {
             mTopicName = topicName;
@@ -63,6 +79,8 @@ namespace AnalysisManagerBase.StatusReporting
                                                  string.IsNullOrWhiteSpace(messageContainer.ManagerName) ? mProcessorName : messageContainer.ManagerName);
 
                 mProducer.Send(textMessage);
+
+                BrokerConnectionFailures = 0;
             }
             catch (Exception ex)
             {
@@ -70,6 +88,8 @@ namespace AnalysisManagerBase.StatusReporting
                 // get rid of current set of connection object - they'll never work again anyway
                 ConsoleMsgUtils.ShowDebug("Exception contacting the ActiveMQ server: " + ex.Message);
                 DestroyConnection();
+
+                BrokerConnectionFailures++;
             }
         }
 
@@ -116,6 +136,7 @@ namespace AnalysisManagerBase.StatusReporting
 
                     mProducer = mSession.CreateProducer(new Apache.NMS.ActiveMQ.Commands.ActiveMQTopic(mTopicName));
                     mHasConnection = true;
+                    BrokerConnectionFailures = 0;
 
                     return;
                 }
@@ -135,10 +156,16 @@ namespace AnalysisManagerBase.StatusReporting
             }
 
             // If we get here, we never could connect to the message broker
+
+            // Example formatted message:
+            // Exception creating broker connection after 3 attempts: Error connecting to proto-7.pnl.gov:61616
+
             OnErrorEvent(string.Format(
                 "Exception creating broker connection{0}: {1}",
                 retryCount == 0 ? string.Empty : " after " + (retryCount + 1) + " attempts",
                 string.Join("; ", errorList)));
+
+            BrokerConnectionFailures++;
         }
 
         private void DestroyConnection()
