@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using PRISM;
 using PRISMDatabaseUtils;
@@ -171,6 +172,12 @@ namespace AnalysisManagerBase.StatusReporting
 
         private DateTime mLastWriteTime;
 
+        private readonly Dictionary<MgrStatusCodes, string> mMgrStatusMap;
+
+        private readonly Dictionary<TaskStatusCodes, string> mTaskStatusMap;
+
+        private readonly Dictionary<TaskStatusDetailCodes, string> mTaskStatusDetailMap;
+
         /// <summary>
         /// Database connection string
         /// </summary>
@@ -210,6 +217,12 @@ namespace AnalysisManagerBase.StatusReporting
             DBConnectionString = dbConnectionString;
             mDBStatusUpdateIntervalMinutes = dbStatusUpdateIntervalMinutes;
             mLastWriteTime = DateTime.MinValue;
+
+            mMgrStatusMap = new Dictionary<MgrStatusCodes, string>();
+            mTaskStatusMap = new Dictionary<TaskStatusCodes, string>();
+            mTaskStatusDetailMap = new Dictionary<TaskStatusDetailCodes, string>();
+
+            StatusFile.DefineEnumToStringMapping(mMgrStatusMap, mTaskStatusMap, mTaskStatusDetailMap);
         }
 
         /// <summary>
@@ -246,7 +259,7 @@ namespace AnalysisManagerBase.StatusReporting
                 // Manager items
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@mgrName", SqlType.VarChar, 128, statusInfo.MgrName);
 
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@MgrStatusCode", SqlType.Int, 0, (int)statusInfo.MgrStatus);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@mgrStatus", SqlType.VarChar, 50, StatusFile.ConvertMgrStatusToString(mMgrStatusMap, statusInfo.MgrStatus));
 
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@lastUpdate", SqlType.DateTime, 0, statusInfo.LastUpdate.ToLocalTime());
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@lastStartTime", SqlType.DateTime, 0, statusInfo.LastStartTime.ToLocalTime());
@@ -259,15 +272,15 @@ namespace AnalysisManagerBase.StatusReporting
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@mostRecentErrorMessage", SqlType.VarChar, 1024, statusInfo.MostRecentErrorMessage);
 
                 // Task items
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskStatusCode", SqlType.Int, 0, (int)statusInfo.Task.Status);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@stepTool", SqlType.VarChar, 128, statusInfo.Task.Tool);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@taskStatus", SqlType.VarChar, 50, StatusFile.ConvertTaskStatusToString(mTaskStatusMap, statusInfo.Task.Status));
 
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@durationHours", SqlType.Float, 0, statusInfo.Task.DurationHours);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@progress", SqlType.Float, 0, statusInfo.Task.Progress);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@currentOperation", SqlType.VarChar, 256, statusInfo.Task.CurrentOperation);
 
                 // Task detail items
-                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@TaskDetailStatusCode", SqlType.Int, 0, (int)statusInfo.Task.Details.Status);
+                PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@taskDetailStatus", SqlType.VarChar, 50, StatusFile.ConvertTaskStatusDetailToString(mTaskStatusDetailMap, statusInfo.Task.Details.Status));
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@job", SqlType.Int, 0, statusInfo.Task.Details.Job);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@jobStep", SqlType.Int, 0, statusInfo.Task.Details.JobStep);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@dataset", SqlType.VarChar, 256, statusInfo.Task.Details.Dataset);
