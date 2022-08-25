@@ -2001,17 +2001,11 @@ namespace AnalysisManagerProg
 
             mStatusTools = new StatusFile(mMgrParams, statusFileLoc, mDebugLevel)
             {
-                TaskStartTime = DateTime.UtcNow,
-                Dataset = string.Empty,
-                WorkDirPath = mWorkDirPath,
-                JobNumber = 0,
-                JobStep = 0,
-                Tool = string.Empty,
                 MgrName = mMgrName,
                 MgrStatus = MgrStatusCodes.RUNNING,
-                TaskStatus = TaskStatusCodes.NO_TASK,
-                TaskStatusDetail = TaskStatusDetailCodes.NO_TASK
+                WorkDirPath = mWorkDirPath
             };
+
             RegisterEvents(mStatusTools);
 
             var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
