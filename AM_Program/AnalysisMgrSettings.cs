@@ -254,8 +254,7 @@ namespace AnalysisManagerProg
                 if (!successLocal)
                     return false;
 
-                var foldersValidated = ValidateOfflineTaskDirectories();
-                return foldersValidated;
+                return ValidateOfflineTaskDirectories();
             }
 
             var success = LoadMgrSettingsFromDB(retryCount: 6);
@@ -263,8 +262,7 @@ namespace AnalysisManagerProg
             if (!success)
                 return false;
 
-            var brokerSuccess = LoadBrokerDBSettings();
-            return brokerSuccess;
+            return LoadBrokerDBSettings();
         }
 
         /// <summary>
@@ -340,14 +338,12 @@ namespace AnalysisManagerProg
                 if (!successLocal)
                     return false;
 
-                var foldersValidated = ValidateOfflineTaskDirectories();
-                return foldersValidated;
+                return ValidateOfflineTaskDirectories();
             }
 
             // LoadSettings already loaded settings from Manager Control DB
             // Now load settings from the Broker DB (DMS_Pipeline)
-            var brokerSuccess = LoadBrokerDBSettings();
-            return brokerSuccess;
+            return LoadBrokerDBSettings();
         }
 
         /// <summary>
