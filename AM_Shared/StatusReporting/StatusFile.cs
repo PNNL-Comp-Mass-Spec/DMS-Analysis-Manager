@@ -45,7 +45,7 @@ namespace AnalysisManagerBase.StatusReporting
         private readonly int mDebugLevel;
 
         // Instance of class AnalysisMgrSettings
-        private IMgrParams mMgrParams;
+        private readonly IMgrParams mMgrParams;
 
         /// <summary>
         /// Used to log the memory usage to a status file
