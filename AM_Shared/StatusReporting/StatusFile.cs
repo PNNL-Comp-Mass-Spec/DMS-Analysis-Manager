@@ -572,6 +572,48 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Enable logging messages directly to the broker database (DMS_Pipeline)
+        /// </summary>
+        /// <param name="statusIntervalMinutes"></param>
+        /// <remarks>If mBrokerDBLogger is already configured, simply exits the method</remarks>
+        public void EnableBrokerDbLoggingNow(int statusIntervalMinutes = 15)
+        {
+            try
+            {
+                if (mBrokerDBLogger != null)
+                {
+                    if ((int)Math.Round(mBrokerDBLogger.DBStatusUpdateIntervalMinutes, 0) != statusIntervalMinutes) {
+                        mBrokerDBLogger.DBStatusUpdateIntervalMinutes = statusIntervalMinutes;
+                    }
+
+                    return;
+                }
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (statusIntervalMinutes < 0)
+                {
+                    statusIntervalMinutes = 15;
+                }
+                else if (statusIntervalMinutes < 5)
+                {
+                    statusIntervalMinutes = 5;
+                }
+
+                // Gigasax.DMS_Pipeline
+                var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrParams.ManagerName);
+
+                float brokerDbStatusUpdateIntervalMinutes = Math.Min(statusIntervalMinutes, mMgrParams.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60));
+
+                ConfigureBrokerDBLogging(true, connectionStringToUse, brokerDbStatusUpdateIntervalMinutes);
+            }
+            catch (Exception ex)
+            {
+                OnWarningEvent("Error enabling broker database logging: {0}", ex.Message);
+            }
+        }
+
+        /// <summary>
         /// Returns the number of cores
         /// </summary>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
@@ -645,9 +687,8 @@ namespace AnalysisManagerBase.StatusReporting
 
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
-                    mQueueLogger = new MessageQueueLogger();
+                    mQueueLogger = new MessageQueueLogger(mMessageSender, this);
                     RegisterEvents(mQueueLogger);
-                    mQueueLogger.Sender += mMessageSender.SendMessage;
 
                     var timeOfDay = DateTime.Now;
 

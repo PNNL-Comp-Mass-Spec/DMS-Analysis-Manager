@@ -5,20 +5,22 @@ using PRISM;
 namespace AnalysisManagerBase.StatusReporting
 {
     /// <summary>
-    /// Delegate that does the eventual posting
-    /// </summary>
-    /// <param name="messageContainer"></param>
-    public delegate void MessageSenderDelegate(MessageContainer messageContainer);
-
-    /// <summary>
     /// Class for interacting with a message queue
     /// </summary>
     internal class MessageQueueLogger : EventNotifier
     {
         /// <summary>
-        /// Actual delegate registers here
+        /// Status file class
         /// </summary>
-        public event MessageSenderDelegate Sender;
+        /// <remarks>
+        /// If there are errors connecting to the message queue, method
+        /// </remarks>
+        private readonly StatusFile mStatusFile;
+
+        /// <summary>
+        /// Message sender
+        /// </summary>
+        private readonly MessageSender mMessageSender;
 
         /// <summary>
         /// The worker thread that pulls messages off the queue and posts them
@@ -37,8 +39,15 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         private readonly Queue<MessageContainer> mStatusMessages = new();
 
-        public MessageQueueLogger()
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="statusFile"></param>
+        public MessageQueueLogger(MessageSender sender, StatusFile statusFile)
         {
+            mStatusFile = statusFile;
+            mMessageSender = sender;
             StartWorkerThread();
         }
 
@@ -77,6 +86,7 @@ namespace AnalysisManagerBase.StatusReporting
             while (true)
             {
                 MessageContainer messageContainer = null;
+                int messagesRemaining;
 
                 lock (mLocker)
                 {
@@ -88,12 +98,25 @@ namespace AnalysisManagerBase.StatusReporting
                             return;
                         }
                     }
+
+                    messagesRemaining = mStatusMessages.Count;
                 }
+
                 if (messageContainer?.Message != null)
                 {
-                    // we have work to do
-                    // use our delegates (if we have any)
-                    Sender?.Invoke(messageContainer);
+                    if (mMessageSender.BrokerConnectionFailures > 5)
+                    {
+                        // Too many failures connecting to the broker
+                        // Enable directly sending status info to the database, but first make sure mStatusMessages is empty
+
+                        if (messagesRemaining > 0)
+                            continue;
+
+                        mStatusFile.EnableBrokerDbLoggingNow();
+                        continue;
+                    }
+
+                    mMessageSender.SendMessage(messageContainer);
                 }
                 else
                 {
