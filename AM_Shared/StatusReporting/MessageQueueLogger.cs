@@ -28,14 +28,14 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Synchronization and signaling stuff to coordinate with worker thread
         /// </summary>
-        private readonly EventWaitHandle waitHandle = new AutoResetEvent(false);
+        private readonly EventWaitHandle mWaitHandle = new AutoResetEvent(false);
 
-        private readonly object locker = new();
+        private readonly object mLocker = new();
 
         /// <summary>
         /// local queue that contains messages to be sent
         /// </summary>
-        private readonly Queue<MessageContainer> mstatusMessages = new();
+        private readonly Queue<MessageContainer> mStatusMessages = new();
 
         public MessageQueueLogger()
         {
@@ -52,9 +52,9 @@ namespace AnalysisManagerBase.StatusReporting
         {
             var messageContainer = new MessageContainer(statusMessage, managerName);
 
-            lock (locker)
+            lock (mLocker)
             {
-                mstatusMessages.Enqueue(messageContainer);
+                mStatusMessages.Enqueue(messageContainer);
             }
 
             if (!worker.IsAlive)
@@ -63,7 +63,7 @@ namespace AnalysisManagerBase.StatusReporting
                 StartWorkerThread();
             }
 
-            waitHandle.Set();
+            mWaitHandle.Set();
         }
 
         /// <summary>
@@ -77,11 +77,12 @@ namespace AnalysisManagerBase.StatusReporting
             while (true)
             {
                 MessageContainer messageContainer = null;
-                lock (locker)
+
+                lock (mLocker)
                 {
-                    if (mstatusMessages.Count > 0)
+                    if (mStatusMessages.Count > 0)
                     {
-                        messageContainer = mstatusMessages.Dequeue();
+                        messageContainer = mStatusMessages.Dequeue();
                         if (messageContainer?.Message == null)
                         {
                             return;
@@ -97,7 +98,7 @@ namespace AnalysisManagerBase.StatusReporting
                 else
                 {
                     // No more mStatusMessages - wait for a signal
-                    waitHandle.WaitOne(60000);
+                    mWaitHandle.WaitOne(60000);
                 }
             }
         }
@@ -123,7 +124,7 @@ namespace AnalysisManagerBase.StatusReporting
             {
                 // Wait for the consumer's thread to finish.
                 // Release any OS resources.
-                waitHandle.Close();
+                mWaitHandle.Close();
             }
         }
     }
