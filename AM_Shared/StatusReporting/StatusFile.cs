@@ -722,7 +722,8 @@ namespace AnalysisManagerBase.StatusReporting
                     Global.CheckStopTrace("CreateMessageSender");
 
                     mMessageSender = new MessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
-                    mMessageSender.ErrorEvent += MessageSender_ErrorEvent;
+
+                    RegisterEvents(mMessageSender);
 
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
@@ -1637,11 +1638,6 @@ namespace AnalysisManagerBase.StatusReporting
         {
             mQueueLogger?.Dispose();
             mMessageSender?.Dispose();
-        }
-
-        private void MessageSender_ErrorEvent(string message, Exception ex)
-        {
-            OnErrorEvent(message, ex);
         }
     }
 }

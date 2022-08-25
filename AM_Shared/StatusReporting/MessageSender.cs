@@ -8,7 +8,7 @@ namespace AnalysisManagerBase.StatusReporting
     /// <summary>
     /// Sends messages to ActiveMQ message broker using NMS client library
     /// </summary>
-    internal class MessageSender
+    internal class MessageSender : EventNotifier, IDisposable
     {
         private readonly string mBrokerUri;
 
@@ -200,16 +200,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
         }
 
-        public event ErrorEventEventHandler ErrorEvent;
-        public delegate void ErrorEventEventHandler(string message, Exception ex);
 
-        /// <summary>
-        /// Report an error
-        /// </summary>
-        /// <param name="message"></param>
-        protected void OnErrorEvent(string message)
-        {
-            ErrorEvent?.Invoke(message, null);
         }
     }
 }
