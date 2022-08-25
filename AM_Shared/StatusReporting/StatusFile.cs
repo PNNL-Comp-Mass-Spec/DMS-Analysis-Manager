@@ -507,7 +507,18 @@ namespace AnalysisManagerBase.StatusReporting
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         private string ConvertMgrStatusToString(MgrStatusCodes statusEnum)
         {
-            if (mMgrStatusMap.TryGetValue(statusEnum, out var statusText))
+            return ConvertMgrStatusToString(mMgrStatusMap, statusEnum);
+        }
+
+        /// <summary>
+        /// Converts the manager status enum to a string value
+        /// </summary>
+        /// <param name="mgrStatusMap"></param>
+        /// <param name="statusEnum">A MgrStatus enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
+        public static string ConvertMgrStatusToString(Dictionary<MgrStatusCodes, string> mgrStatusMap, MgrStatusCodes statusEnum)
+        {
+            if (mgrStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
@@ -521,7 +532,18 @@ namespace AnalysisManagerBase.StatusReporting
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         private string ConvertTaskStatusToString(TaskStatusCodes statusEnum)
         {
-            if (mTaskStatusMap.TryGetValue(statusEnum, out var statusText))
+            return ConvertTaskStatusToString(mTaskStatusMap, statusEnum);
+        }
+
+        /// <summary>
+        /// Converts the task status enum to a string value
+        /// </summary>
+        /// <param name="taskStatusMap"></param>
+        /// <param name="statusEnum">A Task Status enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
+        public static string ConvertTaskStatusToString(Dictionary<TaskStatusCodes, string> taskStatusMap, TaskStatusCodes statusEnum)
+        {
+            if (taskStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
@@ -535,14 +557,31 @@ namespace AnalysisManagerBase.StatusReporting
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         private string ConvertTaskStatusDetailToString(TaskStatusDetailCodes statusEnum)
         {
-            if (mTaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
+            return ConvertTaskStatusDetailToString(mTaskStatusDetailMap, statusEnum);
+        }
+
+        /// <summary>
+        /// Converts the task status detail enum to a string value
+        /// </summary>
+        /// <param name="taskStatusDetailMap"></param>
+        /// <param name="statusEnum">A TaskStatusDetail enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
+        public static string ConvertTaskStatusDetailToString(Dictionary<TaskStatusDetailCodes, string> taskStatusDetailMap, TaskStatusDetailCodes statusEnum)
+        {
+            if (taskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
             return "Unknown Task Status Detail";
         }
 
-        private void DefineEnumToStringMapping(
+        /// <summary>
+        /// Populate the status code to status description dictionaries
+        /// </summary>
+        /// <param name="mgrStatusMap"></param>
+        /// <param name="taskStatusMap"></param>
+        /// <param name="taskStatusDetailMap"></param>
+        public static void DefineEnumToStringMapping(
             IDictionary<MgrStatusCodes, string> mgrStatusMap,
             IDictionary<TaskStatusCodes, string> taskStatusMap,
             IDictionary<TaskStatusDetailCodes, string> taskStatusDetailMap)
