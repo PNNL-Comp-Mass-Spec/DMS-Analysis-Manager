@@ -1120,87 +1120,87 @@ namespace AnalysisManagerBase.StatusReporting
 
             // Create a new memory stream in which to write the XML
             var memStream = new MemoryStream();
-            using var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8)
+            using var writer = new XmlTextWriter(memStream, System.Text.Encoding.UTF8)
             {
                 Formatting = Formatting.Indented,
                 Indentation = 2
             };
 
             // Create the XML document in memory
-            xWriter.WriteStartDocument(true);
-            xWriter.WriteComment("Analysis manager job status");
+            writer.WriteStartDocument(true);
+            writer.WriteComment("Analysis manager job status");
 
             // General job information
             // Root level element
-            xWriter.WriteStartElement("Root");
-            xWriter.WriteStartElement("Manager");
-            xWriter.WriteElementString("MgrName", status.MgrName);
-            xWriter.WriteElementString("RemoteMgrName", status.RemoteMgrName);
-            xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
+            writer.WriteStartElement("Root");
+            writer.WriteStartElement("Manager");
+            writer.WriteElementString("MgrName", status.MgrName);
+            writer.WriteElementString("RemoteMgrName", status.RemoteMgrName);
+            writer.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
 
-            xWriter.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-            xWriter.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
 
             // Write out times in the format 2017-07-06T23:23:14.337Z
-            xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+            writer.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
 
-            xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+            writer.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
 
-            xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
-            xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
-            xWriter.WriteElementString("ProcessID", processId.ToString());
-            xWriter.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
-            xWriter.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
-            xWriter.WriteStartElement("RecentErrorMessages");
+            writer.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
+            writer.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
+            writer.WriteElementString("ProcessID", processId.ToString());
+            writer.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
+            writer.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
+            writer.WriteStartElement("RecentErrorMessages");
 
             var recentErrorMessages = status.RecentErrorMessages;
             if (recentErrorMessages.Count == 0)
             {
-                xWriter.WriteElementString("ErrMsg", string.Empty);
+                writer.WriteElementString("ErrMsg", string.Empty);
             }
             else
             {
                 foreach (var errMsg in recentErrorMessages)
                 {
-                    xWriter.WriteElementString("ErrMsg", errMsg);
+                    writer.WriteElementString("ErrMsg", errMsg);
                 }
             }
-            xWriter.WriteEndElement(); // RecentErrorMessages
-            xWriter.WriteEndElement(); // Manager
+            writer.WriteEndElement(); // RecentErrorMessages
+            writer.WriteEndElement(); // Manager
 
-            xWriter.WriteStartElement("Task");
-            xWriter.WriteElementString("Tool", status.Tool);
-            xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
+            writer.WriteStartElement("Task");
+            writer.WriteElementString("Tool", status.Tool);
+            writer.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
 
             if (status.TaskStatus is TaskStatusCodes.STOPPED or TaskStatusCodes.FAILED or TaskStatusCodes.NO_TASK)
             {
                 runTimeHours = 0;
             }
 
-            xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
-            xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
+            writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
+            writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
 
-            xWriter.WriteElementString("Progress", status.Progress.ToString("##0.00"));
-            xWriter.WriteElementString("CurrentOperation", status.CurrentOperation);
+            writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
+            writer.WriteElementString("CurrentOperation", status.CurrentOperation);
 
-            xWriter.WriteStartElement("TaskDetails");
-            xWriter.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
-            xWriter.WriteElementString("Job", status.JobNumber.ToString());
-            xWriter.WriteElementString("Step", status.JobStep.ToString());
-            xWriter.WriteElementString("Dataset", status.Dataset);
-            xWriter.WriteElementString("WorkDirPath", status.WorkDirPath);
-            xWriter.WriteElementString("MostRecentLogMessage", status.MostRecentLogMessage);
-            xWriter.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
-            xWriter.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
-            xWriter.WriteEndElement(); // TaskDetails
-            xWriter.WriteEndElement(); // Task
+            writer.WriteStartElement("TaskDetails");
+            writer.WriteElementString("Status", status.ConvertTaskStatusDetailToString(status.TaskStatusDetail));
+            writer.WriteElementString("Job", status.JobNumber.ToString());
+            writer.WriteElementString("Step", status.JobStep.ToString());
+            writer.WriteElementString("Dataset", status.Dataset);
+            writer.WriteElementString("WorkDirPath", status.WorkDirPath);
+            writer.WriteElementString("MostRecentLogMessage", status.MostRecentLogMessage);
+            writer.WriteElementString("MostRecentJobInfo", status.MostRecentJobInfo);
+            writer.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
+            writer.WriteEndElement(); // TaskDetails
+            writer.WriteEndElement(); // Task
 
             var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
 
             if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
             {
-                xWriter.WriteStartElement("ProgRunnerCoreUsage");
-                xWriter.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
+                writer.WriteStartElement("ProgRunnerCoreUsage");
+                writer.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
 
                 // Dumping the items from the queue to a list because another thread might
                 // update ProgRunnerCoreUsageHistory while we're iterating over the items
@@ -1208,26 +1208,26 @@ namespace AnalysisManagerBase.StatusReporting
 
                 foreach (var coreUsageSample in coreUsageHistory)
                 {
-                    xWriter.WriteStartElement("CoreUsageSample");
-                    xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
-                    xWriter.WriteValue(coreUsageSample.Value.ToString("0.0"));
-                    xWriter.WriteEndElement(); // CoreUsageSample
+                    writer.WriteStartElement("CoreUsageSample");
+                    writer.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
+                    writer.WriteValue(coreUsageSample.Value.ToString("0.0"));
+                    writer.WriteEndElement(); // CoreUsageSample
                 }
-                xWriter.WriteEndElement(); // ProgRunnerCoreUsage
+                writer.WriteEndElement(); // ProgRunnerCoreUsage
             }
 
-            xWriter.WriteEndElement(); // Root
+            writer.WriteEndElement(); // Root
 
             // Close out the XML document (but do not close XWriter yet)
-            xWriter.WriteEndDocument();
-            xWriter.Flush();
+            writer.WriteEndDocument();
+            writer.Flush();
 
             // Now use a StreamReader to copy the XML text to a string variable
             memStream.Seek(0, SeekOrigin.Begin);
-            var memStreamReader = new StreamReader(memStream);
-            var xmlText = memStreamReader.ReadToEnd();
+            var memoryStreamReader = new StreamReader(memStream);
+            var xmlText = memoryStreamReader.ReadToEnd();
 
-            memStreamReader.Close();
+            memoryStreamReader.Close();
             memStream.Close();
 
             return xmlText;
@@ -1238,12 +1238,16 @@ namespace AnalysisManagerBase.StatusReporting
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
             if (DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds < MIN_FILE_WRITE_INTERVAL_SECONDS)
+            {
                 return;
+            }
 
             // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
 
             if (FileNamePath == null)
+            {
                 return;
+            }
 
             var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
 
@@ -1564,6 +1568,7 @@ namespace AnalysisManagerBase.StatusReporting
             {
                 managerStatus = MgrStatusCodes.DISABLED_LOCAL;
             }
+
             MgrStatus = managerStatus;
             TaskStatus = TaskStatusCodes.NO_TASK;
             TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
