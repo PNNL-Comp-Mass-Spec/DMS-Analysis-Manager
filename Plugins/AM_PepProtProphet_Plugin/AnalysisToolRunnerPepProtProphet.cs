@@ -2134,15 +2134,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper disable ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
 
+                    // Prior to v18.0 we appended the .pepXML file names; that step is no longer necessary
+                    // Instead, simply update datasetCount
+
                     foreach (var datasetIDs in datasetIDsByExperimentGroup.Values)
                     {
-                        foreach (var datasetId in datasetIDs)
-                        {
-                            var datasetName = dataPackageInfo.Datasets[datasetId];
+                        // for each (var datasetId in datasetIDs)
+                        // {
+                        //    var datasetName = dataPackageInfo.Datasets[datasetId];
+                        //    arguments.AppendFormat(" {0}.pepXML", datasetName);
+                        //    datasetCount++;
+                        // }
 
-                            arguments.AppendFormat(" {0}.pepXML", datasetName);
-                            datasetCount++;
-                        }
+                        datasetCount += datasetIDs.Count;
                     }
 
                     // ReSharper restore ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
@@ -2240,6 +2244,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments.ToString());
 
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
+
+                // Note that warnings regarding SLF4J bindings can be ignored
 
                 if (!mConsoleOutputFileParsed)
                 {
