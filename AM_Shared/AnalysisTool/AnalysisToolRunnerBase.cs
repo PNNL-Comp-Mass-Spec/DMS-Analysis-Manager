@@ -3336,6 +3336,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         protected void ResetLogFileNameToDefault()
         {
+            LogTools.FlushPendingMessages();
+
             var logFileName = mMgrParams.GetParam("LogFileName");
             LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: true);
         }
