@@ -367,6 +367,8 @@ namespace AnalysisManager_Mage_PlugIn
                 var updatedFilePath = Path.GetTempFileName();
                 var replaceOriginal = false;
 
+                OnDebugEvent("Validating the alias file: {0}", tAliasFile.FullName);
+
                 using (var reader = new StreamReader(new FileStream(tAliasFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
@@ -436,6 +438,7 @@ namespace AnalysisManager_Mage_PlugIn
                 if (!replaceOriginal)
                     return true;
 
+                OnStatusEvent("Replacing the original t_alias.txt file with the reformatted one");
 
                 // Rename the original to .old
                 var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
@@ -444,11 +447,23 @@ namespace AnalysisManager_Mage_PlugIn
 
                 File.Move(tAliasFile.FullName, invalidFile.FullName);
 
+                OnDebugEvent("Copying {0} to {1}", updatedFilePath, tAliasFile.FullName);
+
                 // Copy the temp file to the remote server
                 File.Copy(updatedFilePath, tAliasFile.FullName);
 
-                // Delete the temp file
-                File.Delete(updatedFilePath);
+                try
+                {
+                    OnDebugEvent("Deleting {0}", updatedFilePath);
+
+                    // Delete the temp file
+                    File.Delete(updatedFilePath);
+                }
+                catch (Exception ex)
+                {
+                    OnWarningEvent("Unable to delete the file: {0}", ex.Message);
+                }
+
                 return true;
             }
             catch (Exception ex)
