@@ -23,6 +23,9 @@ namespace AnalysisManager_Mage_PlugIn
         {
             // Change the name of the log file for the local log file to the plugin log filename
             var logFilePath = Path.Combine(mWorkDir, MAGE_LOG_FILE_NAME);
+
+            LogMessage("Changing log file path to {0}", logFilePath);
+
             const bool appendDateToBaseName = false;
             LogTools.ChangeLogFileBaseName(logFilePath, appendDateToBaseName);
 
