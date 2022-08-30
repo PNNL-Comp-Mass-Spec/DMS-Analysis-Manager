@@ -44,14 +44,20 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         public bool RunMageOperations(string mageOperations, int jobCountLimit)
         {
-            var ok = false;
+            if (string.IsNullOrWhiteSpace(mageOperations))
+            {
+                OnWarningEvent("The mageOperations argument is empty; nothing for RunMageOperations to do");
+                return false;
+            }
+
             foreach (var mageOperation in mageOperations.Split(','))
             {
-                ok = RunMageOperation(mageOperation.Trim(), jobCountLimit);
-                if (!ok)
-                    break;
+                var success = RunMageOperation(mageOperation.Trim(), jobCountLimit);
+                if (!success)
+                    return false;
             }
-            return ok;
+
+            return true;
         }
 
         /// <summary>
