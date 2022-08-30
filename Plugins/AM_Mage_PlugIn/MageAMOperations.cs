@@ -262,7 +262,10 @@ namespace AnalysisManager_Mage_PlugIn
             else
             {
                 // Validate the t_alias.txt file to remove blank rows and remove extra columns
-                ValidateAliasFile(matchingFiles.First());
+                var success = ValidateAliasFile(matchingFiles.First());
+
+                if (!success)
+                    return false;
             }
 
             OnDebugEvent("Importing data package files into SQLite, source directory " + inputDirectoryPath + ", import mode " + importMode);
@@ -357,7 +360,7 @@ namespace AnalysisManager_Mage_PlugIn
             return true;
         }
 
-        private void ValidateAliasFile(FileSystemInfo tAliasFile)
+        private bool ValidateAliasFile(FileSystemInfo tAliasFile)
         {
             try
             {
@@ -431,7 +434,8 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 if (!replaceOriginal)
-                    return;
+                    return true;
+
 
                 // Rename the original to .old
                 var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
@@ -445,10 +449,13 @@ namespace AnalysisManager_Mage_PlugIn
 
                 // Delete the temp file
                 File.Delete(updatedFilePath);
+                return true;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error validating the t_alias file: " + ex.Message, ex);
+
+                return false;
             }
         }
 
