@@ -210,8 +210,8 @@ namespace AnalysisManager_Mage_PlugIn
             if (filesInDirectory.Count == 0)
             {
                 throw new DirectoryNotFoundException(string.Format(
-                    "DataPackageSourceFolderName has no files " +
-                    "(should typically be named ImportFiles and it should have a file named {0}): {1}",
+                    "Directory specified by job parameter DataPackageSourceFolderName has no files " +
+                    "(the directory should typically be named ImportFiles and it should have a file named {0}): {1}",
                     AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
             }
 
@@ -232,11 +232,12 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     // DataPackageSourceFolderName has a mis-named t_alias.txt file
                     throw new DirectoryNotFoundException(string.Format(
-                        "DataPackageSourceFolderName has a mis-named {0} file; rename it to remove the duplicate .txt extension: {1}",
+                        "Directory specified by job parameter DataPackageSourceFolderName has a mis-named {0} file; rename it to remove the duplicate .txt extension: {1}",
                         AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectoryPath));
                 }
 
                 var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
+
                 if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0 ||
                     analysisType.IndexOf("TMT", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
@@ -251,21 +252,15 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 var msg = string.Format(
-                    "File {0} was not found in the DataPackageSourceFolderName directory; this may result in a failure during Ape processing",
-                    AnalysisToolRunnerMage.T_ALIAS_FILE);
+                    "File {0} was not found in the directory specified by job parameter DataPackageSourceFolderName; this may result in a failure during Ape processing; see {1}",
+                    AnalysisToolRunnerMage.T_ALIAS_FILE, inputDirectory.FullName);
 
                 var msgVerbose = msg + ": " + inputDirectoryPath;
 
                 AppendToWarningMessage(msg, msgVerbose);
                 OnWarningEvent(msgVerbose);
-            }
-            else
-            {
-                // Validate the t_alias.txt file to remove blank rows and remove extra columns
-                var success = ValidateAliasFile(matchingFiles.First());
 
-                if (!success)
-                    return false;
+                return true;
             }
 
             OnDebugEvent("Importing data package files into SQLite, source directory " + inputDirectoryPath + ", import mode " + importMode);
@@ -479,14 +474,14 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         private void GetPriorStepResults()
         {
-            if (!mPreviousStepResultsImported)
-            {
-                mPreviousStepResultsImported = true;
-                var mageObj = new MageAMPipelineBase(mJobParams, mMgrParams);
-                RegisterMageEvents(mageObj);
+            if (mPreviousStepResultsImported)
+                return;
 
-                mageObj.GetPriorResultsToWorkDir();
-            }
+            mPreviousStepResultsImported = true;
+            var mageObj = new MageAMPipelineBase(mJobParams, mMgrParams);
+            RegisterMageEvents(mageObj);
+
+            mageObj.GetPriorResultsToWorkDir();
         }
 
         /// <summary>
