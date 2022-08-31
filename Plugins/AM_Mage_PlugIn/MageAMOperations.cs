@@ -263,10 +263,16 @@ namespace AnalysisManager_Mage_PlugIn
                 return true;
             }
 
-            OnDebugEvent("Importing data package files into SQLite, source directory " + inputDirectoryPath + ", import mode " + importMode);
+            // Validate the t_alias.txt file to remove blank rows and remove extra columns
+            var success = ValidateAliasFile(matchingFiles.First(), out var importDirectoryToUse);
+
+            if (!success)
+                return false;
+
+            OnDebugEvent("Importing data package files into SQLite, source directory {0}, import mode {1}", importDirectoryToUse, importMode);
 
             GetPriorStepResults();
-            mageObj.ImportFilesInDirectoryToSQLite(inputDirectoryPath, "", importMode);
+            mageObj.ImportFilesInDirectoryToSQLite(importDirectoryToUse, "", importMode);
             return true;
         }
 
@@ -355,10 +361,30 @@ namespace AnalysisManager_Mage_PlugIn
             return true;
         }
 
-        private bool ValidateAliasFile(FileSystemInfo tAliasFile)
+        /// <summary>
+        /// Validate the t_alias.txt file (which should be in the ImportFiles directory below the data package)
+        /// </summary>
+        /// <param name="tAliasFile">t_alias.txt file to validate</param>
+        /// <param name="importDirectoryToUse">
+        /// Output: directory to actually import the t_alias.txt file from
+        /// Defaults to the t_alias file's directory, but will be the local working directory if there was a write error (or rename error)
+        /// </param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ValidateAliasFile(FileInfo tAliasFile, out string importDirectoryToUse)
         {
+            importDirectoryToUse = string.Empty;
+
             try
             {
+                if (tAliasFile.Directory == null)
+                {
+                    OnErrorEvent("Unable to determine the parent directory of file {0}", tAliasFile.FullName);
+                    importDirectoryToUse = string.Empty;
+                    return false;
+                }
+
+                importDirectoryToUse = tAliasFile.Directory.FullName;
+
                 var updatedFilePath = Path.GetTempFileName();
                 var replaceOriginal = false;
 
@@ -400,7 +426,7 @@ namespace AnalysisManager_Mage_PlugIn
                                 replaceOriginal = true;
                                 if (skipList.Count == 1)
                                 {
-                                    OnWarningEvent("Skipped column {0} in {1} because it had an empty column name", skipList.First() + 1, tAliasFile.Name);
+                                    OnWarningEvent("Skipped column {0} in {1} because it had an empty column name", skipList[0] + 1, tAliasFile.Name);
                                 }
                                 else
                                 {
@@ -435,31 +461,77 @@ namespace AnalysisManager_Mage_PlugIn
 
                 OnStatusEvent("Replacing the original t_alias.txt file with the reformatted one");
 
-                // Rename the original to .old
-                var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
-                if (invalidFile.Exists)
-                    invalidFile.Delete();
-
-                File.Move(tAliasFile.FullName, invalidFile.FullName);
-
-                OnDebugEvent("Copying {0} to {1}", updatedFilePath, tAliasFile.FullName);
-
-                // Copy the temp file to the remote server
-                File.Copy(updatedFilePath, tAliasFile.FullName);
-
                 try
                 {
-                    OnDebugEvent("Deleting {0}", updatedFilePath);
+                    // Rename the original to .old
+                    var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
+                    if (invalidFile.Exists)
+                    {
+                        OnDebugEvent("Deleting existing .old file: {0}", invalidFile.FullName);
+                        invalidFile.Delete();
+                    }
 
-                    // Delete the temp file
-                    File.Delete(updatedFilePath);
+                    OnDebugEvent("Renaming {0} to {1}", tAliasFile.FullName, invalidFile.Name);
+
+                    File.Move(tAliasFile.FullName, invalidFile.FullName);
+
+                    OnDebugEvent("Copying {0} to {1}", updatedFilePath, tAliasFile.FullName);
+
+                    // Copy the temp file to the remote server
+                    File.Copy(updatedFilePath, tAliasFile.FullName);
+
+                    try
+                    {
+                        OnDebugEvent("Deleting {0}", updatedFilePath);
+
+                        // Delete the temp file
+                        File.Delete(updatedFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        OnWarningEvent("Unable to delete the file: {0}", ex.Message);
+                    }
+
+                    return true;
                 }
                 catch (Exception ex)
                 {
-                    OnWarningEvent("Unable to delete the file: {0}", ex.Message);
+                    OnWarningEvent("Error updating the t_alias.txt file on the remote share: {0}", ex.Message);
                 }
 
-                return true;
+                // Copy the updated t_alias.txt file to the manager's local working directory
+
+                var workDir = mMgrParams.GetParam("WorkDir");
+
+                if (string.IsNullOrWhiteSpace(workDir))
+                {
+                    OnErrorEvent("Manager parameter WorkDir is empty; unable to copy the t_alias.txt file locally");
+                    return false;
+                }
+
+                var localImportFilesDirectory = new DirectoryInfo(Path.Combine(workDir, "ImportFiles"));
+
+                try
+                {
+                    var targetFilePath = Path.Combine(localImportFilesDirectory.FullName, tAliasFile.Name);
+
+                    if (!localImportFilesDirectory.Exists)
+                        localImportFilesDirectory.Create();
+
+                    File.Copy(updatedFilePath, targetFilePath, true);
+
+                    importDirectoryToUse = localImportFilesDirectory.FullName;
+                    mJobParams.AddResultFileToSkip(tAliasFile.Name);
+
+                    OnStatusEvent("Due to errors updating the remote t_alias.txt file, will instead import {0}", targetFilePath);
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    OnErrorEvent(string.Format("Error copying the updated t_alias.txt file to {0}: {1}", localImportFilesDirectory.FullName, ex.Message), ex);
+                    return false;
+                }
             }
             catch (Exception ex)
             {
