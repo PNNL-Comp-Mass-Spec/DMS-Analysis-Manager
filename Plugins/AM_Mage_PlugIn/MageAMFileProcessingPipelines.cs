@@ -39,10 +39,11 @@ namespace AnalysisManager_Mage_PlugIn
             // get list of jobs from data package that have ReporterIon results
             BaseModule jobList = GetListOfDMSItems(jobListQuery, jobCountLimit);
 
-            // get selected list reporter ion files from list of jobs
+            // get selected list of reporter ion files from list of jobs
             const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
             var fileList = GetListOfFilesFromDirectoryList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
+            // Importing job result data into SQLite, storing in table t_reporter_ions
             NotifyImportStarting("Importing job result data", tableName, fileList, "files");
 
             // import contents of each file in list
@@ -65,10 +66,11 @@ namespace AnalysisManager_Mage_PlugIn
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
             var jobList = GetListOfDMSItems(jobListQuery, jobCountLimit);
 
-            // get selected list files from list of datasets
+            // get selected list of files from list of datasets
             const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
             var fileList = GetListOfFilesFromDirectoryList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
+            // Importing result file metadata into SQLite, storing in table t_msms_raw_files
             NotifyImportStarting("Importing result file metadata", tableName, fileList, "files");
 
             // import file list to SQLite
@@ -111,6 +113,7 @@ namespace AnalysisManager_Mage_PlugIn
                 FileNameList = fileNameList
             };
 
+            // Importing files in directory into SQLite, storing in table auto-defined;
             NotifyImportStarting("Importing files in directory", "auto-defined", fileList, "files");
 
             var fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
@@ -183,7 +186,7 @@ namespace AnalysisManager_Mage_PlugIn
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
-            NotifyImportStarting("Importing improve cluster file", tableName, null, "file");
+            NotifyImportStarting("Importing Improv cluster file", tableName, null, "file");
 
             var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
             ConnectPipelineToStatusHandlers(pipeline);
@@ -263,6 +266,7 @@ namespace AnalysisManager_Mage_PlugIn
                     writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);
                 }
 
+                // Importing factors into SQLite, storing in table t_factors
                 NotifyImportStarting("Importing factors", "t_factors", sink, "factors");
 
                 ConnectPipelineToStatusHandlers(writePipeline);
@@ -282,6 +286,7 @@ namespace AnalysisManager_Mage_PlugIn
             var jobList = GetListOfDMSItems(sql, jobCountLimit);
             var writer = new SQLiteWriter { DbPath = GetResultsDBFilePath(), TableName = tableName };
 
+            // Importing job list into SQLite, storing in table t_data_package_analysis_jobs
             NotifyImportStarting("Importing job list", tableName, jobList, "jobs");
 
             ProcessingPipeline.Assemble("JobListPipeline", jobList, writer).RunRoot(null);

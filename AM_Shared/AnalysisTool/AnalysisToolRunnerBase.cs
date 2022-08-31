@@ -1060,6 +1060,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var success = MakeResultsDirectory();
+
             if (!success)
             {
                 // MakeResultsDirectory handles posting to local log, so set database error message and exit
@@ -1068,6 +1069,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var moveSucceed = MoveResultFiles(includeSubdirectories, subdirectoriesToSkip);
+
             if (!moveSucceed)
             {
                 // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory

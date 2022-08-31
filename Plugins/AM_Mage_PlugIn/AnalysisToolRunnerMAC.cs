@@ -100,6 +100,7 @@ namespace AnalysisManager_Mage_PlugIn
                 // Override the output directory name and the dataset name (since this is a dataset aggregation job)
                 mResultsDirectoryName = mJobParams.GetParam("StepOutputFolderName");
                 mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+
                 if (!string.IsNullOrEmpty(mResultsDirectoryName))
                     mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
