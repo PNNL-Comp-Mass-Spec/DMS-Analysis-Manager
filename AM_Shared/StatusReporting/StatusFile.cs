@@ -613,8 +613,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Enable logging messages directly to the broker database (DMS_Pipeline)
         /// </summary>
-        /// <param name="statusIntervalMinutes"></param>
         /// <remarks>If mBrokerDBLogger is already configured, simply exits the method</remarks>
+        /// <param name="statusIntervalMinutes"></param>
         public void EnableBrokerDbLoggingNow(int statusIntervalMinutes = 15)
         {
             try

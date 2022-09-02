@@ -196,7 +196,7 @@ namespace MSGFResultsSummarizer
         /// Total number of MS/MS spectra
         /// </summary>
         /// <remarks>
-        /// /// <remarks>For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets</remarks>
+        /// <remarks>For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets</remarks>
         /// </remarks>
         private int TotalMSnScans { get; set; }
 

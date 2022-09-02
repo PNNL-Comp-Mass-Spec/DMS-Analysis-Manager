@@ -800,9 +800,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Stores a list of files in a zip file named zipFilePath
         /// </summary>
+        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
         /// <param name="filePaths">List of file paths to store in the zip file</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
-        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
         /// <returns>True if success, false if an error</returns>
         public bool ZipFiles(IReadOnlyList<string> filePaths, string zipFilePath)
         {
@@ -814,9 +814,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Stores a list of files in a zip file named zipFilePath
         /// </summary>
+        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
         /// <param name="filesToZip">List of file paths to store in the zip file</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
-        /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
         /// <returns>True if success, false if an error</returns>
         public bool ZipFiles(IReadOnlyList<FileInfo> filesToZip, string zipFilePath)
         {
