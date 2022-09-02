@@ -600,7 +600,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!moveSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo);
+                var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo, options);
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -658,14 +658,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="experimentGroupDirectory"></param>
         /// <param name="datasetName"></param>
         /// <param name="options"></param>
-        /// <param name="pepXmlFile"></param>
+        /// <param name="pepXmlFiles"></param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
             FileSystemInfo fragPipeLibDirectory,
-            FileSystemInfo experimentGroupDirectory,
+            DirectoryInfo experimentGroupDirectory,
             string datasetName,
             FragPipeOptions options,
-            out FileInfo pepXmlFile)
+            out List<FileInfo> pepXmlFiles)
         {
             try
             {
@@ -723,19 +723,34 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var currentStep = "PercolatorOutputToPepXML for " + datasetName;
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
-                pepXmlFile = new FileInfo(
-                    Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}.pep.xml", datasetName)));
+                var pepXmlFile = new FileInfo(
+                    Path.Combine(experimentGroupDirectory.FullName, string.Format("interact-{0}{1}.pep.xml",
+                        datasetName,
+                        options.FraggerOptions.DIASearchEnabled ? "_rank1" : string.Empty
+                        )));
 
                 if (processingSuccess)
                 {
+                    pepXmlFiles = new List<FileInfo>();
+
                     // Verify that Percolator created the .pep.xml file
                     if (!pepXmlFile.Exists)
                     {
                         LogError("PercolatorOutputToPepXML did not create file " + pepXmlFile.Name);
+                        pepXmlFiles.Add(pepXmlFile);
                         return false;
                     }
 
-                    mJobParams.AddResultFileToSkip(pepXmlFile.Name);
+                    // With DDA results there will be only one interact .pep.xml file
+                    // For DIA there will be several
+                    // This for loop works for both, populating the pepXmlFiles output parameter
+
+                    foreach (var item in experimentGroupDirectory.GetFiles(string.Format("interact-{0}*.pep.xml", datasetName)))
+                    {
+                        pepXmlFiles.Add(item);
+                        mJobParams.AddResultFileToSkip(item.Name);
+                    }
+
                     return true;
                 }
 
@@ -748,12 +763,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogWarning("Call to Java failed while calling PercolatorOutputToPepXML on interact.pep.xml (but exit code is 0)");
                 }
 
+                pepXmlFiles = new List<FileInfo> { pepXmlFile };
+
                 return false;
             }
             catch (Exception ex)
             {
                 LogError("Error in ConvertPercolatorOutputToPepXML", ex);
-                pepXmlFile = new FileInfo(string.Format("interact-{0}.pep.xml", datasetName));
+
+                pepXmlFiles = new List<FileInfo>
+                {
+                    new (string.Format("interact-{0}.pep.xml", datasetName))
+                };
+
                 return false;
             }
         }
@@ -2735,11 +2757,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Run PeptideProphet separately against each dataset
 
-                foreach (var item in workspaceDirectoryByDatasetId)
+                var interactFilesByDatasetID = new Dictionary<int, List<FileInfo>>();
+
+                foreach (var dataset in workspaceDirectoryByDatasetId)
                 {
-                    var datasetId = item.Key;
+                    var datasetId = dataset.Key;
                     var datasetName = dataPackageInfo.Datasets[datasetId];
-                    var workingDirectory = item.Value;
+                    var workingDirectory = dataset.Value;
 
                     if (workingDirectory.Parent == null)
                     {
@@ -2748,37 +2772,62 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         return false;
                     }
 
-                    // ReSharper disable StringLiteralTypo
-                    var arguments = string.Format(
-                        @"peptideprophet --decoyprobs --ppm --accmass --nonparam --expectscore --decoy XXX_ --database {0} ..\{1}.pepXML",
-                        mFastaFilePath, datasetName);
+                    var interactFiles = new List<FileInfo>();
+                    interactFilesByDatasetID.Add(datasetId, interactFiles);
 
-                    // ReSharper restore StringLiteralTypo
+                    var pepXmlFiles = new List<string>();
 
-                    var success = RunPhilosopher(
-                        PhilosopherToolType.PeptideProphet,
-                        arguments,
-                        "run PeptideProphet",
-                        workingDirectory,
-                        workingDirectoryPadWidth);
-
-                    if (!success)
+                    if (options.FraggerOptions.DIASearchEnabled)
                     {
-                        peptideProphetPepXmlFiles = new List<FileInfo>();
-                        return false;
+                        // Each dataset will have multiple .pepXML files; run peptide prophet separately on each one
+                        foreach (var item in (workingDirectory.Parent.GetFiles(string.Format("{0}_rank*.pepXML", datasetName))))
+                        {
+                            pepXmlFiles.Add(string.Format(@"..\{0}", item.Name));
+                        }
+                    }
+                    else
+                    {
+                        pepXmlFiles.Add(string.Format(@"..\{0}.pepXML", datasetName));
                     }
 
-                    // Verify that the PeptideProphet results file was created
-
-                    var pepXmlFile = new FileInfo(Path.Combine(workingDirectory.Parent.FullName, string.Format("interact-{0}.pep.xml", datasetName)));
-                    if (!pepXmlFile.Exists)
+                    foreach (var pepXmlFile in pepXmlFiles)
                     {
-                        LogError("PeptideProphet results file not found: " + pepXmlFile.Name);
-                        peptideProphetPepXmlFiles = new List<FileInfo>();
-                        return false;
-                    }
+                        // ReSharper disable StringLiteralTypo
+                        var arguments = string.Format(
+                            "peptideprophet --decoyprobs --ppm --accmass --nonparam --expectscore --decoy XXX_ --database {0} {1}",
+                            mFastaFilePath, pepXmlFile);
 
-                    mJobParams.AddResultFileToSkip(pepXmlFile.Name);
+                        // ReSharper restore StringLiteralTypo
+
+                        var success = RunPhilosopher(
+                            PhilosopherToolType.PeptideProphet,
+                            arguments,
+                            "run PeptideProphet",
+                            workingDirectory,
+                            workingDirectoryPadWidth);
+
+                        if (!success)
+                        {
+                            peptideProphetPepXmlFiles = new List<FileInfo>();
+                            return false;
+                        }
+
+                        // Verify that the PeptideProphet results file was created
+
+                        var interactFileName = string.Format("interact-{0}.pep.xml", Path.GetFileNameWithoutExtension(pepXmlFile));
+                        var interactFile = new FileInfo(Path.Combine(workingDirectory.Parent.FullName, interactFileName));
+
+                        if (!interactFile.Exists)
+                        {
+                            LogError("PeptideProphet results file not found: " + interactFile.Name);
+                            peptideProphetPepXmlFiles = new List<FileInfo>();
+                            return false;
+                        }
+
+                        interactFiles.Add(interactFile);
+
+                        mJobParams.AddResultFileToSkip(interactFile.Name);
+                    }
                 }
 
                 DeleteTempDirectories(workspaceDirectoryByDatasetId.Values.ToList());
@@ -2786,6 +2835,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return UpdateMsMsRunSummaryInPepXmlFiles(
                     dataPackageInfo,
                     workspaceDirectoryByDatasetId,
+                    interactFilesByDatasetID,
                     options,
                     out peptideProphetPepXmlFiles);
             }
@@ -2924,12 +2974,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             experimentGroupDirectory,
                             datasetName,
                             options,
-                            out var pepXmlFile);
+                            out var pepXmlFiles);
 
                         if (!percolatorToPepXMLSuccess)
                             continue;
 
-                        peptideProphetPepXmlFiles.Add(pepXmlFile);
+                        peptideProphetPepXmlFiles.AddRange(pepXmlFiles);
 
                         // Delete the percolator PSM files, since we no longer need them
 
@@ -4198,12 +4248,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="workspaceDirectoryByDatasetId"></param>
+        /// <param name="interactFilesByDatasetID"></param>
         /// <param name="options"></param>
-        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
+        /// <param name="peptideProphetPepXmlFiles">Output: list of the .pep.xml files created by PeptideProphet</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
             DataPackageInfo dataPackageInfo,
             Dictionary<int, DirectoryInfo> workspaceDirectoryByDatasetId,
+            IReadOnlyDictionary<int, List<FileInfo>> interactFilesByDatasetID,
             FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
@@ -4232,7 +4284,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in workspaceDirectoryByDatasetId)
                 {
                     var datasetId = item.Key;
-                    var datasetName = dataPackageInfo.Datasets[datasetId];
                     var workingDirectory = item.Value;
 
                     if (workingDirectory.Parent == null)
@@ -4241,70 +4292,75 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         continue;
                     }
 
-                    var pepXmlFile = new FileInfo(Path.Combine(
-                        workingDirectory.Parent.FullName,
-                        string.Format("interact-{0}.pep.xml", datasetName)));
-
-                    if (!pepXmlFile.Exists)
+                    if (!interactFilesByDatasetID.TryGetValue(datasetId, out var interactFiles))
                     {
-                        LogError("PeptideProphet results file not found: " + pepXmlFile.FullName);
+                        LogError("Dataset ID {0} not found in dictionary interactFilesByDatasetID", datasetId);
                         continue;
                     }
 
-                    peptideProphetPepXmlFiles.Add(pepXmlFile);
+                    var successCount2 = 0;
 
-                    var currentStep = string.Format(@"RewritePepxml for {0}\{1}", workingDirectory.Parent.Name, pepXmlFile.Name);
-
-                    var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
-                    if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                    foreach (var interactFile in interactFiles)
                     {
-                        LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
-                        continue;
-                    }
+                        peptideProphetPepXmlFiles.Add(interactFile);
 
-                    // ReSharper disable once StringLiteralTypo
+                        var currentStep = string.Format(@"RewritePepxml for {0}\{1}", workingDirectory.Parent.Name, interactFile.Name);
 
-                    var arguments = string.Format(
-                        "-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1} {2}",
-                        libDirectory.FullName, pepXmlFile.FullName, datasetFile.FullName);
-
-                    InitializeCommandRunner(
-                        workingDirectory.Parent,
-                        Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
-                        CmdRunnerModes.RewritePepXml,
-                        500);
-
-                    LogCommandToExecute(workingDirectory.Parent, options.JavaProgLoc, arguments, options.WorkingDirectoryPadWidth);
-
-                    var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
-
-                    if (!mConsoleOutputFileParsed)
-                    {
-                        ParseConsoleOutputFile();
-                    }
-
-                    if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
-                    {
-                        LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
-                    }
-
-                    UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
-
-                    if (!processingSuccess)
-                    {
-                        if (mCmdRunner.ExitCode != 0)
+                        var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
+                        if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
-                            LogWarning("Java returned a non-zero exit code while calling RewritePepxml on interact-Dataset.pep.xml: " + mCmdRunner.ExitCode);
-                        }
-                        else
-                        {
-                            LogWarning("Call to Java failed while calling RewritePepxml on interact-Dataset.pep.xml (but exit code is 0)");
+                            LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
+                            continue;
                         }
 
-                        continue;
+                        // ReSharper disable once StringLiteralTypo
+
+                        var arguments = string.Format(
+                            "-cp {0}/* com.dmtavt.fragpipe.util.RewritePepxml {1} {2}",
+                            libDirectory.FullName, interactFile.FullName, datasetFile.FullName);
+
+                        InitializeCommandRunner(
+                            workingDirectory.Parent,
+                            Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
+                            CmdRunnerModes.RewritePepXml,
+                            500);
+
+                        LogCommandToExecute(workingDirectory.Parent, options.JavaProgLoc, arguments, options.WorkingDirectoryPadWidth);
+
+                        var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
+
+                        if (!mConsoleOutputFileParsed)
+                        {
+                            ParseConsoleOutputFile();
+                        }
+
+                        if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                        {
+                            LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                        }
+
+                        UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+                        if (!processingSuccess)
+                        {
+                            if (mCmdRunner.ExitCode != 0)
+                            {
+                                LogWarning("Java returned a non-zero exit code while calling RewritePepxml on interact-Dataset.pep.xml: " +
+                                           mCmdRunner.ExitCode);
+                            }
+                            else
+                            {
+                                LogWarning("Call to Java failed while calling RewritePepxml on interact-Dataset.pep.xml (but exit code is 0)");
+                            }
+
+                            continue;
+                        }
+
+                        successCount2++;
                     }
 
-                    successCount++;
+                    if (successCount2 == interactFiles.Count)
+                        successCount++;
                 }
 
                 return successCount == workspaceDirectoryByDatasetId.Count;
@@ -4467,8 +4523,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Also store the .pin files in the zip files
         /// </summary>
         /// <param name="dataPackageInfo"></param>
+        /// <param name="options"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ZipPepXmlAndPinFiles(DataPackageInfo dataPackageInfo)
+        private bool ZipPepXmlAndPinFiles(DataPackageInfo dataPackageInfo, FragPipeOptions options)
         {
             try
             {
@@ -4478,8 +4535,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     var datasetName = dataset.Value;
 
-                    var pepXmlFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PEPXML_EXTENSION));
-                    var pinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, datasetName + PIN_EXTENSION));
+                    var pepXmlFiles = AnalysisToolRunnerMSFragger.FindDatasetPinFileAndPepXmlFiles(
+                        mWorkingDirectory, options.FraggerOptions.DIASearchEnabled,  datasetName, out var pinFile);
+
+                    if (pepXmlFiles.Count == 0)
+                    {
+                        LogError(string.Format("Cannot zip the .pepXML file for dataset {0} since not found in the working directory", datasetName));
+                        continue;
+                    }
 
                     bool pinFileUpdated;
 
@@ -4494,7 +4557,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         pinFileUpdated = true;
                     }
 
-                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile, pinFile.Exists);
+                    var zipSuccess = AnalysisToolRunnerMSFragger.ZipPepXmlAndPinFiles(this, dataPackageInfo, datasetName, pepXmlFiles, pinFile.Exists);
+
                     if (!zipSuccess || !pinFileUpdated)
                     {
                         continue;

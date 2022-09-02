@@ -14,6 +14,7 @@ using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using AnalysisManagerMSFraggerPlugIn;
+using PRISM.Logging;
 
 namespace AnalysisManagerPepProtProphetPlugIn
 {
@@ -203,15 +204,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            foreach (var item in dataPackageInfo.Datasets)
+            foreach (var dataset in dataPackageInfo.Datasets)
             {
-                var datasetName = item.Value;
+                var datasetName = dataset.Value;
 
                 var fileToRetrieve = datasetName + "_pepXML.zip";
                 const bool unzipRequired = true;
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired))
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToRetrieve, unzipRequired, true, out var sourceDirPath, logFileNotFound: true, logRemoteFilePath: false))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -225,6 +226,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // There will be additional _pepXML.zip files if a DIA search was used (e.g. DatasetName_rank2_pepXML.zip, DatasetName_rank3_pepXML.zip, etc.)
+                // Also retrieve those files
+                var sourceDirectory = new DirectoryInfo(sourceDirPath);
+
+                foreach (var item in sourceDirectory.GetFiles(string.Format("{0}_rank*_pepXML.zip", datasetName)))
+                {
+                    if (!mFileCopyUtilities.CopyFileToWorkDir(item.Name, sourceDirPath, mWorkDir, BaseLogger.LogLevels.ERROR, false))
+                    {
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND; ;
+                    }
+
+                    UnzipFileStart(Path.Combine(mWorkDir, item.Name), mWorkDir, "GetPepXMLFiles");
                 }
             }
 
