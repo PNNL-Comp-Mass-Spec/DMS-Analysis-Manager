@@ -12,7 +12,6 @@ namespace AnalysisManagerTest
     [TestFixture]
     public class StatusFileTests
     {
-
         private readonly IMgrParams mMgrSettings;
 
         /// <summary>
