@@ -679,6 +679,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var decoyPsmFile = GetPercolatorFileName(datasetName, true);
                 var pinFile = string.Format("{0}.pin", datasetName);
 
+                string dataMode;
+                string probabilityThreshold;
+
+                if (options.FraggerOptions.DIASearchEnabled)
+                {
+                    dataMode = "DIA";
+                    probabilityThreshold = "0.5";
+                }
+                else
+                {
+                    dataMode = "DDA";
+                    probabilityThreshold = "0.5";
+                }
+
                 var arguments = string.Format(
                     "-cp {0}/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML " +
                     "{1} " +               // DatasetName.pin
@@ -686,14 +700,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "{3} " +               // DatasetName_percolator_target_psms.tsv
                     "{4} " +               // DatasetName_percolator_decoy_psms.tsv
                     "interact-{5} " +      // interact-DatasetName
-                    "DDA " +
-                    "0.5",                 // Minimum probability threshold
+                    "{6} " +               // DDA or DIA
+                    "{7}",                 // Minimum probability threshold
                     fragPipeLibDirectory.FullName,
                     pinFile,
                     datasetName,
                     targetPsmFile,
                     decoyPsmFile,
-                    datasetName);
+                    datasetName,
+                    dataMode,
+                    probabilityThreshold);
 
                 // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
