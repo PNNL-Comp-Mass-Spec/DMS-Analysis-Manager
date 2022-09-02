@@ -36,6 +36,11 @@ namespace AnalysisManagerMSFraggerPlugIn
         private readonly IJobParams mJobParams;
 
         /// <summary>
+        /// This is set to true if data_type is 1 or 2, meaning searching DIA data
+        /// </summary>
+        public bool DIASearchEnabled { get; set; }
+
+        /// <summary>
         /// Whether to run PeptideProphet, Percolator, or nothing
         /// </summary>
         /// <remarks>Defaults to Percolator, but auto-set to PeptideProphet if iTRAQ is in use</remarks>
@@ -388,6 +393,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var precursorMassLower = 0.0;
                 var precursorMassUpper = 0.0;
                 var precursorMassUnits = 0;
+                var dataTypeMode = 0;
 
                 foreach (var parameter in paramFileEntries)
                 {
@@ -407,6 +413,12 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                         case "precursor_mass_units":
                             if (!GetParamValueInt(parameter, out precursorMassUnits))
+                                return false;
+
+                            break;
+
+                        case "data_type":
+                            if (!GetParamValueInt(parameter, out dataTypeMode))
                                 return false;
 
                             break;
@@ -455,6 +467,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                         RunIonQuant = false;
                     }
                 }
+
+                if (dataTypeMode is 1 or 2)
+                    DIASearchEnabled = true;
 
                 return true;
             }
