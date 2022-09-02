@@ -724,7 +724,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 }
 
                 // Customize the path to the FASTA file and the number of threads to use
-                var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath);
+                var resultCode = UpdateMSFraggerParameterFile(out var paramFilePath, out var diaSearchEnabled);
 
                 if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -837,17 +837,15 @@ namespace AnalysisManagerMSFraggerPlugIn
                 var successCount = 0;
 
                 // Validate that MSFragger created a .pepXML file for each dataset
-                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset
+                // For DIA data, the program creates several .pepXML files
+
+                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset (though with DIA data there is only a .pin file, not a .tsv file)
                 // If databaseSplitCount is more than 1, we will create a .tsv file using the data in the .pepXML file
 
                 // Zip each .pepXML file
                 foreach (var item in dataPackageInfo.Datasets)
                 {
                     var datasetName = item.Value;
-
-                    var pepXmlFile = new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION));
-                    var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
-                    var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".pin"));
 
                     string optionalDatasetInfo;
                     if (dataPackageInfo.Datasets.Count > 0)
@@ -859,17 +857,52 @@ namespace AnalysisManagerMSFraggerPlugIn
                         optionalDatasetInfo = string.Empty;
                     }
 
-                    if (!pepXmlFile.Exists)
-                    {
-                        LogError(string.Format("MSFragger did not create a .pepXML file{0}", optionalDatasetInfo));
+                    var pepXmlFiles = new List<FileInfo>();
 
-                        // Treat this as a fatal error
-                        return CloseOutType.CLOSEOUT_FAILED;
+                    if (diaSearchEnabled)
+                    {
+                        // Look for files matching DatasetName_rank*.pepXML
+                        // For example:
+                        //   QC_Dataset_rank1.pepXML
+                        //   QC_Dataset_rank2.pepXML
+
+                        var searchPattern = string.Format("{0}_rank*{1}", datasetName, PEPXML_EXTENSION);
+
+                        var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                        pepXmlFiles.AddRange(workingDirectory.GetFiles(searchPattern));
+
+                        if (pepXmlFiles.Count == 0)
+                        {
+                            // MSFragger did not create any .pepXML files for dataset
+
+                            LogError(string.Format("MSFragger did not create any .pepXML files{0}", optionalDatasetInfo));
+
+                            // Treat this as a fatal error
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
                     }
+                    else
+                    {
+                        pepXmlFiles.Add(new FileInfo(Path.Combine(mWorkDir, datasetName + PEPXML_EXTENSION)));
+
+                        if (!pepXmlFiles[0].Exists)
+                        {
+                            // MSFragger did not create a .pepXML file for dataset
+
+                            LogError(string.Format("MSFragger did not create a .pepXML file{0}", optionalDatasetInfo));
+
+                            // Treat this as a fatal error
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+
+                    var tsvFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".tsv"));
+                    var pinFile = new FileInfo(Path.Combine(mWorkDir, datasetName + ".pin"));
 
                     var splitFastaSearch = databaseSplitCount > 1;
 
-                    if (!tsvFile.Exists)
+                    if (!diaSearchEnabled && !tsvFile.Exists)
                     {
                         if (!splitFastaSearch)
                         {
@@ -884,20 +917,15 @@ namespace AnalysisManagerMSFraggerPlugIn
                         LogError(string.Format("MSFragger did not create a .pin file{0}", optionalDatasetInfo));
                     }
 
-                    if (pepXmlFile.Length == 0)
-                    {
-                        LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
-                    }
+                    var zipSuccess = ZipPepXmlAndPinFiles(datasetName, pepXmlFiles, pinFile.Exists, optionalDatasetInfo);
 
-                    var zipSuccess = ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile, pinFile.Exists);
+                    if (!zipSuccess)
+                        continue;
 
-                    if (zipSuccess)
-                    {
-                        mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
-                        mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
+                    mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
 
-                        successCount++;
-                    }
+                    successCount++;
                 }
 
                 mStatusTools.UpdateAndWrite(mProgress);
@@ -995,7 +1023,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             LogMessage(msg);
 
-            mEvalMessage = Global.AppendToComment(mEvalMessage,msg);
+            mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
 
             // ReSharper disable CommentTypo
 
@@ -1055,8 +1083,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Update the FASTA file name defined in the MSFragger parameter file
         /// In addition, check whether any reporter ions are defined as static or dynamic mods
         /// </summary>
-        /// <param name="paramFilePath"></param>
-        private CloseOutType UpdateMSFraggerParameterFile(out string paramFilePath)
+        /// <param name="paramFilePath">Output: parameter file path</param>
+        /// <param name="diaSearchEnabled">Output: set to true if data_type is 1 or 2, meaning DIA data</param>
+        private CloseOutType UpdateMSFraggerParameterFile(out string paramFilePath, out bool diaSearchEnabled)
         {
             const string FASTA_FILE_COMMENT = "FASTA File (should include decoy proteins)";
             const string FILE_FORMAT_COMMENT = "File format of output files; Percolator uses .pin files";
@@ -1065,6 +1094,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
 
             paramFilePath = string.Empty;
+            diaSearchEnabled = false;
 
             try
             {
@@ -1094,7 +1124,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                             continue;
                         }
 
-                        if (dataLine.Trim().StartsWith("database_name"))
+                        var trimmedLine = dataLine.Trim();
+
+                        if (trimmedLine.StartsWith("database_name"))
                         {
                             if (fastaFileDefined)
                                 continue;
@@ -1108,7 +1140,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                             continue;
                         }
 
-                        if (dataLine.Trim().StartsWith("num_threads"))
+                        if (trimmedLine.StartsWith("num_threads"))
                         {
                             if (threadsDefined)
                                 continue;
@@ -1122,7 +1154,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                             continue;
                         }
 
-                        if (dataLine.Trim().StartsWith("output_format"))
+                        if (trimmedLine.StartsWith("output_format"))
                         {
                             if (outputFormatDefined)
                                 continue;
@@ -1146,6 +1178,20 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                             outputFormatDefined = true;
                             continue;
+                        }
+
+                        if (trimmedLine.StartsWith("data_type"))
+                        {
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+
+                            if (!int.TryParse(setting.ParamValue, out var dataTypeMode))
+                            {
+                                LogError("The data_type setting in the MSFragger parameter file is not followed by an integer: " + dataLine);
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+
+                            if (dataTypeMode is 1 or 2)
+                                diaSearchEnabled = true;
                         }
 
                         writer.WriteLine(dataLine);
@@ -1297,7 +1343,94 @@ namespace AnalysisManagerMSFraggerPlugIn
             writer.WriteLine("{0,-38} {1}", parameterNameAndValue, comment);
         }
 
-        public static bool ZipPepXmlAndPinFiles(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile, bool addPinFile)
+        /// <summary>
+        /// Zip the .pepXML file(s) created by MSFragger
+        /// </summary>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="pepXmlFiles">Typically this is a single .pepXML file, but for DIA searches, this is a set of .pepXML files</param>
+        /// <param name="addPinFile">When true, add the .pin file to the first zipped .pepXML file</param>
+        /// <param name="optionalDatasetInfo">Optional text to append to the error message logged if the .pepXML file is empty</param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ZipPepXmlAndPinFiles(string datasetName, List<FileInfo> pepXmlFiles, bool addPinFile, string optionalDatasetInfo)
+        {
+            if (pepXmlFiles.Count == 0)
+            {
+                LogError("Empty file list sent to method ZipPepXmlAndPinFiles");
+                return false;
+            }
+
+            var primaryPepXmlFile = new List<FileInfo>();
+            var additionalPepXmlFiles = new List<FileInfo>();
+
+            if (pepXmlFiles.Count == 1)
+            {
+                primaryPepXmlFile.Add(pepXmlFiles[0]);
+            }
+            else
+            {
+                // Determine the .pepXML file to store in zip file DatasetName_pepXML.zip
+                // Look for the _rank1.pepXML file in pepXmlFiles
+                // If not found, just use pepXmlFiles[0]
+
+                foreach (var item in pepXmlFiles)
+                {
+                    if (primaryPepXmlFile.Count == 0 && item.Name.EndsWith("_rank1.pepXML", StringComparison.OrdinalIgnoreCase))
+                        primaryPepXmlFile.Add(item);
+                    else
+                        additionalPepXmlFiles.Add(item);
+                }
+
+                if (primaryPepXmlFile.Count == 0)
+                    primaryPepXmlFile.Add(pepXmlFiles[0]);
+            }
+
+            if (primaryPepXmlFile.Count == 0)
+                return false;
+
+            if (primaryPepXmlFile[0].Length == 0)
+            {
+                // pepXML file created by MSFragger is empty for dataset
+                LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
+            }
+
+            var success = ZipPepXmlAndPinFiles(this, datasetName, primaryPepXmlFile[0], addPinFile);
+
+            if (!success)
+                return false;
+
+            if (additionalPepXmlFiles.Count == 0)
+                return true;
+
+            var successCount = 0;
+
+            foreach (var pepXmlFile in additionalPepXmlFiles)
+            {
+                var zipFileNameOverride = string.Format("{0}_pepXML.zip", Path.GetFileNameWithoutExtension(pepXmlFile.Name));
+
+                var success2 = ZipPepXmlAndPinFiles(this, datasetName, pepXmlFile, false, zipFileNameOverride);
+
+                if (success2)
+                    successCount++;
+            }
+
+            if (successCount == additionalPepXmlFiles.Count)
+                return true;
+
+            LogError(string.Format("Zip failure for {0} / {1} .pepXML files created by MSFragger", additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count));
+
+            return false;
+        }
+
+        /// <summary>
+        /// Zip the .pepXML file created by MSFragger
+        /// </summary>
+        /// <param name="toolRunner">Tool runner instance (since this is a static method)</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="pepXmlFile">.pepXML file</param>
+        /// <param name="addPinFile">If true, add this dataset's .pin file to the .zip file</param>
+        /// <param name="zipFileNameOverride">If an empty string, name the .zip file DatasetName_pepXML.zip; otherwise, use this name</param>
+        /// <returns>True if success, false if an error</returns>
+        public static bool ZipPepXmlAndPinFiles(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile, bool addPinFile, string zipFileNameOverride = "")
         {
             mZipTool ??= new DotNetZipTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
 
@@ -1315,8 +1448,15 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return false;
             }
 
-            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, datasetName + "_pepXML.zip");
+            if (string.IsNullOrWhiteSpace(zipFileNameOverride))
+            {
+                zipFileNameOverride = datasetName + "_pepXML.zip";
+            }
+
+            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, zipFileNameOverride);
+
             var existingTargetFile = new FileInfo(newZipFilePath);
+
             if (existingTargetFile.Exists)
             {
                 toolRunner.LogMessage(string.Format("Replacing {0} with updated version", existingTargetFile.Name));
@@ -1330,7 +1470,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             // Add the .pin file to the zip file
 
-            var pinFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, PIN_EXTENSION));
+            var pinFile = new FileInfo(Path.Combine(toolRunner.WorkingDirectory, datasetName + PIN_EXTENSION));
+
             if (!pinFile.Exists)
             {
                 toolRunner.LogError(".pin file not found; cannot add: " + pinFile.Name);
@@ -1338,6 +1479,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             var success = mZipTool.AddToZipFile(zipFile.FullName, pinFile);
+
             if (success)
             {
                 return true;
