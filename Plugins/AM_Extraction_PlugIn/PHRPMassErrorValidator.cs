@@ -57,6 +57,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="precursorMassTolerance"></param>
         /// <param name="psmCount"></param>
         /// <param name="errorCount"></param>
+        /// <param name="diaSearchEnabled"></param>
         /// <returns>True if success, false if an error</returns>
         private bool ExaminePHRPResults(
             string inputFilePath,
@@ -65,12 +66,14 @@ namespace AnalysisManagerExtractionPlugin
             out SortedDictionary<double, string> largestMassErrors,
             out double precursorMassTolerance,
             out int psmCount,
-            out int errorCount)
+            out int errorCount,
+            out bool diaSearchEnabled)
         {
             largestMassErrors = new SortedDictionary<double, string>();
             precursorMassTolerance = 0;
             psmCount = 0;
             errorCount = 0;
+            diaSearchEnabled = false;
 
             var peptideMassCalculator = new PeptideMassCalculator();
 
@@ -156,6 +159,8 @@ namespace AnalysisManagerExtractionPlugin
             {
                 OnDebugEvent("Will use mass tolerance of {0:0.0} Da when determining PHRP mass errors", precursorMassTolerance);
             }
+
+            diaSearchEnabled = MSFraggerDIASearchEnabled(resultType, searchEngineParams);
 
             // Count the number of PSMs with a mass error greater than precursorMassTolerance
 
@@ -277,6 +282,26 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
+        /// If processing MSFragger results and the value for data_type in the parameter file is 1 or 2, return true since we're processing DIA data
+        /// Otherwise, return false
+        /// </summary>
+        /// <param name="resultType"></param>
+        /// <param name="searchEngineParams"></param>
+        private bool MSFraggerDIASearchEnabled(PeptideHitResultTypes resultType, SearchEngineParameters searchEngineParams)
+        {
+            if (resultType != PeptideHitResultTypes.MSFragger)
+                return false;
+
+            if (!searchEngineParams.Parameters.TryGetValue("data_type", out var dataTypeMode))
+                return false;
+
+            if (!int.TryParse(dataTypeMode, out var dataTypeModeValue))
+                return false;
+
+            return dataTypeModeValue is 1 or 2;
+        }
+
+        /// <summary>
         /// Parses inputFilePath to count the number of entries where the difference in mass
         /// between the precursor neutral mass value and the computed monoisotopic mass value
         /// is more than 6 Da away (more for higher charge states)
@@ -296,7 +321,8 @@ namespace AnalysisManagerExtractionPlugin
                     out var largestMassErrors,
                     out var precursorMassTolerance,
                     out var psmCount,
-                    out var errorCount);
+                    out var errorCount,
+                    out var diaSearchEnabled);
 
                 if (!success)
                     return false;
@@ -327,6 +353,15 @@ namespace AnalysisManagerExtractionPlugin
                 if (percentInvalid <= ErrorThresholdPercent || errorCount <= ErrorThresholdCount)
                 {
                     OnWarningEvent(warningMessage + "; this value is within tolerance");
+
+                    // Blank out mErrorMessage since only a warning
+                    ErrorMessage = string.Empty;
+                    return true;
+                }
+
+                if (diaSearchEnabled)
+                {
+                    OnWarningEvent(warningMessage + "; ignoring since processing DIA results");
 
                     // Blank out mErrorMessage since only a warning
                     ErrorMessage = string.Empty;
