@@ -27,7 +27,10 @@ namespace AnalysisManagerMasicPlugin
         // ReSharper disable once CommentTypo
         // Ignore Spelling: Traq, labelling, Glc, Az
 
+        private const string MASIC_STATUS_FILE_PREFIX = "MasicStatus_";
+
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
+
         private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
         // Job running status variable
@@ -37,6 +40,8 @@ namespace AnalysisManagerMasicPlugin
 
         private string mProcessStep = string.Empty;
         private string mMASICStatusFileName = string.Empty;
+
+        private bool mRemovedOldMasicStatusFiles;
 
         private string mReporterIonName = string.Empty;
         private int mReporterIonObservationRateTopNPct;
@@ -176,11 +181,11 @@ namespace AnalysisManagerMasicPlugin
 
             try
             {
-                mMASICStatusFileName = "MasicStatus_" + mMgrName + ".xml";
+                mMASICStatusFileName = string.Format("{0}{1}.xml", MASIC_STATUS_FILE_PREFIX, mMgrName);
             }
             catch (Exception)
             {
-                mMASICStatusFileName = "MasicStatus.xml";
+                mMASICStatusFileName = string.Format("{0}{1}.xml", MASIC_STATUS_FILE_PREFIX, "Undefined");
             }
 
             // Make sure the MASIC executable file exists (MASIC_Console.exe)
@@ -302,6 +307,13 @@ namespace AnalysisManagerMasicPlugin
 
                 if (!statusFile.Exists)
                     return;
+
+                if (!mRemovedOldMasicStatusFiles)
+                {
+                    // Remove any MasicStatus files that were created over 6 months ago
+                    RemoveOldMasicStatusFiles(masicExe.DirectoryName);
+                    mRemovedOldMasicStatusFiles = true;
+                }
 
                 using var reader = new XmlTextReader(new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
@@ -579,6 +591,49 @@ namespace AnalysisManagerMasicPlugin
             {
                 LogError("Error reading the _RepIonObsRate.txt file", ex);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Remove any MasicStatus files that were created over 6 months ago
+        /// </summary>
+        /// <remarks>
+        /// For example, if the DMS_Programs directory was copied from one server to another server,
+        /// MasicStatus files from the old server may still be in the MASIC directory
+        /// </remarks>
+        /// <param name="masicDirectoryPath"></param>
+        private void RemoveOldMasicStatusFiles(string masicDirectoryPath)
+        {
+            try
+            {
+                var masicDirectory = new DirectoryInfo(masicDirectoryPath);
+
+                foreach (var item in masicDirectory.GetFiles(string.Format("{0}*.xml", MASIC_STATUS_FILE_PREFIX)))
+                {
+                    try
+                    {
+                        if (DateTime.UtcNow.Subtract(item.LastWriteTimeUtc).TotalDays < 180)
+                            continue;
+
+                        LogMessage(string.Format(
+                            "Removing old MASIC status file: {0} (last modified {1:yyyy-MM-dd})",
+                            item.FullName, item.LastWriteTime));
+
+                        item.Delete();
+                    }
+                    catch (Exception ex)
+                    {
+                        LogErrorToDatabase(string.Format(
+                            "Error deleting old MASIC status file at {0}: {1}",
+                            item.FullName, ex.Message));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogErrorToDatabase(string.Format(
+                    "Error deleting old MASIC status files in {0}: {1}",
+                    masicDirectoryPath ?? "?Undefined?", ex.Message));
             }
         }
 
