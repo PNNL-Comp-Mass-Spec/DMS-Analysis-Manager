@@ -3068,7 +3068,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 sqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn],");
                 sqlStr.Append("   HMSn, MSn, ");
                 sqlStr.Append("   [PQD-HMSn], [PQD-MSn]");
-                sqlStr.Append(" FROM V_Dataset_ScanType_CrossTab");
+                sqlStr.Append(" FROM V_Dataset_Scan_Type_CrossTab");
                 sqlStr.AppendFormat(" WHERE Dataset = '{0}'", datasetName);
 
                 const int retryCount = 2;
@@ -3091,7 +3091,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (results.Rows.Count < 1)
                 {
                     // No data was returned
-                    OnStatusEvent("No rows were returned for dataset " + datasetName + " from V_Dataset_ScanType_CrossTab in DMS");
+                    OnStatusEvent("No rows were returned for dataset " + datasetName + " from V_Dataset_Scan_Type_CrossTab in DMS");
                     return false;
                 }
 
