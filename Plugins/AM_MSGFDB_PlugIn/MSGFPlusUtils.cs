@@ -3063,11 +3063,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.Append(" SELECT HMS, MS, [CID-HMSn], [CID-MSn],");
-                sqlStr.Append("   [HCD-HMSn], [ETD-HMSn], [ETD-MSn],");
-                sqlStr.Append("   [SA_ETD-HMSn], [SA_ETD-MSn],");
-                sqlStr.Append("   HMSn, MSn, ");
-                sqlStr.Append("   [PQD-HMSn], [PQD-MSn]");
+                sqlStr.Append(" SELECT");
+                sqlStr.Append("   HMS, MS, [CID-HMSn], [CID-MSn],");
+                sqlStr.Append("   [ETD-HMSn], [SA_CID-HMSn],");
+                sqlStr.Append("   [SA_ETD-HMSn], [EThcD-HMSn],");
+                sqlStr.Append("   [HCD-HMSn], [HCD-MSn], [SA_HCD-HMSn],");
+                sqlStr.Append("   [ETD-MSn], [SA_ETD-MSn],");
+                sqlStr.Append("   [HMSn], [MSn],");
+                sqlStr.Append("   [PQD-HMSn], [PQD-MSn],");
+                sqlStr.Append("   [UVPD-HMSn], [UVPD-MSn]");
                 sqlStr.Append(" FROM V_Dataset_Scan_Type_CrossTab");
                 sqlStr.AppendFormat(" WHERE Dataset = '{0}'", datasetName);
 
@@ -3098,13 +3102,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                 foreach (DataRow curRow in results.Rows)
                 {
                     countLowResMSn += curRow["CID-MSn"].CastDBVal<int>();
+
                     countHighResMSn += curRow["CID-HMSn"].CastDBVal<int>();
-                    countHCDMSn += curRow["HCD-HMSn"].CastDBVal<int>();
-
                     countHighResMSn += curRow["ETD-HMSn"].CastDBVal<int>();
-                    countLowResMSn += curRow["ETD-MSn"].CastDBVal<int>();
 
+                    countHighResMSn += curRow["SA_CID-HMSn"].CastDBVal<int>();
                     countHighResMSn += curRow["SA_ETD-HMSn"].CastDBVal<int>();
+                    countHighResMSn += curRow["EThcD-HMSn"].CastDBVal<int>();
+
+                    countHCDMSn += curRow["HCD-HMSn"].CastDBVal<int>();
+                    countHCDMSn += curRow["HCD-MSn"].CastDBVal<int>();
+                    countHCDMSn += curRow["SA_HCD-HMSn"].CastDBVal<int>();
+
+                    countLowResMSn += curRow["ETD-MSn"].CastDBVal<int>();
                     countLowResMSn += curRow["SA_ETD-MSn"].CastDBVal<int>();
 
                     countHighResMSn += curRow["HMSn"].CastDBVal<int>();
@@ -3112,6 +3122,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     countHighResMSn += curRow["PQD-HMSn"].CastDBVal<int>();
                     countLowResMSn += curRow["PQD-MSn"].CastDBVal<int>();
+
+                    countHighResMSn += curRow["UVPD-HMSn"].CastDBVal<int>();
+                    countLowResMSn += curRow["UVPD-MSn"].CastDBVal<int>();
                 }
 
                 results.Dispose();
