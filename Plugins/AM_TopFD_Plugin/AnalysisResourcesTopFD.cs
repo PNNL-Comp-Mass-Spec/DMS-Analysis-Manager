@@ -93,8 +93,12 @@ namespace AnalysisManagerTopFDPlugIn
                     var mzMLResult = GetMzMLFile();
                     if (mzMLResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        mMessage = "";
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        if (mzMLResult == CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE)
+                            mMessage = ".mzML file not found";
+                        else
+                            mMessage = "GetMzMLFile() returned an error code";
+
+                        return mzMLResult;
                     }
 
                     // Make sure we don't move the .mzML file into the results folder
