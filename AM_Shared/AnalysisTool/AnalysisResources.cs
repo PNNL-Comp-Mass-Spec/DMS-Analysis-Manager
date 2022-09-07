@@ -2609,6 +2609,8 @@ namespace AnalysisManagerBase.AnalysisTool
                     errorMessage = "Cached " + msXmlExtension + " file does not exist";
                 }
 
+                // msXML file not found in the source directory(s): MSXML_Gen_1_194; will re-generate the .mzML file
+
                 if (!errorMessage.Contains("will re-generate"))
                     errorMessage += "; will re-generate the " + msXmlExtension + " file";
 

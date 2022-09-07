@@ -641,6 +641,12 @@ namespace AnalysisManagerTopPICPlugIn
 
                 LogMessage(string.Format("The system has {0} cores; TopPIC will use {1} threads ", coreCount, threadsToUse));
                 cmdLineOptions += " --thread-number " + threadsToUse;
+
+                // Note that TopPIC will display a warning when it starts if it thinks the number of threads selected is too high,
+                // given the amount of free system memory, for example:
+
+                // WARNING: Based on the available memory size, up to 6 threads can be used.
+                // Please set the thread number to 6 or the program may crash.
             }
 
             // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy true" or "--keep-temp-files true"

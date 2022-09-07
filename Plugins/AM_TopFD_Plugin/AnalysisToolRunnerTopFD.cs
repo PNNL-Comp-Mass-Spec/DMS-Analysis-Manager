@@ -100,8 +100,8 @@ namespace AnalysisManagerTopFDPlugIn
                 }
                 else
                 {
-                    // We're probably running TopPIC v1.4 (or newer)
-                    mTopFDVersion = new Version(1, 4);
+                    // We're probably running TopPIC v1.5 (or newer)
+                    mTopFDVersion = new Version(1, 5);
                 }
 
                 // Store the TopFD version info in the database after the first line is written to file TopFD_ConsoleOutput.txt
