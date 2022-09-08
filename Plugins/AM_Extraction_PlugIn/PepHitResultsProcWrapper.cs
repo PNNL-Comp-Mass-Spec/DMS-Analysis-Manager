@@ -298,7 +298,7 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             if (!string.IsNullOrWhiteSpace(fastaFilePath))
                             {
-                                if (PHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
+                                if (PHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _, out _))
                                 {
                                     filesToCheck.Add("_ProteinMods.txt");
                                 }

@@ -344,6 +344,7 @@ namespace AnalysisManagerExtractionPlugin
                     return true;
                 }
 
+                // 70.69% of the peptides have a mass error over 6.0 Da (164 / 232)
                 ErrorMessage = string.Format(
                     "{0:F2}% of the peptides have a mass error over {1:F1} Da",
                     percentInvalid, precursorMassTolerance);
@@ -368,6 +369,7 @@ namespace AnalysisManagerExtractionPlugin
                     return true;
                 }
 
+                // 70.69% of the peptides have a mass error over 6.0 Da (164 / 232); this value is too large (over 10.0%)
                 OnErrorEvent(warningMessage + "; this value is too large (over " + ErrorThresholdPercent.ToString("0.0") + "%)");
 
                 // Log the first, last, and middle entry in largestMassErrors
