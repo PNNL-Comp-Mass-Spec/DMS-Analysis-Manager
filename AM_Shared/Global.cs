@@ -80,6 +80,11 @@ namespace AnalysisManagerBase
         public static bool OfflineMode { get; private set; }
 
         /// <summary>
+        /// Looks for strings that end with an integer
+        /// </summary>
+        private static readonly Regex mReturnCodeMatcher = new(@"(?<Number>\d+)\s*$", RegexOptions.Compiled);
+
+        /// <summary>
         /// When true, show trace messages
         /// </summary>
         public static bool TraceMode { get; set; }
@@ -435,7 +440,7 @@ namespace AnalysisManagerBase
         /// <param name="returnCode"></param>
         /// <returns>
         /// If returnCode is blank or '0', returns 0
-        /// If returnCode is an integer, returns the integer
+        /// If returnCode is an integer or if it ends with an integer, returns the integer
         /// Otherwise, returns -1
         /// </returns>
         public static int GetReturnCodeValue(string returnCode)
@@ -445,6 +450,11 @@ namespace AnalysisManagerBase
 
             if (int.TryParse(returnCode, out var returnCodeValue))
                 return returnCodeValue;
+
+            var match = mReturnCodeMatcher.Match(returnCode);
+
+            if (match.Success)
+                return int.Parse(match.Groups["Number"].Value);
 
             return -1;
         }
