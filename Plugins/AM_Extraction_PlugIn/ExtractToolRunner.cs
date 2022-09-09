@@ -2929,7 +2929,14 @@ namespace AnalysisManagerExtractionPlugin
                 if (success)
                     return true;
 
+                // This job parameter is defined in select settings files for analysis jobs
+                var ignoreValidationErrors = mJobParams.GetJobParameter("IgnoreMassErrorValidationErrors", false);
+
+                if (ignoreValidationErrors)
                 {
+                    LogWarning("Ignoring mass error validation failure since 'IgnoreMassErrorValidationErrors' is true");
+                    return true;
+                }
 
                 if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
                 {

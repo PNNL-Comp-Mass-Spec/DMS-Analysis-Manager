@@ -375,6 +375,8 @@ namespace AnalysisManagerExtractionPlugin
                 // 70.69% of the peptides have a mass error over 6.0 Da (164 / 232); this value is too large (over 10.0%)
                 OnErrorEvent(warningMessage + "; this value is too large (over " + ErrorThresholdPercent.ToString("0.0") + "%)");
 
+                OnErrorEvent("To ignore this error, update this job to use a settings file that has 'IgnoreMassErrorValidationErrors' set to true");
+
                 // Log the first, last, and middle entry in largestMassErrors
                 InformLargeErrorExample(largestMassErrors.First());
 
