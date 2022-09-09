@@ -2239,6 +2239,7 @@ namespace AnalysisManagerExtractionPlugin
 
             bool success;
 
+            // This job parameter is defined in select settings files for analysis jobs
             var ignorePeptideProphetErrors = mJobParams.GetJobParameter("IgnorePeptideProphetErrors", false);
 
             var progLoc = mMgrParams.GetParam("PeptideProphetRunnerProgLoc");
@@ -2905,8 +2906,6 @@ namespace AnalysisManagerExtractionPlugin
             PeptideHitResultTypes resultType,
             string searchEngineParamFileName)
         {
-            bool success;
-
             try
             {
                 var massErrorValidator = new PHRPMassErrorValidator(mDebugLevel);
@@ -2917,47 +2916,49 @@ namespace AnalysisManagerExtractionPlugin
                 var toolName = mJobParams.GetJobParameter("ToolName", string.Empty);
 
                 // The default error threshold is 5%
+                // Use 10% for MaxQuant
+                // For small FASTA files, this percent may need to be even higher
+
                 if (toolName.StartsWith("MaxQuant"))
                 {
                     massErrorValidator.ErrorThresholdPercent = 10;
                 }
 
-                success = massErrorValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
+                var success = massErrorValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
 
-                if (!success)
+                if (success)
+                    return true;
+
                 {
-                    if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Ignore this error for inspect if running an unrestricted search
-                        var paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
 
-                        // ReSharper disable once StringLiteralTypo
-                        if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            success = true;
-                        }
-                    }
+                if (toolName.StartsWith("inspect", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Ignore this error for inspect if running an unrestricted search
+                    var paramFileName = mJobParams.GetJobParameter("ParamFileName", "");
 
-                    if (!success)
+                    // ReSharper disable once StringLiteralTypo
+                    if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        if (string.IsNullOrWhiteSpace(massErrorValidator.ErrorMessage))
-                        {
-                            LogError("ValidatePHRPResultMassErrors returned false");
-                        }
-                        else
-                        {
-                            LogError(massErrorValidator.ErrorMessage);
-                        }
+                        return true;
                     }
                 }
+
+                if (string.IsNullOrWhiteSpace(massErrorValidator.ErrorMessage))
+                {
+                    LogError("ValidatePHRPResultMassErrors returned false");
+                }
+                else
+                {
+                    LogError(massErrorValidator.ErrorMessage);
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Error calling ValidatePHRPResultMassErrors", ex);
-                success = false;
+                return false;
             }
-
-            return success;
         }
 
         private DateTime mLastPepProphetStatusLog = DateTime.MinValue;

@@ -184,8 +184,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // PrecursorNeutralMass is based on the mass value reported by the search engine
-                //   (will be reported mono mass or could be m/z or MH converted to neutral mass)
+                //   (will be reported mono mass or could be observed m/z or MH converted to neutral mass)
                 // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
+
+                // For MaxQuant, precursor m/z values are loaded from the _PrecursorInfo.txt file, since precursor m/z values reported by MaxQuant are often several Da away from the observed m/z
+
                 var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
 
                 double toleranceCurrent;
