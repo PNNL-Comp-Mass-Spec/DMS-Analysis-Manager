@@ -68,7 +68,7 @@ namespace AnalysisManagerTopPICPlugIn
             LogMessage("Getting data files");
 
             // Find the _ms2.msalign file
-            // However, results for FAIMS datasets could have one _ms2.msalign file for each CV value
+            // However, results for FAIMS datasets could have multiple _ms2.msalign files (one for each CV value)
 
             var ms2MSAlignFilesForFAIMS = string.Format("{0}_*{1}", DatasetName, MSALIGN_FILE_SUFFIX);
 
@@ -93,8 +93,9 @@ namespace AnalysisManagerTopPICPlugIn
                 mJobParams.AddResultFileToSkip(ms2MSAlignFile);
             }
 
-            // TopPIC 1.2 and earlier created a .feature file
-            // TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
+            // TopFD for TopPIC 1.2 and earlier created a .feature file
+            // TopFD for TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
+            // TopFD for TopPIC 1.5 creates separate feature files for each CV value
 
             // Keys in this dictionary are filenames, values are true if the file needs to be unzipped
             var filesToRetrieve = new Dictionary<string, bool>();
