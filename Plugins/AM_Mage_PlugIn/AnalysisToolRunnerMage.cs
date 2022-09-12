@@ -253,7 +253,7 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 // Make sure all of the ion counts are the same
-                var ionCountFirst = ionCounts.First();
+                var ionCountFirst = ionCounts.Count == 0 ? 0 : ionCounts[0];
 
                 var lookupQ = (from item in ionCounts where item != ionCountFirst select item).ToList();
 

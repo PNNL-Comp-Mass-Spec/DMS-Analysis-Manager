@@ -264,7 +264,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             // Validate the t_alias.txt file to remove blank rows and remove extra columns
-            var success = ValidateAliasFile(matchingFiles.First(), out var importDirectoryToUse);
+            var success = ValidateAliasFile(matchingFiles[0], out var importDirectoryToUse);
 
             if (!success)
                 return false;
