@@ -644,7 +644,17 @@ namespace AnalysisManagerTopPICPlugIn
                 var coreCount = Global.GetCoreCount();
                 var threadsToUse = (int)Math.Floor(coreCount * 0.88);
 
-                LogMessage(string.Format("The system has {0} cores; TopPIC will use {1} threads ", coreCount, threadsToUse));
+                // Additionally, assume that each thread will use 3 GB of memory
+                // Adjust the thread count lower if insufficient free memory
+                var freeMemoryGB = Global.GetFreeMemoryMB() / 1024;
+
+                while (threadsToUse > 1 && threadsToUse * 3 > freeMemoryGB)
+                {
+                    threadsToUse--;
+                }
+
+                LogMessage(string.Format("The system has {0} cores and {1:F1} GB of free memory; TopPIC will use {2} threads", coreCount, freeMemoryGB, threadsToUse));
+
                 cmdLineOptions += " --thread-number " + threadsToUse;
 
                 // Note that TopPIC will display a warning when it starts if it thinks the number of threads selected is too high,
