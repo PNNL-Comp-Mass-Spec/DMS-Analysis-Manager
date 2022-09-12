@@ -193,8 +193,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return false;
             }
 
-            var success = base.CopyResultsToTransferDirectory();
-            return success;
+            return base.CopyResultsToTransferDirectory();
         }
 
         /// <summary>
@@ -558,25 +557,57 @@ namespace AnalysisManagerTopFDPlugIn
             // Make sure the output files were created and are not zero-bytes
             // If the input .mzML file only has MS spectra and no MS/MS spectra, the output files will be empty
 
-            // resultsFiles is a dictionary mapping a results file suffix to the full results file name
-
             // Require that the .feature and _ms2.msalign files were created
+
             // Starting with TopPIC 1.3, the program creates _ms1.feature and _ms2.feature instead of a single .feature file
-            //
             // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC so we don't check for it
-            var resultsFiles = new Dictionary<string, string>
+
+            var workDir = new DirectoryInfo(mWorkDir);
+
+            // resultsFiles is a dictionary mapping a results file suffix to the full results file name
+            var resultsFiles = new Dictionary<string, string>();
+
+            // For FAIMS datasets with multiple CV values, TopPIC 1.5 creates one _ms2.msalign file for each CV
+            // Example file names are Dataset_0_ms2.msalign, Dataset_1_ms2.msalign, etc.
+
+            var msAlignFiles = workDir.GetFiles(string.Format("{0}_*{1}", mDatasetName, MSALIGN_FILE_SUFFIX));
+
+            if (msAlignFiles.Length > 0)
             {
-                {MSALIGN_FILE_SUFFIX, mDatasetName + MSALIGN_FILE_SUFFIX}
-            };
+                foreach (var item in msAlignFiles)
+                {
+                    resultsFiles.Add(item.Name.Substring(item.Name.Length - MSALIGN_FILE_SUFFIX.Length - 1), item.Name);
+                }
+            }
+            else
+            {
+                resultsFiles.Add(MSALIGN_FILE_SUFFIX, mDatasetName + MSALIGN_FILE_SUFFIX);
+            }
 
             var legacyFeatureFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + TOPFD_FEATURE_FILE_SUFFIX));
+
             if (legacyFeatureFile.Exists)
             {
                 resultsFiles.Add(TOPFD_FEATURE_FILE_SUFFIX, legacyFeatureFile.Name);
             }
             else
             {
-                resultsFiles.Add("_ms2" + TOPFD_FEATURE_FILE_SUFFIX, mDatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX);
+                // For FAIMS datasets with multiple CV values, TopPIC 1.5 creates one _ms2.feature file for each CV
+                // Example file names are Dataset_0_ms2.feature, Dataset_1_ms2.feature, etc.
+
+                var featureFiles = workDir.GetFiles(string.Format("{0}_*_ms2{1}", mDatasetName, TOPFD_FEATURE_FILE_SUFFIX));
+
+                if (featureFiles.Length > 0)
+                {
+                    foreach (var item in featureFiles)
+                    {
+                        resultsFiles.Add(item.Name.Substring(item.Name.Length - TOPFD_FEATURE_FILE_SUFFIX.Length - 5), item.Name);
+                    }
+                }
+                else
+                {
+                    resultsFiles.Add("_ms2" + TOPFD_FEATURE_FILE_SUFFIX, mDatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX);
+                }
             }
 
             var validResultFiles = 0;

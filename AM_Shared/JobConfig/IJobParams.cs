@@ -215,7 +215,14 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Add a filename to not move to the results directory
         /// </summary>
-        /// <remarks>FileName can be a full path to a file; only the filename will be stored in ResultFilesToSkip</remarks>
+        /// <remarks>
+        /// <para>
+        /// FileName can be a full path to a file; only the filename will be stored in ResultFilesToSkip
+        /// </para>
+        /// <para>
+        /// For partial file names, use <a cref="AddResultFileExtensionToSkip">AddResultFileExtensionToSkip</a>
+        /// </para>
+        /// </remarks>
         /// <param name="fileName"></param>
         void AddResultFileToSkip(string fileName);
 
