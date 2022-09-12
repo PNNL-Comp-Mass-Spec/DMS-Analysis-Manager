@@ -2352,10 +2352,32 @@
             Feature score
             </summary>
         </member>
+        <member name="F:PHRPReader.Data.TopPICSynFileColumns.Feature_Apex_Time">
+            <summary>
+            Feature apex time (in minutes)
+            </summary>
+        </member>
+        <member name="F:PHRPReader.Data.TopPICSynFileColumns.Protein_Count">
+            <summary>
+            Number of proteins for this peptide (aka proteoform)
+            </summary>
+        </member>
         <member name="F:PHRPReader.Data.TopPICSynFileColumns.Protein">
             <summary>
             Protein name
             </summary>
+        </member>
+        <member name="F:PHRPReader.Data.TopPICSynFileColumns.Protein_Nterminal_Form">
+            <summary>
+            Protein N-terminus state
+            </summary>
+            <remarks>
+            Examples:
+              NONE
+              M_ACETYLATION
+              NME
+              NME_ACETYLATION
+            </remarks>
         </member>
         <member name="F:PHRPReader.Data.TopPICSynFileColumns.ResidueStart">
             <summary>
@@ -3588,7 +3610,7 @@
         <member name="M:PHRPReader.Data.PeptideModificationContainer.LookupModificationMassByName(System.String,System.Double@)">
             <summary>
             Resolve a modification name to a modification mass
-            Checks both selected UniMod names and the names in mMassCorrectionTags
+            Checks both names in mMassCorrectionTags and UniMod names
             </summary>
             <param name="modName">Modification name</param>
             <param name="modMass">Monoisotopic mass</param>
