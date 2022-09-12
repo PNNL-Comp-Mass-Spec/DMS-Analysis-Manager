@@ -20,7 +20,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     public class FileSearch : EventNotifier
     {
         // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
-        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, txt, Workflows
+        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, txt, wildcards, Workflows
 
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
@@ -200,31 +200,31 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <remarks>Logs an error if the file is not found</remarks>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip)
+        public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir: true);
+            return FindAndRetrieveMiscFiles(fileNameOrPattern, unzip, searchArchivedDatasetDir: true);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <remarks>Logs an error if the file is not found</remarks>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir)
+        public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _);
+            return FindAndRetrieveMiscFiles(fileNameOrPattern, unzip, searchArchivedDatasetDir, out _);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
@@ -237,36 +237,36 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound, bool logRemoteFilePath)
+        public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound, bool logRemoteFilePath)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath);
+            return FindAndRetrieveMiscFiles(fileNameOrPattern, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
         /// <remarks>Logs an error if the file is not found</remarks>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath, bool logFileNotFound = true)
+        public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath, bool logFileNotFound = true)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out sourceDirPath, logFileNotFound, logRemoteFilePath: false);
+            return FindAndRetrieveMiscFiles(fileNameOrPattern, unzip, searchArchivedDatasetDir, out sourceDirPath, logFileNotFound, logRemoteFilePath: false);
         }
 
         /// <summary>
         /// Retrieves specified file from storage server, transfer directory, or archive and unzips if necessary
         /// </summary>
-        /// <param name="fileName">Name of file to be retrieved</param>
+        /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
@@ -274,14 +274,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
         /// <returns>True if success, false if an error</returns>
         public bool FindAndRetrieveMiscFiles(
-            string fileName, bool unzip, bool searchArchivedDatasetDir,
+            string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir,
             out string sourceDirPath, bool logFileNotFound, bool logRemoteFilePath)
         {
             const bool CreateStoragePathInfoFile = false;
 
             // Look for the file in the various directories
             // A message will be logged if the file is not found
-            sourceDirPath = FindDataFile(fileName, searchArchivedDatasetDir, logFileNotFound);
+            sourceDirPath = FindDataFile(fileNameOrPattern, searchArchivedDatasetDir, logFileNotFound);
 
             // Exit if file was not found
             if (string.IsNullOrEmpty(sourceDirPath))
@@ -296,33 +296,40 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return mMyEMSLUtilities.AddFileToDownloadQueue(sourceDirPath);
             }
 
-            var remoteFilePath = Path.Combine(sourceDirPath, fileName);
+            // Copy the file(s)
+            var sourceDirectory = new DirectoryInfo(sourceDirPath);
+            var filesRetrieved = 0;
 
-            // Copy the file
-            if (!mFileCopyUtilities.CopyFileToWorkDir(fileName, sourceDirPath, mWorkDir, BaseLogger.LogLevels.ERROR, CreateStoragePathInfoFile))
+            foreach (var item in sourceDirectory.GetFiles(fileNameOrPattern))
             {
-                return false;
-            }
-
-            if (logRemoteFilePath)
-            {
-                OnStatusEvent("Retrieved file " + remoteFilePath);
-            }
-
-            // Check whether unzipping was requested
-            if (!unzip)
-                return true;
-
-            OnStatusEvent("Unzipping file " + fileName);
-            if (UnzipFileStart(Path.Combine(mWorkDir, fileName), mWorkDir, "FindAndRetrieveMiscFiles"))
-            {
-                if (mDebugLevel >= 3)
+                if (!mFileCopyUtilities.CopyFileToWorkDir(item.Name, sourceDirPath, mWorkDir, BaseLogger.LogLevels.ERROR, CreateStoragePathInfoFile))
                 {
-                    OnStatusEvent("Unzipped file " + fileName);
+                    return false;
+                }
+
+                if (logRemoteFilePath)
+                {
+                    OnStatusEvent("Retrieved file " + Path.Combine(sourceDirPath, item.Name));
+                }
+
+                filesRetrieved++;
+
+                // Check whether unzipping was requested
+                if (!unzip)
+                    continue;
+
+                OnStatusEvent("Unzipping file " + item.Name);
+
+                if (UnzipFileStart(item.FullName, mWorkDir, "FindAndRetrieveMiscFiles"))
+                {
+                    if (mDebugLevel >= 3)
+                    {
+                        OnStatusEvent("Unzipped file " + item.Name);
+                    }
                 }
             }
 
-            return true;
+            return filesRetrieved > 0;
         }
 
         /// <summary>
@@ -341,7 +348,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string synopsisFileName,
             bool addToResultFileSkipList = true,
             bool logFileNotFound = true,
-            bool logRemoteFilePath= false)
+            bool logRemoteFilePath = false)
         {
             var success = FindAndRetrieveMiscFiles(
                 fileToGet, unzip: false, searchArchivedDatasetDir: true, logFileNotFound, logRemoteFilePath);
@@ -429,29 +436,29 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Finds the server or archive directory where specified file is located
         /// </summary>
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        /// <param name="fileToFind">Name of the file to search for</param>
+        /// <param name="fileNameOrPattern">Name of the file to search for (supports wildcards)</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found</returns>
-        public string FindDataFile(string fileToFind)
+        public string FindDataFile(string fileNameOrPattern)
         {
-            return FindDataFile(fileToFind, searchArchivedDatasetDir: true);
+            return FindDataFile(fileNameOrPattern, searchArchivedDatasetDir: true);
         }
 
         /// <summary>
         /// Finds the server or archive directory where specified file is located
         /// </summary>
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        /// <param name="fileToFind">Name of the file to search for</param>
+        /// <param name="fileNameOrPattern">Name of the file to search for (supports wildcards)</param>
         /// <param name="searchArchivedDatasetDir">
         /// True if the EMSL archive (Aurora) or MyEMSL should also be searched
         /// (mAuroraAvailable and MyEMSLSearchDisabled take precedence)
         /// </param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found</returns>
-        public string FindDataFile(string fileToFind, bool searchArchivedDatasetDir, bool logFileNotFound = true)
+        public string FindDataFile(string fileNameOrPattern, bool searchArchivedDatasetDir, bool logFileNotFound = true)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(fileToFind))
+                if (string.IsNullOrWhiteSpace(fileNameOrPattern))
                 {
                     OnErrorEvent("Argument fileToFind sent to FindDataFile is an empty string");
                     return string.Empty;
@@ -549,31 +556,36 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                         if (directoryPath.StartsWith(MYEMSL_PATH_FLAG))
                         {
-                            var matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileToFind, directoryToCheck.Name, DatasetName, recurse: false);
+                            var matchingMyEMSLFiles = mMyEMSLUtilities.FindFiles(fileNameOrPattern, directoryToCheck.Name, DatasetName, recurse: false);
 
-                            if (matchingMyEMSLFiles.Count > 0)
-                            {
-                                matchFound = true;
+                            if (matchingMyEMSLFiles.Count == 0)
+                                continue;
 
-                                // Include the MyEMSL FileID in TempDir so that it is available for downloading
-                                matchingDirectoryPath = DatasetInfoBase.AppendMyEMSLFileID(directoryPath, matchingMyEMSLFiles.First().FileID);
-                                break;
-                            }
+                            matchFound = true;
+
+                            // Include the MyEMSL FileID in TempDir so that it is available for downloading
+                            matchingDirectoryPath = DatasetInfoBase.AppendMyEMSLFileID(directoryPath, matchingMyEMSLFiles.First().FileID);
+                            break;
                         }
                         else
                         {
-                            if (directoryToCheck.Exists && File.Exists(Path.Combine(directoryPath, fileToFind)))
-                            {
-                                matchFound = true;
-                                matchingDirectoryPath = directoryPath;
-                                break;
-                            }
+                            if (!directoryToCheck.Exists)
+                                continue;
+
+                            var foundFiles = directoryToCheck.GetFiles(fileNameOrPattern);
+
+                            if (foundFiles.Length == 0)
+                                continue;
+
+                            matchFound = true;
+                            matchingDirectoryPath = directoryPath;
+                            break;
                         }
                     }
                     catch (Exception ex)
                     {
                         // Exception checking TempDir; log an error, but continue checking the other directories in directoriesToSearch
-                        OnErrorEvent("Error in FindDataFile looking for: " + fileToFind + " in " + directoryPath, ex);
+                        OnErrorEvent("Error in FindDataFile looking for: " + fileNameOrPattern + " in " + directoryPath, ex);
                     }
                 }
 
@@ -581,7 +593,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     if (mDebugLevel >= 2)
                     {
-                        OnDebugEvent("Data file found: " + fileToFind);
+                        OnDebugEvent("Data file found: " + fileNameOrPattern);
                     }
                     return matchingDirectoryPath;
                 }
@@ -594,11 +606,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     if (searchArchivedDatasetDir || (!mAuroraAvailable && MyEMSLSearchDisabled))
                     {
-                        OnErrorEvent("Data file not found: " + fileToFind);
+                        OnErrorEvent("Data file not found: " + fileNameOrPattern);
                     }
                     else
                     {
-                        OnWarningEvent("Warning: Data file not found (did not check archive): " + fileToFind);
+                        OnWarningEvent("Warning: Data file not found (did not check archive): " + fileNameOrPattern);
                     }
                 }
 
@@ -606,7 +618,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in FindDataFile looking for: " + fileToFind, ex);
+                OnErrorEvent("Error in FindDataFile looking for: " + fileNameOrPattern, ex);
             }
 
             // We'll only get here if an exception occurs
