@@ -68,15 +68,30 @@ namespace AnalysisManagerTopPICPlugIn
             LogMessage("Getting data files");
 
             // Find the _ms2.msalign file
-            var ms2MSAlignFile = DatasetName + MSALIGN_FILE_SUFFIX;
-            var success = FileSearchTool.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out var sourceDirPath);
-            if (!success)
-            {
-                // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
+            // However, results for FAIMS datasets could have one _ms2.msalign file for each CV value
 
-            mJobParams.AddResultFileToSkip(ms2MSAlignFile);
+            var ms2MSAlignFilesForFAIMS = string.Format("{0}_*{1}", DatasetName, MSALIGN_FILE_SUFFIX);
+
+            var faimsFileFound = FileSearchTool.FindAndRetrieveMiscFiles(ms2MSAlignFilesForFAIMS, false, true, out var sourceDirPath, false);
+
+            if (faimsFileFound)
+            {
+                mJobParams.AddResultFileExtensionToSkip(MSALIGN_FILE_SUFFIX);
+            }
+            else
+            {
+                var ms2MSAlignFile = DatasetName + MSALIGN_FILE_SUFFIX;
+
+                var success = FileSearchTool.FindAndRetrieveMiscFiles(ms2MSAlignFile, false, true, out sourceDirPath);
+
+                if (!success)
+                {
+                    // Errors were reported in method call, so just return
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                mJobParams.AddResultFileToSkip(ms2MSAlignFile);
+            }
 
             // TopPIC 1.2 and earlier created a .feature file
             // TopPIC 1.3 creates two files: _ms1.feature and _ms2.feature
@@ -93,8 +108,16 @@ namespace AnalysisManagerTopPICPlugIn
             }
             else
             {
-                filesToRetrieve.Add(DatasetName + "_ms1" + TOPFD_FEATURE_FILE_SUFFIX, false);
-                filesToRetrieve.Add(DatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX, false);
+                if (faimsFileFound)
+                {
+                    filesToRetrieve.Add(string.Format("{0}_*_ms1{1}", DatasetName, TOPFD_FEATURE_FILE_SUFFIX), false);
+                    filesToRetrieve.Add(string.Format("{0}_*_ms2{1}", DatasetName, TOPFD_FEATURE_FILE_SUFFIX), false);
+                }
+                else
+                {
+                    filesToRetrieve.Add(DatasetName + "_ms1" + TOPFD_FEATURE_FILE_SUFFIX, false);
+                    filesToRetrieve.Add(DatasetName + "_ms2" + TOPFD_FEATURE_FILE_SUFFIX, false);
+                }
 
                 // Also retrieve the _html.zip file, though it is not required to exist
                 // In particular, if the TopFD step for this job used TopFD results from a prior job, the transfer directory will not have an _html.zip file
