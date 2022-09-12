@@ -1854,7 +1854,7 @@ namespace AnalysisManagerExtractionPlugin
                 inputFileName,
                 PeptideHitResultTypes.TopPIC,
                 synopsisFileName,
-                false,
+                true,
                 true);
         }
 
