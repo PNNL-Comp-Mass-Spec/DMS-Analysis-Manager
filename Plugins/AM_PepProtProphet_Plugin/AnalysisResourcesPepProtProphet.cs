@@ -236,7 +236,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     if (!mFileCopyUtilities.CopyFileToWorkDir(item.Name, sourceDirPath, mWorkDir, BaseLogger.LogLevels.ERROR, false))
                     {
-                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND; ;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     UnzipFileStart(Path.Combine(mWorkDir, item.Name), mWorkDir, "GetPepXMLFiles");
