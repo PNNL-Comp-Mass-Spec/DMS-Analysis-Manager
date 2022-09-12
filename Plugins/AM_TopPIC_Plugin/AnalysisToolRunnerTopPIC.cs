@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
@@ -114,7 +115,7 @@ namespace AnalysisManagerTopPICPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the _ms2.msalign file using TopPIC
+                // Process the _ms2.msalign file(s) using TopPIC
                 var processingResult = StartTopPIC(fastaFileIsDecoy, mTopPICProgLoc);
 
                 mProgress = PROGRESS_PCT_COMPLETE;
@@ -605,9 +606,13 @@ namespace AnalysisManagerTopPICPlugIn
                 return result;
             }
 
+            var workDirectory = new DirectoryInfo(mWorkDir);
+
             // If file DatasetName_ms2.feature exists, assume that we are using TopPIC 1.3 and are thus using separate error tolerances
-            var ms2FeatureFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_ms2" + AnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX));
-            var useSeparateErrorTolerances = ms2FeatureFile.Exists;
+            // FAIMS datasets will have files named DatasetName_0_ms2.feature, DatasetName_1_ms2.feature, etc.
+            var ms2FeatureFiles = workDirectory.GetFiles(string.Format("{0}*_ms2{1}", Dataset, AnalysisResourcesTopPIC.TOPFD_FEATURE_FILE_SUFFIX));
+
+            var useSeparateErrorTolerances = ms2FeatureFiles.Length > 0;
 
             // Obtain the dictionary that maps parameter names to argument names
             var paramToArgMapping = GetTopPICParameterNames(useSeparateErrorTolerances);
@@ -746,12 +751,18 @@ namespace AnalysisManagerTopPICPlugIn
                 return result;
             }
 
-            var msalignFileName = mDatasetName + AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX;
+            var workingDirectory = new DirectoryInfo(mWorkDir);
 
-            var arguments = string.Format("{0} {1} {2}",
-                                          cmdLineOptions,
-                                          mValidatedFASTAFilePath,
-                                          msalignFileName);
+            var arguments = new StringBuilder();
+
+            arguments.AppendFormat("{0} {1}", cmdLineOptions.Trim(), mValidatedFASTAFilePath);
+
+            // Append the .msalign file(s)
+
+            foreach (var msAlignFile in workingDirectory.GetFiles(string.Format("{0}*{1}", mDatasetName, AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX)))
+            {
+                arguments.AppendFormat(" {0}", msAlignFile.Name);
+            }
 
             LogDebug(progLoc + " " + arguments);
 
@@ -763,6 +774,7 @@ namespace AnalysisManagerTopPICPlugIn
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT)
             };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -771,7 +783,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments, "TopPIC", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, arguments.ToString(), "TopPIC", true);
 
             if (!mToolVersionWritten)
             {
@@ -779,6 +791,7 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     ParseConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));
                 }
+
                 mToolVersionWritten = StoreToolVersionInfo();
             }
 
