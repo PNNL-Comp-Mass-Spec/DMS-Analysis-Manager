@@ -118,10 +118,7 @@ namespace AnalysisManagerFormularityPlugin
                 width = currentPage.Page.Width - DoublePageMargin;
             }
 
-            if (position == null)
-            {
-                position = XStringFormats.Default;
-            }
+            position ??= XStringFormats.Default;
 
             var height = textHeight;
             if (position.LineAlignment == XLineAlignment.BaseLine)

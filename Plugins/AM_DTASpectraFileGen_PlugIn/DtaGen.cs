@@ -204,19 +204,9 @@ namespace DTASpectraFileGen
             var mostRecentBlankDTA = string.Empty;
             var mostRecentValidDTA = string.Empty;
 
-            if (procedureName == null)
-            {
-                procedureName = "DtaGen.??";
-            }
-            if (dtaToolName == null)
-            {
-                dtaToolName = "Unknown DTA Tool";
-            }
-
-            if (errorMessage == null)
-            {
-                errorMessage = "Unknown error";
-            }
+            procedureName ??= "DtaGen.??";
+            dtaToolName ??= "Unknown DTA Tool";
+            errorMessage ??= "Unknown error";
 
             OnErrorEvent(procedureName + ", Error running " + dtaToolName + "; " + errorMessage);
 
