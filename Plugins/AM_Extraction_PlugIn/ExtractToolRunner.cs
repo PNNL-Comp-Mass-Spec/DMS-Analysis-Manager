@@ -1846,16 +1846,54 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPHRPForTopPIC()
         {
-            var inputFileName = mDatasetName + "_TopPIC_PrSMs.txt";
-            var synopsisFileName = mDatasetName + "_toppic_syn.txt";
+            const string SYNOPSIS_FILE_SUFFIX = "_toppic_syn.txt";
 
-            return RunPHRPWork(
-                "TopPIC",
-                inputFileName,
-                PeptideHitResultTypes.TopPIC,
-                synopsisFileName,
-                true,
-                true);
+            var filesToFind = mDatasetName + "*_TopPIC_PrSMs.txt";
+
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            var prsmFiles = workingDirectory.GetFiles(filesToFind).ToList();
+
+            var successCodes = new List<CloseOutType>();
+
+            foreach (var inputFile in prsmFiles)
+            {
+                var matchIndex = inputFile.Name.LastIndexOf("_TopPIC_PrSMs", StringComparison.OrdinalIgnoreCase);
+
+                var synopsisFileName = matchIndex > 0
+                    ? inputFile.Name.Substring(0, matchIndex) + SYNOPSIS_FILE_SUFFIX
+                    : mDatasetName + SYNOPSIS_FILE_SUFFIX;
+
+                var returnCode = RunPHRPWork(
+                    "TopPIC",
+                    inputFile.Name,
+                    PeptideHitResultTypes.TopPIC,
+                    synopsisFileName,
+                    true,
+                    true);
+
+                successCodes.Add(returnCode);
+            }
+
+            if (successCodes.Count == 0)
+            {
+                LogError("Did not find any TopPIC_PrSMs.txt files in the working directory");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (successCodes.Count < prsmFiles.Count)
+            {
+                LogError(string.Format("Only processed {0} / {1} TopPIC_PrSMs.txt files in the working directory", successCodes.Count, prsmFiles.Count));
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var returnCode in successCodes)
+            {
+                if (returnCode != CloseOutType.CLOSEOUT_SUCCESS)
+                    return returnCode;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

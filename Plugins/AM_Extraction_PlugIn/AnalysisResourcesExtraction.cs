@@ -1357,15 +1357,20 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetTopPICFiles()
         {
-            var fileToGet = DatasetName + "_TopPIC_PrSMs.txt";
+            var filesToGet = DatasetName + "*_TopPIC_PrSMs.txt";
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(filesToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            mJobParams.AddResultFileToSkip(fileToGet);
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+
+            foreach (var item in workingDirectory.GetFiles(filesToGet))
+            {
+                mJobParams.AddResultFileToSkip(item.Name);
+            }
 
             // Note that we'll obtain the TopPIC parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;
