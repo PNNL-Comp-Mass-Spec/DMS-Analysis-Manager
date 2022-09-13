@@ -60,6 +60,8 @@ namespace AnalysisManagerTopPICPlugIn
 
         private string mConsoleOutputErrorMsg;
 
+        private int mMsAlignFileCount;
+
         private string mValidatedFASTAFilePath;
 
         private DateTime mLastConsoleOutputParse;
@@ -423,6 +425,8 @@ namespace AnalysisManagerTopPICPlugIn
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var linesRead = 0;
+                var msAlignFileNumber = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
@@ -479,6 +483,11 @@ namespace AnalysisManagerTopPICPlugIn
                         {
                             if (!dataLine.StartsWith(processingStep.Key, StringComparison.OrdinalIgnoreCase))
                                 continue;
+
+                            // This line will appear once for each .msalign input file that we are processing (FAIMS datasets can have multiple .msalign files)
+
+                            if (dataLine.StartsWith("Non PTM filtering - started"))
+                                msAlignFileNumber++;
 
                             currentProgress = processingStep.Value;
                         }
@@ -537,7 +546,14 @@ namespace AnalysisManagerTopPICPlugIn
                     effectiveProgress = currentProgress;
                 }
 
-                mProgress = effectiveProgress;
+                if (mMsAlignFileCount <= 1 || msAlignFileNumber == 0)
+                {
+                    mProgress = effectiveProgress;
+                }
+                else
+                {
+                    mProgress = ComputeIncrementalProgress(msAlignFileNumber, mMsAlignFileCount, effectiveProgress);
+                }
             }
             catch (Exception ex)
             {
@@ -790,6 +806,8 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             LogDebug(progLoc + " " + arguments);
+
+            mMsAlignFileCount = msAlignFiles.Count;
 
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
             {
