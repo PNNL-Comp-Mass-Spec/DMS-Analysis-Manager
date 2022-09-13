@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
@@ -155,6 +156,18 @@ namespace AnalysisManagerTopPICPlugIn
                 LogError("Error in TopPICPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        private FileInfo AppendSuffixToBaseName(FileInfo sourceFile, string suffix)
+        {
+            var baseName = Path.GetFileNameWithoutExtension(sourceFile.Name);
+            var extension = Path.GetExtension(sourceFile.Name);
+
+            var updatedName = string.Format("{0}{1}{2}", baseName, suffix, extension);
+
+            return sourceFile.Directory == null
+                ? new FileInfo(updatedName)
+                : new FileInfo(Path.Combine(sourceFile.Directory.FullName, updatedName));
         }
 
         private static float ComputeOverallProgress(
@@ -769,7 +782,9 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Append the .msalign file(s)
 
-            foreach (var msAlignFile in workingDirectory.GetFiles(string.Format("{0}*{1}", mDatasetName, AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX)))
+            var msAlignFiles = workingDirectory.GetFiles(string.Format("{0}*{1}", mDatasetName, AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX)).ToList();
+
+            foreach (var msAlignFile in msAlignFiles)
             {
                 arguments.AppendFormat(" {0}", msAlignFile.Name);
             }
@@ -827,7 +842,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // Validate the results files and zip the html subdirectories
-            var processingError = !ValidateAndZipResults(out var noValidResults);
+            var processingError = !ValidateAndZipResults(msAlignFiles, out var noValidResults);
 
             if (processingError)
             {
@@ -1018,8 +1033,10 @@ namespace AnalysisManagerTopPICPlugIn
         /// TopPIC 1.1 created tab-delimited text files ending with "_ms2.OUTPUT_TABLE" and "_ms2.FORM_OUTPUT_TABLE"
         /// TopPIC 1.2 creates .csv files ending with "_ms2_toppic_prsm.csv" and "_ms2_toppic_proteoform.csv"
         /// </remarks>
+        /// <param name="msAlignFiles">List of .msalign files</param>
+        /// <param name="noValidResults">Output: true if no valid results were found</param>
         /// <returns>True if success, false if an error</returns>
-        private bool ValidateAndZipResults(out bool noValidResults)
+        private bool ValidateAndZipResults(List<FileInfo> msAlignFiles, out bool noValidResults)
         {
             noValidResults = false;
 
@@ -1029,32 +1046,65 @@ namespace AnalysisManagerTopPICPlugIn
                 var resultFileNames = new List<TopPICResultFileInfo>
                 {
                     // TopPIC output file names prior to November 2018 (version 1.1.2)
-                    new(PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL),
+                    new(mDatasetName, PRSM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_OUTPUT_TABLE_NAME_SUFFIX_ORIGINAL),
 
                     // TopPIC output file names used between November 2018 and January 2020 (versions 1.2.2, 1.2.3, and 1.3.1)
-                    new(PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, true),
-
-                    // TopPIC output file names used in 2021 (version 1.4.4)
-                    new(PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL)
+                    new(mDatasetName, PRSM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_CSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, true)
                 };
 
-                var targetPrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL));
-                var targetProteoformFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL));
+                int expectedPrsmResults;
 
-                var prsmResultsFound = false;
+                if (msAlignFiles.Count <= 1)
+                {
+                    // TopPIC output file names used in 2021 (starting with version 1.4.4)
+                    // Dataset_ms2_toppic_prsm.tsv and Dataset_ms2_toppic_proteoform.tsv
+                    resultFileNames.Add(new TopPICResultFileInfo(mDatasetName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
 
-                var validPrsmResults = false;
-                var validProteoformResults = false;
+                    expectedPrsmResults = 1;
+                }
+                else
+                {
+                    foreach (var msAlignFile in msAlignFiles)
+                    {
+                        // Determine the base name by removing the extension and removing "_ms2"
+                        var nameWithoutExtension = Path.GetFileNameWithoutExtension(msAlignFile.Name);
+
+                        string baseName;
+
+                        if (nameWithoutExtension.EndsWith("_ms2", StringComparison.OrdinalIgnoreCase))
+                        {
+                            baseName = nameWithoutExtension.Substring(0, nameWithoutExtension.Length - 4);
+                        }
+                        else
+                        {
+                            LogWarning("MSAlign filename does not end with _ms2; this is unexpected: " + nameWithoutExtension);
+                            baseName = nameWithoutExtension;
+                        }
+
+                        resultFileNames.Add(new TopPICResultFileInfo(baseName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
+                    }
+
+                    expectedPrsmResults = msAlignFiles.Count;
+                }
+
+                var prsmResultsFound = 0;
+
+                var validPrsmResults = 0;
+                var validProteoformResults = 0;
 
                 foreach (var resultFileInfo in resultFileNames)
                 {
-                    var sourcePrsmFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFileInfo.PrsmFileSuffix));
-                    var sourceProteoformFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + resultFileInfo.ProteoformFileSuffix));
-
+                    var sourcePrsmFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + resultFileInfo.PrsmFileSuffix));
                     if (!sourcePrsmFile.Exists)
                         continue;
 
-                    prsmResultsFound = true;
+                    var sourcePrsmSingleFile = AppendSuffixToBaseName(sourcePrsmFile, "_single");
+
+                    var sourceProteoformFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + resultFileInfo.ProteoformFileSuffix));
+
+                    var sourceProteoformSingleFile = AppendSuffixToBaseName(sourceProteoformFile, "_single");
+
+                    prsmResultsFound++;
 
                     if (!sourceProteoformFile.Exists)
                     {
@@ -1064,28 +1114,89 @@ namespace AnalysisManagerTopPICPlugIn
                         break;
                     }
 
-                    // Extract the **** Parameters **** block from the start of the PRSM results file and save to TopPIC_RuntimeParameters.txt
-                    validPrsmResults = ValidateResultTableFile(sourcePrsmFile, targetPrsmFile, true, resultFileInfo.IsCsvDelimited);
+                    var targetPrsmFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + PRSM_RESULT_TABLE_NAME_SUFFIX_FINAL));
+                    var targetProteoformFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + PROTEOFORM_RESULT_TABLE_NAME_SUFFIX_FINAL));
 
-                    validProteoformResults = ValidateResultTableFile(sourceProteoformFile, targetProteoformFile, false, resultFileInfo.IsCsvDelimited);
+                    // Create file Dataset_TopPIC_PrSMs.txt
+                    // In addition, extract the **** Parameters **** block from the start of the PRSM results file and save to TopPIC_RuntimeParameters.txt
 
-                    break;
+                    if (ValidateResultTableFile(sourcePrsmFile, targetPrsmFile, true, resultFileInfo.IsCsvDelimited))
+                    {
+                        validPrsmResults++;
+
+                        // Also process the "_single" file if it exists
+                        // For example Dataset_ms2_toppic_prsm_single.tsv is based on Dataset_ms2_toppic_prsm.tsv but only lists the first protein for each proteoform
+
+                        if (sourcePrsmSingleFile.Exists)
+                        {
+                            var targetPrsmSingleFile = AppendSuffixToBaseName(targetPrsmFile, "_single");
+                            ValidateResultTableFile(sourcePrsmSingleFile, targetPrsmSingleFile, false, resultFileInfo.IsCsvDelimited);
+                        }
+                    }
+
+                    // Create file Dataset_TopPIC_Proteoforms.txt
+                    if (ValidateResultTableFile(sourceProteoformFile, targetProteoformFile, false, resultFileInfo.IsCsvDelimited))
+                    {
+                        validProteoformResults++;
+
+                        // Also process the "_single" file if it exists
+                        // For example Dataset_ms2_toppic_proteoform_single.tsv is based on Dataset_ms2_toppic_proteoform.tsv but only lists the first protein for each proteoform
+
+                        if (sourceProteoformSingleFile.Exists)
+                        {
+                            var targetProteoformSingleFile = AppendSuffixToBaseName(targetProteoformFile, "_single");
+                            ValidateResultTableFile(sourceProteoformSingleFile, targetProteoformSingleFile, false, resultFileInfo.IsCsvDelimited);
+                        }
+                    }
                 }
 
-                if (!validPrsmResults)
+                var validResults = true;
+
+                if (validPrsmResults < expectedPrsmResults)
                 {
-                    if (prsmResultsFound)
-                        LogError("Valid TopPIC Prsm results file not found");
+                    validResults = false;
+
+                    if (prsmResultsFound == 0)
+                    {
+                        // TopPIC Prsm results file not found
+                        LogError(string.Format(
+                            "TopPIC Prsm results {0} not found",
+                            expectedPrsmResults > 1 ? "files" : "file"));
+                    }
+                    else if (expectedPrsmResults == 1)
+                    {
+                        LogError("TopPIC Prsm results file is not valid");
+                    }
+                    else if (validPrsmResults > 0)
+                    {
+                        LogError(string.Format(
+                            "{0} / {1} TopPIC Prsm results files were not valid",
+                            expectedPrsmResults - validPrsmResults, expectedPrsmResults));
+                    }
                     else
-                        LogError("TopPIC Prsm results file not found");
-
-                    return false;
+                    {
+                        LogError("None of the TopPIC Prsm results files were valid");
+                    }
                 }
 
-                if (!validProteoformResults)
+                if (validResults && validProteoformResults < expectedPrsmResults)
                 {
-                    LogError("Valid TopPIC Proteoform results file not found");
-                    return false;
+                    validResults = false;
+
+                    if (expectedPrsmResults == 1)
+                    {
+                        LogError("TopPIC Proteoform results file not found or not valid");
+                    }
+                    else if (validPrsmResults > 0)
+                    {
+                        LogError(string.Format(
+                            "{0} / {1} TopPIC Proteoform results files were not valid",
+                            expectedPrsmResults - validProteoformResults, expectedPrsmResults));
+                    }
+                    else
+                    {
+                        LogError("None of the TopPIC Proteoform results files were valid");
+                    }
                 }
 
                 // Add numerous temp files to skip
@@ -1143,7 +1254,9 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 if (directoriesZipped >= 1)
-                    return true;
+                {
+                    return validResults;
+                }
 
                 LogError("Expected TopPIC html directories were not found");
                 return false;
@@ -1174,12 +1287,10 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
-            if (!string.IsNullOrEmpty(proteinOptions))
+
+            if (!string.IsNullOrEmpty(proteinOptions) && proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    fastaFileIsDecoy = true;
-                }
+                fastaFileIsDecoy = true;
             }
 
             return true;
@@ -1208,7 +1319,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (mDebugLevel >= 2)
                 {
-                    LogMessage("Validating that the TopPIC results file is not empty");
+                    LogMessage("Validating that TopPIC results file {0} is not empty", sourceFile.Name);
                 }
 
                 // This RegEx is used to remove double quotes from the start and end of a column value
@@ -1326,7 +1437,8 @@ namespace AnalysisManagerTopPICPlugIn
 
                         // Starting with TopPIC v1.4.4, data in the protein description and proteoform columns are surrounded by double-quotes
                         // These double quotes are not necessary for a tab-delimited file
-                        // We will thus remove them
+                        // In contrast, TopPIC 1.5 does not add the double quotes
+                        // Remove the double quotes if present
 
                         var lineParts = dataLine.Split('\t');
                         for (var i = 0; i < lineParts.Length; i++)
