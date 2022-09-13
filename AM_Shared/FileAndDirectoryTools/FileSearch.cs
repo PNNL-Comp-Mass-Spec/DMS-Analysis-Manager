@@ -460,7 +460,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 if (string.IsNullOrWhiteSpace(fileNameOrPattern))
                 {
-                    OnErrorEvent("Argument fileToFind sent to FindDataFile is an empty string");
+                    OnErrorEvent("Argument fileNameOrPattern sent to FindDataFile is an empty string");
                     return string.Empty;
                 }
 
@@ -547,7 +547,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 var matchingDirectoryPath = string.Empty;
                 var matchFound = false;
 
-                // Now search for FileToFind in each directory in directoriesToSearch
+                // Now search for fileNameOrPattern in each directory in directoriesToSearch
                 foreach (var directoryPath in directoriesToSearch)
                 {
                     try
