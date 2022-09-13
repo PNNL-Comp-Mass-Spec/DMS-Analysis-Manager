@@ -5,6 +5,7 @@
 //
 //*********************************************************************************************************
 
+using System;
 using AnalysisManagerBase;
 using System.Collections.Generic;
 using System.IO;
@@ -151,7 +152,13 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (!unzip)
                 {
-                    mJobParams.AddResultFileToSkip(fileName);
+                    var wildcardIndex = fileName.IndexOf("*", StringComparison.OrdinalIgnoreCase);
+
+                    if (wildcardIndex > 0)
+                        mJobParams.AddResultFileExtensionToSkip(fileName.Substring(wildcardIndex + 1));
+                    else
+                        mJobParams.AddResultFileToSkip(fileName);
+
                     continue;
                 }
 
