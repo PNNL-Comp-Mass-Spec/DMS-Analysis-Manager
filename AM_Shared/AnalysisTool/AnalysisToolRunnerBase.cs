@@ -829,6 +829,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Determine the remote transfer directory path (create it if missing)
                 targetDirectoryPath = CreateRemoteTransferDirectory(analysisResults, transferDirectoryPath);
+
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
                     analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);

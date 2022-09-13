@@ -63,6 +63,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Retrieve the FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 

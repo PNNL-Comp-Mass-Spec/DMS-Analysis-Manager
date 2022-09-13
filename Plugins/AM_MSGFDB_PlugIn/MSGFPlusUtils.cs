@@ -2941,7 +2941,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="countHCDMSn"></param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
-        ///
         private void ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
         {
             instrumentIDNew = string.Empty;
