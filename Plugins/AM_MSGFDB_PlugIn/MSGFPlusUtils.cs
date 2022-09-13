@@ -2871,12 +2871,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // InstrumentID values:
             // #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap, Lumos, and QEHFX instruments
+            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap and Lumos instruments with high res MS2 spectra
             // #  2 means TOF
-            // #  3 means Q-Exactive
+            // #  3 means Q-Exactive; use InstrumentID=3 for Q Exactive and QEHFX instruments
 
             // The logic for determining InstrumentID is:
-            // If the instrument is a QExactive, use InstrumentID 3
+            // If the instrument is a QExactive or QEHFX, use InstrumentID 3
             // If the instrument has HCD spectra (which should be high res MS2), use InstrumentID 1
             // If the instrument has high res MS2 spectra, use InstrumentID 1
             // If the instrument has low res MS2 spectra, use InstrumentID 0
