@@ -2863,8 +2863,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Override Instrument ID based on the instrument class and scan types in the _ScanType file
         /// </summary>
         /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
-        /// <param name="scanTypeFilePath"></param>
-        /// <param name="instrumentGroup"></param>
+        /// <param name="scanTypeFilePath">Scan type file path</param>
+        /// <param name="instrumentGroup">Instrument group</param>
         private CloseOutType DetermineInstrumentID(MSGFPlusKeyValueParamFileLine paramFileLine, string scanTypeFilePath, string instrumentGroup)
         {
             // InstrumentID values:
@@ -2875,7 +2875,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // The logic for determining InstrumentID is:
             // If the instrument is a QExactive or QEHFX, use InstrumentID 3
-            // If the instrument has HCD spectra (which should be high res MS2), use InstrumentID 1
+            // If the instrument has HCD spectra (which are typically high res MS2, but sometimes low res), use InstrumentID 1
             // If the instrument has high res MS2 spectra, use InstrumentID 1
             // If the instrument has low res MS2 spectra, use InstrumentID 0
 
@@ -2934,9 +2934,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Determine the instrument mode based on the number of low res and high res MS2 spectra
         /// This method is used only if we cannot determine the instrument group for the dataset's instrument
         /// </summary>
-        /// <param name="countLowResMSn"></param>
-        /// <param name="countHighResMSn"></param>
-        /// <param name="countHCDMSn"></param>
+        /// <param name="countLowResMSn">Total number of spectra that are MSn (does not include HCD-MSn)</param>
+        /// <param name="countHighResMSn">Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
+        /// <param name="countHCDMSn">Total number of spectra that are HCD-HMSn, HCD-MSn, or SA_HCD-HMSn</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
         private void ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
@@ -3039,9 +3039,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Contact the database to determine the number of MSn scans of various type for the given dataset
         /// </summary>
         /// <param name="datasetName"></param>
-        /// <param name="countLowResMSn"></param>
-        /// <param name="countHighResMSn"></param>
-        /// <param name="countHCDMSn"></param>
+        /// <param name="countLowResMSn">Output: Total number of spectra that are MSn (does not include HCD-MSn)</param>
+        /// <param name="countHighResMSn">Output: Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
+        /// <param name="countHCDMSn">Output: Total number of spectra that are HCD-HMSn, HCD-MSn, or SA_HCD-HMSn</param>
         public bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countHCDMSn)
         {
             countLowResMSn = 0;
