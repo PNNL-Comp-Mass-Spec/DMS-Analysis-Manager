@@ -12,7 +12,6 @@ using System.IO;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
-using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -888,7 +887,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             inputFileFormat = InputFileFormatTypes.CDTA;
 
             if (!validateCdtaAndCreateScanTypeFile)
+            {
                 return CloseOutType.CLOSEOUT_SUCCESS;
+            }
 
             // Make sure the _DTA.txt file is valid
             if (!ValidateCDTAFile())
@@ -1079,7 +1080,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Bump up mMSGFPlusCompletionTime by one hour
             // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
             mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
-            mCmdRunner.AbortProgramNow();
+            mCmdRunner?.AbortProgramNow();
         }
 
         /// <summary>
