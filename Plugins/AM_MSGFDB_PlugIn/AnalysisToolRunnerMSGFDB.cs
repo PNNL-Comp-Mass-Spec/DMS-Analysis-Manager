@@ -316,11 +316,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mResultFilesToSkipIfNoError.Clear();
 
-            var result = DetermineInputFileFormat(true, out var inputFileFormat, out var assumedScanType, out var scanTypeFilePath);
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var inputFormatResult = DetermineInputFileFormat(true, out var inputFileFormat, out var assumedScanType, out var scanTypeFilePath);
+            if (inputFormatResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Immediately exit the plugin; results and console output files will not be saved
-                return result;
+                return inputFormatResult;
             }
 
             // Initialize mMSGFPlusUtils
@@ -335,12 +335,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             var javaExePath = javaProgLoc;
             var msgfPlusJarFilePath = mMSGFPlusProgLoc;
 
-            result = mMSGFPlusUtils.InitializeFastaFile(
+            var fastaInitializeResult = mMSGFPlusUtils.InitializeFastaFile(
                 javaExePath, msgfPlusJarFilePath,
                 out var fastaFileSizeKB, out var fastaFileIsDecoy,
                 out var fastaFilePath, parameterFilePath);
 
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            if (fastaInitializeResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
                 {
@@ -348,7 +348,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Immediately exit the plugin; results and console output files will not be saved
-                return result;
+                return fastaInitializeResult;
             }
 
             mFastaFileSizeMB = fastaFileSizeKB / 1024.0;
@@ -357,12 +357,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Read the MSGFPlus Parameter File and optionally create a new one with customized parameters
             // paramFile will contain the path to either the original parameter file or the customized one
-            result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
+            var paramFileResult = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
                 instrumentGroup, parameterFilePath,
                 out var sourceParamFile, out var finalParamFile);
 
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            if (paramFileResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (string.IsNullOrWhiteSpace(mMessage) && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
                 {
@@ -370,7 +370,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Immediately exit the plugin; results and console output files will not be saved
-                return result;
+                return paramFileResult;
             }
 
             if (finalParamFile == null)
