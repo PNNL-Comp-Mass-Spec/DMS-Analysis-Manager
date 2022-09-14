@@ -2856,9 +2856,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            var success = WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, false, out finalParamFile);
-
-            return success;
+            return WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, false, out finalParamFile);
         }
 
         /// <summary>
