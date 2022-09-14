@@ -420,10 +420,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     inputFileDescription = ".mzXML file";
                     break;
 
-                default:
+                case InputFileFormatTypes.Unknown:
                     LogError("Unsupported InputFileFormat: " + inputFileFormat);
                     // Immediately exit the plugin; results and console output files will not be saved
                     return CloseOutType.CLOSEOUT_FAILED;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
 
             var fastaFile = new FileInfo(fastaFilePath);
