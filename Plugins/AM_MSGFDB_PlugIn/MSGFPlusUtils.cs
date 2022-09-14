@@ -2552,11 +2552,22 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                     if (scanTypeLookupSuccess)
                                     {
-                                        ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
+                                        var success = ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
+
+                                        if (!success)
+                                        {
+                                            return CloseOutType.CLOSEOUT_FAILED;
+                                        }
                                     }
                                 }
 
                                 AutoUpdateInstrumentIDIfChanged(paramFileLine, instrumentIDNew, autoSwitchReason);
+                            }
+                            else
+                            {
+                                ErrorMessage = "Instrument group is empty and a scan type file was not provided; unable to determine the value to use for InstrumentID";
+                                OnErrorEvent(ErrorMessage);
+                                return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
                         else if (Global.IsMatch(paramFileLine.ParamInfo.ParameterName, MSGFPLUS_OPTION_STATIC_MOD))
@@ -2894,9 +2905,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count the number of High res CID or ETD spectra
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
-                var success = LoadScanTypeFile(scanTypeFilePath, out var lowResMSn, out var highResMSn, out var hcdMSn, out _);
+                var scanTypeFileLoaded = LoadScanTypeFile(scanTypeFilePath, out var lowResMSn, out var highResMSn, out var hcdMSn, out _);
 
-                if (!success)
+                if (!scanTypeFileLoaded)
                 {
                     if (string.IsNullOrEmpty(ErrorMessage))
                     {
@@ -2913,7 +2924,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, out instrumentIDNew, out autoSwitchReason);
+                var success = ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, out instrumentIDNew, out autoSwitchReason);
+
+                if (!success)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
             }
 
             AutoUpdateInstrumentIDIfChanged(paramFileLine, instrumentIDNew, autoSwitchReason);
@@ -2939,53 +2955,54 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="countHCDMSn">Total number of spectra that are HCD-HMSn, HCD-MSn, or SA_HCD-HMSn</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
-        private void ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
+        /// <returns>True if successful, false if countLowResMSn, countHighResMSn, and countHCDMSn are all 0</returns>
+        private bool ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
         {
             instrumentIDNew = string.Empty;
             autoSwitchReason = string.Empty;
 
             if (countLowResMSn + countHighResMSn + countHCDMSn == 0)
             {
-                // Scan counts are all 0; leave instrumentIDNew untouched
-                OnStatusEvent("Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID");
+                // Scan counts are all 0; assume this is a critical error
+                ErrorMessage = "Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID";
+                OnErrorEvent(ErrorMessage);
+                return false;
+            }
+
+            double fractionHiRes = 0;
+
+            if (countHighResMSn > 0)
+            {
+                fractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
+            }
+
+            if (fractionHiRes > 0.1)
+            {
+                // At least 10% of the spectra are HMSn
+                instrumentIDNew = "1";
+                autoSwitchReason = "since " + (fractionHiRes * 100).ToString("0") + "% of the spectra are HMSn";
+                return true;
+            }
+
+            if (countLowResMSn == 0 && countHCDMSn > 0)
+            {
+                // All of the spectra are HCD
+                instrumentIDNew = "1";
+                autoSwitchReason = "since all of the spectra are HCD";
+                return true;
+            }
+
+            instrumentIDNew = "0";
+            if (countHCDMSn == 0 && countHighResMSn == 0)
+            {
+                autoSwitchReason = "since all of the spectra are low res MSn";
             }
             else
             {
-                double fractionHiRes = 0;
-
-                if (countHighResMSn > 0)
-                {
-                    fractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
-                }
-
-                if (fractionHiRes > 0.1)
-                {
-                    // At least 10% of the spectra are HMSn
-                    instrumentIDNew = "1";
-                    autoSwitchReason = "since " + (fractionHiRes * 100).ToString("0") + "% of the spectra are HMSn";
-                }
-                else
-                {
-                    if (countLowResMSn == 0 && countHCDMSn > 0)
-                    {
-                        // All of the spectra are HCD
-                        instrumentIDNew = "1";
-                        autoSwitchReason = "since all of the spectra are HCD";
-                    }
-                    else
-                    {
-                        instrumentIDNew = "0";
-                        if (countHCDMSn == 0 && countHighResMSn == 0)
-                        {
-                            autoSwitchReason = "since all of the spectra are low res MSn";
-                        }
-                        else
-                        {
-                            autoSwitchReason = "since there is a mix of low res and high res spectra";
-                        }
-                    }
-                }
+                autoSwitchReason = "since there is a mix of low res and high res spectra";
             }
+
+            return true;
         }
 
         /// <summary>
