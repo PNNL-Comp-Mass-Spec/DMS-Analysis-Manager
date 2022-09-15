@@ -2980,24 +2980,31 @@ namespace AnalysisManagerMSGFDBPlugIn
                 fractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
             }
 
-            if (fractionHiRes > 0.1)
+            double fractionLowResHCD = 0;
+
+            if (countLowResHCD > 0)
             {
-                // At least 10% of the spectra are HMSn
+                fractionLowResHCD = countLowResHCD / (double)(countLowResHCD + countHighResHCD);
+            }
+
+            if (fractionHiRes > 0.1 && fractionLowResHCD < 0.5)
+            {
+                // At least 10% of the spectra are HMSn and no more than 50% of the spectra are HCD-MSn
                 instrumentIDNew = "1";
                 autoSwitchReason = "since " + (fractionHiRes * 100).ToString("0") + "% of the spectra are HMSn";
                 return true;
             }
 
-            if (countLowResMSn == 0 && countHCDMSn > 0)
+            if (countLowResMSn == 0 && countLowResHCD == 0 && countHighResHCD > 0)
             {
-                // All of the spectra are HCD
+                // All of the spectra are HCD-HMSn
                 instrumentIDNew = "1";
-                autoSwitchReason = "since all of the spectra are HCD";
+                autoSwitchReason = "since all of the spectra are high resolution HCD";
                 return true;
             }
 
             instrumentIDNew = "0";
-            if (countHCDMSn == 0 && countHighResMSn == 0)
+            if (countHighResHCD == 0 && countHighResMSn == 0)
             {
                 autoSwitchReason = "since all of the spectra are low res MSn";
             }
