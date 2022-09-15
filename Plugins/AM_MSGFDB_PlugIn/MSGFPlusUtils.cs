@@ -185,7 +185,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         public const string SCAN_COUNT_LOW_RES_MSN = "ScanCountLowResMSn";
         public const string SCAN_COUNT_HIGH_RES_MSN = "ScanCountHighResMSn";
-        public const string SCAN_COUNT_HCD_MSN = "ScanCountHCDMSn";
+        public const string SCAN_COUNT_LOW_RES_HCD = "ScanCountLowResHCD";
+        public const string SCAN_COUNT_HIGH_RES_HCD = "ScanCountHighResHCD";
 
         /// <summary>
         /// Event raised when a peptide to protein mapping error has been ignored
@@ -2535,24 +2536,26 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     bool scanTypeLookupSuccess;
                                     int countLowResMSn;
                                     int countHighResMSn;
-                                    int countHCDMSn;
+                                    int countLowResHCD;
+                                    int countHighResHCD;
 
                                     if (Global.OfflineMode)
                                     {
                                         countLowResMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_LOW_RES_MSN, 0);
                                         countHighResMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HIGH_RES_MSN, 0);
-                                        countHCDMSn = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HCD_MSN, 0);
+                                        countLowResHCD = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_LOW_RES_HCD, 0);
+                                        countHighResHCD = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SCAN_COUNT_HIGH_RES_HCD, 0);
 
-                                        scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countHCDMSn) > 0;
+                                        scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countLowResHCD + countHighResHCD) > 0;
                                     }
                                     else
                                     {
-                                        scanTypeLookupSuccess = LookupScanTypesForDataset(datasetName, out countLowResMSn, out countHighResMSn, out countHCDMSn);
+                                        scanTypeLookupSuccess = LookupScanTypesForDataset(datasetName, out countLowResMSn, out countHighResMSn, out countLowResHCD, out countHighResHCD);
                                     }
 
                                     if (scanTypeLookupSuccess)
                                     {
-                                        var success = ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
+                                        var success = ExamineScanTypes(countLowResMSn, countHighResMSn, countLowResHCD, countHighResHCD, out instrumentIDNew, out autoSwitchReason);
 
                                         if (!success)
                                         {
@@ -2924,7 +2927,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, out instrumentIDNew, out autoSwitchReason);
+                var success = ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, 0, out instrumentIDNew, out autoSwitchReason);
 
                 if (!success)
                 {
@@ -2948,20 +2951,21 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         /// <summary>
         /// Determine the instrument mode based on the number of low res and high res MS2 spectra
-        /// This method is used only if we cannot determine the instrument group for the dataset's instrument
+        /// This method is used when the dataset's instrument group does not have a preferred Instrument ID value
         /// </summary>
         /// <param name="countLowResMSn">Total number of spectra that are MSn (does not include HCD-MSn)</param>
         /// <param name="countHighResMSn">Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
-        /// <param name="countHCDMSn">Total number of spectra that are HCD-HMSn, HCD-MSn, or SA_HCD-HMSn</param>
+        /// <param name="countLowResHCD">Total number of spectra that are HCD-MSn</param>
+        /// <param name="countHighResHCD">Total number of spectra that are HCD-HMSn or SA_HCD-HMSn</param>
         /// <param name="instrumentIDNew"></param>
         /// <param name="autoSwitchReason"></param>
-        /// <returns>True if successful, false if countLowResMSn, countHighResMSn, and countHCDMSn are all 0</returns>
-        private bool ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
+        /// <returns>True if successful, false if countLowResMSn, countHighResMSn, countLowResHCD, and countHighResHCD are all 0</returns>
+        private bool ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countLowResHCD, int countHighResHCD, out string instrumentIDNew, out string autoSwitchReason)
         {
             instrumentIDNew = string.Empty;
             autoSwitchReason = string.Empty;
 
-            if (countLowResMSn + countHighResMSn + countHCDMSn == 0)
+            if (countLowResMSn + countHighResMSn + countLowResHCD + countHighResHCD == 0)
             {
                 // Scan counts are all 0; assume this is a critical error
                 ErrorMessage = "Scan counts provided to ExamineScanTypes are all 0; cannot auto-update InstrumentID";
@@ -3058,12 +3062,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="datasetName"></param>
         /// <param name="countLowResMSn">Output: Total number of spectra that are MSn (does not include HCD-MSn)</param>
         /// <param name="countHighResMSn">Output: Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
-        /// <param name="countHCDMSn">Output: Total number of spectra that are HCD-HMSn, HCD-MSn, or SA_HCD-HMSn</param>
-        public bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countHCDMSn)
+        /// <param name="countLowResHCD">Output: Total number of spectra that are HCD-MSn</param>
+        /// <param name="countHighResHCD">Output: Total number of spectra that are HCD-HMSn or SA_HCD-HMSn</param>
+        public bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countLowResHCD, out int countHighResHCD)
         {
             countLowResMSn = 0;
             countHighResMSn = 0;
-            countHCDMSn = 0;
+            countLowResHCD = 0;
+            countHighResHCD = 0;
 
             try
             {
@@ -3124,9 +3130,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     countHighResMSn += curRow["SA_ETD-HMSn"].CastDBVal<int>();
                     countHighResMSn += curRow["EThcD-HMSn"].CastDBVal<int>();
 
-                    countHCDMSn += curRow["HCD-HMSn"].CastDBVal<int>();
-                    countHCDMSn += curRow["HCD-MSn"].CastDBVal<int>();
-                    countHCDMSn += curRow["SA_HCD-HMSn"].CastDBVal<int>();
+                    countLowResHCD += curRow["HCD-MSn"].CastDBVal<int>();
+
+                    countHighResHCD += curRow["HCD-HMSn"].CastDBVal<int>();
+                    countHighResHCD += curRow["SA_HCD-HMSn"].CastDBVal<int>();
 
                     countLowResMSn += curRow["ETD-MSn"].CastDBVal<int>();
                     countLowResMSn += curRow["SA_ETD-MSn"].CastDBVal<int>();

@@ -243,7 +243,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var msgfPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
                 RegisterEvents(msgfPlusUtils);
 
-                var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn);
+                var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countLowResHCD, out var countHighResHCD);
                 if (!success)
                 {
                     var assumedScanType = mJobParams.GetParam("AssumedScanType");
@@ -262,7 +262,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HIGH_RES_MSN, countHighResMSn);
-                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HCD_MSN, countHCDMSn);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_HCD, countLowResHCD);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_HIGH_RES_HCD, countHighResHCD);
             }
             catch (Exception ex)
             {
