@@ -26,7 +26,7 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerTopPIC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cmd, Csv, html, json, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
+        // Ignore Spelling: cmd, Csv, html, json, msalign, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
 
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
         private const string TOPPIC_EXE_NAME = "toppic.exe";
@@ -1071,6 +1071,7 @@ namespace AnalysisManagerTopPICPlugIn
                 };
 
                 int expectedPrsmResults;
+                var baseNames = new List<string>();
 
                 if (msAlignFiles.Count <= 1)
                 {
@@ -1079,6 +1080,7 @@ namespace AnalysisManagerTopPICPlugIn
                     resultFileNames.Add(new TopPICResultFileInfo(mDatasetName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
 
                     expectedPrsmResults = 1;
+                    baseNames.Add(mDatasetName);
                 }
                 else
                 {
@@ -1100,6 +1102,7 @@ namespace AnalysisManagerTopPICPlugIn
                         }
 
                         resultFileNames.Add(new TopPICResultFileInfo(baseName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
+                        baseNames.Add(baseName);
                     }
 
                     expectedPrsmResults = msAlignFiles.Count;
@@ -1252,8 +1255,9 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 // Zip the Html directory (or directories)
-                // The TopPIC 1.3 release of TopPIC (January 2020) creates just one _html directory, named DatasetName_html
-                // The TopPIC 1.2 release of TopPIC (November 2018) has Html directories that include the text _ms2_toppic
+                // TopPIC 1.2 (November 2018) created Html directories that include the text _ms2_toppic
+                // TopPIC 1.3 (January 2020) and newer create just one _html directory, named DatasetName_html
+                // If there are multiple msalign files, there will be multiple html directories
                 // Earlier versions do not have _ms2_toppic
                 var directoriesToCompress = new List<string> {
                     "_html",
@@ -1261,6 +1265,17 @@ namespace AnalysisManagerTopPICPlugIn
                     "_ms2_toppic_proteoform_cutoff_html",
                     "_ms2_prsm_cutoff_html",
                     "_ms2_proteoform_cutoff_html"};
+
+                if (baseNames.Count > 0)
+                {
+                    foreach (var baseName in baseNames)
+                    {
+                        // baseName should be of the form DatasetName_0
+                        // Remove the dataset name from baseName then add to directoriesToCompress
+
+                        directoriesToCompress.Add(string.Format("{0}_html", baseName.Substring(mDatasetName.Length)));
+                    }
+                }
 
                 var directoriesZipped = 0;
 
