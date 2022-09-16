@@ -461,6 +461,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </remarks>
         public virtual void CopyFailedResultsToArchiveDirectory()
         {
+            const string DMS_WORKING_DIRECTORY_FILE_INFO_FILE = "_DMS_WorkDir_File_Info_.tsv";
+
             if (Global.OfflineMode)
             {
                 // Offline mode jobs each have their own work directory
@@ -486,11 +488,39 @@ namespace AnalysisManagerBase.AnalysisTool
             if (mDebugLevel < 2)
                 mDebugLevel = 2;
 
+            // Create a tab-delimited text file listing all of the files in the working directory and all subdirectories
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            var workingDirectoryPathLength = workingDirectory.FullName.Length;
+
+            var fileInfoFilePath = Path.Combine(workingDirectory.FullName, DMS_WORKING_DIRECTORY_FILE_INFO_FILE);
+
+            using (var writer = new StreamWriter(new FileStream(fileInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+            {
+                writer.WriteLine("{0}\t{1}\t{2}\t{3}", "Date", "Size", "File", "Subdirectory");
+
+                foreach (var item in workingDirectory.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    var parentDirectoryPath = item.Directory == null
+                        ? string.Empty
+                        : item.Directory.FullName;
+
+                    if (item.Name.Equals(DMS_WORKING_DIRECTORY_FILE_INFO_FILE) && workingDirectory.FullName.Equals(parentDirectoryPath))
+                        continue;
+
+                    var subdirectory = parentDirectoryPath.Length > workingDirectoryPathLength
+                        ? parentDirectoryPath.Substring(workingDirectoryPathLength + 1)
+                        : string.Empty;
+
+                    writer.WriteLine("{0}\t{1}\t{2}\t{3}", item.LastWriteTime.ToString(DATE_TIME_FORMAT), item.Length, item.Name, subdirectory);
+                }
+            }
+
             // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
             var directoryPathToArchive = mWorkDir;
 
             // Make the results directory
             var success = MakeResultsDirectory();
+
             if (success)
             {
                 // Move the result files into the results directory
