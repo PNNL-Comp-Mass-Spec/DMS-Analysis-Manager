@@ -34,7 +34,7 @@ namespace AnalysisManagerProg
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Archaea, Bem, bemidjiensis, bool, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
+        // Ignore Spelling: Acq, Archaea, Bem, bemidjiensis, bool, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
         // Ignore Spelling: hh, Inj, lovelyi, luteus, Mam, metallireducens, mgf, Micrococcus, msgfspecprob, na, nr,
         // Ignore Spelling: pek, perf, Pos, proteinseqs, Qonvert, Rar, sp, Sprot, ss, svc-dms, Trembl, tt, yyyy
 
@@ -70,7 +70,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Load settings from config file AnalysisManagerProg.exe.config
-                var options = new CommandLineOptions {TraceMode = TRACE_MODE_ENABLED};
+                var options = new CommandLineOptions { TraceMode = TRACE_MODE_ENABLED };
 
                 var mainProcess = new MainProcess(options);
                 mainProcess.InitMgrSettings(false);
@@ -509,8 +509,8 @@ namespace AnalysisManagerProg
         {
             const string workDir = @"C:\DMS_WorkDir";
 
-            const string  exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
-            const string  dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
+            const string exePath = @"C:\DMS_Programs\ProteoWizard\msconvert.exe";
+            const string dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
             const string arguments =
                 dataFilePath +
                 @" --filter ""peakPicking true 1-"" " +
@@ -755,7 +755,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestCopyToLocalWithHashCheck()
         {
-            const string  remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
+            const string remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
             const string targetDirectoryPath = @"C:\DMS_Temp_Org";
 
             var fileTools = new FileTools("AnalysisManager", 1);
@@ -1224,9 +1224,9 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-            /// Determine the size of a legacy FASTA file
-            /// </summary>
-            public void GetLegacyFastaFileSize()
+        /// Determine the size of a legacy FASTA file
+        /// </summary>
+        public void GetLegacyFastaFileSize()
         {
             var jobParams = new AnalysisJob(mMgrSettings, 0);
 
@@ -1587,6 +1587,201 @@ namespace AnalysisManagerProg
             dotNetZipTools.ZipDirectory(@"F:\Temp\FolderTest", @"F:\Temp\ZippedFolderTest.zip");
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+        }
+
+        /// <summary>
+        /// Determine the InstrumentID value used for a set of analysis jobs
+        /// </summary>
+        /// <param name="jobList">Comma or new-line separated list of job numbers</param>
+        /// <param name="resultsFilePath"></param>
+        public void ExamineInstrumentID(string jobList, string resultsFilePath = @"C:\Temp\InstrumentIDsByJob.txt")
+        {
+            try
+            {
+                var analysisJobs = jobList.Split(new char[] { '\t', ',', '\r', '\n' });
+                var jobNumbers = new List<int>();
+
+                foreach (var item in analysisJobs)
+                {
+                    if (int.TryParse(item, out var jobNumber))
+                        jobNumbers.Add(jobNumber);
+
+                }
+
+                var sql = string.Format(
+                    "SELECT J.Job, J.Dataset, J.InstrumentName, J.StoragePathServer, J.DatasetFolder, J.ResultsFolder, J.ParameterFileName, DSType.Dataset_Type, DSType.Acq_Start " +
+                    "FROM V_Analysis_Job_Export J " +
+                    "     INNER JOIN ( SELECT id, " +
+                    "                         [Dataset Type] AS Dataset_Type, " +
+                    "                         [Acq Start] AS Acq_Start " +
+                    "                  FROM V_Dataset_List_Report_2 ) DSType " +
+                    "       ON J.DatasetID = DSType.ID " +
+                    "WHERE J.Job In ({0}) " +
+                    "ORDER BY J.Job", string.Join(", ", jobNumbers));
+
+
+                const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+                const short retryCount = 2;
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_ExamineInstrumentID");
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: true);
+                RegisterEvents(dbTools);
+
+                var success = dbTools.GetQueryResultsDataTable(sql, out var dt, retryCount);
+
+                if (!success)
+                {
+                    Console.WriteLine("Repeated errors running database query");
+                }
+
+                if (dt.Rows.Count < 1)
+                {
+                    // No data was returned
+                    Console.WriteLine("Job numbers were not found in V_Analysis_Job_Export");
+                    return;
+                }
+
+                Console.WriteLine("Writing results to " + resultsFilePath);
+
+                using var writer = new StreamWriter(new FileStream(resultsFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                writer.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", "Job", "Dataset", "Instrument", "InstrumentID_Param", "InstrumentMode_ConsoleOutput", "Dataset_Scan_Types", "Acq_Start");
+
+                foreach (DataRow curRow in dt.Rows)
+                {
+                    var dataset = curRow["Dataset"].CastDBVal<string>();
+                    var job = curRow["Job"].CastDBVal<int>();
+                    var instrument = curRow["InstrumentName"].CastDBVal<string>();
+                    var storagePathServer = curRow["StoragePathServer"].CastDBVal<string>();
+                    var datasetFolder = curRow["DatasetFolder"].CastDBVal<string>();
+                    var resultsDirectory = curRow["ResultsFolder"].CastDBVal<string>();
+                    var parameterFile = curRow["ParameterFileName"].CastDBVal<string>();
+                    var datasetType = curRow["Dataset_Type"].CastDBVal<string>();
+                    var acqStart = curRow["Acq_Start"].CastDBVal<string>();
+
+                    var jobDirectory = new DirectoryInfo(Path.Combine(storagePathServer, datasetFolder, resultsDirectory));
+
+                    if (!jobDirectory.Exists)
+                    {
+                        ConsoleMsgUtils.ShowWarning("Results not found for job {0}: {1}", job, jobDirectory.FullName);
+                        continue;
+                    }
+
+                    var files = jobDirectory.GetFiles(parameterFile).ToList();
+
+                    FileInfo jobParameterFile;
+
+                    if (files.Count > 0)
+                    {
+                        jobParameterFile = files[0];
+                    }
+                    else
+                    {
+                        // Parameter file not found; it was likely renamed
+                        // Look for any MS-GF+ parameter file
+                        var files2 = jobDirectory.GetFiles("MSGF*.txt").ToList();
+
+                        if (files2.Count > 0)
+                        {
+                            FileInfo foundFile = null;
+
+                            foreach (var item in files2)
+                            {
+                                if (item.Name.EndsWith("ConsoleOutput.txt", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                if (item.Name.EndsWith("_ModDefs.txt", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                if (item.Name.Equals("MSGFDB_mods.txt", StringComparison.OrdinalIgnoreCase))
+                                    continue;
+
+                                foundFile = item;
+                                break;
+                            }
+
+                            if (foundFile == null)
+                                continue;
+
+                            jobParameterFile = foundFile;
+
+                            ConsoleMsgUtils.ShowWarning("Parameter file not found for job {0}, but found {1} instead", job, jobParameterFile.Name);
+                        }
+                        else
+                        {
+                            ConsoleMsgUtils.ShowWarning("Parameter file not found for job {0}: {1}", job, parameterFile);
+                            jobParameterFile = null;
+                        }
+                    }
+
+                    var instrumentID = string.Empty;
+
+                    if (jobParameterFile != null)
+                    {
+                        var paramFileReader = new KeyValueParamFileReader("MS-GF+", jobParameterFile.FullName);
+                        RegisterEvents(paramFileReader);
+
+                        var paramFileSuccess = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+                        if (!paramFileSuccess)
+                        {
+                            ConsoleMsgUtils.ShowWarning("ParseKeyValueParameterFileGetAllLines returned false for job {0}, parameter file {1}",
+                                job, jobParameterFile.Name);
+
+                            continue;
+                        }
+
+                        foreach (var parameter in paramFileEntries)
+                        {
+                            if (parameter.Key.Equals("InstrumentID", StringComparison.OrdinalIgnoreCase))
+                            {
+                                instrumentID = parameter.Value;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Extract the instrument mode from the console output file
+                    FileInfo consoleOutputFile;
+                    var consoleOutputFile1 = jobDirectory.GetFiles("MSGFPlus_ConsoleOutput.txt").ToList();
+                    var consoleOutputFile2 = jobDirectory.GetFiles("MSGFDB_ConsoleOutput.txt").ToList();
+
+                    if (consoleOutputFile1.Count > 0)
+                        consoleOutputFile = consoleOutputFile1[0];
+                    else if (consoleOutputFile2.Count > 0)
+                        consoleOutputFile = consoleOutputFile2[0];
+                    else
+                    {
+                        ConsoleMsgUtils.ShowWarning("Console output file not found for job {0}: {1}", job, jobDirectory.FullName);
+                        consoleOutputFile = null;
+                    }
+
+                    var instrumentMode = string.Empty;
+
+                    if (consoleOutputFile != null)
+                    {
+                        var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                        while (!reader.EndOfStream)
+                        {
+                            var dataLine = reader.ReadLine();
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                                continue;
+
+                            if (!dataLine.Trim().StartsWith("Instrument:"))
+                                continue;
+
+                            instrumentMode = dataLine.Trim().Substring("Instrument:".Length).Trim();
+                        }
+                    }
+
+                    writer.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", job, dataset, instrument, instrumentID, instrumentMode, datasetType, acqStart);
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleMsgUtils.ShowError("Exception in ExamineInstrumentID", ex);
+            }
         }
 
         /// <summary>
