@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AnalysisManagerBase;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
@@ -186,14 +187,28 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return resultCode;
 
             // Retrieve the TopPIC results for this job
-            var topPICResultsFile = DatasetName + TOPPIC_RESULT_FILE_SUFFIX;
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(topPICResultsFile, false))
+
+            var filesToGet = DatasetName + "*" + TOPPIC_RESULT_FILE_SUFFIX;
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(filesToGet, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
-            mJobParams.AddResultFileToSkip(topPICResultsFile);
-            mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM, topPICResultsFile);
+
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+            var topPICResultFileNames = new List<string>();
+
+            foreach (var item in workingDirectory.GetFiles(filesToGet))
+            {
+                mJobParams.AddResultFileToSkip(item.Name);
+
+                topPICResultFileNames.Add(item.Name);
+            }
+
+            // If there are multiple _TopPIC_PrSMs.txt files, separate them with a tab
+            mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSALIGN_QUANT_INPUT_FILE_NAME_PARAM,
+                string.Join("\t", topPICResultFileNames));
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
