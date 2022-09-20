@@ -572,20 +572,18 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                             matchingDirectoryPath = DatasetInfoBase.AppendMyEMSLFileID(directoryPath, matchingMyEMSLFiles.First().FileID);
                             break;
                         }
-                        else
-                        {
-                            if (!directoryToCheck.Exists)
-                                continue;
 
-                            var foundFiles = directoryToCheck.GetFiles(fileNameOrPattern);
+                        if (!directoryToCheck.Exists)
+                            continue;
 
-                            if (foundFiles.Length == 0)
-                                continue;
+                        var foundFiles = directoryToCheck.GetFiles(fileNameOrPattern);
 
-                            matchFound = true;
-                            matchingDirectoryPath = directoryPath;
-                            break;
-                        }
+                        if (foundFiles.Length == 0)
+                            continue;
+
+                        matchFound = true;
+                        matchingDirectoryPath = directoryPath;
+                        break;
                     }
                     catch (Exception ex)
                     {
@@ -1142,8 +1140,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Match succeeded; extract out the coordinates
                 if (int.TryParse(reMatch.Groups["R"].Value, out R))
                     success = true;
+
                 if (int.TryParse(reMatch.Groups["X"].Value, out X))
                     success = true;
+
                 int.TryParse(reMatch.Groups["Y"].Value, out Y);
             }
             else
@@ -1155,8 +1155,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     if (int.TryParse(reMatch.Groups["R"].Value, out R))
                         success = true;
+
                     if (int.TryParse(reMatch.Groups["X"].Value, out X))
                         success = true;
+
                     Y = 0;
                 }
                 else
