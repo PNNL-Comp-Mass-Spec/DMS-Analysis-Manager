@@ -30,7 +30,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "September 19, 2022";
+        public const string PROGRAM_DATE = "September 20, 2022";
 
         private static bool mTraceMode;
 

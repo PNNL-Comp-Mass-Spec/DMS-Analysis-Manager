@@ -19,6 +19,7 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
+using System.Data;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -1225,7 +1226,7 @@ namespace AnalysisManagerExtractionPlugin
             var filesToGet = new List<string>();
 
             // First copy the _psm.tsv file locally
-            if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET))
+            if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
             {
                 // The results directory will have a file named Aggregation_psm.tsv if no experiment groups were defined
                 // However, if experiment groups were defined, there will be one _psm.tsv file for each experiment group

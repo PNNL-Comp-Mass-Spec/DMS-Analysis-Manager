@@ -1367,7 +1367,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPHRPForMSFragger()
         {
-            if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+            if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
             {
                 return RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
             }
@@ -1414,12 +1414,12 @@ namespace AnalysisManagerExtractionPlugin
                         experimentGroup,
                         inputFileName,
                         false,
-                        out var synopsisFileNameFromPHRP,
+                        out var synopsisFileNamesFromPHRP,
                         out var psmResults);
 
                     if (experimentGroupResult == CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        synopsisFileNames.Add(synopsisFileNameFromPHRP);
+                        synopsisFileNames.AddRange(synopsisFileNamesFromPHRP);
                     }
                     else
                     {
@@ -1552,31 +1552,90 @@ namespace AnalysisManagerExtractionPlugin
             string baseDatasetName,
             string inputFileName,
             bool postJobPSMResultsToDB,
-            out string synopsisFileNameFromPHRP,
+            out List<string> synopsisFileNamesFromPHRP,
             out PSMResults psmResults)
         {
+            const string PSM_FILE_SUFFIX = "_psm.tsv";
+
+            synopsisFileNamesFromPHRP = new List<string>();
+            psmResults = new PSMResults();
+
             var synopsisFileName = baseDatasetName + "_msfragger_syn.txt";
 
-            var result = RunPHRPWork(
-                "MSFragger",
-                inputFileName,
-                PeptideHitResultTypes.MSFragger,
-                synopsisFileName,
-                false,
-                true,
-                baseDatasetName,
-                out synopsisFileNameFromPHRP);
+            var peptideSearchResultsFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var inputFiles = new List<FileInfo>();
+
+            if (peptideSearchResultsFile.Exists)
             {
-                psmResults = new PSMResults();
-                return result;
+                inputFiles.Add(peptideSearchResultsFile);
+            }
+            else
+            {
+                // Run PHRP on each _psm.tsv file in the work directory
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                // Use search pattern *_psm.tsv
+                inputFiles.AddRange(workingDirectory.GetFiles(string.Format("*{0}", PSM_FILE_SUFFIX)));
+
+                if (inputFiles.Count == 0)
+                {
+                    LogError("Did not find any _psm.tsv files in the working directory; cannot run PHRP");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
             }
 
-            // Summarize the number of PSMs in the synopsis file
-            // This is done by this class since the MSFragger script does not have an MSGF job step
+            var successCount = 0;
+            var successOverall = CloseOutType.CLOSEOUT_SUCCESS;
 
-            return SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFileNameFromPHRP, postJobPSMResultsToDB, out psmResults);
+            foreach (var inputFile in inputFiles)
+            {
+                if (!peptideSearchResultsFile.Exists)
+                {
+                    // Override baseDatasetName
+                    baseDatasetName = inputFile.Name.Substring(0, inputFile.Name.Length - PSM_FILE_SUFFIX.Length);
+                }
+
+                var result = RunPHRPWork(
+                    "MSFragger",
+                    inputFile.Name,
+                    PeptideHitResultTypes.MSFragger,
+                    synopsisFileName,
+                    false,
+                    true,
+                    baseDatasetName,
+                    out var synopsisFileNameFromPHRP);
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    continue;
+                }
+
+                synopsisFileNamesFromPHRP.Add(synopsisFileNameFromPHRP);
+
+                // Summarize the number of PSMs in the synopsis file
+                // This is done by this class since the MSFragger script does not have an MSGF job step
+
+                var summarizeResult = SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFileNameFromPHRP, postJobPSMResultsToDB, out var psmResultsToAdd);
+
+                if (summarizeResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    successOverall = summarizeResult;
+                    continue;
+                }
+
+                successCount++;
+
+                if (successCount == 1)
+                    psmResults = psmResultsToAdd;
+                else
+                    psmResults.AppendResults(psmResultsToAdd);
+            }
+
+            return successCount == inputFiles.Count
+                ? CloseOutType.CLOSEOUT_SUCCESS
+                : successOverall;
+
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
@@ -2017,7 +2076,7 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
+                if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
                 {
                     // PHRP auto-named the synopsis file based on the datasets in this data package
                     // Auto-find the file
