@@ -502,8 +502,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
                 {
-                    // Also add the data package directory
-                    parentDirPaths.Add(mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH));
+                    var dataPackageDirectory = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH);
+
+                    if (!string.IsNullOrWhiteSpace(dataPackageDirectory))
+                    {
+                        // Also add the data package directory
+                        parentDirPaths.Add(mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH));
+                    }
                 }
 
                 var directoriesToSearch = new List<string>();
