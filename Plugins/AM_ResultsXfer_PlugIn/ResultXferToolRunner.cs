@@ -360,11 +360,13 @@ namespace AnalysisManagerResultsXferPlugin
             var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
             string datasetStoragePath;
 
-            bool appendDatasetDirectoryName;
+            bool appendDatasetDirectoryNameForSource;
+            bool appendDatasetDirectoryNameForTarget;
 
             if (Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
             {
-                appendDatasetDirectoryName = false;
+                appendDatasetDirectoryNameForSource = false;
+                appendDatasetDirectoryNameForTarget = false;
 
                 datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATA_PACKAGE_PATH);
 
@@ -376,13 +378,29 @@ namespace AnalysisManagerResultsXferPlugin
             }
             else
             {
-                appendDatasetDirectoryName = true;
+                appendDatasetDirectoryNameForSource = !AnalysisResources.IsDataPackageDataset(mDatasetName);
+                appendDatasetDirectoryNameForTarget = true;
+
                 datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
 
                 if (string.IsNullOrEmpty(datasetStoragePath))
                 {
                     LogError("DatasetStoragePath job parameter is empty");
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            if (!Directory.Exists(transferDirectoryPath) && AnalysisResources.IsDataPackageDataset(mDatasetName))
+            {
+                var cacheFolderRootPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_CACHE_FOLDER_ROOT_PATH);
+
+                if (!string.IsNullOrWhiteSpace(cacheFolderRootPath) && Directory.Exists(cacheFolderRootPath))
+                {
+                    LogWarning(string.Format(
+                        "Transfer directory not found ({0}) but the cache folder root path does exist; updating the transfer directory to: {1}",
+                        transferDirectoryPath, cacheFolderRootPath));
+
+                    transferDirectoryPath = cacheFolderRootPath;
                 }
             }
 
@@ -415,7 +433,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             string directoryToMove;
 
-            if (appendDatasetDirectoryName)
+            if (appendDatasetDirectoryNameForSource)
             {
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 if (string.IsNullOrWhiteSpace(datasetDirectoryName))
@@ -434,7 +452,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (!Directory.Exists(directoryToMove))
             {
-                LogError("Results transfer failed, directory " + directoryToMove + " not found");
+                LogError(string.Format("Results transfer failed, directory {0} not found", directoryToMove));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -447,7 +465,7 @@ namespace AnalysisManagerResultsXferPlugin
             // If it doesn't exist, we will auto-create it
 
             string datasetDirectoryPath;
-            if (appendDatasetDirectoryName)
+            if (appendDatasetDirectoryNameForTarget)
             {
                 datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
             }
