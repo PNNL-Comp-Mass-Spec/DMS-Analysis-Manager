@@ -20,7 +20,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     public class FileSearch : EventNotifier
     {
         // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
-        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, ser, txt, wildcards, Workflows
+        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, protoapps, ser, txt, wildcards, Workflows
 
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
@@ -529,16 +529,34 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         continue;
                     }
 
+                    // If the parent directory is a staging directory for MaxQuant or MSFragger, look for files in subdirectories directly below the staging directory
+                    // MaxQuant uses  \\protoapps\MaxQuant_Staging
+                    // MSFragger uses \\proto-9\MSFragger_Staging
+                    var checkDirectlyBelowParent =
+                        parentDirPath.IndexOf("_Staging", StringComparison.OrdinalIgnoreCase) > 0 && (
+                            scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase) ||
+                            scriptName.StartsWith("MSFragger", StringComparison.OrdinalIgnoreCase));
+
                     if (!string.IsNullOrEmpty(inputDirectoryName))
                     {
                         // Parent directory \ Dataset directory \ Input directory
                         FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, inputDirectoryName, subdirectoriesToAppend);
+
+                        if (checkDirectlyBelowParent)
+                        {
+                            FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, string.Empty, inputDirectoryName, subdirectoriesToAppend);
+                        }
                     }
 
                     foreach (var sharedDirName in sharedResultDirNames)
                     {
                         // Parent directory \ Dataset directory \ Shared results directory
                         FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, datasetDirectoryName, sharedDirName, subdirectoriesToAppend);
+
+                        if (checkDirectlyBelowParent)
+                        {
+                            FindDataFileAddDirectoryToCheck(directoriesToSearch, parentDirPath, string.Empty, sharedDirName, subdirectoriesToAppend);
+                        }
                     }
 
                     if (!string.IsNullOrWhiteSpace(datasetDirectoryName))
