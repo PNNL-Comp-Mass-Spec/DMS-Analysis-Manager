@@ -2928,6 +2928,8 @@ namespace AnalysisManagerProg
             const int DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB = 750;
             const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 2048;
 
+            const string CACHE_FOLDER = "cache folder";
+
             errorMessage = string.Empty;
 
             try
@@ -2983,6 +2985,10 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = mMgrParams.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
+                // The CacheFolderRootPath parameter is normally in section JobParameters, but could be in section MSFragger
+                // Thus, search for the parameter in any section
+                var cacheFolderRootPath = mAnalysisTask.GetParam(AnalysisResources.JOB_PARAM_CACHE_FOLDER_ROOT_PATH);
+
                 var transferDir = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
                 var transferDirMinFreeSpaceGB = mMgrParams.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
@@ -3001,25 +3007,65 @@ namespace AnalysisManagerProg
 
                 if (!Global.OfflineMode)
                 {
+                    string directoryDescription;
+
                     if (string.IsNullOrEmpty(transferDir))
                     {
-                        errorMessage = "Transfer directory for the job is empty; cannot continue";
-
-                        if (DataPackageIdMissing())
+                        if (!string.IsNullOrWhiteSpace(cacheFolderRootPath))
                         {
-                            errorMessage += ". Data package ID cannot be 0 for this job type";
+                            LogWarning("Transfer directory parameter for the job is empty; but the cache folder parameter is defined ({0})", cacheFolderRootPath);
+                            transferDir = cacheFolderRootPath;
+                            directoryDescription = CACHE_FOLDER;
                         }
+                        else
+                        {
+                            errorMessage = "Transfer directory parameter for the job is empty; cannot continue";
 
-                        LogError(errorMessage);
-                        return false;
+                            if (DataPackageIdMissing())
+                            {
+                                errorMessage += ". Data package ID cannot be 0 for this job type";
+                            }
+
+                            LogError(errorMessage);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        var targetDirectory = new DirectoryInfo(transferDir);
+
+                        if (targetDirectory.Exists)
+                        {
+                            directoryDescription = "transfer directory";
+                        }
+                        else if (!string.IsNullOrWhiteSpace(cacheFolderRootPath))
+                        {
+                            LogWarning("Transfer directory parameter refers to a folder that does not exist ({0}); will instead use the cache folder parameter ({1})", transferDir, cacheFolderRootPath);
+                            transferDir = cacheFolderRootPath;
+                            directoryDescription = CACHE_FOLDER;
+                        }
+                        else
+                        {
+                            directoryDescription = "transfer directory";
+                        }
                     }
 
-                    ShowTrace("Validating free space for the transfer directory: " + transferDir);
+                    // Validating free space for the transfer directory
+                    // Validating free space for the cache folder
+                    ShowTrace(string.Format("Validating free space for the {0}: {1}", directoryDescription, transferDir));
 
                     // Verify that the remote transfer directory exists and that its drive has sufficient free space
                     if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage))
                     {
                         return false;
+                    }
+
+                    if (directoryDescription.Equals(CACHE_FOLDER))
+                    {
+                        // Override the transfer directory job parameter
+                        mAnalysisTask.SetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH, cacheFolderRootPath);
+
+                        LogMessage("Updated the transfer directory parameter to use the cache folder path: {0}", cacheFolderRootPath);
                     }
                 }
 

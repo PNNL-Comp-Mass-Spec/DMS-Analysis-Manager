@@ -38,7 +38,7 @@ namespace AnalysisManagerBase.AnalysisTool
     {
         // Ignore Spelling: acqu, baf, centroided, Cn, deconv, dta, fht, fid, Formularity, hashcheck, histone, loc
         // Ignore Spelling: maldi, MaxQuant, MODa, msalign, msgf, msgfdb, msgfplus, MSPathFinder, mzml, mzxml, na, num
-        // Ignore Spelling: parm, resourcer, sequest, ser, tdf, tims, tof, uimf, wiff, xt, xtandem
+        // Ignore Spelling: parm, protoapps, resourcer, sequest, ser, tdf, tims, tof, uimf, wiff, xt, xtandem
         // Ignore Spelling: Bruker, Micromass, Orbitrap
 
         /// <summary>
@@ -326,6 +326,17 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Bruker fid file name
         /// </summary>
         public const string BRUKER_FID_FILE = "fid";
+
+        /// <summary>
+        /// Cache folder root path
+        /// </summary>
+        /// <remarks>
+        /// Default values:
+        ///   PRIDE_Converter: \\protoapps\MassIVE_Staging
+        ///   MaxQuant:        \\protoapps\MaxQuant_Staging
+        ///   MSFragger:       \\proto-9\MSFragger_Staging
+        /// </remarks>
+        public const string JOB_PARAM_CACHE_FOLDER_ROOT_PATH = "CacheFolderRootPath";
 
         /// <summary>
         /// Dataset directory name
