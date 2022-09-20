@@ -229,9 +229,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if an error</returns>
-        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound)
+        public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir, bool logFileNotFound)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath: false);
+            return FindAndRetrieveMiscFiles(fileNameOrPattern, unzip, searchArchivedDatasetDir, out _, logFileNotFound, logRemoteFilePath: false);
         }
 
         /// <summary>
