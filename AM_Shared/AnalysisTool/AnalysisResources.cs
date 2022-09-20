@@ -3049,6 +3049,17 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
+        /// Return true if the dataset name is of the form "DataPackage_1234_"
+        /// </summary>
+        /// <param name="datasetName"></param>
+        public static bool IsDataPackageDataset(string datasetName)
+        {
+            var dataPackageMatcher = new Regex(@"^DataPackage_\d+_", RegexOptions.IgnoreCase);
+
+            return dataPackageMatcher.IsMatch(datasetName);
+        }
+
+        /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
@@ -3434,7 +3445,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPkgDataset"></param>
         public bool OverrideCurrentDatasetInfo(DataPackageDatasetInfo dataPkgDataset)
         {
-            var aggregationJob = false;
 
             if (string.IsNullOrEmpty(dataPkgDataset.Dataset))
             {
@@ -3442,10 +3452,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            if (Global.IsMatch(dataPkgDataset.Dataset, AGGREGATION_JOB_DATASET))
-            {
-                aggregationJob = true;
-            }
+            var aggregationJob = Global.IsMatch(dataPkgDataset.Dataset, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(dataPkgDataset.Dataset);
 
             if (!aggregationJob)
             {
@@ -3494,7 +3501,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPkgJob"></param>
         public bool OverrideCurrentDatasetAndJobInfo(DataPackageJobInfo dataPkgJob)
         {
-            var aggregationJob = false;
 
             if (string.IsNullOrEmpty(dataPkgJob.Dataset))
             {
@@ -3502,10 +3508,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return false;
             }
 
-            if (Global.IsMatch(dataPkgJob.Dataset, AGGREGATION_JOB_DATASET))
-            {
-                aggregationJob = true;
-            }
+            var aggregationJob = Global.IsMatch(dataPkgJob.Dataset, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(dataPkgJob.Dataset);
 
             if (!aggregationJob)
             {
