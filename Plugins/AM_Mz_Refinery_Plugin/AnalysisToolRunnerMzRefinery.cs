@@ -1610,6 +1610,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // MSConvert
             var success = mToolVersionUtilities.GetMSConvertToolVersion(mMSConvertProgLoc, out var msConvertVersion);
+
             if (!success)
             {
                 LogError(string.Format("Unable to determine the version of {0}", Path.GetFileName(mMSConvertProgLoc)), true);

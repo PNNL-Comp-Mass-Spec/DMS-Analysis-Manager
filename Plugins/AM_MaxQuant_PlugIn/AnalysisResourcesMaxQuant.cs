@@ -656,28 +656,28 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (string.IsNullOrWhiteSpace(maxQuantProgLoc))
                 {
-                    LogError("MaxQuant location could not be determined using manager parameter {0} and relative path {1}", "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME);
+                    LogError(string.Format("MaxQuant location could not be determined using manager parameter {0} and relative path {1}", "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME));
                     return new SortedSet<string>();
                 }
 
                 var maxQuantExecutable = new FileInfo(maxQuantProgLoc);
                 if (maxQuantExecutable.Directory == null)
                 {
-                    LogError("Unable to determine the MaxQuant parent directory using {0}", maxQuantProgLoc);
+                    LogError(string.Format("Unable to determine the MaxQuant parent directory using {0}", maxQuantProgLoc));
                     return new SortedSet<string>();
                 }
 
                 var confDirectory = new DirectoryInfo(Path.Combine(maxQuantExecutable.Directory.FullName, "conf"));
                 if (!confDirectory.Exists)
                 {
-                    LogError("MaxQuant conf directory not found: {0}", confDirectory.FullName);
+                    LogError(string.Format("MaxQuant conf directory not found: {0}", confDirectory.FullName));
                     return new SortedSet<string>();
                 }
 
                 var sourceFile = new FileInfo(Path.Combine(confDirectory.FullName, "modifications.xml"));
                 if (!sourceFile.Exists)
                 {
-                    LogError("MaxQuant modifications file not found: {0}", sourceFile.FullName);
+                    LogError(string.Format("MaxQuant modifications file not found: {0}", sourceFile.FullName));
                     return new SortedSet<string>();
                 }
 
@@ -704,7 +704,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (maxQuantModificationNames.Contains(modTitle))
                     {
-                        LogError("Modification {0} is defined twice in the MaxQuant modifications.xml file", modTitle);
+                        LogError(string.Format("Modification {0} is defined twice in the MaxQuant modifications.xml file", modTitle));
                         LogWarning("File path {0}", sourceFile.FullName);
                         return new SortedSet<string>();
                     }
