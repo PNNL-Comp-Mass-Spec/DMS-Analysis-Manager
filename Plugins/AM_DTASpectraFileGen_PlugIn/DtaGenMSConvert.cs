@@ -274,11 +274,11 @@ namespace DTASpectraFileGen
                 {
                     // Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
                     // Syntax details:
-                    //   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
-                    //   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
+                    //   peakPicking [<PickerType> [msLevel=<ms_levels>]]
+                    //   threshold <type> <threshold> <orientation> [<mslevels>]
 
-                    // So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 250 peaks (sorted by intensity)
-                    // --filter "peakPicking true 1-" --filter "threshold count 250 most-intense"
+                    // The following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
+                    // --filter "peakPicking vendor mslevel=1-" --filter "threshold count 150 most-intense"
 
                     if (centroidPeakCountToRetain == 0)
                     {
@@ -289,7 +289,7 @@ namespace DTASpectraFileGen
                         centroidPeakCountToRetain = 25;
                     }
 
-                    argumentList.Add("--filter \"peakPicking true 1-\"");
+                    argumentList.Add("--filter \"peakPicking vendor mslevel=1-\"");
                     argumentList.Add(string.Format("--filter \"threshold count {0} most-intense\"", centroidPeakCountToRetain));
 
                     if (centroidPeakCountMinimum > 0)

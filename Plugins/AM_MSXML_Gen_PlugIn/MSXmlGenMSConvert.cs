@@ -91,23 +91,30 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     // Centroid the data by first applying the peak-picking algorithm, then keeping the top N data points
                     // Syntax details:
+                    //   peakPicking [<PickerType> [msLevel=<ms_levels>]]
+                    //   threshold <type> <threshold> <orientation> [<mslevels>]
+
+                    // The following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
+                    // --filter "peakPicking vendor mslevel=1-" --filter "threshold count 150 most-intense"
+
+                    // Older versions of MSConvert used this syntax (which is still supported)
                     //   peakPicking prefer_vendor:<true|false>  int_set(MS levels)
                     //   threshold <count|count-after-ties|absolute|bpi-relative|tic-relative|tic-cutoff> <threshold> <most-intense|least-intense> [int_set(MS levels)]
 
-                    // So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
-                    // --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
+                    // The following is the older syntax version of the two-step filter shown above
+                    // --filter "peakPicking true 1-" --filter "threshold count 150
 
                     if (mCentroidMS1 && !mCentroidMS2)
                     {
-                        arguments += " --filter \"peakPicking true 1\"";
+                        arguments += " --filter \"peakPicking vendor mslevel=1\"";
                     }
                     else if (!mCentroidMS1 && mCentroidMS2)
                     {
-                        arguments += " --filter \"peakPicking true 2-\"";
+                        arguments += " --filter \"peakPicking vendor mslevel=2-\"";
                     }
                     else
                     {
-                        arguments += " --filter \"peakPicking true 1-\"";
+                        arguments += " --filter \"peakPicking vendor mslevel=1-\"";
                     }
 
                     if (mCentroidPeakCountToRetain < 0)
@@ -135,9 +142,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // Replace single quotes with double quotes
                 // For example, switch from:
-                // --filter 'peakPicking true 1-' --filter 'scanNumber [0,24427] [24441,49450]' --mzML --32
+                // --filter 'peakPicking vendor mslevel=1-' --filter 'scanNumber [0,24427] [24441,49450]' --mzML --32
                 // to:
-                // --filter "peakPicking true 1-" --filter "scanNumber [0,24427] [24441,49450]" --mzML --32
+                // --filter "peakPicking vendor mslevel=1-" --filter "scanNumber [0,24427] [24441,49450]" --mzML --32
 
                 arguments += " " + mCustomMSConvertArguments.Replace("'", "\"");
             }

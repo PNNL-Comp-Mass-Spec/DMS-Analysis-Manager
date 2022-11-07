@@ -513,7 +513,7 @@ namespace AnalysisManagerProg
             const string dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
             const string arguments =
                 dataFilePath +
-                @" --filter ""peakPicking true 1-"" " +
+                @" --filter ""peakPicking vendor mslevel=1-"" " +
                 @" --filter ""threshold count 500 most-intense"" " +
                 @" --mgf -o C:\DMS_WorkDir";
 
