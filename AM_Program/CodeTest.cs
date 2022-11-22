@@ -35,7 +35,7 @@ namespace AnalysisManagerProg
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: Acq, Archaea, Bem, bemidjiensis, bool, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
-        // Ignore Spelling: hh, Inj, lovelyi, luteus, Mam, metallireducens, mgf, Micrococcus, msgfspecprob, na, nr,
+        // Ignore Spelling: hh, Inj, lovelyi, luteus, Mam, metallireducens, mgf, Micrococcus, msgfspecprob, mslevel, na, nr,
         // Ignore Spelling: pek, perf, Pos, proteinseqs, Qonvert, Rar, sp, Sprot, ss, svc-dms, Trembl, tt, yyyy
 
         // ReSharper restore CommentTypo
@@ -2062,6 +2062,43 @@ namespace AnalysisManagerProg
             }
 
             return fileContents;
+        }
+
+        /// <summary>
+        /// Display the system path environment variable
+        /// </summary>
+        public void TestGetSystemPath()
+        {
+            var searchPath = Environment.GetEnvironmentVariable("Path");
+
+            var searchPathProcess = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Process);
+
+            // This is only valid on Windows
+            var searchPathUser = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.User);
+
+            // This is only valid on Windows
+            var searchPathMachine = Environment.GetEnvironmentVariable("Path", EnvironmentVariableTarget.Machine);
+
+            Console.WriteLine("System path values");
+            Console.WriteLine("{0,10}{1}", "Default:", searchPath);
+            Console.WriteLine();
+
+            if (searchPathProcess != null && searchPathProcess.Equals(searchPath))
+            {
+                Console.WriteLine("{0,10}{1}", "Process:", "Same as the default path");
+            }
+            else
+            {
+                Console.WriteLine("{0,10}{1}", "Process:", searchPathProcess);
+            }
+
+            Console.WriteLine();
+
+            Console.WriteLine("{0,10}{1}", "User:", searchPathUser);
+            Console.WriteLine();
+
+            Console.WriteLine("{0,10}{1}", "Machine:", searchPathMachine);
+            Console.WriteLine();
         }
 
         /// <summary>
