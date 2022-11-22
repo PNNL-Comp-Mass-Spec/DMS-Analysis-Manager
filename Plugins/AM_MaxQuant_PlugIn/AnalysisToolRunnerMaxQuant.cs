@@ -858,6 +858,15 @@ namespace AnalysisManagerMaxQuantPlugIn
 
             if (!processingSuccess)
             {
+                var dotNetDirectory = new DirectoryInfo(@"C:\Program Files\dotnet");
+
+                var searchPath = Environment.GetEnvironmentVariable("Path");
+
+                if (searchPath != null && dotNetDirectory.Exists && searchPath.IndexOf(@"C:\Program Files\dotnet", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    LogError(@"Directory 'C:\Program Files\dotnet' exists but it is not present in the system path; the DMS Program Runner Service likely needs to be restarted");
+                }
+
                 if (mCmdRunner.CachedConsoleErrors.Contains(".NET Core 3.1"))
                 {
                     LogError("Install 64-bit .NET Core SDK 3.1 (file dotnet-sdk-3.1.416-win-x64.exe) from https://dotnet.microsoft.com/en-us/download/dotnet/3.1");
