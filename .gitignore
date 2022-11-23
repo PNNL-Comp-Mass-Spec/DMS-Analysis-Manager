@@ -64,3 +64,7 @@ cloc*.pl
 CachedLibs/
 **/.vs/
 *.pdb
+/AM_Common/PSI_Interface.dll
+/AM_Common/System.CodeDom.dll
+/AM_Common/System.Data.Odbc.dll
+/AM_Common/System.Data.SqlClient.dll
