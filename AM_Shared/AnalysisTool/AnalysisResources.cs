@@ -3233,7 +3233,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Column aliases are used to assure that column names match V_DMS_Data_Package_Aggregation_Jobs,
             // and can thus be parsed by DataPackageInfoLoader.ParseDataPackageJobInfoRow
 
-            sqlStr.Append("SELECT Job, Dataset, DatasetID As Dataset_ID, InstrumentName As Instrument, InstrumentGroup AS Instrument_Group,");
+            sqlStr.Append("SELECT Job, Dataset, DatasetID As Dataset_ID, InstrumentName As Instrument_Name, InstrumentGroup AS Instrument_Group,");
             sqlStr.Append("       Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
             sqlStr.Append("       Tool, ResultType As Result_Type, SettingsFileName As Settings_File_Name, ParameterFileName As Parameter_File_Name,");
             sqlStr.Append("       OrganismDBName As Organism_DB_Name, ProteinCollectionList As Protein_Collection_List, ProteinOptions As Protein_Options,");

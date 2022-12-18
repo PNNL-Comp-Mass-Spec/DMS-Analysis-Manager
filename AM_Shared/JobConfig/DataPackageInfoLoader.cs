@@ -239,7 +239,7 @@ namespace AnalysisManagerBase.JobConfig
             // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs
             // Order by Step ascending, since the SharedResultsFolders list is processed in reverse (last item first)
 
-            sqlStr.Append(" SELECT Job, Dataset, Dataset_ID, Instrument, Instrument_Group,");
+            sqlStr.Append(" SELECT Job, Dataset, Dataset_ID, Instrument_Name, Instrument_Group,");
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
             sqlStr.Append("        Tool, Result_Type, Settings_File_Name, Parameter_File_Name,");
             sqlStr.Append("        Organism_DB_Name, Protein_Collection_List, Protein_Options,");
@@ -560,7 +560,7 @@ namespace AnalysisManagerBase.JobConfig
             var jobInfo = new DataPackageJobInfo(dataPkgJob, dataPkgDataset)
             {
                 DatasetID = curRow["Dataset_ID"].CastDBVal<int>(),
-                Instrument = curRow["Instrument"].CastDBVal<string>(),
+                Instrument = curRow["Instrument_Name"].CastDBVal<string>(),
                 InstrumentGroup = curRow["Instrument_Group"].CastDBVal<string>(),
                 Experiment = curRow["Experiment"].CastDBVal<string>(),
                 Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
