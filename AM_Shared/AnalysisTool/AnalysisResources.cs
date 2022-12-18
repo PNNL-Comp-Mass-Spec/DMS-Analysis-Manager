@@ -3229,12 +3229,16 @@ namespace AnalysisManagerBase.AnalysisTool
             var sqlStr = new StringBuilder();
 
             // This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
-            sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName As Instrument, InstrumentGroup,");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
-            sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,");
-            sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder,");
-            sqlStr.Append("        1 As Step, '' As SharedResultsFolder, RawDataType ");
+
+            // Column aliases are used to assure that column names match V_DMS_Data_Package_Aggregation_Jobs,
+            // and can thus be parsed by DataPackageInfoLoader.ParseDataPackageJobInfoRow
+
+            sqlStr.Append("SELECT Job, Dataset, DatasetID As Dataset_ID, InstrumentName As Instrument, InstrumentGroup AS Instrument_Group,");
+            sqlStr.Append("       Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
+            sqlStr.Append("       Tool, ResultType As Result_Type, SettingsFileName As Settings_File_Name, ParameterFileName As Parameter_File_Name,");
+            sqlStr.Append("       OrganismDBName As Organism_DB_Name, ProteinCollectionList As Protein_Collection_List, ProteinOptions As Protein_Options,");
+            sqlStr.Append("       ServerStoragePath As Server_Storage_Path, ArchiveStoragePath As Archive_Storage_Path, ResultsFolder As Results_Folder, DatasetFolder As Dataset_Folder,");
+            sqlStr.Append("       1 As Step, '' As Shared_Results_Folder, RawDataType As Raw_Data_Type");
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
