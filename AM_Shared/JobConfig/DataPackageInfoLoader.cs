@@ -239,12 +239,12 @@ namespace AnalysisManagerBase.JobConfig
             // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs
             // Order by Step ascending, since the SharedResultsFolders list is processed in reverse (last item first)
 
-            sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
-            sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
-            sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder,");
-            sqlStr.Append("        Step, SharedResultsFolder, RawDataType");
+            sqlStr.Append(" SELECT Job, Dataset, Dataset_ID, Instrument, Instrument_Group,");
+            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
+            sqlStr.Append("        Tool, Result_Type, Settings_File_Name, Parameter_File_Name,");
+            sqlStr.Append("        Organism_DB_Name, Protein_Collection_List, Protein_Options,");
+            sqlStr.Append("        Server_Storage_Path, Archive_Storage_Path, Results_Folder, Dataset_Folder,");
+            sqlStr.Append("        Step, Shared_Results_Folder, Raw_Data_Type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
@@ -559,9 +559,9 @@ namespace AnalysisManagerBase.JobConfig
 
             var jobInfo = new DataPackageJobInfo(dataPkgJob, dataPkgDataset)
             {
-                DatasetID = curRow["DatasetID"].CastDBVal<int>(),
+                DatasetID = curRow["Dataset_ID"].CastDBVal<int>(),
                 Instrument = curRow["Instrument"].CastDBVal<string>(),
-                InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
+                InstrumentGroup = curRow["Instrument_Group"].CastDBVal<string>(),
                 Experiment = curRow["Experiment"].CastDBVal<string>(),
                 Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
                 Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
@@ -569,31 +569,31 @@ namespace AnalysisManagerBase.JobConfig
                 Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
                 Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
                 Tool = curRow["Tool"].CastDBVal<string>(),
-                ResultType = curRow["ResultType"].CastDBVal<string>()
+                ResultType = curRow["Result_Type"].CastDBVal<string>()
             };
 
             jobInfo.PeptideHitResultType = ReaderFactory.GetPeptideHitResultType(jobInfo.ResultType);
-            jobInfo.SettingsFileName = curRow["SettingsFileName"].CastDBVal<string>();
-            jobInfo.ParameterFileName = curRow["ParameterFileName"].CastDBVal<string>();
-            jobInfo.LegacyFastaFileName = curRow["OrganismDBName"].CastDBVal<string>();
-            jobInfo.ProteinCollectionList = curRow["ProteinCollectionList"].CastDBVal<string>();
-            jobInfo.ProteinOptions = curRow["ProteinOptions"].CastDBVal<string>();
+            jobInfo.SettingsFileName = curRow["Settings_File_Name"].CastDBVal<string>();
+            jobInfo.ParameterFileName = curRow["Parameter_File_Name"].CastDBVal<string>();
+            jobInfo.LegacyFastaFileName = curRow["Organism_DB_Name"].CastDBVal<string>();
+            jobInfo.ProteinCollectionList = curRow["Protein_Collection_List"].CastDBVal<string>();
+            jobInfo.ProteinOptions = curRow["Protein_Options"].CastDBVal<string>();
 
             // This will be updated later for SplitFasta jobs (using method LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
 
-            jobInfo.ServerStoragePath = curRow["ServerStoragePath"].CastDBVal<string>();
-            jobInfo.ArchiveStoragePath = curRow["ArchiveStoragePath"].CastDBVal<string>();
-            jobInfo.ResultsFolderName = curRow["ResultsFolder"].CastDBVal<string>();
-            jobInfo.DatasetFolderName = curRow["DatasetFolder"].CastDBVal<string>();
+            jobInfo.ServerStoragePath = curRow["Server_Storage_Path"].CastDBVal<string>();
+            jobInfo.ArchiveStoragePath = curRow["Archive_Storage_Path"].CastDBVal<string>();
+            jobInfo.ResultsFolderName = curRow["Results_Folder"].CastDBVal<string>();
+            jobInfo.DatasetFolderName = curRow["Dataset_Folder"].CastDBVal<string>();
 
-            var sharedResultsFolder = curRow["SharedResultsFolder"].CastDBVal<string>();
+            var sharedResultsFolder = curRow["Shared_Results_Folder"].CastDBVal<string>();
             if (!string.IsNullOrWhiteSpace(sharedResultsFolder))
             {
                 jobInfo.SharedResultsFolders.Add(sharedResultsFolder);
             }
 
-            jobInfo.RawDataType = curRow["RawDataType"].CastDBVal<string>();
+            jobInfo.RawDataType = curRow["Raw_Data_Type"].CastDBVal<string>();
 
             return jobInfo;
         }
