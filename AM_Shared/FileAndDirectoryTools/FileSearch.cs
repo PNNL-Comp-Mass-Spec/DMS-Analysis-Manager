@@ -1553,7 +1553,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 try
                 {
-                    // Remove the DatasetID suffix on directoryName
+                    // Remove the DatasetID or Data Package ID suffix on directoryName
                     var msXmlToolNameVersionDirectory = AnalysisResources.GetMSXmlToolNameVersionFolder(directoryName);
                     msXmlToolNameVersionDirs.Add(msXmlToolNameVersionDirectory);
                 }

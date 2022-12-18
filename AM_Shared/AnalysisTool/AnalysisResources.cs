@@ -2393,13 +2393,13 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Examine a directory name of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
+        /// Examine a directory name of the form MSXML_Gen_1_93_367204 and remove the DatasetID or Data Package ID portion
         /// </summary>
         /// <param name="toolNameVersionDatasetIdDirectory">Shared results directory name</param>
         /// <returns>The trimmed directory name if a valid directory; throws an exception if the directory name is not the correct format</returns>
         public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIdDirectory)
         {
-            // Remove the dataset ID from the end of the directory name
+            // Remove the dataset ID or data package ID from the end of the directory name
             var toolNameAndVersionMatcher = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
             var match = toolNameAndVersionMatcher.Match(toolNameVersionDatasetIdDirectory);
             if (!match.Success)
