@@ -145,10 +145,10 @@ namespace AnalysisManagerBase.JobConfig
             // Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
             // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
 
-            sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, PackageComment, ");
+            sqlStr.Append(" SELECT Dataset, Dataset_ID, Instrument_Name, Instrument_Group, Package_Comment,");
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism,");
             sqlStr.Append("        Experiment_NEWT_ID, Experiment_NEWT_Name, Experiment_Tissue_ID, Experiment_Tissue_Name,");
-            sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
+            sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, Raw_Data_Type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
@@ -416,12 +416,12 @@ namespace AnalysisManagerBase.JobConfig
         private static DataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
         {
             var datasetName = curRow["Dataset"].CastDBVal<string>();
-            var datasetId = curRow["DatasetID"].CastDBVal<int>();
+            var datasetId = curRow["Dataset_ID"].CastDBVal<int>();
 
             // Look for an Experiment Group name in the data package comment for a dataset
             // This only applies to MSFragger jobs, but could be in the MaxQuant parameter group ID format
 
-            var packageComment = curRow["PackageComment"].CastDBVal<string>();
+            var packageComment = curRow["Package_Comment"].CastDBVal<string>();
 
             // Examine the comment to look for "MSFragger Group GroupName" (or similar)
             // Example allowed comments:
@@ -527,8 +527,8 @@ namespace AnalysisManagerBase.JobConfig
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
-                Instrument = curRow["Instrument"].CastDBVal<string>(),
-                InstrumentGroup = curRow["InstrumentGroup"].CastDBVal<string>(),
+                Instrument = curRow["Instrument_Name"].CastDBVal<string>(),
+                InstrumentGroup = curRow["Instrument_Group"].CastDBVal<string>(),
                 Experiment = curRow["Experiment"].CastDBVal<string>(),
                 Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
                 Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
@@ -539,7 +539,7 @@ namespace AnalysisManagerBase.JobConfig
                 Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
                 DatasetDirectoryPath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
                 DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
-                RawDataType = curRow["RawDataType"].CastDBVal<string>(),
+                RawDataType = curRow["Raw_Data_Type"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
                 DatasetExperimentGroup = datasetExperimentGroup,
                 MaxQuantParamGroup = paramGroupIndexOrNumber,

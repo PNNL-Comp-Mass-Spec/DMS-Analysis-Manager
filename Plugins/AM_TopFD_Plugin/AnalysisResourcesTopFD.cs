@@ -267,7 +267,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
                 // Part 2: Determine the settings files for the jobs in jobCandidates
-                var settingsFileQuery = "SELECT Job, SettingsFileName " +
+                var settingsFileQuery = "SELECT Job, Settings_File_Name " +
                                         "FROM V_Analysis_Job_Export_DataPkg " +
                                         "WHERE Job in (" + jobList + ") " +
                                         "ORDER BY Job Desc";

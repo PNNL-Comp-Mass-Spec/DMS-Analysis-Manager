@@ -3230,15 +3230,15 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
 
-            // Column aliases are used to assure that column names match V_DMS_Data_Package_Aggregation_Jobs,
-            // and can thus be parsed by DataPackageInfoLoader.ParseDataPackageJobInfoRow
+            // Query results are parsed using method DataPackageInfoLoader.ParseDataPackageJobInfoRow, which is
+            // designed for view V_DMS_Data_Package_Aggregation_Jobs, but view V_Analysis_Job_Export_DataPkg has identical column names
 
-            sqlStr.Append("SELECT Job, Dataset, DatasetID As Dataset_ID, InstrumentName As Instrument_Name, InstrumentGroup AS Instrument_Group,");
+            sqlStr.Append("SELECT Job, Dataset, Dataset_ID, Instrument_Name, Instrument_Group,");
             sqlStr.Append("       Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
-            sqlStr.Append("       Tool, ResultType As Result_Type, SettingsFileName As Settings_File_Name, ParameterFileName As Parameter_File_Name,");
-            sqlStr.Append("       OrganismDBName As Organism_DB_Name, ProteinCollectionList As Protein_Collection_List, ProteinOptions As Protein_Options,");
-            sqlStr.Append("       ServerStoragePath As Server_Storage_Path, ArchiveStoragePath As Archive_Storage_Path, ResultsFolder As Results_Folder, DatasetFolder As Dataset_Folder,");
-            sqlStr.Append("       1 As Step, '' As Shared_Results_Folder, RawDataType As Raw_Data_Type");
+            sqlStr.Append("       Tool, Result_Type, Settings_File_Name, Parameter_File_Name,");
+            sqlStr.Append("       Organism_DB_Name, Protein_Collection_List, Protein_Options,");
+            sqlStr.Append("       Server_Storage_Path, Archive_Storage_Path, Results_Folder, Dataset_Folder,");
+            sqlStr.Append("       1 As Step, '' As Shared_Results_Folder, Raw_Data_Type");
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
