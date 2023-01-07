@@ -492,7 +492,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (string.IsNullOrEmpty(dataPackageStoragePath))
                     {
                         LogWarning(string.Format(
-                            "View V_DMS_Data_Packages does not have data package {0} (or column [Share Path] is empty);" +
+                            "View V_DMS_Data_Packages does not have data package {0} (or column Share_Path is empty);" +
                             "unable to retrieve the PX Submission template file from the data package directory", dataPackageID));
                     }
                     else

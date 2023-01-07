@@ -1941,9 +1941,9 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var sqlStr = new StringBuilder();
 
-            sqlStr.Append("Select [Share Path] AS StoragePath ");
-            sqlStr.Append("From V_DMS_Data_Packages ");
-            sqlStr.Append("Where ID = " + dataPackageID);
+            sqlStr.Append("SELECT share_path AS StoragePath ");
+            sqlStr.Append("FROM V_DMS_Data_Packages ");
+            sqlStr.Append("WHERE id = " + dataPackageID);
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
