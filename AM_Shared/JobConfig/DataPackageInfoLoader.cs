@@ -267,9 +267,11 @@ namespace AnalysisManagerBase.JobConfig
                 // If the data package exists and has datasets associated with it, log this as a warning but return true
                 // Otherwise, log an error and return false
 
+                // Use V_DMS_Data_Package_Datasets in the DMS_Pipeline database to count the number of datasets in the data package
+
                 sqlStr.Clear();
                 sqlStr.Append(" SELECT Count(*) AS Datasets");
-                sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
+                sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
                 sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
 
                 var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
