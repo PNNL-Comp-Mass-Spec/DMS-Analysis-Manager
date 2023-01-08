@@ -1870,10 +1870,10 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var sqlQuery = string.Format(
-                "SELECT ParameterName, ParameterValue " +
+                "SELECT parameter_name, parameter_value " +
                 "FROM V_Mgr_Params " +
-                "WHERE ManagerName = '{0}' AND " +
-                "      ParameterName IN ('DebugLevel', 'MgrSettingGroupName')",
+                "WHERE manager_name = '{0}' AND " +
+                "      parameter_name IN ('DebugLevel', 'MgrSettingGroupName')",
                 managerName);
 
             var callingMethods = Global.AppendToComment(callerName, "GetManagerDebugLevel");
