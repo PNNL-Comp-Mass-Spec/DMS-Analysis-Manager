@@ -206,7 +206,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
-            var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + mJob + ")";
+            var sqlQuery = "SELECT organism_db_name FROM V_Analysis_Job WHERE (job = " + mJob + ")";
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);

@@ -211,7 +211,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             // Query V_Storage_Path_Export for the local volume name of the given path
             //
-            sql.Append(" SELECT TOP 1 vol_server, storage_path");
+            sql.Append(" SELECT vol_server, storage_path");
             sql.Append(" FROM V_Storage_Path_Export");
             sql.AppendFormat(" WHERE (machine_name = '{0}') AND", serverName);
             sql.AppendFormat("       (storage_path = '{0}' OR", uncSharePath);
@@ -233,9 +233,9 @@ namespace AnalysisManagerResultsXferPlugin
 
             foreach (DataRow curRow in dt.Rows)
             {
+                // Only return the first result
                 var volServer = curRow["vol_server"].CastDBVal<string>();
-                var localDirectoryPath = Path.Combine(volServer, uncSharePath);
-                return localDirectoryPath;
+                return Path.Combine(volServer, uncSharePath);
             }
 
             // No data was returned

@@ -182,7 +182,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="tool"></param>
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
-            const string sqlTemplate = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
+            const string sqlTemplate = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE data_package_id = {0} AND tool LIKE '%{1}%'";
             var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
             var jobList = GetListOfItemsFromDB(sql, connStr);

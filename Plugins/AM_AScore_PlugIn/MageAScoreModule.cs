@@ -473,13 +473,13 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
-                var sqlWhere = "WHERE Job = " + jobNumber + " AND Tool LIKE '%" + toolName + "%' AND (ISNULL(Input_Folder, '') <> '')";
+                var sqlWhere = "WHERE job = " + jobNumber + " AND tool LIKE '%" + toolName + "%' AND (Coalesce(input_folder, '') <> '')"; // TODO: Updates for postgres!!
 
                 var sqlQuery =
-                    " SELECT Input_Folder, 1 AS Preference, GetDate() AS Saved FROM DMS_Pipeline.dbo.V_Job_Steps " + sqlWhere +
+                    " SELECT input_folder, 1 AS preference, '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' AS saved FROM DMS_Pipeline.dbo.V_Job_Steps_Export " + sqlWhere +
                     " UNION " +
-                    " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere +
-                    " ORDER BY Preference, saved";
+                    " SELECT input_folder, 2 AS preference, saved FROM DMS_Pipeline.dbo.V_Job_Steps_History_Export " + sqlWhere +
+                    " ORDER BY preference, saved";
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
@@ -488,7 +488,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (!success || firstSharedResultsDirectory.Count == 0)
                 {
-                    LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps or V_Job_Steps_History");
+                    LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps_Export or V_Job_Steps_History_Export");
                     return string.Empty;
                 }
 

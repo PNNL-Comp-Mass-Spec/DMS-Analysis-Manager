@@ -188,10 +188,10 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
-                    var sql = " SELECT Input_Folder_Name " +
-                              " FROM T_Job_Steps" +
-                              " WHERE Job = " + mJob + " AND Step_Number < " + stepNum + " AND Input_Folder_Name LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" +
-                              " ORDER by Step_Number DESC";
+                    var sql = " SELECT input_folder " +
+                              " FROM V_Job_Steps_Export" +
+                              " WHERE job = " + mJob + " AND step < " + stepNum + " AND input_folder LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" + // TODO: step_number is 'step' in postgres; use view?
+                              " ORDER by step DESC";
 
                     var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                     RegisterEvents(dbTools);
@@ -200,7 +200,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     if (!success)
                     {
-                        mMessage = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
+                        mMessage = "Error looking up the correct PBF_Gen folder name in V_Job_Steps_Export";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
@@ -208,7 +208,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     if (string.IsNullOrWhiteSpace(pbfGenFolderName))
                     {
-                        mMessage = "PBF_Gen folder name listed in T_Job_Steps for step " + (stepNum - 1) + " was empty";
+                        mMessage = "PBF_Gen folder name listed in V_Job_Steps_Export for step " + (stepNum - 1) + " was empty";
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
