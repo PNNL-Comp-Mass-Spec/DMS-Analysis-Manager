@@ -112,20 +112,20 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             var sqlText = new StringBuilder();
-            sqlText.Append("SELECT DISTINCT R.QID FROM V_Mage_Data_Package_Analysis_Jobs J ");
-            sqlText.Append("INNER JOIN V_MTS_PM_Results_List_Report R on R.Job = J.Job ");
-            sqlText.AppendFormat("WHERE J.Data_Package_ID = {0} AND R.Task_Database = '{1}'", dataPackageID, apeMTSDatabaseName);
+            sqlText.Append("SELECT DISTINCT R.qid FROM V_Mage_Data_Package_Analysis_Jobs J ");
+            sqlText.Append("INNER JOIN V_MTS_PM_Results_List_Report R on R.Job = J.job ");
+            sqlText.AppendFormat("WHERE J.data_package_id = {0} AND R.task_database = '{1}'", dataPackageID, apeMTSDatabaseName);
 
             // Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
-                sqlText.AppendFormat(" AND R.MD_State = {0}", GetJobParam("ApeMDState"));
+                sqlText.AppendFormat(" AND R.md_state = {0}", GetJobParam("ApeMDState"));
             }
 
             // Add INI filename if defined
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDIniFilename")))
             {
-                sqlText.AppendFormat(" AND R.Ini_File_Name = '{0}'", GetJobParam("ApeMDIniFilename"));
+                sqlText.AppendFormat(" AND R.ini_file_name = '{0}'", GetJobParam("ApeMDIniFilename"));
             }
 
             var qidList = string.Empty;

@@ -441,11 +441,11 @@ namespace AnalysisManagerProg
             // Query the Pipeline DB to find jobs that ran DTA Refinery
 
             var sql =
-                "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" +
+                "SELECT JS.dataset, J.dataset_id, JS.job, JS.output_folder, DFP.dataset_folder_path, JS.transfer_folder_path" +
                 " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" +
-                "      DMS_Pipeline.dbo.T_Jobs J ON JS.Job = J.Job INNER JOIN" +
-                "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" +
-                " WHERE (JS.Job Between " + jobStart + " and " + jobEnd + ") AND (JS.Tool = 'DTA_Refinery') AND (JS.State = 5)";
+                "      DMS_Pipeline.dbo.V_Jobs J ON JS.job = J.job INNER JOIN" +
+                "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.dataset_id = DFP.dataset_id" +
+                " WHERE (JS.job Between " + jobStart + " and " + jobEnd + ") AND (JS.tool = 'DTA_Refinery') AND (JS.state = 5)";
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
             const short retryCount = 2;
@@ -477,15 +477,15 @@ namespace AnalysisManagerProg
 
             foreach (DataRow curRow in dt.Rows)
             {
-                var dataset = curRow["Dataset"].CastDBVal<string>();
-                var datasetID = curRow["Dataset_ID"].CastDBVal<int>();
-                var job = curRow["Job"].CastDBVal<int>();
-                var dtaRefineryDataFolderPath = Path.Combine(curRow["Dataset_Folder_Path"].CastDBVal<string>(),
-                                                             curRow["Output_Folder"].CastDBVal<string>());
+                var dataset = curRow["dataset"].CastDBVal<string>();
+                var datasetID = curRow["dataset_id"].CastDBVal<int>();
+                var job = curRow["job"].CastDBVal<int>();
+                var dtaRefineryDataFolderPath = Path.Combine(curRow["dataset_folder_path"].CastDBVal<string>(),
+                                                             curRow["output_folder"].CastDBVal<string>());
 
                 if (!Directory.Exists(dtaRefineryDataFolderPath))
                 {
-                    dtaRefineryDataFolderPath = Path.Combine(curRow["Transfer_Folder_Path"].CastDBVal<string>(), curRow["Output_Folder"].CastDBVal<string>());
+                    dtaRefineryDataFolderPath = Path.Combine(curRow["transfer_folder_path"].CastDBVal<string>(), curRow["output_folder"].CastDBVal<string>());
                 }
 
                 if (Directory.Exists(dtaRefineryDataFolderPath))
@@ -1322,7 +1322,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestRunQuery()
         {
-            const string sqlStr = "Select top 15 * from t_log_entries where posting_time >= DateAdd(day, -15, GetDate())";
+            const string sqlStr = "Select top 15 * from t_log_entries where posting_time >= DateAdd(day, -15, GetDate())"; // TODO: Date functions not compatible with postgres
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
             const short retryCount = 2;
@@ -1609,15 +1609,15 @@ namespace AnalysisManagerProg
                 }
 
                 var sql = string.Format(
-                    "SELECT J.Job, J.Dataset, J.InstrumentName, J.StoragePathServer, J.DatasetFolder, J.ResultsFolder, J.ParameterFileName, DSType.Dataset_Type, DSType.Acq_Start " +
+                    "SELECT J.job, J.dataset, J.instrumentname, J.storagepathserver, J.datasetfolder, J.resultsfolder, J.parameterfilename, DSType.dataset_type, DSType.acq_start " +
                     "FROM V_Analysis_Job_Export J " +
                     "     INNER JOIN ( SELECT id, " +
-                    "                         [Dataset Type] AS Dataset_Type, " +
-                    "                         [Acq Start] AS Acq_Start " +
+                    "                         dataset_type, " +
+                    "                         acq_start " +
                     "                  FROM V_Dataset_List_Report_2 ) DSType " +
-                    "       ON J.DatasetID = DSType.ID " +
-                    "WHERE J.Job In ({0}) " +
-                    "ORDER BY J.Job", string.Join(", ", jobNumbers));
+                    "       ON J.datasetid = DSType.id " +
+                    "WHERE J.job In ({0}) " +
+                    "ORDER BY J.job", string.Join(", ", jobNumbers));
 
 
                 const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
@@ -1650,15 +1650,15 @@ namespace AnalysisManagerProg
 
                 foreach (DataRow curRow in dt.Rows)
                 {
-                    var dataset = curRow["Dataset"].CastDBVal<string>();
-                    var job = curRow["Job"].CastDBVal<int>();
-                    var instrument = curRow["InstrumentName"].CastDBVal<string>();
-                    var storagePathServer = curRow["StoragePathServer"].CastDBVal<string>();
-                    var datasetFolder = curRow["DatasetFolder"].CastDBVal<string>();
-                    var resultsDirectory = curRow["ResultsFolder"].CastDBVal<string>();
-                    var parameterFile = curRow["ParameterFileName"].CastDBVal<string>();
-                    var datasetType = curRow["Dataset_Type"].CastDBVal<string>();
-                    var acqStart = curRow["Acq_Start"].CastDBVal<string>();
+                    var dataset = curRow["dataset"].CastDBVal<string>();
+                    var job = curRow["job"].CastDBVal<int>();
+                    var instrument = curRow["instrumentname"].CastDBVal<string>();
+                    var storagePathServer = curRow["storagepathserver"].CastDBVal<string>();
+                    var datasetFolder = curRow["datasetfolder"].CastDBVal<string>();
+                    var resultsDirectory = curRow["resultsfolder"].CastDBVal<string>();
+                    var parameterFile = curRow["parameterfilename"].CastDBVal<string>();
+                    var datasetType = curRow["dataset_type"].CastDBVal<string>();
+                    var acqStart = curRow["acq_start"].CastDBVal<string>();
 
                     var jobDirectory = new DirectoryInfo(Path.Combine(storagePathServer, datasetFolder, resultsDirectory));
 

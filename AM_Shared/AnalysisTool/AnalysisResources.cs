@@ -1941,7 +1941,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var sqlStr = new StringBuilder();
 
-            sqlStr.Append("SELECT share_path AS StoragePath ");
+            sqlStr.Append("SELECT share_path AS storage_path ");
             sqlStr.Append("FROM V_DMS_Data_Packages ");
             sqlStr.Append("WHERE id = " + dataPackageID);
 
@@ -3233,14 +3233,14 @@ namespace AnalysisManagerBase.AnalysisTool
             // Query results are parsed using method DataPackageInfoLoader.ParseDataPackageJobInfoRow, which is
             // designed for view V_DMS_Data_Package_Aggregation_Jobs, but view V_Analysis_Job_Export_DataPkg has identical column names
 
-            sqlStr.Append("SELECT Job, Dataset, Dataset_ID, Instrument_Name, Instrument_Group,");
-            sqlStr.Append("       Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
-            sqlStr.Append("       Tool, Result_Type, Settings_File_Name, Parameter_File_Name,");
-            sqlStr.Append("       Organism_DB_Name, Protein_Collection_List, Protein_Options,");
-            sqlStr.Append("       Server_Storage_Path, Archive_Storage_Path, Results_Folder, Dataset_Folder,");
-            sqlStr.Append("       1 As Step, '' As Shared_Results_Folder, Raw_Data_Type");
+            sqlStr.Append("SELECT job, dataset, dataset_id, instrument_name, instrument_group,");
+            sqlStr.Append("       experiment, experiment_reason, experiment_comment, organism, experiment_newt_id, experiment_newt_name,");
+            sqlStr.Append("       tool, result_type, settings_file_name, parameter_file_name,");
+            sqlStr.Append("       organism_db_name, protein_collection_list, protein_options,");
+            sqlStr.Append("       server_storage_path, archive_storage_path, results_folder, dataset_folder,");
+            sqlStr.Append("       1 as step, '' as shared_results_folder, raw_data_type");
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
-            sqlStr.Append("WHERE Job = " + jobNumber);
+            sqlStr.Append("WHERE job = " + jobNumber);
 
             var genericJobInfo = new DataPackageJobInfo(0, string.Empty);
 
@@ -3319,7 +3319,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (string.IsNullOrWhiteSpace(legacyFastaName))
                     return 0;
 
-                var sqlQuery = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" + legacyFastaName + "')";
+                var sqlQuery = "SELECT file_size_kb FROM V_Organism_DB_File_Export WHERE (filename = '" + legacyFastaName + "')";
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 

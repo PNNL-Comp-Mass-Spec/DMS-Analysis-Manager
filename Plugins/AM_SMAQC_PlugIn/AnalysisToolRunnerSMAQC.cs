@@ -321,9 +321,9 @@ namespace AnalysisManagerSMAQCPlugIn
 
             var success = false;
 
-            var sqlStr = "SELECT Instrument_ID " +
+            var sqlStr = "SELECT instrument_id " +
                          "FROM V_Dataset_Instrument_List_Report " +
-                         "WHERE ID = " + datasetID;
+                         "WHERE id = " + datasetID;
 
             instrumentID = 0;
 

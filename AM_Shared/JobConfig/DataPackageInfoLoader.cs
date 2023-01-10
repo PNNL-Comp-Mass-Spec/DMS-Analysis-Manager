@@ -145,13 +145,13 @@ namespace AnalysisManagerBase.JobConfig
             // Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
             // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
 
-            sqlStr.Append(" SELECT Dataset, Dataset_ID, Instrument_Name, Instrument_Group, Package_Comment,");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism,");
-            sqlStr.Append("        Experiment_NEWT_ID, Experiment_NEWT_Name, Experiment_Tissue_ID, Experiment_Tissue_Name,");
-            sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, Raw_Data_Type");
+            sqlStr.Append(" SELECT dataset, dataset_id, instrument_name, instrument_group, package_comment,");
+            sqlStr.Append("        experiment, experiment_reason, experiment_comment, organism,");
+            sqlStr.Append("        experiment_newt_id, experiment_newt_name, experiment_tissue_id, experiment_tissue_name,");
+            sqlStr.Append("        dataset_folder_path, archive_folder_path, raw_data_type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
-            sqlStr.Append(" ORDER BY Dataset");
+            sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
+            sqlStr.Append(" ORDER BY dataset");
 
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 
@@ -239,15 +239,15 @@ namespace AnalysisManagerBase.JobConfig
             // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs
             // Order by Step ascending, since the SharedResultsFolders list is processed in reverse (last item first)
 
-            sqlStr.Append(" SELECT Job, Dataset, Dataset_ID, Instrument_Name, Instrument_Group,");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name,");
-            sqlStr.Append("        Tool, Result_Type, Settings_File_Name, Parameter_File_Name,");
-            sqlStr.Append("        Organism_DB_Name, Protein_Collection_List, Protein_Options,");
-            sqlStr.Append("        Server_Storage_Path, Archive_Storage_Path, Results_Folder, Dataset_Folder,");
-            sqlStr.Append("        Step, Shared_Results_Folder, Raw_Data_Type");
+            sqlStr.Append(" SELECT job, dataset, dataset_id, instrument_name, instrument_group,");
+            sqlStr.Append("        experiment, experiment_reason, experiment_comment, organism, experiment_newt_id, experiment_newt_name,");
+            sqlStr.Append("        tool, result_type, settings_file_name, parameter_file_name,");
+            sqlStr.Append("        organism_db_name, protein_collection_list, protein_options,");
+            sqlStr.Append("        server_storage_path, archive_storage_path, results_folder, dataset_folder,");
+            sqlStr.Append("        step, shared_results_folder, raw_data_type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
-            sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
+            sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
+            sqlStr.Append(" ORDER BY dataset, tool, job, step");
 
             var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobQueryResults);
 
@@ -270,9 +270,9 @@ namespace AnalysisManagerBase.JobConfig
                 // Use V_DMS_Data_Package_Datasets in the DMS_Pipeline database to count the number of datasets in the data package
 
                 sqlStr.Clear();
-                sqlStr.Append(" SELECT Count(*) AS Datasets");
+                sqlStr.Append(" SELECT Count(*) AS datasets");
                 sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-                sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
+                sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
 
                 var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
 
@@ -417,13 +417,13 @@ namespace AnalysisManagerBase.JobConfig
 
         private static DataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
         {
-            var datasetName = curRow["Dataset"].CastDBVal<string>();
-            var datasetId = curRow["Dataset_ID"].CastDBVal<int>();
+            var datasetName = curRow["dataset"].CastDBVal<string>();
+            var datasetId = curRow["dataset_id"].CastDBVal<int>();
 
             // Look for an Experiment Group name in the data package comment for a dataset
             // This only applies to MSFragger jobs, but could be in the MaxQuant parameter group ID format
 
-            var packageComment = curRow["Package_Comment"].CastDBVal<string>();
+            var packageComment = curRow["package_comment"].CastDBVal<string>();
 
             // Examine the comment to look for "MSFragger Group GroupName" (or similar)
             // Example allowed comments:
@@ -529,19 +529,19 @@ namespace AnalysisManagerBase.JobConfig
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
-                Instrument = curRow["Instrument_Name"].CastDBVal<string>(),
-                InstrumentGroup = curRow["Instrument_Group"].CastDBVal<string>(),
-                Experiment = curRow["Experiment"].CastDBVal<string>(),
-                Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
-                Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
-                Experiment_Organism = curRow["Organism"].CastDBVal<string>(),
-                Experiment_Tissue_ID = curRow["Experiment_Tissue_ID"].CastDBVal<string>(),
-                Experiment_Tissue_Name = curRow["Experiment_Tissue_Name"].CastDBVal<string>(),
-                Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
-                Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
-                DatasetDirectoryPath = curRow["Dataset_Folder_Path"].CastDBVal<string>(),
-                DatasetArchivePath = curRow["Archive_Folder_Path"].CastDBVal<string>(),
-                RawDataType = curRow["Raw_Data_Type"].CastDBVal<string>(),
+                Instrument = curRow["instrument_name"].CastDBVal<string>(),
+                InstrumentGroup = curRow["instrument_group"].CastDBVal<string>(),
+                Experiment = curRow["experiment"].CastDBVal<string>(),
+                Experiment_Reason = curRow["experiment_reason"].CastDBVal<string>(),
+                Experiment_Comment = curRow["experiment_comment"].CastDBVal<string>(),
+                Experiment_Organism = curRow["organism"].CastDBVal<string>(),
+                Experiment_Tissue_ID = curRow["experiment_tissue_id"].CastDBVal<string>(),
+                Experiment_Tissue_Name = curRow["experiment_tissue_name"].CastDBVal<string>(),
+                Experiment_NEWT_ID = curRow["experiment_newt_id"].CastDBVal<int>(),
+                Experiment_NEWT_Name = curRow["experiment_newt_name"].CastDBVal<string>(),
+                DatasetDirectoryPath = curRow["dataset_folder_path"].CastDBVal<string>(),
+                DatasetArchivePath = curRow["archive_folder_path"].CastDBVal<string>(),
+                RawDataType = curRow["raw_data_type"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
                 DatasetExperimentGroup = datasetExperimentGroup,
                 MaxQuantParamGroup = paramGroupIndexOrNumber,
@@ -556,46 +556,46 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="curRow"></param>
         public static DataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
-            var dataPkgJob = curRow["Job"].CastDBVal<int>();
-            var dataPkgDataset = curRow["Dataset"].CastDBVal<string>();
+            var dataPkgJob = curRow["job"].CastDBVal<int>();
+            var dataPkgDataset = curRow["dataset"].CastDBVal<string>();
 
             var jobInfo = new DataPackageJobInfo(dataPkgJob, dataPkgDataset)
             {
-                DatasetID = curRow["Dataset_ID"].CastDBVal<int>(),
-                Instrument = curRow["Instrument_Name"].CastDBVal<string>(),
-                InstrumentGroup = curRow["Instrument_Group"].CastDBVal<string>(),
-                Experiment = curRow["Experiment"].CastDBVal<string>(),
-                Experiment_Reason = curRow["Experiment_Reason"].CastDBVal<string>(),
-                Experiment_Comment = curRow["Experiment_Comment"].CastDBVal<string>(),
-                Experiment_Organism = curRow["Organism"].CastDBVal<string>(),
-                Experiment_NEWT_ID = curRow["Experiment_NEWT_ID"].CastDBVal<int>(),
-                Experiment_NEWT_Name = curRow["Experiment_NEWT_Name"].CastDBVal<string>(),
-                Tool = curRow["Tool"].CastDBVal<string>(),
-                ResultType = curRow["Result_Type"].CastDBVal<string>()
+                DatasetID = curRow["dataset_id"].CastDBVal<int>(),
+                Instrument = curRow["instrument_name"].CastDBVal<string>(),
+                InstrumentGroup = curRow["instrument_group"].CastDBVal<string>(),
+                Experiment = curRow["experiment"].CastDBVal<string>(),
+                Experiment_Reason = curRow["experiment_reason"].CastDBVal<string>(),
+                Experiment_Comment = curRow["experiment_comment"].CastDBVal<string>(),
+                Experiment_Organism = curRow["organism"].CastDBVal<string>(),
+                Experiment_NEWT_ID = curRow["experiment_newt_id"].CastDBVal<int>(),
+                Experiment_NEWT_Name = curRow["experiment_newt_name"].CastDBVal<string>(),
+                Tool = curRow["tool"].CastDBVal<string>(),
+                ResultType = curRow["result_type"].CastDBVal<string>()
             };
 
             jobInfo.PeptideHitResultType = ReaderFactory.GetPeptideHitResultType(jobInfo.ResultType);
-            jobInfo.SettingsFileName = curRow["Settings_File_Name"].CastDBVal<string>();
-            jobInfo.ParameterFileName = curRow["Parameter_File_Name"].CastDBVal<string>();
-            jobInfo.LegacyFastaFileName = curRow["Organism_DB_Name"].CastDBVal<string>();
-            jobInfo.ProteinCollectionList = curRow["Protein_Collection_List"].CastDBVal<string>();
-            jobInfo.ProteinOptions = curRow["Protein_Options"].CastDBVal<string>();
+            jobInfo.SettingsFileName = curRow["settings_file_name"].CastDBVal<string>();
+            jobInfo.ParameterFileName = curRow["parameter_file_name"].CastDBVal<string>();
+            jobInfo.LegacyFastaFileName = curRow["organism_db_name"].CastDBVal<string>();
+            jobInfo.ProteinCollectionList = curRow["protein_collection_list"].CastDBVal<string>();
+            jobInfo.ProteinOptions = curRow["protein_options"].CastDBVal<string>();
 
             // This will be updated later for SplitFasta jobs (using method LookupJobParametersFromHistory)
             jobInfo.NumberOfClonedSteps = 0;
 
-            jobInfo.ServerStoragePath = curRow["Server_Storage_Path"].CastDBVal<string>();
-            jobInfo.ArchiveStoragePath = curRow["Archive_Storage_Path"].CastDBVal<string>();
-            jobInfo.ResultsFolderName = curRow["Results_Folder"].CastDBVal<string>();
-            jobInfo.DatasetFolderName = curRow["Dataset_Folder"].CastDBVal<string>();
+            jobInfo.ServerStoragePath = curRow["server_storage_path"].CastDBVal<string>();
+            jobInfo.ArchiveStoragePath = curRow["archive_storage_path"].CastDBVal<string>();
+            jobInfo.ResultsFolderName = curRow["results_folder"].CastDBVal<string>();
+            jobInfo.DatasetFolderName = curRow["dataset_folder"].CastDBVal<string>();
 
-            var sharedResultsFolder = curRow["Shared_Results_Folder"].CastDBVal<string>();
+            var sharedResultsFolder = curRow["shared_results_folder"].CastDBVal<string>();
             if (!string.IsNullOrWhiteSpace(sharedResultsFolder))
             {
                 jobInfo.SharedResultsFolders.Add(sharedResultsFolder);
             }
 
-            jobInfo.RawDataType = curRow["Raw_Data_Type"].CastDBVal<string>();
+            jobInfo.RawDataType = curRow["raw_data_type"].CastDBVal<string>();
 
             return jobInfo;
         }

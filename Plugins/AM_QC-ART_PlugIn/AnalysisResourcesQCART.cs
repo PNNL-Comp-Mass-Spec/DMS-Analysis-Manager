@@ -799,8 +799,8 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns>True if success, otherwise an error</returns>
         private bool RetrieveQCMetricsFromDB(ICollection<string> datasetNamesToRetrieveMetrics)
         {
-            const string DATASET_COLUMN = "DatasetName";
-            const string FRACTION_COLUMN = "Fraction";
+            const string DATASET_COLUMN = "dataset_name";
+            const string FRACTION_COLUMN = "fraction";
 
             try
             {
@@ -815,21 +815,21 @@ namespace AnalysisManagerQCARTPlugin
 
                 var metricNames = new List<string>
                 {
-                    "P_2C",         // Number of tryptic peptides; unique peptide count
-                    "MS1_2B",       // Median TIC value for identified peptides from run start through middle 50% of separation
-                    "RT_MS_Q1",     // The interval for the first 25% of all MS events divided by RT-Duration
-                    "RT_MS_Q4",     // The interval for the fourth 25% of all MS events divided by RT-Duration
-                    "RT_MSMS_Q1",   // The interval for the first 25% of all MS/MS events divided by RT-Duration
-                    "RT_MSMS_Q4"    // The interval for the fourth 25% of all MS/MS events divided by RT-Duration
+                    "p_2c",         // Number of tryptic peptides; unique peptide count
+                    "ms1_2b",       // Median TIC value for identified peptides from run start through middle 50% of separation
+                    "rt_ms_q1",     // The interval for the first 25% of all MS events divided by RT-Duration
+                    "rt_ms_q4",     // The interval for the fourth 25% of all MS events divided by RT-Duration
+                    "rt_msms_q1",   // The interval for the first 25% of all MS/MS events divided by RT-Duration
+                    "rt_msms_q4"    // The interval for the fourth 25% of all MS/MS events divided by RT-Duration
                 };
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.AppendLine("SELECT Dataset AS " + DATASET_COLUMN + ", 0 AS " + FRACTION_COLUMN + ",");
-                sqlStr.AppendLine("       Dataset_ID, Acq_Time_Start AS [Date], Dataset_Rating AS Rating,");
+                sqlStr.AppendLine("SELECT dataset AS " + DATASET_COLUMN + ", 0 AS " + FRACTION_COLUMN + ",");
+                sqlStr.AppendLine("       dataset_id, acq_time_start AS date, dataset_rating AS rating,");
                 sqlStr.AppendFormat("     {0} \n", string.Join(", ", metricNames));
                 sqlStr.AppendLine("FROM V_Dataset_QC_Metrics_Export ");
-                sqlStr.AppendLine("WHERE Dataset IN (");
+                sqlStr.AppendLine("WHERE dataset IN (");
 
                 sqlStr.AppendFormat("'{0}'", string.Join("', '", datasetNamesToRetrieveMetrics));
                 sqlStr.AppendLine(")");

@@ -720,7 +720,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var fileID = int.Parse(reMatch.Groups[1].Value);
 
-                var sqlQuery = "SELECT FileName FROM V_Archived_Output_File_Protein_Collections WHERE Archived_File_ID = " + fileID;
+                var sqlQuery = "SELECT collection_name FROM V_Archived_Output_File_Protein_Collections WHERE archived_file_id = " + fileID;
                 const short retryCount = 3;
 
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");

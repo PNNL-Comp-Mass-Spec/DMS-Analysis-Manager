@@ -3091,16 +3091,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var sqlStr = new StringBuilder();
 
                 sqlStr.Append(" SELECT");
-                sqlStr.Append("   HMS, MS, [CID-HMSn], [CID-MSn],");
-                sqlStr.Append("   [ETD-HMSn], [SA_CID-HMSn],");
-                sqlStr.Append("   [SA_ETD-HMSn], [EThcD-HMSn],");
-                sqlStr.Append("   [HCD-HMSn], [HCD-MSn], [SA_HCD-HMSn],");
-                sqlStr.Append("   [ETD-MSn], [SA_ETD-MSn],");
-                sqlStr.Append("   [HMSn], [MSn],");
-                sqlStr.Append("   [PQD-HMSn], [PQD-MSn],");
-                sqlStr.Append("   [UVPD-HMSn], [UVPD-MSn]");
+                sqlStr.Append("   \"HMS\", \"MS\", \"CID-HMSn\", \"CID-MSn\",");
+                sqlStr.Append("   \"ETD-HMSn\", \"SA_CID-HMSn\",");
+                sqlStr.Append("   \"SA_ETD-HMSn\", \"EThcD-HMSn\",");
+                sqlStr.Append("   \"HCD-HMSn\", \"HCD-MSn\", \"SA_HCD-HMSn\",");
+                sqlStr.Append("   \"ETD-MSn\", \"SA_ETD-MSn\",");
+                sqlStr.Append("   \"HMSn\", \"MSn\",");
+                sqlStr.Append("   \"PQD-HMSn\", \"PQD-MSn\",");
+                sqlStr.Append("   \"UVPD-HMSn\", \"UVPD-MSn\"");
                 sqlStr.Append(" FROM V_Dataset_Scan_Type_CrossTab");
-                sqlStr.AppendFormat(" WHERE Dataset = '{0}'", datasetName);
+                sqlStr.AppendFormat(" WHERE dataset = '{0}'", datasetName);
 
                 const int retryCount = 2;
 

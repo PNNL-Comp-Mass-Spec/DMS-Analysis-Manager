@@ -1931,7 +1931,7 @@ namespace MSGFResultsSummarizer
                 if (datasetID <= 0)
                     return false;
 
-                var queryDatasetID = "Select Dataset From V_Dataset_Export Where ID = " + datasetID;
+                var queryDatasetID = "Select dataset From V_Dataset_Export Where id = " + datasetID;
 
                 var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
@@ -1983,11 +1983,11 @@ namespace MSGFResultsSummarizer
                 }
 
                 var queryScanStats =
-                    " SELECT Scan_Count_Total, " +
-                    "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
+                    " SELECT scan_count_total, " +
+                    "        SUM(CASE WHEN scan_type LIKE '%MSn' THEN scan_count ELSE 0 END) AS scan_count_msn" +
                     " FROM V_Dataset_Scans_Export DSE" +
-                    " WHERE Dataset = '" + datasetName + "'" +
-                    " GROUP BY Scan_Count_Total";
+                    " WHERE dataset = '" + datasetName + "'" +
+                    " GROUP BY scan_count_total";
 
                 var dbTools = DbToolsFactory.GetDBTools(mConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
@@ -2012,7 +2012,7 @@ namespace MSGFResultsSummarizer
                     }
                 }
 
-                var queryScanTotal = " SELECT [Scan Count] FROM V_Dataset_Export WHERE Dataset = '" + datasetName + "'";
+                var queryScanTotal = " SELECT scan_count FROM V_Dataset_Export WHERE dataset = '" + datasetName + "'";
 
                 // ReSharper disable once ExplicitCallerInfoArgument
                 var scanCountSuccess = dbTools.GetQueryResults(queryScanTotal, out var datasetScanCountFromDb, callingFunction: "LookupScanStats_V_Dataset_Export");

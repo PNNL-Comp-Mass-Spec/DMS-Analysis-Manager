@@ -248,9 +248,9 @@ namespace AnalysisManagerBase.DataFileTools
             // This queries table T_DMS_Organism_DB_Info in MT_Main
             // That table is updated using data in DMS5
             //
-            sqlQuery.Append(" SELECT TOP 1 Full_Path, Organism_Name ");
+            sqlQuery.Append(" SELECT TOP 1 full_path, organism_name "); // TODO: Change for Postgres to 'LIMIT 1' after 'WHERE' clause
             sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
-            sqlQuery.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
+            sqlQuery.Append(" WHERE file_name = '" + legacyFASTAFileName + "'");
 
             var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, timeoutSeconds, debugMode: mTraceMode);
             RegisterEvents(dbTools);
