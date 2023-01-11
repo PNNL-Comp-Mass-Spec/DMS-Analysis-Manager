@@ -206,7 +206,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
-            var sqlQuery = "SELECT organism_db_name FROM V_Analysis_Job WHERE (job = " + mJob + ")";
+            var sqlQuery = "SELECT organism_db_name FROM V_Analysis_Job WHERE job = " + mJob;
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
@@ -215,7 +215,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!success || orgDbNameForJob == null || orgDbNameForJob.Count == 0)
             {
-                LogError("Could not determine the legacy FASTA file name (OrganismDBName in V_Analysis_Job) for job " + mJob);
+                LogError("Could not determine the legacy FASTA file name (organism_db_name in V_Analysis_Job) for job " + mJob);
                 return string.Empty;
             }
 
