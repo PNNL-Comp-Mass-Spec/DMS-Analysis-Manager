@@ -198,12 +198,12 @@ namespace AnalysisManagerProg
             // Construct the SQL to obtain the information:
             //   SELECT 'Step_Tool_Param_File_Storage_Path_' + name AS parameter_name, param_file_storage_path AS parameter_value
             //   FROM V_Pipeline_Step_Tools_Detail_Report
-            //   WHERE ISNULL(param_file_storage_path, '') <> ''
+            //   WHERE Coalesce(param_file_storage_path, '') <> ''
             //
             const string sqlQuery =
                 " SELECT '" + Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + name AS parameter_name, " +
                 " param_file_storage_path AS parameter_value" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
-                " WHERE ISNULL(param_file_storage_path, '') <> ''";
+                " WHERE Coalesce(param_file_storage_path, '') <> ''";
 
             ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
