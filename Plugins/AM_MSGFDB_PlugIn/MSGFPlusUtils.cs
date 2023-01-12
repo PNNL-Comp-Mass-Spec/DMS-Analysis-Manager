@@ -3128,7 +3128,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (results.Rows.Count < 1)
                 {
                     // No data was returned
-                    OnStatusEvent("No rows were returned for dataset " + datasetName + " from V_Dataset_Scan_Type_CrossTab in DMS");
+                    OnStatusEvent("No rows were returned for dataset " + datasetName + " from v_dataset_scan_types in DMS");
                     return false;
                 }
 
