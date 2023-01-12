@@ -1605,8 +1605,9 @@ namespace AnalysisManagerProg
                 {
                     if (int.TryParse(item, out var jobNumber))
                         jobNumbers.Add(jobNumber);
-
                 }
+
+                // ReSharper disable StringLiteralTypo
 
                 var sql = string.Format(
                     "SELECT J.job, J.dataset, J.instrumentname, J.storagepathserver, J.datasetfolder, J.resultsfolder, J.parameterfilename, DSType.dataset_type, DSType.acq_start " +
@@ -1619,6 +1620,7 @@ namespace AnalysisManagerProg
                     "WHERE J.job In ({0}) " +
                     "ORDER BY J.job", string.Join(", ", jobNumbers));
 
+                // ReSharper restore StringLiteralTypo
 
                 const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
                 const short retryCount = 2;
