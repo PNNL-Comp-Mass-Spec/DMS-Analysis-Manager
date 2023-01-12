@@ -708,7 +708,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <returns>If three or fewer protein collections, returns an updated filename based on the protein collection names.  Otherwise, simply returns orgDbName</returns>
         private string UpdateOrgDBNameIfRequired(string orgDbName)
         {
-            var reArchiveFileId = new Regex(@"ID_([0-9]+)_[A-Z0-9]+\.fasta", RegexOptions.Compiled);
+            var reArchiveFileId = new Regex(@"ID_([0-9]+)_[A-Z0-9]+\.fasta", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
