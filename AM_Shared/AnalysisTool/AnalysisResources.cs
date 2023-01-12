@@ -3460,7 +3460,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPkgDataset"></param>
         public bool OverrideCurrentDatasetInfo(DataPackageDatasetInfo dataPkgDataset)
         {
-
             if (string.IsNullOrEmpty(dataPkgDataset.Dataset))
             {
                 LogError("OverrideCurrentDatasetInfo; Column 'Dataset' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
@@ -3516,7 +3515,6 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPkgJob"></param>
         public bool OverrideCurrentDatasetAndJobInfo(DataPackageJobInfo dataPkgJob)
         {
-
             if (string.IsNullOrEmpty(dataPkgJob.Dataset))
             {
                 LogError("OverrideCurrentDatasetAndJobInfo; Column 'Dataset' not defined for job " + dataPkgJob.Job + " in the data package");

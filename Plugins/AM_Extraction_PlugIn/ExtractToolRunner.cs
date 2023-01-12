@@ -1635,7 +1635,6 @@ namespace AnalysisManagerExtractionPlugin
             return successCount == inputFiles.Count
                 ? CloseOutType.CLOSEOUT_SUCCESS
                 : successOverall;
-
         }
 
         private CloseOutType RunPhrpForMSGFPlus()
