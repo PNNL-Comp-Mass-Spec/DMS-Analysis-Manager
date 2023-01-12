@@ -195,17 +195,14 @@ namespace AnalysisManagerProg
 
             ShowTrace("LoadBrokerDBSettings has BrokerConnectionString = " + connectionStringToUse);
 
-            // Construct the SQL to obtain the information:
-            //   SELECT 'Step_Tool_Param_File_Storage_Path_' + name AS parameter_name, param_file_storage_path AS parameter_value
-            //   FROM V_Pipeline_Step_Tools_Detail_Report
-            //   WHERE Coalesce(param_file_storage_path, '') <> ''
-            //
-            const string sqlQuery =
-                " SELECT '" + Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "' + name AS parameter_name, " +
-                " param_file_storage_path AS parameter_value" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
-                " WHERE Coalesce(param_file_storage_path, '') <> ''";
+            // Lookup the storage path for each step tool
 
-            ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
+            const string sqlQuery =
+                " SELECT step_tool, param_file_storage_path" +
+                " FROM V_Pipeline_Step_Tool_Storage_Paths" +
+                " WHERE param_file_storage_path <> ''";
+
+            ShowTrace("Query V_Pipeline_Step_Tool_Storage_Paths in broker");
 
             // Query the database
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
@@ -226,17 +223,18 @@ namespace AnalysisManagerProg
             {
                 // No data was returned
                 var statusMessage = string.Format(
-                    "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using {0}",
+                    "AnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tool_Storage_Paths returned no rows using {0}",
                     connectionStringToUse);
 
                 ReportError(statusMessage, false);
                 return false;
             }
 
-            // Store the parameters
+            // Store the storage paths in the manager settings
             foreach (var item in queryResults)
             {
-                SetParam(item[0], item[1]);
+                var paramName = "Step_Tool_Param_File_Storage_Path_" + item[0];
+                SetParam(paramName, item[1]);
             }
 
             return true;

@@ -64,7 +64,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 dtaRefineryParamFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
                 LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
+                    "' is not defined (obtained using V_Pipeline_Step_Tool_Storage_Paths in the Broker DB); " +
                     "will assume: " + dtaRefineryParamFileStoragePath);
             }
 

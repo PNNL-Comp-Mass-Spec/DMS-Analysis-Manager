@@ -49,7 +49,7 @@ namespace AnalysisManagerProMexPlugIn
             {
                 proMexParamFileStoragePath = @"C:\DMS_Programs\ProMex";
                 LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
+                    "' is not defined (obtained using V_Pipeline_Step_Tool_Storage_Paths in the Broker DB); " +
                     "will assume: " + proMexParamFileStoragePath);
             }
 
