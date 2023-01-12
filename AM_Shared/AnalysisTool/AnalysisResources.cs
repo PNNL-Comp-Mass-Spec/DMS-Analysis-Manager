@@ -4832,7 +4832,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     return true;
                 }
 
-                paramFileGenerator = new clsMakeParameterFile
+                paramFileGenerator = new MakeParameterFile
                 {
                     TemplateFilePath = mMgrParams.GetParam("ParamTemplateLoc")
                 };
