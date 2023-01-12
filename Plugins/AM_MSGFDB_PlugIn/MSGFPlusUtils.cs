@@ -3090,16 +3090,22 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.Append(" SELECT");
-                sqlStr.Append("   \"HMS\", \"MS\", \"CID-HMSn\", \"CID-MSn\",");
-                sqlStr.Append("   \"ETD-HMSn\", \"SA_CID-HMSn\",");
-                sqlStr.Append("   \"SA_ETD-HMSn\", \"EThcD-HMSn\",");
-                sqlStr.Append("   \"HCD-HMSn\", \"HCD-MSn\", \"SA_HCD-HMSn\",");
-                sqlStr.Append("   \"ETD-MSn\", \"SA_ETD-MSn\",");
-                sqlStr.Append("   \"HMSn\", \"MSn\",");
-                sqlStr.Append("   \"PQD-HMSn\", \"PQD-MSn\",");
-                sqlStr.Append("   \"UVPD-HMSn\", \"UVPD-MSn\"");
-                sqlStr.Append(" FROM V_Dataset_Scan_Type_CrossTab");
+                // This query runs quickly on SQL Server but takes ~4 seconds on Postgres
+
+                // SELECT "HMS", "MS", "CID-HMSn", "CID-MSn",
+                //        "ETD-HMSn", "SA_CID-HMSn",
+                //        "SA_ETD-HMSn", "EThcD-HMSn",
+                //        "HCD-HMSn", "HCD-MSn", "SA_HCD-HMSn",
+                //        "ETD-MSn", "SA_ETD-MSn",
+                //        "HMSn", "MSn",
+                //        "PQD-HMSn", "PQD-MSn",
+                //        "UVPD-HMSn", "UVPD-MSn"
+                // FROM V_Dataset_Scan_Type_CrossTab
+                // WHERE dataset = 'QC_Mam_19_01_b_17Jan22_Rage_Rep-21-12-20'
+
+                // Query v_dataset_scan_types instead
+                sqlStr.Append(" SELECT scan_type, scan_count");
+                sqlStr.Append(" FROM v_dataset_scan_types");
                 sqlStr.AppendFormat(" WHERE dataset = '{0}'", datasetName);
 
                 const int retryCount = 2;
@@ -3128,31 +3134,52 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (DataRow curRow in results.Rows)
                 {
-                    countLowResMSn += curRow["CID-MSn"].CastDBVal<int>();
+                    var scanType = curRow["scan_type"].CastDBVal<string>();
+                    var scanCount = curRow["scan_count"].CastDBVal<int>();
 
-                    countHighResMSn += curRow["CID-HMSn"].CastDBVal<int>();
-                    countHighResMSn += curRow["ETD-HMSn"].CastDBVal<int>();
+                    switch (scanType)
+                    {
+                        case "CID-MSn":
+                        case "ETD-MSn":
+                        case "SA_ETD-MSn":
+                        case "MSn":
+                        case "PQD-MSn":
+                        case "UVPD-MSn":
+                            countLowResMSn += scanCount;
+                            break;
 
-                    countHighResMSn += curRow["SA_CID-HMSn"].CastDBVal<int>();
-                    countHighResMSn += curRow["SA_ETD-HMSn"].CastDBVal<int>();
-                    countHighResMSn += curRow["EThcD-HMSn"].CastDBVal<int>();
+                        case "CID-HMSn":
+                        case "ETD-HMSn":
+                        case "SA_CID-HMSn":
+                        case "SA_ETD-HMSn":
+                        case "EThcD-HMSn":
+                        case "HMSn":
+                        case "PQD-HMSn":
+                        case "UVPD-HMSn":
+                            countHighResMSn += scanCount;
+                            break;
 
-                    countLowResHCD += curRow["HCD-MSn"].CastDBVal<int>();
+                        case "HCD-MSn":
+                            countLowResHCD += scanCount;
+                            break;
 
-                    countHighResHCD += curRow["HCD-HMSn"].CastDBVal<int>();
-                    countHighResHCD += curRow["SA_HCD-HMSn"].CastDBVal<int>();
+                        case "HCD-HMSn":
+                        case "SA_HCD-HMSn":
+                            countHighResHCD += scanCount;
+                            break;
 
-                    countLowResMSn += curRow["ETD-MSn"].CastDBVal<int>();
-                    countLowResMSn += curRow["SA_ETD-MSn"].CastDBVal<int>();
+                        default:
+                            if (scanType.EndsWith("-HMSn", StringComparison.OrdinalIgnoreCase))
+                            {
+                                countHighResMSn += scanCount;
+                            }
+                            else if (scanType.EndsWith("-MSn", StringComparison.OrdinalIgnoreCase))
+                            {
+                                countLowResMSn += scanCount;
+                            }
 
-                    countHighResMSn += curRow["HMSn"].CastDBVal<int>();
-                    countLowResMSn += curRow["MSn"].CastDBVal<int>();
-
-                    countHighResMSn += curRow["PQD-HMSn"].CastDBVal<int>();
-                    countLowResMSn += curRow["PQD-MSn"].CastDBVal<int>();
-
-                    countHighResMSn += curRow["UVPD-HMSn"].CastDBVal<int>();
-                    countLowResMSn += curRow["UVPD-MSn"].CastDBVal<int>();
+                            break;
+                    }
                 }
 
                 results.Dispose();
