@@ -13,7 +13,7 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
 using MyEMSLReader;
-using ParamFileGenerator.MakeParams;
+using ParamFileGenerator;
 using PHRPReader;
 using PRISM;
 using PRISM.Logging;
