@@ -68,3 +68,4 @@ CachedLibs/
 /AM_Common/System.CodeDom.dll
 /AM_Common/System.Data.Odbc.dll
 /AM_Common/System.Data.SqlClient.dll
+/AM_Common/*.delete
