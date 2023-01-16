@@ -1294,10 +1294,8 @@ namespace AnalysisManagerProg
                     LogError("R directory not found");
                     return;
                 }
-                else
-                {
-                    LogMessage("R directory path: " + rBinPath);
-                }
+
+                LogMessage("R directory path: " + rBinPath);
 
                 var cyclops = new CyclopsController(paramDictionary);
                 RegisterEvents(cyclops);
@@ -1598,7 +1596,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var analysisJobs = jobList.Split(new char[] { '\t', ',', '\r', '\n' });
+                var analysisJobs = jobList.Split('\t', ',', '\r', '\n');
                 var jobNumbers = new List<int>();
 
                 foreach (var item in analysisJobs)
@@ -1749,9 +1747,13 @@ namespace AnalysisManagerProg
                     var consoleOutputFile2 = jobDirectory.GetFiles("MSGFDB_ConsoleOutput.txt").ToList();
 
                     if (consoleOutputFile1.Count > 0)
+                    {
                         consoleOutputFile = consoleOutputFile1[0];
+                    }
                     else if (consoleOutputFile2.Count > 0)
+                    {
                         consoleOutputFile = consoleOutputFile2[0];
+                    }
                     else
                     {
                         ConsoleMsgUtils.ShowWarning("Console output file not found for job {0}: {1}", job, jobDirectory.FullName);
