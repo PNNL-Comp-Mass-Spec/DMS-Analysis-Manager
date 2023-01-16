@@ -1320,7 +1320,9 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestRunQuery()
         {
-            const string sqlStr = "Select top 15 * from t_log_entries where posting_time >= DateAdd(day, -15, GetDate())"; // TODO: Date functions not compatible with postgres
+            var dateThreshold = DateTime.Now.Subtract(new TimeSpan(15, 0, 0, 0));
+
+            var sqlStr = string.Format("Select * From t_log_entries where posting_time >= '{0:yyyy-MM-dd}'", dateThreshold);
 
             const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
             const short retryCount = 2;
@@ -1333,10 +1335,16 @@ namespace AnalysisManagerProg
 
             dbTools.GetQueryResultsDataTable(sqlStr, out var results, retryCount);
 
+            var dataCount = 0;
+
             Console.WriteLine("{0,-10} {1,-21} {2,-20} {3}", "Entry_ID", "Date", "Posted_By", "Message");
             foreach (DataRow row in results.Rows)
             {
                 Console.WriteLine("{0,-10} {1,-21:yyyy-MM-dd hh:mm tt} {2,-20} {3}", row[0], row[2], row[1], row[4]);
+                dataCount++;
+
+                if (dataCount >= 15)
+                    break;
             }
         }
 
