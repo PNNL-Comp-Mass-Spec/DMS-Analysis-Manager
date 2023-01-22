@@ -6,6 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{721EEB4A-243E-4CB6-9B6A-6EE0E7F826B6}</ProjectGuid>
     <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MASIC_ReporterIonObsStatsUploader</RootNamespace>
     <AssemblyName>MASIC_ReporterIonObsStatsUploader</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>

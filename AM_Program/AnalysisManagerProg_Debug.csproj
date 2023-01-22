@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -26,8 +26,6 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\AnalysisManagerProg.xml</DocumentationFile>
-    <NoWarn>
-    </NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,8 +46,7 @@
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Cyclops, Version=1.1.7107.29277, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Cyclops">
       <HintPath>..\AM_Common\Cyclops.dll</HintPath>
     </Reference>
     <Reference Include="DMSUpdateManager">
@@ -77,7 +74,6 @@
       <HintPath>..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
     </Reference>
     <Reference Include="PeptideToProteinMapEngine">
-      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
     <Reference Include="PHRPReader">
@@ -86,9 +82,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
@@ -239,11 +232,4 @@ xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 </PostBuildEvent>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
