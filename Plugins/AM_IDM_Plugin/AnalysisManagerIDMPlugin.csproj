@@ -48,9 +48,6 @@
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Core">
-      <HintPath>..\..\AM_Common\Pacifica.Core.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />

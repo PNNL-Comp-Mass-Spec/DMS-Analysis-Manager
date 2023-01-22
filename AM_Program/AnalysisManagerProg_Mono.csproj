@@ -69,8 +69,8 @@
     <Reference Include="OrganismDatabaseHandler">
       <HintPath>..\AM_Common\OrganismDatabaseHandler.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica.Core">
-      <HintPath>..\AM_Common\Pacifica.Core.dll</HintPath>
+    <Reference Include="Pacifica">
+      <HintPath>..\AM_Common\Pacifica.dll</HintPath>
     </Reference>
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
@@ -125,6 +125,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.2</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
       <Version>1.3.16</Version>
     </PackageReference>
@@ -199,7 +202,7 @@ echo Skip: xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Commo
 echo Skip: xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)DotNetZip.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-echo Skip: xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+echo Skip: xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)PdfSharp.Charting.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)PdfSharp.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 echo Skip: xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\AM_Common\" /D /Y

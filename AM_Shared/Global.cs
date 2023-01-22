@@ -248,7 +248,7 @@ namespace AnalysisManagerBase
         /// <returns>Clear text password</returns>
         public static string DecodePassword(string encodedPwd)
         {
-            return Pacifica.Core.Utilities.DecodePassword(encodedPwd);
+            return AppUtils.DecodeShiftCipher(encodedPwd);
         }
 
         /// <summary>

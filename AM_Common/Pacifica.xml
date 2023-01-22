@@ -1,0 +1,2148 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Pacifica</name>
+    </assembly>
+    <members>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_POLICY_SERVER_HOST_NAME">
+            <summary>
+            Policy Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_POLICY_SERVER_HOST_NAME">
+            <summary>
+            Policy Server host name for testing
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_FILE_SERVER_HOST_NAME">
+            <summary>
+            File Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_METADATA_SERVER_HOST_NAME">
+            <summary>
+            Metadata Server host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_METADATA_SERVER_HOST_NAME">
+            <summary>
+            Metadata Server host name for testing
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DEFAULT_INGEST_HOST_NAME">
+            <summary>
+            Ingest host name on the production server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.TEST_INGEST_HOST_NAME">
+            <summary>
+            Ingest host name on the test server
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.DMS_CLIENT_CERT_DIRECTORY">
+            <summary>
+            Windows directory (for DMS) with the MyEMSL client certificate file
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.Configuration.CLIENT_CERT_DIRECTORY">
+            <summary>
+            Windows directory with the MyEMSL client certificate file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.LocalTempDirectory">
+            <summary>
+            Local temp directory
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.UseSecureDataTransfer">
+            <summary>
+            If true, use https; otherwise use http
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.Scheme">
+            <summary>
+            Returns either https:// or http://
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.ClientCertFilePath">
+            <summary>
+            Path to the MyEMSL certificate file, e.g. svc-dms-cert_2019.pfx
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.FileServerHostName">
+            <summary>
+            Server for retrieving files one file at a time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.FileServerUri">
+            <summary>
+            File download server, default https://files.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.IngestServerHostName">
+            <summary>
+            Ingest server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.IngestServerUri">
+            <summary>
+            Ingest server, default https://ingest.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.PolicyServerHostName">
+            <summary>
+            Policy server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.PolicyServerUri">
+            <summary>
+            Policy server, default https://policy.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.MetadataServerHostName">
+            <summary>
+            Metadata server name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.MetadataServerUri">
+            <summary>
+            Metadata server, default https://metadata.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.HttpProxyUrl">
+            <summary>
+            Proxy server, default empty string
+            </summary>
+            <remarks>Ignored if an empty string</remarks>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.FindNewestClientCertFile">
+            <summary>
+            Look for the newest client certificate file (e.g., svc-dms.pfx)
+            </summary>
+            <remarks>First checks the directory with the executing assembly, then C:\DMS_Programs\client_certs, then C:\client_certs\</remarks>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+        </member>
+        <member name="M:Pacifica.Core.Configuration.SetProxy(System.Net.HttpWebRequest)">
+            <summary>
+            Associate the proxy server (if defined) with the WebRequest
+            </summary>
+            <param name="oWebRequest"></param>
+        </member>
+        <member name="P:Pacifica.Core.Configuration.UseTestInstance">
+            <summary>
+            When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_ABORTED_RESPONSE">
+            <summary>
+            Response to return when the thread used to send a request aborts
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_EXCEPTION_RESPONSE">
+            <summary>
+            Response to return when the thread used to send a request catches an exception
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_PRECONDITION_FAILED_RESPONSE">
+            <summary>
+            Response to return the Policy server reports Precondition Failed
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.REQUEST_TIMEOUT_RESPONSE">
+            <summary>
+            Response to return when a request times out
+            </summary>
+        </member>
+        <member name="F:Pacifica.Core.EasyHttp.MYEMSL_METADATA_FILE_NAME">
+            <summary>
+            Metadata file name
+            </summary>
+        </member>
+        <member name="T:Pacifica.Core.EasyHttp.HttpMethod">
+            <summary>
+            An enumeration of standard HTTP methods.
+            </summary>
+            <remarks>
+            Use ExtensionMethods.GetDescription
+            to pull the description value out of this type.
+            </remarks>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.MyEMSLOffline">
+            <summary>
+            This event is raised if we are unable to connect to MyEMSL, leading to events
+            System.Net.WebException: Unable to connect to the remote server
+            System.Net.Sockets.SocketException: A connection attempt failed because the connected party did not properly respond after a period of time
+            </summary>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.StatusUpdate">
+            <summary>
+            This event is used by SendFileListToIngester to report upload status
+            </summary>
+        </member>
+        <member name="E:Pacifica.Core.EasyHttp.ErrorEvent">
+            <summary>
+            Error event
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.AbortThreadedSendNow">
+            <summary>
+            Abort thread mThreadedSend
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetFile(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Retrieve a file
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="downloadFilePath">Local file path to save the file as</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>True if success, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetHeaders(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get the headers for a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Headers</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.GetHeaders(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Get the headers for a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode"></param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Headers</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.InitializeRequest(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer@,System.Int32@,System.Net.NetworkCredential,System.Double)">
+            <summary>
+            Initialize a request
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <param name="maxTimeoutHours"></param>
+            <returns>Web request</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.InitializeRequest(Pacifica.Core.UrlContactInfo)">
+            <summary>
+            Initialize a request
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.IsResponseError(System.String)">
+            <summary>
+            Return True if responseText is one of the custom responses that this class uses to report errors (timeout, abort, or exception)
+            </summary>
+            <param name="responseText"></param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.OnErrorEvent(System.String,System.Exception)">
+            <summary>
+            Report an error
+            </summary>
+            <param name="message"></param>
+            <param name="ex">Exception (allowed to be nothing)</param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.RaiseStatusUpdate(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Report a status update
+            </summary>
+            <param name="percentCompleted">Value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes to send</param>
+            <param name="totalBytesToSend">Total bytes sent</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <remarks>Uses the Task Parallel Library (TPL)</remarks>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.SendViaThreadStart(Pacifica.Core.Configuration,System.String,System.Net.HttpStatusCode@,System.Int32)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <remarks>Uses ThreadStart instead of TPL</remarks>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.SendViaThreadStart(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.Net.HttpStatusCode@,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+            <remarks>Uses ThreadStart instead of TPL</remarks>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="responseStatusCode">Response status code</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+            <returns>Response data</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.Send(Pacifica.Core.UrlContactInfo)">
+            <summary>
+            Get or post data to a URL
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.StartThreadedSend">
+            <summary>
+            Start a thread to contact the URL
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.ResolveCertFile(Pacifica.Core.Configuration,System.String,System.String@)">
+            <summary>
+            Determine the path to the MyEMSL Certificate file
+            </summary>
+            <param name="config">Pacifica Config</param>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+        </member>
+        <member name="M:Pacifica.Core.EasyHttp.ResolveCertFile(Pacifica.Core.Configuration,System.String,System.String@,System.String@)">
+            <summary>
+            Determine the path to the MyEMSL Certificate file
+            </summary>
+            <param name="config">Pacifica Config</param>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <param name="errorMessageDetailed">Output: error message, including calling method</param>
+            <returns>Path to the file if found, otherwise an empty string</returns>
+        </member>
+        <member name="P:Pacifica.Core.MessageEventArgs.CallingFunction">
+            <summary>
+            Calling function
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.MessageEventArgs.Message">
+            <summary>
+            Message
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.PercentCompleted">
+            <summary>
+            Value between 0 and 100
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.TotalBytesSent">
+            <summary>
+            Total bytes that have been sent
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.TotalBytesToSend">
+            <summary>
+            Total bytes to send
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.StatusEventArgs.StatusMessage">
+            <summary>
+            Status message
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.StatusEventArgs.#ctor(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="percentCompleted">Percent complete, value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes sent</param>
+            <param name="totalBytesToSend">Total bytes to send</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="P:Pacifica.Core.UploadCompletedEventArgs.ServerResponse">
+            <summary>
+            Server response
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.ExtensionMethods.GetDescription``1(System.Object)">
+            <summary>
+            Determine the Description attribute of a given enum value
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="enumerationValue"></param>
+            <returns>Description attribute, or simply enum.ToString</returns>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.String,System.String)">
+            <summary>
+            Constructor and takes a file path
+            </summary>
+            <remarks>
+            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            </remarks>
+            <param name="filePath">Full path to the local file</param>
+            <param name="baseDSPath">Base dataset folder path</param>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.IO.FileInfo,System.String)">
+            <summary>
+            Constructor that takes a FileInfo object
+            </summary>
+            <remarks>
+            Instantiate a new FileInfoObject, including computing the SHA-1 hash of the file
+            </remarks>
+            <param name="fileToAdd">File info</param>
+            <param name="baseDSPath">Base dataset folder path</param>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.#ctor(System.IO.FileInfo,System.String,System.String)">
+            <summary>
+            Instantiate a new FileInfoObject; auto-computes the SHA-1 hash if sha1Hash is blank or is not exactly 40 characters long
+            </summary>
+            <param name="fileToAdd">File info</param>
+            <param name="relativeDestinationDirectory">Folder in archive in which to store the file; empty string means to store in the dataset folder</param>
+            <param name="sha1Hash">SHA-1 hash for the file; if blank, the hash will be auto-computed</param>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.File">
+            <summary>
+            File info
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.AbsoluteLocalPath">
+            <summary>
+            Full path to the local file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.RelativeDestinationDirectory">
+            <summary>
+            Relative destination directory, with Unix-style slashes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.RelativeDestinationFullPath">
+            <summary>
+             Relative destination path, with Unix-style slashes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.DestinationFileName">
+            <summary>
+            Optional alternate name to use for the file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.FileName">
+            <summary>
+            Filename
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.Sha1HashHex">
+            <summary>
+            SHA-1 hash of the file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.FileSizeInBytes">
+            <summary>
+            File size, in bytes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.CreationTime">
+            <summary>
+            File creation time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.FileInfoObject.LastWriteTime">
+            <summary>
+            File last write time
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.ConvertWindowsPathToUnix(System.String)">
+            <summary>
+            Converts a windows path of the form \\proto-7\VOrbi05\2013_2\QC_Shew_13_02_500ng_15May13_Lynx_12-12-04\metadata.xml
+            to the Linux form proto-7/VOrbi05/2013_2/QC_Shew_13_02_500ng_15May13_Lynx_12-12-04/metadata.xml
+            </summary>
+            <remarks>Removes any leading slashes</remarks>
+            <param name="path">Unix-style path</param>
+        </member>
+        <member name="M:Pacifica.Core.FileInfoObject.ToString">
+            <summary>
+            Return the SHA-1 hash
+            </summary>
+        </member>
+        <member name="T:Pacifica.Core.MyEMSLStatusCheck">
+            <summary>
+            Examine the status of a given ingest job
+            </summary>
+            <remarks>
+            <para>
+            First call GetIngestStatus then call IngestStepCompleted.
+            This allows for just one web request, but the ability to examine the status of multiple steps
+            </para>
+            <para>
+            This class is used by Capture Task Manager plugins Archive Verify and Archive Status Check
+            </para>
+            </remarks>
+        </member>
+        <member name="P:Pacifica.Core.MyEMSLStatusCheck.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.DetermineIngestStepsCompleted(System.String,System.Int32,System.Byte)">
+            <summary>
+            Examine the task name and percent complete to determine the number of ingest steps that have been completed
+            </summary>
+            <param name="currentTask"></param>
+            <param name="percentComplete">percent complete; typically meaningless (either 0 or 100)</param>
+            <param name="ingestStepsCompletedOld"></param>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.DoesFileExistInMyEMSL(Pacifica.Core.FileInfoObject)">
+            <summary>
+            Check whether a file exists in MyEMSL
+            </summary>
+            <remarks>Searches using Sha1HashHex, so could match a file in a different location than the specific path tracked by fileInfo</remarks>
+            <param name="fileInfo">File info object</param>
+            <returns>True if found, otherwise false</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.GetIngestStatus(System.String,System.String@,System.Int32@,System.Boolean@,System.String@)">
+            <summary>
+            Obtain the status returned by the given MyEMSL status page
+            </summary>
+            <param name="statusURI">
+            URI to examine, e.g. https://ingestdms.my.emsl.pnl.gov/get_state?job_id=1300782
+            </param>
+            <param name="currentTask">Current task</param>
+            <param name="percentComplete">Output: ingest process percent complete (value between 0 and 100)</param>
+            <param name="lookupError">Output: true if an error occurs</param>
+            <param name="errorMessage">Output: error message if lookupError is true</param>
+            <returns>Status dictionary (empty dictionary if an error)</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.GetStatusNumFromURI(System.String)">
+            <summary>
+            Extract the StatusNum (StatusID) from a status URI
+            </summary>
+            <param name="statusURI"></param>
+            <returns>The status number, or 0 if an error</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.IngestStepCompletionCount(System.Int32)">
+            <summary>
+            Percent complete (value between 0 and 100)
+            </summary>
+            <remarks>Reports 7 when percentComplete is 100</remarks>
+            <param name="percentComplete"></param>
+            <returns>Number of steps completed</returns>
+        </member>
+        <member name="M:Pacifica.Core.MyEMSLStatusCheck.ValidateCertFile(System.String,System.String@)">
+            <summary>
+            Validate that the MyEMSL certificate file exists
+            </summary>
+            <param name="callingMethod">Calling method</param>
+            <param name="errorMessage">Output: error message</param>
+            <returns>True if the cert file is found, otherwise false</returns>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Config">
+            <summary>
+            Configuration options
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Url">
+            <summary>
+            URL
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Cookies">
+            <summary>
+            Cookies
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.ResponseData">
+            <summary>
+            Tracks response text and response code
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.PostData">
+            <summary>
+            Data to post (when method is HttpMethod.Post)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.Method">
+            <summary>
+            Get, Post, or Put
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.TimeoutSeconds">
+            <summary>
+            Timeout, in seconds
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.ContentType">
+            <summary>
+            Form/post content-type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.SendStringInHeader">
+            <summary>
+            If True, and the method is Get, include postData in the header
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.UrlContactInfo.LoginCredentials">
+            <summary>
+            Login credentials
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.UrlContactInfo.#ctor(Pacifica.Core.Configuration,System.String,System.Net.CookieContainer,System.String,Pacifica.Core.EasyHttp.HttpMethod,System.Int32,System.String,System.Boolean,System.Net.NetworkCredential)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config">Configuration options</param>
+            <param name="url">URL</param>
+            <param name="cookies">Cookies</param>
+            <param name="postData">Data to post (when method is HttpMethod.Post)</param>
+            <param name="method">Get, Post, or Put</param>
+            <param name="timeoutSeconds">Timeout, in seconds</param>
+            <param name="contentType">Form/post content-type</param>
+            <param name="sendStringInHeader">If True, and the method is Get, include postData in the header</param>
+            <param name="loginCredentials">Login credentials</param>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.DeleteFileIgnoreErrors(System.IO.FileInfo)">
+            <summary>
+            Try to delete the file; ignore any errors
+            </summary>
+            <param name="fileToDelete"></param>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Boolean)">
+            <summary>
+            Lookup the value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.Int32)">
+            <summary>
+            Lookup the integer value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Integer to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.GetDictionaryValue(System.Collections.Generic.IReadOnlyDictionary{System.String,System.String},System.String,System.String)">
+            <summary>
+            Lookup the value associated with the given key in the dictionary
+            </summary>
+            <param name="dictionary">Dictionary</param>
+            <param name="keyName">Key name</param>
+            <param name="valueIfMissingOrNull">Value to return if the dictionary value is missing or null</param>
+            <returns>Value for the given key, or valueIfMissingOrNull if the value is missing or null</returns>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.PossiblyConvertToLongPath(System.String)">
+            <summary>
+            Return the path as-is if less than 260 characters in length
+            Otherwise, convert to a long path
+            </summary>
+            <param name="path"></param>
+        </member>
+        <member name="M:Pacifica.Core.Utilities.ValidateRemoteCertificate(System.Security.Cryptography.X509Certificates.X509Certificate,System.Net.Security.SslPolicyErrors,System.String@)">
+            <summary>
+            Callback used to validate the certificate in an SSL conversation
+            </summary>
+            <param name="cert">Certificate to be validated</param>
+            <param name="policyErrors">Results from the default certificate validation</param>
+            <param name="errorMessage"></param>
+            <returns>True if the server is trusted</returns>
+        </member>
+        <member name="T:Pacifica.Core.WebResponseData">
+            <summary>
+            Tracks the response code and response text returned by a call to EasyHttp.Send
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionCaught">
+            <summary>
+            Set to true when an exception was caught
+            </summary>
+            <remarks>For details, see exceptionMessage and ExceptionStackTrace</remarks>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionMessage">
+            <summary>
+            Exception message
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ExceptionStackTrace">
+            <summary>
+            Stack trace for the exception
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ResponseStatusCode">
+            <summary>
+            Response code
+            </summary>
+        </member>
+        <member name="P:Pacifica.Core.WebResponseData.ResponseText">
+            <summary>
+            Response text
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.ResetExceptionInfo">
+            <summary>
+            Clear cached exception info
+            </summary>
+        </member>
+        <member name="M:Pacifica.Core.WebResponseData.RegisterException(System.Exception)">
+            <summary>
+            Store information on a new exception
+            </summary>
+            <param name="ex"></param>
+        </member>
+        <member name="T:Pacifica.DataUpload.TarStreamUploader">
+            <summary>
+            .tar stream uploader
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.TarStreamUploader.TAR_BLOCK_SIZE_BYTES">
+            <summary>
+            Block size for tar files
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.TarStreamUploader.UPLOADING_FILES">
+            <summary>
+            Used to report status
+            </summary>
+        </member>
+        <member name="T:Pacifica.DataUpload.TarStreamUploader.UploadDebugMode">
+            <summary>
+            Debug options
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.TarStreamUploader.UploadDebugMode.DebugDisabled">
+            <summary>
+            Debugging is disabled
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.TarStreamUploader.UploadDebugMode.CreateTarLocal">
+            <summary>
+            Authenticate with MyEMSL, but create a local .tar file
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.TarStreamUploader.UploadDebugMode.MyEMSLOfflineMode">
+            <summary>
+            Do not contact MyEMSL; create a local .tar file
+            </summary>
+        </member>
+        <member name="E:Pacifica.DataUpload.TarStreamUploader.StatusUpdate">
+            <summary>
+            This event is used by SendFileListToIngester to report upload status
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.TarStreamUploader.RaiseStatusUpdate(System.Double,System.Int64,System.Int64,System.String)">
+            <summary>
+            Report a status update
+            </summary>
+            <param name="percentCompleted">Value between 0 and 100</param>
+            <param name="totalBytesSent">Total bytes to send</param>
+            <param name="totalBytesToSend">Total bytes sent</param>
+            <param name="statusMessage">Status message</param>
+        </member>
+        <member name="M:Pacifica.DataUpload.TarStreamUploader.SendFileListToIngester(Pacifica.Core.Configuration,System.String,System.String,System.Collections.Generic.SortedDictionary{System.String,Pacifica.Core.FileInfoObject},System.String,Pacifica.DataUpload.TarStreamUploader.UploadDebugMode)">
+            <summary>
+            Upload a file via POST
+            </summary>
+            <param name="config"></param>
+            <param name="location"></param>
+            <param name="serverBaseAddress"></param>
+            <param name="fileListObject"></param>
+            <param name="metadataFilePath"></param>
+            <param name="debugMode"></param>
+            <returns>Web response data</returns>
+        </member>
+        <member name="T:Pacifica.DataUpload.Upload">
+            <summary>
+            MyEMSL Upload metadata class
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.DEFAULT_EUS_OPERATOR_ID">
+            <summary>
+            EUS Operator ID to use when operator ID is unknown
+            </summary>
+            <remarks>43428 is "Monroe, Matthew"</remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.DEFAULT_EUS_PROJECT_ID">
+            <summary>
+            EUS Project ID to use when the project ID is unknown
+            </summary>
+            <remarks>
+            We originally used Project 17797: "Development of High Throughput Proteomics Production Operations"
+            We switched to Project 51287 in January 2020
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UNKNOWN_INSTRUMENT_EUS_INSTRUMENT_ID">
+            <summary>
+            EUS Instrument ID to use when the EUS Instrument ID is unknown
+            </summary>
+            <remarks>34127 is VOrbiETD04</remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UNKNOWN_INSTRUMENT_NAME">
+            <summary>
+            DMS Instrument Name corresponding to EUS Instrument ID 34127
+            </summary>
+        </member>
+        <member name="T:Pacifica.DataUpload.Upload.EUSInfo">
+            <summary>
+            EUS info
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.EUSInfo.EUSInstrumentID">
+            <summary>
+            EUS instrument ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.EUSInfo.EUSProjectID">
+            <summary>
+            EUS project number
+            </summary>
+            <remarks>As of May 2019, these are now referred to as projects, not proposals</remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.EUSInfo.EUSUploaderID">
+            <summary>
+            EUS ID of the instrument operator (for datasets) or the data package owner (for Data Packages)
+            </summary>
+            <remarks>Aka EUSSubmitterId</remarks>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.EUSInfo.Clear">
+            <summary>
+            Clear stored EUS info
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.EUSInfo.ToString">
+            <summary>
+            Return EUS instrument ID, uploader ID, and project ID
+            </summary>
+        </member>
+        <member name="T:Pacifica.DataUpload.Upload.UploadMetadata">
+            <summary>
+            Upload metadata
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DatasetID">
+            <summary>
+            Dataset ID
+            </summary>
+            <remarks>
+            0 for data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DataPackageID">
+            <summary>
+            Data package ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.SubFolder">
+            <summary>
+            Subdirectory
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DatasetName">
+            <summary>
+            Dataset name
+            </summary>
+            <remarks>
+            Only used for datasets; not data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DateCodeString">
+            <summary>
+            Date code string
+            </summary>
+            <remarks>
+            Only used for datasets; not data packages
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DMSInstrumentName">
+            <summary>
+            DMS instrument name
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.CampaignName">
+            <summary>
+            Campaign name
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.CampaignID">
+            <summary>
+            Campaign ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.EUSInstrumentID">
+            <summary>
+            EUS instrument ID
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in July 2017 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.EUSProjectID">
+            <summary>
+            EUS project ID
+            </summary>
+            <remarks>
+            Originally only used by datasets. Used by Data Packages starting in October 2016 since required by policy
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.ExperimentName">
+            <summary>
+            Experiment name
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.ExperimentID">
+            <summary>
+            Experiment ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.OrganismName">
+            <summary>
+            Organism name
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.OrganismID">
+            <summary>
+            Organism ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.NCBITaxonomyID">
+            <summary>
+            NCBI taxonomy ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.AcquisitionTime">
+            <summary>
+            Acquisition time
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.AcquisitionLengthMin">
+            <summary>
+            Acquisition length, in minutes
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.NumberOfScans">
+            <summary>
+            Number of scans
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.SeparationType">
+            <summary>
+            Separation type
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.DatasetType">
+            <summary>
+            Dataset type
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.RequestedRunID">
+            <summary>
+            Requested run ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.UserOfRecordList">
+            <summary>
+            User list
+            </summary>
+        </member>
+        <member name="F:Pacifica.DataUpload.Upload.UploadMetadata.EUSOperatorID">
+            <summary>
+            Instrument Operator EUS ID for datasets
+            Data Package Owner for data packages
+            </summary>
+            <remarks>DEFAULT_EUS_OPERATOR_ID if unknown</remarks>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.UploadMetadata.#ctor">
+            <summary>
+            Default constructor to ensure default values are populated
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.UploadMetadata.Clear">
+            <summary>
+            Clear stored metadata
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.UploadMetadata.ToString">
+            <summary>
+            Return the dataset ID if available, otherwise data package ID
+            </summary>
+        </member>
+        <member name="P:Pacifica.DataUpload.Upload.ErrorMessage">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="P:Pacifica.DataUpload.Upload.TransferFolderPath">
+            <summary>
+            The metadata.txt file will be copied to the Transfer Folder if the folder path is not empty
+            Example: \\proto-4\DMS3_Xfer\QC_Shew_16_01_125ng_CID-STD_newCol-1_5Apr17_Frodo_16-11-08
+            </summary>
+        </member>
+        <member name="P:Pacifica.DataUpload.Upload.JobNumber">
+            <summary>
+            Capture Task DB job number for the DatasetArchive or ArchiveUpdate Job
+            </summary>
+            <remarks>
+            The metadata.txt file name will include the JobNumber text in the name, for example MyEMSL_metadata_CaptureJob_12345.txt
+            For DataPackages we store DataPackageId in JobNumber</remarks>
+        </member>
+        <member name="P:Pacifica.DataUpload.Upload.UseTestInstance">
+            <summary>
+            When true, upload to ingestdmsdev.my.emsl.pnl.gov instead of ingestdms.my.emsl.pnl.gov
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.#ctor(Pacifica.Core.Configuration)">
+            <summary>
+            Constructor (TransferFolderPath and JobNumber will be empty)
+            </summary>
+            <remarks>This constructor is used by the DataPackage Archive Manager</remarks>
+            <param name="config">Pacifica configuration</param>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.#ctor(Pacifica.Core.Configuration,System.String,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <remarks>The metadata.txt file will be copied to the transfer folder</remarks>
+            <param name="config">Pacifica config</param>
+            <param name="transferFolderPath">
+            Transfer folder path for this dataset,
+            for example \\proto-4\DMS3_Xfer\IFT001_Pool_17_B_10x_27Aug13_Tiger_13-07-36
+            </param>
+            <param name="jobNumber">DMS Data Capture job number</param>
+        </member>
+        <member name="E:Pacifica.DataUpload.Upload.MyEMSLOffline">
+            <summary>
+            MyEMSL Offline event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DataUpload.Upload.UploadCompleted">
+            <summary>
+            Upload completed event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DataUpload.Upload.StatusUpdate">
+            <summary>
+            Status updated event
+            </summary>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.StartUpload(System.Collections.Generic.List{Pacifica.Json.IUploadMetadata},System.String@)">
+            <summary>
+            Update the files and data tracked by metadataObject to MyEMSL
+            </summary>
+            <remarks>This method is used by the DataPackage Archive Manager</remarks>
+            <param name="metadataObject"></param>
+            <param name="statusURI">Status URL</param>
+            <returns>True if successfully uploaded, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.StartUpload(System.Collections.Generic.List{Pacifica.Json.IUploadMetadata},Pacifica.DataUpload.TarStreamUploader.UploadDebugMode,System.String@)">
+            <summary>
+            Update the files and data tracked by metadataObject to MyEMSL
+            </summary>
+            <param name="metadataObject"></param>
+            <param name="debugMode">
+            Set to UploadDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+            Set to UploadDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+            </param>
+            <param name="statusURI">Status URL</param>
+            <returns>True if successfully uploaded, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.CreatePacificaMetadataObject(Pacifica.DataUpload.Upload.UploadMetadata,System.Collections.Generic.List{Pacifica.Core.FileInfoObject},Pacifica.DataUpload.Upload.EUSInfo@)">
+            <summary>
+            Create the metadata object with the upload details, including the files to upload
+            </summary>
+            <param name="uploadMetadata">Upload metadata</param>
+            <param name="filesToUpload">Files to upload</param>
+            <param name="eusInfo">Output parameter: EUS instrument ID, project ID, and uploader ID</param>
+            <returns>
+            Dictionary of the information to translate to JSON;
+            Keys are key names; values are either strings or dictionary objects or even a list of dictionary objects
+            </returns>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.GetMetadataObjectDescription(System.Collections.Generic.List{Pacifica.Json.IUploadMetadata})">
+            <summary>
+            Return a string description of the EUS info encoded by metadataObject
+            </summary>
+            <param name="metadataObject"></param>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.GetEUSInstrumentID(System.Int32,System.Int32)">
+            <summary>
+            Return the EUS instrument ID, falling back to instrumentIdIfUnknown if eusInstrumentId is empty
+            </summary>
+            <param name="eusInstrumentId"></param>
+            <param name="instrumentIdIfUnknown"></param>
+        </member>
+        <member name="M:Pacifica.DataUpload.Upload.GetEUSProjectID(System.String,System.String)">
+            <summary>
+            Validate the EUS project ID, or use the default
+            </summary>
+            <remarks>This is a string because the project ID may contain suffix letters</remarks>
+            <param name="eusProjectId"></param>
+            <param name="eusProjectIdIfUnknown"></param>
+        </member>
+        <member name="T:Pacifica.DMSDataUpload.DMSMetadataObject">
+            <summary>
+            DMS metadata object
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.LARGE_DATASET_ARCHIVE_THRESHOLD_GB">
+            <summary>
+            If a dataset archive task involves more 15 GB of data, only archive the root directory and the QC directory
+            Use property SkippedDatasetArchiveSubdirectories to view the skipped subdirectory names
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.MAX_FILES_TO_ARCHIVE">
+            <summary>
+            Maximum number of files to archive
+            </summary>
+            <remarks>
+            If uploading an entire dataset directory and all of its subdirectories via a DatasetArchive operation,
+              this value applies to all files in the dataset directory (and subdirectories)
+            If uploading just one dataset subdirectory via an ArchiveUpdate operation,
+              this value applies to all files in that subdirectory
+            </remarks>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.SOURCE_DIRECTORY_NOT_FOUND">
+            <summary>
+            Error message thrown when the dataset directory is not found
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.TOO_MANY_FILES_TO_ARCHIVE">
+            <summary>
+            Error message thrown when the dataset directory has too many files to archive
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.UNDEFINED_EUS_OPERATOR_ID">
+            <summary>
+            Error message thrown when the dataset instrument operator does not have an EUS person ID
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.EUS_PORTAL_URL">
+            <summary>
+            URL of the EUS website
+            </summary>
+            <remarks>Previously https://eusi.emsl.pnnl.gov/Portal/</remarks>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.HASHING_FILES">
+            <summary>
+            Text to show when reporting progress
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.mRemoteCacheInfoFilesToRetrieve">
+            <summary>
+            List of remote files that were found using CacheInfo files
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.mRemoteCacheInfoLockFiles">
+            <summary>
+            Keys in this dictionary are lock directory share paths (for example \\proto-6\DMS_LockFiles)
+            Values are the corresponding lock file info object
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMSDataUpload.DMSMetadataObject.ZeroByteFileEvent">
+            <summary>
+            Event raised when a zero byte file is encountered
+            </summary>
+        </member>
+        <member name="T:Pacifica.DMSDataUpload.DMSMetadataObject.ArchiveModes">
+            <summary>
+            Archive modes
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.ArchiveModes.archive">
+            <summary>
+            Archive files (initial push of a dataset's files into MyEMSL)
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.DMSMetadataObject.ArchiveModes.update">
+            <summary>
+            Add/update a dataset's files
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.DatasetName">
+            <summary>
+            Dataset name
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.EUSInfo">
+            <summary>
+            EUS Info
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.JobNumber">
+            <summary>
+            Job number (in the DMS_Capture database)
+            </summary>
+            <remarks>0 if no job number</remarks>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.IgnoreMaxFileLimit">
+            <summary>
+            When true, allow over 500 files to be pushed to MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.IgnoreMyEMSLFileTrackingError">
+            <summary>
+            when True, allow the ingest step to proceed, even if MyEMSL is tracking fewer files than expected for a given dataset
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.ManagerName">
+            <summary>
+            Manager name
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.MetadataObject">
+            <summary>
+            Object that tracks the upload details, including the files to upload
+            </summary>
+            <remarks>
+            The objects in this list are translated to a single JSON string
+            </remarks>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.SkippedDatasetArchiveSubdirectories">
+            <summary>
+            Subdirectory names that were skipped during a DatasetArchive task because we're pushing more than 15 GB of data
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.TotalFileSizeToUpload">
+            <summary>
+            Number of bytes to upload
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.TotalFileCountNew">
+            <summary>
+            Number of new files pushed to MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.TotalFileCountUpdated">
+            <summary>
+            Number of files updated in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.TraceMode">
+            <summary>
+            True to enable trace mode
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.UseTestInstance">
+            <summary>
+            True to use the Test instance
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.DMSMetadataObject.MetadataObjectJSON">
+            <summary>
+            Retrieve the metadata JSON as a string
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.#ctor(Pacifica.Core.Configuration,System.String,System.Int32,PRISM.FileTools)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config"></param>
+            <param name="managerName"></param>
+            <param name="jobNumber"></param>
+            <param name="fileTools"></param>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.SetupMetadata(System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},System.Boolean@,System.String@)">
+            <summary>
+            Construct the metadata that will be included with the ingested data
+            </summary>
+            <param name="taskParams"></param>
+            <param name="mgrParams"></param>
+            <param name="criticalError">Output: set to true if the job should be failed</param>
+            <param name="criticalErrorMessage">Output: explanation of the critical error</param>
+            <returns>True if success, otherwise false</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.BytesToGB(System.Int64)">
+            <summary>
+            Convert a file size in bytes to gigabytes
+            </summary>
+            <param name="sizeBytes"></param>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.CollectFileInformation(Pacifica.DMSDataUpload.DMSMetadataObject.ArchiveModes,System.String,System.String,System.Boolean)">
+            <summary>
+            Find all of the files in the path to be archived
+            </summary>
+            <param name="archiveMode">Archive for the initial archive of a dataset, or update for updating a specific subdirectory</param>
+            <param name="pathToBeArchived">Directory path to be archived</param>
+            <param name="baseDSPath">Base dataset directory path</param>
+            <param name="recurse">True to find files in all subdirectories</param>
+            <returns>List of files to be archived</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.CompareDatasetContentsWithMyEMSLMetadata(System.String,System.Collections.Generic.IEnumerable{Pacifica.Core.FileInfoObject},Pacifica.DataUpload.Upload.UploadMetadata,System.Boolean@,System.String@)">
+            <summary>
+            Query server for files and hash codes
+            </summary>
+            <param name="captureDbConnectionString">DMS_Capture connection string</param>
+            <param name="candidateFilesToUpload">List of local files</param>
+            <param name="uploadMetadata">Upload metadata</param>
+            <param name="criticalError">Output: set to true if the job should be failed</param>
+            <param name="criticalErrorMessage">Output: explanation of the critical error</param>
+            <returns>List of files that need to be uploaded</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.CreateLockFiles">
+            <summary>
+            Create lock files for the files in mRemoteCacheInfoFilesToRetrieve
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.DeleteLockFiles">
+            <summary>
+            Delete lock files tracked by mRemoteCacheInfoLockFiles
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.FileHashExists(System.Collections.Generic.IEnumerable{Pacifica.Json.MyEMSLFileInfo},System.String)">
+            <summary>
+            Return true if fileVersions has a file with the given hash
+            </summary>
+            <param name="fileVersions">List of files in MyEMSL</param>
+            <param name="fileHash">SHA-1 hash to find</param>
+            <returns>True if a match is found, otherwise false</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.FindDatasetFilesToArchive(System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},Pacifica.DataUpload.Upload.UploadMetadata@)">
+            <summary>
+            Find new or updated files to archive
+            </summary>
+            <param name="taskParams"></param>
+            <param name="mgrParams"></param>
+            <param name="uploadMetadata"></param>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.GetDatasetFileCountExpectedInMyEMSL(System.String,System.Int32,System.Int32)">
+            <summary>
+            Query the DMS_Capture database to determine the number of files that MyEMSL should be tracking for this dataset
+            </summary>
+            <param name="connectionString"></param>
+            <param name="datasetID"></param>
+            <param name="retryCount">Number of times to try again if the data cannot be retrieved</param>
+            <returns>Number of files that should be in MyEMSL for this dataset; -1 if an error</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.GetDatasetFilesInMyEMSL(System.Int32,System.String)">
+            <summary>
+            Find files in MyEMSL associated with the given dataset ID
+            </summary>
+            <param name="datasetID">Dataset ID</param>
+            <param name="subDirFilter">Optional subdirectory (subfolder) to filter on</param>
+            <returns>
+            Dictionary of files in MyEMSL; keys are relative file paths (Unix style paths) and values are file details
+            Returns null if MyEMSL does not return a valid response
+            </returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.GetDatasetYearQuarter(System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Get the dataset date-code text, e.g. 2040_4
+            </summary>
+            <param name="taskParams"></param>
+            <returns>Year_Quarter</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.IgnoreFile(System.IO.FileInfo,System.Boolean)">
+            <summary>
+            Check whether a file should be ignored when either uploading files or comparing existing files to files already in MyEMSL
+            </summary>
+            <param name="dataFile"></param>
+            <param name="raiseZeroByteFileEvent">When true, raise event ZeroByteFileEvent if the file size is 0 bytes</param>
+            <returns>True if the file should be ignored</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.IgnoreFile(System.String,System.Int64,System.Boolean)">
+            <summary>
+            Check whether a file should be ignored when either uploading files or comparing existing files to files already in MyEMSL
+            </summary>
+            <param name="fileName"></param>
+            <param name="fileSizeBytes"></param>
+            <param name="raiseZeroByteFileEvent">When true, raise event ZeroByteFileEvent if the file size is 0 bytes</param>
+            <returns>True if the file should be ignored</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.IgnoreFile(System.String)">
+            <summary>
+            Check whether a file should be ignored when either uploading files or comparing existing files to files already in MyEMSL
+            </summary>
+            <remarks>
+            Ignore files .DS_Store and Thumbs.db
+            Also ignore files that end with .sqlite-journal
+            </remarks>
+            <param name="fileName"></param>
+            <returns>True if the file should be ignored</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.GetFilesToIgnore">
+            <summary>
+            Get a list of file names that we can ignore when transferring data to MyEMSL or comparing files on disk to files in MyEMSL
+            </summary>
+            <returns>SortedSet of strings (case insensitive)</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.DMSMetadataObject.ValidateCertFile(System.String)">
+            <summary>
+            Validate that the MyEMSL certificate file exists
+            </summary>
+            <param name="callingMethod">Calling method</param>
+            <returns>True if the cert file is found, otherwise false</returns>
+        </member>
+        <member name="T:Pacifica.DMSDataUpload.DMSMetadataObject.ZeroByteFileEventEventHandler">
+            <summary>
+            Event for reporting that a zero byte file was skipped when creating the .tar file
+            </summary>
+            <param name="dataFile">File information</param>
+            <param name="message">Warning message</param>
+        </member>
+        <member name="T:Pacifica.DMSDataUpload.MyEMSLUploader">
+            <summary>
+            MyEMSL uploader
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.MyEMSLUploader.RECURSIVE_UPLOAD">
+            <summary>
+            Recursive upload dictionary key
+            </summary>
+        </member>
+        <member name="F:Pacifica.DMSDataUpload.MyEMSLUploader.CRITICAL_UPLOAD_ERROR">
+            <summary>
+            Critical error text
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.Bytes">
+            <summary>
+            Number of bytes uploaded
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.CriticalErrorMessage">
+            <summary>
+            Critical error message, as reported by SetupMetadata in DMSMetadataObject
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.ErrorMessage">
+            <summary>
+            Error message from the MyEMSLUploader
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.EUSInfo">
+            <summary>
+            EUS Info
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.FileCountNew">
+            <summary>
+            New files that were added
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.FileCountUpdated">
+            <summary>
+            Existing files that were updated
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.MetadataContainer">
+            <summary>
+            DMS Metadata container
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.StatusURI">
+            <summary>
+            Status URI
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.TraceMode">
+            <summary>
+            True to enable trace mode
+            </summary>
+        </member>
+        <member name="P:Pacifica.DMSDataUpload.MyEMSLUploader.UseTestInstance">
+            <summary>
+            True to use the test instance
+            </summary>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.MyEMSLUploader.#ctor(Pacifica.Core.Configuration,System.Collections.Generic.Dictionary{System.String,System.String},System.Collections.Generic.Dictionary{System.String,System.String},PRISM.FileTools)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="config">Pacifica configuration</param>
+            <param name="mgrParams"></param>
+            <param name="taskParams"></param>
+            <param name="fileTools"></param>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.MyEMSLUploader.SetupMetadataAndUpload(Pacifica.Core.Configuration,Pacifica.DataUpload.TarStreamUploader.UploadDebugMode,System.String@)">
+            <summary>
+            Look for files to upload, compute a SHA-1 hash for each, compare those hashes to existing files in MyEMSL,
+            and upload new/changed files
+            </summary>
+            <param name="config"></param>
+            <param name="debugMode">
+            Set to UploadDebugMode.CreateTarLocal to authenticate with MyEMSL, then create a .tar file locally instead of actually uploading it
+            Set to UploadDebugMode.MyEMSLOfflineMode to create the .tar file locally without contacting MyEMSL
+            </param>
+            <param name="statusURL">Output: status URL</param>
+            <returns>True if success, false if an error</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.MyEMSLUploader.GetParam(System.String,System.Boolean)">
+            <summary>
+            Gets a job parameter
+            </summary>
+            <param name="name">Parameter name</param>
+            <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+            <returns>Parameter value if found, otherwise empty string</returns>
+        </member>
+        <member name="M:Pacifica.DMSDataUpload.MyEMSLUploader.GetParam(System.String,System.Int32)">
+            <summary>
+            Gets a job parameter
+            </summary>
+            <param name="name">Parameter name</param>
+            <param name="valueIfMissing">Value to return if the parameter does not exist</param>
+            <returns>Parameter value if found, otherwise empty string</returns>
+        </member>
+        <member name="E:Pacifica.DMSDataUpload.MyEMSLUploader.MetadataDefinedEvent">
+            <summary>
+            Metadata defined event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMSDataUpload.MyEMSLUploader.StatusUpdate">
+            <summary>
+            Status update event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMSDataUpload.MyEMSLUploader.UploadCompleted">
+            <summary>
+            Upload complete event
+            </summary>
+        </member>
+        <member name="E:Pacifica.DMSDataUpload.MyEMSLUploader.ZeroByteFileEvent">
+            <summary>
+            Event raised when a zero byte file is encountered
+            </summary>
+        </member>
+        <member name="T:Pacifica.Json.IUploadMetadata">
+            <summary>
+            Interface for upload metadata
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.IUploadMetadata.DestinationTable">
+            <summary>
+            All entries must contain a value for destination table
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.IUploadMetadata.Valid">
+            <summary>
+            True if the data meets the validity requirements of the metadata type
+            </summary>
+        </member>
+        <member name="T:Pacifica.Json.JsonTools">
+            <summary>
+            Methods for converting between objects and JSON text
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.JsonToFileList(System.String,System.String,System.String,System.String@)">
+            <summary>
+            Convert JSON text into a list of <see cref="T:Pacifica.Json.MyEMSLFileInfo"/> objects
+            </summary>
+            <param name="jsonString"></param>
+            <param name="dataUrl"></param>
+            <param name="callingMethodName"></param>
+            <param name="errorMessage"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.JsonToUploadMetadata(System.String,System.String,System.String,System.String@)">
+            <summary>
+            Convert JSON text into a list of <see cref="T:Pacifica.Json.IUploadMetadata"/>-implementing objects
+            </summary>
+            <param name="jsonString"></param>
+            <param name="dataUrl"></param>
+            <param name="callingMethodName"></param>
+            <param name="errorMessage"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.JsonToTaskStatus(System.String)">
+            <summary>
+            Convert JSON text into a <see cref="T:Pacifica.Json.MyEMSLTaskStatus"/> object
+            </summary>
+            <param name="jsonString"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.UploadMetadataToJson(System.Collections.Generic.IReadOnlyList{Pacifica.Json.IUploadMetadata})">
+            <summary>
+            Convert a list of <see cref="T:Pacifica.Json.IUploadMetadata"/>-implementing objects into JSON text
+            </summary>
+            <param name="metadataList"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.JsonToDictionaryList(System.String,System.String,System.String,System.String@)">
+            <summary>
+            Converts JSON string into a list of dictionaries
+            </summary>
+            <param name="jsonString"></param>
+            <param name="dataUrl"></param>
+            <param name="callingMethodName"></param>
+            <param name="errorMessage"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.JsonToObject(System.String)">
+            <summary>
+            Converts JSON string to a dictionary
+            </summary>
+            <param name="jsonString"></param>
+        </member>
+        <member name="M:Pacifica.Json.JsonTools.ObjectToJson(System.Collections.IList)">
+            <summary>
+            Converts a list of dictionaries to a JSON string
+            </summary>
+            <param name="metadataList"></param>
+        </member>
+        <member name="T:Pacifica.Json.MyEMSLFileInfo">
+            <summary>
+            Metadata for files in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Valid">
+            <summary>
+            True if essential values are set.
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Filename">
+            <summary>
+            Filename
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.FileID">
+            <summary>
+            File ID in MyEMSL
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.HashSum">
+            <summary>
+            File hash (typically SHA-1)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.HashType">
+            <summary>
+            Hash type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Created">
+            <summary>
+            Time created in MyEMSL
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Updated">
+            <summary>
+            Time updated in MyEMSL (typically identical to Created)
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Deleted">
+            <summary>
+            Time deleted in MyEMSL; null if not deleted
+            </summary>
+            <remarks>Use UpdateRemoteFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.FileCreationTime">
+            <summary>
+            Original file creation time (on the host system prior to MyEMSL ingest)
+            </summary>
+            <remarks>Use UpdateSourceFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.FileLastWriteTime">
+            <summary>
+            Last modification time (on the host system prior to MyEMSL ingest)
+            </summary>
+            <remarks>Use UpdateSourceFileTimes to update this value</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Size">
+            <summary>
+            File size, in bytes
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.SubDir">
+            <summary>
+            Subdirectory (subfolder) below the dataset folder
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.TransactionId">
+            <summary>
+            Transaction ID
+            </summary>
+            <remarks>All files uploaded in a given batch will have the same transaction ID</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Dataset">
+            <summary>
+            Dataset Name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.DatasetID">
+            <summary>
+            DatasetID
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.Instrument">
+            <summary>
+            Instrument name for this file
+            </summary>
+            <remarks>Will be blank for data package files</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.DatasetYearQuarter">
+            <summary>
+            Dataset year-quarter string, for example 2013_3
+            </summary>
+            <remarks>Will be blank for data package files</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.PathWithDataset">
+            <summary>
+            Relative path to the file, including the dataset name
+            </summary>
+            <remarks>Uses Windows-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.PathWithDatasetUnix">
+            <summary>
+            Relative path to the file, including the dataset name
+            </summary>
+            <remarks>Uses Unix-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.PathWithInstrumentAndDatasetUnix">
+            <summary>
+            Relative path to the file, including the instrument, year_quarter, and dataset
+            </summary>
+            <remarks>Uses Unix-style slashes</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.PathWithInstrumentAndDatasetWindows">
+            <summary>
+            Relative path to the file, including the instrument, year_quarter, and dataset
+            </summary>
+            <remarks>
+            Uses Windows-style slashes.
+            Note that instrument IMS_TOF_4 was renamed to IMS04_AgTOF05 in 2013, and thus
+            there are datasets with files associated with both instruments in MyEMSL</remarks>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLFileInfo.RelativePathWindows">
+            <summary>
+            Path to the file, relative to the dataset folder
+            </summary>
+            <remarks>Uses Windows-style slashes</remarks>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.#ctor">
+            <summary>
+            Private constructor that can be accessed for deserialization
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.#ctor(System.String,System.Int64,System.String,System.DateTime)">
+            <summary>
+            Constructor for use during JSON deserialization
+            </summary>
+            <param name="name"></param>
+            <param name="_id"></param>
+            <param name="hashsum"></param>
+            <param name="created"></param>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.#ctor(System.String,System.Int64,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="fileName"></param>
+            <param name="fileId"></param>
+            <param name="hashSum"></param>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.UpdateRemoteFileTimes(System.String,System.String,System.String)">
+            <summary>
+            Update times the file was created, updated, and optionally deleted in MyEMSL
+            </summary>
+            <param name="createdInMyEMSL"></param>
+            <param name="updatedInMyEMSL"></param>
+            <param name="deletedInMyEMSL"></param>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.UpdateSourceFileTimes(System.String,System.String)">
+            <summary>
+            Update file creation and modification times using the string values reported by MyEMSL
+            </summary>
+            <param name="creationTimeText"></param>
+            <param name="lastWriteTimeText"></param>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLFileInfo.ToString">
+            <summary>
+            Return the relative file path
+            </summary>
+        </member>
+        <member name="T:Pacifica.Json.MyEMSLTaskStatus">
+            <summary>
+            Status report data from MyEMSL upload
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.Valid">
+            <summary>
+            True if the data is valid (false for empty responses)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.JobId">
+            <summary>
+            MyEMSL Job ID
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.State">
+            <summary>
+            State: Usually 'OK' or 'FAILED'
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.CurrentTask">
+            <summary>
+            Current upload task. Examples: 'UPLOADING', 'Policy Validation', 'ingest metadata', 'ingest files'
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.PercentCompleteText">
+            <summary>
+            Upload task percent complete
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.PercentComplete">
+            <summary>
+            Upload task percent complete
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.Complete">
+            <summary>
+            True when task is completed
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.Updated">
+            <summary>
+            Last report update time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.Created">
+            <summary>
+            Task creation time
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.MyEMSLTaskStatus.Exception">
+            <summary>
+            Task upload error message
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLTaskStatus.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.MyEMSLTaskStatus.#ctor(System.Int64,System.String,System.String,System.String,System.String)">
+            <summary>
+            Constructor for testing purposes
+            </summary>
+            <param name="jobId"></param>
+            <param name="state"></param>
+            <param name="currentTask"></param>
+            <param name="taskPercentString"></param>
+            <param name="exception"></param>
+        </member>
+        <member name="T:Pacifica.Json.UploadMetadataConverter">
+            <summary>
+            Custom JSON converter handler to populate the correct objects when reading from JSON
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataConverter.WriteJson(Newtonsoft.Json.JsonWriter,System.Object,Newtonsoft.Json.JsonSerializer)">
+            <inheritdoc cref="M:Newtonsoft.Json.JsonConverter.WriteJson(Newtonsoft.Json.JsonWriter,System.Object,Newtonsoft.Json.JsonSerializer)"/>>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataConverter.ReadJson(Newtonsoft.Json.JsonReader,System.Type,System.Object,Newtonsoft.Json.JsonSerializer)">
+            <inheritdoc cref="M:Newtonsoft.Json.JsonConverter.ReadJson(Newtonsoft.Json.JsonReader,System.Type,System.Object,Newtonsoft.Json.JsonSerializer)"/>>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataConverter.CanConvert(System.Type)">
+            <inheritdoc cref="M:Newtonsoft.Json.JsonConverter.CanConvert(System.Type)"/>>
+        </member>
+        <member name="T:Pacifica.Json.UploadMetadataExtensions">
+            <summary>
+            Some convenience methods for working with IUploadMetadata
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataExtensions.AddKeyValue(System.Collections.Generic.ICollection{Pacifica.Json.IUploadMetadata},System.String,System.Object)">
+            <summary>
+            Add a key-value entry to the list
+            </summary>
+            <param name="collection">Target list</param>
+            <param name="key">Key - if null/whitespace, item will not be added</param>
+            <param name="value">Value - if null/whitespace, item will not be added</param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataExtensions.AddValue(System.Collections.Generic.ICollection{Pacifica.Json.IUploadMetadata},System.String,System.Object)">
+            <summary>
+            Add a column/value entry to the list
+            </summary>
+            <param name="collection">Target list</param>
+            <param name="columnName">Column - if null/whitespace, item will not be added</param>
+            <param name="value">Value - if null/whitespace, item will not be added</param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataExtensions.AddFile(System.Collections.Generic.ICollection{Pacifica.Json.IUploadMetadata},Pacifica.Core.FileInfoObject,System.String)">
+            <summary>
+            Add a file entry to the list
+            </summary>
+            <param name="collection">Target list</param>
+            <param name="file">File info object</param>
+            <param name="subDir">Remote subdirectory relative to the parent dataset or data package</param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataExtensions.GetFileListFromMetadataObject(System.Collections.Generic.List{Pacifica.Json.IUploadMetadata})">
+            <summary>
+            Get the files from the list as a list of <see cref="T:Pacifica.Core.FileInfoObject"/>
+            </summary>
+            <param name="metadataObject"></param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataExtensions.RemoveFileFromMetadataObject(System.Collections.Generic.List{Pacifica.Json.IUploadMetadata},System.String)">
+            <summary>
+            Remove the <see cref="T:Pacifica.Json.UploadMetadataFile"/> instance from the list that matches <paramref name="absoluteLocalPath"/>
+            </summary>
+            <param name="metadataObject"></param>
+            <param name="absoluteLocalPath"></param>
+        </member>
+        <member name="T:Pacifica.Json.UploadMetadataFile">
+            <summary>
+            IUploadMetadata implementation for file entries
+            </summary>
+        </member>
+        <member name="F:Pacifica.Json.UploadMetadataFile.DestinationTableName">
+            <summary>
+            Destination table name used for all 'File' entries
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.DestinationTable">
+            <summary>
+            Destination table
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.Valid">
+            <summary>
+            True if the data meets the validity requirements of the metadata type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.Name">
+            <summary>
+            File name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.AbsoluteLocalPath">
+            <summary>
+            Absolute path to the local file
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.SubDir">
+            <summary>
+            File subdirectory path (from dataset base directory)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.Size">
+            <summary>
+            File size
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.HashSum">
+            <summary>
+            File hash sum, using algorithm specified by <see cref="P:Pacifica.Json.UploadMetadataFile.HashType"/>
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.MimeType">
+            <summary>
+            File MIME type (binary file)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.HashType">
+            <summary>
+            Hash algorithm used for <see cref="P:Pacifica.Json.UploadMetadataFile.HashSum"/>
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.FileCreationTimeUtc">
+            <summary>
+            File creation time (UTC)
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataFile.FileLastModifiedTimeUtc">
+            <summary>
+            File last modified time (UTC)
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataFile.#ctor">
+            <summary>
+            Default constructor used by JSON deserialization
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataFile.#ctor(Pacifica.Core.FileInfoObject,System.String)">
+            <summary>
+            Constructor for output preparation
+            </summary>
+            <param name="file">File object supplying necessary metadata</param>
+            <param name="subDir">Dataset subdirectory path that contains the file</param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataFile.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataFile.#ctor(System.String,System.String,System.String,System.String,System.String,System.String,System.String)">
+            <summary>
+            Method for the round-trip/upgrade JSON testing
+            </summary>
+            <param name="name"></param>
+            <param name="absoluteLocalPath"></param>
+            <param name="subDir"></param>
+            <param name="size"></param>
+            <param name="hashSum"></param>
+            <param name="fileCreationTime"></param>
+            <param name="fileLastModifiedTime"></param>
+        </member>
+        <member name="T:Pacifica.Json.UploadMetadataKeyValue">
+            <summary>
+            IUploadMetadata implementation for key-value entries
+            </summary>
+        </member>
+        <member name="F:Pacifica.Json.UploadMetadataKeyValue.DestinationTableName">
+            <summary>
+            Destination table name used for all 'key-value' entries
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataKeyValue.DestinationTable">
+            <summary>
+            Destination table
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataKeyValue.Valid">
+            <summary>
+            True if the data meets the validity requirements of the metadata type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataKeyValue.Key">
+            <summary>
+            Entry key/name
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataKeyValue.Value">
+            <summary>
+            Entry value
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataKeyValue.#ctor">
+            <summary>
+            Default constructor used by JSON deserialization
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataKeyValue.#ctor(System.String,System.Object)">
+            <summary>
+            Constructor for output preparation
+            </summary>
+            <param name="key"></param>
+            <param name="value"></param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataKeyValue.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+        <member name="T:Pacifica.Json.UploadMetadataValue">
+            <summary>
+            IUploadMetadata implementation for value entries (no key)
+            </summary>
+        </member>
+        <member name="F:Pacifica.Json.UploadMetadataValue.DestinationTableBaseName">
+            <summary>
+            Prefix for DestinationTable
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataValue.DestinationTable">
+            <summary>
+            Destination table
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataValue.Valid">
+            <summary>
+            True if the data meets the validity requirements of the metadata type
+            </summary>
+        </member>
+        <member name="P:Pacifica.Json.UploadMetadataValue.Value">
+            <summary>
+            Value
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataValue.#ctor">
+            <summary>
+            Default constructor used by JSON deserialization
+            </summary>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataValue.#ctor(System.String,System.Object)">
+            <summary>
+            Constructor for output preparation
+            </summary>
+            <param name="columnName">Column name, without the prefix supplied by <see cref="F:Pacifica.Json.UploadMetadataValue.DestinationTableBaseName"/></param>
+            <param name="value">Value for this entry</param>
+        </member>
+        <member name="M:Pacifica.Json.UploadMetadataValue.ToString">
+            <inheritdoc cref="M:System.Object.ToString"/>
+        </member>
+    </members>
+</doc>
