@@ -185,7 +185,7 @@ namespace AnalysisManagerProg
             mNeedToAbortProcessing = false;
             mMostRecentJobInfo = string.Empty;
 
-            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
+            var exeInfo = new FileInfo(AppUtils.GetAppPath());
             mMgrExeName = exeInfo.Name;
             mMgrDirectoryPath = exeInfo.DirectoryName;
         }
@@ -1251,7 +1251,7 @@ namespace AnalysisManagerProg
                 {
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
-                    ProgRunner.GarbageCollectNow();
+                    AppUtils.GarbageCollectNow();
                     Global.IdleLoop(5);
 
                     return true;
@@ -2246,7 +2246,7 @@ namespace AnalysisManagerProg
             var cooldownSeconds = 10 + 10 * errorOrDeadlockCount;
 
             LogMessage(string.Format("Pausing manager for {0} seconds", cooldownSeconds));
-            ProgRunner.SleepMilliseconds(cooldownSeconds * 1000);
+            AppUtils.SleepMilliseconds(cooldownSeconds * 1000);
         }
 
         /// <summary>

@@ -89,7 +89,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            ProgRunner.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             if (!success)
             {

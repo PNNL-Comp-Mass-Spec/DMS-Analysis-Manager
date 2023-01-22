@@ -59,7 +59,7 @@ namespace AnalysisManagerBase.DataFileTools
                     return false;
                 }
 
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 var newMGFFile = new FileInfo(Path.Combine(workDir, datasetName + ".mgf"));
 
@@ -258,7 +258,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 if (deleteSourceFileIfUpdated)
                 {
-                    ProgRunner.GarbageCollectNow();
+                    AppUtils.GarbageCollectNow();
                     originalFile.Delete();
                 }
             }
@@ -266,7 +266,7 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 // No changes were made; nothing to update
                 // However, delete the new file we created
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 updatedFile.Delete();
             }

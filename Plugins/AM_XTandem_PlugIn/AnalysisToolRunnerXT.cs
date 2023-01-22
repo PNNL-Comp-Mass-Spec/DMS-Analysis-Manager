@@ -171,7 +171,7 @@ namespace AnalysisManagerXTandemPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            ProgRunner.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             // Zip the output file
             var result = ZipMainOutputFile();

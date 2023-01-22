@@ -151,7 +151,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 reader.Close();
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 // Compute the Sha1 hash of the content written from the start, up to and including "  <sha1"
                 byte[] hashValue;
@@ -163,7 +163,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     hashValue = mySha1.ComputeHash(indexedFileStream);
                 }
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 using (var indexedFileStream = new FileStream(indexedFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 {
@@ -183,7 +183,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 // Replace the target file with the indexed copy
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 try
                 {

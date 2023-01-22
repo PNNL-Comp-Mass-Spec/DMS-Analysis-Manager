@@ -136,7 +136,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 // Make sure objects are released
                 Global.IdleLoop(0.5);
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {

@@ -112,7 +112,7 @@ namespace AnalysisManagerProMexPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

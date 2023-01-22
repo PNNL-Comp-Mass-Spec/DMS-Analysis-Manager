@@ -421,7 +421,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         cachedProcessID = mProgRunner.PID;
 
                     OnLoopWaiting();
-                    ProgRunner.SleepMilliseconds(mMonitorInterval);
+                    AppUtils.SleepMilliseconds(mMonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {

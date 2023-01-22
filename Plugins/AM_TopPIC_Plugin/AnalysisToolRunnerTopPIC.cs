@@ -133,7 +133,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 // Make sure objects are released
                 Global.IdleLoop(0.5);
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the "processing" messages
                 TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPPIC_CONSOLE_OUTPUT));

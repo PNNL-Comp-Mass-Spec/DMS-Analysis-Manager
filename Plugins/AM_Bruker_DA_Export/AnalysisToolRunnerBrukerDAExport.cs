@@ -131,7 +131,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 if (!exportSuccess)
                 {
@@ -547,7 +547,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 var subDir = workingDirectory.CreateSubdirectory("FilesToZip");
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 foreach (var fileToMove in spectraFiles)
                 {

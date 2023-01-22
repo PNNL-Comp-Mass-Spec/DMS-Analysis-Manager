@@ -315,7 +315,7 @@ namespace AnalysisManagerBase
             if (mAppDirectoryPath != null)
                 return mAppDirectoryPath;
 
-            mAppDirectoryPath = PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppDirectoryPath();
+            mAppDirectoryPath = AppUtils.GetAppDirectoryPath();
 
             return mAppDirectoryPath;
         }

@@ -107,7 +107,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 if (!success)
                 {

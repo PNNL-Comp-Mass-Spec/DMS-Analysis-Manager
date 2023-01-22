@@ -82,7 +82,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

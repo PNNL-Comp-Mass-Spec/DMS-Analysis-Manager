@@ -364,7 +364,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Delete the original .mgf file and replace it with newMGFFilePath
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 AnalysisToolRunnerBase.DeleteFileWithRetries(mgfFilePath, mDebugLevel);
 

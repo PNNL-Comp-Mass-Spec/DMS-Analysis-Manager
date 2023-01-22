@@ -226,7 +226,7 @@ namespace AnalysisManagerProg
             var actualHoldoffSeconds = Math.Min(300, Math.Max(0.1, holdoffSeconds));
 
             // Try to ensure there are no open objects with file handles
-            PRISM.ProgRunner.GarbageCollectNow();
+            PRISM.AppUtils.GarbageCollectNow();
             Global.IdleLoop(actualHoldoffSeconds);
 
             // Delete all of the files and directories in the work directory

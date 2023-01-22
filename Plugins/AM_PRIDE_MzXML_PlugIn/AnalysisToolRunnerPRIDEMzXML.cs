@@ -93,7 +93,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            PRISM.ProgRunner.GarbageCollectNow();
+            PRISM.AppUtils.GarbageCollectNow();
 
             // Override the dataset name and transfer folder path so that the results get copied to the correct location
             RedefineAggregationJobDatasetAndTransferDirectory();

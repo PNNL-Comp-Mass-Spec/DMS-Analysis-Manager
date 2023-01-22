@@ -146,7 +146,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {
@@ -650,7 +650,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 var workDirInfo = new DirectoryInfo(mWorkDir);
 
                 // Make sure MSPathFinder has released the file handles
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 var compressDirInfo = new DirectoryInfo(Path.Combine(mWorkDir, "TempCompress"));
                 if (compressDirInfo.Exists)

@@ -354,7 +354,7 @@ namespace AnalysisManagerBase.JobConfig
             // Throttle the calls to this method to avoid overloading the database for data packages with hundreds of jobs
             while (DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50)
             {
-                ProgRunner.SleepMilliseconds(25);
+                AppUtils.SleepMilliseconds(25);
             }
 
             mLastJobParameterFromHistoryLookup = DateTime.UtcNow;

@@ -1939,7 +1939,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             try
             {
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
                 File.Delete(targetZipFilePath);
             }
             catch (Exception ex)
@@ -3333,7 +3333,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     }
                 }
 
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 // Delete all s*.zip files in working directory
                 foreach (var zipFilePath in zipFiles)

@@ -116,7 +116,7 @@ namespace AnalysisManager_IDM_Plugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

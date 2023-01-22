@@ -18,7 +18,6 @@ using PRISM;
 using PRISM.Logging;
 using System;
 using System.Threading;
-using PRISM.FileProcessor;
 
 namespace AnalysisManagerProg
 {
@@ -52,7 +51,7 @@ namespace AnalysisManagerProg
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
                 var parser = new CommandLineParser<CommandLineOptions>(exeName,
-                    ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE))
+                    AppUtils.GetAppVersion(PROGRAM_DATE))
                 {
                     ProgramInfo = "This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.",
                     ContactInfo = "Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)" + Environment.NewLine +
@@ -182,7 +181,7 @@ namespace AnalysisManagerProg
         {
             Console.WriteLine();
             Console.WriteLine("DMS Analysis Manager");
-            Console.WriteLine("Version " + ProcessFilesOrDirectoriesBase.GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine("Version " + AppUtils.GetAppVersion(PROGRAM_DATE));
             Console.WriteLine("Host    " + Environment.MachineName);
             Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();

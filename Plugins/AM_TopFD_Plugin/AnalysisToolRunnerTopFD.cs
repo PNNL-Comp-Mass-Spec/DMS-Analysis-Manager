@@ -151,7 +151,7 @@ namespace AnalysisManagerTopFDPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
                 TrimConsoleOutputFile(Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT));

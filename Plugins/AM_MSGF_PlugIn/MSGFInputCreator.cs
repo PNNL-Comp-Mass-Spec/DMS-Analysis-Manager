@@ -131,7 +131,7 @@ namespace AnalysisManagerMSGFPlugin
                 mLogFile.Close();
                 mLogFile = null;
 
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
             }
         }
 

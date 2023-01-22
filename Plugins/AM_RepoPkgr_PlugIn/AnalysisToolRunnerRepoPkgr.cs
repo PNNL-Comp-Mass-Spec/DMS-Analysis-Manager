@@ -437,7 +437,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 mJobParams.AddResultFileToSkip(Path.GetFileName(localMzXmlFile.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 return gzippedMzXmlFile.FullName;
             }

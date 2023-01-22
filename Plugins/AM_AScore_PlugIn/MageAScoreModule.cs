@@ -357,7 +357,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Perform garage collection to force the Unzip tool to release the file handle
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 AnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);
             }

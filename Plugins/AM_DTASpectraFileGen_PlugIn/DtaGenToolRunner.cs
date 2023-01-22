@@ -487,7 +487,7 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 cdtaFileOriginal = Path.Combine(mWorkDir, mDatasetName + "_DTA_Original.txt");
                 cdtaFileInfo.MoveTo(cdtaFileOriginal);
@@ -532,7 +532,7 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 cdtaFileCentroided = Path.Combine(mWorkDir, mDatasetName + "_DTA_Centroided.txt");
                 cdtaFileInfo.MoveTo(cdtaFileCentroided);

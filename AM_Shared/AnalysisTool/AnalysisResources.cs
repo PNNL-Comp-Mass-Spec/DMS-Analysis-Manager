@@ -1850,7 +1850,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (!deleteLocalDatasetFileOrDirectory)
                     return true;
 
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 try
                 {

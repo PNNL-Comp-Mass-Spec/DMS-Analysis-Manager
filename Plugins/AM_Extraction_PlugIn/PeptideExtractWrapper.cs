@@ -173,7 +173,7 @@ namespace AnalysisManagerExtractionPlugin
                 mExtractTools = null;
 
                 // Clean up processes
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
             }
         }
 

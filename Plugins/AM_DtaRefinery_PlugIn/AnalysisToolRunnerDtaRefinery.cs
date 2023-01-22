@@ -199,7 +199,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Make sure objects are released
             Global.IdleLoop(0.5);
-            ProgRunner.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             if (!ValidateDTARefineryLogFile())
             {

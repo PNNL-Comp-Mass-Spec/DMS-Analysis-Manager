@@ -1322,7 +1322,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     Global.IdleLoop(2);
 
                     // Do a garbage collection to assure file handles have been released
-                    ProgRunner.GarbageCollectNow();
+                    AppUtils.GarbageCollectNow();
                     retryCount++;
                 }
                 catch (Exception ex3)

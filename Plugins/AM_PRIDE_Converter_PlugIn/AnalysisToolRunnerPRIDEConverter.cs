@@ -412,7 +412,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 if (!success || jobFailureCount > 0)
                 {
@@ -979,7 +979,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     LogWarning("Unable to delete the _dta.txt file after successfully converting it to .mgf: " + ex.Message);
                 }
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 var newMGFFile = new FileInfo(Path.Combine(mWorkDir, dataPkgJob.Dataset + DOT_MGF));
 
@@ -5011,7 +5011,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 StoreMzIdSampleInfo(mzIdFilePath, sampleMetadata);
 
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 mzIdExistsRemotely = false;
                 if (!replaceOriginal)

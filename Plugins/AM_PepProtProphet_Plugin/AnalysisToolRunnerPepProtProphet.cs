@@ -263,7 +263,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Make sure objects are released
                 Global.IdleLoop(0.5);
-                PRISM.ProgRunner.GarbageCollectNow();
+                PRISM.AppUtils.GarbageCollectNow();
 
                 if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {

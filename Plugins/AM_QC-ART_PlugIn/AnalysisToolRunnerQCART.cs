@@ -121,7 +121,7 @@ namespace AnalysisManagerQCARTPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (!processingSuccess)
                 {

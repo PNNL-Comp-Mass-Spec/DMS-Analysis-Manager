@@ -832,7 +832,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
             jobParams.SetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
-            var mgr = new FileInfo(PRISM.FileProcessor.ProcessFilesOrDirectoriesBase.GetAppPath());
+            var mgr = new FileInfo(AppUtils.GetAppPath());
             var mgrFolderPath = mgr.DirectoryName;
 
             var summaryFile = new SummaryFile();

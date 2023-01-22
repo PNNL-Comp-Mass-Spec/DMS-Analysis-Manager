@@ -264,7 +264,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Make sure objects are released
                 Global.IdleLoop(0.5);
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 if (processingError)
                 {
@@ -2591,7 +2591,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Replace the original file with the new one
                 Global.IdleLoop(0.2);
-                ProgRunner.GarbageCollectNow();
+                AppUtils.GarbageCollectNow();
 
                 try
                 {

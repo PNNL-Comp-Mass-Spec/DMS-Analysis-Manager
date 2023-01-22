@@ -479,7 +479,7 @@ namespace MSMSSpectrumFilterAM
 
                         var filesMatch = CDTAFilesMatch(bakFilePath, inputFilePath);
 
-                        PRISM.ProgRunner.GarbageCollectNow();
+                        PRISM.AppUtils.GarbageCollectNow();
 
                         // Delete the _dta.txt.bak file
                         File.Delete(bakFilePath);
