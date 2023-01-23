@@ -98,7 +98,7 @@ xcopy "$(ProjectDir)..\..\AM_Common\x86\*" "$(TargetDir)x86\" /D /Y
 xcopy "$(ProjectDir)..\..\AM_Common\x64\*" "$(TargetDir)x64\" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /Y
-xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Common\" /D /Y
 
 xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Program\bin" /Y
 xcopy "$(TargetDir)$(TargetName).pdb" "$(ProjectDir)..\..\AM_Program\bin" /D /Y
