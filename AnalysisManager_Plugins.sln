@@ -45,12 +45,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerXTandemPlugIn", "Plugins\AM_XTandem_PlugIn\AnalysisManagerXTandemPlugIn.csproj", "{E29686F3-709C-4C38-8B9F-534F71682770}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDeconPeakDetectorPlugIn", "Plugins\AM_DeconPeakDetector_PlugIn\AnalysisManagerDeconPeakDetectorPlugIn.csproj", "{C244E5E3-A545-4E6F-91FD-EB946E9BC229}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerGlyQIQPlugin", "Plugins\AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.csproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLipidMapSearchPlugIn", "Plugins\AM_LipidMapSearch_Plugin\AnalysisManagerLipidMapSearchPlugIn.csproj", "{ABBE557F-6955-4EFB-9892-8F028AD420DD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODaPlugIn", "Plugins\AM_MODa_PlugIn\AnalysisManagerMODaPlugIn.csproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSAlignQuantPlugIn", "Plugins\AM_MSAlign_Quant_Plugin\AnalysisManagerMSAlignQuantPlugIn.csproj", "{46993519-3E09-475B-B836-7A32108AAFD1}"
@@ -77,11 +71,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerQCARTPlugIn"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFResultsSummarizer", "Plugins\AM_MSGF_PlugIn\MSGFResultsSummarizerDLL\MSGFResultsSummarizer.csproj", "{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMetaboliteDetectorPlugin", "Plugins\AM_MetaboliteDetector_Plugin\AnalysisManagerMetaboliteDetectorPlugin.csproj", "{665C2F14-4954-4609-BBA4-C91206C318B2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "Plugins\AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_Debug", "AM_Program\AnalysisManagerProg_Debug.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
@@ -195,18 +185,6 @@ Global
 		{E29686F3-709C-4C38-8B9F-534F71682770}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E29686F3-709C-4C38-8B9F-534F71682770}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E29686F3-709C-4C38-8B9F-534F71682770}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C244E5E3-A545-4E6F-91FD-EB946E9BC229}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C244E5E3-A545-4E6F-91FD-EB946E9BC229}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C244E5E3-A545-4E6F-91FD-EB946E9BC229}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C244E5E3-A545-4E6F-91FD-EB946E9BC229}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ABBE557F-6955-4EFB-9892-8F028AD420DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ABBE557F-6955-4EFB-9892-8F028AD420DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ABBE557F-6955-4EFB-9892-8F028AD420DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ABBE557F-6955-4EFB-9892-8F028AD420DD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{894D4C6C-FD28-44D2-A570-2600ED2C787E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -259,18 +237,10 @@ Global
 		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{60C3570F-82BD-4103-AC4B-AC6CDD4A729C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{665C2F14-4954-4609-BBA4-C91206C318B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{665C2F14-4954-4609-BBA4-C91206C318B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{665C2F14-4954-4609-BBA4-C91206C318B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{665C2F14-4954-4609-BBA4-C91206C318B2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
