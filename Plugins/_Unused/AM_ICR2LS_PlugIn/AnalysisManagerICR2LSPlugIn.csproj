@@ -37,10 +37,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="PEKtoCSVConverter">
-      <HintPath>..\..\AM_Common\PEKtoCSVConverter.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

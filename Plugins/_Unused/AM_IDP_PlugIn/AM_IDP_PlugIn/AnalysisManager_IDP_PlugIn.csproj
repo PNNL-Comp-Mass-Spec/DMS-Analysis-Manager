@@ -56,8 +56,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IDP">
-      <HintPath>..\..\..\AM_Common\IDP.dll</HintPath>
+    <Reference Include="IDP, Version=1.0.4581.27978, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\IDP.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

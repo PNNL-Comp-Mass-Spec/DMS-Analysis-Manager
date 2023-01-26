@@ -37,13 +37,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MSDataFileReader">
-      <HintPath>..\..\AM_Common\MSDataFileReader.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\MSDataFileReader.dll</HintPath>
     </Reference>
     <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
     <Reference Include="ParamFileGenerator">
-      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+      <HintPath>..\..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
