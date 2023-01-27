@@ -32,9 +32,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared">
-      <HintPath>..\..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="MyEMSLReader, Version=1.0.5576.19327, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
@@ -61,6 +58,12 @@
     <PackageReference Include="PRISM-Library">
       <Version>2.8.6</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
