@@ -55,10 +55,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data.SQLite">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\System.Data.SQLite.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -92,6 +88,10 @@
     <PackageReference Include="PSI_Interface">
       <Version>2.5.92</Version>
     </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.111</Version>
+    </PackageReference>
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\AM_Shared\AM_Shared.csproj">
       <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
