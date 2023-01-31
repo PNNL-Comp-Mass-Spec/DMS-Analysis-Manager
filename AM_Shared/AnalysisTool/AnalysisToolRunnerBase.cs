@@ -1873,7 +1873,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 "SELECT parameter_name, parameter_value " +
                 "FROM V_Mgr_Params " +
                 "WHERE manager_name = '{0}' AND " +
-                "      parameter_name IN ('DebugLevel', 'MgrSettingGroupName')",
+                "      parameter_name IN ('DebugLevel', 'MgrSettingGroupName') " +
+                "ORDER BY parameter_name",
                 managerName);
 
             var callingMethods = Global.AppendToComment(callerName, "GetManagerDebugLevel");
@@ -1897,7 +1898,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (Global.IsMatch(paramName, "MgrSettingGroupName"))
                 {
-                    // DebugLevel is defined by a manager settings group; repeat the query to V_MgrParams
+                    // DebugLevel is defined by a manager settings group; repeat the query to V_Mgr_Params
 
                     return GetManagerDebugLevel(connectionString, paramValue, currentDebugLevel, recursionLevel + 1, callerName);
                 }
