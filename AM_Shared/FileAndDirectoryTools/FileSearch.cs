@@ -393,43 +393,78 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             errorMessage = string.Empty;
 
             // Retrieve zipped DTA file
-            var sourceFileName = DatasetName + AnalysisResources.CDTA_ZIPPED_EXTENSION;
-            var sourceDirPath = FindDataFile(sourceFileName);
+            var zippedDtaFileName = DatasetName + AnalysisResources.CDTA_ZIPPED_EXTENSION;
+
+            var sourceDirPath = FindDataFile(zippedDtaFileName);
 
             if (!string.IsNullOrEmpty(sourceDirPath))
             {
                 if (sourceDirPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    // add the _dta.zip file name to the directory path found by FindDataFile
-                    return MyEMSLUtilities.AddFileToMyEMSLDirectoryPath(sourceDirPath, sourceFileName);
+                    // Add the _dta.zip file name to the directory path found by FindDataFile
+                    return MyEMSLUtilities.AddFileToMyEMSLDirectoryPath(sourceDirPath, zippedDtaFileName);
                 }
 
                 // Return the path to the _dta.zip file
-                return Path.Combine(sourceDirPath, sourceFileName);
+                return Path.Combine(sourceDirPath, zippedDtaFileName);
             }
 
-            // Couldn't find a directory with the _dta.zip file; how about the _dta.txt file?
+            // Couldn't find a directory with the _dta.zip file
+            // Look for the _dta.txt file instead
 
-            sourceFileName = DatasetName + AnalysisResources.CDTA_EXTENSION;
-            sourceDirPath = FindDataFile(sourceFileName);
+            var unzippedDtaFileName = DatasetName + AnalysisResources.CDTA_EXTENSION;
 
-            if (string.IsNullOrEmpty(sourceDirPath))
+            sourceDirPath = FindDataFile(unzippedDtaFileName);
+
+            if (!string.IsNullOrEmpty(sourceDirPath))
             {
-                // No directory found containing the zipped DTA files; return false
-                // (the FindDataFile procedure should have already logged an error)
-                errorMessage = "Could not find " + sourceFileName + " using FindDataFile";
-                return string.Empty;
+                OnWarningEvent("Warning: could not find the _dta.zip file, but was able to find {0} in directory {1}", unzippedDtaFileName, sourceDirPath);
+
+                if (sourceDirPath.StartsWith(MYEMSL_PATH_FLAG))
+                {
+                    return sourceDirPath;
+                }
+
+                // Return the path to the _dta.txt file
+                return Path.Combine(sourceDirPath, unzippedDtaFileName);
             }
 
-            OnWarningEvent("Warning: could not find the _dta.zip file, but was able to find " + sourceFileName + " in directory " + sourceDirPath);
+            // Jobs that ran more than 3 years ago are removed from T_Job_Steps_History,
+            // which prevents the analysis manager from determining the shared results directory name
 
-            if (sourceDirPath.StartsWith(MYEMSL_PATH_FLAG))
+            // Look for any _dta.zip files in the dataset directory
+            // If exactly one file is found, use it
+
+            var datasetDirectory = GetDatasetDirectory();
+
+            if (datasetDirectory != null)
             {
-                return sourceDirPath;
+                var foundFiles = datasetDirectory.GetFiles(zippedDtaFileName, SearchOption.AllDirectories);
+
+                if (foundFiles.Length == 1)
+                {
+                    if (mDebugLevel >= 2)
+                    {
+                        OnDebugEvent("Data file found by searching the dataset directory: {0} for {1}", foundFiles[0].Name, DatasetName);
+                    }
+
+                    return foundFiles[0].FullName;
+                }
+
+                if (foundFiles.Length > 1)
+                {
+                    var job = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+
+                    OnWarningEvent(
+                        "Multiple versions of file {0} were found in the dataset directory; unable to auto-determine which one to use for job {1}: {2}",
+                        foundFiles[0].Name, job, DatasetName);
+                }
             }
 
-            // Return the path to the _dta.txt file
-            return Path.Combine(sourceDirPath, sourceFileName);
+            // No directory found containing the zipped DTA files; return an empty string
+            // (the FindDataFile procedure should have already logged an error)
+            errorMessage = "Could not find " + zippedDtaFileName + " using FindDataFile";
+            return string.Empty;
         }
 
         /// <summary>
@@ -1113,11 +1148,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string directorySearchPattern,
             out List<FileInfo> matchingFiles)
         {
-            var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
-
-            var storagePath = mJobParams.GetParam("DatasetStoragePath");
-
-            var datasetDirectory = new DirectoryInfo(Path.Combine(storagePath, datasetDirectoryName));
+            DirectoryInfo datasetDirectory = GetDatasetDirectory();
 
             matchingFiles = new List<FileInfo>();
 
@@ -1222,6 +1253,27 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             return applySectionFilter;
+        }
+
+        /// <summary>
+        /// Get a DirectoryInfo instance of the dataset directory
+        /// </summary>
+        /// <returns>DirectoryInfo object, or null if an error</returns>
+        private DirectoryInfo GetDatasetDirectory()
+        {
+            try
+            {
+                var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+
+                var storagePath = mJobParams.GetParam("DatasetStoragePath");
+
+                return new DirectoryInfo(Path.Combine(storagePath, datasetDirectoryName));
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Unable to determine the dataset directory", ex);
+                return null;
+            }
         }
 
         /// <summary>
@@ -2727,6 +2779,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             OnStatusEvent("Retrieving spectra file(s)");
 
             var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
+
             switch (rawDataType)
             {
                 case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
