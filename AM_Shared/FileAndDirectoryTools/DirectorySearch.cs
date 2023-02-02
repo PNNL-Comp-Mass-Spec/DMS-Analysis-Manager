@@ -129,8 +129,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             isDirectory = false;
 
-            var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
-            switch (rawDataType)
+            switch (AnalysisResources.GetRawDataType(rawDataTypeName))
             {
                 case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
