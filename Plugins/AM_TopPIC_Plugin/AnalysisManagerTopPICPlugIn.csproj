@@ -53,6 +53,16 @@
     <Compile Include="TopPICResultFileInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Nerdbank.GitVersioning">
+      <Version>3.5.119</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="CsvHelper">
       <Version>30.0.1</Version>
     </PackageReference>

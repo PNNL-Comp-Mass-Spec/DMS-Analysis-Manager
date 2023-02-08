@@ -1,0 +1,17 @@
+{ // Monolithic/shared versioning config file
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/main/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "2.6",
+  "assemblyVersion": {
+    "precision": "build"
+  },
+  "pathFilters": [
+    ":/AM_Program", // Consider all committed file changes in the AM_Program folder for version increases
+    ":/AM_Shared", // Consider all committed file changes in the AM_Shared folder for version increases
+    ":/Plugins", // Consider all committed file changes in the Plugins folder for version increases
+    ":^/Plugins/_Unused", // Exclude changes in Plugins\_Unused
+    ":^/Plugins/FixSpaces.bat" // Exclude changes to Plugins\FixSpaces.bat
+  ],
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$" // we release out of master
+  ]
+}

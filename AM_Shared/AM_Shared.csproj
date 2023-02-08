@@ -149,6 +149,11 @@
     <Compile Include="StatusReporting\SystemProcessInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\version.json">
+      <Link>Properties\version.json</Link>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
       <Version>1.8.0</Version>
     </PackageReference>
@@ -160,6 +165,11 @@
     </PackageReference>
     <PackageReference Include="MathNet.Numerics">
       <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="Nerdbank.GitVersioning">
+      <Version>3.5.119</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.2</Version>
