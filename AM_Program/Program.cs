@@ -29,7 +29,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "February 2, 2023";
+        public static string ProgramDate { get; }
+
+        static Program()
+        {
+            ProgramDate = ThisAssembly.GitCommitDate.ToLocalTime().ToString("MMMM dd, yyyy");
+        }
 
         private static bool mTraceMode;
 
@@ -51,7 +56,7 @@ namespace AnalysisManagerProg
                 var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
 
                 var parser = new CommandLineParser<CommandLineOptions>(exeName,
-                    AppUtils.GetAppVersion(PROGRAM_DATE))
+                    AppUtils.GetAppVersion(ProgramDate))
                 {
                     ProgramInfo = "This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.",
                     ContactInfo = "Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)" + Environment.NewLine +
@@ -181,7 +186,7 @@ namespace AnalysisManagerProg
         {
             Console.WriteLine();
             Console.WriteLine("DMS Analysis Manager");
-            Console.WriteLine("Version " + AppUtils.GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine("Version " + AppUtils.GetAppVersion(ProgramDate));
             Console.WriteLine("Host    " + Environment.MachineName);
             Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();
