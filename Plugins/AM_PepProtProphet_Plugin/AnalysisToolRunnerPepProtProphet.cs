@@ -1923,13 +1923,72 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 LogDebug("Annotating the FASTA file to create db.bin files", 2);
 
+                // ReSharper disable once CommentTypo
+
+                /*
+
+                // The following code can be used to replace a FASTA file with an alternative one, prior to indexing
+                // This was used in February 2023 while diagnosing an indexing error with Philosopher
+                // See GitHub issue https://github.com/Nesvilab/philosopher/issues/411
+
+                const string fastaFileName = "ID_008341_110ECBC1.fasta";
+
+                var fastaFile = new FileInfo(mFastaFilePath);
+
+                if (fastaFile.DirectoryName == null)
+                {
+                    LogError("Unable to determine the parent directory of " + mFastaFilePath);
+                    return false;
+                }
+
+                var alternateFilePath = Path.Combine(fastaFile.DirectoryName, Path.GetFileNameWithoutExtension(fastaFile.Name) + "_fixed.fasta");
+                var alternateFile = new FileInfo(alternateFilePath);
+
+                var backupPath = mFastaFilePath + ".original";
+
+                bool filesSwapped;
+
+                if (fastaFile.Name.Equals(fastaFileName))
+                {
+                    if (!alternateFile.Exists)
+                    {
+                        LogError("Alternate FASTA file not found: " + alternateFile.FullName);
+                        return false;
+                    }
+
+                    LogDebug("Replacing problematic FASTA file with alternate: " + alternateFile.FullName);
+
+                    fastaFile.MoveTo(backupPath);
+                    alternateFile.MoveTo(mFastaFilePath);
+
+                    filesSwapped = true;
+                }
+                else
+                {
+                    filesSwapped = false;
+                }
+
+                */
+
                 // First process the working directory
                 var workDirSuccess = RunDatabaseAnnotation(mWorkingDirectory, options.WorkingDirectoryPadWidth);
                 if (!workDirSuccess)
                     return false;
 
                 if (experimentGroupWorkingDirectories.Count <= 1)
+                {
+                    /*
+
+                    if (filesSwapped)
+                    {
+                        alternateFile.MoveTo(alternateFilePath);
+                        fastaFile.MoveTo(mFastaFilePath);
+                    }
+
+                    */
+
                     return true;
+                }
 
                 // Next process each of the experiment directories
                 var successCount = 0;
@@ -1942,6 +2001,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (success)
                         successCount++;
                 }
+
+                /*
+
+                if (filesSwapped)
+                {
+                    alternateFile.MoveTo(alternateFilePath);
+                    fastaFile.MoveTo(mFastaFilePath);
+                }
+
+                */
 
                 return successCount == experimentGroupWorkingDirectories.Count;
             }
