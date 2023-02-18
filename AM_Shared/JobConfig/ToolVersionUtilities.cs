@@ -29,7 +29,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Stored procedure name for storing the step tool version
         /// </summary>
-        private const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
+        private const string SP_NAME_SET_TASK_TOOL_VERSION = "set_step_task_tool_version";
 
         /// <summary>
         /// Used for tool version info files

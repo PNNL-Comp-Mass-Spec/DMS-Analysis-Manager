@@ -29,7 +29,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         public const string JOB_INFO_FILE_PREFIX = "JobInfoFile_Job";
 
-        private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "GetJobStepInputFolder";
+        private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "get_job_step_input_folder";
 
         /// <summary>
         /// File that tracks Job number and whether or not the search used a .mzML file

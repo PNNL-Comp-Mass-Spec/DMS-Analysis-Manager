@@ -35,7 +35,7 @@ namespace AnalysisManagerProg
         /// </summary>
         private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
-        private const string SP_NAME_PAUSE_MANAGER_TASK_REQUESTS = "PauseManagerTaskRequests";
+        private const string SP_NAME_PAUSE_MANAGER_TASK_REQUESTS = "pause_manager_task_requests";
         /// <summary>
         /// File with settings loaded when OfflineMode is enabled
         /// </summary>

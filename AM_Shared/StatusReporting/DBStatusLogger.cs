@@ -163,7 +163,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Stored procedure that could be used to report manager status; typically not used
         /// </summary>
         /// <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-        private const string SP_NAME_UPDATE_MANAGER_STATUS = "UpdateManagerAndTaskStatus";
+        private const string SP_NAME_UPDATE_MANAGER_STATUS = "update_manager_and_task_status";
 
         /// <summary>
         /// The minimum interval between updating the manager status in the database

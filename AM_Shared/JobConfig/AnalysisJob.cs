@@ -48,17 +48,17 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Stored procedure to call once the analysis finishes
         /// </summary>
-        protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
+        protected const string SP_NAME_SET_COMPLETE = "set_step_task_complete";
 
         /// <summary>
         /// Stored procedure the manager calls to indicate that a deadlock occurred, and this manager was not assigned a job
         /// </summary>
-        private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
+        private const string SP_NAME_REPORT_IDLE = "report_manager_idle";
 
         /// <summary>
         /// "RequestStepTask"
         /// </summary>
-        protected const string SP_NAME_REQUEST_TASK = "RequestStepTaskXML";
+        protected const string SP_NAME_REQUEST_TASK = "request_step_task_xml";
 
         /// <summary>
         /// XML file with job parameters used when running job remotely
