@@ -10,6 +10,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Acceptable design pattern", Scope = "module")]
 [assembly: SuppressMessage("Readability", "RCS1123:Add parentheses when necessary.", Justification = "Parenthese are not required", Scope = "member", Target = "~M:AnalysisManagerProg.MainProcess.PauseManagerForCooldown(System.Int32)")]
 [assembly: SuppressMessage("Readability", "RCS1192:Unnecessary usage of verbatim string literal.", Justification = "@ included for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestProgRunnerIDPicker")]
+[assembly: SuppressMessage("Roslynator", "RCS1146:Use conditional access.", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestGetSystemPath")]
 [assembly: SuppressMessage("Simplification", "RCS1190:Join string expressions.", Justification = "Separate for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.RunMSConvert")]
 [assembly: SuppressMessage("Simplification", "RCS1190:Join string expressions.", Justification = "Separate for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestProgRunnerIDPicker")]
 [assembly: SuppressMessage("Style", "IDE0059:Unnecessary assignment of a value", Justification = "Used for debugging", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.ProcessDtaRefineryLogFiles(System.Int32,System.Int32)~System.Boolean")]
