@@ -261,7 +261,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         // Storing "No results above threshold" in mMessage will result in the job being assigned state No Export (14) in DMS
-                        // See stored procedure UpdateJobState
+                        // See stored procedure update_job_state
                         mMessage = NO_RESULTS_ABOVE_THRESHOLD;
                     }
                 }
@@ -1104,7 +1104,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Storing "No results above threshold" in mMessage will result in the job being assigned state No Export (14) in DMS
-                    // See stored procedure UpdateJobState
+                    // See stored procedure update_job_state
                     LogError(NO_RESULTS_ABOVE_THRESHOLD);
                     return result;
                 }

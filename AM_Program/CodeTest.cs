@@ -1363,7 +1363,7 @@ namespace AnalysisManagerProg
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, debugMode: true);
             RegisterEvents(dbTools);
 
-            var cmd = dbTools.CreateCommand("GetJobStepParamsAsTable", CommandType.StoredProcedure);
+            var cmd = dbTools.CreateCommand("get_job_step_params_as_table", CommandType.StoredProcedure);
 
             dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = 1026591;
             dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 3;

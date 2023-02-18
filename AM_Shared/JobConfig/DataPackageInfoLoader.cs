@@ -361,7 +361,7 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var cmd = dbTools.CreateCommand("GetJobStepParamsAsTableUseHistory", CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand("get_job_step_params_as_table_use_history", CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
                 dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 1;

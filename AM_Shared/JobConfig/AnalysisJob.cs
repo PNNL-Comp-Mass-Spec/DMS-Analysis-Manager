@@ -56,7 +56,7 @@ namespace AnalysisManagerBase.JobConfig
         private const string SP_NAME_REPORT_IDLE = "report_manager_idle";
 
         /// <summary>
-        /// "RequestStepTask"
+        /// "request_step_task"
         /// </summary>
         protected const string SP_NAME_REQUEST_TASK = "request_step_task_xml";
 
@@ -1227,7 +1227,7 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Requests a single analysis job using RequestStepTaskXML
+        /// Requests a single analysis job using request_step_task_xml
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
         private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
@@ -1797,7 +1797,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (TaskClosed)
             {
-                // Job 1234567 has already been closed; will not call SetStepTaskComplete again
+                // Job 1234567 has already been closed; will not call set_step_task_complete again
                 LogWarning(string.Format(
                     "Job {0} has already been closed; will not call {1} again",
                     mJobId, SP_NAME_SET_COMPLETE));
@@ -1868,7 +1868,7 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Call stored procedure ReportManagerIdle to inform the database that this manager did not receive a job
+        /// Call stored procedure report_manager_idle to inform the database that this manager did not receive a job
         /// </summary>
         /// <remarks>This is used when a Deadlock occurs while requesting a job</remarks>
         private void ReportManagerIdle()
@@ -1934,7 +1934,7 @@ namespace AnalysisManagerBase.JobConfig
 
             var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(PipelineDBProcedureExecutor.ConnectStr);
 
-            // Setup for execution of stored procedure SetStepTaskComplete
+            // Setup for execution of stored procedure set_step_task_complete
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@job", SqlType.Int).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
@@ -2002,7 +2002,7 @@ namespace AnalysisManagerBase.JobConfig
                     ? ParameterDirection.InputOutput
                     : ParameterDirection.Output);
 
-            // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
+            // Call Stored Procedure set_step_task_complete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);

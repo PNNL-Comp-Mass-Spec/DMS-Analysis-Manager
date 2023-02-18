@@ -345,7 +345,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Calls stored procedure PauseManagerTaskRequests to update manager parameter TaskRequestEnableTime
+        /// Calls stored procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
         /// </summary>
         /// <remarks>
         /// This will effectively put the manager to sleep, since it will not request new jobs

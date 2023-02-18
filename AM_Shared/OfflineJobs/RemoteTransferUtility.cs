@@ -34,19 +34,19 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Step parameter RemoteProgress
         /// </summary>
-        /// <remarks>Read from the .info file and sent to stored procedure SetStepTaskComplete in SetAnalysisJobComplete</remarks>
+        /// <remarks>Read from the .info file and sent to stored procedure set_step_task_complete in SetAnalysisJobComplete</remarks>
         public const string STEP_PARAM_REMOTE_PROGRESS = "RemoteProgress";
 
         /// <summary>
         /// Step parameter RemoteStart
         /// </summary>
-        /// <remarks>Read from the .info or .success file and sent to stored procedure SetStepTaskComplete</remarks>
+        /// <remarks>Read from the .info or .success file and sent to stored procedure set_step_task_complete</remarks>
         public const string STEP_PARAM_REMOTE_START = "RemoteStart";
 
         /// <summary>
         /// Step parameter RemoteFinish
         /// </summary>
-        /// <remarks>Read from the .success file and sent to stored procedure SetStepTaskComplete</remarks>
+        /// <remarks>Read from the .success file and sent to stored procedure set_step_task_complete</remarks>
         public const string STEP_PARAM_REMOTE_FINISH = "RemoteFinish";
 
         /// <summary>
@@ -534,7 +534,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the XML string that should be stored as job parameter RemoteInfo
         /// </summary>
-        /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
+        /// <remarks>RemoteInfo is sent to the database via stored procedure set_step_task_complete</remarks>
         /// <param name="useDefaultManagerRemoteInfo"></param>
         /// <returns>String with XML</returns>
         private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
@@ -562,7 +562,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the default XML string that will be used for jobs staged by this manager
         /// </summary>
-        /// <remarks>The RemoteInfo generated here is passed to RequestStepTaskXML when checking for an available job</remarks>
+        /// <remarks>The RemoteInfo generated here is passed to request_step_task_xml when checking for an available job</remarks>
         /// <param name="mgrParams">Manager parameters</param>
         /// <returns>String with XML</returns>
         public static string GetRemoteInfoXml(IMgrParams mgrParams)

@@ -61,7 +61,7 @@ namespace AnalysisManagerBase
         public const int RET_VAL_OK = 0;
 
         /// <summary>
-        /// Return value for RequestStepTask on SQL Server
+        /// Return value for request_step_task on SQL Server
         /// </summary>
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 

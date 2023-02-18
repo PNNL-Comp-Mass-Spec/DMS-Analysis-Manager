@@ -90,7 +90,7 @@ namespace AnalysisManagerBase
         bool HasParam(string name);
 
         /// <summary>
-        /// Calls stored procedure PauseManagerTaskRequests to update manager parameter TaskRequestEnableTime
+        /// Calls stored procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
         /// </summary>
         /// <param name="holdoffIntervalMinutes">Holdoff interval, in minutes</param>
         void PauseManagerTaskRequests(int holdoffIntervalMinutes = 60);

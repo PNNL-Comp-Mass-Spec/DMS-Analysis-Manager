@@ -18,7 +18,7 @@ namespace AnalysisManagerBase.JobConfig
     /// <summary>
     /// Job result codes (aka completion codes)
     /// </summary>
-    /// <remarks>Sent to parameter completionCode when calling SetStepTaskComplete</remarks>
+    /// <remarks>Sent to parameter completionCode when calling set_step_task_complete</remarks>
     public enum CloseOutType
     {
         /// <summary>
