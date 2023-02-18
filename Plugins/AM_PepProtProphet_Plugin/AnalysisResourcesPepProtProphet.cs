@@ -73,6 +73,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var datasetCount = GetDatasetCount();
 
                 var optionsLoaded = LoadMSFraggerOptions(paramFilePath, datasetCount, out var options);
+
                 if (!optionsLoaded)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -119,6 +120,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
+
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
 
@@ -362,6 +364,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             foreach (var item in columnIndexToChargeMap)
                             {
                                 var chargeFlag = lineParts[item.Key];
+
                                 if (!int.TryParse(chargeFlag, out var value) || value <= 0)
                                 {
                                     continue;

@@ -225,6 +225,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 };
 
                 var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out _);
+
                 if (!success)
                     return false;
 
@@ -284,6 +285,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 };
 
                 var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out _);
+
                 if (!success)
                     return false;
 
@@ -342,6 +344,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 };
 
                 var success = WriteUpdatedFile(headerNames, inputFile, updatedFile, out peptideCount);
+
                 if (!success)
                     return false;
 

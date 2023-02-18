@@ -151,6 +151,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 var success = CopyResultsToTransferDirectory();
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -293,6 +294,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 foreach (var item in dataPackageInfo.DatasetFiles)
                 {
                     var mzMLFile = new FileInfo(Path.Combine(mWorkDir, item.Value));
+
                     if (!mzMLFile.Exists)
                     {
                         LogError(".mzML file not found: " + mzMLFile.FullName);
@@ -1024,6 +1026,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             }
 
             var msFraggerScript = new FileInfo(Path.Combine(toolsDirectory.FullName, "msfragger_pep_split.py"));
+
             if (!msFraggerScript.Exists)
             {
                 LogError("MSFragger script not found; cannot run a split FASTA search: " + msFraggerScript.FullName);
@@ -1468,6 +1471,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             mZipTool ??= new DotNetZipTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
 
             var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
+
             if (!zipSuccess)
             {
                 return false;
@@ -1475,6 +1479,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             // Rename the zipped file
             var zipFile = new FileInfo(Path.ChangeExtension(pepXmlFile.FullName, ".zip"));
+
             if (!zipFile.Exists)
             {
                 toolRunner.LogError("Zipped pepXML file not found; cannot rename");

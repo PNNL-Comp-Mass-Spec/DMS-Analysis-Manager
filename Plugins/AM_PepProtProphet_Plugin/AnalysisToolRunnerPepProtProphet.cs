@@ -287,6 +287,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mJobParams.AddResultFileToSkip("reprint.spc.tsv");
 
                 var success = CopyResultsToTransferDirectory();
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -304,6 +305,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             const PhilosopherToolType toolType = PhilosopherToolType.ShowVersion;
 
             var success = RunPhilosopher(toolType, "version", "get the version");
+
             if (!success)
                 return false;
 
@@ -375,6 +377,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.OpenSearch)
                 {
                     var crystalCSuccess = RunCrystalC(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+
                     if (!crystalCSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -413,6 +416,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     else
                     {
                         var msBoosterSuccess = RunMSBooster(dataPackageInfo, datasetIDsByExperimentGroup, options, paramFilePath);
+
                         if (!msBoosterSuccess)
                             return CloseOutType.CLOSEOUT_FAILED;
 
@@ -465,6 +469,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     // Run ProteinProphet
                     var proteinProphetSuccess = RunProteinProphet(peptideProphetPepXmlFiles, options);
+
                     if (!proteinProphetSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -478,12 +483,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var dbAnnotateSuccess = RunDatabaseAnnotation(experimentGroupWorkingDirectories, options);
+
                 if (!dbAnnotateSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 mProgress = (int)ProgressPercentValues.DBAnnotationComplete;
 
                 var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options, usedProteinProphet);
+
                 if (!filterSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -495,6 +502,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // If no reporter ions, either run FreeQuant or run IonQuant
 
                     var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories, options);
+
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -504,6 +512,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
                     var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
+
                     if (!labelQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -511,6 +520,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
+
                 if (!reportSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -547,6 +557,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (options.RunIProphet)
                     {
                         var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+
                         if (!iProphetSuccess)
                             return CloseOutType.CLOSEOUT_FAILED;
 
@@ -556,6 +567,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (options.RunAbacus)
                     {
                         var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
+
                         if (!abacusSuccess)
                             return CloseOutType.CLOSEOUT_FAILED;
 
@@ -566,6 +578,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.RunIonQuant)
                 {
                     var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+
                     if (!ionQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -575,6 +588,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
                     var tmtIntegratorSuccess = RunTmtIntegrator(experimentGroupWorkingDirectories, options);
+
                     if (!tmtIntegratorSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -584,6 +598,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (options.OpenSearch && options.RunPTMShepherd)
                 {
                     var ptmShepherdSuccess = RunPTMShepherd(experimentGroupWorkingDirectories, options);
+
                     if (!ptmShepherdSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -591,16 +606,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
+
                 if (!reportFilesUpdated)
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
 
                 var moveSuccess = MoveResultsOutOfSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
+
                 if (!moveSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo, options);
+
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -1492,6 +1510,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
+
                         if (!pepXmlSuccess)
                             return false;
 
@@ -1947,6 +1966,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             var arguments = string.Format("database --annotate {0} --prefix XXX_", mFastaFilePath);
 
             var success = RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
+
             if (!success)
                 return false;
 
@@ -1954,6 +1974,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Verify that it was created
 
             var outputFile = new FileInfo(Path.Combine(workingDirectory.FullName, ".meta", "db.bin"));
+
             if (outputFile.Exists)
             {
                 return true;
@@ -2000,6 +2021,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ToDo: Verify that the FreeQuant results file was created
                     var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
+
                     //if (!outputFile.Exists)
                     //{
                     //    LogError("FreeQuant results file not found: " + outputFile.Name);
@@ -2897,6 +2919,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         var pepXmlFilename = string.Format("{0}_c.pepXML", datasetName);
 
                         var pepXmlFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, pepXmlFilename));
+
                         if (!pepXmlFile.Exists)
                         {
                             LogError("Crystal-C .pepXML file not found: " + pepXmlFile.Name);
@@ -3668,6 +3691,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Verify that psm.bin was created
 
                     var outputFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, ".meta", "psm.bin"));
+
                     if (!outputFile.Exists)
                     {
                         LogError("Filtered results file not found in the .meta directory: " + outputFile.Name);
@@ -3870,6 +3894,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 var consoleOutputFile = new FileInfo(consoleOutputFilepath);
+
                 if (!consoleOutputFile.Exists)
                 {
                     LogWarning("UpdateCombinedPhilosopherConsoleOutput: ConsoleOutput file not found: " + consoleOutputFilepath);
@@ -4194,6 +4219,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     foreach (var datasetId in item.Value)
                     {
                         var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
+
                         if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));
@@ -4323,6 +4349,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         var currentStep = string.Format(@"RewritePepxml for {0}\{1}", workingDirectory.Parent.Name, interactFile.Name);
 
                         var datasetFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, dataPackageInfo.DatasetFiles[datasetId]));
+
                         if (!datasetFile.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             LogError(string.Format("The extension for dataset file {0} is not .mzML; this is unexpected", datasetFile.Name));

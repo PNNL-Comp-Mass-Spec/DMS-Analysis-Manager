@@ -54,6 +54,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
 
                 currentTask = "ValidateFreeMemorySize";
+
                 if (!ValidateFreeMemorySize("MSFraggerJavaMemorySize", false))
                 {
                     mInsufficientFreeMemory = true;

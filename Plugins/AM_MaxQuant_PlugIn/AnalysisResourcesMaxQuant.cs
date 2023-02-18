@@ -87,6 +87,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var validModifications = ValidateMaxQuantModificationNames(mWorkDir, paramFileName);
+
                 if (!validModifications)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -159,6 +160,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
+
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     return resultCode;
 
@@ -668,6 +670,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var confDirectory = new DirectoryInfo(Path.Combine(maxQuantExecutable.Directory.FullName, "conf"));
+
                 if (!confDirectory.Exists)
                 {
                     LogError(string.Format("MaxQuant conf directory not found: {0}", confDirectory.FullName));
@@ -675,6 +678,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var sourceFile = new FileInfo(Path.Combine(confDirectory.FullName, "modifications.xml"));
+
                 if (!sourceFile.Exists)
                 {
                     LogError(string.Format("MaxQuant modifications file not found: {0}", sourceFile.FullName));
@@ -734,6 +738,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+
                 if (!transferDirectory.Exists)
                 {
                     // The transfer directory may not yet exist
@@ -773,6 +778,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         continue;
 
                     var copySuccess = mFileTools.CopyFileUsingLocks(item, targetFile.FullName, true);
+
                     if (!copySuccess)
                     {
                         LogError(string.Format("Error copying file {0} to {1}", item.FullName, targetFile.FullName));
@@ -792,6 +798,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     // Unzip the file
                     var unzipSuccess = zipTools.UnzipFile(targetFile.FullName, targetDirectory);
+
                     if (!unzipSuccess)
                     {
                         LogError(string.Format("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory));

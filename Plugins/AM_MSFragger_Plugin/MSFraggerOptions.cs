@@ -379,12 +379,14 @@ namespace AnalysisManagerMSFraggerPlugIn
                 RegisterEvents(paramFileReader);
 
                 var paramFileLoaded = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries, true);
+
                 if (!paramFileLoaded)
                 {
                     return false;
                 }
 
                 var success = DetermineReporterIonMode(paramFileEntries, out var reporterIonMode);
+
                 if (!success)
                     return false;
 
@@ -611,6 +613,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 RegisterEvents(paramFileReader);
 
                 var paramFileLoaded = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries, true);
+
                 if (!paramFileLoaded)
                 {
                     return false;

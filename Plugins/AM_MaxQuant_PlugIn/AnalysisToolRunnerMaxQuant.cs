@@ -182,6 +182,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var success = CopyResultsToTransferDirectory(true, subdirectoriesToSkipTransfer);
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -506,6 +507,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var txtDirectory = new DirectoryInfo(Path.Combine(combinedDirectory.FullName, "txt"));
+
                 if (!txtDirectory.Exists)
                 {
                     LogError("The MaxQuant search should be complete, but the txt directory does not exist in the combined directory");
@@ -513,6 +515,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var newTxtDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "txt"));
+
                 if (!newTxtDirectory.Exists)
                     newTxtDirectory.Create();
 
@@ -610,6 +613,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
 
                     var successZipping = subdirectoryCompressor.ZipDirectories(directoriesToSkipZipping, directoriesToZipSubsSeparately);
+
                     if (!successZipping)
                         return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
                 }
@@ -943,6 +947,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             };
 
             var success = StoreDotNETToolVersionInfo(mMaxQuantProgLoc, additionalDLLs, true);
+
             if (!success)
                 return false;
 
@@ -1000,6 +1005,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 processedParameterFilePaths.Add(parameterFile.FullName);
                 var success = UpdateAndromedaParameterFile(localOrgDbDirectory, generatedFastaFilePath, parameterFile, out var fileUpdated);
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -1021,6 +1027,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 processedParameterFilePaths.Add(parameterFile.FullName);
 
                 var success = UpdateAndromedaParameterFile(localOrgDbDirectory, generatedFastaFilePath, parameterFile, out var fileUpdated);
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -1671,6 +1678,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
                 var andromedaDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "combined", "andromeda"));
+
                 if (!andromedaDirectory.Exists)
                 {
                     // Nothing to update, meaning this is the first MaxQuant job step
@@ -1700,6 +1708,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 foreach (var metadataFile in metadataFiles)
                 {
                     var success = UpdateAndromedaPeakListFile(workingDirectory, metadataFile, andromedaParameterFiles);
+
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1733,6 +1742,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
+
             if (!string.IsNullOrEmpty(proteinOptions) && proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // The FASTA file has decoy sequences
