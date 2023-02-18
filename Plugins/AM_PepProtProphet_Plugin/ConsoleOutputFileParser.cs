@@ -15,6 +15,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper restore CommentTypo
 
         /// <summary>
+        /// Text indicating that philosopher crashed with an exception
+        /// </summary>
+        public const string PHILOSOPHER_PANIC_ERROR = "panic:";
+
+        /// <summary>
+        /// Text indicating that philosopher crashed with a runtime error
+        /// </summary>
+        public const string PHILOSOPHER_RUNTIME_ERROR = "runtime error:";
+
+        /// <summary>
         /// RegEx for matching color codes that appear in the Philosopher console output file
         /// </summary>
         /// <remarks>
@@ -345,7 +355,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper disable once InvertIf
                     // ReSharper disable once StringLiteralTypo
-                    if (dataLine.StartsWith("FATA") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    if ((dataLine.StartsWith("FATA") ||
+                         dataLine.StartsWith(PHILOSOPHER_PANIC_ERROR) ||
+                         dataLine.Contains(PHILOSOPHER_RUNTIME_ERROR)
+                        ) && !ConsoleOutputErrorMsg.Contains(dataLine))
                     {
                         // Fatal error
                         if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))

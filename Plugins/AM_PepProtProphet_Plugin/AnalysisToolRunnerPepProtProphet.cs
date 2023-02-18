@@ -1972,8 +1972,48 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // First process the working directory
                 var workDirSuccess = RunDatabaseAnnotation(mWorkingDirectory, options.WorkingDirectoryPadWidth);
+
                 if (!workDirSuccess)
+                {
+                    // ReSharper disable CommentTypo
+
+                    // Philosopher makes several assumptions about protein names, which can lead to "index out of range" errors while indexing the FASTA file
+
+                    // For example, ">AT10A_MOUSE" is assumed to be Arabidopsis thaliana because it starts with "AT"
+                    // Also, ">ZP1_MOUSE" is assumed to be an NCBI protein because it starts with "ZP"
+
+                    // Protein lines like these lead to "index out of range" errors due to erroneous assumptions in the code
+                    // For more info, see GitHub issue https://github.com/Nesvilab/philosopher/issues/411
+
+                    // Use the following commands to manually index a FASTA file to confirm that protein names are supported:
+
+                    // cd \DMS_WorkDir1
+                    // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe workspace --init --nocheck
+                    // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe database --annotate c:\DMS_Temp_Org\ID_008341_110ECBC1.fasta --prefix XXX_
+
+                    // ReSharper restore CommentTypo
+
+                    // Look for "panic:" and "runtime error:" in the cached console output error messages
+                    if (mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_PANIC_ERROR) ||
+                        mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_RUNTIME_ERROR))
+                    {
+                        // Clear mMessage so that this text appears at the start of the message:
+                        mMessage = string.Empty;
+
+                        LogError("Philosopher reported an error while indexing the FASTA file; " +
+                                 "it makes assumptions about protein names that can fail; " +
+                                 "rename any proteins that start with \"AT\" or \"ZP\" to instead start with \"_AT\" or \"_ZP\", then re-run MSFragger and Philosopher");
+
+                        mMessage = Global.AppendToComment(mMessage, mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                    }
+                    else
+                    {
+                        mMessage = Global.AppendToComment("Philosopher reported an error while indexing the FASTA file", mMessage);
+                        LogErrorNoMessageUpdate("Philosopher reported an error while indexing the FASTA file");
+                    }
+
                     return false;
+                }
 
                 if (experimentGroupWorkingDirectories.Count <= 1)
                 {
