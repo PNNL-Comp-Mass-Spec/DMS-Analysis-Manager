@@ -8,13 +8,11 @@
             <summary>
             Database connection string
             </summary>
-            <returns></returns>
         </member>
         <member name="P:OrganismDatabaseHandler.DatabaseTools.DBTask.DbTools">
             <summary>
             Database connection string
             </summary>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.DatabaseTools.DBTask.#ctor(System.String)">
             <summary>
@@ -43,7 +41,6 @@
             <param name="proteins"></param>
             <param name="destinationPath">Destination file path; will get updated with the final path</param>
             <param name="selectedProteinList"></param>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteins.Export(OrganismDatabaseHandler.ProteinStorage.ProteinStorage,System.String@)">
             <summary>
@@ -51,7 +48,6 @@
             </summary>
             <param name="proteins"></param>
             <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteins.Export(System.Data.DataSet,System.String@)">
             <summary>
@@ -59,7 +55,6 @@
             </summary>
             <param name="proteinTables"></param>
             <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteins.Export(System.Data.DataTable,System.String@)">
             <summary>
@@ -67,7 +62,6 @@
             </summary>
             <param name="proteinTable"></param>
             <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteins.GetFileHash(System.String)">
             <summary>
@@ -88,56 +82,28 @@
             Export the proteins to the given file
             </summary>
             <param name="proteins"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
-            <remarks></remarks>
+            <param name="fastaFilePath">Destination file path; will get updated with the final path</param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsFASTA.Export(System.Data.DataSet,System.String@)">
             <summary>
             Export the proteins to the given file
             </summary>
             <param name="proteinTables"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
+            <param name="fastaFilePath">Destination file path; will get updated with the final path</param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsFASTA.Export(System.Data.DataTable,System.String@)">
             <summary>
             Export the proteins to the given file
             </summary>
             <param name="proteinTable"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
+            <param name="fastaFilePath">Destination file path; will get updated with the final path</param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsFASTA.FinalizeFile(System.String@)">
             <summary>
             Rename the file to include the fingerprint
             </summary>
-            <param name="destinationPath">File path to finalize; will get updated with the new name that includes the fingerprint</param>
+            <param name="fastaFilePath">File path to finalize; will get updated with the new name that includes the fingerprint</param>
             <returns>Fingerprint, e.g. 9B916A8B</returns>
-        </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsXTFASTA.Export(OrganismDatabaseHandler.ProteinStorage.ProteinStorage,System.String@)">
-            <summary>
-            Export the proteins to the given file
-            </summary>
-            <param name="proteins"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
-        </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsXTFASTA.Export(System.Data.DataSet,System.String@)">
-            <summary>
-            Export the proteins to the given file
-            </summary>
-            <param name="proteinTables"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
-        </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.ExportProteinsXTFASTA.Export(System.Data.DataTable,System.String@)">
-            <summary>
-            Export the proteins to the given file
-            </summary>
-            <param name="proteinTable"></param>
-            <param name="destinationPath">Destination file path; will get updated with the final path</param>
-            <returns></returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.#ctor">
             <summary>
@@ -151,22 +117,20 @@
             </summary>
             <param name="dbConnectionString">Protein sequences database connection string</param>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.#ctor(System.String,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.SequenceTypes,System.Boolean)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.#ctor(System.String,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.SequenceTypes,System.Boolean)">
             <summary>
             Constructor that takes connection string, database format type, and output sequence type
             </summary>
             <param name="dbConnectionString">Database connection string; empty string if offline and only planning to use ValidateMatchingHash</param>
-            <param name="databaseFormatType"></param>
             <param name="outputSequenceType"></param>
             <param name="decoyUsesXXX">When true, decoy proteins start with XXX_ instead of Reversed_</param>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.ExportFASTAFile(System.Int32,System.String,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.SequenceTypes)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.ExportFASTAFile(System.Int32,System.String,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.SequenceTypes)">
             <summary>
             Create the FASTA file for the given protein collection ID
             </summary>
-            <param name="destinationFolderPath"></param>
             <param name="proteinCollectionId">Protein collection ID</param>
-            <param name="databaseFormatType">Typically fasta for .fasta files; fastapro will create a .fasta.pro file</param>
+            <param name="destinationFolderPath"></param>
             <param name="outputSequenceType">Sequence type (forward, reverse, scrambled, decoy, or decoyX)</param>
             <returns>CRC32 hash of the generated (or retrieved) file</returns>
         </member>
@@ -184,15 +148,15 @@
             <summary>
             Construct the hashcheck file path, given the FASTA file path and its CRC32 hash
             </summary>
-            <param name="strFastaFilePath"></param>
-            <param name="crc32Hash"></param>
-            <param name="hashCheckExtension">Hashcheck file extension; if an empty string, the default of .hashcheck is used</param>
-            <returns>FileInfo object for the .hashcheck file</returns>
             <remarks>
             Example .hashcheck filenames:
             ID_004137_23AA5A07.fasta.23AA5A07.hashcheck
             H_sapiens_Ensembl_v68_2013-01-08.fasta.DF687525.hashcheck
             </remarks>
+            <param name="strFastaFilePath"></param>
+            <param name="crc32Hash"></param>
+            <param name="hashCheckExtension">Hashcheck file extension; if an empty string, the default of .hashcheck is used</param>
+            <returns>FileInfo object for the .hashcheck file</returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.UpdateHashValidationFile(System.String,System.String,System.String)">
             <summary>
@@ -206,22 +170,21 @@
             <summary>
             Validates that the hash of a .fasta file matches the expected hash value
             If the actual hash differs and if forceRegenerateHash=True, then this strExpectedHash get updated
-            forceRegenerateHash should be set to True only when processing legacy fasta files that have been newly copied to this computer
+            forceRegenerateHash should be set to True only when processing legacy FASTA files that have been newly copied to this computer
             </summary>
-            <param name="fastaFilePath">Fasta file to check</param>
+            <remarks>Public method because the Analysis Manager uses this class when running offline jobs</remarks>
+            <param name="fastaFilePath">FASTA file to check</param>
             <param name="expectedHash">Expected CRC32 hash; updated if incorrect and forceRegenerateHash is true</param>
             <param name="retryHoldoffHours">Time between re-generating the hash value for an existing file</param>
             <param name="forceRegenerateHash">Re-generate the hash</param>
             <param name="hashcheckExtension">Hashcheck file extension; if an empty string, the default of .hashcheck is used</param>
             <returns>True if the hash values match, or if forceRegenerateHash=True</returns>
-            <remarks>Public method because the Analysis Manager uses this class when running offline jobs</remarks>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.OnTaskCompletion(System.String)">
             <summary>
-            Raises event FileGenerationCompleted is raised once the fasta file is done being created
+            Raises event FileGenerationCompleted is raised once the FASTA file is done being created
             </summary>
             <param name="finalOutputPath"></param>
-            <remarks></remarks>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.GenerateFileAuthenticationHash(System.String)">
             <summary>
@@ -230,12 +193,11 @@
             <param name="fullFilePath"></param>
             <returns>File hash</returns>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSDecoy.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes,System.Boolean)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSDecoy.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,System.Boolean)">
             <summary>
             Constructor
             </summary>
             <param name="databaseAccessor">Object for retrieving data from the protein sequences database</param>
-            <param name="databaseFormatType">Typically fasta; but also supports fastapro to create .fasta.pro files</param>
             <param name="decoyUsesXXX"></param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSDecoy.ExportFASTAFile(System.Collections.Generic.List{System.String},System.String,System.Int32,System.Boolean)">
@@ -248,25 +210,23 @@
             <param name="padWithPrimaryAnnotation"></param>
             <returns>CRC32 hash of the generated (or retrieved) file</returns>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSDecoyX.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSDecoyX.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask)">
             <summary>
             Constructor
             </summary>
             <param name="databaseAccessor">Object for retrieving data from the protein sequences database</param>
-            <param name="databaseFormatType">Typically fasta; but also supports fastapro to create .fasta.pro files</param>
         </member>
         <member name="F:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSForward.mAllCollections">
             <summary>
             Keys are protein collection IDs
-            Values are filename
+            Values are protein collection name
             </summary>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSForward.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSForward.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask)">
             <summary>
             Constructor
             </summary>
             <param name="databaseAccessor">Object for retrieving data from the protein sequences database</param>
-            <param name="databaseFormatType">Typically fasta; but also supports fastapro to create .fasta.pro files</param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSForward.ExportFASTAFile(System.Collections.Generic.List{System.String},System.String,System.Int32,System.Boolean)">
             <summary>
@@ -293,26 +253,23 @@
             <param name="fullFilePath"></param>
             <returns>File hash</returns>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSReversed.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSReversed.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask)">
             <summary>
             Constructor
             </summary>
             <param name="databaseAccessor">Object for retrieving data from the protein sequences database</param>
-            <param name="databaseFormatType">Typically fasta; but also supports fastapro to create .fasta.pro files</param>
         </member>
         <member name="P:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSReversed.UseXXX">
             <summary>
             When true, reverse proteins start with XXX_
             When false, they start with REV_
             </summary>
-            <returns></returns>
         </member>
-        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSScrambled.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask,OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.DatabaseFormatTypes)">
+        <member name="M:OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMSScrambled.#ctor(OrganismDatabaseHandler.DatabaseTools.DBTask)">
             <summary>
             Constructor
             </summary>
             <param name="databaseAccessor">Object for retrieving data from the protein sequences database</param>
-            <param name="databaseFormatType">Typically fasta; but also supports fastapro to create .fasta.pro files</param>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinImport.AddUpdateEntries.CompareProteinId(OrganismDatabaseHandler.ProteinStorage.ProteinStorage,System.Collections.Generic.List{System.String})">
             <summary>
@@ -322,7 +279,13 @@
             </summary>
             <param name="pc"></param>
             <param name="selectedProteinList"></param>
-            <remarks></remarks>
+        </member>
+        <member name="M:OrganismDatabaseHandler.ProteinImport.AddUpdateEntries.AddProteinSequence(OrganismDatabaseHandler.ProteinStorage.ProteinStorageEntry)">
+            <summary>
+            Add the protein
+            </summary>
+            <param name="protein"></param>
+            <returns>Protein ID</returns>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinImport.AddUpdateEntries.DeleteProteinCollectionMembers(System.Int32,System.Int32)">
             <summary>
@@ -330,24 +293,36 @@
             </summary>
             <param name="proteinCollectionId"></param>
             <param name="numProteins"></param>
-            <remarks></remarks>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinImport.AddUpdateEntries.RunSP_DeleteProteinCollectionMembers(System.Int32,System.Int32)">
             <summary>
             Deletes the proteins for the given protein collection in preparation for re-uploading the proteins
             </summary>
+            <remarks>NumResidues in T_Protein_Collections is set to 0</remarks>
             <param name="proteinCollectionId"></param>
             <param name="numProteinsForReLoad">The number of proteins that will be uploaded after this delete</param>
-            <remarks>NumResidues in T_Protein_Collections is set to 0</remarks>
         </member>
         <member name="M:OrganismDatabaseHandler.ProteinImport.FASTAReader.#ctor">
             <summary>
             Constructor
             </summary>
         </member>
+        <member name="M:OrganismDatabaseHandler.ProteinImport.ImportHandler.LoadProteinsRaw(System.String,OrganismDatabaseHandler.ProteinImport.ImportHandler.ProteinImportFileTypes)">
+            <summary>
+            Function to load FASTA file contents with no checking against the existing database entries
+            used to load up the source collection ListView
+            </summary>
+            <param name="filePath"></param>
+            <param name="fileType"></param>
+        </member>
         <member name="F:OrganismDatabaseHandler.ProteinStorage.ProteinStorage.Proteins">
             <summary>
             Keys are Protein_Name
+            </summary>
+        </member>
+        <member name="P:OrganismDatabaseHandler.ProteinStorage.ProteinStorage.FilePath">
+            <summary>
+            Full path to the FASTA file
             </summary>
         </member>
         <member name="M:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.#ctor(System.String,System.String)">
@@ -370,6 +345,31 @@
             <param name="sCount"></param>
             <param name="average"></param>
             <param name="monoisotopic"></param>
+        </member>
+        <member name="P:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.C">
+            <summary>
+            Number of C atoms
+            </summary>
+        </member>
+        <member name="P:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.H">
+            <summary>
+            Number of H atoms
+            </summary>
+        </member>
+        <member name="P:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.N">
+            <summary>
+            Number of N atoms
+            </summary>
+        </member>
+        <member name="P:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.O">
+            <summary>
+            Number of O atoms
+            </summary>
+        </member>
+        <member name="P:OrganismDatabaseHandler.SequenceInfo.SequenceInfo.S">
+            <summary>
+            Number of S atoms
+            </summary>
         </member>
     </members>
 </doc>

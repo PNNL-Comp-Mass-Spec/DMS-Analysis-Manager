@@ -24,7 +24,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         private const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "AddUpdateOrganismDBFile";
 
-        private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "RefreshCachedOrganismDBInfo";
+        private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
 
         /// <summary>
         /// DMS5 database connection string
@@ -346,7 +346,7 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Call RefreshCachedOrganismDBInfo in the Protein Sequences database
+        /// Call refresh_cached_organism_db_info in the Protein Sequences database
         /// to update T_DMS_Organism_DB_Info in MT_Main on the ProteinSeqs server
         /// using data from V_DMS_Organism_DB_File_Import
         /// (which pulls from V_Organism_DB_File_Export in DMS5)
