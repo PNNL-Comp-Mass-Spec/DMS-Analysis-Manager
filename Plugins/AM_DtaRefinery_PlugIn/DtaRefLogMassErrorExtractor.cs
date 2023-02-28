@@ -18,7 +18,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     {
         // Ignore Spelling: dta
 
-        private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
+        private const string STORE_MASS_ERROR_STATS_SP_NAME = "store_dta_ref_mass_error_stats";
 
         private readonly IMgrParams mMgrParams;
         private readonly string mWorkDir;
@@ -211,8 +211,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var cmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlResults;
+                dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);

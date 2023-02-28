@@ -63,7 +63,7 @@ namespace MSGFResultsSummarizer
 
         private const string DEFAULT_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
 
-        private const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
+        private const string STORE_JOB_PSM_RESULTS_SP_NAME = "store_job_psm_stats";
 
         private const string MSGF_RESULT_FILENAME_SUFFIX = "_MSGF.txt";
 
@@ -1124,7 +1124,7 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                // Call stored procedure StoreJobPSMStats in DMS5
+                // Call stored procedure store_job_psm_stats in DMS5
 
                 var dbTools = mStoredProcedureExecutor;
 

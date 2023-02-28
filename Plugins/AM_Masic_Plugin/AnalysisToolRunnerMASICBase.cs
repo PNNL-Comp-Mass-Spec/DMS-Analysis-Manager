@@ -29,7 +29,7 @@ namespace AnalysisManagerMasicPlugin
 
         private const string MASIC_STATUS_FILE_PREFIX = "MasicStatus_";
 
-        private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
+        private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "store_reporter_ion_obs_stats";
 
         private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
@@ -663,7 +663,7 @@ namespace AnalysisManagerMasicPlugin
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure StoreReporterIonObsStats in DMS5
+                // Call stored procedure store_reporter_ion_obs_stats in DMS5
                 // Data is stored in table T_Reporter_Ion_Observation_Rates
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 

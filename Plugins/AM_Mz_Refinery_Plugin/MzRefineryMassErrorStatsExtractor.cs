@@ -15,7 +15,7 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// </summary>
     public class MzRefineryMassErrorStatsExtractor
     {
-        private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
+        private const string STORE_MASS_ERROR_STATS_SP_NAME = "store_dta_ref_mass_error_stats";
         private readonly IMgrParams mMgrParams;
         private readonly short mDebugLevel;
 
@@ -188,13 +188,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure StoreDTARefMassErrorStats in DMS5
+                // Call stored procedure store_dta_ref_mass_error_stats in DMS5
                 // Data is stored in table T_Dataset_QC
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddTypedParameter(sqlCmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(sqlCmd, "@ResultsXML", SqlType.XML).Value = xmlResults;
+                dbTools.AddTypedParameter(sqlCmd, "@datasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(sqlCmd, "@resultsXML", SqlType.XML).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd);

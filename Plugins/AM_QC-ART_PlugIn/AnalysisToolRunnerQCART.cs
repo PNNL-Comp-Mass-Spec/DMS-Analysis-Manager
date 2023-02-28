@@ -30,7 +30,7 @@ namespace AnalysisManagerQCARTPlugin
         private const int PROGRESS_PCT_STARTING = 5;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
-        private const string STORE_QCART_RESULTS = "StoreQCARTResults";
+        private const string STORE_QCART_RESULTS = "store_qcart_results";
 
         // private string mConsoleOutputFile;
         // private string mConsoleOutputErrorMsg;
@@ -620,7 +620,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
-                // Call stored procedure StoreQCARTResults
+                // Call stored procedure store_qcart_results
                 // Retry up to 3 times
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
@@ -629,8 +629,8 @@ namespace AnalysisManagerQCARTPlugin
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlData;
+                dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlData;
 
                 var returnCode = dbTools.ExecuteSP(cmd, 3);
 

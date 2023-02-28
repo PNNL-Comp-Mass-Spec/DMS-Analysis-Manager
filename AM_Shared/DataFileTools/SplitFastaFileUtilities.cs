@@ -22,7 +22,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         public const string LOCK_FILE_PROGRESS_TEXT = "Lockfile";
 
-        private const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "AddUpdateOrganismDBFile";
+        private const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "add_update_organism_db_file";
 
         private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
 

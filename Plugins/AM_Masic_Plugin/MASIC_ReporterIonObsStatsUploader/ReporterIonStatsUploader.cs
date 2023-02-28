@@ -12,7 +12,7 @@ namespace MASIC_ReporterIonObsStatsUploader
     {
         // Ignore Spelling: Traq, Glc, Az, labelling
 
-        private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "StoreReporterIonObsStats";
+        private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "store_reporter_ion_obs_stats";
 
         /// <summary>
         /// Processing options
@@ -561,7 +561,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 dbTools.WarningEvent += ProcedureExecutor_WarningEvent;
                 dbTools.ErrorEvent += ProcedureExecutor_DBErrorEvent;
 
-                // Call stored procedure StoreReporterIonObsStats in DMS5
+                // Call stored procedure store_reporter_ion_obs_stats in DMS5
                 // Data is stored in table T_Reporter_Ion_Observation_Rates
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 

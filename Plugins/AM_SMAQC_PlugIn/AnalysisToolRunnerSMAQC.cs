@@ -28,7 +28,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private const int PROGRESS_PCT_RUNNING_LLRC = 95;
         private const int PROGRESS_PCT_COMPLETE = 99;
 
-        private const string STORE_SMAQC_RESULTS_SP_NAME = "StoreSMAQCResults";
+        private const string STORE_SMAQC_RESULTS_SP_NAME = "store_smaqc_results";
 
         internal const bool LLRC_ENABLED = false;
 
@@ -658,15 +658,15 @@ namespace AnalysisManagerSMAQCPlugIn
                     xmlResultsClean = xmlResults;
                 }
 
-                // Call stored procedure StoreSMAQCResults in DMS5
+                // Call stored procedure store_smaqc_results in DMS5
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
                 var cmd = dbTools.CreateCommand(STORE_SMAQC_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-                dbTools.AddTypedParameter(cmd, "@DatasetID", SqlType.Int, value: datasetID);
-                dbTools.AddParameter(cmd, "@ResultsXML", SqlType.XML).Value = xmlResultsClean;
+                dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
+                dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResultsClean;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
