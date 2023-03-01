@@ -924,7 +924,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Determine the amount of memory to reserve for Java
         /// </summary>
-        /// <remarks>Based on job parameter MSGFDBJavaMemorySize and the FASTA file size</remarks>
+        /// <remarks>Based on job parameter MSGFPlusJavaMemorySize and the FASTA file size</remarks>
         /// <param name="jobParams"></param>
         /// <param name="fastaFile"></param>
         /// <param name="warningMessage"></param>
@@ -937,7 +937,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Determine the amount of memory to reserve for Java
         /// </summary>
-        /// <remarks>Based on job parameter MSGFDBJavaMemorySize, the FASTA file size, and optionally the input file size</remarks>
+        /// <remarks>Based on job parameter MSGFPlusJavaMemorySize, the FASTA file size, and optionally the input file size</remarks>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="fastaFile">FASTA file</param>
         /// <param name="inputFile">Spectrum file; allowed to be null</param>
@@ -954,9 +954,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
             // The amount of memory required depends on both the FASTA file size and the size of the input data file (typically .mzML)
             //   since data from all spectra are cached in memory.
-            // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
+            // Customize this on a per-job basis using the MSGFPlusJavaMemorySize setting in the settings file
 
-            // Prior to January 2016, MS-GF+ used 4 to 7 threads, and if MSGFDBJavaMemorySize was too small,
+            // Prior to January 2016, MS-GF+ used 4 to 7 threads, and if MSGFPlusJavaMemorySize was too small,
             // we ran the risk of one thread crashing and the results files missing the search results for the spectra assigned to that thread
             // For large _dta.txt files, 2000 MB of memory could easily be small enough to result in crashing threads
             // Consequently, the default was changed to 4000 MB
@@ -965,8 +965,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
 
-            // Setting MSGFDBJavaMemorySize is stored in the settings file for this job
-            var javaMemorySizeMB = jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
+            // Setting MSGFPlusJavaMemorySize is stored in the settings file for this job
+            var javaMemorySizeMB = jobParams.GetJobParameter("MSGFPlusJavaMemorySize", 4000);
             if (javaMemorySizeMB < 512)
                 javaMemorySizeMB = 512;
 

@@ -2696,8 +2696,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Define the thread count; note that MSGFDBThreads could be "all"
-            var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFDBThreads", string.Empty);
+            // Define the thread count; note that MSGFPlusThreads (previously MSGFDBThreads) could be "all"
+            var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFPlusThreads", string.Empty);
             if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) ||
                 string.Equals(dmsDefinedThreadCountText, "all", StringComparison.OrdinalIgnoreCase) ||
                 !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))

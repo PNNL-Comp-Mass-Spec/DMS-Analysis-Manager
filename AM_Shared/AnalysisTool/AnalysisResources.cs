@@ -5304,7 +5304,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Validates that sufficient free memory is available to run Java
         /// </summary>
         /// <remarks>
-        /// Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
+        /// Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFPlusJavaMemorySize (previously MSGFDBJavaMemorySize), and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
         /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
