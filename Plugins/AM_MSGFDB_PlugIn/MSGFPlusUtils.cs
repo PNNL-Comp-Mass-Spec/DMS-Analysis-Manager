@@ -693,12 +693,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Convert a .mzid file to a tab-delimited text file (.tsv) using MSGFPlus.jar
         /// </summary>
         /// <param name="javaProgLoc">Full path to Java</param>
-        /// <param name="msgfDbProgLoc">Folder with MSGFPlus.jar</param>
+        /// <param name="msgfPlusProgLoc">Folder with MSGFPlus.jar</param>
         /// <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
         /// <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
         /// <returns>TSV file path, or an empty string if an error</returns>
         [Obsolete("Use the version of ConvertMzidToTsv that simply accepts a dataset name and .mzid file path and uses MzidToTsvConverter.exe")]
-        public string ConvertMZIDToTSV(string javaProgLoc, string msgfDbProgLoc, string datasetName, string mzidFileName)
+        public string ConvertMZIDToTSV(string javaProgLoc, string msgfPlusProgLoc, string datasetName, string mzidFileName)
         {
             string tsvFilePath;
 
@@ -745,7 +745,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     javaMemorySizeMB = 10000;
 
                 // Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
-                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, msgfDbProgLoc, javaMemorySizeMB);
+                var arguments = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, mWorkDir, msgfPlusProgLoc, javaMemorySizeMB);
 
                 // Make sure the machine has enough free memory to run MSGFPlus
                 const bool LOG_FREE_MEMORY_ON_SUCCESS = false;
@@ -828,16 +828,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="mzidFileName"></param>
         /// <param name="tsvFileName"></param>
         /// <param name="workingDirectory"></param>
-        /// <param name="msgfDbProgLoc"></param>
+        /// <param name="msgfPlusProgLoc"></param>
         /// <param name="javaMemorySizeMB"></param>
         [Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")]
-        public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfDbProgLoc, int javaMemorySizeMB)
+        public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfPlusProgLoc, int javaMemorySizeMB)
         {
             // We're using "-XX:+UseConcMarkSweepGC" as directed at https://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
             // due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
 
             var arguments =
-                " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc +
+                " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfPlusProgLoc +
                 " edu.ucsd.msjava.ui.MzIDToTsv" +
                 " -i " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
                 " -o " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
