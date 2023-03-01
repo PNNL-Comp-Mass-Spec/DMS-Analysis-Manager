@@ -483,7 +483,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // If an MS-GF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // The amount of memory required depends on both the FASTA file size and the size of the input .mzML file, since data from all spectra are cached in memory
-            // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
+            // Customize this on a per-job basis using the MzRefMSGFPlusJavaMemorySize setting in the settings file
             var javaMemorySize = mJobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
