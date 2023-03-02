@@ -1,4 +1,6 @@
-﻿namespace AnalysisManagerMSFraggerPlugIn
+﻿using Newtonsoft.Json;
+
+namespace AnalysisManagerMSFraggerPlugIn
 {
     internal class IntegerParameter
     {
@@ -20,6 +22,11 @@
         public int? MinValue { get; }
 
         /// <summary>
+        /// True if the parameter is required, false if optional
+        /// </summary>
+        public bool Required { get; }
+
+        /// <summary>
         /// Parameter name
         /// </summary>
         public string ParameterName { get; }
@@ -34,24 +41,28 @@
         /// </summary>
         /// <param name="parameterName"></param>
         /// <param name="parameterValue"></param>
+        /// <param name="required"></param>
         // ReSharper disable once UnusedMember.Global
-        public IntegerParameter(string parameterName, int parameterValue)
+        public IntegerParameter(string parameterName, int parameterValue, bool required = true)
         {
             ParameterName = parameterName;
+            Required = required;
             SetValue(parameterValue);
         }
 
         /// <summary>
-        /// Constructor that accepts the range of allowed values
+        /// Constructor that accepts a range of allowed values
         /// </summary>
         /// <param name="parameterName"></param>
         /// <param name="minAllowedValue"></param>
         /// <param name="maxAllowedValue"></param>
-        public IntegerParameter(string parameterName, int? minAllowedValue, int? maxAllowedValue)
+        /// /// <param name="required"></param>
+        public IntegerParameter(string parameterName, int? minAllowedValue, int? maxAllowedValue, bool required = true)
         {
             ParameterName = parameterName;
             MinValue = minAllowedValue;
             MaxValue = maxAllowedValue;
+            Required = required;
         }
 
         /// <summary>

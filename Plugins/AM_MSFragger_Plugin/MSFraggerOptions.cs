@@ -119,9 +119,9 @@ namespace AnalysisManagerMSFraggerPlugIn
             VariableModifications = new Dictionary<string, SortedSet<double>>();
         }
 
-        private void AddParameterToValidate(IDictionary<string, IntegerParameter> parametersToValidate, string parameterName, int minValue, int maxValue)
+        private void AddParameterToValidate(IDictionary<string, IntegerParameter> parametersToValidate, string parameterName, int minValue, int maxValue, bool required = true)
         {
-            parametersToValidate.Add(parameterName, new IntegerParameter(parameterName, minValue, maxValue));
+            parametersToValidate.Add(parameterName, new IntegerParameter(parameterName, minValue, maxValue, required));
         }
 
         private void AppendModificationMass(IDictionary<string, SortedSet<double>> modificationList, string residueOrPositionName, double modificationMass)
@@ -793,7 +793,14 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 AddParameterToValidate(parametersToValidate, "remove_precursor_peak", 0, 2);
                 AddParameterToValidate(parametersToValidate, "intensity_transform", 0, 1);
-                AddParameterToValidate(parametersToValidate, "write_calibrated_mgf", 0, 1);
+
+                // Removed in v19:
+                AddParameterToValidate(parametersToValidate, "write_calibrated_mgf", 0, 1, false);
+
+                // Added in v19
+                AddParameterToValidate(parametersToValidate, "write_calibrated_mzml", 0, 1, false);
+                AddParameterToValidate(parametersToValidate, "write_uncalibrated_mgf", 0, 1, false);
+
                 AddParameterToValidate(parametersToValidate, "mass_diff_to_variable_mod", 0, 2);
                 AddParameterToValidate(parametersToValidate, "localize_delta_mass", 0, 1);
                 AddParameterToValidate(parametersToValidate, "num_enzyme_termini", 0, 2);
@@ -824,6 +831,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 {
                     if (!item.Value.IsDefined)
                     {
+                        if (!item.Value.Required)
+                            continue;
+
                         OnErrorEvent("Parameter {0} is missing from the MSFraggerParameter file", item.Key);
                         return false;
                     }
