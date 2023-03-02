@@ -209,6 +209,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     }
                 }
 
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (matchedReporterIonModes.Count == 0)
                 {
                     reporterIonMode = ReporterIonModes.Disabled;
