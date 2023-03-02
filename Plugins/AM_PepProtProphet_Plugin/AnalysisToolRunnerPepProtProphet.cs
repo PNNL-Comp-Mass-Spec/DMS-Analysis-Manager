@@ -827,6 +827,71 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
+        /// Create the file listing the psm.tsv files for IonQuant to process
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="datasetCount"></param>
+        /// <returns>File list file</returns>
+        private FileInfo CreateIonQuantFileListFile(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            out int datasetCount
+            )
+        {
+            datasetCount = 0;
+
+            var fileListFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "filelist_ionquant.txt"));
+
+            using var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            // Header line
+            writer.WriteLine("flag{0}value", '\t');
+
+            if (experimentGroupWorkingDirectories.Count <= 1)
+            {
+                writer.WriteLine("--psm\tpsm.tsv");
+            }
+            else
+            {
+                foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                {
+                    writer.WriteLine("--psm\t{0}", Path.Combine(experimentGroupWorkingDirectory.Name, "psm.tsv"));
+                }
+            }
+
+            // ReSharper disable once StringLiteralTypo
+            writer.WriteLine("--specdir\t{0}", mWorkingDirectory.FullName);
+
+            foreach (var item in datasetIDsByExperimentGroup)
+            {
+                var experimentGroupName = item.Key;
+                var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var datasetId in item.Value)
+                {
+                    var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                    if (experimentGroupWorkingDirectories.Count <= 1)
+                    {
+                        writer.WriteLine("--pepxml\t{0}", datasetName + ".pepXML");
+                    }
+                    else
+                    {
+                        writer.WriteLine("--pepxml\t{0}", Path.Combine(experimentWorkingDirectory.Name, datasetName + ".pepXML"));
+                    }
+
+                    datasetCount++;
+                }
+            }
+
+            return fileListFile;
+        }
+
+        /// <summary>
         /// Create the MSBooster parameter file
         /// </summary>
         /// <param name="dataPackageInfo"></param>
@@ -2323,57 +2388,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
 
-                    var fileListFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "filelist_ionquant.txt"));
+                    var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, out datasetCount);
 
-                    using (var writer = new StreamWriter(new FileStream(fileListFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                    {
-                        // Header line
-                        writer.WriteLine("flag{0}value", '\t');
+                    // v18:
+                    // arguments.AppendFormat(" --multidir . --filelist {0}", fileListFile.FullName);
 
-                        if (experimentGroupWorkingDirectories.Count <= 1)
-                        {
-                            writer.WriteLine("--psm\tpsm.tsv");
-                        }
-                        else
-                        {
-                            foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
-                            {
-                                writer.WriteLine("--psm\t{0}", Path.Combine(experimentGroupWorkingDirectory.Name, "psm.tsv"));
-                            }
-                        }
-
-                        writer.WriteLine("--specdir\t{0}", mWorkingDirectory.FullName);
-
-                        foreach (var item in datasetIDsByExperimentGroup)
-                        {
-                            var experimentGroupName = item.Key;
-                            var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
-
-                            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-                            foreach (var datasetId in item.Value)
-                            {
-                                var datasetName = dataPackageInfo.Datasets[datasetId];
-
-                                if (experimentGroupWorkingDirectories.Count <= 1)
-                                {
-                                    writer.WriteLine("--pepxml\t{0}", datasetName + ".pepXML");
-                                }
-                                else
-                                {
-                                    writer.WriteLine("--pepxml\t{0}", Path.Combine(experimentWorkingDirectory.Name, datasetName + ".pepXML"));
-                                }
-
-                                datasetCount++;
-                            }
-                        }
-                    }
-
-                    arguments.AppendFormat(" --multidir . --filelist {0}", fileListFile.FullName);
+                    // v19:
+                    arguments.AppendFormat(" --filelist {0}", fileListFile.FullName);
 
                     creatingCombinedFile = true;
 
                     mJobParams.AddResultFileToSkip(fileListFile.Name);
+
+                    // ReSharper restore CommentTypo
                 }
+
+
+
 
                 // ReSharper restore StringLiteralTypo
 
