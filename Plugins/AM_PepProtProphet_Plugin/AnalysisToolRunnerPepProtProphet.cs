@@ -3824,7 +3824,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (usedProteinProphet)
                     {
-                        arguments.Append(" --prot 0.01");
+                        var proteinReportFDR = mJobParams.GetJobParameter("Philosopher", "ProteinReportFDR", 0.01f);
+                        arguments.AppendFormat(" --prot {0:0.00}", proteinReportFDR);
                     }
 
                     if (options.OpenSearch)
