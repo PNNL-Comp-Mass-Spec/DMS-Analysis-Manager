@@ -634,42 +634,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Rename and update the report files created by Philosopher
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory,
-        /// updating the strings in columns Spectrum, Spectrum File, and Protein ID
-        /// </para>
-        /// <para>
-        /// If experiment group working directories are present, will move the updated files to the main working directory
-        /// </para>
-        /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <returns>True if successful, false if an error</returns>
-        private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
-        {
-            var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
-            RegisterEvents(processor);
-
-            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, out var totalPeptideCount);
-
-            if (totalPeptideCount > 0)
-            {
-                return success;
-            }
-
-            var warningMessage = string.Format("No peptides were confidently identified ({0})",
-                experimentGroupWorkingDirectories.Count > 1
-                    ? "the peptide.tsv files are all empty"
-                    : "the peptide.tsv file is empty");
-
-            LogWarning(warningMessage, true);
-
-            return success;
-        }
-
-        /// <summary>
         /// Convert the output from Percolator to .pep.xml
         /// </summary>
         /// <param name="fragPipeLibDirectory"></param>
@@ -4543,6 +4507,42 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogError("Error in UpdateMsMsRunSummaryInPepXmlFiles", ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Rename and update the report files created by Philosopher
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Updates files ion.tsv, peptide.tsv, protein.tsv, and psm.tsv in each experiment group working directory,
+        /// updating the strings in columns Spectrum, Spectrum File, and Protein ID
+        /// </para>
+        /// <para>
+        /// If experiment group working directories are present, will move the updated files to the main working directory
+        /// </para>
+        /// </remarks>
+        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        {
+            var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
+            RegisterEvents(processor);
+
+            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, out var totalPeptideCount);
+
+            if (totalPeptideCount > 0)
+            {
+                return success;
+            }
+
+            var warningMessage = string.Format("No peptides were confidently identified ({0})",
+                experimentGroupWorkingDirectories.Count > 1
+                    ? "the peptide.tsv files are all empty"
+                    : "the peptide.tsv file is empty");
+
+            LogWarning(warningMessage, true);
+
+            return success;
         }
 
         /// <summary>
