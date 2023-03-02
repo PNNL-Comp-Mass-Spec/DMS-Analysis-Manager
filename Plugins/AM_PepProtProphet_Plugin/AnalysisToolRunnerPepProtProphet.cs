@@ -508,6 +508,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ResultsFilterComplete;
 
+                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                {
+                    LogMessage("Based on static and/or dynamic mods, the reporter ion mode is {0}", options.ReporterIonMode);
+                }
+
                 if (options.ReporterIonMode != ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant)
                 {
                     // Always run FreeQuant when we have reporter ions
@@ -925,6 +930,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 writer.WriteLine(modMass);
             }
+
+            // ReSharper disable CommentTypo
+
+            // Example message:
+            // Created file modmasses_ionquant.txt; mass list: 15.9949, 42.0106, 57.02146
+
+            if (modificationMasses.Count == 0)
+                LogMessage("Created empty file {0} for IonQuant since there are no static or dynamic modifications", modMassesFile.Name);
+            else
+                LogMessage("Created file {0} for IonQuant; mass list: {1}", modMassesFile.Name, string.Join(", ", modificationMasses));
+
+            // ReSharper restore CommentTypo
 
             return modMassesFile;
         }
