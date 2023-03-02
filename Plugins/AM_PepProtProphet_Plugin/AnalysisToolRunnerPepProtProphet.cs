@@ -300,6 +300,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        private void AppendModificationMasses(ISet<double> modificationMasses, Dictionary<string, SortedSet<double>> modificationInfo)
+        {
+            foreach (var residueOrLocation in modificationInfo)
+            {
+                foreach (var modificationMass in residueOrLocation.Value)
+                {
+                    if (!modificationMasses.Contains(modificationMass))
+                        modificationMasses.Add(modificationMass);
+                }
+            }
+        }
+
         private bool DeterminePhilosopherVersion()
         {
             const PhilosopherToolType toolType = PhilosopherToolType.ShowVersion;
@@ -889,6 +901,32 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             return fileListFile;
+        }
+
+        /// <summary>
+        /// Create a text file listing modification masses (both static and dynamic modifications)
+        /// </summary>
+        /// <param name="options"></param>
+        /// <returns>Mod masses file</returns>
+        private FileInfo CreateIonQuantModMassesFile(FragPipeOptions options)
+        {
+            // Construct a unique list of modification masses
+            var modificationMasses = new SortedSet<double>();
+
+            AppendModificationMasses(modificationMasses, options.FraggerOptions.StaticModifications);
+            AppendModificationMasses(modificationMasses, options.FraggerOptions.VariableModifications);
+
+            var modMassesFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "modmasses_ionquant.txt"));
+
+            using var writer = new StreamWriter(new FileStream(modMassesFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            // Write the static and dynamic mod masses to the file
+            foreach (var modMass in modificationMasses)
+            {
+                writer.WriteLine(modMass);
+            }
+
+            return modMassesFile;
         }
 
         /// <summary>
@@ -2403,8 +2441,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper restore CommentTypo
                 }
 
+                // Create a file listing modification masses
+                var modMassesFile = CreateIonQuantModMassesFile(options);
 
+                arguments.AppendFormat(" --modlist {0}", modMassesFile.FullName);
 
+                mJobParams.AddResultFileToSkip(modMassesFile.Name);
 
                 // ReSharper restore StringLiteralTypo
 
