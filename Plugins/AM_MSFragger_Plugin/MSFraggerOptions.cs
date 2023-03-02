@@ -33,6 +33,11 @@ namespace AnalysisManagerMSFraggerPlugIn
 
     public class MSFraggerOptions : EventNotifier
     {
+        private const string C_TERM_PEPTIDE = "Cterm_peptide";
+        private const string N_TERM_PEPTIDE = "Nterm_peptide";
+        private const string C_TERM_PROTEIN = "Cterm_protein";
+        private const string N_TERM_PROTEIN = "Nterm_protein";
+
         private readonly IJobParams mJobParams;
 
         /// <summary>
@@ -50,6 +55,24 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// True when the MS1 validation mode was auto-defined (since job parameters RunPeptideProphet and/or RunPercolator were not present)
         /// </summary>
         public bool MS1ValidationModeAutoDefined { get; set; }
+
+        /// <summary>
+        /// Dictionary of static modifications
+        /// </summary>
+        /// <remarks>
+        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
+        /// </remarks>
+        public Dictionary<string, SortedSet<double>> StaticModifications { get; }
+
+        /// <summary>
+        /// Dictionary of variable (dynamic) modifications
+        /// </summary>
+        /// <remarks>
+        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys can alternatively be symbols indicating N or C terminal peptide or protein (e.g., [^ for protein N-terminus or n^ for peptide N-terminus)</para>
+        /// </remarks>
+        public Dictionary<string, SortedSet<double>> VariableModifications { get; }
 
         /// <summary>
         /// True if the MSFragger parameter file has open search based tolerances
@@ -91,6 +114,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         public MSFraggerOptions(IJobParams jobParams)
         {
             mJobParams = jobParams;
+
+            StaticModifications = new Dictionary<string, SortedSet<double>>();
+            VariableModifications = new Dictionary<string, SortedSet<double>>();
         }
 
         private void AddParameterToValidate(IDictionary<string, IntegerParameter> parametersToValidate, string parameterName, int minValue, int maxValue)
@@ -98,71 +124,72 @@ namespace AnalysisManagerMSFraggerPlugIn
             parametersToValidate.Add(parameterName, new IntegerParameter(parameterName, minValue, maxValue));
         }
 
+        private void AppendModificationMass(IDictionary<string, SortedSet<double>> modificationList, string residueOrPositionName, double modificationMass)
+        {
+            if (modificationList.TryGetValue(residueOrPositionName, out var modMasses))
+            {
+                if (!modMasses.Contains(modificationMass))
+                    modMasses.Add(modificationMass);
+
+                return;
+            }
+
+            modificationList.Add(residueOrPositionName, new SortedSet<double> { modificationMass });
+        }
+
+        // ReSharper disable CommentTypo
+
         /// <summary>
         /// Examine the dynamic and static mods loaded from a MSFragger parameter file to determine the reporter ion mode
         /// </summary>
-        /// <param name="paramFileEntries"></param>
+        /// <remarks>Peptide and protein static terminal modifications in staticModifications are indicated by Nterm_peptide, Cterm_peptide, add_Nterm_protein, and Cterm_protein</remarks>
+        /// <param name="staticModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
+        /// <param name="variableModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
         /// <param name="reporterIonMode"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool DetermineReporterIonMode(IEnumerable<KeyValuePair<string, string>> paramFileEntries, out ReporterIonModes reporterIonMode)
+        // ReSharper restore CommentTypo
+        private bool DetermineReporterIonMode(
+            IReadOnlyDictionary<string, SortedSet<double>> staticModifications,
+            IReadOnlyDictionary<string, SortedSet<double>> variableModifications,
+            out ReporterIonModes reporterIonMode)
         {
             reporterIonMode = ReporterIonModes.Disabled;
 
             try
             {
-                var staticNTermModMass = 0.0;
-                var staticLysineModMass = 0.0;
+                ReporterIonModes staticNTermMode;
+                ReporterIonModes staticLysineMode;
 
-                // Keys in this dictionary are modification masses; values are a list of the affected residues
-                var variableModMasses = new Dictionary<double, List<string>>();
-
-                foreach (var parameter in paramFileEntries)
+                if (staticModifications.TryGetValue("Nterm_peptide", out var staticNTermModMass) && staticNTermModMass.Count > 0)
                 {
-                    // ReSharper disable once StringLiteralTypo
-                    if (parameter.Key.Equals("add_Nterm_peptide"))
-                    {
-                        if (!ParseModMass(parameter, out staticNTermModMass, out _))
-                            return false;
-
-                        continue;
-                    }
-
-                    if (parameter.Key.Equals("add_K_lysine"))
-                    {
-                        if (!ParseModMass(parameter, out staticLysineModMass, out _))
-                            return false;
-
-                        continue;
-                    }
-
-                    if (!parameter.Key.StartsWith("variable_mod"))
-                    {
-                        continue;
-                    }
-
-                    if (!ParseModMass(parameter, out var dynamicModMass, out var affectedResidues))
-                        return false;
-
-                    if (variableModMasses.TryGetValue(dynamicModMass, out var existingResidueList))
-                    {
-                        existingResidueList.AddRange(affectedResidues);
-                        continue;
-                    }
-
-                    variableModMasses.Add(dynamicModMass, affectedResidues);
+                    staticNTermMode = GetReporterIonModeFromModMass(staticNTermModMass.First());
+                }
+                else
+                {
+                    staticNTermMode = ReporterIonModes.Disabled;
                 }
 
-                var staticNTermMode = GetReporterIonModeFromModMass(staticNTermModMass);
-                var staticLysineMode = GetReporterIonModeFromModMass(staticLysineModMass);
+                if (staticModifications.TryGetValue("K", out var staticLysineModMass) && staticLysineModMass.Count > 0)
+                {
+                    staticLysineMode = GetReporterIonModeFromModMass(staticLysineModMass.First());
+                }
+                else
+                {
+                    staticLysineMode = ReporterIonModes.Disabled;
+                }
 
+                // Keys in this dictionary are modification masses, values are the reporter ion mode that corresponds to the modification mass (if any)
                 var dynamicModModes = new Dictionary<double, ReporterIonModes>();
 
-                foreach (var item in variableModMasses)
+                foreach (var residueOrLocation in variableModifications)
                 {
-                    dynamicModModes.Add(item.Key, GetReporterIonModeFromModMass(item.Key));
+                    foreach (var modMass in residueOrLocation.Value)
+                    {
+                        if (dynamicModModes.Keys.Contains(modMass))
+                            continue;
 
-                    // If necessary, we could examine the affected residues to override the auto-determined mode
-                    // var affectedResidues = item.Value;
+                        dynamicModModes.Add(modMass, GetReporterIonModeFromModMass(modMass));
+                    }
                 }
 
                 var reporterIonModeStats = new Dictionary<ReporterIonModes, int>();
@@ -171,7 +198,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 UpdateReporterIonModeStats(reporterIonModeStats, staticLysineMode);
                 UpdateReporterIonModeStats(reporterIonModeStats, dynamicModModes.Values.ToList());
 
+                // Keys in this dictionary are reporter ion modes, values are the number of dynamic or static modifications that indicate the given mode
                 var matchedReporterIonModes = new Dictionary<ReporterIonModes, int>();
+
                 foreach (var item in reporterIonModeStats)
                 {
                     if (item.Key != ReporterIonModes.Disabled && item.Value > 0)
@@ -281,6 +310,113 @@ namespace AnalysisManagerMSFraggerPlugIn
             return residueMatcher.Replace(affectedResidueList, string.Empty);
         }
 
+        /// <summary>
+        /// Examine the MSFragger parameters to determine the static and dynamic (variable) modifications
+        /// </summary>
+        /// <remarks>
+        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
+        /// </remarks>
+        /// <param name="paramFileEntries"></param>
+        /// <param name="staticModifications">Output: dictionary of static modifications</param>
+        /// <param name="variableModifications">Output: dictionary of dynamic modifications</param>
+        /// <returns>True if modifications were successfully parsed, false if an error</returns>
+        private bool GetMSFraggerModifications(
+            IEnumerable<KeyValuePair<string, string>> paramFileEntries,
+            out Dictionary<string, SortedSet<double>> staticModifications,
+            out Dictionary<string, SortedSet<double>> variableModifications)
+        {
+            staticModifications = new Dictionary<string, SortedSet<double>>();
+            variableModifications = new Dictionary<string, SortedSet<double>>();
+
+            // ReSharper disable StringLiteralTypo
+
+            var terminalStaticModParameters = new Dictionary<string, string>
+            {
+                { "add_Cterm_peptide", C_TERM_PEPTIDE },
+                { "add_Nterm_peptide", N_TERM_PEPTIDE },
+                { "add_Cterm_protein", C_TERM_PROTEIN },
+                { "add_Nterm_protein", N_TERM_PROTEIN }
+            };
+
+            // ReSharper restore StringLiteralTypo
+
+            var aminoAcidSymbols = new SortedSet<string>
+            {
+                "G", "A", "S", "P", "V",
+                "T", "C", "L", "I", "N",
+                "D", "Q", "K", "E", "M",
+                "H", "F", "R", "Y", "W",
+                "B", "J", "O", "U", "X", "Z"
+            };
+
+            foreach (var parameter in paramFileEntries)
+            {
+                var matchFound = false;
+
+                foreach (var staticModParameter in terminalStaticModParameters)
+                {
+                    if (!parameter.Key.Equals(staticModParameter.Key))
+                        continue;
+
+                    if (!ParseModMass(parameter, out var modMass, out _))
+                        return false;
+
+                    if (modMass != 0)
+                    {
+                        AppendModificationMass(staticModifications, staticModParameter.Value, modMass);
+                    }
+
+                    matchFound = true;
+                    break;
+                }
+
+                if (matchFound)
+                    continue;
+
+                foreach (var aminoAcidSymbol in aminoAcidSymbols)
+                {
+                    if (!parameter.Key.StartsWith(string.Format("add_{0}_", aminoAcidSymbol)))
+                        continue;
+
+                    if (!ParseModMass(parameter, out var modMass, out _))
+                        return false;
+
+                    if (modMass != 0)
+                    {
+                        AppendModificationMass(staticModifications, aminoAcidSymbol, modMass);
+                    }
+
+                    matchFound = true;
+                    break;
+                }
+
+                if (matchFound)
+                    continue;
+
+                if (!parameter.Key.StartsWith("variable_mod"))
+                {
+                    continue;
+                }
+
+                if (!ParseModMass(parameter, out var dynamicModMass, out var affectedResidues))
+                    return false;
+
+                if (dynamicModMass == 0)
+                {
+                    OnErrorEvent("Variable modification mass in MSFragger parameter file is zero: {0} = {1}", parameter.Key, parameter.Value);
+                    return false;
+                }
+
+                foreach (var residue in affectedResidues)
+                {
+                    AppendModificationMass(variableModifications, residue, dynamicModMass);
+                }
+            }
+
+            return true;
+        }
+
         private bool GetParamValueDouble(KeyValuePair<string, string> parameter, out double value)
         {
             if (double.TryParse(parameter.Value, out value))
@@ -371,6 +507,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <returns>True if success, false if an error</returns>
         public bool LoadMSFraggerOptions(string paramFilePath)
         {
+            StaticModifications.Clear();
+            VariableModifications.Clear();
+
             try
             {
                 var paramFile = new FileInfo(paramFilePath);
@@ -385,10 +524,30 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return false;
                 }
 
-                var success = DetermineReporterIonMode(paramFileEntries, out var reporterIonMode);
+                var validMods = GetMSFraggerModifications(
+                    paramFileEntries,
+                    out var staticModifications,
+                    out var variableModifications);
 
-                if (!success)
+                if (!validMods)
                     return false;
+
+                foreach (var item in staticModifications)
+                {
+                    StaticModifications.Add(item.Key, item.Value);
+                }
+
+                foreach (var item in variableModifications)
+                {
+                    VariableModifications.Add(item.Key, item.Value);
+                }
+
+                var reporterIonModeSuccess = DetermineReporterIonMode(staticModifications, variableModifications, out var reporterIonMode);
+
+                if (!reporterIonModeSuccess)
+                {
+                    return false;
+                }
 
                 ReporterIonMode = reporterIonMode;
 
