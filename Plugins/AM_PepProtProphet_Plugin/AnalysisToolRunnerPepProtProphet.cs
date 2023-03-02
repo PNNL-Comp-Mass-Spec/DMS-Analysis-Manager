@@ -3929,38 +3929,38 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable StringLiteralTypo
 
                     writer.WriteLine("tmtintegrator:");
-                    writer.WriteLine("{0,-76} {1}", string.Format("  path: {0}", mTmtIntegratorProgLoc), "# path to TMT-Integrator jar");
-                    writer.WriteLine("{0,-76} {1}", "  memory: 16", "# memory allocation, in GB");
-                    writer.WriteLine("{0,-76} {1}", string.Format("  protein_database: {0}", mFastaFilePath), "# protein fasta file");
-                    writer.WriteLine("{0,-76} {1}", string.Format("  output: {0}", mWorkingDirectory.FullName), "# the location of output files");
-                    writer.WriteLine("{0,-42} {1}", string.Format("  channel_num: {0}", plex), "# number of channels in the multiplex (e.g. 10, 11)");
-                    writer.WriteLine("  ref_tag: Bridge                          # unique tag for identifying the reference channel (Bridge sample added to each multiplex)");
-                    writer.WriteLine("  groupby: 0                               # level of data summarization(0: PSM aggregation to the gene level; 1: protein; 2: peptide sequence; 3: multiple PTM sites; 4: single PTM site; 5: multi-mass (for glycosylation); -1: generate reports at all levels)");
-                    writer.WriteLine("  psm_norm: false                          # perform additional retention time-based normalization at the PSM level");
-                    writer.WriteLine("  outlier_removal: true                    # perform outlier removal");
-                    writer.WriteLine("  prot_norm: 1                             # normalization ( -1: generate reports with all normalization options; 0: None; 1: MC (median centering); 2: GN (median centering + variance scaling); 3: SL (sample loading); 4: IRS (internal reference scaling); 5: SL+IRS (sample loading and internal reference scaling))");
-                    writer.WriteLine("  min_pep_prob: 0.9                        # minimum PSM probability threshold (in addition to FDR-based filtering by Philosopher)");
-                    writer.WriteLine("  min_purity: 0.5                          # ion purity score threshold");
-                    writer.WriteLine("  min_percent: 0.05                        # remove low intensity PSMs (e.g. value of 0.05 indicates removal of PSMs with the summed TMT reporter ions intensity in the lowest 5% of all PSMs)");
-                    writer.WriteLine("  unique_pep: false                        # allow PSMs with unique peptides only (if true) or unique plus razor peptides (if false), as classified by Philosopher and defined in PSM.tsv files");
-                    writer.WriteLine("  unique_gene: 0                           # additional, gene-level uniqueness filter (0: allow all PSMs; 1: remove PSMs mapping to more than one GENE with evidence of expression in the dataset; 2:remove all PSMs mapping to more than one GENE in the fasta file)");
-                    writer.WriteLine("  best_psm: true                           # keep the best PSM only (highest summed TMT intensity) among all redundant PSMs within the same LC-MS run");
-                    writer.WriteLine("  prot_exclude: none                       # exclude proteins with specified tags at the beginning of the accession number (e.g. none: no exclusion; sp|,tr| : exclude protein with sp| or tr|)");
+                    writer.WriteLine("  add_Ref: 1                               # add an artificial reference channel if there is no reference channel or export raw abundance (-2: export raw abundance; -1: don't add the reference; 0: use summation as the reference; 1: use average as the reference; 2: use median as the reference)");
+                    writer.WriteLine("  aggregation_method: 0                    # the aggregation method from the PSM level to the specified level (0: median, 1: weighted-ratio)");
                     writer.WriteLine("  allow_overlabel: true                    # allow PSMs with TMT on S (when overlabelling on S was allowed in the database search)");
                     writer.WriteLine("  allow_unlabeled: false                   # allow PSMs without TMT tag or acetylation on the peptide n-terminus ");
-                    writer.WriteLine("  mod_tag: none                            # PTM info for generation of PTM-specific reports (none: for Global data; S(79.9663),T(79.9663),Y(79.9663): for Phospho; K(42.0105): for K-Acetyl; M(15.9949): for M-Oxidation; N-glyco: for N-glycosylation; O-glyco: for O-glycosylation)");
-                    writer.WriteLine("  min_site_prob: -1                        # site localization confidence threshold (-1: for Global; 0: as determined by the search engine; above 0 (e.g. 0.75): PTMProphet probability, to be used with phosphorylation only)");
-                    writer.WriteLine("  ms1_int: true                            # use MS1 precursor ion intensity (if true) or MS2 reference intensity (if false) as part of the reference sample abundance estimation ");
-                    writer.WriteLine("  top3_pep: true                           # use top 3 most intense peptide ions as part of the reference sample abundance estimation");
-                    writer.WriteLine("  print_RefInt: false                      # print individual reference sample abundance estimates for each multiplex in the final reports (in addition to the combined reference sample abundance estimate)");
-                    writer.WriteLine("  add_Ref: 1                               # add an artificial reference channel if there is no reference channel or export raw abundance (-2: export raw abundance; -1: don't add the reference; 0: use summation as the reference; 1: use average as the reference; 2: use median as the reference)");
-                    writer.WriteLine("  max_pep_prob_thres: 0.9                  # the threshold for maximum peptide probability");
-                    writer.WriteLine("  min_ntt: 0                               # minimum allowed number of enzymatic termini");
-                    writer.WriteLine("  aggregation_method: 0                    # the aggregation method from the PSM level to the specified level (0: median, 1: weighted-ratio)");
-                    writer.WriteLine("  use_glycan_composition: false            # (optional) for multi-mass report, create index using glycan composition (from observed mod column) instead of mass");                             // Introduced with TMT-Integrator 3.3.3
+                    writer.WriteLine("  best_psm: true                           # keep the best PSM only (highest summed TMT intensity) among all redundant PSMs within the same LC-MS run");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  channel_num: {0}", plex), "# number of channels in the multiplex (e.g. 10, 11)");
                     writer.WriteLine("  glyco_qval: -1                           # (optional) filter modified PSMs to those with glycan q-value less than provided value. 0 <= value <= 1. Value of -1 or not specified ignores");   // Introduced with TMT-Integrator 3.3.3
-                    writer.WriteLine("  prefix: XXX_                             # the prefix for decoy sequences");                                                                                                                 // Introduced with TMT-Integrator 4.0
+                    writer.WriteLine("  groupby: 0                               # level of data summarization(0: PSM aggregation to the gene level; 1: protein; 2: peptide sequence; 3: multiple PTM sites; 4: single PTM site; 5: multi-mass (for glycosylation); -1: generate reports at all levels)");
                     writer.WriteLine("  log2transformed: true                    # report ratio and abundance reports in the log2 scale");                                                                                           // Introduced with TMT-Integrator 4.0
+                    writer.WriteLine("  max_pep_prob_thres: 0.9                  # the threshold for maximum peptide probability");
+                    writer.WriteLine("{0,-76} {1}", "  memory: 16", "# memory allocation, in GB");
+                    writer.WriteLine("  min_ntt: 0                               # minimum allowed number of enzymatic termini");
+                    writer.WriteLine("  min_pep_prob: 0.9                        # minimum PSM probability threshold (in addition to FDR-based filtering by Philosopher)");
+                    writer.WriteLine("  min_percent: 0.05                        # remove low intensity PSMs (e.g. value of 0.05 indicates removal of PSMs with the summed TMT reporter ions intensity in the lowest 5% of all PSMs)");
+                    writer.WriteLine("  min_purity: 0.5                          # ion purity score threshold");
+                    writer.WriteLine("  min_site_prob: -1                        # site localization confidence threshold (-1: for Global; 0: as determined by the search engine; above 0 (e.g. 0.75): PTMProphet probability, to be used with phosphorylation only)");
+                    writer.WriteLine("  mod_tag: none                            # PTM info for generation of PTM-specific reports (none: for Global data; S(79.9663),T(79.9663),Y(79.9663): for Phospho; K(42.0105): for K-Acetyl; M(15.9949): for M-Oxidation; N-glyco: for N-glycosylation; O-glyco: for O-glycosylation)");
+                    writer.WriteLine("  ms1_int: true                            # use MS1 precursor ion intensity (if true) or MS2 reference intensity (if false) as part of the reference sample abundance estimation ");
+                    writer.WriteLine("  outlier_removal: true                    # perform outlier removal");
+                    writer.WriteLine("{0,-76} {1}", string.Format("  output: {0}", mWorkingDirectory.FullName), "# the location of output files");
+                    writer.WriteLine("{0,-76} {1}", string.Format("  path: {0}", mTmtIntegratorProgLoc), "# path to TMT-Integrator jar");
+                    writer.WriteLine("  prefix: XXX_                             # the prefix for decoy sequences");                                                                                                                 // Introduced with TMT-Integrator 4.0
+                    writer.WriteLine("  print_RefInt: false                      # print individual reference sample abundance estimates for each multiplex in the final reports (in addition to the combined reference sample abundance estimate)");
+                    writer.WriteLine("  prot_exclude: none                       # exclude proteins with specified tags at the beginning of the accession number (e.g. none: no exclusion; sp|,tr| : exclude protein with sp| or tr|)");
+                    writer.WriteLine("  prot_norm: 1                             # normalization ( -1: generate reports with all normalization options; 0: None; 1: MC (median centering); 2: GN (median centering + variance scaling); 3: SL (sample loading); 4: IRS (internal reference scaling); 5: SL+IRS (sample loading and internal reference scaling))");
+                    writer.WriteLine("{0,-76} {1}", string.Format("  protein_database: {0}", mFastaFilePath), "# protein fasta file");
+                    writer.WriteLine("  psm_norm: false                          # perform additional retention time-based normalization at the PSM level");
+                    writer.WriteLine("  ref_tag: Bridge                          # unique tag for identifying the reference channel (Bridge sample added to each multiplex)");
+                    writer.WriteLine("  top3_pep: true                           # use top 3 most intense peptide ions as part of the reference sample abundance estimation");
+                    writer.WriteLine("  unique_gene: 0                           # additional, gene-level uniqueness filter (0: allow all PSMs; 1: remove PSMs mapping to more than one GENE with evidence of expression in the dataset; 2:remove all PSMs mapping to more than one GENE in the fasta file)");
+                    writer.WriteLine("  unique_pep: false                        # allow PSMs with unique peptides only (if true) or unique plus razor peptides (if false), as classified by Philosopher and defined in PSM.tsv files");
+                    writer.WriteLine("  use_glycan_composition: false            # (optional) for multi-mass report, create index using glycan composition (from observed mod column) instead of mass");                             // Introduced with TMT-Integrator 3.3.3
 
                     // ReSharper restore StringLiteralTypo
                 }
