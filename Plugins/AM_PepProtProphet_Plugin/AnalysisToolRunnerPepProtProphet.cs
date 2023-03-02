@@ -3956,7 +3956,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  groupby: 0                               # level of data summarization(0: PSM aggregation to the gene level; 1: protein; 2: peptide sequence; 3: multiple PTM sites; 4: single PTM site; 5: multi-mass (for glycosylation); -1: generate reports at all levels)");
                     writer.WriteLine("  log2transformed: true                    # report ratio and abundance reports in the log2 scale");                                                                                           // Introduced with TMT-Integrator 4.0
                     writer.WriteLine("  max_pep_prob_thres: 0.9                  # the threshold for maximum peptide probability");
-                    writer.WriteLine("{0,-76} {1}", "  memory: 16", "# memory allocation, in GB");
+                    writer.WriteLine("{0,-42} {1}", "  memory: 16", "# memory allocation, in GB");
                     writer.WriteLine("  min_ntt: 0                               # minimum allowed number of enzymatic termini");
                     writer.WriteLine("  min_pep_prob: 0.9                        # minimum PSM probability threshold (in addition to FDR-based filtering by Philosopher)");
                     writer.WriteLine("  min_percent: 0.05                        # remove low intensity PSMs (e.g. value of 0.05 indicates removal of PSMs with the summed TMT reporter ions intensity in the lowest 5% of all PSMs)");
@@ -3965,7 +3965,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  mod_tag: none                            # PTM info for generation of PTM-specific reports (none: for Global data; S(79.9663),T(79.9663),Y(79.9663): for Phospho; K(42.0105): for K-Acetyl; M(15.9949): for M-Oxidation; N-glyco: for N-glycosylation; O-glyco: for O-glycosylation)");
                     writer.WriteLine("  ms1_int: true                            # use MS1 precursor ion intensity (if true) or MS2 reference intensity (if false) as part of the reference sample abundance estimation ");
                     writer.WriteLine("  outlier_removal: true                    # perform outlier removal");
-                    writer.WriteLine("{0,-76} {1}", string.Format("  output: {0}", mWorkingDirectory.FullName), "# the location of output files");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  output: {0}", mWorkingDirectory.FullName), "# the location of output files");
                     writer.WriteLine("{0,-76} {1}", string.Format("  path: {0}", mTmtIntegratorProgLoc), "# path to TMT-Integrator jar");
                     writer.WriteLine("  prefix: XXX_                             # the prefix for decoy sequences");                                                                                                                 // Introduced with TMT-Integrator 4.0
                     writer.WriteLine("  print_RefInt: false                      # print individual reference sample abundance estimates for each multiplex in the final reports (in addition to the combined reference sample abundance estimate)");
