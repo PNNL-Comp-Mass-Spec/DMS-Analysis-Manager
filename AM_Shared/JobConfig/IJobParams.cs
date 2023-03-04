@@ -394,5 +394,32 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="keyName">Parameter name</param>
         /// <param name="value">Parameter value</param>
         void SetParam(string section, string keyName, string value);
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter (looks in all parameter sections)
+        /// </summary>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
+        /// <returns>True if success, false if not found</returns>
+        public bool TryGetParam(string paramName, out string paramValue);
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter in the specified parameter section
+        /// </summary>
+        /// <param name="section">Section Name</param>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
+        /// <returns>True if success, false if not found</returns>
+        public bool TryGetParam(string section, string paramName, out string paramValue);
+
+        /// <summary>
+        /// Attempts to retrieve the specified parameter in the specified parameter section
+        /// </summary>
+        /// <param name="section">Section Name</param>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
+        /// <param name="searchAllSectionsIfNotFound">If true, searches other sections for the parameter if not found in the specified section</param>
+        /// <returns>True if success, false if not found</returns>
+        public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound);
     }
 }
