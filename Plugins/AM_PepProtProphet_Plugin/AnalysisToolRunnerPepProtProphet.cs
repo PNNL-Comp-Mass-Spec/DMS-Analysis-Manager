@@ -1149,6 +1149,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroupName));
         }
 
+        private float GetJobParameterOrDefault(string sectionName, string parameterName, float valueIfMissing, out bool jobParameterExists)
+        {
+            if (!mJobParams.TryGetParam(sectionName, parameterName, out _, false))
+            {
+                jobParameterExists = false;
+                return valueIfMissing;
+            }
+
+            jobParameterExists = true;
+            return mJobParams.GetJobParameter(sectionName, parameterName, valueIfMissing);
+        }
+
         private static int GetLongestWorkingDirectoryName(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
         {
             return GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories.Values.ToList());
@@ -3822,10 +3834,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --picked");
                     }
 
-                    if (usedProteinProphet)
+                    var psmLevelFDR = GetJobParameterOrDefault("Philosopher", "PhilosopherFDR_PSM", 0.01f, out var hasPSMLevelFDR);
+                    var peptideLevelFDR = GetJobParameterOrDefault("Philosopher", "PhilosopherFDR_Peptide", 0.01f, out var hasPeptideLevelFDR);
+                    var proteinLevelFDR = GetJobParameterOrDefault("Philosopher", "PhilosopherFDR_Protein", 0.01f, out var hasProteinLevelFDR);
+
+                    if (hasPSMLevelFDR)
                     {
-                        var proteinReportFDR = mJobParams.GetJobParameter("Philosopher", "ProteinReportFDR", 0.01f);
-                        arguments.AppendFormat(" --prot {0:0.00}", proteinReportFDR);
+                        arguments.AppendFormat(" --psm {0:0.00}", psmLevelFDR);
+                    }
+
+                    if (hasPeptideLevelFDR)
+                    {
+                        arguments.AppendFormat(" --pep {0:0.00}", peptideLevelFDR);
+                    }
+
+                    if (usedProteinProphet || hasProteinLevelFDR)
+                    {
+                        arguments.AppendFormat(" --prot {0:0.00}", proteinLevelFDR);
                     }
 
                     if (options.OpenSearch)
