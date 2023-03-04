@@ -3737,11 +3737,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper restore CommentTypo
 
-                    const string arguments = "report";
+                    var arguments = new StringBuilder();
+                    arguments.Append("report");
+
+                    if (mJobParams.GetJobParameter("Philosopher", "PhilosopherIncludeDecoys", false))
+                    {
+                        // Include decoy peptides and proteins in the reports
+                        arguments.Append(" --decoys");
+                    }
 
                     var success = RunPhilosopher(
                         PhilosopherToolType.GenerateReport,
-                        arguments,
+                        arguments.ToString(),
                         "generate report files",
                         experimentGroupDirectory,
                         options.WorkingDirectoryPadWidth);
