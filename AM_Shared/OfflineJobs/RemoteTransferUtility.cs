@@ -210,6 +210,7 @@ namespace AnalysisManagerBase.OfflineJobs
         private static string ConstructRemoteInfoXml(IEnumerable<KeyValuePair<string, string>> settings)
         {
             var xmlText = new StringBuilder();
+
             foreach (var setting in settings)
             {
                 xmlText.Append(string.Format("<{0}>{1}</{0}>", setting.Key, setting.Value));
@@ -263,6 +264,7 @@ namespace AnalysisManagerBase.OfflineJobs
             try
             {
                 var sourceFile = new FileInfo(sourceFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     OnErrorEvent("Cannot copy file to remote; source file not found: " + sourceFilePath);
@@ -336,6 +338,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 var infoFilePathLocal = Path.Combine(WorkDir, infoFileName);
 
                 var remoteDirectoryPath = RemoteTaskQueuePathForTool;
+
                 if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
                 {
                     OnErrorEvent("Remote task queue path for this job's step tool is empty; cannot create the task info file");
@@ -356,6 +359,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 // Assure that the target directory exists
                 var targetFolderVerified = CreateRemoteDirectory(remoteDirectoryPath);
+
                 if (!targetFolderVerified)
                 {
                     OnErrorEvent("Unable to verify/create directory {0} on host {1}", remoteDirectoryPath, RemoteHostName);
@@ -409,6 +413,7 @@ namespace AnalysisManagerBase.OfflineJobs
         private string GetBaseStatusFilename()
         {
             var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot properly construct the base tracking file name");
@@ -474,6 +479,7 @@ namespace AnalysisManagerBase.OfflineJobs
             }
 
             var jobStepDescription = string.Format("job {0}, step {1}", job, step);
+
             if (string.IsNullOrWhiteSpace(stepTool))
             {
                 ConsoleMsgUtils.ShowWarning("Job parameter StepTool is empty; " +
@@ -482,6 +488,7 @@ namespace AnalysisManagerBase.OfflineJobs
             }
 
             var remoteTimestamp = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, "");
+
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 ConsoleMsgUtils.ShowWarning("Job parameter RemoteTimestamp is empty; " +
@@ -491,6 +498,7 @@ namespace AnalysisManagerBase.OfflineJobs
             var jobStatusFilename = GetBaseStatusFilename(job, step, remoteTimestamp) + ".jobstatus";
 
             var taskQueuePath = mgrParams.GetParam("LocalTaskQueuePath");
+
             if (string.IsNullOrWhiteSpace(taskQueuePath))
             {
                 ConsoleMsgUtils.ShowWarning("Manager parameter LocalTaskQueuePath is empty; " +
@@ -599,6 +607,7 @@ namespace AnalysisManagerBase.OfflineJobs
             try
             {
                 var remoteTimestamp = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+
                 if (string.IsNullOrWhiteSpace(remoteTimestamp))
                 {
                     OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
@@ -606,6 +615,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 }
 
                 var baseTrackingFilename = GetBaseStatusFilename();
+
                 if (string.IsNullOrWhiteSpace(baseTrackingFilename))
                 {
                     return new Dictionary<string, SftpFile>();
@@ -677,6 +687,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 }
 
                 var statusFile = new FileInfo(Path.Combine(WorkDir, statusFileName));
+
                 if (statusFile.Exists)
                 {
                     statusFilePathLocal = statusFile.FullName;
@@ -735,6 +746,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                     var appFolder = new DirectoryInfo(Global.GetAppDirectoryPath());
                     var appFolderParent = appFolder.Parent;
+
                     if (appFolderParent != null)
                     {
                         sourceCandidates.Add(appFolderParent.FullName);
@@ -781,6 +793,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 var dirsProcessed = 0;
                 var errorMessages = new List<string>();
+
                 foreach (var analysisManagerDir in analysisManagerDirs.Split(','))
                 {
                     if (string.IsNullOrWhiteSpace(analysisManagerDir))
@@ -876,6 +889,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 OnDebugEvent("Updating remote transfer settings using job parameter RemoteInfo");
 
                 var remoteInfo = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO);
+
                 if (string.IsNullOrWhiteSpace(remoteInfo))
                 {
                     throw new Exception("RemoteInfo job step parameter is empty; the RemoteTransferUtility cannot validate remote info");
@@ -984,6 +998,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 // Update the info on the remote file
                 var matchingFiles = GetRemoteFileListing(remoteDirectoryPath, sourceFile.Name);
+
                 if (matchingFiles.Count > 0)
                 {
                     var newFileInfo = matchingFiles.First().Value;

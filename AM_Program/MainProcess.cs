@@ -264,6 +264,7 @@ namespace AnalysisManagerProg
                     var configFileSettings = LoadMgrSettingsFromFile();
 
                     var settingsClass = (AnalysisMgrSettings)mMgrParams;
+
                     if (settingsClass != null)
                     {
                         RegisterEvents(settingsClass);
@@ -276,6 +277,7 @@ namespace AnalysisManagerProg
                     CheckStopTrace("LoadSettings");
 
                     var success = mMgrParams.LoadSettings(configFileSettings);
+
                     if (!success)
                     {
                         if (!string.IsNullOrEmpty(mMgrParams.ErrMsg))
@@ -345,6 +347,7 @@ namespace AnalysisManagerProg
             LogMessage(startupMsg);
 
             var configFileName = mMgrParams.GetParam("ConfigFileName");
+
             if (string.IsNullOrEmpty(configFileName))
             {
                 // Manager parameter error; log an error and exit
@@ -403,6 +406,7 @@ namespace AnalysisManagerProg
             ShowTrace("Setup the manager cleanup class");
 
             string mgrConfigDBConnectionString;
+
             if (Global.OfflineMode)
             {
                 mgrConfigDBConnectionString = string.Empty;
@@ -518,6 +522,7 @@ namespace AnalysisManagerProg
                         }
 
                         mConfigFileWatcher.EnableRaisingEvents = true;
+
                         if (mLocalSettingsFileWatcher != null)
                             mLocalSettingsFileWatcher.EnableRaisingEvents = true;
                     }
@@ -544,6 +549,7 @@ namespace AnalysisManagerProg
                     if (!(mgrActive && mgrActiveLocal) || taskRequestDisabled)
                     {
                         string managerDisableReason;
+
                         if (!mgrActiveLocal)
                         {
                             managerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
@@ -787,6 +793,7 @@ namespace AnalysisManagerProg
                             // Deadlocks can occur when too many managers are requesting a job at once
 
                             successiveDeadLockCount++;
+
                             if (successiveDeadLockCount >= 3)
                             {
                                 // Encountered 3 deadlocks in a row
@@ -998,6 +1005,7 @@ namespace AnalysisManagerProg
             if (!ValidateFreeDiskSpace(toolResourcer, out mMostRecentErrorMessage))
             {
                 ShowTrace("Insufficient free space; closing job step task");
+
                 if (string.IsNullOrEmpty(mMostRecentErrorMessage))
                 {
                     mMostRecentErrorMessage = "Insufficient free space (location undefined)";
@@ -1028,6 +1036,7 @@ namespace AnalysisManagerProg
             mMgrErrorCleanup.CreateStatusFlagFile();
 
             CloseOutType resultCode;
+
             if (runningRemote)
             {
                 // Job is running remotely; check its status
@@ -1042,6 +1051,7 @@ namespace AnalysisManagerProg
 
                 // Retrieve the resources for the job then either run locally or run remotely
                 var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out resultCode);
+
                 if (!resourcesRetrieved)
                 {
                     if (SkippedStepTool(resultCode))
@@ -1067,6 +1077,7 @@ namespace AnalysisManagerProg
                 {
                     // Transfer files to the remote host so that the job can run remotely
                     success = RunJobRemotely(toolResourcer, jobNum, stepNum, out resultCode);
+
                     if (!success)
                     {
                         ShowTrace("Error staging the job to run remotely; closing job step task");
@@ -1111,6 +1122,7 @@ namespace AnalysisManagerProg
                 ShowTrace("Task completed successfully; closing the job step task");
 
                 CloseOutType closeOut;
+
                 if (runJobsRemotely)
                 {
                     // resultCode will be CLOSEOUT_RUNNING_REMOTE if RunJobRemotely was called
@@ -1129,6 +1141,7 @@ namespace AnalysisManagerProg
                 // Close out the job as a success
                 // Examine toolRunner.Message to determine if we should use it as the completion message
                 string compMsg;
+
                 if (toolRunner.Message.StartsWith("Calibration failed"))
                 {
                     compMsg = toolRunner.Message;
@@ -1206,6 +1219,7 @@ namespace AnalysisManagerProg
                     case RemoteMonitor.RemoteJobStatusCodes.Success:
 
                         var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out resultCode);
+
                         if (!success)
                         {
                             mMostRecentErrorMessage = toolRunner.Message;
@@ -1352,6 +1366,7 @@ namespace AnalysisManagerProg
             if (dataPkgRequired)
             {
                 var dataPkgID = mAnalysisTask.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackageID", 0);
+
                 if (dataPkgID <= 0)
                 {
                     // The data package ID is 0 or missing
@@ -1503,6 +1518,7 @@ namespace AnalysisManagerProg
                                         continue;
 
                                     var jobMatch = jobStartLineMatcher.Match(dataLine);
+
                                     if (!jobMatch.Success)
                                         continue;
 
@@ -1540,6 +1556,7 @@ namespace AnalysisManagerProg
 
                         // Decrement the log file path by one day
                         logFilePath = DecrementLogFilePath(logFilePath);
+
                         if (string.IsNullOrEmpty(logFilePath))
                         {
                             break;
@@ -1620,6 +1637,7 @@ namespace AnalysisManagerProg
             if (match.Groups.Count >= 2)
             {
                 var timestamp = match.Groups["Date"].Value;
+
                 if (!DateTime.TryParse(timestamp, out timeStamp))
                     timeStamp = DateTime.MinValue;
 
@@ -1797,6 +1815,7 @@ namespace AnalysisManagerProg
             RegisterEvents(mgrSettings);
 
             var valueFound = mgrSettings.GetXmlConfigFileSetting(configFilePaths, settingName, out var settingValue);
+
             if (valueFound)
                 return settingValue;
 
@@ -1940,6 +1959,7 @@ namespace AnalysisManagerProg
             }
 
             var postProcessResult = toolRunner.PostProcessRemoteResults();
+
             if (!AnalysisJob.SuccessOrNoData(postProcessResult))
             {
                 resultCode = postProcessResult;
@@ -1958,6 +1978,7 @@ namespace AnalysisManagerProg
             }
 
             var success = toolRunner.CopyResultsToTransferDirectory();
+
             if (success)
                 return true;
 
@@ -2009,6 +2030,7 @@ namespace AnalysisManagerProg
             RegisterEvents(mStatusTools);
 
             var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
+
             if (runJobsRemotely)
             {
                 mStatusTools.RemoteMgrName = mMgrParams.GetParam("RemoteHostName");
@@ -2387,6 +2409,7 @@ namespace AnalysisManagerProg
 
                 string compMsg;
                 bool errorProcessing;
+
                 if (SkippedStepTool(resultCode))
                 {
                     compMsg = string.IsNullOrWhiteSpace(toolResourcer.Message) ? string.Empty : toolResourcer.Message;
@@ -2791,6 +2814,7 @@ namespace AnalysisManagerProg
             // Periodically log errors to the database
             var flagFile = new FileInfo(mMgrErrorCleanup.FlagFilePath);
             string errorMessage;
+
             if (flagFile.Directory == null)
             {
                 errorMessage = "Flag file exists in the manager directory";
@@ -2898,6 +2922,7 @@ namespace AnalysisManagerProg
             float brokerDbStatusUpdateIntervalMinutes = mMgrParams.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
             var logStatusToMessageQueue = mMgrParams.GetParam("LogStatusToMessageQueue", false);
+
             if (DisableMessageQueue)
             {
                 // Command line has switch /NQ
@@ -2968,6 +2993,7 @@ namespace AnalysisManagerProg
                     }
 
                     var datasetStorageDirectory = new DirectoryInfo(datasetStoragePath);
+
                     if (!datasetStorageDirectory.Exists)
                     {
                         // Dataset directory not found; that's OK, since the Results Transfer plugin will auto-create it
@@ -3126,6 +3152,7 @@ namespace AnalysisManagerProg
                 // Find the newest SQLite_1.*.* directory
                 // For example, SQLite_1.0.108
                 var sourceDirs = mgrDir.GetDirectories("SQLite_1.*.*");
+
                 if (sourceDirs.Length == 0)
                 {
                     LogWarning(string.Format(
@@ -3144,6 +3171,7 @@ namespace AnalysisManagerProg
                 foreach (var sourceDir in sourceDirs)
                 {
                     var match = versionMatcher.Match(sourceDir.Name);
+
                     if (!match.Success)
                     {
                         LogDebug(string.Format(
@@ -3177,6 +3205,7 @@ namespace AnalysisManagerProg
                 var newestSrcDir = sourceDirVersions[sortedVersions.Last()];
 
                 var newestDll = new FileInfo(Path.Combine(newestSrcDir.FullName, SQLITE_DLL));
+
                 if (!newestDll.Exists)
                 {
                     LogWarning(string.Format(
@@ -3196,6 +3225,7 @@ namespace AnalysisManagerProg
                 // Also look for a .so file below the SQLite_1.*.* directory
 
                 var soFiles = newestSrcDir.GetFiles(SQLITE_INTEROP_FILE, SearchOption.AllDirectories);
+
                 if (soFiles.Length == 0)
                 {
                     LogWarning(string.Format(
@@ -3331,6 +3361,7 @@ namespace AnalysisManagerProg
         private void PluginLoader_ErrorEventHandler(string errorMessage, Exception ex)
         {
             mPluginLoaderErrorCount++;
+
             if (mPluginLoaderErrorCount == 1)
             {
                 LogError(mPluginLoaderStepTool + " load error: " + errorMessage, ex);
@@ -3338,6 +3369,7 @@ namespace AnalysisManagerProg
             else
             {
                 string formattedError;
+
                 if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.OrdinalIgnoreCase))
                 {
                     formattedError = errorMessage;

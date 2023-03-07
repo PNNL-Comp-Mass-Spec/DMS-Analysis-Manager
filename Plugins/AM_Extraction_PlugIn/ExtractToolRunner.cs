@@ -163,6 +163,7 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPhrpForMSGFPlus();
 
                         var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
                         if (result == CloseOutType.CLOSEOUT_SUCCESS && splitFastaEnabled)
                         {
                             result = RunMzidMerger(Dataset + "_msgfplus_Part*.mzid", Dataset + "_msgfplus.mzid");
@@ -178,6 +179,7 @@ namespace AnalysisManagerExtractionPlugin
                     case AnalysisResources.RESULT_TYPE_MODA:
                         // Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
                         result = ConvertMODaResultsToTxt(out var filteredMODaResultsFileName, true);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -187,6 +189,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MODa";
                         result = RunPhrpForMODa(filteredMODaResultsFileName);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -194,6 +197,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                         result = ConvertMODaResultsToTxt(out _, false);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -203,6 +207,7 @@ namespace AnalysisManagerExtractionPlugin
                     case AnalysisResources.RESULT_TYPE_MODPLUS:
                         // Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
                         result = ConvertMODPlusResultsToTxt(out var filteredMODPlusResultsFileName, true);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -212,6 +217,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MODPlus";
                         result = RunPhrpForMODPlus(filteredMODPlusResultsFileName);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -219,6 +225,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Convert the MODPlus results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                         result = ConvertMODPlusResultsToTxt(out _, false);
+
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
@@ -268,6 +275,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Possibly run AScore
                 var runAscore = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResourcesExtraction.JOB_PARAM_RUN_ASCORE, false);
+
                 if (runAscore)
                 {
                     LogMessage("TODO: Run AScore");
@@ -455,6 +463,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrWhiteSpace(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -560,9 +569,11 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var mzidFileName = mDatasetName + "_msgfplus" + suffixToAdd + ".mzid";
+
                 if (!File.Exists(Path.Combine(mWorkDir, mzidFileName)))
                 {
                     var mzidFileNameAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(mzidFileName, "Dataset_msgfdb.txt");
+
                     if (File.Exists(Path.Combine(mWorkDir, mzidFileNameAlternate)))
                     {
                         mzidFileName = mzidFileNameAlternate;
@@ -654,6 +665,7 @@ namespace AnalysisManagerExtractionPlugin
             LogMessage("Creating the missing _PepToProtMap.txt file");
 
             var localOrgDbDir = mMgrParams.GetParam("OrgDbDir");
+
             if (mMSGFPlusUtils == null)
             {
                 mMSGFPlusUtils = new MSGFPlusUtils(mMgrParams, mJobParams, mWorkDir, mDebugLevel);
@@ -731,6 +743,7 @@ namespace AnalysisManagerExtractionPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -894,6 +907,7 @@ namespace AnalysisManagerExtractionPlugin
                     for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                     {
                         var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_msgfplus_Part" + iteration + "_PepToProtMap.txt"));
+
                         if (!sourceFile.Exists)
                         {
                             LogWarning("Peptide to protein map file not found; cannot merge: " + sourceFile.FullName);
@@ -912,6 +926,7 @@ namespace AnalysisManagerExtractionPlugin
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
+
                             if (string.IsNullOrWhiteSpace(dataLine))
                                 continue;
 
@@ -926,6 +941,7 @@ namespace AnalysisManagerExtractionPlugin
                             }
 
                             var charIndex = dataLine.IndexOf('\t');
+
                             if (charIndex <= 0)
                             {
                                 continue;
@@ -1008,12 +1024,14 @@ namespace AnalysisManagerExtractionPlugin
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;
                     }
 
                     var matchFileCount = reFileCount.Match(dataLine);
+
                     if (matchFileCount.Success)
                     {
                         totalFiles = int.Parse(matchFileCount.Groups["FileCount"].Value);
@@ -1021,9 +1039,11 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     var matchMerging = reMerging.Match(dataLine);
+
                     if (matchMerging.Success)
                     {
                         var fileNumber = int.Parse(matchMerging.Groups["MergeFile"].Value);
+
                         if (fileNumber > filesMerged)
                             filesMerged = fileNumber;
 
@@ -1209,6 +1229,7 @@ namespace AnalysisManagerExtractionPlugin
                         while (!reader.EndOfStream)
                         {
                             var lineIn = reader.ReadLine();
+
                             if (string.IsNullOrWhiteSpace(lineIn))
                                 continue;
 
@@ -1240,6 +1261,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // GZip the combined file
                 var combinedMzidGzFile = GZipFile(combinedMzidFile, true);
+
                 if (combinedMzidGzFile == null || !combinedMzidGzFile.Exists)
                 {
                     // The error has already been logged
@@ -1444,6 +1466,7 @@ namespace AnalysisManagerExtractionPlugin
                         while (!tsvReader.EndOfStream)
                         {
                             var dataLine = tsvReader.ReadLine();
+
                             if (string.IsNullOrWhiteSpace(dataLine))
                                 continue;
 
@@ -1510,6 +1533,7 @@ namespace AnalysisManagerExtractionPlugin
                 mJobParams.AddResultFileToSkip(combinedPsmTsvFilePath);
 
                 var workDirInfo = new DirectoryInfo(mWorkDir);
+
                 foreach (var phrpFile in workDirInfo.GetFileSystemInfos(COMBINED_TSV_BASE_NAME + "*"))
                 {
                     mJobParams.AddResultFileToSkip(phrpFile.Name);
@@ -1693,6 +1717,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_msgfplus.txt");
                     CloseOutType result;
+
                     if (!File.Exists(targetFilePath))
                     {
                         // Processing MS-GF+ results, work with .tsv files
@@ -1725,6 +1750,7 @@ namespace AnalysisManagerExtractionPlugin
                             if (!File.Exists(targetFilePath))
                             {
                                 var targetFilePathAlt = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(targetFilePath, "Dataset_msgfdb.txt");
+
                                 if (File.Exists(targetFilePathAlt))
                                 {
                                     targetFilePath = targetFilePathAlt;
@@ -1738,6 +1764,7 @@ namespace AnalysisManagerExtractionPlugin
                                 currentStep = "Creating .tsv file " + targetFilePath;
 
                                 targetFilePath = ConvertMZIDToTSV(suffixToAdd);
+
                                 if (string.IsNullOrWhiteSpace(targetFilePath))
                                 {
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1787,6 +1814,7 @@ namespace AnalysisManagerExtractionPlugin
                             else
                             {
                                 result = CreateMSGFPlusResultsProteinToPeptideMappingFile(targetFilePath);
+
                                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                                 {
                                     return result;
@@ -1800,6 +1828,7 @@ namespace AnalysisManagerExtractionPlugin
                             currentStep = "Merging Parallel MS-GF+ results";
 
                             var numberOfHitsPerScanToKeep = mJobParams.GetJobParameter("MergeResultsToKeepPerScan", 2);
+
                             if (numberOfHitsPerScanToKeep < 1)
                                 numberOfHitsPerScanToKeep = 1;
 
@@ -2033,6 +2062,7 @@ namespace AnalysisManagerExtractionPlugin
                     currentStep = "Looking for the results file";
 
                     var peptideSearchResultsFilePath = Path.Combine(mWorkDir, inputFileName);
+
                     if (!File.Exists(peptideSearchResultsFilePath))
                     {
                         LogError(string.Format("{0} results file not found: {1}", toolName, Path.GetFileName(peptideSearchResultsFilePath)));
@@ -2185,6 +2215,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 consoleOutputFilesDir.Refresh();
+
                 if (consoleOutputFilesDir.GetFileSystemInfos().Length == 0)
                 {
                     consoleOutputFilesDir.Delete();
@@ -2194,6 +2225,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var zippedConsoleOutputFilePath = Path.Combine(workingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip");
+
             if (!mDotNetZipTools.ZipDirectory(consoleOutputFilesDir.FullName, zippedConsoleOutputFilePath))
             {
                 LogError("Problem zipping the console output file; will not delete the separate copies from the transfer directory");
@@ -2377,6 +2409,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Check to see if the synopsis file exists
             var synopsisFile = new FileInfo(synFilePath);
+
             if (!synopsisFile.Exists)
             {
                 LogError("ExtractToolRunner.RunPeptideProphet(); Syn file " + synFilePath + " not found; unable to run peptide prophet");
@@ -2388,6 +2421,7 @@ namespace AnalysisManagerExtractionPlugin
             // Check the size of the Syn file
             // If it is too large, we will need to break it up into multiple parts, process each part separately, and then combine the results
             var parentSynFileSizeMB = Global.BytesToMB(synopsisFile.Length);
+
             if (parentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
             {
                 splitFileList = new List<string>
@@ -2440,6 +2474,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var splitSynFile = new FileInfo(splitFilePath);
                 var synFileNameAndSize = string.Format("{0} (file size = {1:F2} MB", splitSynFile.Name, Global.BytesToMB(splitSynFile.Length));
+
                 if (splitFileList.Count > 1)
                 {
                     synFileNameAndSize += "; parent syn file is " + parentSynFileSizeMB.ToString("0.00") + " MB)";
@@ -2722,6 +2757,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var sourceFile = new FileInfo(sourceFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     LogError("File not found: " + sourceFile.FullName);
@@ -2800,6 +2836,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         outputFileWriters[targetFileIndex].WriteLine(lineIn);
                         targetFileIndex++;
+
                         if (targetFileIndex == splitFileCount)
                             targetFileIndex = 0;
                     }
@@ -2849,6 +2886,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 var phrpDLL = new FileInfo(Path.Combine(phrpProgDir.FullName, "PeptideHitResultsProcessor.dll"));
+
                 if (!phrpDLL.Exists)
                 {
                     LogError("PHRP DLL not found: " + phrpDLL.FullName);
@@ -2865,6 +2903,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
             if (splitFastaEnabled)
             {
                 // Lookup the version of the MzidMerger
@@ -2882,6 +2921,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     var mzidMerger = new FileInfo(Path.Combine(mzidMergerDir.FullName, "MzidMerger.exe"));
+
                     if (!mzidMerger.Exists)
                     {
                         LogError("MzidMerger not found: " + mzidMerger.FullName);
@@ -2921,6 +2961,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     // Lookup the version of the PeptideProphetRunner
                     var success = mToolVersionUtilities.StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, peptideProphetRunner.FullName);
+
                     if (!success)
                         return false;
 

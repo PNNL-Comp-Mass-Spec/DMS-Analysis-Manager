@@ -265,6 +265,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 var statusFiles = TransferUtility.GetStatusFiles();
                 mCachedStatusFiles.Clear();
+
                 foreach (var statusFile in statusFiles)
                 {
                     mCachedStatusFiles.Add(statusFile.Key);
@@ -275,6 +276,7 @@ namespace AnalysisManagerBase.OfflineJobs
                     // No status files, not even a .info file
                     // Check whether the remote server is reachable
                     var taskFolderItems = TransferUtility.GetRemoteFilesAndDirectories(TransferUtility.RemoteTaskQueuePath);
+
                     if (taskFolderItems.Count > 0)
                     {
                         LogError("No status files were found for " + TransferUtility.JobStepDescription + ", not even a .info file");
@@ -297,6 +299,7 @@ namespace AnalysisManagerBase.OfflineJobs
                         // .jobstatus file found; check the age
                         // If over 24 hours old, we probably have an issue
                         var statusFileAgeHours = DateTime.UtcNow.Subtract(remoteJobStatusFile.LastWriteTimeUtc).TotalHours;
+
                         if (statusFileAgeHours > STALE_JOBSTATUS_FILE_AGE_HOURS)
                         {
                             NotifyStaleJobStatusFile(remoteJobStatusFile.Name, (int)Math.Round(statusFileAgeHours, 0));
@@ -327,6 +330,7 @@ namespace AnalysisManagerBase.OfflineJobs
                         // A lock file exists, but no .jobstatus file exists yet, and a .success or .fail file was not found
                         // If the .lock file is over 24 hours old, we probably have an issue
                         var lockFileAgeHours = DateTime.UtcNow.Subtract(remoteLockFile.LastWriteTimeUtc).TotalHours;
+
                         if (lockFileAgeHours > STALE_LOCK_FILE_AGE_HOURS)
                         {
                             // Stale lock file; notify the calling class, but still return state "Running"
@@ -413,12 +417,15 @@ namespace AnalysisManagerBase.OfflineJobs
             var coreUsageInfo = doc.Elements("Root").Elements("ProgRunnerCoreUsage").ToList();
 
             var coreUsage = coreUsageInfo.Elements("CoreUsageSample").ToList();
+
             foreach (var coreUsageSample in coreUsage)
             {
                 string samplingDateText;
+
                 if (coreUsageSample.HasAttributes)
                 {
                     var dateAttribute = coreUsageSample.Attribute("Date");
+
                     if (dateAttribute == null)
                         continue;
 
@@ -479,12 +486,14 @@ namespace AnalysisManagerBase.OfflineJobs
                 status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
 
                 status.TaskStartTime = XMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
+
                 if (status.TaskStartTime > DateTime.MinValue)
                 {
                     status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
                 }
 
                 var lastUpdate = XMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
+
                 if (lastUpdate > DateTime.MinValue)
                 {
                     lastUpdate = lastUpdate.ToUniversalTime();
@@ -616,6 +625,7 @@ namespace AnalysisManagerBase.OfflineJobs
             try
             {
                 var statusResultFile = new FileInfo(statusResultFilePath);
+
                 if (!statusResultFile.Exists)
                 {
                     LogError("Status result file not found: " + statusResultFile.FullName);
@@ -641,6 +651,7 @@ namespace AnalysisManagerBase.OfflineJobs
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -801,6 +812,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 

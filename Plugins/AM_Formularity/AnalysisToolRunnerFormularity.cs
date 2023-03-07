@@ -80,10 +80,12 @@ namespace AnalysisManagerFormularityPlugin
                     string.Empty);
 
                 string datasetScansFilePath;
+
                 if (datasetScansFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     var zipFilePath = Path.Combine(mWorkDir, datasetScansFile);
                     var unzipSuccess = UnzipFile(zipFilePath, mWorkDir);
+
                     if (!unzipSuccess)
                     {
                         if (string.IsNullOrEmpty(mMessage))
@@ -208,6 +210,7 @@ namespace AnalysisManagerFormularityPlugin
                 var pngFileTableLayout = PngToPdfConverter.GetPngFileTableLayout(mDatasetName, datasetDetailReportLink);
 
                 var pngFileNames = new SortedSet<string>();
+
                 foreach (var item in pngFiles)
                 {
                     pngFileNames.Add(item.Name);
@@ -229,6 +232,7 @@ namespace AnalysisManagerFormularityPlugin
                 foreach (var tableRow in pngFileTableLayout)
                 {
                     writer.WriteLine("    <tr>");
+
                     foreach (var tableCell in tableRow)
                     {
                         if (tableCell.StartsWith(LITERAL_TEXT_FLAG))
@@ -238,6 +242,7 @@ namespace AnalysisManagerFormularityPlugin
                         else
                         {
                             var pngFileName = tableCell;
+
                             if (pngFileNames.Contains(pngFileName))
                             {
                                 writer.WriteLine("      <td><a href='{0}'><img src='{0}' width='500' border='0'></a></td>", pngFileName);
@@ -333,6 +338,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 mProgress = PROGRESS_PCT_FINISHED_NOMSI;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("NOMSI plot creation complete");
@@ -377,6 +383,7 @@ namespace AnalysisManagerFormularityPlugin
                 currentTask = "Calling CreatePlotViewHTML";
 
                 var htmlSuccess = CreatePlotViewHTML(workDir, pngFiles);
+
                 if (htmlSuccess != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return htmlSuccess;
@@ -392,6 +399,7 @@ namespace AnalysisManagerFormularityPlugin
                 foreach (var pngFile in pngFiles)
                 {
                     var newPath = Path.Combine(plotDirectory.FullName, pngFile.Name);
+
                     if (!string.Equals(pngFile.FullName, newPath))
                     {
                         pngFile.MoveTo(newPath);
@@ -404,6 +412,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var htmlFile = new FileInfo(Path.Combine(workDir.FullName, INDEX_HTML));
                 var newHtmlFile = new FileInfo(Path.Combine(plotDirectory.FullName, htmlFile.Name));
+
                 if (newHtmlFile.Exists)
                     newHtmlFile.Delete();
 
@@ -413,6 +422,7 @@ namespace AnalysisManagerFormularityPlugin
                 var zipFilePath = Path.Combine(workDir.FullName, mDatasetName + "_Plots.zip");
 
                 var zipSuccess = mDotNetZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
+
                 if (!zipSuccess)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -619,6 +629,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Open nomsi_summary.txt to look for "summary=success"
                 var nomsiSummaryResult = ValidateNOMSISummaryFile(workDir);
+
                 if (nomsiSummaryResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return resultCode;
@@ -626,6 +637,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Rename the plot files, replacing suffix "_Report.PNG" with ".png"
                 var renameResultCode = RenamePlotFiles(workDir, out var pngFiles);
+
                 if (renameResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return renameResultCode;
@@ -652,6 +664,7 @@ namespace AnalysisManagerFormularityPlugin
                     if (pngFile.Name.StartsWith("EC_count_"))
                     {
                         var newFilePath = Path.Combine(workDir.FullName, pngFile.Name);
+
                         if (!string.Equals(pngFile.FullName, newFilePath))
                         {
                             // The file is in the plots subdirectory; move it back to the working directory
@@ -700,6 +713,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Confirm that multiple .png files were created
                 var sourcePngFiles = workDir.GetFiles("*" + REPORT_PNG_FILE_SUFFIX).ToList();
+
                 if (sourcePngFiles.Count == 0)
                 {
                     // NOMSI did not create any PNG files (with suffix _Report.PNG
@@ -855,6 +869,7 @@ namespace AnalysisManagerFormularityPlugin
                     string.Empty);
 
                 string calibrationPeaksFilePath;
+
                 if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
                 {
                     calibrationPeaksFilePath = string.Empty;
@@ -918,6 +933,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 mProgress = PROGRESS_PCT_FINISHED_FORMULARITY;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("Formularity processing complete");
@@ -932,6 +948,7 @@ namespace AnalysisManagerFormularityPlugin
                 {
                     // None of the scans had peaks
                     mMessage = "No peaks found";
+
                     if (scanCount > 1)
                         mEvalMessage = "None of the scans had peaks";
                     else
@@ -1001,6 +1018,7 @@ namespace AnalysisManagerFormularityPlugin
             try
             {
                 var nomsiSummaryFile = new FileInfo(Path.Combine(workDir.FullName, NOMSI_SUMMARY_FILE_NAME));
+
                 if (!nomsiSummaryFile.Exists)
                 {
                     LogError("NOMSI summary file not found: " + nomsiSummaryFile.Name);
@@ -1012,6 +1030,7 @@ namespace AnalysisManagerFormularityPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 

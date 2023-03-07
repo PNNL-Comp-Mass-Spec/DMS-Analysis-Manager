@@ -84,6 +84,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!DirectoryExistsWithRetry(sourceDirectory.FullName, 3, 3))
             {
                 message = "Source directory does not exist: " + sourceDirectory.FullName;
+
                 if (continueOnError)
                 {
                     LogError(message);
@@ -97,6 +98,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (targetDirectory.Parent == null)
             {
                 message = "Unable to determine the parent directory of " + targetDirectory.FullName;
+
                 if (continueOnError)
                 {
                     LogError(message);
@@ -109,6 +111,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!DirectoryExistsWithRetry(targetDirectory.Parent.FullName, 1, 1))
             {
                 message = "Destination directory does not exist: " + targetDirectory.Parent.FullName;
+
                 if (continueOnError)
                 {
                     LogError(message);
@@ -129,6 +132,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 try
                 {
                     var targetPath = Path.Combine(targetDirectory.FullName, childFile.Name);
+
                     if (overwrite)
                     {
                         CopyFileWithRetry(childFile.FullName, targetPath, true, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
@@ -213,6 +217,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (actualRetryHoldoffSeconds < 1)
                 actualRetryHoldoffSeconds = 1;
+
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
@@ -367,6 +372,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             writer.WriteLine("Date" + '\t' + DateTime.Now);
+
             if (mJobParams == null)
                 return;
 
@@ -420,6 +426,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (actualRetryHoldoffSeconds < 1)
                 actualRetryHoldoffSeconds = 1;
+
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
@@ -484,6 +491,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 try
                 {
                     var oldResultsDirectoryName = Path.GetFileNameWithoutExtension(folderInfoFile.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+
                     if (folderInfoFile.DirectoryName == null)
                     {
                         LogWarning("Unable to determine the parent directory of " + folderInfoFile.FullName);
@@ -557,6 +565,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (actualRetryHoldoffSeconds < 1)
                 actualRetryHoldoffSeconds = 1;
+
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 

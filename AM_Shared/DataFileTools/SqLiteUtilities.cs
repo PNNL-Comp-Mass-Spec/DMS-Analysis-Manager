@@ -97,6 +97,7 @@ namespace AnalysisManagerBase.DataFileTools
                     var cmdTargetDB = targetDB.CreateCommand();
 
                     Dictionary<string, string> existingTables;
+
                     if (appendingToExistingDB)
                     {
                         // Lookup the table names that already exist in the target
@@ -220,6 +221,7 @@ namespace AnalysisManagerBase.DataFileTools
                 cmdSourceDB.CommandText = sql;
 
                 var result = cmdSourceDB.ExecuteScalar();
+
                 if (result == null || ReferenceEquals(result, DBNull.Value))
                 {
                     throw new Exception("Source file " + Path.GetFileName(sourceDBPath) + " does not have table " + tableName);

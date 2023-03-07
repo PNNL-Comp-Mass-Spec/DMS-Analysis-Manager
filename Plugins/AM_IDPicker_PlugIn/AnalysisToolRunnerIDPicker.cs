@@ -126,6 +126,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 var resultType = AnalysisResources.GetResultType(mJobParams);
 
                 var phrpResultType = ReaderFactory.GetPeptideHitResultType(resultType);
+
                 if (phrpResultType == PeptideHitResultTypes.Unknown)
                 {
                     LogError("Invalid tool result type (not supported by IDPicker): " + resultType);
@@ -141,6 +142,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!File.Exists(synFilePath))
                 {
                     var alternateFilePath = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(synFilePath, "Dataset_msgfdb.txt");
+
                     if (File.Exists(alternateFilePath))
                     {
                         synFilePath = alternateFilePath;
@@ -202,6 +204,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     mJobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt");
 
                     var paramFileNameLocal = mJobParams.GetParam(AnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
+
                     if (string.IsNullOrEmpty(paramFileNameLocal))
                     {
                         mJobParams.AddResultFileToSkip(AnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME);
@@ -228,6 +231,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Zip the PepXML file
                     var zipSuccess = ZipPepXMLFile(phrpBaseName);
+
                     if (!zipSuccess)
                         processingSuccess = false;
                 }
@@ -259,6 +263,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 var directoryCreated = MakeResultsDirectory();
+
                 if (!directoryCreated)
                 {
                     // MakeResultsDirectory handles posting to local log, so set database error message and exit
@@ -269,6 +274,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!skipIDPicker)
                 {
                     var moveResult = MoveFilesIntoIDPickerSubdirectory();
+
                     if (moveResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
@@ -307,6 +313,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // If we run MS-GF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
                 success = LookForDecoyProteinsInMSGFPlusResults(synFilePath, phrpResultType, ref decoyPrefix);
+
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -322,6 +329,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Look for decoy proteins in the FASTA file
                 success = DetermineDecoyProteinPrefix(fastaFilePath, out decoyPrefix);
+
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -341,6 +349,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             // Load the IDPicker options
             success = LoadIDPickerOptions();
+
             if (!success)
             {
                 processingError = true;
@@ -349,6 +358,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             // Convert the search scores in the pepXML file to q-values
             success = RunQonvert(fastaFilePath, decoyPrefix, phrpResultType, phrpBaseName);
+
             if (!success)
             {
                 processingError = true;
@@ -357,6 +367,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             // Organizes the search results into a hierarchy
             success = RunAssemble(phrpBaseName);
+
             if (!success)
             {
                 processingError = true;
@@ -365,6 +376,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             // Apply parsimony in protein assembly and generate reports
             success = RunReport();
+
             if (!success)
             {
                 processingError = true;
@@ -635,6 +647,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Find the prefix (key) in prefixStats with the highest occurrence count
                     var maxCount = -1;
+
                     foreach (var kvEntry in prefixStats)
                     {
                         if (kvEntry.Value > maxCount)
@@ -691,6 +704,7 @@ namespace AnalysisManagerIDPickerPlugIn
             try
             {
                 mIDPickerParamFileNameLocal = mJobParams.GetParam(AnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
+
                 if (string.IsNullOrEmpty(mIDPickerParamFileNameLocal))
                 {
                     LogError("IDPicker parameter file not defined");
@@ -721,9 +735,11 @@ namespace AnalysisManagerIDPickerPlugIn
                     var value = string.Empty;
 
                     var charIndex = trimmedLine.IndexOf('=');
+
                     if (charIndex > 0)
                     {
                         key = trimmedLine.Substring(0, charIndex).Trim();
+
                         if (charIndex < trimmedLine.Length - 1)
                         {
                             value = trimmedLine.Substring(charIndex + 1).Trim();
@@ -735,6 +751,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
 
                     charIndex = value.IndexOf('#');
+
                     if (charIndex >= 0)
                     {
                         value = value.Substring(0, charIndex);
@@ -783,6 +800,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 while (reader.MoveNext())
                 {
                     var found = false;
+
                     foreach (var prefixToCheck in prefixesToCheck)
                     {
                         if (reader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(prefixToCheck))
@@ -853,6 +871,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         {
                             // Note that the file may have been moved already; confirm that it still exists
                             fileToMove.Refresh();
+
                             if (fileToMove.Exists)
                             {
                                 fileToMove.MoveTo(Path.Combine(targetDirectory.FullName, fileToMove.Name));
@@ -959,6 +978,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var assembleFilePath = Path.Combine(mWorkDir, ASSEMBLE_GROUPING_FILENAME);
 
             var success = CreateAssembleFile(assembleFilePath, phrpBaseName);
+
             if (!success)
             {
                 if (string.IsNullOrEmpty(mMessage))
@@ -1281,6 +1301,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (!success)
             {
                 mMessage = "Error running " + programDescription;
+
                 if (mCmdRunnerErrors.Count > 0)
                 {
                     mMessage += ": " + mCmdRunnerErrors.First();
@@ -1300,6 +1321,7 @@ namespace AnalysisManagerIDPickerPlugIn
             else
             {
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug(programDescription + " Complete");
@@ -1336,6 +1358,7 @@ namespace AnalysisManagerIDPickerPlugIn
             else
             {
                 var idPickerProgram = new FileInfo(idPickerProgLoc);
+
                 if (!idPickerProgram.Exists)
                 {
                     try

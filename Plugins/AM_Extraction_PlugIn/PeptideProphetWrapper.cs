@@ -65,6 +65,7 @@ namespace AnalysisManagerExtractionPlugin
                 ErrorMessage = string.Empty;
 
                 var inputFile = new FileInfo(InputFile);
+
                 if (inputFile.Directory == null)
                 {
                     ReportError("Unable to determine the parent directory of the input file for peptide prophet: " + InputFile);
@@ -125,6 +126,7 @@ namespace AnalysisManagerExtractionPlugin
                         while (!reader.EndOfStream)
                         {
                             var lineIn = reader.ReadLine();
+
                             if (!string.IsNullOrWhiteSpace(lineIn))
                             {
                                 if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)

@@ -313,6 +313,7 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     // Existing job; append an additional SharedResultsFolder
                     var existingPkgJob = dataPackageJobs[dataPkgJob.Job];
+
                     foreach (var sharedResultsFolder in dataPkgJob.SharedResultsFolders)
                     {
                         if (existingPkgJob.SharedResultsFolders.Contains(sharedResultsFolder))
@@ -590,6 +591,7 @@ namespace AnalysisManagerBase.JobConfig
             jobInfo.DatasetFolderName = curRow["dataset_folder"].CastDBVal<string>();
 
             var sharedResultsFolder = curRow["shared_results_folder"].CastDBVal<string>();
+
             if (!string.IsNullOrWhiteSpace(sharedResultsFolder))
             {
                 jobInfo.SharedResultsFolders.Add(sharedResultsFolder);

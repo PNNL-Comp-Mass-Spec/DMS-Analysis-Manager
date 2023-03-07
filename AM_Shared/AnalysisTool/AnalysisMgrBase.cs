@@ -132,10 +132,12 @@ namespace AnalysisManagerBase.AnalysisTool
         protected void LogCopyStats(DateTime startTimeUtc, string destinationFilePath, int logThresholdSeconds = 10)
         {
             var elapsedSeconds = DateTime.UtcNow.Subtract(startTimeUtc).TotalSeconds;
+
             if (elapsedSeconds < logThresholdSeconds)
                 return;
 
             var destinationFile = new FileInfo(destinationFilePath);
+
             if (destinationFile.Exists)
             {
                 var fileSizeMB = Global.BytesToMB(destinationFile.Length);
@@ -303,6 +305,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return;
 
             mLastLockQueueWaitTimeLog = DateTime.UtcNow;
+
             if (mDebugLevel >= 1)
             {
                 LogDebug(string.Format(

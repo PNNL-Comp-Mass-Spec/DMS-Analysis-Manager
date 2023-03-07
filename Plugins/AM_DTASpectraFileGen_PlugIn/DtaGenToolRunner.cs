@@ -58,6 +58,7 @@ namespace DTASpectraFileGen
 
             // Create spectra files
             var result = CreateMSMSSpectra();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
@@ -75,6 +76,7 @@ namespace DTASpectraFileGen
 
             // Get rid of raw data file
             result = DeleteDataFile();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -101,6 +103,7 @@ namespace DTASpectraFileGen
         {
             // Make the spectra files
             var result = MakeSpectraFiles();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
 
@@ -108,6 +111,7 @@ namespace DTASpectraFileGen
             if (mConcatenateDTAs)
             {
                 result = ConcatSpectraFiles();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     return result;
             }
@@ -115,12 +119,14 @@ namespace DTASpectraFileGen
             if (mCentroidDTAs)
             {
                 result = CentroidCDTA();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     return result;
             }
 
             // Zip concatenated spectra files
             result = ZipConcatenatedDtaFile();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
 
@@ -256,6 +262,7 @@ namespace DTASpectraFileGen
                 case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
 
                     concatenateDTAs = false;
+
                     if (string.Equals(dtaGenerator, DtaGenThermoRaw.MSCONVERT_FILENAME, StringComparison.OrdinalIgnoreCase))
                     {
                         return DTAGeneratorConstants.MSConvert;
@@ -292,6 +299,7 @@ namespace DTASpectraFileGen
             try
             {
                 var stepResult = DeleteDataFile();
+
                 if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return stepResult;
@@ -310,6 +318,7 @@ namespace DTASpectraFileGen
             try
             {
                 var dtaFiles = Directory.GetFiles(mWorkDir, "*.dta");
+
                 foreach (var targetFile in dtaFiles)
                 {
                     DeleteFileWithRetries(targetFile);
@@ -323,6 +332,7 @@ namespace DTASpectraFileGen
 
             // Delete unzipped concatenated dta files
             var cdtaFiles = Directory.GetFiles(mWorkDir, "*" + CDTA_FILE_SUFFIX);
+
             foreach (var cdtaFile in cdtaFiles)
             {
                 try
@@ -401,6 +411,7 @@ namespace DTASpectraFileGen
 
             // Store the Version info in the database
             bool success;
+
             if (eDtaGeneratorType == DTAGeneratorConstants.MGFtoDTA)
             {
                 // MGFtoDTA DLL
@@ -481,6 +492,7 @@ namespace DTASpectraFileGen
             {
                 // Rename the _DTA.txt file to _DTA_Original.txt
                 var cdtaFileInfo = new FileInfo(Path.Combine(mWorkDir, mDatasetName + CDTA_FILE_SUFFIX));
+
                 if (!cdtaFileInfo.Exists)
                 {
                     LogError("File not found in CentroidCDTA: " + cdtaFileInfo.Name);
@@ -526,6 +538,7 @@ namespace DTASpectraFileGen
                 // Rename the new _DTA.txt file to _DTA_Centroided.txt
 
                 var cdtaFileInfo = new FileInfo(Path.Combine(mWorkDir, mDatasetName + CDTA_FILE_SUFFIX));
+
                 if (!cdtaFileInfo.Exists)
                 {
                     LogError("File not found in CentroidCDTA (after calling DtaGenMSConvert): " + cdtaFileInfo.Name);
@@ -553,6 +566,7 @@ namespace DTASpectraFileGen
                 var cdtaFileFinal = Path.Combine(mWorkDir, mDatasetName + CDTA_FILE_SUFFIX);
 
                 var success = MergeCDTAs(cdtaFileOriginal, cdtaFileCentroided, cdtaFileFinal);
+
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -671,6 +685,7 @@ namespace DTASpectraFileGen
             try
             {
                 var cdtaReaderParentIons = new clsDtaTextFileReader(false);
+
                 if (!cdtaReaderParentIons.OpenFile(cdtaWithParentIonData))
                 {
                     LogError("Error opening CDTA file with the parent ion data");
@@ -678,6 +693,7 @@ namespace DTASpectraFileGen
                 }
 
                 var cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+
                 if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                 {
                     LogError("Error opening CDTA file with centroided spectra data");
@@ -722,6 +738,7 @@ namespace DTASpectraFileGen
                 var fragIonDataHeader = cdtaReaderFragIonData.GetNewSpectrumHeaderInfo();
 
                 cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+
                 if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                 {
                     LogError("Error re-opening CDTA file with the fragment ion data (after initial scan of the file)");
@@ -748,11 +765,13 @@ namespace DTASpectraFileGen
                         while (!ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader))
                         {
                             nextSpectrumAvailable = cdtaReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
+
                             if (!nextSpectrumAvailable)
                                 break;
                         }
 
                         nextSpectrumAvailable = ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader);
+
                         if (!nextSpectrumAvailable)
                         {
                             // We never did find a match; this is unexpected
@@ -761,6 +780,7 @@ namespace DTASpectraFileGen
                             fragIonDataHeader = cdtaReaderFragIonData.GetNewSpectrumHeaderInfo();
 
                             cdtaReaderFragIonData = new clsDtaTextFileReader(true);
+
                             if (!cdtaReaderFragIonData.OpenFile(cdtaWithFragIonData))
                             {
                                 LogError("Error re-opening CDTA file with the fragment ion data (when nextSpectrumAvailable is false)");
@@ -770,11 +790,13 @@ namespace DTASpectraFileGen
                             while (!ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader))
                             {
                                 nextSpectrumAvailable = cdtaReaderFragIonData.ReadNextSpectrum(out _, out fragIonDataHeader);
+
                                 if (!nextSpectrumAvailable)
                                     break;
                             }
 
                             nextSpectrumAvailable = ScanHeadersMatch(parentIonDataHeader, fragIonDataHeader);
+
                             if (!nextSpectrumAvailable)
                             {
                                 LogWarning("MergeCDTAs could not find spectrum with StartScan=" + parentIonDataHeader.ScanNumberStart +
@@ -807,6 +829,7 @@ namespace DTASpectraFileGen
                         if (DateTime.UtcNow.Subtract(lastStatus).TotalSeconds >= 30)
                         {
                             lastStatus = DateTime.UtcNow;
+
                             if (mDebugLevel >= 1)
                             {
                                 LogMessage("Merging CDTAs, scan " + parentIonDataHeader.ScanNumberStart);
@@ -876,6 +899,7 @@ namespace DTASpectraFileGen
                 return true;
 
             var zipFileToRename = new FileInfo(Path.Combine(workDir, sourceFileName));
+
             if (!zipFileToRename.Exists)
             {
                 LogError("Zip file not found, job " + mJob + ", step " + mStepNum + ": " + zipFileToRename.FullName);
@@ -929,6 +953,7 @@ namespace DTASpectraFileGen
         private CloseOutType StartAndWaitForDTAGenerator(ISpectraFileProcessor dtaGenerator, string callingFunction, bool secondPass)
         {
             var retVal = dtaGenerator.Start();
+
             if (retVal == ProcessStatus.SF_ERROR)
             {
                 LogError("Error starting spectra processor: " + dtaGenerator.ErrMsg);
@@ -1007,6 +1032,7 @@ namespace DTASpectraFileGen
             }
 
             var dtaGenerator = new FileInfo(dtaGeneratorAppPath);
+
             if (!dtaGenerator.Exists)
             {
                 try
@@ -1033,6 +1059,7 @@ namespace DTASpectraFileGen
                 string dllPath;
 
                 var success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dtaGenerator.FullName);
+
                 if (!success)
                     return false;
 
@@ -1040,6 +1067,7 @@ namespace DTASpectraFileGen
                 {
                     // DeconMSn
                     var deconEngineV2File = new FileInfo(Path.Combine(dtaGenerator.DirectoryName, "DeconEngineV2.dll"));
+
                     if (deconEngineV2File.Exists)
                     {
                         // C# version of DeconMSn (released in January 2017)
@@ -1066,12 +1094,14 @@ namespace DTASpectraFileGen
                     dllPath = Path.Combine(dtaGenerator.DirectoryName, "DeconTools.Backend.dll");
                     toolFiles.Add(new FileInfo(dllPath));
                     success = StoreToolVersionInfoOneFile(ref toolVersionInfo, dllPath);
+
                     if (!success)
                         return false;
 
                     // Lookup the version of DeconEngineV2 (in the DeconTools folder)
                     dllPath = Path.Combine(dtaGenerator.DirectoryName, "DeconEngineV2.dll");
                     success = StoreToolVersionInfoOneFile(ref toolVersionInfo, dllPath);
+
                     if (!success)
                         return false;
                 }
@@ -1233,6 +1263,7 @@ namespace DTASpectraFileGen
             // If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
 
             var zipFile = new FileInfo(GetZipFilePathForFile(inputFilePath));
+
             if (!zipFile.Exists || zipFile.Length <= 0)
             {
                 LogError("Error zipping spectrum file, job {0}, step {1}", mJob, mStepNum);

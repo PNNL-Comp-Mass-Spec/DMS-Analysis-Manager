@@ -34,6 +34,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -91,9 +92,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var scriptName = mJobParams.GetParam("ToolName");
 
             string paramFileNameOverride;
+
             if (scriptName.StartsWith("Formularity", StringComparison.OrdinalIgnoreCase))
             {
                 paramFileNameOverride = mJobParams.GetParam("DeconToolsParameterFile");
+
                 if (!string.IsNullOrWhiteSpace(paramFileNameOverride))
                 {
                     mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION,
@@ -107,6 +110,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             string paramFileName;
+
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
                 paramFileName = mJobParams.GetParam("ParamFileName");
@@ -296,6 +300,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                 {
                     var msLevel = rawFileReader.GetMSLevel(scanNumber);
+
                     if (msLevel == 1)
                     {
                         countMs1++;

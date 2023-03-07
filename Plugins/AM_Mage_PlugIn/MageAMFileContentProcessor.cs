@@ -110,6 +110,7 @@ namespace AnalysisManager_Mage_PlugIn
         {
             var set = new HashSet<string>();
             var items = delimitedList.Split(',');
+
             foreach (var item in items)
             {
                 set.Add(item.Trim());

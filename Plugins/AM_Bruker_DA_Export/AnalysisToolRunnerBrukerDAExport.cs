@@ -83,6 +83,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 var exportScriptName = mJobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
+
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
                     LogError("BrukerSpectraExportScriptFile parameter is empty");
@@ -102,6 +103,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     if (resultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessExportedSpectra();
+
                         if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -169,6 +171,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             var dataFolder = new DirectoryInfo(dataFolderPath);
             var bafFile = dataFolder.GetFiles("analysis.baf", SearchOption.AllDirectories).ToList();
+
             if (bafFile.Count > 0)
             {
                 datasetSizeMB = Global.BytesToMB(bafFile[0].Length);
@@ -182,6 +185,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
 
             var scanCountEstimate = (int)Math.Round(datasetSizeMB / MB_PER_SCAN, 0);
+
             if (scanCountEstimate > 1)
             {
                 maxRuntimeSeconds += scanCountEstimate * SECONDS_PER_SCAN;
@@ -233,6 +237,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     // Determine the directory that contains method directories (.m directories) that we can use with the Bruker DataAnalysis program
                     var methodsDirPath = mMgrParams.GetParam(BRUKER_SPECTRA_EXPORT_METHOD_CONTAINER_DIR, @"C:\DMS_Programs\Bruker_DataAnalysis");
                     var methodsDir = new DirectoryInfo(methodsDirPath);
+
                     if (!methodsDir.Exists)
                     {
                         LogError(
@@ -243,6 +248,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     }
 
                     methodOverridePath = Path.Combine(methodsDir.FullName, methodName);
+
                     if (!Directory.Exists(methodOverridePath))
                     {
                         LogError(
@@ -348,6 +354,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 mProgress = PROGRESS_PCT_COMPLETE;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("Bruker spectrum export Complete");
@@ -384,6 +391,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 var matchingFiles = brukerDaltonikDir.GetFiles("DataAnalysis.exe", SearchOption.AllDirectories).ToList();
+
                 if (matchingFiles.Count == 0)
                 {
                     LogError("DataAnalysis.exe not found in the Bruker Daltonik folder at " + brukerDaltonikDir.FullName);
@@ -471,6 +479,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         }
 
                         var reMatch = reTotalScans.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out totalScans);
@@ -478,6 +487,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         else
                         {
                             reMatch = reCurrentScan.Match(dataLine);
+
                             if (reMatch.Success)
                             {
                                 int.TryParse(reMatch.Groups[1].Value, out currentScan);
@@ -555,6 +565,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 var success = mDotNetZipTools.ZipDirectory(subDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
+
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -588,6 +599,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
 
             var program = new FileInfo(progLoc);
+
             if (!program.Exists)
             {
                 try

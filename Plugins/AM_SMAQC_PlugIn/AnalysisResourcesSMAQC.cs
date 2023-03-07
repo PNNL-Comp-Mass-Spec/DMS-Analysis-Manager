@@ -22,6 +22,7 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -241,6 +242,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var synFileToFind = msgfplusSynopsisFile;
 
             var success = FileSearchTool.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true, logFileNotFound: true, logRemoteFilePath: true);
+
             if (!success)
             {
                 // Errors were reported in method call, so just return
@@ -249,6 +251,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             // Check whether we are loading data where the filenames are _msgfdb.txt instead of _msgfplus.txt
             var autoSwitchFilename = !string.Equals(synFileToFind, msgfplusSynopsisFile);
+
             if (autoSwitchFilename)
             {
                 msgfplusSynopsisFile = synFileToFind;
@@ -263,6 +266,7 @@ namespace AnalysisManagerSMAQCPlugIn
             foreach (var phrpFile in fileNamesToGet)
             {
                 string fileToGet;
+
                 if (autoSwitchFilename)
                 {
                     fileToGet = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(phrpFile, msgfplusSynopsisFile);

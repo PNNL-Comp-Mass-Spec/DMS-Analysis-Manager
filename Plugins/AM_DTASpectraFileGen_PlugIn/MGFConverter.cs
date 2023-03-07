@@ -98,6 +98,7 @@ namespace DTASpectraFileGen
                 var mzMLFilePath = Path.Combine(mWorkDir, datasetName + AnalysisResources.DOT_MZML_EXTENSION);
 
                 success = UpdateMGFFileTitleLinesUsingMzML(mzMLFilePath, mgfFilePath, datasetName);
+
                 if (!success)
                 {
                     return false;
@@ -169,10 +170,12 @@ namespace DTASpectraFileGen
             while (reader.Read())
             {
                 XMLTextReaderSkipWhitespace(reader);
+
                 if (reader.ReadState != ReadState.Interactive)
                     break;
 
                 var scanInfo = new ScanInfo();
+
                 if (reader.NodeType == XmlNodeType.Element)
                 {
                     switch (reader.Name)
@@ -242,6 +245,7 @@ namespace DTASpectraFileGen
         private string XMLTextReaderGetAttributeValue(XmlReader reader, string attributeName, string valueIfMissing)
         {
             reader.MoveToAttribute(attributeName);
+
             if (reader.ReadAttributeValue())
             {
                 return reader.Value;
@@ -344,6 +348,7 @@ namespace DTASpectraFileGen
                                 {
                                     dataLine = "TITLE=" + datasetName + "." + scanInfo.ScanStart.ToString("0000") + "." +
                                                 scanInfo.ScanEnd.ToString("0000") + ".";
+
                                     if (scanInfo.Charge > 0)
                                     {
                                         // Also append charge

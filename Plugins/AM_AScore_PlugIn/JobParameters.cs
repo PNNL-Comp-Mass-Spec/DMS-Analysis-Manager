@@ -26,6 +26,7 @@ namespace AnalysisManager_AScore_PlugIn
         public string RequireJobParam(string paramName)
         {
             var val = mJobParms.GetParam(paramName);
+
             if (string.IsNullOrWhiteSpace(val))
             {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -50,6 +51,7 @@ namespace AnalysisManager_AScore_PlugIn
         public string GetJobParam(string paramName, string defaultValue)
         {
             var val = mJobParms.GetParam(paramName);
+
             if (string.IsNullOrWhiteSpace(val))
                 val = defaultValue;
             return val;

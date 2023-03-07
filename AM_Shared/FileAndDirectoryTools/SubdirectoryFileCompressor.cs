@@ -87,6 +87,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 foreach (var subdirectory in workingDirectoryMetadata.WorkingDirectoryFiles)
                 {
                     var subdirectoryPath = subdirectory.Key;
+
                     foreach (var item in subdirectory.Value)
                     {
                         writer.WriteLine("{0}\t{1}\t{2}\t{3:O}", subdirectoryPath, item.Value.Name, item.Value.Length, item.Value.LastModifiedUTC);
@@ -160,6 +161,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 // Load the directory files metadata file
                 var metadataFile = new FileInfo(Path.Combine(WorkingDirectory.FullName, WORKING_DIRECTORY_METADATA_FILE));
+
                 if (!metadataFile.Exists)
                 {
                     OnWarningEvent("Working directory metadata file not found; the resourcer should have created file " + metadataFile.FullName);
@@ -180,6 +182,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     }
 
                     var success = CheckDirectoryModified(workingDirectoryMetadata, subdirectory, out var isModified);
+
                     if (!success)
                         return false;
 
@@ -218,10 +221,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
                     var lineParts = dataLine.Split('\t');
+
                     if (lineParts.Length < 4)
                     {
                         OnWarningEvent("Line in working directory metadata file does not have 4 columns; skipping " + dataLine);
@@ -419,6 +424,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 var zipDirectoryFiles = item.Value;
 
                 var success = ZipSubdirectories(zipTools, deleteFilesAfterZip, item.Key, zipDirectoryFiles);
+
                 if (success)
                     return true;
 

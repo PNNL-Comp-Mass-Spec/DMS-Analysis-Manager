@@ -49,6 +49,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -58,6 +59,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Setting MSGFPlusJavaMemorySize is stored in the settings file for this job
 
                 currentTask = "ValidateFreeMemorySize";
+
                 if (!ValidateFreeMemorySize("MSGFPlusJavaMemorySize", false))
                 {
                     mInsufficientFreeMemory = true;
@@ -76,6 +78,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, mFastaFileName));
+
                 if (!fastaFile.Exists)
                 {
                     LogError("FASTA file not found: " + fastaFile.FullName);
@@ -244,6 +247,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(msgfPlusUtils);
 
                 var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countLowResHCD, out var countHighResHCD);
+
                 if (!success)
                 {
                     var assumedScanType = mJobParams.GetParam("AssumedScanType");
@@ -349,10 +353,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Copy the FASTA file and related index files to the remote computer
                     var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
+
                     if (copyOrgDbSuccess)
                         return true;
 
                     attemptCount++;
+
                     if (attemptCount >= 3)
                         return false;
 
@@ -502,6 +508,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Note that if the file was found in MyEMSL, GetZippedMgfFile will auto-call ProcessMyEMSLDownloadQueue to download the file
 
             var mgfFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + DOT_MGF_EXTENSION));
+
             if (mgfFile.Exists)
             {
                 // The .mgf file is already in the working directory
@@ -510,6 +517,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             var result = GetZippedMgfFile();
+
             if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -581,6 +589,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             while (!reader.EndOfStream)
             {
                 headerLine = reader.ReadLine();
+
                 if (!string.IsNullOrWhiteSpace(headerLine))
                     break;
             }
@@ -596,6 +605,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             foreach (var columnName in columnNameWithScanType)
             {
                 var scanTypeIndex = headerColumns.IndexOf(columnName);
+
                 if (scanTypeIndex >= 0)
                 {
                     columnIndicesToCheck.Add(scanTypeIndex);
@@ -648,6 +658,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             while (!reader.EndOfStream && !detailedScanTypesDefined)
             {
                 var dataLine = reader.ReadLine();
+
                 if (string.IsNullOrWhiteSpace(dataLine))
                     continue;
 
@@ -683,6 +694,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return false;
 
             var headerLine = reader.ReadLine();
+
             if (string.IsNullOrWhiteSpace(headerLine))
                 return false;
 

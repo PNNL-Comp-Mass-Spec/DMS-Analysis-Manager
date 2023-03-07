@@ -46,12 +46,14 @@ namespace AnalysisManagerTopFDPlugIn
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
 
                 var topFdParamFile = mJobParams.GetParam("TopFD_ParamFile");
+
                 if (string.IsNullOrWhiteSpace(topFdParamFile))
                 {
                     LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
@@ -64,6 +66,7 @@ namespace AnalysisManagerTopFDPlugIn
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "TopFD";
 
                 var topFdParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
                 if (string.IsNullOrWhiteSpace(topFdParamFileStoragePath))
                 {
                     topFdParamFileStoragePath = @"\\gigasax\dms_parameter_Files\TopFD";
@@ -91,6 +94,7 @@ namespace AnalysisManagerTopFDPlugIn
                     currentTask = "Get Input file";
 
                     var mzMLResult = GetMzMLFile();
+
                     if (mzMLResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         if (mzMLResult == CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE)
@@ -133,6 +137,7 @@ namespace AnalysisManagerTopFDPlugIn
             try
             {
                 var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
+
                 if (datasetID == 0)
                 {
                     LogError("Job parameters do not have DatasetID (or it is 0); unable to look for existing TopFD results");
@@ -141,6 +146,7 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 var settingsFileToFind = mJobParams.GetJobParameter("SettingsFileName", string.Empty).Trim();
+
                 if (string.IsNullOrWhiteSpace(settingsFileToFind))
                 {
                     LogError("Job parameters do not SettingsFileName (or it is an empty string); unable to look for existing TopFD results");
@@ -164,6 +170,7 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 var topFDExe = new FileInfo(topFDProgLoc);
+
                 if (!topFDExe.Exists)
                 {
                     mMessage = Global.AppendToComment(mMessage, "File not found: " + topFDExe.FullName);
@@ -204,6 +211,7 @@ namespace AnalysisManagerTopFDPlugIn
                     // TopFD 1.3.1; topfd.exe: 2020-01-13 10:55:30 AM
 
                     var job = result[0];
+
                     if (!int.TryParse(job, out var jobValue))
                     {
                         LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Job_Steps_History_Export: {1}", datasetID, job));
@@ -214,6 +222,7 @@ namespace AnalysisManagerTopFDPlugIn
                     var resultsDirectory = result[2];
 
                     var charIndex = toolVersion.IndexOf("topfd.exe:", StringComparison.OrdinalIgnoreCase);
+
                     if (charIndex < 0)
                         continue;
 
@@ -222,6 +231,7 @@ namespace AnalysisManagerTopFDPlugIn
                     var topFDToolAndDate = toolVersion.Substring(charIndex);
 
                     var dateMatch = dateMatcher.Match(topFDToolAndDate);
+
                     if (!dateMatch.Success)
                     {
                         LogWarning(string.Format(
@@ -283,6 +293,7 @@ namespace AnalysisManagerTopFDPlugIn
                 foreach (var result in settingsFileResults)
                 {
                     var job = result[0];
+
                     if (!int.TryParse(job, out var jobValue))
                     {
                         LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Analysis_Job_Export: {1}", datasetID, job));
@@ -290,6 +301,7 @@ namespace AnalysisManagerTopFDPlugIn
                     }
 
                     var settingsFile = result[1].Trim();
+
                     if (!settingsFile.Equals(settingsFileToFind))
                         continue;
 
@@ -301,6 +313,7 @@ namespace AnalysisManagerTopFDPlugIn
                     var resultsDirectoryPath = Path.Combine(datasetDirectoryPath, jobCandidates[jobValue].ResultsDirectoryName);
 
                     var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
+
                     if (!resultsDirectory.Exists)
                     {
                         LogWarning(string.Format("Results directory not found for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath));

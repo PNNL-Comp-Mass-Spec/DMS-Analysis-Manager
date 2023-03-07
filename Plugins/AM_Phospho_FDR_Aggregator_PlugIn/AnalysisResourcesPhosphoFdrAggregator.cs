@@ -23,6 +23,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -37,6 +38,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
+
                 if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower().Trim() != "copy")
                 {
                     mJobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
@@ -135,6 +137,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         private bool RetrieveAScoreParamFile(string parameterName, ref int paramFilesCopied)
         {
             var paramFileName = mJobParams.GetJobParameter(parameterName, string.Empty);
+
             if (string.IsNullOrWhiteSpace(paramFileName))
             {
                 return true;

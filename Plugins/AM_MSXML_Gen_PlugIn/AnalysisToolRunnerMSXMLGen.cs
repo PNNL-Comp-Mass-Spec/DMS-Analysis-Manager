@@ -52,6 +52,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             var storeInCache = mJobParams.GetJobParameter("StoreMSXmlInCache", true);
+
             if (storeInCache)
             {
                 var msXMLCacheFolderPath = mMgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
@@ -328,6 +329,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         private string GetRecalculatePrecursorsToolProgLoc(out string recalculatePrecursorsTool)
         {
             recalculatePrecursorsTool = mJobParams.GetJobParameter("RecalculatePrecursorsTool", string.Empty);
+
             if (string.IsNullOrWhiteSpace(recalculatePrecursorsTool))
             {
                 LogError("Job parameter RecalculatePrecursorsTool is not defined in the settings file; cannot determine tool to use");
@@ -337,6 +339,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             if (string.Equals(recalculatePrecursorsTool, RawConverterRunner.RAW_CONVERTER_FILENAME, StringComparison.OrdinalIgnoreCase))
             {
                 var rawConverterDir = mMgrParams.GetParam("RawConverterProgLoc");
+
                 if (string.IsNullOrWhiteSpace(rawConverterDir))
                 {
                     LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the directory for " +
@@ -423,9 +426,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // and settings file IonTrapDefSettings_MzML_RawConverter_StatCysAlk_4plexITRAQ.xml
 
                 var recalculatePrecursors = mJobParams.GetJobParameter("RecalculatePrecursors", false);
+
                 if (recalculatePrecursors && mMSXmlOutputFileType != AnalysisResources.MSXMLOutputTypeConstants.mgf)
                 {
                     var success = RecalculatePrecursorIons(msXmlFile);
+
                     if (!success)
                     {
                         return false;
@@ -438,6 +443,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
                 // However, that will not work if RecalculatePrecursors is true
                 var msXmlFileZipped = GZipFile(msXmlFile);
+
                 if (msXmlFileZipped == null)
                 {
                     return false;
@@ -517,6 +523,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             var recalculatePrecursorsToolProgLoc = GetRecalculatePrecursorsToolProgLoc(out var recalculatePrecursorsTool);
+
             if (string.IsNullOrWhiteSpace(recalculatePrecursorsToolProgLoc))
             {
                 return false;
@@ -534,6 +541,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var rawConverterSuccess = RecalculatePrecursorIonsCreateMGF(rawConverterExe.Directory.FullName, rawFilePath, out var mgfFile);
+
                 if (!rawConverterSuccess)
                     return false;
 
@@ -576,6 +584,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Confirm that RawConverter created a .mgf file
 
                 mgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION));
+
                 if (!mgfFile.Exists)
                 {
                     LogError("RawConverter did not create file " + mgfFile.Name);
@@ -618,6 +627,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Confirm that ParentIonUpdater created a new .mzML file
 
                 var updatedMzMLFile = new FileInfo(updatedMzMLPath);
+
                 if (!updatedMzMLFile.Exists)
                 {
                     LogError("ParentIonUpdater did not create file " + mgfFile.Name);
@@ -760,6 +770,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var msXmlGenerator = mJobParams.GetParam("MSXMLGenerator");
 
             mMSXmlGeneratorAppPath = string.Empty;
+
             if (msXmlGenerator.IndexOf("readw", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // ReAdW
@@ -774,6 +785,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 mMSXmlGeneratorAppPath = Path.Combine(proteoWizardDir, msXmlGenerator);
 
                 var success = mToolVersionUtilities.GetMSConvertToolVersion(mMSXmlGeneratorAppPath, out var msConvertVersion);
+
                 if (!success)
                 {
                     LogError(string.Format("Unable to determine the version of {0}", msXmlGenerator), true);

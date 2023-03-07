@@ -503,6 +503,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Use a linked list to keep track of the progress values
             // This makes lookup of the next progress value easier
             var progressValues = new LinkedList<int>();
+
             foreach (var item in (from progressValue in processingSteps.Keys orderby progressValue select progressValue))
             {
                 progressValues.AddLast(item);
@@ -606,6 +607,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     }
 
                     var splitFastaProgressMatch = splitFastaMatcher.Match(dataLine);
+
                     if (splitFastaProgressMatch.Success &&
                         splitFastaProgressMatch.Groups["Action"].Value.Equals("STARTED", StringComparison.OrdinalIgnoreCase))
                     {
@@ -627,6 +629,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     }
 
                     var sliceMatch = sliceMatcher.Match(dataLine);
+
                     if (sliceMatch.Success)
                     {
                         currentSlice = int.Parse(sliceMatch.Groups["Current"].Value);
@@ -642,6 +645,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                         }
 
                         var progressMatch = progressMatcher.Match(dataLine);
+
                         if (progressMatch.Success)
                         {
                             datasetProgress = float.Parse(progressMatch.Groups["PercentComplete"].Value);
@@ -776,6 +780,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -783,6 +788,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 // Determine the path to Philosopher
                 var philosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
+
                 if (string.IsNullOrWhiteSpace(philosopherProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -885,6 +891,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     var datasetName = item.Value;
 
                     string optionalDatasetInfo;
+
                     if (dataPackageInfo.Datasets.Count > 0)
                     {
                         optionalDatasetInfo = " for dataset " + datasetName;
@@ -979,6 +986,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (Global.RunningOnDeveloperComputer())
             {
                 var freeMemoryMB = Global.GetFreeMemoryMB();
+
                 if (javaMemorySizeMB > freeMemoryMB * 0.9)
                 {
                     ConsoleMsgUtils.ShowWarning(
@@ -1421,6 +1429,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (primaryPepXmlFile[0].Length == 0)
             {
                 string optionalDatasetInfo;
+
                 if (dataPackageInfo.Datasets.Count > 0)
                 {
                     optionalDatasetInfo = " for dataset " + datasetName;

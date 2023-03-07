@@ -54,6 +54,7 @@ namespace AnalysisManagerMasicPlugin
 
             // Examine the size of the .Raw file
             var inputFile = new FileInfo(inputFilePath);
+
             if (!inputFile.Exists)
             {
                 // Unable to resolve the file path
@@ -93,6 +94,7 @@ namespace AnalysisManagerMasicPlugin
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = mMSXmlCreator.ErrorMessage;
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Unknown error creating the mzXML file for dataset " + mDatasetName;
@@ -107,6 +109,7 @@ namespace AnalysisManagerMasicPlugin
                 return string.Empty;
 
             var mzXMLFilePath = Path.ChangeExtension(thermoRawFile.FullName, "mzXML");
+
             if (!File.Exists(mzXMLFilePath))
             {
                 mMessage = "MSXmlCreator did not create the .mzXML file";
@@ -124,6 +127,7 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 var foundFiles = Directory.GetFiles(mWorkDir, "*.raw");
+
                 foreach (var targetFile in foundFiles)
                 {
                     DeleteFileWithRetries(targetFile);

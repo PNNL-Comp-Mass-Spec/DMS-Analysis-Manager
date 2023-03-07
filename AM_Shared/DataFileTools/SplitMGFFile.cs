@@ -84,6 +84,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var mgfFile = new FileInfo(mgfFilePath);
+
                 if (!mgfFile.Exists)
                 {
                     OnErrorEvent("File not found: " + mgfFilePath);
@@ -150,12 +151,14 @@ namespace AnalysisManagerBase.DataFileTools
                 while (true)
                 {
                     var spectrumData = GetNextMGFSpectrum(mgfFileReader, ref previousLine, ref bytesRead, out var scanNumber);
+
                     if (spectrumData.Count == 0)
                     {
                         break;
                     }
 
                     var nextWriter = splitFileWriters.Dequeue();
+
                     foreach (var dataLine in spectrumData)
                     {
                         nextWriter.Writer.WriteLine(dataLine);
@@ -173,6 +176,7 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         lastProgress = DateTime.UtcNow;
                         var percentComplete = bytesRead / (float)mgfFileReader.BaseStream.Length * 100;
+
                         if (percentComplete > 100)
                             percentComplete = 100;
                         OnProgressUpdate("Splitting MGF file", (int)percentComplete);
@@ -224,6 +228,7 @@ namespace AnalysisManagerBase.DataFileTools
                 return spectrumData;
 
             string dataLine;
+
             if (string.IsNullOrWhiteSpace(previousLine))
             {
                 dataLine = mgfFileReader.ReadLine();
@@ -258,6 +263,7 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         // Parse out the scan number
                         var reMatch = mExtractScan.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out scanNumber);

@@ -109,6 +109,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // Get a listing of the zip files to process
             var zipFiles = Directory.GetFiles(datasetDirectoryPath, "s*.zip");
+
             if (zipFiles.GetLength(0) < 1)
             {
                 // No zipped data files found
@@ -124,6 +125,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnDebugEvent("Copying file " + sourceZipFile + " to work directory");
                 }
                 var sourceFileName = Path.GetFileName(sourceZipFile);
+
                 if (string.IsNullOrEmpty(sourceFileName))
                 {
                     OnErrorEvent("Unable to determine the filename of zip file " + sourceZipFile);
@@ -755,6 +757,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         continue;
 
                     var filePathMatch = FindFileInDirectoryTree(subdirectory.FullName, fileName);
+
                     if (!string.IsNullOrEmpty(filePathMatch))
                     {
                         return filePathMatch;
@@ -773,6 +776,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public List<FileInfo> FindMaxQuantSynopsisFiles(string directoryPath)
         {
             var synopsisFileNames = FindMaxQuantSynopsisFiles(directoryPath, out var errorMessage);
+
             if (!string.IsNullOrWhiteSpace(errorMessage))
             {
                 OnErrorEvent(errorMessage);
@@ -899,6 +903,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     foreach (var archivedFileInfo in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                     {
                         var archivedFile = new FileInfo(archivedFileInfo.FileInfo.RelativePathWindows);
+
                         if (Global.IsMatch(archivedFile.Name, mzXMLFilename))
                         {
                             myEmslFileID = archivedFileInfo.FileID;
@@ -1230,6 +1235,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 if (sourceDirectory.Exists)
                 {
                     var candidateFilePath = Path.Combine(sourceDirectory.FullName, msXmlOrPbfFilename);
+
                     if (File.Exists(candidateFilePath))
                     {
                         sourceFilePath = candidateFilePath;
@@ -1239,6 +1245,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     if (lookForGzippedFile)
                     {
                         var candidateGzFilePath = candidateFilePath + AnalysisResources.DOT_GZ_EXTENSION;
+
                         if (File.Exists(candidateGzFilePath))
                         {
                             sourceFilePath = candidateGzFilePath;
@@ -1525,6 +1532,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // Determine the YearQuarter code for this dataset
             var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+
             if (string.IsNullOrEmpty(datasetStoragePath) && (mAuroraAvailable || !MyEMSLSearchDisabled))
             {
                 datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
@@ -1696,6 +1704,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             endSectionX = int.MaxValue;
 
             var param = jobParams.GetParam("MALDI_Imaging_startSectionX");
+
             if (!string.IsNullOrEmpty(param))
             {
                 if (int.TryParse(param, out startSectionX))
@@ -1705,6 +1714,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             param = jobParams.GetParam("MALDI_Imaging_endSectionX");
+
             if (!string.IsNullOrEmpty(param))
             {
                 if (int.TryParse(param, out endSectionX))
@@ -1760,6 +1770,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 foreach (var item in sharedResultsDirectoryList.Split(','))
                 {
                     var itemTrimmed = item.Trim();
+
                     if (itemTrimmed.Length > 0)
                     {
                         sharedResultDirNames.Add(itemTrimmed);
@@ -1974,6 +1985,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             try
             {
                 var progLoc = mMgrParams.GetParam(progLocName);
+
                 if (string.IsNullOrEmpty(progLocName))
                 {
                     OnErrorEvent("Manager parameter " + progLocName + " is not defined; cannot retrieve file " + OMICS_ELEMENT_DATA_FILE);
@@ -2009,6 +2021,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly, int maxAttempts)
         {
             var datasetFilePath = mDirectorySearch.FindDatasetFile(maxAttempts, fileExtension);
+
             if (string.IsNullOrEmpty(datasetFilePath))
             {
                 return false;
@@ -2022,6 +2035,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             var datasetFile = new FileInfo(datasetFilePath);
+
             if (!datasetFile.Exists)
             {
                 OnErrorEvent("Source dataset file not found: " + datasetFile.FullName);
@@ -2114,6 +2128,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // Unzip concatenated DTA file
             OnStatusEvent("Unzipping concatenated DTA file");
+
             if (UnzipFileStart(targetZipFilePath, mWorkDir, "RetrieveDtaFiles"))
             {
                 if (mDebugLevel >= 1)
@@ -2192,6 +2207,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             var mgfFile = new FileInfo(mgfFilePath);
+
             if (!mgfFile.Exists)
             {
                 OnErrorEvent("Source mgf file not found: " + mgfFile.FullName);
@@ -2340,6 +2356,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     // Delete the local StoragePathInfo file
                     var storagePathInfoFile = Path.Combine(mWorkDir, sourceFile.Name + AnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
+
                     if (File.Exists(storagePathInfoFile))
                     {
                         File.Delete(storagePathInfoFile);
@@ -2395,6 +2412,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // Unzip concatenated OUT file
             OnStatusEvent("Unzipping concatenated OUT file");
+
             if (UnzipFileStart(Path.Combine(mWorkDir, zippedFileName), mWorkDir, "RetrieveOutFiles"))
             {
                 if (mDebugLevel >= 1)
@@ -2520,8 +2538,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var requiredFileSuffixes = new List<string>();
 
             if (retrieveSICStatsFile) requiredFileSuffixes.Add(AnalysisResources.SIC_STATS_FILE_SUFFIX);
+
             if (retrieveScanStatsFile) requiredFileSuffixes.Add(AnalysisResources.SCAN_STATS_FILE_SUFFIX);
+
             if (retrieveScanStatsExFile) requiredFileSuffixes.Add(AnalysisResources.SCAN_STATS_EX_FILE_SUFFIX);
+
             if (retrieveReporterIonsFile) requiredFileSuffixes.Add(AnalysisResources.REPORTERIONS_FILE_SUFFIX);
 
             var matchCount = requiredFileSuffixes.Count(fileSuffix => FileExistsInWorkDir(DatasetName + fileSuffix));
@@ -2598,6 +2619,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // See if the ServerPath directory actually contains a subdirectory that starts with "SIC"
             var subdirectories = datasetDirectory.GetDirectories("SIC*");
+
             if (subdirectories.Length == 0)
             {
                 OnWarningEvent("Dataset directory does not contain any MASIC results directories");
@@ -2613,6 +2635,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             foreach (var subdirectory in subdirectories)
             {
                 var scanStatsFile = new FileInfo(Path.Combine(subdirectory.FullName, scanStatsFilename));
+
                 if (scanStatsFile.Exists)
                 {
                     if (string.IsNullOrEmpty(newestScanStatsFilePath) || scanStatsFile.LastWriteTimeUtc > newestScanStatsFileDate)
@@ -2837,6 +2860,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var ignoreFile = SafeToIgnore(sourceFile.Name, nonCriticalFileSuffixes);
 
             BaseLogger.LogLevels logMsgTypeIfNotFound;
+
             if (ignoreFile)
             {
                 logMsgTypeIfNotFound = BaseLogger.LogLevels.DEBUG;
@@ -3022,6 +3046,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBafAndTdfFiles)
         {
             var fileNamesToSkip = new List<string>();
+
             if (skipBafAndTdfFiles)
             {
                 fileNamesToSkip.Add("analysis.baf");
@@ -3077,6 +3102,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             try
             {
                 var sourceDirectory = new DirectoryInfo(datasetDirectoryPath);
+
                 if (!sourceDirectory.Exists)
                 {
                     OnErrorEvent("Source dataset directory not found: " + sourceDirectory.FullName);
@@ -3140,6 +3166,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 // Delete any subdirectories at ChameleonCachedDataFolder that do not have this dataset's name
                 chameleonCachedDataDir = new DirectoryInfo(chameleonCachedDataDirPath);
+
                 if (!chameleonCachedDataDir.Exists)
                 {
                     OnErrorEvent("Chameleon cached data directory does not exist: " + chameleonCachedDataDir.FullName);
@@ -3256,6 +3283,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     zipFilePathRemote = zipFilePath;
 
                     bool unzipFile;
+
                     if (applySectionFilter)
                     {
                         unzipFile = false;
@@ -3308,6 +3336,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     // If unzipOverNetwork is true, we want to copy the file locally first
 
                     string zipFilePathToExtract;
+
                     if (unzipOverNetwork)
                     {
                         zipFilePathToExtract = zipFilePathRemote;
@@ -3318,6 +3347,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         {
                             // Copy the file to the work directory on the local computer
                             var sourceFileName = Path.GetFileName(zipFilePathRemote);
+
                             if (string.IsNullOrEmpty(sourceFileName))
                             {
                                 OnErrorEvent("Unable to determine the filename of the remote zip file: " + zipFilePathRemote);
@@ -3474,6 +3504,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 // Get a listing of the zip files to process
                 var zipFiles = Directory.GetFiles(mWorkDir, "s*.zip");
+
                 if (zipFiles.GetLength(0) < 1)
                 {
                     OnErrorEvent("No zipped s-folders found in working directory");
@@ -3633,6 +3664,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             catch (Exception ex)
             {
                 var errMsg = "Exception while unzipping '" + zipFilePath + "'";
+
                 if (!string.IsNullOrEmpty(unzipToolName))
                     errMsg += " using " + unzipToolName;
 

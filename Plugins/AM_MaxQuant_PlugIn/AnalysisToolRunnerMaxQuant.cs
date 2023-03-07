@@ -247,12 +247,14 @@ namespace AnalysisManagerMaxQuantPlugIn
             try
             {
                 var procDirectory = new DirectoryInfo(Path.Combine(subdirectoryCompressor.WorkingDirectory.FullName, "proc"));
+
                 if (procDirectory.Exists)
                 {
                     directoriesToSkipZipping.Add(procDirectory);
                 }
 
                 var txtDirectory = new DirectoryInfo(Path.Combine(subdirectoryCompressor.WorkingDirectory.FullName, "txt"));
+
                 if (txtDirectory.Exists)
                 {
                     directoriesToSkipZipping.Add(txtDirectory);
@@ -284,6 +286,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         internal bool GetDmsStepDetails(XElement item, out DmsStepInfo dmsStepInfo)
         {
             var success = GetDmsStepDetails(item, out dmsStepInfo, out var errorMessage);
+
             if (success)
                 return true;
 
@@ -453,6 +456,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         private static void MoveFileOverwrite(FileInfo fileToMove, string newFilePath)
         {
             var targetFile = new FileInfo(newFilePath);
+
             if (targetFile.Exists)
                 targetFile.Delete();
 
@@ -552,6 +556,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var directoriesToZipSubsSeparately = new Dictionary<DirectoryInfo, bool>();
 
                 var combinedDirectory = new DirectoryInfo(Path.Combine(workingDirectory.FullName, "combined"));
+
                 if (combinedDirectory.Exists)
                 {
                     directoriesToZipSubsSeparately.Add(combinedDirectory, false);
@@ -567,6 +572,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 var maxquantSearchComplete = combinedDirectory.Exists && RuntimeOptions.EndStepNumber >= MaxQuantRuntimeOptions.MAX_STEP_NUMBER;
 
                 var txtDirectoryMoveError = false;
+
                 if (maxquantSearchComplete)
                 {
                     // Move the txt directory to be just below the working directory
@@ -717,6 +723,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     if (RuntimeOptions.DryRun)
                     {
                         var match = dryRunStepMatcher.Match(dataLine);
+
                         if (match.Success)
                         {
                             var stepNumber = int.Parse(match.Groups["StepNumber"].Value);
@@ -918,6 +925,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 if (RuntimeOptions.DryRun)
@@ -1092,6 +1100,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                         // Split on an equals sign
                         var lineParts = dataLine.Split(delimiter, 2).ToList();
+
                         if (lineParts.Count < 2)
                         {
                             dataLines.Add(dataLine);
@@ -1206,6 +1215,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     // Split on tabs
                     var lineParts = dataLine.Split('\t').ToList();
+
                     if (lineParts.Count < 2)
                     {
                         LogWarning(string.Format("Line {0} in file {1} does not have a tab; this is unexpected: {2}",
@@ -1614,6 +1624,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         }
 
                         var stepMatched = false;
+
                         foreach (var dmsStep in dmsSteps)
                         {
                             if (dmsStep.Key != stepId)
@@ -1797,6 +1808,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 RuntimeOptions.DryRun = false;
+
                 foreach (var dmsStep in dmsSteps.Where(item => !item.Value.StartStepID.HasValue))
                 {
                     // In the MaxQuant parameter file, DMS step 1 has an undefined startStepID; running a dry run of MaxQuant to determine step IDs
@@ -1809,6 +1821,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 bool usedDryRun;
+
                 if (RuntimeOptions.DryRun)
                 {
                     var result = StartMaxQuant();
@@ -1887,6 +1900,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     RuntimeOptions.StartStepNumber = dmsStep.Value.StartStepID.Value;
 
                     var nextStepID = dmsStep.Key + 1;
+
                     if (dmsSteps.TryGetValue(nextStepID, out var nextDmsStep))
                     {
                         if (!nextDmsStep.StartStepID.HasValue)

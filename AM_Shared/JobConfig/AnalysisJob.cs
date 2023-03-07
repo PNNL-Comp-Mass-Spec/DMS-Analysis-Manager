@@ -320,6 +320,7 @@ namespace AnalysisManagerBase.JobConfig
             try
             {
                 string targetFileDescription;
+
                 if (fileSpec.StartsWith("*.") && fileSpec.Length > 2)
                 {
                     targetFileDescription = fileSpec.Substring(2);
@@ -330,6 +331,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
 
                 var foundFiles = taskQueueDirectory.GetFiles(fileSpec);
+
                 if (foundFiles.Length == 0)
                     return;
 
@@ -344,11 +346,13 @@ namespace AnalysisManagerBase.JobConfig
                     return;
 
                 var jobStatusFiles = new Dictionary<string, FileInfo>();
+
                 if (ignoreIfRecentJobStatusFile)
                 {
                     foreach (var jobStatusFile in taskQueueDirectory.GetFiles("*.jobstatus"))
                     {
                         var baseName = Path.GetFileName(jobStatusFile.Name);
+
                         if (jobStatusFiles.ContainsKey(baseName))
                             continue;
 
@@ -818,6 +822,7 @@ namespace AnalysisManagerBase.JobConfig
                         continue;
 
                     var nameAttrib = section.Attribute("name");
+
                     if (nameAttrib == null)
                         continue;
 
@@ -834,6 +839,7 @@ namespace AnalysisManagerBase.JobConfig
                         if (!item.HasAttributes) continue;
 
                         var itemKey = item.Attribute("key");
+
                         if (itemKey == null) continue;
 
                         paramNames.Add(itemKey.Value);
@@ -848,12 +854,14 @@ namespace AnalysisManagerBase.JobConfig
                             continue;
 
                         var paramName = paramItem.Attribute("key");
+
                         if (paramName == null)
                             continue;
 
                         if (paramNamesToIgnore.ContainsKey(paramName.Value))
                         {
                             var requiredParameter = paramNamesToIgnore[paramName.Value];
+
                             if (string.IsNullOrWhiteSpace(requiredParameter) || paramNames.Contains(requiredParameter))
                             {
                                 // Remove this parameter from this section
@@ -868,6 +876,7 @@ namespace AnalysisManagerBase.JobConfig
                         // This is most commonly used to add attribute step="1"
 
                         var attribName = paramsToAddAsAttribute[paramName.Value];
+
                         if (string.IsNullOrWhiteSpace(attribName))
                             attribName = paramName.Value;
 
@@ -958,10 +967,12 @@ namespace AnalysisManagerBase.JobConfig
                         ConsoleMsgUtils.ShowDebug("  Reading task info file " + taskInfoFile.FullName);
 
                     var success = ReadOfflineJobInfoFile(taskInfoFile, out _, out _, out var workDirPath, out _);
+
                     if (!success || string.IsNullOrWhiteSpace(workDirPath))
                         continue;
 
                     var jobWorkDir = new DirectoryInfo(workDirPath);
+
                     if (!activeWorkDirs.ContainsKey(jobWorkDir.FullName))
                         activeWorkDirs.Add(jobWorkDir.FullName, jobWorkDir);
 
@@ -985,6 +996,7 @@ namespace AnalysisManagerBase.JobConfig
                         ConsoleMsgUtils.ShowDebug("Finding Job_Step directories in " + parentWorkDir.FullName);
 
                     var workDirs = parentWorkDir.GetDirectories("Job*_Step*", SearchOption.TopDirectoryOnly);
+
                     if (workDirs.Length == 0)
                         continue;
 
@@ -1008,6 +1020,7 @@ namespace AnalysisManagerBase.JobConfig
                         }
 
                         workDir.Refresh();
+
                         if (!workDir.Exists)
                         {
                             // WorkDir no longer exists
@@ -1078,12 +1091,14 @@ namespace AnalysisManagerBase.JobConfig
                         ConsoleMsgUtils.ShowDebug("Finding x_Job_Step directories in " + parentWorkDir.FullName);
 
                     var oldWorkDirs = parentWorkDir.GetDirectories("x_Job*_Step*", SearchOption.TopDirectoryOnly);
+
                     if (oldWorkDirs.Length == 0)
                         continue;
 
                     foreach (var oldWorkDir in oldWorkDirs)
                     {
                         oldWorkDir.Refresh();
+
                         if (!oldWorkDir.Exists)
                         {
                             // WorkDir no longer exists
@@ -1153,10 +1168,12 @@ namespace AnalysisManagerBase.JobConfig
             while (!reader.EndOfStream)
             {
                 var dataLine = reader.ReadLine();
+
                 if (string.IsNullOrWhiteSpace(dataLine))
                     continue;
 
                 var lineParts = dataLine.Split(splitChars, 2);
+
                 if (lineParts.Length < 2)
                     continue;
 
@@ -1400,6 +1417,7 @@ namespace AnalysisManagerBase.JobConfig
                 var stepTools = stepToolList.Split(',');
 
                 var taskQueuePathBase = mMgrParams.GetParam("LocalTaskQueuePath");
+
                 if (string.IsNullOrWhiteSpace(taskQueuePathBase))
                 {
                     LogError("Manager parameter LocalTaskQueuePath is empty; update ManagerSettingsLocal.xml");
@@ -1414,6 +1432,7 @@ namespace AnalysisManagerBase.JobConfig
                 foreach (var stepTool in stepTools)
                 {
                     var taskQueueDirectory = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool.Trim()));
+
                     if (!taskQueueDirectory.Exists)
                     {
                         LogWarning("Task queue directory not found: " + taskQueueDirectory.FullName);
@@ -1423,6 +1442,7 @@ namespace AnalysisManagerBase.JobConfig
                     DeleteOldTaskQueueFiles(taskQueueDirectory);
 
                     var infoFiles = taskQueueDirectory.GetFiles("*.info");
+
                     if (infoFiles.Length == 0)
                         continue;
 
@@ -1601,6 +1621,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
 
                 mJobId = jobId;
+
                 if (stepNum == 0)
                 {
                     FinalizeFailedOfflineJob(infoFile, startTime, "Step missing from .info file");
@@ -1621,6 +1642,7 @@ namespace AnalysisManagerBase.JobConfig
                 // If necessary, switch from a Linux-style path to a Windows-style path
                 // (this will be the case when debugging offline jobs on a Windows computer)
                 var workDir = new DirectoryInfo(workDirPath);
+
                 if (!string.Equals(workDirPath, workDir.FullName))
                 {
                     workDirPath = workDir.FullName;
@@ -1785,6 +1807,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 // Make sure a .lock file does not exist
                 var lockFile = new FileInfo(Path.ChangeExtension(mOfflineJobInfoFile.FullName, Global.LOCK_FILE_EXTENSION));
+
                 if (lockFile.Exists)
                 {
                     LogWarning(string.Format(
@@ -1806,6 +1829,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             TaskClosed = true;
+
             if (Global.OfflineMode)
             {
                 if (mOfflineJobInfoFile == null)
@@ -1968,6 +1992,7 @@ namespace AnalysisManagerBase.JobConfig
             // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
             //
             object remoteProgress = null;
+
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
             {
                 remoteProgress = Global.CSngSafe(remoteProgressText, 0);
@@ -1976,6 +2001,7 @@ namespace AnalysisManagerBase.JobConfig
 
             // Note: leave remoteStartParam.Value as null if job parameter RemoteStart is empty
             object remoteStart = null;
+
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
             {
                 // remoteStartText should be UTC-based
@@ -1986,6 +2012,7 @@ namespace AnalysisManagerBase.JobConfig
 
             // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
             object remoteFinish = null;
+
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
             {
                 // remoteFinishText should be UTC-based
@@ -2014,6 +2041,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             string errorMessage;
+
             if (resCode != 0)
             {
                 errorMessage = "Error " + resCode + " setting analysis job complete";
@@ -2024,6 +2052,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             var messageDetails = messageParam.Value?.CastDBVal<string>();
+
             if (!string.IsNullOrWhiteSpace(messageDetails))
             {
                 LogError(errorMessage + ": " + messageDetails);

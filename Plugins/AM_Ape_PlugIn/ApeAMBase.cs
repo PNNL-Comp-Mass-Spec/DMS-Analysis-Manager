@@ -44,6 +44,7 @@ namespace AnalysisManager_Ape_PlugIn
         public string RequireMgrParam(string paramName)
         {
             var val = mMgrParams.GetParam(paramName);
+
             if (string.IsNullOrEmpty(val))
             {
                 OnWarningEvent("Required job parameter '{0}' was missing.", paramName);
@@ -54,6 +55,7 @@ namespace AnalysisManager_Ape_PlugIn
         public string RequireJobParam(string paramName)
         {
             var val = mJobParams.GetParam(paramName);
+
             if (string.IsNullOrEmpty(val))
             {
                 OnWarningEvent("Required job parameter '{0}' was missing.", paramName);

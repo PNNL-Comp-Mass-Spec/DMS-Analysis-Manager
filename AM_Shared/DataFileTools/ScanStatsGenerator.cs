@@ -142,6 +142,7 @@ namespace AnalysisManagerBase.DataFileTools
                 else
                 {
                     var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+
                     if (newInstance != null)
                     {
                         msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)newInstance;

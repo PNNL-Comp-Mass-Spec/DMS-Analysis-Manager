@@ -104,6 +104,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 MassErrorStats.PSMJob = psmJob;
 
                 var sourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     ErrorMessage = "MzRefinery Log file not found";

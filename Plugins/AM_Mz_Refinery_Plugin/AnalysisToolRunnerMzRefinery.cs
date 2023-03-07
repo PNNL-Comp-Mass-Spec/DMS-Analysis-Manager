@@ -137,6 +137,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -154,10 +155,12 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var msXmlFileExtension = AnalysisResources.DOT_MZML_EXTENSION;
 
                 var dtaGenerator = mJobParams.GetJobParameter("DtaGenerator", string.Empty);
+
                 if (!string.IsNullOrWhiteSpace(dtaGenerator))
                 {
                     // Update the .mzML file using parent ion details in the _dta.txt file
                     var successToMzML = UpdateMzMLUsingCDTA();
+
                     if (!successToMzML)
                     {
                         if (string.IsNullOrEmpty(mMessage))
@@ -170,6 +173,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 else
                 {
                     var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+
                     if (string.Equals(msXmlOutputType, "mzXML", StringComparison.OrdinalIgnoreCase))
                     {
                         msXmlFileExtension = AnalysisResources.DOT_MZXML_EXTENSION;
@@ -182,6 +186,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var skippedMSGFPlus = false;
 
                 CloseOutType result;
+
                 if (msgfPlusResults.Exists)
                 {
                     result = CloseOutType.CLOSEOUT_SUCCESS;
@@ -234,6 +239,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         {
                             // No valid peak was found; a result file may not exist
                             fixedMSXmlFile.Refresh();
+
                             if (!fixedMSXmlFile.Exists)
                             {
                                 // Rename the original file to have the expected name of the fixed mzML file
@@ -248,9 +254,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     // Look for the results file
                     fixedMSXmlFile.Refresh();
+
                     if (fixedMSXmlFile.Exists)
                     {
                         var postProcessSuccess = PostProcessMzRefineryResults(msgfPlusResults, fixedMSXmlFile, skippedMSGFPlus);
+
                         if (!postProcessSuccess)
                             processingError = true;
                     }
@@ -267,6 +275,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (mUnableToUseMzRefinery)
                 {
                     msgfPlusResults.Refresh();
+
                     if (mForceGeneratePPMErrorPlots && msgfPlusResults.Exists)
                     {
                         try
@@ -352,6 +361,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // If we get here, MS-GF+ succeeded, but MzRefinery or PostProcessing failed
                 LogWarning("Processing failed; see results at " + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH));
+
                 if (mUnableToUseMzRefinery)
                 {
                     return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
@@ -431,6 +441,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var overrideParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var jobScript = mJobParams.GetJobParameter("ToolName", "");
+
             if (jobScript.StartsWith("modplus", StringComparison.OrdinalIgnoreCase))
             {
                 if (fastaFileIsDecoy)
@@ -468,6 +479,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Look for extra parameters specific to MZRefinery
             var success = ExtractMzRefinerOptionsFromParameterFile(sourceParamFile.FullName);
+
             if (!success)
             {
                 LogError("Error extracting MzRefinery options from parameter file " + Path.GetFileName(paramFilePath));
@@ -485,6 +497,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // The amount of memory required depends on both the FASTA file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MzRefMSGFPlusJavaMemorySize setting in the settings file
             var javaMemorySize = mJobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
+
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
@@ -543,6 +556,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             else
             {
                 string msg;
+
                 if (mMSGFPlusComplete)
                 {
                     msg = "MS-GF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen";
@@ -582,6 +596,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 mProgress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("MS-GF+ Search Complete");
@@ -676,6 +691,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 var msXmlFiles = new DirectoryInfo(mWorkDir).GetFiles("*" + msXmlFileExtension);
+
                 foreach (var fileToDelete in msXmlFiles)
                 {
                     fileToDelete.Delete();
@@ -713,6 +729,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 RegisterEvents(paramFileReader);
 
                 var success = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+
                 if (!success)
                 {
                     LogError(paramFileReader.ErrorMessage);
@@ -749,6 +766,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (mProgRunnerMode == MzRefinerProgRunnerMode.MSGFPlus)
             {
                 ParseMSGFPlusConsoleOutputFile(mWorkDir);
+
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();
@@ -1042,6 +1060,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                         var thresholdValueMatcher = new Regex("MME <= (?<Threshold>.+)");
                         var thresholdMatch = thresholdValueMatcher.Match(thresholdRange);
+
                         if (thresholdMatch.Success)
                         {
                             if (double.TryParse(thresholdMatch.Groups["Threshold"].Value, out var specEValueThreshold))
@@ -1088,6 +1107,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))
                 {
                     string correctionMode;
+
                     if (mMzRefineryCorrectionMode.Equals("global"))
                     {
                         correctionMode = "a global shift";
@@ -1132,6 +1152,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     // Store the PPM Mass Errors in the database
                     success = StorePPMErrorStatsInDB();
+
                     if (!success)
                     {
                         return false;
@@ -1242,6 +1263,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 var cdtaFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.CDTA_EXTENSION));
+
                 if (!cdtaFile.Exists)
                 {
                     LogError("_dta.txt file not found: " + cdtaFile.FullName);
@@ -1253,6 +1275,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var reader = new clsDtaTextFileReader(true);
 
                 var success = reader.OpenFile(cdtaFile.FullName);
+
                 if (!success)
                 {
                     LogError("Error opening the _dta.txt file: " + cdtaFile.Name);
@@ -1377,6 +1400,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     // Ignore this error if a _FIXED.mzML file was created and it is of comparable size to the input file
                     outputFile.Refresh();
+
                     if (outputFile.Exists && outputFile.Length >= originalMSXmlFile.Length * 0.95)
                     {
                         LogWarning(
@@ -1395,6 +1419,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
 
                     var consoleError = "Console error: " + mCmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
+
                     if (string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg))
                     {
                         mConsoleOutputErrorMsg = consoleError;
@@ -1409,6 +1434,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(mConsoleOutputErrorMsg);
+
                 if (mConsoleOutputErrorMsg.Contains("No high-resolution data in input file"))
                 {
                     mMessage = string.Empty;
@@ -1477,6 +1503,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mProgress = PROGRESS_PCT_MzREFINERY_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("MzRefinery Complete");
@@ -1553,6 +1580,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             mProgress = PROGRESS_PCT_PLOTS_GENERATED;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("PPMErrorCharter Complete");
@@ -1582,6 +1610,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             string errorMsg;
+
             if (string.IsNullOrEmpty(massErrorExtractor.ErrorMessage))
             {
                 errorMsg = "Error parsing PMM Error Charter output to extract mass error stats";
@@ -1650,6 +1679,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 var success = ReadParentIonMZsFromCDTA(out var parentIonMZs);
+
                 if (!success)
                     return false;
 
@@ -1680,6 +1710,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrEmpty(dataLine))
                         {
                             continue;
@@ -1705,6 +1736,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         {
                             // Parse out the scan number
                             var match = reScanNumber.Match(dataLine);
+
                             if (!match.Success)
                             {
                                 LogError("<spectrum> entry does not have scan=, " + dataLine);
@@ -1792,6 +1824,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                             {
                                 // Replace the m/z or charge
                                 var match = reValueReplace.Match(dataLine);
+
                                 if (!match.Success)
                                 {
                                     LogError(replacementContext + " does not have value=, " + dataLine);

@@ -101,6 +101,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // javaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
                 // Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -116,6 +117,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 MSAlignVersionType msAlignVersion;
+
                 if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.5" + Path.DirectorySeparatorChar))
                 {
                     msAlignVersion = MSAlignVersionType.v0pt5;
@@ -161,11 +163,13 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
                 var javaMemorySize = mJobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+
                 if (javaMemorySize < 512)
                     javaMemorySize = 512;
 
                 // Set up and execute a program runner to run MSAlign
                 string arguments;
+
                 if (msAlignVersion == MSAlignVersionType.v0pt5)
                 {
                     arguments = " -Xmx" + javaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
@@ -217,6 +221,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 CloseOutType eResult;
+
                 if (!processingSuccess)
                 {
                     LogError("Error running MSAlign");
@@ -267,6 +272,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
 
                     mStatusTools.UpdateAndWrite(mProgress);
+
                     if (mDebugLevel >= 3)
                     {
                         LogDebug("MSAlign Search Complete");
@@ -369,6 +375,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
 
                 var reader = new ProteinFileReader.FastaFileReader();
+
                 if (!reader.OpenFile(sourceFilePath))
                 {
                     mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
@@ -468,6 +475,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 msAlignWork.CreateSubdirectory("msoutput");
                 msAlignWork.CreateSubdirectory("xml");
                 msAlignWork.CreateSubdirectory("xsl");
+
                 if (msAlignVersion != MSAlignVersionType.v0pt5)
                 {
                     msAlignWork.CreateSubdirectory("etc");
@@ -829,6 +837,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Move the _msdeconv.msalign file to the MSInput folder
                 var msAlignFile = sourceDirectory.GetFiles("*" + AnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
+
                 if (msAlignFile.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
@@ -938,6 +947,7 @@ namespace AnalysisManagerMSAlignPlugIn
                             if (dataLine.StartsWith("Processing spectrum"))
                             {
                                 var match = reExtractPercentFinished.Match(dataLine);
+
                                 if (match.Success)
                                 {
                                     if (short.TryParse(match.Groups[1].Value, out var progress))
@@ -1037,6 +1047,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             writer.WriteLine(dataLine);
@@ -1046,6 +1057,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         var keepLine = true;
 
                         var match = reExtractScan.Match(dataLine);
+
                         if (match.Success)
                         {
                             if (int.TryParse(match.Groups[1].Value, out var scanNumber))
@@ -1239,6 +1251,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Confirm that the directory has one or more files or subdirectories
                 var sourceFolder = new DirectoryInfo(sourceFolderPath);
+
                 if (sourceFolder.GetFileSystemInfos().Length == 0)
                 {
                     if (mDebugLevel >= 1)

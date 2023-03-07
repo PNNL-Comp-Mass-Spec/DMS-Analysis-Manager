@@ -32,6 +32,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -50,6 +51,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Retrieve the targets file
                 currentTask = "Retrieve the targets file";
                 var targetsFileName = mJobParams.GetParam("dm_target_file");
+
                 if (string.IsNullOrWhiteSpace(targetsFileName))
                 {
                     LogError("Parameter dm_target_file not found in the settings file");
@@ -58,6 +60,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 currentTask = "Retrieve the transformations file";
                 paramFileStoragePath = Path.Combine(paramFileStoragePath, "Transformations");
+
                 if (!Directory.Exists(paramFileStoragePath))
                 {
                     LogError("Transformations folder not found", "Transformations folder not found: " + paramFileStoragePath);
@@ -81,6 +84,7 @@ namespace AnalysisManagerNOMSIPlugin
                 mJobParams.AddResultFileToSkip(fileToGet);
 
                 currentTask = "Process the MyEMSL download queue";
+
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

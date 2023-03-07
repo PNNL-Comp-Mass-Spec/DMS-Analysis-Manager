@@ -93,6 +93,7 @@ namespace AnalysisManagerBase.StatusReporting
                     if (mStatusMessages.Count > 0)
                     {
                         messageContainer = mStatusMessages.Dequeue();
+
                         if (messageContainer?.Message == null)
                         {
                             return;

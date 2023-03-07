@@ -25,6 +25,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public RawConverterRunner(string rawConverterDir, int debugLevel = 1)
         {
             RawConverterExePath = Path.Combine(rawConverterDir, RAW_CONVERTER_FILENAME);
+
             if (!File.Exists(RawConverterExePath))
             {
                 throw new FileNotFoundException(RawConverterExePath);
@@ -43,6 +44,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             try
             {
                 var sourceFile = new FileInfo(rawFilePath);
+
                 if (sourceFile.Directory == null)
                 {
                     OnErrorEvent("Unable to determine the parent directory of the instrument file: " + rawFilePath);
@@ -55,6 +57,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var rawConverter = new FileInfo(RawConverterExePath);
+
                 if (rawConverter.Directory == null)
                 {
                     OnErrorEvent("Unable to determine the parent directory of the converter exe: " + RawConverterExePath);

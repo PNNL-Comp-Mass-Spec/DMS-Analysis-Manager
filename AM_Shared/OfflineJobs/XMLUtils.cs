@@ -20,10 +20,12 @@ namespace AnalysisManagerBase.OfflineJobs
         public static string GetXmlValue(IEnumerable<XElement> elementList, string elementName, string valueIfMissing = "")
         {
             var elements = elementList.Elements(elementName).ToList();
+
             if (elements.Count == 0)
                 return valueIfMissing;
 
             var firstElement = elements[0];
+
             if (string.IsNullOrEmpty(firstElement?.Value))
                 return valueIfMissing;
 

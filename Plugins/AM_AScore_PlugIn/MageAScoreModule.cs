@@ -123,12 +123,14 @@ namespace AnalysisManager_AScore_PlugIn
                 var analysisTool = values[toolIdx];
 
                 var dtaFilePath = CopyDTAResults(datasetName, resultsDirectoryPath, jobNumber, analysisTool, mConnectionString);
+
                 if (string.IsNullOrEmpty(dtaFilePath))
                 {
                     return false;
                 }
 
                 string fragType;
+
                 if (datasetType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) > 0)
                 {
                     fragType = "hcd";
@@ -141,6 +143,7 @@ namespace AnalysisManager_AScore_PlugIn
                 {
                     var settingsFileName = values[settingsFileIdx];
                     var findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
+
                     if (findFragmentation.Contains("hcd"))
                     {
                         fragType = "hcd";
@@ -170,6 +173,7 @@ namespace AnalysisManager_AScore_PlugIn
                     Console.WriteLine(warningMessage);
 
                     var paramFileToUse2 = Path.Combine(WorkingDir, AscoreParamFileName);
+
                     if (Path.GetExtension(paramFileToUse2).Length == 0)
                         paramFileToUse2 += ".xml";
 
@@ -233,11 +237,13 @@ namespace AnalysisManager_AScore_PlugIn
 
                 // Confirm that AScore created the output file
                 var ascoreFile = new FileInfo(ascoreOutputFilePath);
+
                 if (ascoreFile.Exists)
                 {
                     // Look for the _ProteinMap.txt file
                     // AScore will create that file if a valid FastaFile is defined
                     var proteinMap = new FileInfo(Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreFile.Name) + "_ProteinMap.txt"));
+
                     if (proteinMap.Exists && proteinMap.Length > ascoreFile.Length)
                         ascoreFile = proteinMap;
 
@@ -413,6 +419,7 @@ namespace AnalysisManager_AScore_PlugIn
             string dtaZipSourceFilePath;
 
             var files = resultsDirectory.GetFiles("*_dta.zip").ToList();
+
             if (files.Count > 0)
             {
                 dtaZipSourceFilePath = files.First().FullName;
@@ -438,6 +445,7 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 var alternateDtaDirectory = new DirectoryInfo(Path.Combine(resultsDirectory.Parent.FullName, dtaDirectoryName));
+
                 if (!alternateDtaDirectory.Exists)
                 {
                     LogTools.LogError("DTA directory not found: " + alternateDtaDirectory.FullName);
@@ -445,6 +453,7 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 files = alternateDtaDirectory.GetFiles("*_dta.zip").ToList();
+
                 if (files.Count == 0)
                 {
                     LogTools.LogError("DTA file not found in directory " + alternateDtaDirectory.FullName);

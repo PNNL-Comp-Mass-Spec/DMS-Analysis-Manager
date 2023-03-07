@@ -156,6 +156,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             var fragPipeDirectory = toolsDirectory.Parent;
+
             if (fragPipeDirectory == null)
             {
                 OnErrorEvent("Unable to determine the parent directory of " + toolsDirectory.FullName);
@@ -164,6 +165,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             libDirectory = new DirectoryInfo(Path.Combine(fragPipeDirectory.FullName, "lib"));
+
             if (libDirectory.Exists)
             {
                 mFragPipeLibDirectory = libDirectory;
@@ -201,6 +203,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             toolsDirectory = PhilosopherExe.Directory.Parent;
+
             if (toolsDirectory == null)
             {
                 OnErrorEvent("Unable to determine the parent directory of " + PhilosopherExe.Directory.FullName);
@@ -235,6 +238,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, BATMASS_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -260,6 +264,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, "commons-math3-3.6.1.jar"));
+
             if (jarFile.Exists)
                 return true;
 
@@ -284,6 +289,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, CRYSTALC_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -308,6 +314,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(libDirectory.FullName, FRAGPIPE_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -333,6 +340,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, GRPPR_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -357,6 +365,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, IONQUANT_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -380,6 +389,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, JFREECHART_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -403,6 +413,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, MSBOOSTER_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -426,6 +437,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, PTMSHEPHERD_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -449,6 +461,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, SMILE_CORE_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -472,6 +485,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             jarFile = new FileInfo(Path.Combine(toolsDirectory.FullName, SMILE_MATH_JAR_NAME));
+
             if (jarFile.Exists)
                 return true;
 
@@ -495,6 +509,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             cppPresetsDirectory = new DirectoryInfo(Path.Combine(toolsDirectory.FullName, JAVA_CPP_PRESETS_DIRECTORY_NAME));
+
             if (cppPresetsDirectory.Exists)
                 return true;
 
@@ -521,6 +536,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             foreach (var directoryPath in PythonPathsToCheck())
             {
                 var exePath = FindPythonExe(directoryPath);
+
                 if (string.IsNullOrWhiteSpace(exePath))
                     continue;
 
@@ -538,6 +554,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         private static string FindPythonExe(string directoryPath)
         {
             var directory = new DirectoryInfo(directoryPath);
+
             if (!directory.Exists)
                 return string.Empty;
 
@@ -550,6 +567,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             foreach (var subDirectory in subDirectories)
             {
                 var files = subDirectory.GetFiles("python.exe");
+
                 if (files.Length == 0)
                     continue;
 
@@ -635,6 +653,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             var sitePackagesDirectory = new DirectoryInfo(Path.Combine(pythonExe.Directory.FullName, "Lib", "site-packages"));
+
             if (!sitePackagesDirectory.Exists)
             {
                 errorMessage = "Python site-packages directory not found: " + sitePackagesDirectory.FullName;
@@ -642,6 +661,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             var packageDirectory = new DirectoryInfo(Path.Combine(sitePackagesDirectory.FullName, packageName));
+
             if (!packageDirectory.Exists)
             {
                 errorMessage = string.Format(

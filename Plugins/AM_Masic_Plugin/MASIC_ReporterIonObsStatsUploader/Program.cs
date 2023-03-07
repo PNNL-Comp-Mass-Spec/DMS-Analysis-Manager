@@ -93,6 +93,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 processor.SkipConsoleWriteIfNoProgressListener = true;
 
                 bool success;
+
                 if (options.ReporterIonObsRateFilePath.Contains('*') ||
                     options.ReporterIonObsRateFilePath.Contains('?'))
                 {

@@ -438,6 +438,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             while (!reader.EndOfStream)
             {
                 var dataLine = reader.ReadLine();
+
                 if (string.IsNullOrEmpty(dataLine))
                 {
                     writer.WriteLine();
@@ -471,6 +472,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (spectrumColumnIndex >= 0 && lineParts.Length >= spectrumColumnIndex)
                 {
                     var match = scanMatcher.Match(lineParts[spectrumColumnIndex].Trim());
+
                     if (match.Success)
                     {
                         lineParts[spectrumColumnIndex] = int.Parse(match.Groups["ScanNumber"].Value).ToString();
@@ -478,6 +480,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     else
                     {
                         scanWarningsShown++;
+
                         if (scanWarningsShown <= 10)
                         {
                             OnWarningEvent("Scan number not found in the spectrum column: " + lineParts[spectrumColumnIndex]);

@@ -86,6 +86,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParams, ResultsDestination);
+
             foreach (var p in BasePipelineQueue.Pipelines.ToArray())
             {
                 ConnectPipelineToStatusHandlers(p);

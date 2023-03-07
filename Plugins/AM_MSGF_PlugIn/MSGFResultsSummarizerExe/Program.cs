@@ -116,6 +116,7 @@ namespace MSGFResultsSummarizerExe
                     }
 
                     var inputDirectory = new DirectoryInfo(mInputDirectoryPath);
+
                     if (!inputDirectory.Exists)
                     {
                         ShowErrorMessage("Input directory not found: " + inputDirectory.FullName);
@@ -174,6 +175,7 @@ namespace MSGFResultsSummarizerExe
                 }
 
                 var sourceFile = new FileInfo(mMSGFSynFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     ShowErrorMessage("Input file not found: " + sourceFile.FullName);
@@ -201,6 +203,7 @@ namespace MSGFResultsSummarizerExe
                     if (underscoreIndex > 0)
                     {
                         var namePart = sourceFile.DirectoryName.Substring(underscoreIndex + 1);
+
                         if (namePart.StartsWith("auto", StringComparison.OrdinalIgnoreCase))
                         {
                             namePart = namePart.Substring(4);

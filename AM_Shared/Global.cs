@@ -232,6 +232,7 @@ namespace AnalysisManagerBase
         public static DirectoryInfo CreateDirectoryIfMissing(string directoryPath)
         {
             var targetDirectory = new DirectoryInfo(directoryPath);
+
             if (!targetDirectory.Exists)
             {
                 // Note that .NET will automatically create any missing parent directories
@@ -262,6 +263,7 @@ namespace AnalysisManagerBase
                 var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
 
                 var lockFile = new FileInfo(lockFilePath);
+
                 if (lockFile.Exists)
                 {
                     lockFile.Delete();
@@ -327,6 +329,7 @@ namespace AnalysisManagerBase
         public static string GetAssemblyVersion()
         {
             var entryAssembly = Assembly.GetEntryAssembly();
+
             if (entryAssembly == null)
                 return string.Empty;
 
@@ -545,6 +548,7 @@ namespace AnalysisManagerBase
         public static bool ParseHeaderLine(Dictionary<string, int> columnMap, string headerLine, List<string> expectedHeaderNames)
         {
             var columnNamesByIdentifier = new Dictionary<string, SortedSet<string>>();
+
             foreach (var headerName in expectedHeaderNames)
             {
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, headerName);
@@ -709,6 +713,7 @@ namespace AnalysisManagerBase
             try
             {
                 var sourceFile = new FileInfo(sourceFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     // Source file not found
@@ -716,6 +721,7 @@ namespace AnalysisManagerBase
                 }
 
                 var baseName = Path.GetFileNameWithoutExtension(targetFileName);
+
                 if (baseName == null)
                 {
                     // Cannot continue without a base filename
@@ -723,6 +729,7 @@ namespace AnalysisManagerBase
                 }
 
                 var extension = Path.GetExtension(targetFileName);
+
                 if (string.IsNullOrEmpty(extension))
                 {
                     extension = ".bak";
@@ -730,6 +737,7 @@ namespace AnalysisManagerBase
 
                 if (versionCountToKeep > 9)
                     versionCountToKeep = 9;
+
                 if (versionCountToKeep < 0)
                     versionCountToKeep = 0;
 
@@ -739,6 +747,7 @@ namespace AnalysisManagerBase
                     try
                     {
                         var baseNameCurrent = baseName;
+
                         if (revision > 0)
                         {
                             baseNameCurrent += "_" + revision;
@@ -803,6 +812,7 @@ namespace AnalysisManagerBase
             }
 
             var hashcheckFilePath = HashUtilities.CreateHashcheckFileWithHash(dataFilePath, HashUtilities.HashTypeConstants.MD5, md5Hash, out var warningMessage);
+
             if (!string.IsNullOrWhiteSpace(warningMessage))
                 ConsoleMsgUtils.ShowWarning(warningMessage);
 
@@ -905,6 +915,7 @@ namespace AnalysisManagerBase
             }
 
             string newText;
+
             if (charIndex == 0)
             {
                 newText = string.Empty;

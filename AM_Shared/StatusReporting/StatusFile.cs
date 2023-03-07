@@ -226,6 +226,7 @@ namespace AnalysisManagerBase.StatusReporting
                     return new List<string>();
 
                 var messages = new List<string>();
+
                 for (var i = 0; i < mRecentErrorMessageCount; i++)
                 {
                     messages.Add(mRecentErrorMessages[i]);
@@ -801,12 +802,14 @@ namespace AnalysisManagerBase.StatusReporting
             else
             {
                 statusInfo.MostRecentErrorMessage = mRecentErrorMessages[0];
+
                 if (mRecentErrorMessageCount > 1)
                 {
                     // Append the next two error messages
                     for (var index = 1; index <= mRecentErrorMessageCount - 1; index++)
                     {
                         statusInfo.MostRecentErrorMessage += Environment.NewLine + mRecentErrorMessages[index];
+
                         if (index >= 2)
                             break;
                     }
@@ -1155,6 +1158,7 @@ namespace AnalysisManagerBase.StatusReporting
             writer.WriteStartElement("RecentErrorMessages");
 
             var recentErrorMessages = status.RecentErrorMessages;
+
             if (recentErrorMessages.Count == 0)
             {
                 writer.WriteElementString("ErrMsg", string.Empty);
@@ -1264,6 +1268,7 @@ namespace AnalysisManagerBase.StatusReporting
             }
 
             var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
+
             if (success)
             {
                 try

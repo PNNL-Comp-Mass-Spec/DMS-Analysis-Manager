@@ -75,6 +75,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
 
             string dataLine;
+
             if (!string.IsNullOrEmpty(mSavedLine))
             {
                 dataLine = mSavedLine;
@@ -116,6 +117,7 @@ namespace AnalysisManagerMODPlusPlugin
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out var charge);
+
                             if (int.TryParse(reMatch.Groups[2].Value, out scan))
                             {
                                 mCurrentScanChargeCombo = scan + charge / 100.0;
@@ -139,6 +141,7 @@ namespace AnalysisManagerMODPlusPlugin
                         try
                         {
                             var dataColumns = dataLine.Split('\t');
+
                             if (dataColumns.Length > 3)
                             {
                                 var mgfFilePath = dataColumns[0].TrimStart('>');

@@ -37,6 +37,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -119,6 +120,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             try
             {
                 var inputFolderName = mJobParams.GetParam("inputFolderName");
+
                 if (string.IsNullOrWhiteSpace(inputFolderName))
                 {
                     LogError("Input_Folder is not defined for this job step (job parameter inputFolderName); cannot retrieve input files");
@@ -161,11 +163,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             // Retrieve the MSAlign_Quant parameter file
             var resultCode = RetrieveMSAlignQuantParameterFile();
+
             if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 return resultCode;
 
             // Retrieve the MSAlign results for this job
             var msAlignResultsTableFile = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(msAlignResultsTableFile, false))
             {
                 // Errors were reported in method call, so just return
@@ -183,6 +187,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             // Retrieve the MSAlign_Quant parameter file
             var resultCode = RetrieveMSAlignQuantParameterFile();
+
             if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 return resultCode;
 
@@ -220,6 +225,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
             var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(paramFileStoragePath))
             {
                 paramFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
@@ -229,6 +235,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
 
             var paramFileName = mJobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
+
             if (string.IsNullOrEmpty(paramFileName))
             {
                 mMessage = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");

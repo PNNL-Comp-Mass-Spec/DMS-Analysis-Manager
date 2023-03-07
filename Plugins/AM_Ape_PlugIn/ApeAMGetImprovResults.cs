@@ -82,6 +82,7 @@ namespace AnalysisManager_Ape_PlugIn
             // mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var jobList = GetJobIDList();
+
             if (string.IsNullOrEmpty(jobList))
             {
                 return false;
@@ -142,6 +143,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             // Get the matching jobs from the Data Package
             var success = dbTools.GetQueryResults(sqlText, out var results);
+
             if (success)
             {
                 foreach (var result in results.SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))

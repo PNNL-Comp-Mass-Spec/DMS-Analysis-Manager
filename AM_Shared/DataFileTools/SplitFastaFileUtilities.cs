@@ -121,6 +121,7 @@ namespace AnalysisManagerBase.DataFileTools
                 try
                 {
                     lockFi.Refresh();
+
                     if (lockFi.Exists)
                     {
                         WaitingForLockFile = true;
@@ -133,6 +134,7 @@ namespace AnalysisManagerBase.DataFileTools
                         {
                             Global.IdleLoop(5);
                             lockFi.Refresh();
+
                             if (DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60)
                             {
                                 break;
@@ -140,6 +142,7 @@ namespace AnalysisManagerBase.DataFileTools
                         }
 
                         lockFi.Refresh();
+
                         if (lockFi.Exists)
                         {
                             OnStatusEvent(LOCK_FILE_PROGRESS_TEXT + " still exists; assuming another process timed out; thus, now deleting file " + lockFi.Name);
@@ -208,6 +211,7 @@ namespace AnalysisManagerBase.DataFileTools
                     try
                     {
                         var lockFi = new FileInfo(lockFilePath);
+
                         if (lockFi.Exists)
                         {
                             lockFi.Delete();
@@ -319,12 +323,14 @@ namespace AnalysisManagerBase.DataFileTools
                     dbTools.ExecuteSP(cmd, retryCount, 2);
 
                     var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+
                     if (returnCode != 0)
                     {
                         // Error occurred
                         ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
 
                         var statusMessage = messageParam.Value;
+
                         if (statusMessage != null)
                         {
                             ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
@@ -381,6 +387,7 @@ namespace AnalysisManagerBase.DataFileTools
                 dbTools.ExecuteSP(cmd, retryCount, 2);
 
                 var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+
                 if (returnCode != 0)
                 {
                     // Error occurred
@@ -421,6 +428,7 @@ namespace AnalysisManagerBase.DataFileTools
                         {
                             // If the directory exists but no split FASTA files exist, assume that we need to re-split the FASTA file
                             var existingSplitFastaFile = new FileInfo(knownSplitFastaFilePath);
+
                             if (existingSplitFastaFile.Directory?.Exists != true)
                             {
                                 ErrorMessage = "Cannot find directory with the base FASTA file: " + knownSplitFastaFilePath;
@@ -446,6 +454,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                             var existingSplitFastaFiles = existingSplitFastaFile.Directory.GetFiles(splitFastaMatchSpec);
                             long totalSize = 0;
+
                             foreach (var splitFastaFile in existingSplitFastaFiles)
                             {
                                 totalSize += splitFastaFile.Length;
@@ -480,6 +489,7 @@ namespace AnalysisManagerBase.DataFileTools
                 // Query DMS for the location of baseFastaName
                 currentTask = "GetLegacyFastaFilePath for baseFastaName";
                 var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
+
                 if (string.IsNullOrWhiteSpace(baseFastaFilePath))
                 {
                     // Base file not found
@@ -514,6 +524,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
                 var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // The file now exists
@@ -553,9 +564,11 @@ namespace AnalysisManagerBase.DataFileTools
 
                 // Verify that the FASTA files were created
                 currentTask = "Verify new files";
+
                 foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
                 {
                     var splitFastaFileInfo = new FileInfo(currentSplitFile.FilePath);
+
                     if (!splitFastaFileInfo.Exists)
                     {
                         ErrorMessage = "Newly created split FASTA file not found: " + currentSplitFile.FilePath;
@@ -570,6 +583,7 @@ namespace AnalysisManagerBase.DataFileTools
                 // Store the newly created FASTA file names, plus their protein and residue stats, in DMS
                 currentTask = "StoreSplitFastaFileNames";
                 success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo);
+
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(ErrorMessage))

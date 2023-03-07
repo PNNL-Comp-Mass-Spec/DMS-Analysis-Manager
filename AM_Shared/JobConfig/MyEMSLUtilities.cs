@@ -299,6 +299,7 @@ namespace AnalysisManagerBase.JobConfig
             MostRecentUnzippedFiles.Clear();
 
             var success = mMyEMSLDatasetListInfo.ProcessDownloadQueue(downloadDirectoryPath, directoryLayout);
+
             if (success)
                 return true;
 

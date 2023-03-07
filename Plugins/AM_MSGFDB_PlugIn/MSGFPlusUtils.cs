@@ -602,6 +602,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Examine the size of the .mzid file
                 var mzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
+
                 if (!mzidFile.Exists)
                 {
                     OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + mzidFile.FullName);
@@ -632,6 +633,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Need to run MzidToTsvConverter.exe using mono
                     var updated = mzidToTsvRunner.UpdateToUseMono(mMgrParams, ref mzidToTsvConverterProgLoc, ref arguments);
+
                     if (!updated)
                     {
                         OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
@@ -710,6 +712,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Examine the size of the .mzid file
                 var mzidFile = new FileInfo(Path.Combine(mWorkDir, mzidFileName));
+
                 if (!mzidFile.Exists)
                 {
                     OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + mzidFile.FullName);
@@ -915,6 +918,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
 
                     var enzymeDefClean = enzymeDefParts[0];
+
                     for (var i = 0; i < 4; i++)
                     {
                         enzymeDefParts[i] = enzymeDefParts[i].Replace("\t", " ").Trim();
@@ -997,6 +1001,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Validate that the input file has at least one entry; if not, no point in continuing
 
                 var inputFile = new FileInfo(inputFilePath);
+
                 if (!inputFile.Exists)
                 {
                     msg = "MS-GF+ TSV results file not found: " + inputFilePath;
@@ -1017,6 +1022,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 while (!reader.EndOfStream && linesRead < 10)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (!string.IsNullOrEmpty(dataLine))
                     {
                         linesRead++;
@@ -1040,6 +1046,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             string fastaFileToSearch;
+
             if (!resultsIncludeAutoAddedDecoyPeptides)
             {
                 fastaFileToSearch = fastaFilePath;
@@ -1143,6 +1150,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else
                     {
                         OnErrorEvent("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
+
                         if (mPeptideToProteinMapper.StatusMessage.Length > 0)
                         {
                             OnErrorEvent("PeptideToProteinMapEngine status: " + mPeptideToProteinMapper.StatusMessage);
@@ -1231,6 +1239,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var contaminantUtility = new FastaContaminantUtility();
 
                 var requiredContaminants = new Dictionary<string, bool>();
+
                 foreach (var proteinName in contaminantUtility.ProteinNames)
                 {
                     requiredContaminants.Add(proteinName, false);
@@ -1260,6 +1269,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
 
                             var spaceIndex = dataLine.IndexOf(' ', 1);
+
                             if (spaceIndex < 0)
                                 spaceIndex = dataLine.Length - 1;
                             var proteinName = dataLine.Substring(1, spaceIndex - 1);
@@ -1316,6 +1326,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 var sourceFile = new FileInfo(inputFilePath);
+
                 if (!sourceFile.Exists)
                 {
                     ErrorMessage = "FASTA file not found: " + sourceFile.FullName;
@@ -1512,6 +1523,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(paramFileReader);
 
                 var success = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+
                 if (!success)
                 {
                     ErrorMessage = Global.AppendToComment(
@@ -1594,9 +1606,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
                 var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
+
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
                     var fractionDecoy = AnalysisResources.GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out _);
+
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -1631,6 +1645,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Auto-change fastaFileIsDecoy to true to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
+
                         if (mDebugLevel >= 1)
                         {
                             OnStatusEvent("Processing large FASTA file with forward-only search; auto switching to -tda 0");
@@ -1642,6 +1657,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // Auto-change fastaFileIsDecoy to true to prevent the reverse indices from being created
 
                         fastaFileIsDecoy = true;
+
                         if (mDebugLevel >= 1)
                         {
                             OnStatusEvent("Using NoDecoy parameter file with TDA=0; auto switching to -tda 0");
@@ -1892,6 +1908,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             while (!reader.EndOfStream)
             {
                 var dataLine = reader.ReadLine();
+
                 if (!string.IsNullOrWhiteSpace(dataLine))
                 {
                     lastLine = dataLine;
@@ -2027,6 +2044,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 consoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE);
+
                 if (!File.Exists(consoleOutputFilePath))
                 {
                     if (mDebugLevel >= 4)
@@ -2191,6 +2209,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 TaskCountTotal = totalTasks;
                 TaskCountCompleted = completedTasks.Count;
+
                 if (TaskCountCompleted == 0 && tasksCompleteViaSearchProgress > 0)
                 {
                     TaskCountCompleted = tasksCompleteViaSearchProgress;
@@ -2199,6 +2218,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (percentCompleteAllTasks > 0)
                 {
                     effectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100f;
+
                     if (effectiveProgress > PROGRESS_PCT_MSGFPLUS_COMPLETE)
                     {
                         effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
@@ -2270,6 +2290,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
                                 return false;
+
                             if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
                                 return false;
                             writer.WriteLine(customAADefClean);
@@ -2283,6 +2304,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 writer.WriteLine();
                 writer.WriteLine("# Static mods");
+
                 if (staticMods.Count == 0)
                 {
                     writer.WriteLine("# None");
@@ -2295,6 +2317,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
                                 return false;
+
                             if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
                                 return false;
                             writer.WriteLine(modClean);
@@ -2308,6 +2331,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 writer.WriteLine();
                 writer.WriteLine("# Dynamic mods");
+
                 if (dynamicMods.Count == 0)
                 {
                     writer.WriteLine("# None");
@@ -2320,6 +2344,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
                                 return false;
+
                             if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
                                 return false;
                             writer.WriteLine(modClean);
@@ -2402,6 +2427,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             var outputDirectory = sourceParamFile.Directory;
+
             if (outputDirectory == null)
             {
                 OnErrorEvent("Unable to determine the parent directory of " + sourceParamFile.FullName);
@@ -2412,6 +2438,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             RegisterEvents(paramFileReader);
 
             var paramFileSuccess = paramFileReader.ParseKeyValueParameterFileGetAllLines(out var sourceParamFileLines);
+
             if (!paramFileSuccess)
             {
                 ErrorMessage = Global.AppendToComment(
@@ -2521,6 +2548,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             if (!string.IsNullOrWhiteSpace(scanTypeFilePath))
                             {
                                 var instrumentLookupResult = DetermineInstrumentID(paramFileLine, scanTypeFilePath, instrumentGroup);
+
                                 if (instrumentLookupResult != CloseOutType.CLOSEOUT_SUCCESS)
                                 {
                                     WriteMSGFPlusParameterFile(sourceParamFile, msgfPlusParamFileLines, true, out finalParamFile);
@@ -2663,6 +2691,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // Not valid for MS-GF+; comment out this line
                         paramFileLine.ChangeLineToComment("Obsolete");
+
                         if (mDebugLevel >= 1)
                         {
                             OnWarningEvent("Commenting out parameter {0} since it is not valid for this version of MS-GF+", paramFileLine.ParamName);
@@ -2698,6 +2727,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Define the thread count; note that MSGFPlusThreads (previously MSGFDBThreads) could be "all"
             var dmsDefinedThreadCountText = mJobParams.GetJobParameter("MSGFPlusThreads", string.Empty);
+
             if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) ||
                 string.Equals(dmsDefinedThreadCountText, "all", StringComparison.OrdinalIgnoreCase) ||
                 !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))
@@ -2727,6 +2757,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (limitCoreUsage)
                 {
                     int maxAllowedCores;
+
                     if (Dns.GetHostName().StartsWith("PrismWeb3", StringComparison.OrdinalIgnoreCase))
                     {
                         // Use fewer cores on the web server
@@ -2771,6 +2802,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // There are enough spare cores that we can use 75% of all of the cores
                         var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
+
                         if (paramFileThreadCount > maxAllowedCores)
                         {
                             OnStatusEvent("The system has " + coreCount + " cores; MS-GF+ will use " + maxAllowedCores + " cores " +
@@ -3004,6 +3036,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             instrumentIDNew = "0";
+
             if (countHighResHCD == 0 && countHighResMSn == 0)
             {
                 autoSwitchReason = "since all of the spectra are low res MSn";
@@ -3027,6 +3060,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private string ExtractComment(string paramLine, out string comment, out string whiteSpaceBeforeComment)
         {
             var poundIndex = paramLine.IndexOf(MSGFPlusKeyValueParamFileLine.COMMENT_CHAR);
+
             if (poundIndex <= 0)
             {
                 comment = string.Empty;
@@ -3045,6 +3079,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             var match = mCommentExtractor.Match(paramLine);
+
             if (!match.Success)
             {
                 whiteSpaceBeforeComment = string.Empty;
@@ -3054,6 +3089,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 whiteSpaceBeforeComment = match.Groups["WhiteSpace"].Value;
 
                 var commentFromRegEx = match.Groups["Comment"].Value;
+
                 if (!string.IsNullOrWhiteSpace(commentFromRegEx) && !string.Equals(comment, commentFromRegEx))
                 {
                     comment = commentFromRegEx;
@@ -3207,6 +3243,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Split on commas, change tabs to spaces, and remove whitespace
             var modParts = modDef.Split(',');
+
             for (var i = 0; i < modParts.Length; i++)
             {
                 modParts[i] = modParts[i].Replace("\t", " ").Trim();
@@ -3377,6 +3414,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private void UpdateCompletedTasks(string dataLine, ISet<int> completedTasks)
         {
             var reMatch = reTaskComplete.Match(dataLine);
+
             if (reMatch.Success)
             {
                 var taskNumber = int.Parse(reMatch.Groups["TaskNumber"].Value);
@@ -3401,6 +3439,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private void UpdateElapsedTime(string dataLine, ref float totalElapsedTimeHours)
         {
             var reElapsedTimeMatch = reElapsedTime.Match(dataLine);
+
             if (!reElapsedTimeMatch.Success)
                 return;
 
@@ -3431,6 +3470,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private void UpdatePercentComplete(string dataLine, ref float percentCompleteAllTasks, ref int tasksCompleteViaSearchProgress)
         {
             var reProgressMatch = rePercentComplete.Match(dataLine);
+
             if (reProgressMatch.Success)
             {
                 var newTasksComplete = int.Parse(reProgressMatch.Groups["TasksComplete"].Value);
@@ -3441,6 +3481,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var newPercentComplete = float.Parse(reProgressMatch.Groups["PercentComplete"].Value);
+
                 if (newPercentComplete > percentCompleteAllTasks)
                 {
                     percentCompleteAllTasks = newPercentComplete;
@@ -3474,6 +3515,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
                         return false;
+
                     if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
                         return false;
                 }
@@ -3490,6 +3532,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
                         return false;
+
                     if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
                         return false;
                 }
@@ -3504,6 +3547,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
                         return false;
+
                     if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
                         return false;
                 }
@@ -3548,9 +3592,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                         continue;
 
                     peptideCount++;
+
                     if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
                     {
                         peptideCountNoMatch++;
+
                         if (unmatchedPeptides.Count < 5)
                         {
                             unmatchedPeptides.Add(dataLine);
@@ -3707,6 +3753,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 var tmpFilePath = Path.Combine(mWorkDir, fileName);
+
                 if (!File.Exists(tmpFilePath))
                 {
                     OnErrorEvent("MS-GF+ results file not found: " + fileName);

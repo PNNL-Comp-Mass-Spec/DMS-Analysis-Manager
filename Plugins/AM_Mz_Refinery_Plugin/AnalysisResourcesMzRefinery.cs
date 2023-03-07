@@ -41,6 +41,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 GetSharedResources();
 
                 var mzRefParamFile = mJobParams.GetJobParameter("MzRefParamFile", string.Empty);
+
                 if (string.IsNullOrEmpty(mzRefParamFile))
                 {
                     LogError("MzRefParamFile parameter is empty");
@@ -72,6 +73,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     LogMessage("Running MzRefinery on a _dta.txt file");
                     var result = GetCDTAFile();
+
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         return result;
@@ -82,6 +84,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     // Retrieve the .mzML file
                     var result = GetMsXmlFile();
+
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         return result;
@@ -104,6 +107,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Mz_Refinery";
 
                 var mzRefineryParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
                 if (string.IsNullOrWhiteSpace(mzRefineryParamFileStoragePath))
                 {
                     mzRefineryParamFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
@@ -149,6 +153,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
                 mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
@@ -193,6 +198,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             var transferDirectory = new DirectoryInfo(Path.Combine(transferDirectoryPath, DatasetName, resultsFolderName));
+
             if (!transferDirectory.Exists)
             {
                 // This is not an error -- it just means there are no existing MS-GF+ results to use
@@ -210,6 +216,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             var msgfPlusConsoleOutput = new FileInfo(Path.Combine(transferDirectory.FullName, "MSGFPlus_ConsoleOutput.txt"));
+
             if (!msgfPlusConsoleOutput.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
@@ -218,6 +225,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
 
             var mzRefParamFile = new FileInfo(Path.Combine(transferDirectory.FullName, mzRefParamFileName));
+
             if (!mzRefParamFile.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file

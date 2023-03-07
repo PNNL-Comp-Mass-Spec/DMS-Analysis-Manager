@@ -112,6 +112,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 };
 
                 var sourceFile = new FileInfo(Path.Combine(workDirPath, datasetName + "_dta_DtaRefineryLog.txt"));
+
                 if (!sourceFile.Exists)
                 {
                     OnErrorEvent("DtaRefinery Log file not found; " + sourceFile.FullName);
@@ -123,6 +124,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 

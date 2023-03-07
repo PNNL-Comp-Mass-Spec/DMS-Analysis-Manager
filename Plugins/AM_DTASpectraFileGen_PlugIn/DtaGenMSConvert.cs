@@ -72,6 +72,7 @@ namespace DTASpectraFileGen
             mProgress = 75;
 
             var convertToCDTA = mJobParams.GetJobParameter("DtaGenerator", "ConvertMGFtoCDTA", true);
+
             if (convertToCDTA)
             {
                 // Convert the .mgf file to _dta.txt
@@ -325,6 +326,7 @@ namespace DTASpectraFileGen
                 argumentList.Add("-o " + mWorkDir);
 
                 var arguments = string.Join(" ", argumentList);
+
                 if (mDebugLevel > 0)
                 {
                     OnStatusEvent(mDtaToolNameLoc + " " + arguments);

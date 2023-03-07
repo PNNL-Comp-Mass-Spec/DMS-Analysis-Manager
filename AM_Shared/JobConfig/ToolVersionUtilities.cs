@@ -164,6 +164,7 @@ namespace AnalysisManagerBase.JobConfig
                     while (reader.Peek() >= 0)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -254,6 +255,7 @@ namespace AnalysisManagerBase.JobConfig
 
                         case "version":
                             version = value;
+
                             if (string.IsNullOrWhiteSpace(version))
                             {
                                 OnErrorEvent("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath));
@@ -346,6 +348,7 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     const string toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
                     var success = fileSearchUtility.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
+
                     if (success)
                     {
                         // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
@@ -513,6 +516,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             var programInfo = new FileInfo(progLoc);
+
             if (!programInfo.Exists)
             {
                 try
@@ -627,6 +631,7 @@ namespace AnalysisManagerBase.JobConfig
                 var assembly = System.Reflection.Assembly.Load(assemblyName).GetName();
 
                 string nameAndVersion;
+
                 if (includeRevision)
                 {
                     nameAndVersion = assembly.Name + ", Version=" + assembly.Version;
@@ -729,6 +734,7 @@ namespace AnalysisManagerBase.JobConfig
                 var fileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
 
                 var name = fileVersionInfo.FileDescription;
+
                 if (string.IsNullOrEmpty(name))
                 {
                     name = fileVersionInfo.InternalName;
@@ -745,6 +751,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
 
                 var version = fileVersionInfo.FileVersion;
+
                 if (string.IsNullOrEmpty(version))
                 {
                     version = fileVersionInfo.ProductVersion;

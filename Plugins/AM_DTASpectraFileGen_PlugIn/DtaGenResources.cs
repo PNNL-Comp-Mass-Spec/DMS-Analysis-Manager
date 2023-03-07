@@ -31,6 +31,7 @@ namespace DTASpectraFileGen
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -42,6 +43,7 @@ namespace DTASpectraFileGen
             var zippedDTAFilePath = string.Empty;
 
             var dtaGeneratorType = DtaGenToolRunner.GetDTAGeneratorInfo(mJobParams, out var errorMessage);
+
             if (dtaGeneratorType == DtaGenToolRunner.DTAGeneratorConstants.Unknown)
             {
                 if (string.IsNullOrEmpty(errorMessage))
@@ -64,6 +66,7 @@ namespace DTASpectraFileGen
             if (mgfInstrumentData)
             {
                 var fileToFind = DatasetName + DOT_MGF_EXTENSION;
+
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, false))
                 {
                     LogError("Instrument data not found: " + fileToFind);
@@ -85,6 +88,7 @@ namespace DTASpectraFileGen
                 }
 
                 bool centroidDTAs;
+
                 if (dtaGeneratorType == DtaGenToolRunner.DTAGeneratorConstants.DeconConsole)
                 {
                     centroidDTAs = false;
@@ -172,6 +176,7 @@ namespace DTASpectraFileGen
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Gen";
 
                 var paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
                 if (string.IsNullOrEmpty(paramFileStoragePath))
                 {
                     paramFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DTA_Gen";

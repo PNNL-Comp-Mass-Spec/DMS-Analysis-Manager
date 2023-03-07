@@ -34,6 +34,7 @@ namespace AnalysisManagerExtractionPlugin
         public MSGFPlusPSMs(int scanNumber, int chargeState, int maximumPSMsToRetain)
         {
             MaximumPSMsToKeep = maximumPSMsToRetain;
+
             if (MaximumPSMsToKeep < 1)
                 MaximumPSMsToKeep = 1;
 
@@ -137,6 +138,7 @@ namespace AnalysisManagerExtractionPlugin
                     foreach (var item in mPSMs)
                     {
                         var peptideToFind = item.Value.Peptide;
+
                         if (bestScoreByPeptide.TryGetValue(peptideToFind, out var storedScore))
                         {
                             bestScoreByPeptide[peptideToFind] = Math.Min(storedScore, item.Value.SpecEValue);
@@ -151,6 +153,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         var storedPSM = mPSMs[key];
                         var bestScore = bestScoreByPeptide[storedPSM.Peptide];
+
                         if (bestScore < storedPSM.SpecEValue)
                         {
                             storedPSM.SpecEValue = bestScore;

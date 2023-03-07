@@ -54,6 +54,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Store the FeatureFinder version info in the database
             var success = StoreToolVersionInfo(progLoc);
+
             if (!success)
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
@@ -63,6 +64,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Set up and execute a program runner to run the LCMS Feature Finder
             var arguments = Path.Combine(mWorkDir, mJobParams.GetParam("LCMSFeatureFinderIniFile"));
+
             if (mDebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + arguments);
@@ -138,6 +140,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
             var featureFinderInfo = new FileInfo(featureFinderProgLoc);
+
             if (!featureFinderInfo.Exists)
             {
                 try
@@ -162,6 +165,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Lookup the version of the Feature Finder
             var success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, featureFinderInfo.FullName);
+
             if (!success)
                 return false;
 
@@ -173,11 +177,13 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 toolFiles.Add(new FileInfo(featureFinderDllLoc));
 
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, featureFinderDllLoc);
+
                 if (!success)
                     return false;
 
                 // Lookup the version of the UIMF Library (in the feature finder folder)
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(featureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
+
                 if (!success)
                     return false;
             }

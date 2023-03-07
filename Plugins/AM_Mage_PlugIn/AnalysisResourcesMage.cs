@@ -19,6 +19,7 @@ namespace AnalysisManager_Mage_PlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -32,6 +33,7 @@ namespace AnalysisManager_Mage_PlugIn
             var requireMasicJobs = mageOperations.Contains("ImportReporterIons");
 
             var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
+
             if (workFlowSteps.Contains("4plex") ||
                 workFlowSteps.Contains("6plex") ||
                 workFlowSteps.Contains("8plex"))
@@ -52,6 +54,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // Lookup the jobs associated with this data package
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
+
             if (dataPackageID < 0)
             {
                 LogError("DataPackageID is not defined");
@@ -149,6 +152,7 @@ namespace AnalysisManager_Mage_PlugIn
             else
             {
                 msg.AppendFormat(" has {0} PeptideHit job", missingJobCount);
+
                 if (missingJobCount > 1)
                     msg.Append("s that do not");
                 else

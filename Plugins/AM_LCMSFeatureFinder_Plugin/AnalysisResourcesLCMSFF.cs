@@ -40,6 +40,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -48,6 +49,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // Retrieve Decon2LS _scans.csv file for this dataset
             // The LCMSFeature Finder doesn't actually use the _scans.csv file, but we want to be sure it's present in the results folder
             var fileToGet = DatasetName + SCANS_FILE_SUFFIX;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -56,6 +58,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve Decon2LS _isos.csv files for this dataset
             fileToGet = DatasetName + ISOS_FILE_SUFFIX;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -65,6 +68,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve the LCMSFeatureFinder .Ini file specified for this job
             var lcmsFeatureFinderIniFileName = mJobParams.GetParam("LCMSFeatureFinderIniFile");
+
             if (string.IsNullOrEmpty(lcmsFeatureFinderIniFileName))
             {
                 LogError("LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
@@ -73,6 +77,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "LCMSFeatureFinder";
             var lcmsFeatureFinderIniFileStorageDirectory = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(lcmsFeatureFinderIniFileStorageDirectory))
             {
                 lcmsFeatureFinderIniFileStorageDirectory = @"\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder";
@@ -121,9 +126,11 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Customize the LCMSFeatureFinder .Ini file to include the input file path and output folder path
             var success = UpdateFeatureFinderIniFile(lcmsFeatureFinderIniFileName);
+
             if (!success)
             {
                 var message = "AnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + lcmsFeatureFinderIniFileName;
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = message;
@@ -142,6 +149,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (!string.IsNullOrEmpty(dataLine))
             {
                 var equalsIndex = dataLine.IndexOf('=');
+
                 if (equalsIndex > 0 && equalsIndex < dataLine.Length - 1)
                 {
                     value = dataLine.Substring(equalsIndex + 1);
@@ -212,6 +220,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                     if (!string.IsNullOrEmpty(value))
                                     {
                                         var file = new FileInfo(value);
+
                                         if (!file.Exists)
                                         {
                                             mMessage = "Entry for " + FILTER_FILE_NAME_KEY + " in " + lcmsFeatureFinderIniFileName +

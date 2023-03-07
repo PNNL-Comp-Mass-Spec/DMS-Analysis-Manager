@@ -80,6 +80,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 // Lookup the InstrumentID for this dataset
                 var instrumentID = 0;
+
                 if (!LookupInstrumentIDFromDB(ref instrumentID))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -157,6 +158,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 {
                     mProgress = PROGRESS_PCT_SMAQC_COMPLETE;
                     mStatusTools.UpdateAndWrite(mProgress);
+
                     if (mDebugLevel >= 3)
                     {
                         LogDebug("SMAQC Search Complete");
@@ -552,6 +554,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                         // Remove the timestamp from the start of the line (if present)
                         var reMatch = reMatchTimeStamp.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             dataLineNoTimestamp = dataLine.Substring(reMatch.Length);
@@ -649,6 +652,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 var startIndex = xmlResults.IndexOf("?>", StringComparison.Ordinal);
                 string xmlResultsClean;
+
                 if (startIndex > 0)
                 {
                     xmlResultsClean = xmlResults.Substring(startIndex + 2).Trim();
@@ -774,6 +778,7 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool StoreToolVersionInfo(string progLoc)
         {
             var additionalDLLs = new List<string>();
+
             if (LLRC_ENABLED)
             {
 #pragma warning disable CS0162

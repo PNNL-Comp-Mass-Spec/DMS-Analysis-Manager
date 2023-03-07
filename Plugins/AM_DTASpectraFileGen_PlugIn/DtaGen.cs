@@ -182,6 +182,7 @@ namespace DTASpectraFileGen
             foreach (var dataFile in workDir.GetFiles())
             {
                 var reMatch = reValidFiles.Match(dataFile.Extension);
+
                 if (!reMatch.Success)
                 {
                     try

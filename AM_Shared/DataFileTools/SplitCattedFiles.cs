@@ -45,6 +45,7 @@ namespace AnalysisManagerBase.DataFileTools
         {
             var cdtaFilePath = Path.Combine(resultsFolderPath, datasetName + AnalysisResources.CDTA_EXTENSION);
             var cdtaFile = new FileInfo(cdtaFilePath);
+
             if (cdtaFile.Exists)
             {
                 if (mResultsFileCount <= 0)
@@ -66,6 +67,7 @@ namespace AnalysisManagerBase.DataFileTools
         {
             var outFilePath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
             var outFile = new FileInfo(outFilePath);
+
             if (!outFile.Exists)
                 return false;
 
@@ -111,6 +113,7 @@ namespace AnalysisManagerBase.DataFileTools
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (dataLine == null)
                             continue;
 
@@ -187,6 +190,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 // See if this line contains the extra information of the form: scan=1000 cs=1
                 var dtaLineMatch = mDTAFirstLine.Match(outputLine);
+
                 if (dtaLineMatch.Success)
                 {
                     // Yes, it has the extra information
@@ -229,6 +233,7 @@ namespace AnalysisManagerBase.DataFileTools
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (dataLine != null && reOutFileSepMatcher.IsMatch(dataLine))
                         fileCount++;
                 }

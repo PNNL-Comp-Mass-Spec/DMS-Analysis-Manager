@@ -87,6 +87,7 @@ namespace AnalysisManagerProg
             PRISM.AppUtils.GarbageCollectNow();
 
             var folderCreateSuccess = MakeResultsDirectory();
+
             if (!folderCreateSuccess)
             {
                 // MakeResultsDirectory handles posting to local log, so set database error message and exit
@@ -95,6 +96,7 @@ namespace AnalysisManagerProg
             }
 
             var moveSucceed = MoveResultFiles();
+
             if (!moveSucceed)
             {
                 // MoveResultFiles moves the result files to the result folder
@@ -106,6 +108,7 @@ namespace AnalysisManagerProg
             var plotsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Plots"));
 
             var targetFolderPath = Path.Combine(Path.Combine(mWorkDir, mResultsDirectoryName), "Plots");
+
             if (plotsFolder.Exists && !Directory.Exists(targetFolderPath))
                 plotsFolder.MoveTo(targetFolderPath);
 
@@ -119,6 +122,7 @@ namespace AnalysisManagerProg
             }
 
             var copySuccess = CopyResultsFolderToServer();
+
             if (!copySuccess)
             {
                 // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory

@@ -513,6 +513,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 else
                 {
                     AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetDirectoryName), true);
+
                     if (datasetDirectoryName != datasetName)
                         AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetStoragePath"), datasetName), false);
                 }
@@ -532,17 +533,20 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 if ((mAuroraAvailable || MyEMSLSearchDisabled) && !assumeUnpurged)
                 {
                     AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetDirectoryName), true);
+
                     if (datasetDirectoryName != datasetName)
                         AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam("DatasetArchivePath"), datasetName), false);
                 }
 
                 AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), datasetDirectoryName), false);
+
                 if (datasetDirectoryName != datasetName)
                     AddPathToCheck(pathsToCheck, Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), datasetName), false);
 
                 var fileNotFoundEncountered = false;
 
                 bestPath = pathsToCheck.First().Item1;
+
                 foreach (var pathToCheck in pathsToCheck)
                 {
                     try
@@ -615,6 +619,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 else
                 {
                     directoryNotFoundMessage = "Could not find a valid dataset directory";
+
                     if (fileNameToFind.Length > 0)
                     {
                         // Could not find a valid dataset directory containing file
@@ -693,6 +698,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             var msg = new StringBuilder();
             msg.AppendFormat("MyEMSL does not have any files for dataset {0}", dataset);
+
             if (!string.IsNullOrEmpty(fileNameToFind))
             {
                 msg.AppendFormat(" and file {0}", fileNameToFind);
@@ -856,6 +862,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 retryCount--;
+
                 if (retryCount <= 0)
                 {
                     return false;

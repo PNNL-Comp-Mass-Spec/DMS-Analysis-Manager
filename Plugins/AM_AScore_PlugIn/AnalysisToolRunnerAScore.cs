@@ -87,6 +87,7 @@ namespace AnalysisManager_AScore_PlugIn
                         {
                             // Export the AScore result table as a tab-delimited text file
                             var exportSuccess = ExportAScoreResults();
+
                             if (!exportSuccess)
                             {
                                 mMessage = "Export of table t_results_ascore failed";
@@ -146,6 +147,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 var sqlLiteDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
+
                 if (!sqlLiteDB.Exists)
                 {
                     mMessage = "Cannot export AScore results since Results.db3 does not exist";
@@ -203,6 +205,7 @@ namespace AnalysisManager_AScore_PlugIn
             // Delete any PeptideToProteinMapEngine_log files
             var workingDirectory = new DirectoryInfo(mWorkDir);
             var matchingFiles = workingDirectory.GetFiles("PeptideToProteinMapEngine_log*");
+
             if (matchingFiles.Length > 0)
             {
                 foreach (var logFile in matchingFiles)

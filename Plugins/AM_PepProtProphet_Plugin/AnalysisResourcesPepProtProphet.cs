@@ -53,6 +53,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -262,6 +263,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!sourcePinFile.Exists)
                 {
                     var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
                     if (databaseSplitCount > 1)
                         return true;
 
@@ -333,6 +335,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             var columnMap = Global.ParseHeaderLine(dataLine, headerNames);
 
                             scanNumberIndex = columnMap["ScanNr"];
+
                             if (scanNumberIndex < 0)
                             {
                                 LogError(string.Format("{0} column not found in {1}", "columnMap", sourcePinFile.FullName));
@@ -344,6 +347,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                                 var chargeColumn = string.Format("charge_{0}", chargeState);
 
                                 var columnIndex = columnMap[chargeColumn];
+
                                 if (columnIndex >= 0)
                                 {
                                     columnIndexToChargeMap.Add(columnIndex, chargeState);
@@ -354,6 +358,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         var lineParts = dataLine.Split('\t');
+
                         if (lineParts.Length > 1 && string.IsNullOrWhiteSpace(lineParts[0]))
                         {
                             var scanNumber = lineParts[scanNumberIndex];

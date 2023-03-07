@@ -35,6 +35,7 @@ namespace AnalysisManagerProMexPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -45,6 +46,7 @@ namespace AnalysisManagerProMexPlugIn
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "ProMex";
 
             var proMexParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(proMexParamFileStoragePath))
             {
                 proMexParamFileStoragePath = @"C:\DMS_Programs\ProMex";
@@ -146,6 +148,7 @@ namespace AnalysisManagerProMexPlugIn
                 currentTask = "RetrieveMzMLFile";
 
                 var result = GetMzMLFile();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -174,6 +177,7 @@ namespace AnalysisManagerProMexPlugIn
                 currentTask = "RetrievePBFFile";
 
                 var result = GetPBFFile();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;

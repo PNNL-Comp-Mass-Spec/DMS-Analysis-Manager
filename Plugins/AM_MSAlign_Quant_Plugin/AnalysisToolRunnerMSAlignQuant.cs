@@ -82,6 +82,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (targetedQuantParamFilePaths.Count == 0)
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned an empty list");
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
@@ -182,6 +183,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     // File.Move(trimmedFilePath, fullResultsPath);
 
                     var workflowParamFileName = mJobParams.GetParam("MSAlignQuantParamFile");
+
                     if (string.IsNullOrEmpty(workflowParamFileName))
                     {
                         mMessage = NotifyMissingParameter(mJobParams, "MSAlignQuantParamFile");
@@ -349,6 +351,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
                                 var match = reSubProgress.Match(dataLine);
+
                                 if (match.Success)
                                 {
                                     if (double.TryParse(match.Groups[1].Value, out subProgressAddOn))
@@ -359,6 +362,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             }
 
                             var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.Ordinal);
+
                             if (charIndex < 0)
                             {
                                 charIndex = dataLineLCase.IndexOf("\terror", StringComparison.Ordinal);
@@ -528,6 +532,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             {
                 mProgress = PROGRESS_PCT_COMPLETE;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("TargetedWorkflowsConsole Quantitation Complete");

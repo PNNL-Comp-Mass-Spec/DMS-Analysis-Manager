@@ -20,6 +20,7 @@ namespace AnalysisManager_IDM_Plugin
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -43,6 +44,7 @@ namespace AnalysisManager_IDM_Plugin
                 if (useExistingIDMResults)
                 {
                     var idmResultsDB = new FileInfo(Path.Combine(dataPackageFolderPath, mJobParams.GetParam("StepOutputFolderName"), "Results.db3"));
+
                     if (idmResultsDB.Exists)
                     {
                         var targetFilePath = Path.Combine(mWorkDir, AnalysisToolRunnerIDM.EXISTING_IDM_RESULTS_FILE_NAME);

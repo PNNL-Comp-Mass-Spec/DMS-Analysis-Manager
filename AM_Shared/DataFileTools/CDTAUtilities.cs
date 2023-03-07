@@ -114,6 +114,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var originalFile = new FileInfo(sourceFilePath);
+
                 if (!originalFile.Exists)
                 {
                     OnErrorEvent("Error in RemoveSparseSpectra: source file not found: " + sourceFilePath);
@@ -245,6 +246,7 @@ namespace AnalysisManagerBase.DataFileTools
                 do
                 {
                     oldFilePath = originalFile.FullName + ".old";
+
                     if (addon > 0)
                     {
                         oldFilePath += addon.ToString();
@@ -300,6 +302,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 var originalFile = new FileInfo(sourceFilePath);
+
                 if (!originalFile.Exists)
                 {
                     OnErrorEvent("Error in ValidateCDTAFileScanAndCSTags: source file not found: " + sourceFilePath);
@@ -307,6 +310,7 @@ namespace AnalysisManagerBase.DataFileTools
                 }
 
                 string outputFilePathTemp;
+
                 if (replaceSourceFile)
                 {
                     outputFilePathTemp = sourceFilePath + ".tmp";
@@ -454,6 +458,7 @@ namespace AnalysisManagerBase.DataFileTools
                     OnStatusEvent("Now deleting file " + filePathOld);
 
                     cdtaFile = new FileInfo(filePathOld);
+
                     if (cdtaFile.Exists)
                     {
                         cdtaFile.Delete();

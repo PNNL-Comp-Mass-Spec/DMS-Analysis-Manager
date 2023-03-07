@@ -573,6 +573,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     foreach (var item in zipEntries)
                     {
                         item.Extract(targetDirectory, overwriteBehavior);
+
                         if (item.IsDirectory)
                             continue;
 
@@ -622,6 +623,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 // Confirm that the zip file was created
                 var zipFile = new FileInfo(zipFilePath);
+
                 if (!zipFile.Exists)
                 {
                     LogError("Zip file not found: " + zipFilePath);
@@ -661,6 +663,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         continue;
 
                     var success = VerifyZipFileEntry(zipFilePath, entry);
+
                     if (!success)
                         return false;
                 }

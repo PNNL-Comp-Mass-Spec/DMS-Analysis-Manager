@@ -98,6 +98,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 var indexedFile = new FileInfo(originalFile.FullName + ".indexed");
 
                 var reader = new BinaryTextReader();
+
                 if (!reader.OpenFile(originalFile.FullName))
                     return false;
 
@@ -220,6 +221,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 case XmlNodeType.Element:
                     writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
                     writer.WriteAttributes(reader, true);
+
                     if (reader.IsEmptyElement)
                     {
                         writer.WriteEndElement();

@@ -79,6 +79,7 @@ namespace AnalysisManagerProg
 
                 mMgrSettings = new AnalysisMgrSettings(Global.GetAppDirectoryPath(), TRACE_MODE_ENABLED);
                 var settingsClass = (AnalysisMgrSettings)mMgrSettings;
+
                 if (settingsClass != null)
                 {
                     RegisterEvents(settingsClass);
@@ -86,6 +87,7 @@ namespace AnalysisManagerProg
                 }
 
                 var success = mMgrSettings.LoadSettings(configFileSettings);
+
                 if (!success)
                     return;
 
@@ -134,6 +136,7 @@ namespace AnalysisManagerProg
                 }
 
                 List<FileInfo> filesToVersion;
+
                 if (string.IsNullOrWhiteSpace(fileNameFileSpec))
                 {
                     filesToVersion = sourceDirectory.GetFiles("*.dll").ToList();
@@ -159,6 +162,7 @@ namespace AnalysisManagerProg
                         var frameworkVersion = "??";
 
                         var customAttributes = fileAssembly.GetCustomAttributes(typeof(TargetFrameworkAttribute)).ToList();
+
                         if (customAttributes?.Count > 0)
                         {
                             var frameworkAttribute = (TargetFrameworkAttribute)customAttributes.First();
@@ -229,6 +233,7 @@ namespace AnalysisManagerProg
                 var query = (from item in results orderby item.Key select item).ToList();
 
                 Console.WriteLine("{0,-50} {1,-20} {2}", "Filename", ".NET Version", "Target Framework");
+
                 foreach (var result in query)
                 {
                     Console.WriteLine("{0,-50} {1,-20} {2}", Path.GetFileName(result.Key), " " + result.Value.Key, result.Value.Value);
@@ -410,7 +415,9 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine("Error in PerformanceCounterTest: " + ex.Message);
                 Console.WriteLine(Global.GetExceptionStackTrace(ex, true));
+
                 var rePub1000 = new Regex(@"Pub-1\d{3,}", RegexOptions.IgnoreCase);
+
                 if (rePub1000.IsMatch(Environment.MachineName))
                 {
                     Console.WriteLine("This is a known issue with Windows instances running under VMWare on PIC");
@@ -550,6 +557,7 @@ namespace AnalysisManagerProg
                 if (Global.LinuxOS)
                 {
                     var localWorkDirPath = mMgrSettings.GetParam(AnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
+
                     if (!string.IsNullOrWhiteSpace(localWorkDirPath))
                     {
                         var localWorkDir = new DirectoryInfo(localWorkDirPath);
@@ -572,6 +580,7 @@ namespace AnalysisManagerProg
 
             var resultsDirectoryPath = Path.Combine(GetWorkDirPath(), "TestResults");
             var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
+
             if (!resultsDirectory.Exists)
                 resultsDirectory.Create();
 
@@ -626,6 +635,7 @@ namespace AnalysisManagerProg
                 var needToArchiveFile = false;
 
                 var fileName = Path.GetFileName(sourceFilePath);
+
                 if (fileName == null)
                 {
                     Console.WriteLine("Filename could not be parsed from parameter " + nameof(sourceFilePath));
@@ -658,6 +668,7 @@ namespace AnalysisManagerProg
                         while (true)
                         {
                             newPath = Path.Combine(targetFolderPath, newName);
+
                             if (!File.Exists(newPath))
                             {
                                 break;
@@ -702,6 +713,7 @@ namespace AnalysisManagerProg
             const string username = "svc-dms";
 
             var keyFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.key");
+
             if (!keyFile.Exists)
             {
                 LogError("File not found: " + keyFile.FullName);
@@ -709,6 +721,7 @@ namespace AnalysisManagerProg
             }
 
             var passPhraseFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.pass");
+
             if (!passPhraseFile.Exists)
             {
                 LogError("File not found: " + passPhraseFile.FullName);
@@ -736,6 +749,7 @@ namespace AnalysisManagerProg
 
                 sftp.Connect();
                 var files = sftp.ListDirectory(".");
+
                 foreach (var file in files)
                 {
                     Console.WriteLine(file.FullName);
@@ -1135,6 +1149,7 @@ namespace AnalysisManagerProg
             }
 
             Console.ResetColor();
+
             foreach (ConsoleColor color in Enum.GetValues(typeof(ConsoleColor)))
             {
                 Console.Write("{0,-12} [", color);
@@ -1282,6 +1297,7 @@ namespace AnalysisManagerProg
                 foreach (var candidateDir in candidateRDirectories)
                 {
                     LogDebug("Looking for " + candidateDir);
+
                     if (Directory.Exists(candidateDir))
                     {
                         paramDictionary.Add("RDLL", @"C:\Program Files\R\R-3.6.0\bin\x64");
@@ -1338,6 +1354,7 @@ namespace AnalysisManagerProg
             var dataCount = 0;
 
             Console.WriteLine("{0,-10} {1,-21} {2,-20} {3}", "Entry_ID", "Date", "Posted_By", "Message");
+
             foreach (DataRow row in results.Rows)
             {
                 Console.WriteLine("{0,-10} {1,-21:yyyy-MM-dd hh:mm tt} {2,-20} {3}", row[0], row[2], row[1], row[4]);
@@ -1395,6 +1412,7 @@ namespace AnalysisManagerProg
             dotNetZipTools.UnzipFile(zipFilePath);
 
             var workDir = new DirectoryInfo(workDirPath);
+
             foreach (var mzidFile in workDir.GetFiles("*.mzid"))
             {
                 dotNetZipTools.GZipFile(mzidFile.FullName, true);
@@ -1425,6 +1443,7 @@ namespace AnalysisManagerProg
             var roundTripFile = new FileInfo(Path.Combine(targetDirectoryPath, sourceFile.Name));
 
             Console.WriteLine();
+
             if (roundTripFile.Length == sourceFile.Length)
             {
                 Console.WriteLine("Round trip file length matches the original file {0:#,###} bytes", sourceFile.Length);
@@ -1490,6 +1509,7 @@ namespace AnalysisManagerProg
             RegisterEvents(dotNetZipTools);
 
             dotNetZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
+
             foreach (var item in dotNetZipTools.MostRecentUnzippedFiles)
             {
                 Console.WriteLine(item.Key + " - " + item.Value);
@@ -1544,6 +1564,7 @@ namespace AnalysisManagerProg
             statusTools.MgrName = mMgrSettings.ManagerName;
 
             var exePath = Assembly.GetExecutingAssembly().Location;
+
             if (exePath == null)
                 throw new Exception("Unable to determine the Exe path of the currently executing assembly");
 
@@ -1731,6 +1752,7 @@ namespace AnalysisManagerProg
                         RegisterEvents(paramFileReader);
 
                         var paramFileSuccess = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries);
+
                         if (!paramFileSuccess)
                         {
                             ConsoleMsgUtils.ShowWarning("ParseKeyValueParameterFileGetAllLines returned false for job {0}, parameter file {1}",
@@ -1777,6 +1799,7 @@ namespace AnalysisManagerProg
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
+
                             if (string.IsNullOrWhiteSpace(dataLine))
                                 continue;
 
@@ -1811,6 +1834,7 @@ namespace AnalysisManagerProg
             const string workingDir = @"C:\DMS_WorkDir";
 
             var inputFile = new FileInfo(Path.Combine(workingDir, inputFileName));
+
             if (!inputFile.Exists)
             {
                 LogError("GenerateScanStatsFiles; File not found: " + inputFile.FullName);
@@ -1829,6 +1853,7 @@ namespace AnalysisManagerProg
             const string msFileInfoScannerDir = @"C:\DMS_Programs\MSFileInfoScanner";
 
             var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
+
             if (!File.Exists(msFileInfoScannerDLLPath))
             {
                 Console.WriteLine("File Not Found: " + msFileInfoScannerDLLPath);
@@ -2206,6 +2231,7 @@ namespace AnalysisManagerProg
             if (DateTime.UtcNow.Subtract(mLastStatusTime).TotalSeconds >= 5)
             {
                 mLastStatusTime = DateTime.UtcNow;
+
                 if (percentComplete > 0)
                 {
                     LogMessage(progressMessage + "; " + percentComplete.ToString("0.0") + "% complete");

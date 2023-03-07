@@ -108,6 +108,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -119,6 +120,7 @@ namespace AnalysisManagerQCARTPlugin
                 var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 var success = FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -132,6 +134,7 @@ namespace AnalysisManagerQCARTPlugin
                 var rScriptStoragePath = Path.Combine(paramFileStoragePath, "Template_Scripts");
 
                 success = FileSearchTool.RetrieveFile(rScriptName, rScriptStoragePath);
+
                 if (!success)
                 {
                     mMessage = "Template QC-ART R Script not found: " + rScriptName;
@@ -149,6 +152,7 @@ namespace AnalysisManagerQCARTPlugin
                 // baselineMetadataKey tracks a unique key defined as the MD5 hash of the dataset names, appended with JobFirst_JobLast
 
                 success = ParseQCARTParamFile(paramFilePathLocal, out var baselineDatasets, out var baselineMetadataKey);
+
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -164,6 +168,7 @@ namespace AnalysisManagerQCARTPlugin
                 currentTask = "Get existing baseline results";
 
                 var baselineResultsFound = FindBaselineResults(paramFilePathRemote, baselineMetadataKey, out var baselineMetadataFilePath, out var criticalError);
+
                 if (criticalError)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -193,6 +198,7 @@ namespace AnalysisManagerQCARTPlugin
                 currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " file for " + DatasetName;
 
                 success = RetrieveReporterIonsFile(currentDatasetAndJobInfo);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -203,6 +209,7 @@ namespace AnalysisManagerQCARTPlugin
                     currentTask = "Retrieve " + REPORTER_IONS_FILE_SUFFIX + " files for the baseline datasets";
 
                     success = RetrieveDataForBaselineDatasets(paramFileName, baselineDatasets);
+
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -210,6 +217,7 @@ namespace AnalysisManagerQCARTPlugin
                     OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
                     success = CreateBaselineDatasetInfoFile(baselineDatasets);
+
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -217,6 +225,7 @@ namespace AnalysisManagerQCARTPlugin
                 currentTask = "Process the MyEMSL download queue";
 
                 success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -227,6 +236,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 currentTask = "Retrieve QC Metrics from DMS";
                 success = RetrieveQCMetricsFromDB(datasetNamesToRetrieveMetrics);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -234,6 +244,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Customize the QC-ART R Script
                 success = CustomizeQCRScript(rScriptName, baselineResultsFound);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -319,6 +330,7 @@ namespace AnalysisManagerQCARTPlugin
                                 if (baselineResultsFound)
                                 {
                                     customValue = mJobParams.GetJobParameter(JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
+
                                     if (string.IsNullOrWhiteSpace(customValue))
                                     {
                                         const string errorMsg = "Error in CustomizeQCRScript: " + JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME + " is undefined";
@@ -389,9 +401,11 @@ namespace AnalysisManagerQCARTPlugin
                 using (var writer = new StreamWriter(new FileStream(baselineDataInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine("DatasetName,Fraction");
+
                     foreach (var dataset in baselineDatasets)
                     {
                         var fractionNumber = ExtractFractionFromDatasetName(dataset.Key);
+
                         if (fractionNumber <= 0)
                         {
                             datasetParseErrors.Add(dataset.Key);
@@ -469,6 +483,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Find the parameter file in the remote location
                 currentTask = "Finding parameter file";
                 var paramFile = new FileInfo(paramFilePath);
+
                 if (!paramFile.Exists)
                 {
                     errorMessage = "Parameter file not found";
@@ -595,6 +610,7 @@ namespace AnalysisManagerQCARTPlugin
                 var contents = paramFile.CreateNavigator();
 
                 var projectNode = contents.Select("/Parameters/Metadata/Project");
+
                 if (!projectNode.MoveNext())
                 {
                     LogError("Project node not found in the QC-ART parameter file; " +
@@ -603,6 +619,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 mProjectName = projectNode.Current.Value;
+
                 if (string.IsNullOrWhiteSpace(mProjectName))
                 {
                     mProjectName = "Unknown";
@@ -611,6 +628,7 @@ namespace AnalysisManagerQCARTPlugin
                 mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAMETER_QCART_PROJECT_NAME, mProjectName);
 
                 var baselineDatasetEntries = contents.Select("/Parameters/BaselineList/BaselineDataset");
+
                 if (baselineDatasetEntries.Count == 0)
                 {
                     LogError(NO_BASELINE_INFO);
@@ -733,6 +751,7 @@ namespace AnalysisManagerQCARTPlugin
                 var contents = paramFile.CreateNavigator();
 
                 var projectNode = contents.Select("/Parameters/Results/BaselineDataCacheFile");
+
                 if (!projectNode.MoveNext())
                 {
                     const string warningMessage = "BaselineDataCacheFile node not found in the QC-ART baseline results metadata file; " +
@@ -742,6 +761,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 var baselineDataCacheFileName = projectNode.Current.Value;
+
                 if (string.IsNullOrWhiteSpace(baselineDataCacheFileName))
                 {
                     const string warningMessage = "BaselineDataCacheFile node is empty in the QC-ART baseline results metadata file";
@@ -1012,6 +1032,7 @@ namespace AnalysisManagerQCARTPlugin
                 var reporterIonsFileName = DatasetName + REPORTER_IONS_FILE_SUFFIX;
 
                 var success = FileSearchTool.FindAndRetrieveMiscFiles(reporterIonsFileName, false);
+
                 if (!success)
                 {
                     LogError(REPORTER_IONS_FILE_SUFFIX + " file not found for dataset " + dataPkgJob.Dataset + ", job " + dataPkgJob.Job);

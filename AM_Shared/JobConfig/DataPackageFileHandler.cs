@@ -233,6 +233,7 @@ namespace AnalysisManagerBase.JobConfig
                     foreach (var myEmslFile in mAnalysisResources.MyEMSLUtils.RecentlyFoundMyEMSLFiles)
                     {
                         var archivedFile = new FileInfo(myEmslFile.FileInfo.RelativePathWindows);
+
                         if (archivedFile.Name.EndsWith("_CacheInfo.txt", StringComparison.OrdinalIgnoreCase))
                         {
                             mAnalysisResources.MyEMSLUtils.AddFileToDownloadQueue(myEmslFile.FileInfo);
@@ -262,9 +263,11 @@ namespace AnalysisManagerBase.JobConfig
                     }
 
                     var cacheInfoFiles = sourceDirectory.GetFiles("*_CacheInfo.txt");
+
                     if (cacheInfoFiles.Length == 0)
                     {
                         var sourceDirectoryAlt = new DirectoryInfo(Path.Combine(sourceDirectory.FullName, inputDirectoryName));
+
                         if (sourceDirectoryAlt.Exists)
                         {
                             cacheInfoFiles = sourceDirectoryAlt.GetFiles("*_CacheInfo.txt");
@@ -300,6 +303,7 @@ namespace AnalysisManagerBase.JobConfig
                 // Open the CacheInfo file and read the first line
 
                 var localCacheInfoFile = new FileInfo(Path.Combine(workDirInfo.FullName, cacheInfoFileName));
+
                 if (!localCacheInfoFile.Exists)
                 {
                     OnErrorEvent("CacheInfo file not found in the working directory; should have been retrieved from " + cacheInfoFileSourceType);
@@ -410,6 +414,7 @@ namespace AnalysisManagerBase.JobConfig
         private string MoveFileToJobSubdirectory(FileSystemInfo workDirInfo, DataPackageJobInfo dataPkgJob, FileInfo sourceFile)
         {
             var jobSubDirectory = new DirectoryInfo(Path.Combine(workDirInfo.FullName, "Job" + dataPkgJob.Job));
+
             if (!jobSubDirectory.Exists)
             {
                 jobSubDirectory.Create();
@@ -434,6 +439,7 @@ namespace AnalysisManagerBase.JobConfig
             try
             {
                 var mzidFile = new FileInfo(mzIdFileToInspect);
+
                 if (!mzidFile.Exists)
                 {
                     OnErrorEvent("Unable to examine the mzid file to determine whether MS-GF+ searched a .mzML file; file Not found:   " + mzIdFileToInspect);
@@ -632,6 +638,7 @@ namespace AnalysisManagerBase.JobConfig
                     prefixRequired = true;
 
                     localDirectoryPath = Path.Combine(workDirInfo.FullName, "FileRename");
+
                     if (!Directory.Exists(localDirectoryPath))
                     {
                         Directory.CreateDirectory(localDirectoryPath);
@@ -662,6 +669,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
 
                 var myEmslSuccess = mAnalysisResources.ProcessMyEMSLDownloadQueue();
+
                 if (!myEmslSuccess)
                 {
                     return false;
@@ -710,6 +718,7 @@ namespace AnalysisManagerBase.JobConfig
                     foreach (var filePath in foundFiles)
                     {
                         var currentFileInfo = new FileInfo(filePath);
+
                         if (currentFileInfo.Name.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Convert the _msgfplus.zip file to a .mzid.gz file
@@ -846,6 +855,7 @@ namespace AnalysisManagerBase.JobConfig
                         if (File.Exists(sourceFilePath))
                         {
                             foundFiles.Add(sourceFilePath);
+
                             if (IsMzidFile(sourceFilePath, out var splitFastaMzid) && !splitFastaMzid)
                             {
                                 mzidFileFound = true;
@@ -854,6 +864,7 @@ namespace AnalysisManagerBase.JobConfig
                         else if (File.Exists(alternateFileName))
                         {
                             foundFiles.Add(alternateFileName);
+
                             if (IsMzidFile(alternateFileName, out var splitFastaMzid) && !splitFastaMzid)
                             {
                                 mzidFileFound = true;
@@ -864,6 +875,7 @@ namespace AnalysisManagerBase.JobConfig
                             if (logMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
                                 var warningMessage = "Required PHRP file not found: " + sourceFilename;
+
                                 if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
                                     sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase))
                                 {
@@ -885,6 +897,7 @@ namespace AnalysisManagerBase.JobConfig
                         {
                             var alternateFileName = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
                             fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceDirectoryPath, localDirectoryPath, logMsgTypeIfNotFound);
+
                             if (fileCopied)
                             {
                                 sourceFilename = alternateFileName;
@@ -951,6 +964,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             var searchUsedMzML = false;
+
             if (!string.IsNullOrEmpty(mzIDFileToInspect))
             {
                 if (cachedJobMetadata.TryGetValue(dataPkgJob.Job, out var jobMetadata))
@@ -974,6 +988,7 @@ namespace AnalysisManagerBase.JobConfig
             if (searchUsedMzML)
             {
                 var stepToolFilter = string.Empty;
+
                 if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
                 {
                     stepToolFilter = "MSGFPlus";
@@ -1270,12 +1285,14 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             var fileName = Path.GetFileName(rawFilePath);
+
             if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
             {
                 // ToDo: Validate correct handling of MyEMSL files
                 mAnalysisResources.MyEMSLUtils.AddFileToDownloadQueue(rawFilePath);
 
                 var myEmslSuccess = mAnalysisResources.ProcessMyEMSLDownloadQueue();
+
                 if (!myEmslSuccess)
                 {
                     return false;
@@ -1315,6 +1332,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 var localInstrumentFilePath = Path.Combine(workingDir, fileName);
                 var success = fileTools.CopyFileUsingLocks(rawFilePath, localInstrumentFilePath);
+
                 if (!success)
                 {
                     OnErrorEvent("Error copying dataset file " + rawFilePath);
@@ -1901,6 +1919,7 @@ namespace AnalysisManagerBase.JobConfig
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -2006,6 +2025,7 @@ namespace AnalysisManagerBase.JobConfig
                 foreach (var gzipCandidate in gzipFileCandidates)
                 {
                     var gzippedMzidFile = new FileInfo(Path.Combine(workDirInfo.FullName, gzipCandidate));
+
                     if (gzippedMzidFile.Exists)
                     {
                         matchedFilePath = gzippedMzidFile.FullName;
@@ -2018,6 +2038,7 @@ namespace AnalysisManagerBase.JobConfig
                     foreach (var zipCandidate in zipFileCandidates)
                     {
                         var fileToUnzip = new FileInfo(Path.Combine(workDirInfo.FullName, zipCandidate));
+
                         if (fileToUnzip.Exists)
                         {
                             dotNetTools.UnzipFile(fileToUnzip.FullName);
@@ -2062,6 +2083,7 @@ namespace AnalysisManagerBase.JobConfig
             {
                 // Unzip _pepXML.zip if it exists
                 var fileToUnzip = new FileInfo(Path.Combine(workDirInfo.FullName, zippedPepXmlFile));
+
                 if (fileToUnzip.Exists)
                 {
                     dotNetTools.UnzipFile(fileToUnzip.FullName);

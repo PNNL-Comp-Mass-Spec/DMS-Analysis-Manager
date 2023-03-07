@@ -332,6 +332,7 @@ namespace MSMSSpectrumFilterAM
                 if (!mMsMsSpectrumFilter.LoadParameterFileSettings(parameterFilePath))
                 {
                     mErrMsg = mMsMsSpectrumFilter.GetErrorMessage();
+
                     if (string.IsNullOrEmpty(mErrMsg))
                     {
                         mErrMsg = "Parameter file load error: " + parameterFilePath;
@@ -548,6 +549,7 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 var scanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(mWorkDir, mDatasetName);
+
                 if (scanStatsFilesExist)
                 {
                     if (mDebugLevel >= 1)
@@ -597,6 +599,7 @@ namespace MSMSSpectrumFilterAM
                     }
 
                     mErrMsg = mMsMsSpectrumFilter.GetErrorMessage();
+
                     if (string.IsNullOrEmpty(mErrMsg))
                     {
                         mErrMsg = "GenerateFinniganScanStatsFiles returned false; _ScanStats.txt files not generated";
@@ -683,6 +686,7 @@ namespace MSMSSpectrumFilterAM
 
             // Settings file exist?
             var settingsNamePath = Path.Combine(mWorkDir, mSettingsFileName);
+
             if (!VerifyFileExists(settingsNamePath))
             {
                 // Error msg handled by VerifyFileExists

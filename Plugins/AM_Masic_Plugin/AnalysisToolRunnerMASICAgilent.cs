@@ -62,6 +62,7 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 foundFiles = Directory.GetFiles(mWorkDir, "*.cdf");
+
                 foreach (var targetFile in foundFiles)
                 {
                     DeleteFileWithRetries(targetFile);
@@ -77,6 +78,7 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 foundFiles = Directory.GetFiles(mWorkDir, "*.mgf");
+
                 foreach (var targetFile in foundFiles)
                 {
                     DeleteFileWithRetries(targetFile);

@@ -81,6 +81,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Determine the path to the AScore program
                 // AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
                 var progLocAScore = mMgrParams.GetParam("AScoreProgLoc");
+
                 if (!File.Exists(progLocAScore))
                 {
                     if (string.IsNullOrWhiteSpace(progLocAScore))
@@ -108,12 +109,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     foreach (var fileSuffix in fileSuffixesToCombine)
                     {
                         var concatenateSuccess = ConcatenateResultFiles(fileSuffix + FILE_SUFFIX_ASCORE_RESULTS);
+
                         if (!concatenateSuccess)
                         {
                             processingSuccess = false;
                         }
 
                         concatenateSuccess = ConcatenateResultFiles(fileSuffix + FILE_SUFFIX_SYN_PLUS_ASCORE);
+
                         if (!concatenateSuccess)
                         {
                             processingSuccess = false;
@@ -166,6 +169,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             try
             {
                 var synFile = new FileInfo(synFilePath);
+
                 if (synFile.Directory == null)
                 {
                     LogError("Cannot determine the parent directory of " + synFile.FullName);
@@ -227,6 +231,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 mergePipeline.RunRoot(null);
 
                 updatedFile.Refresh();
+
                 if (!updatedFile.Exists)
                 {
                     mMessage = "Mage did not create " + updatedFile.Name + " for job " + jobNumber;
@@ -260,6 +265,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         private void CacheFileSuffix(List<string> fileSuffixesToCombine, string datasetName, string fileName)
         {
             var baseName = Path.GetFileNameWithoutExtension(fileName);
+
             if (string.IsNullOrWhiteSpace(baseName))
                 return;
 
@@ -285,6 +291,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     var jobNumber = jobFolder.Key;
 
                     var logFiles = jobFolder.Value.GetFiles(ASCORE_CONSOLE_OUTPUT_PREFIX + "*").ToList();
+
                     if (logFiles.Count == 0)
                     {
                         continue;
@@ -306,10 +313,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             while (!reader.EndOfStream)
                             {
                                 var dataLine = reader.ReadLine();
+
                                 if (!string.IsNullOrWhiteSpace(dataLine))
                                 {
                                     if (dataLine.StartsWith("Percent Completion"))
                                         continue;
+
                                     if (dataLine.Trim().StartsWith("Skipping PHRP result"))
                                         continue;
 
@@ -343,6 +352,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 using var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                 var jobFolderList = GetJobFolderList();
+
                 foreach (var jobFolder in jobFolderList)
                 {
                     var jobNumber = jobFolder.Key;
@@ -357,6 +367,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             continue;
 
                         var headerLine = reader.ReadLine();
+
                         if (headerLine == null)
                             continue;
 
@@ -386,6 +397,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
+
                             if (string.IsNullOrWhiteSpace(dataLine))
                                 continue;
 
@@ -393,6 +405,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             {
                                 // Remove the first column from dataLine
                                 var charIndex = dataLine.IndexOf('\t');
+
                                 if (charIndex >= 0)
                                 {
                                     writer.WriteLine(jobNumber + "\t" + dataLine.Substring(charIndex + 1));
@@ -534,6 +547,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (!File.Exists(jobMetadata.FirstHitsFilePath))
             {
                 var fhtFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(jobMetadata.FirstHitsFilePath, "Dataset_msgfdb.txt");
+
                 if (File.Exists(fhtFileAlternate))
                 {
                     jobMetadata.FirstHitsFilePath = fhtFileAlternate;
@@ -544,6 +558,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (!File.Exists(jobMetadata.SynopsisFilePath))
             {
                 var synFileAlternate = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(jobMetadata.SynopsisFilePath, "Dataset_msgfdb.txt");
+
                 if (File.Exists(synFileAlternate))
                 {
                     jobMetadata.SynopsisFilePath = synFileAlternate;
@@ -554,9 +569,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (File.Exists(jobMetadata.FirstHitsFilePath))
             {
                 CacheFileSuffix(fileSuffixesToCombine, jobMetadata.Dataset, fhtFile);
+
                 if (runningSequest)
                 {
                     success = AddMSGFSpecProbValues(jobMetadata.Job, jobMetadata.FirstHitsFilePath, "fht");
+
                     if (!success)
                         return false;
                 }
@@ -569,9 +586,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (File.Exists(jobMetadata.SynopsisFilePath))
             {
                 CacheFileSuffix(fileSuffixesToCombine, jobMetadata.Dataset, synFile);
+
                 if (runningSequest)
                 {
                     success = AddMSGFSpecProbValues(jobMetadata.Job, jobMetadata.SynopsisFilePath, "syn");
+
                     if (!success)
                         return false;
                 }
@@ -593,9 +612,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         private string DetermineSpectrumFilePath(DirectoryInfo jobFolder)
         {
             var dtaFiles = jobFolder.GetFiles("*_dta.zip");
+
             if (dtaFiles.Length > 0)
             {
                 var dtaFile = dtaFiles.First();
+
                 if (!UnzipFile(dtaFile.FullName))
                 {
                     mMessage = "Error unzipping " + dtaFile.Name;
@@ -606,9 +627,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
 
             var mzMLFiles = jobFolder.GetFiles("*.mzML.gz");
+
             if (mzMLFiles.Length > 0)
             {
                 var mzMLFile = mzMLFiles.First();
+
                 if (!GUnzipFile(mzMLFile.FullName))
                 {
                     mMessage = "Error unzipping " + mzMLFile.Name;
@@ -627,6 +650,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             foreach (var paramName in parameterNames)
             {
                 var paramFileName = mJobParams.GetJobParameter(paramName, string.Empty);
+
                 if (string.IsNullOrWhiteSpace(paramFileName))
                 {
                     continue;
@@ -731,6 +755,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             }
 
                             var match = reCheckProgress.Match(dataLine);
+
                             if (match.Success)
                             {
                                 int.TryParse(match.Groups[1].ToString(), out ascoreProgress);
@@ -803,6 +828,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     var synopsisFiles = jobFolder.Value.GetFiles("*syn*.txt");
 
                     var firstHitsFiles = jobFolder.Value.GetFiles("*fht*.txt");
+
                     if (synopsisFiles.Length + firstHitsFiles.Length == 0)
                     {
                         continue;
@@ -845,6 +871,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                     // Find any first hits and synopsis files
                     var success = DetermineInputFilePaths(jobFolder.Value, ref jobMetadata, fileSuffixesToCombine);
+
                     if (!success)
                     {
                         jobCountSkippedNoSynFile++;
@@ -855,6 +882,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         {
                             // Analyze the first hits file with AScore
                             success = RunAscore(progLoc, jobMetadata, jobMetadata.FirstHitsFilePath, bestAScoreParamFilePath, "fht", processingRunTimes);
+
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -866,6 +894,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         {
                             // Analyze the synopsis file with AScore
                             success = RunAscore(progLoc, jobMetadata, jobMetadata.SynopsisFilePath, bestAScoreParamFilePath, "syn", processingRunTimes);
+
                             if (!success)
                             {
                                 // An error has already been logged, and mMessage has been updated
@@ -968,6 +997,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             var sourceFile = new FileInfo(inputFilePath);
+
             if (sourceFile.Directory == null)
             {
                 LogError("Cannot determine the parent directory of " + sourceFile.FullName);
@@ -1060,6 +1090,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("AScore search complete for data package job " + jobMetadata.Job);

@@ -709,6 +709,7 @@ namespace AnalysisManagerBase.AnalysisTool
             set
             {
                 mMyEMSLSearchDisabled = value;
+
                 if (DirectorySearchTool != null)
                 {
                     if (mMyEMSLSearchDisabled && !DirectorySearchTool.MyEMSLSearchDisabled)
@@ -826,6 +827,7 @@ namespace AnalysisManagerBase.AnalysisTool
             mWorkDir = mMgrParams.GetParam("WorkDir");
 
             var jobNum = mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "Job");
+
             if (!string.IsNullOrEmpty(jobNum))
             {
                 int.TryParse(jobNum, out mJob);
@@ -878,6 +880,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool CopyGeneratedOrgDBToRemote(RemoteTransferUtility transferUtility)
         {
             var dbFilename = mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME);
+
             if (string.IsNullOrWhiteSpace(dbFilename))
             {
                 LogError("Cannot copy the generated FASTA remotely; parameter " + JOB_PARAM_GENERATED_FASTA_NAME + " is empty");
@@ -885,6 +888,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var orgDbDirPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+
             if (string.IsNullOrWhiteSpace(orgDbDirPath))
             {
                 LogError("Cannot copy the generated FASTA remotely; manager parameter OrgDBDir is empty");
@@ -903,6 +907,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Find .hashcheck files
             var hashcheckFiles = orgDbDir.GetFiles(sourceFasta.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix);
+
             if (hashcheckFiles.Length == 0)
             {
                 LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
@@ -926,6 +931,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 foreach (var remoteFile in matchingFiles)
                 {
                     var extension = Path.GetExtension(remoteFile.Value.Name);
+
                     if (extension == null)
                         continue;
 
@@ -962,6 +968,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var success = transferUtility.CopyFilesToRemote(sourceFiles, transferUtility.RemoteOrgDBPath, useLockFile: true);
+
             if (success)
                 return true;
 
@@ -999,6 +1006,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var remoteHost = transferUtility.RemoteHostName;
 
                 var targetDirectoryVerified = transferUtility.CreateRemoteDirectory(remoteDirectoryPath);
+
                 if (!targetDirectoryVerified)
                 {
                     LogError(string.Format("Unable to create working directory {0} on host {1}", remoteDirectoryPath, remoteHost));
@@ -1239,6 +1247,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (waitingForLockFile)
             {
                 var lastProgressTime = DateTime.UtcNow;
+
                 if (logIntervalMinutes < 1)
                     logIntervalMinutes = 1;
 
@@ -1271,6 +1280,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Check for the lock file one more time
                 lockFile.Refresh();
+
                 if (lockFile.Exists)
                 {
                     // Lock file is over 2 hours old; delete it
@@ -1403,6 +1413,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     else
                     {
                         mMessage = "Error retrieving protein collection or legacy FASTA file: ";
+
                         if (ex.Message.Contains("could not open database connection"))
                         {
                             mMessage += "could not open database connection";
@@ -1465,6 +1476,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // where NN is the number of total cloned steps and nn is this job's specific step number
 
                 legacyFastaToUse = GetSplitFastaFileName(mJobParams, out var errorMessage, out var numberOfClonedSteps);
+
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     mMessage = errorMessage;
 
@@ -1479,6 +1491,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Lookup connection strings
                 // Proteinseqs.Protein_Sequences
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
+
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
                     LogError("Error in CreateFastaFile: manager parameter FastaCnString is not defined");
@@ -1487,6 +1500,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Gigasax.DMS5
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
                     LogError("Error in CreateFastaFile: manager parameter ConnectionString is not defined");
@@ -1498,6 +1512,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Lookup the MSGFPlus Index Folder path
                 var msgfPlusIndexFilesDirPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
+
                 if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathLegacyDB))
                 {
                     msgfPlusIndexFilesDirPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
@@ -1532,6 +1547,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 mSplitFastaLastPercentComplete = 0;
 
                 var success = mSplitFastaFileUtility.ValidateSplitFastaFile(proteinCollectionInfo.LegacyFastaName, legacyFastaToUse);
+
                 if (!success)
                 {
                     mMessage = mSplitFastaFileUtility.ErrorMessage;
@@ -1604,6 +1620,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     var rePathMatcher = new Regex(@"not found: (?<SourceDirectory>.+)\\");
                     var reMatch = rePathMatcher.Match(ex.Message);
+
                     if (reMatch.Success)
                     {
                         mMessage = "Legacy FASTA file not found at " + reMatch.Groups["SourceDirectory"].Value;
@@ -1764,6 +1781,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
+
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
             {
                 LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFiles)");
@@ -1771,6 +1789,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
+
             if (!File.Exists(msFileInfoScannerDLLPath))
             {
                 LogError("File Not Found (GenerateScanStatsFiles): " + msFileInfoScannerDLLPath);
@@ -1872,6 +1891,7 @@ namespace AnalysisManagerBase.AnalysisTool
             else
             {
                 LogError("Error generating ScanStats files with ScanStatsGenerator", scanStatsGenerator.ErrorMessage);
+
                 if (scanStatsGenerator.MSFileInfoScannerErrorCount > 0)
                 {
                     LogMessage("MSFileInfoScanner encountered " + scanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
@@ -1919,6 +1939,7 @@ namespace AnalysisManagerBase.AnalysisTool
             };
 
             var sharedResultsDirectories = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Empty);
+
             foreach (var sharedResultsDirectory in sharedResultsDirectories.Split(','))
             {
                 if (string.IsNullOrWhiteSpace(sharedResultsDirectory) || jobInfo.SharedResultsFolders.Contains(sharedResultsDirectory))
@@ -2045,6 +2066,7 @@ namespace AnalysisManagerBase.AnalysisTool
             while (!reader.EndOfStream)
             {
                 var dataLine = reader.ReadLine();
+
                 if (string.IsNullOrWhiteSpace(dataLine))
                 {
                     continue;
@@ -2067,6 +2089,7 @@ namespace AnalysisManagerBase.AnalysisTool
             double fractionDecoy = 0;
 
             proteinCount = forwardProteinCount + reverseProteinCount;
+
             if (proteinCount > 0)
             {
                 fractionDecoy = reverseProteinCount / (double)proteinCount;
@@ -2121,6 +2144,7 @@ namespace AnalysisManagerBase.AnalysisTool
             try
             {
                 var stepNum = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+
                 if (stepNum == 1)
                 {
                     // This is the first step; nothing to retrieve
@@ -2135,6 +2159,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 var includeDatasetName = dataPackageID <= 0;
 
                 var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory: true, includeDatasetName: includeDatasetName);
+
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
                     // Transfer directory parameter is empty; nothing to retrieve
@@ -2153,6 +2178,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Copy the file, renaming to avoid a naming collision
                 var destinationFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+
                 if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, overwrite: true, maxCopyAttempts: 3))
                 {
                     if (mDebugLevel > 3)
@@ -2220,6 +2246,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds > 1)
                 {
                     lastProgress = DateTime.UtcNow;
+
                     if (!longRunning)
                     {
                         Console.WriteLine("Finding FASTA files below " + orgDbDirectory);
@@ -2242,6 +2269,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Look for a .hashcheck file
                 var hashCheckFiles = fastaFile.Directory.GetFiles(fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix).ToList();
+
                 if (hashCheckFiles.Count > 0)
                 {
                     lastUsed = DateMax(lastUsed, hashCheckFiles.First().LastWriteTimeUtc);
@@ -2270,6 +2298,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         if (!lastUsedReader.EndOfStream)
                         {
                             var lastUseDate = lastUsedReader.ReadLine();
+
                             if (DateTime.TryParse(lastUseDate, out var lastUsedActual))
                             {
                                 lastUsed = DateMax(lastUsed, lastUsedActual);
@@ -2406,6 +2435,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Remove the dataset ID or data package ID from the end of the directory name
             var toolNameAndVersionMatcher = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
             var match = toolNameAndVersionMatcher.Match(toolNameVersionDatasetIdDirectory);
+
             if (!match.Success)
             {
                 throw new Exception("Directory name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID");
@@ -2821,6 +2851,7 @@ namespace AnalysisManagerBase.AnalysisTool
             numberOfClonedSteps = 0;
 
             var legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", string.Empty);
+
             if (string.IsNullOrEmpty(legacyFastaFileName))
             {
                 errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step";
@@ -2829,6 +2860,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             numberOfClonedSteps = jobParams.GetJobParameter("NumberOfClonedSteps", 0);
+
             if (numberOfClonedSteps == 0)
             {
                 errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step";
@@ -2837,9 +2869,11 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var iteration = GetSplitFastaIteration(jobParams, out errorMessage);
+
             if (iteration < 1)
             {
                 var toolName = jobParams.GetJobParameter("StepTool", string.Empty);
+
                 if (Global.IsMatch(toolName, "Mz_Refinery"))
                 {
                     // Running MzRefinery
@@ -2887,6 +2921,7 @@ namespace AnalysisManagerBase.AnalysisTool
             errorMessage = string.Empty;
 
             var cloneStepRenumberStart = jobParams.GetJobParameter("CloneStepRenumberStart", 0);
+
             if (cloneStepRenumberStart == 0)
             {
                 errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step";
@@ -2895,6 +2930,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var stepNumber = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+
             if (stepNumber == 0)
             {
                 errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
@@ -2915,12 +2951,14 @@ namespace AnalysisManagerBase.AnalysisTool
             var stepNumToParamsMap = new Dictionary<int, XElement>();
 
             var stepParamSections = doc.Elements("sections").Elements("section").ToList();
+
             foreach (var section in stepParamSections)
             {
                 if (!section.HasAttributes)
                     continue;
 
                 var nameAttrib = section.Attribute("name");
+
                 if (nameAttrib == null)
                     continue;
 
@@ -2928,6 +2966,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     continue;
 
                 var stepAttrib = section.Attribute("step");
+
                 if (stepAttrib == null)
                     continue;
 
@@ -2972,6 +3011,7 @@ namespace AnalysisManagerBase.AnalysisTool
             string datasetName = "")
         {
             var transferDirPathBase = jobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+
             if (string.IsNullOrEmpty(transferDirPathBase))
             {
                 // Transfer directory parameter is empty; return an empty string
@@ -2983,6 +3023,7 @@ namespace AnalysisManagerBase.AnalysisTool
             missingJobParamTransferDirectoryPath = false;
 
             string datasetDirectoryName;
+
             if (includeDatasetName)
             {
                 // Append the dataset directory name (or the dataset name) to the transfer directory path
@@ -3305,6 +3346,7 @@ namespace AnalysisManagerBase.AnalysisTool
             try
             {
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
                 if (string.IsNullOrWhiteSpace(dmsConnectionString))
                 {
                     LogError("Error in LookupLegacyDBDiskSpaceRequiredMB: manager parameter ConnectionString is not defined");
@@ -3337,6 +3379,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Empty query results
                     var statusMessage = "Warning: Could not determine the legacy FASTA file's size for job " + mJob + ", file " + legacyFastaName;
+
                     if (proteinCollectionInfo.UsingSplitFasta)
                     {
                         // Likely the FASTA file has not yet been split
@@ -3672,6 +3715,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (debugLevel >= 1)
             {
                 var fileText = string.Format("{0,2} file", filesToDelete.Count);
+
                 if (filesToDelete.Count != 1)
                 {
                     fileText += "s";
@@ -3686,6 +3730,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 foreach (var fileToDelete in filesToDelete)
                 {
                     var fileSizeBytes = fileToDelete.Length;
+
                     if (preview)
                         ConsoleMsgUtils.ShowDebugCustom("Preview delete " + fileToDelete.Name, "    ");
                     else if (fileToDelete.Exists)
@@ -3752,6 +3797,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     // MaxDirSize.txt file exists; this file specifies the max total GB that files in orgDbDirectory can use
                     // If the file exists and has a valid threshold, we will not delete files using freeSpaceThresholdPercent, requiredFreeSpaceMB, or maxDirectorySizeGB
                     var success = PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, legacyFastaFileBaseName, mDebugLevel, preview);
+
                     if (success)
                         return;
                 }
@@ -3769,6 +3815,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     // Could not instantiate the DriveInfo class (and MaxDirSize.txt does not exist)
 
                     string baseErrorMessage;
+
                     if (Path.DirectorySeparatorChar == '/')
                         baseErrorMessage = "Could not determine the root path, and could not find file " + maxDirSizeFile.Name;
                     else
@@ -3916,6 +3963,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // We have deleted all of the files that can be deleted
 
             double finalFreeSpaceGB;
+
             if (preview)
             {
                 finalFreeSpaceGB = freeSpaceGB + Global.BytesToGB(totalBytesPurged);
@@ -3947,6 +3995,7 @@ namespace AnalysisManagerBase.AnalysisTool
             try
             {
                 var orgDbDirectory = maxDirSizeFile.Directory;
+
                 if (orgDbDirectory == null)
                 {
                     LogTools.LogError("Unable to determine the parent directory of file {0}; cannot manage drive space usage", maxDirSizeFile.FullName);
@@ -3962,12 +4011,14 @@ namespace AnalysisManagerBase.AnalysisTool
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine) || dataLine.StartsWith("#"))
                         {
                             continue;
                         }
 
                         var lineParts = dataLine.Split('=');
+
                         if (lineParts.Length < 2)
                         {
                             continue;
@@ -4050,12 +4101,14 @@ namespace AnalysisManagerBase.AnalysisTool
                     iterations++;
 
                     long spaceUsageBytes = 0;
+
                     foreach (var orgDbDirFile in orgDbDirectory.GetFiles("*", SearchOption.AllDirectories))
                     {
                         spaceUsageBytes += orgDbDirFile.Length;
                     }
 
                     var spaceUsageGB = Global.BytesToGB(spaceUsageBytes);
+
                     if (spaceUsageGB <= maxDirectorySizeGB)
                     {
                         // Space usage is under the threshold
@@ -4093,6 +4146,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     long totalBytesPurged = 0;
 
                     var filesProcessed = 0;
+
                     foreach (var fileToPurge in fastaFilesByLastUse)
                     {
                         filesProcessed++;
@@ -4370,6 +4424,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     foreach (var fileSpec in fileSpecList)
                     {
                         var fileSpecTerms = fileSpec.Trim().Split(':').ToList();
+
                         if (dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.OrdinalIgnoreCase))
                         {
                             fileSpecListCurrent = fileSpecList;
@@ -4432,6 +4487,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         var sourceDirectoryPath = "??";
 
                         var saveMode = "nocopy";
+
                         if (fileSpecTerms.Count > 2)
                         {
                             saveMode = fileSpecTerms[2].Trim();
@@ -4446,6 +4502,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                             // To avoid collisions, files for this job will be placed in a subdirectory based on the Job number
                             var targetDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "Job" + dataPkgJob.Key));
+
                             if (!targetDirectory.Exists)
                                 targetDirectory.Create();
 
@@ -4480,6 +4537,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                     if (!string.IsNullOrEmpty(alternateSourceFileName))
                                     {
                                         sourceDirectoryPath = FileSearchTool.FindDataFile(alternateSourceFileName);
+
                                         if (!string.IsNullOrEmpty(sourceDirectoryPath))
                                         {
                                             sourceFileName = alternateSourceFileName;
@@ -4526,6 +4584,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                 }
 
                                 mMessage = "Could not find a valid directory with file " + sourceFileName + " for job " + dataPkgJob.Key;
+
                                 if (mDebugLevel >= 1)
                                 {
                                     LogMessage(mMessage, 0, true);
@@ -4536,6 +4595,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
                             {
                                 mMessage = "CopyFileToWorkDir returned false for " + sourceFileName + " using directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key;
+
                                 if (mDebugLevel >= 1)
                                 {
                                     LogMessage(mMessage, 0, true);
@@ -4680,6 +4740,7 @@ namespace AnalysisManagerBase.AnalysisTool
             const int DEFAULT_ORG_DB_DIR_MAX_SIZE_GB = 200;
 
             Console.WriteLine();
+
             if (mDebugLevel >= 3)
             {
                 LogMessage("Obtaining Org DB file");
@@ -4714,6 +4775,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     // Confirm that the FASTA file exists
                     var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, fastaFileName));
+
                     if (!fastaFile.Exists)
                     {
                         LogError(string.Format("FASTA file not found: {0}", fastaFile.FullName));
@@ -4780,6 +4842,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Determine the FASTA file size (should already be known for legacy FASTA files)
                     var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, mFastaFileName));
+
                     if (fastaFile.Exists)
                         fastaFileSizeGB = Global.BytesToGB(fastaFile.Length);
                 }
@@ -4827,6 +4890,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (Global.OfflineMode)
                 {
                     var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
+
                     if (!paramFile.Exists)
                     {
                         LogError("Parameter file not found: " + paramFile.FullName);
@@ -4846,6 +4910,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Job parameter ToolName tracks the pipeline script name (whose name is based on the primary analysis tool for the script)
                 var scriptName = mJobParams.GetParam("ToolName", string.Empty);
+
                 if (string.IsNullOrWhiteSpace(scriptName))
                 {
                     LogError("Job parameter ToolName is empty");
@@ -4853,6 +4918,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 var paramFileType = SetParamFileType(scriptName);
+
                 if (paramFileType == IGenerateFile.ParamFileType.Invalid)
                 {
                     LogError("Script " + scriptName + " is not supported by the ParamFileGenerator; update AnalysisResources and ParamFileGenerator.dll");
@@ -4870,6 +4936,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Examine the size of the ModDefs.txt file
                 // Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
                 var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+
                 if (modDefsFile.Exists && modDefsFile.Length == 0)
                 {
                     mJobParams.AddResultFileToSkip(modDefsFile.Name);
@@ -5100,6 +5167,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool ValidateCDTAFileRemoveSparseSpectra(string workDir, string inputFileName)
         {
             var success = mCDTAUtilities.RemoveSparseSpectra(workDir, inputFileName);
+
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = "mCDTAUtilities.RemoveSparseSpectra returned false";
@@ -5125,6 +5193,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated, string outputFilePath)
         {
             var success = mCDTAUtilities.ValidateCDTAFileScanAndCSTags(sourceFilePath, replaceSourceFile, deleteSourceFileIfUpdated, outputFilePath);
+
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = "mCDTAUtilities.ValidateCDTAFileScanAndCSTags returned false";
@@ -5141,6 +5210,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool ValidateCDTAFileSize(string workDir, string inputFileName)
         {
             var success = mCDTAUtilities.ValidateCDTAFileSize(workDir, inputFileName);
+
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = "mCDTAUtilities.ValidateCDTAFileSize returned false";
@@ -5267,6 +5337,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     while (!reader.EndOfStream && !dataFound)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
@@ -5395,6 +5466,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var hashcheckFileSpec = fastaFile.Name + "*" + OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS.HashcheckSuffix;
                 var hashcheckFiles = fastaFile.Directory.GetFiles(hashcheckFileSpec);
+
                 if (hashcheckFiles.Length == 0)
                 {
                     LogError("FASTA validation error: hashcheck file not found for " + fastaFile.FullName);

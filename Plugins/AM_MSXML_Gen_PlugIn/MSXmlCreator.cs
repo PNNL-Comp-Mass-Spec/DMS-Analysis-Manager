@@ -76,6 +76,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var sourceFilePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MZML_EXTENSION);
 
             var progLoc = mMSXmlGeneratorAppPath;
+
             if (!File.Exists(progLoc))
             {
                 ErrorMessage = "MSXmlGenerator not found; unable to convert .mzML file to .mzXML";

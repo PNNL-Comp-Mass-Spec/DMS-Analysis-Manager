@@ -27,6 +27,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                     return result;
                 }
@@ -91,6 +92,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                         // Generate the path FASTA File
                         var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         {
                             mMessage = "Cyclops Resourcer failed to retrieve the path to the FASTA file to run ProteinProphet";

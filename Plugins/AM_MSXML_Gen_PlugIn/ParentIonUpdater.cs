@@ -144,6 +144,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         if (!cachedParentIonInfo.TryGetValue(dtaSpectrum.ScanNumber, out var chargeInfoList))
                         {
                             OnWarningEvent("Warning, scan " + dtaSpectrum.ScanNumber + " not found in MGF file; unable to update the data");
+
                             if (removeUnmatchedSpectra)
                             {
                                 Console.WriteLine("Skipping scan " + dtaSpectrum.ScanNumber);
@@ -200,6 +201,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                             // Write the ions using the data from the DTA file
                             var dtaMsMsData = dtaFileReader.GetMSMSDataAsText();
+
                             foreach (var item in dtaMsMsData)
                             {
                                 writer.WriteLine(item);
@@ -214,6 +216,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var oldDtaFilePath = Path.Combine(sourceDtaFile.FullName + ".old");
                     var oldDtaFile = new FileInfo(oldDtaFilePath);
+
                     if (oldDtaFile.Exists)
                     {
                         oldDtaFile.Delete();
@@ -301,6 +304,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var sourceMzMLFile = new FileInfo(mzMLFilePath);
+
                 if (sourceMzMLFile.Directory == null)
                 {
                     throw new DirectoryNotFoundException("Unable to determine the parent directory of " + mzMLFilePath);
@@ -407,11 +411,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                     }
 
                                     spectraRead++;
+
                                     if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 1)
                                     {
                                         lastProgress = DateTime.UtcNow;
 
                                         var percentComplete = 0;
+
                                         if (totalSpectrumCount > 0)
                                         {
                                             percentComplete = (int)(spectraRead / (float)totalSpectrumCount * 100);
@@ -478,6 +484,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var oldMzMLFilePath = Path.Combine(sourceMzMLFile.FullName + ".old");
                     var oldMzMLFile = new FileInfo(oldMzMLFilePath);
+
                     if (oldMzMLFile.Exists)
                     {
                         oldMzMLFile.Delete();
@@ -506,6 +513,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 case XmlNodeType.Element:
                     writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
                     writer.WriteAttributes(reader, true);
+
                     if (reader.IsEmptyElement)
                     {
                         writer.WriteEndElement();
@@ -572,6 +580,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (reader.NodeType == XmlNodeType.EndElement)
                 {
                     WriteShallowNode(reader, writer);
+
                     if (reader.Depth == startDepth)
                     {
                         return;
@@ -632,6 +641,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (reader.NodeType == XmlNodeType.EndElement)
                 {
                     WriteShallowNode(reader, writer);
+
                     if (reader.Depth == startDepth)
                     {
                         return;
@@ -779,6 +789,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                         writer.WriteStartElement(XML_ELEMENT_CV_PARAM);
                         WriteXmlAttribute(writer, "cvRef", "MS");
+
                         if (string.IsNullOrEmpty(softwareInfo.AccessionCode))
                         {
                             WriteXmlAttribute(writer, "accession", "MS:1000799");
@@ -812,6 +823,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         private void WriteXmlAttribute(XmlWriter writer, string name, string value)
         {
             writer.WriteStartAttribute(name);
+
             if (string.IsNullOrEmpty(value))
             {
                 writer.WriteString(string.Empty);

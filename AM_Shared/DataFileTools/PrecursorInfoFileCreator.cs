@@ -48,6 +48,7 @@ namespace AnalysisManagerBase.DataFileTools
             try
             {
                 var parentDirectory = scanStatsFile.Directory;
+
                 if (parentDirectory == null)
                 {
                     OnErrorEvent("Unable to determine the parent directory of the ScanStats file: " + scanStatsFile.FullName);
@@ -140,6 +141,7 @@ namespace AnalysisManagerBase.DataFileTools
                     if (warningMessage.Length > 0)
                     {
                         warningCount++;
+
                         if (warningCount < 10)
                         {
                             OnWarningEvent(warningMessage);

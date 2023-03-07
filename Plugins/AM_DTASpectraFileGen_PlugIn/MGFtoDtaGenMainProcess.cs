@@ -89,6 +89,7 @@ namespace DTASpectraFileGen
         private void MakeDTAFilesThreaded()
         {
             mStatus = ProcessStatus.SF_RUNNING;
+
             if (!MakeDTAFilesFromMGF())
             {
                 if (mStatus != ProcessStatus.SF_ABORTING)

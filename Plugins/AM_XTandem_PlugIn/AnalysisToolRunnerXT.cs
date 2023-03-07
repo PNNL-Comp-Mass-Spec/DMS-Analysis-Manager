@@ -83,6 +83,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Define the path to the X!Tandem .Exe
             var progLoc = mMgrParams.GetParam("xtProgLoc");
+
             if (progLoc.Length == 0)
             {
                 mMessage = "Parameter 'xtProgLoc' not defined for this manager";
@@ -175,6 +176,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Zip the output file
             var result = ZipMainOutputFile();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
@@ -352,6 +354,7 @@ namespace AnalysisManagerXTandemPlugIn
                         else if (dataLine.StartsWith("Valid models"))
                         {
                             var match = valueMatcher.Match(dataLine);
+
                             if (match.Success)
                             {
                                 int.TryParse(match.Groups[1].Value, out mXTandemResultsCount);
@@ -379,9 +382,11 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 var fileList = Directory.GetFiles(mWorkDir, "*_xt.xml");
+
                 foreach (var file in fileList)
                 {
                     var filePath = Path.Combine(mWorkDir, Path.GetFileName(file));
+
                     if (!ZipFile(filePath, true))
                     {
                         LogError("Error zipping output files");
@@ -399,6 +404,7 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 var fileList = Directory.GetFiles(mWorkDir, "*_xt.xml");
+
                 foreach (var file in fileList)
                 {
                     File.SetAttributes(file, File.GetAttributes(file) & (~FileAttributes.ReadOnly));
@@ -428,6 +434,7 @@ namespace AnalysisManagerXTandemPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(mWorkDir, XTANDEM_CONSOLE_OUTPUT));
+
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mXTandemVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();

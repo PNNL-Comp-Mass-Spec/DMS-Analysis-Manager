@@ -34,6 +34,7 @@ namespace AnalysisManager_IDM_Plugin
                 }
 
                 var idmResultsDB = new FileInfo(Path.Combine(mWorkDir, EXISTING_IDM_RESULTS_FILE_NAME));
+
                 if (idmResultsDB.Exists)
                 {
                     // Existing results file was copied to the working directory

@@ -83,6 +83,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var qidList = GetQIDList();
+
             if (string.IsNullOrEmpty(qidList))
             {
                 return false;
@@ -138,6 +139,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             // Get the matching QIDs for this data package
             var success = dbTools.GetQueryResults(sqlText.ToString(), out var results);
+
             if (success)
             {
                 foreach (var result in results.SelectMany(x => x).Where(x => !string.IsNullOrWhiteSpace(x)))

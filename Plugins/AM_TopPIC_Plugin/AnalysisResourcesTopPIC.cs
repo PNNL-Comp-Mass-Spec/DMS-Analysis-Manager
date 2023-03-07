@@ -50,6 +50,7 @@ namespace AnalysisManagerTopPICPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -105,6 +106,7 @@ namespace AnalysisManagerTopPICPlugIn
             var htmlFileName = DatasetName + "_html.zip";
 
             var legacyFeatureFile = new FileInfo(Path.Combine(sourceDirPath, DatasetName + TOPFD_FEATURE_FILE_SUFFIX));
+
             if (legacyFeatureFile.Exists)
             {
                 filesToRetrieve.Add(legacyFeatureFile.Name, false);
@@ -145,6 +147,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     // Create the html subdirectory
                     var htmlDirectory = new DirectoryInfo(Path.Combine(mWorkDir, DatasetName + "_html"));
+
                     if (!htmlDirectory.Exists)
                         htmlDirectory.Create();
 
@@ -168,6 +171,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 var zipOutputDirectoryPath = Path.Combine(mWorkDir, DatasetName + "_html");
                 LogMessage("Unzipping file " + fileName);
+
                 if (UnzipFileStart(Path.Combine(mWorkDir, fileName), zipOutputDirectoryPath, "AnalysisResourcesTopPIC.GetResources"))
                 {
                     continue;

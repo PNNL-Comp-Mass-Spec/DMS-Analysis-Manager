@@ -56,6 +56,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 // Determine the path to R
                 var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
+
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -105,6 +106,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                     // cyclops.WorkingDirectory       (different for each manager)
 
                     AppendToCyclopsLog("Parameters:");
+
                     foreach (var entry in cyclops.Parameters)
                     {
                         AppendToCyclopsLog("  " + entry.Key + ": " + entry.Value);
@@ -151,6 +153,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var resultsFolderCreated = MakeResultsDirectory();
+
                 if (!resultsFolderCreated)
                 {
                     // MakeResultsDirectory handles posting to local log, so set database error message and exit
@@ -188,12 +191,14 @@ namespace AnalysisManager_Cyclops_PlugIn
             {
 
                 var cyclopsLogFile = new FileInfo(cyclopsLogFilePath);
+
                 if (!cyclopsLogFile.Exists)
                 {
                     return;
                 }
 
                 var deleteFile = false;
+
                 if (cyclopsLogFile.Length == 0)
                 {
                     deleteFile = true;
@@ -271,6 +276,7 @@ namespace AnalysisManager_Cyclops_PlugIn
         {
             AppendToCyclopsLog();
             string errorMessage;
+
             if (message.StartsWith("Error", StringComparison.InvariantCultureIgnoreCase))
                 errorMessage = message;
             else
@@ -289,6 +295,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             AppendToCyclopsLog();
 
             string warningMessage;
+
             if (message.StartsWith("Warning", StringComparison.InvariantCultureIgnoreCase))
                 warningMessage = message;
             else

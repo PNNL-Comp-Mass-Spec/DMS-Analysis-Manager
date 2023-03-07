@@ -179,6 +179,7 @@ namespace AnalysisManagerBase
                 // XDocument can often be easier to use since XDocument is LINQ-based
 
                 var contents = reader.ReadToEnd();
+
                 if (string.IsNullOrWhiteSpace(contents))
                 {
                     LogError("Empty job parameters passed to ParseXMLJobParameters");
@@ -190,6 +191,7 @@ namespace AnalysisManagerBase
                 foreach (var section in doc.Elements("sections").Elements("section"))
                 {
                     string sectionName;
+
                     if (section.HasAttributes)
                     {
                         var sectionNameAttrib = section.Attribute("name");
@@ -215,10 +217,12 @@ namespace AnalysisManagerBase
                             continue;
 
                         var keyAttrib = item.Attribute("key");
+
                         if (keyAttrib == null)
                             continue;
 
                         var valueAttrib = item.Attribute("value");
+
                         if (valueAttrib == null)
                             continue;
 
@@ -245,6 +249,7 @@ namespace AnalysisManagerBase
             // Verify there really are command parameters
             if (sqlCmd == null)
                 return;
+
             if (sqlCmd.Parameters.Count < 1)
                 return;
 

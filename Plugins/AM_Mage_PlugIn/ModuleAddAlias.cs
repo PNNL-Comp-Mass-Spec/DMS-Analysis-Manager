@@ -61,9 +61,11 @@ namespace AnalysisManager_Mage_PlugIn
         private string MakeAlias(string dataset)
         {
             var alias = dataset;
+
             for (var width = 8; width < dataset.Length; width++)
             {
                 var candidateAlias = dataset.Substring(0, width);
+
                 if (candidateAlias.Last() == '_')
                 {
                     continue;
@@ -90,6 +92,7 @@ namespace AnalysisManager_Mage_PlugIn
             // get non-duplicate set of dataset names
             var uniqueNameSet = new HashSet<string>();
             var dIdx = factorsObj.ColumnIndex["Dataset"];
+
             foreach (var row in factorsObj.Rows)
             {
                 uniqueNameSet.Add(row[dIdx]);
@@ -122,6 +125,7 @@ namespace AnalysisManager_Mage_PlugIn
             // create lookup tables for alias widths and alaises
             var nameLookup = new Dictionary<string, string>();
             var aliasWidths = new Dictionary<string, int>();
+
             foreach (var name in nameList)
             {
                 nameLookup.Add(name, "");
@@ -130,6 +134,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // first, build lookup of aiias widths
             var maxWidth = 0;
+
             for (var currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++)
             {
                 // we examine current name and adjacent name in sorted list
@@ -173,6 +178,7 @@ namespace AnalysisManager_Mage_PlugIn
         {
             var width = 0;
             var len = (s1.Length > s2.Length) ? s2.Length : s1.Length;
+
             for (var i = 0; i < len; i++)
             {
                 if (s1[i] != s2[i])
@@ -197,6 +203,7 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 var candidatePrefix = "";
                 var matched = true;
+
                 foreach (var alias in nameLookup.Values)
                 {
                     if (string.IsNullOrEmpty(candidatePrefix))
@@ -225,6 +232,7 @@ namespace AnalysisManager_Mage_PlugIn
             if (width > 1)
             {
                 var start = width - 1;
+
                 foreach (var dataset in nameLookup.Keys)
                 {
                     var alias = nameLookup[dataset];

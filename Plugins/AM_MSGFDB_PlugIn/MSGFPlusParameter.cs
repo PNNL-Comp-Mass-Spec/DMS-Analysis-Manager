@@ -46,6 +46,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var commentChar = MSGFPlusKeyValueParamFileLine.COMMENT_CHAR.ToString();
+
                 if (commentText.Trim().StartsWith(commentChar))
                     return commentText;
 
@@ -89,6 +90,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             ParameterName = paramName ?? string.Empty;
             CommandLineArg = commandLineArgName ?? string.Empty;
             SynonymList = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
             if (!string.IsNullOrWhiteSpace(paramNameSynonym))
             {
                 SynonymList.Add(paramNameSynonym);
@@ -143,9 +145,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         public void UpdateComment(string comment, string whitespaceBeforeComment)
         {
             Comment = comment ?? string.Empty;
+
             if (string.IsNullOrWhiteSpace(whitespaceBeforeComment))
             {
                 var commentChar = MSGFPlusKeyValueParamFileLine.COMMENT_CHAR.ToString();
+
                 if (Comment.Trim().StartsWith(commentChar))
                     WhiteSpaceBeforeComment = string.Empty;
                 else
@@ -222,6 +226,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private MSGFPlusParameter Clone(bool copyValue, string newValue)
         {
             var parameterCopy = new MSGFPlusParameter(ParameterName, CommandLineArg);
+
             foreach (var synonym in SynonymList)
             {
                 parameterCopy.AddSynonym(synonym);
@@ -230,6 +235,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             parameterCopy.UpdateComment(Comment, WhiteSpaceBeforeComment);
 
             parameterCopy.UpdateValue(copyValue ? Value : newValue);
+
             if (!parameterCopy.ValueLocked)
             {
                 parameterCopy.ValueLocked = ValueLocked;

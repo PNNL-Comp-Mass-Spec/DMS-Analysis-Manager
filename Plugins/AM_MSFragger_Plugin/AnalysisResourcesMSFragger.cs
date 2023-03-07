@@ -45,6 +45,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -126,6 +127,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Possibly require additional system memory, based on the size of the FASTA file
                 // However, when FASTA file splitting is enabled, use the memory size defined by the settings file
                 var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024, databaseSplitCount);
+
                 if (javaMemoryCheckResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return javaMemoryCheckResultCode;
 

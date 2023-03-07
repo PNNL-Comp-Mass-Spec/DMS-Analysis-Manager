@@ -171,6 +171,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Verify source file exists
                 const int HOLDOFF_SECONDS = 1;
                 const int MAX_ATTEMPTS = 1;
+
                 if (!FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, logMsgTypeIfNotFound, MAX_ATTEMPTS))
                 {
                     // Errors have already been logged
@@ -428,6 +429,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (retryHoldoffSeconds <= 0)
                 retryHoldoffSeconds = DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS;
+
             if (retryHoldoffSeconds > 600)
                 retryHoldoffSeconds = 600;
 
@@ -446,6 +448,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 retryCount--;
+
                 if (retryCount > 0)
                 {
                     // Wait RetryHoldoffSeconds seconds before retrying
@@ -455,6 +458,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             // If we got to here, there were too many failures
             string logMessage;
+
             if (maxAttempts == 1)
             {
                 logMessage = "File not found: " + fileName;

@@ -53,6 +53,7 @@ namespace AnalysisManager_Mage_PlugIn
             foreach (var mageOperation in mageOperations.Split(','))
             {
                 var success = RunMageOperation(mageOperation.Trim(), jobCountLimit);
+
                 if (!success)
                     return false;
             }
@@ -198,6 +199,7 @@ namespace AnalysisManager_Mage_PlugIn
             var inputDirectoryPath = Path.Combine(dataPackageStoragePathRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
             var inputDirectory = new DirectoryInfo(inputDirectoryPath);
+
             if (!inputDirectory.Exists)
             {
                 throw new DirectoryNotFoundException(string.Format(
@@ -399,6 +401,7 @@ namespace AnalysisManager_Mage_PlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             replaceOriginal = true;
@@ -424,6 +427,7 @@ namespace AnalysisManager_Mage_PlugIn
                             if (skipList.Count > 0)
                             {
                                 replaceOriginal = true;
+
                                 if (skipList.Count == 1)
                                 {
                                     OnWarningEvent("Skipped column {0} in {1} because it had an empty column name", skipList[0] + 1, tAliasFile.Name);
@@ -437,6 +441,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                         // Add data for columns that had a valid header
                         var dataToWrite = new List<string>();
+
                         foreach (var colIndex in columnsIndicesToUse)
                         {
                             if (colIndex < lineParts.Length)
@@ -465,6 +470,7 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     // Rename the original to .old
                     var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
+
                     if (invalidFile.Exists)
                     {
                         OnDebugEvent("Deleting existing .old file: {0}", invalidFile.FullName);

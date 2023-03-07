@@ -83,6 +83,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             var localOrgDbDirectory = mMgrParams.RequireMgrParam("OrgDbDir");
             var fastaFileName = jobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName");
+
             if (!string.IsNullOrEmpty(fastaFileName))
             {
                 var fastaFilePath = Path.Combine(localOrgDbDirectory, fastaFileName);
@@ -135,6 +136,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "AScore";
             var parameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(parameterFileStoragePath))
             {
                 parameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";

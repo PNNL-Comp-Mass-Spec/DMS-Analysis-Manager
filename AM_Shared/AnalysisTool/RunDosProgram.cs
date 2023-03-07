@@ -440,6 +440,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         abortLogged = true;
                         string msg;
+
                         if (runtimeExceeded)
                         {
                             msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
@@ -498,6 +499,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             // Manager parameter MonoProgLoc is defined in file ManagerSettingsLocal.xml
             var monoProgLoc = mgrParams.GetParam("MonoProgLoc", string.Empty);
+
             if (string.IsNullOrWhiteSpace(monoProgLoc))
             {
                 if (!File.Exists("/usr/local/bin/mono"))
@@ -511,6 +513,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var monoExecutable = new FileInfo(monoProgLoc);
+
             if (!monoExecutable.Exists)
             {
                 OnErrorEvent("Mono not found at {0}; cannot run {1}", monoProgLoc, Path.GetFileName(executablePath));

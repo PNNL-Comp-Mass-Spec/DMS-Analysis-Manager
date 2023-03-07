@@ -124,6 +124,7 @@ namespace MASIC_ReporterIonObsStatsUploader
         private int GetColumnIndex(string headerLine, string columnName, int indexIfMissing)
         {
             var columnNames = headerLine.Split('\t');
+
             for (var i = 0; i < columnNames.Length; i++)
             {
                 if (columnNames[i].Equals(columnName, StringComparison.OrdinalIgnoreCase))
@@ -174,6 +175,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 var directoryMatcher = new Regex(@"[^_]+_Auto(?<Job>\d+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 var match = directoryMatcher.Match(inputFile.Directory.Name);
+
                 if (match.Success)
                 {
                     jobNumber = int.Parse(match.Groups["Job"].Value);
@@ -262,6 +264,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 }
 
                 var inputFile = new FileInfo(inputFilePath);
+
                 if (!inputFile.Exists)
                 {
                     OnErrorEvent("File not found: " + inputFile.FullName);
@@ -269,9 +272,11 @@ namespace MASIC_ReporterIonObsStatsUploader
                 }
 
                 string masicParameterFilePath;
+
                 if (string.IsNullOrWhiteSpace(parameterFilePath))
                 {
                     var paramFileFound = FindParameterFile(inputFile, out masicParameterFilePath);
+
                     if (!paramFileFound)
                         return false;
                 }
@@ -327,6 +332,7 @@ namespace MASIC_ReporterIonObsStatsUploader
             }
 
             var reporterIonMassMode = masicSettings.GetParam("MasicExportOptions", "ReporterIonMassMode", 0, out var valueNotPresent);
+
             if (valueNotPresent)
             {
                 OnErrorEvent("MASIC parameter file does not have key 'ReporterIonMassMode' in section 'MasicExportOptions': " + parameterFilePath);
@@ -501,6 +507,7 @@ namespace MASIC_ReporterIonObsStatsUploader
             try
             {
                 var inputDirectoryPath = inputFile.DirectoryName;
+
                 if (string.IsNullOrWhiteSpace(inputDirectoryPath))
                 {
                     OnErrorEvent("Unable to determine the parent directory of the input file, " + inputFile.FullName);
@@ -508,18 +515,22 @@ namespace MASIC_ReporterIonObsStatsUploader
                 }
 
                 var success = GetDatasetName(inputFile, out var datasetName);
+
                 if (!success)
                     return false;
 
                 var jobSuccess = GetJobNumber(inputFile, out var jobNumber);
+
                 if (!jobSuccess)
                     return false;
 
                 var paramFileLoaded = ReadMASICParameterFile(masicParameterFilePath, out var reporterIonName, out var reporterIonObservationRateTopNPct);
+
                 if (!paramFileLoaded)
                     return false;
 
                 var observationRateFile = new FileInfo(Path.Combine(inputDirectoryPath, datasetName + "_RepIonObsRate.txt"));
+
                 if (!observationRateFile.Exists)
                     return true;
 

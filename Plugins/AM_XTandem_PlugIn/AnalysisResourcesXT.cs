@@ -34,6 +34,7 @@ namespace AnalysisManagerXTandemPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -41,6 +42,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -87,6 +89,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             var success = CopyFileToWorkDir("taxonomy_base.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
+
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
@@ -94,6 +97,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             success = CopyFileToWorkDir("input_base.txt", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
+
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
@@ -101,6 +105,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             success = CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir);
+
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
@@ -114,6 +119,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // set up taxonomy file to reference the organism DB file (FASTA)
             success = MakeTaxonomyFile();
+
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed making taxonomy file");
@@ -122,6 +128,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
             success = MakeInputFile();
+
             if (!success)
             {
                 LogError("AnalysisResourcesXT.GetResources(), failed making input file");
@@ -151,6 +158,7 @@ namespace AnalysisManagerXTandemPlugIn
                 while (!baseFileReader.EndOfStream)
                 {
                     var dataLine = baseFileReader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -200,6 +208,7 @@ namespace AnalysisManagerXTandemPlugIn
                 while (!paramFileReader.EndOfStream)
                 {
                     var paramLine = paramFileReader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(paramLine))
                         continue;
 
@@ -211,6 +220,7 @@ namespace AnalysisManagerXTandemPlugIn
                     while (!baseReader.EndOfStream)
                     {
                         var baseLine = baseReader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(baseLine))
                             continue;
 
@@ -300,6 +310,7 @@ namespace AnalysisManagerXTandemPlugIn
                         }
 
                         inputFile = new FileInfo(filePathOld);
+
                         if (inputFile.Exists)
                         {
                             inputFile.Delete();

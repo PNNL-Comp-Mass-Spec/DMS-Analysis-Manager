@@ -53,6 +53,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             // Make sure the Results.db3 file was created
             var resultsDB = new FileInfo(Path.Combine(mWorkDir, "Results.db3"));
+
             if (!resultsDB.Exists)
             {
                 LogError("Results.db3 file was not created");
@@ -197,6 +198,7 @@ namespace AnalysisManager_Mage_PlugIn
                     while (drReader.Read())
                     {
                         var sampleName = drReader.GetString(1);
+
                         if (!sampleNames.Contains(sampleName, StringComparer.OrdinalIgnoreCase))
                             sampleNames.Add(sampleName);
 
@@ -283,6 +285,7 @@ namespace AnalysisManager_Mage_PlugIn
                 var labelingScheme = string.Empty;
 
                 var workFlowSteps = mJobParams.GetParam("ApeWorkflowStepList", string.Empty);
+
                 if (workFlowSteps.Contains("4plex"))
                 {
                     // 4-plex iTraq
@@ -388,6 +391,7 @@ namespace AnalysisManager_Mage_PlugIn
             var iTraqMode = false;
 
             var analysisType = mJobParams.GetJobParameter("AnalysisType", string.Empty);
+
             if (analysisType.Contains("iTRAQ"))
                 iTraqMode = true;
 

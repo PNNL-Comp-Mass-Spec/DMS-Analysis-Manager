@@ -161,6 +161,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     // Look for the equals sign
                     var charIndex = dataLine.IndexOf('=');
+
                     if (charIndex > 0)
                     {
                         var modDef = dataLine.Substring(charIndex + 1).Trim();
@@ -262,6 +263,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     // Look for the equals sign
                     var charIndex = dataLine.IndexOf('=');
+
                     if (charIndex > 0)
                     {
                         var modDef = dataLine.Substring(charIndex + 1).Trim();
@@ -381,6 +383,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Valid node; examine its InnerText value
                         var modDefList = selectedNodes.Item(matchIndex)?.InnerText;
+
                         if (string.IsNullOrWhiteSpace(modDefList))
                             continue;
 
@@ -388,9 +391,11 @@ namespace AnalysisManagerExtractionPlugin
                         // 79.9663@S,79.9663@T,79.9663@Y
 
                         var modDefs = modDefList.Split(',');
+
                         foreach (var modDef in modDefs)
                         {
                             var modDefParts = modDef.Split('@');
+
                             if (modDefParts.Length < 2)
                                 continue;
 
@@ -430,6 +435,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -470,6 +476,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
+
             if (skipProteinMods && !createPepToProtMapFile)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -479,6 +486,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Retrieve the FASTA file; required to create the _ProteinMods.txt file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -504,6 +512,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var inputFolderName = mJobParams.GetParam("inputFolderName");
+
                 if (string.IsNullOrWhiteSpace(inputFolderName))
                 {
                     LogError("Input_Folder is not defined for this job step (job parameter inputFolderName); cannot retrieve input files");
@@ -604,6 +613,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetXTandemFiles()
         {
             var fileToGet = DatasetName + "_xt.zip";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
@@ -618,6 +628,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // However, we need to obtain the "input.xml" file and "default_input.xml" files now
             fileToGet = "input.xml";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -640,6 +651,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // This file contains the p-value filtered results
             var fileToGet = DatasetName + "_inspect.zip";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -649,6 +661,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // This file contains top hit for each scan (no filters)
             fileToGet = DatasetName + "_inspect_fht.zip";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -658,6 +671,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Get the peptide to protein mapping file
             fileToGet = DatasetName + "_inspect_PepToProtMap.txt";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call
@@ -711,6 +725,7 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileToSkip(msmsFile);
 
             const string peptidesFile = "peptides.txt";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(peptidesFile, false))
             {
                 // Errors were reported in method call, so just return
@@ -723,6 +738,7 @@ namespace AnalysisManagerExtractionPlugin
 
             var sourceDirectory = new DirectoryInfo(sourceDirPath);
             var fileCountCopied = GetMaxQuantPrecursorInfoFiles(sourceDirectory, out var fileCopyError);
+
             if (fileCopyError)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -771,6 +787,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetMODaFiles()
         {
             var fileToGet = DatasetName + "_moda.zip";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 // Errors were reported in method call, so just return
@@ -780,6 +797,7 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileExtensionToSkip("_moda.txt");
 
             fileToGet = DatasetName + "_mgf_IndexToScanMap.txt";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -839,9 +857,11 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 string suffixToAdd;
+
                 if (splitFastaEnabled)
                 {
                     numberOfClonedSteps = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
+
                     if (numberOfClonedSteps == 0)
                     {
                         LogError("Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
@@ -864,6 +884,7 @@ namespace AnalysisManagerExtractionPlugin
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
                 var sourceDir = FileSearchTool.FindDataFile(fileToFind, true, false);
                 string mzidSuffix;
+
                 if (!string.IsNullOrEmpty(sourceDir))
                 {
                     // Running MS-GF+ with gzipped results
@@ -885,6 +906,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // File not found; look for a .zip file
                         var zipSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
+
                         if (!string.IsNullOrEmpty(zipSourceDir))
                         {
                             // Running MS-GF+ with zipped results
@@ -895,6 +917,7 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             // File not found; try _msgfdb
                             var zipSourceDirAlt = FileSearchTool.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
+
                             if (!string.IsNullOrEmpty(zipSourceDirAlt))
                             {
                                 // File Found
@@ -948,10 +971,12 @@ namespace AnalysisManagerExtractionPlugin
                         currentStep = "Retrieving " + tsvFileName;
 
                         var tsvSourceDir = FileSearchTool.FindDataFile(tsvFileName, false, false);
+
                         if (string.IsNullOrEmpty(tsvSourceDir))
                         {
                             var fileToGetAlternative = ReaderFactory.AutoSwitchToLegacyMSGFDBIfRequired(tsvFileName, DatasetName + "_msgfdb.txt");
                             var tsvSourceDirAlt = FileSearchTool.FindDataFile(fileToGetAlternative, false, false);
+
                             if (!string.IsNullOrEmpty(tsvSourceDirAlt))
                             {
                                 tsvFileName = fileToGetAlternative;
@@ -967,6 +992,7 @@ namespace AnalysisManagerExtractionPlugin
                                 // If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
                                 var tsvFile = new FileInfo(Path.Combine(tsvSourceDir, tsvFileName));
+
                                 if (DateTime.UtcNow.Subtract(tsvFile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
@@ -1007,6 +1033,7 @@ namespace AnalysisManagerExtractionPlugin
                         mJobParams.AddResultFileToSkip(mzidFile);
 
                         var mzidFileInfo = new FileInfo(Path.Combine(mWorkDir, mzidFile));
+
                         if (!mzidFileInfo.Exists)
                         {
                             LogError(string.Format(
@@ -1055,6 +1082,7 @@ namespace AnalysisManagerExtractionPlugin
                             // If PHRP has already finished, separate PepToProtMap.txt files will not exist for each job step
 
                             var pepToProtMapSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
+
                             if (!string.IsNullOrEmpty(pepToProtMapSourceDir))
                             {
                                 ignorePepToProtMapErrors = true;
@@ -1135,6 +1163,7 @@ namespace AnalysisManagerExtractionPlugin
                 // is newer than the .mzid.gz file(s)
 
                 var phrpResultsSourceDir = FileSearchTool.FindDataFile(DatasetName + "_msgfplus_fht.txt", false, false);
+
                 if (string.IsNullOrWhiteSpace(phrpResultsSourceDir))
                 {
                     // PHRP has not been run yet (which will typically be the case)
@@ -1160,6 +1189,7 @@ namespace AnalysisManagerExtractionPlugin
                 foreach (var phrpFileName in phrpFilesToFind)
                 {
                     var phrpFile = new FileInfo(Path.Combine(phrpResultsSourceDir, phrpFileName));
+
                     if (!phrpFile.Exists)
                     {
                         // File not found; need to run PHRP
@@ -1209,6 +1239,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType GetMSAlignFiles()
         {
             var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -1386,6 +1417,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
             var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+
             if (string.IsNullOrEmpty(sharedResultsFolders))
             {
                 mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");

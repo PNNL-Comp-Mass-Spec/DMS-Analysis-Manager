@@ -88,6 +88,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -222,6 +223,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 while (!scanStatsReader.EndOfStream)
                 {
                     var dataLine = scanStatsReader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;
@@ -278,6 +280,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         continue;
 
                     var scanTypeName = string.Empty;
+
                     if (scanStatsExLoaded)
                     {
                         mScanTypeMap.TryGetValue(scanNumber, out scanTypeName);

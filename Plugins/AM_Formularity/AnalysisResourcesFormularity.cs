@@ -46,6 +46,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -64,6 +65,7 @@ namespace AnalysisManagerFormularityPlugin
                 // Examine the parameter file
                 // If calibration is enabled, retrieve the calibration peaks file
                 var success = RetrieveCalibrationPeaksFile(paramFileStoragePath, paramFileName);
+
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -76,6 +78,7 @@ namespace AnalysisManagerFormularityPlugin
                 // Retrieve the database
                 currentTask = "Retrieve the CIA database";
                 var databaseFileName = mJobParams.GetParam("cia_db_name");
+
                 if (string.IsNullOrWhiteSpace(databaseFileName))
                 {
                     LogError("Parameter cia_db_name not found in the settings file");
@@ -83,6 +86,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 var sourceDirectory = new DirectoryInfo(Path.Combine(paramFileStoragePath, "CIA_DB"));
+
                 if (!sourceDirectory.Exists)
                 {
                     LogError("CIA database directory not found: " + sourceDirectory.FullName);
@@ -94,6 +98,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var remoteCiaDbPath = Path.Combine(sourceDirectory.FullName, databaseFileName);
                 var orgDbDirectory = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
+
                 if (string.IsNullOrWhiteSpace(orgDbDirectory))
                 {
                     LogError(string.Format("Manager parameter {0} is not defined", MGR_PARAM_ORG_DB_DIR));
@@ -212,6 +217,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 currentTask = "Process the MyEMSL download queue";
+
                 if (!ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -250,6 +256,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 var regressionSetting = XMLUtils.GetXmlValue(calibrationSection, "Regression");
+
                 if (string.IsNullOrWhiteSpace(regressionSetting))
                 {
                     LogError("Regression setting is missing from the Calibration section of the parameter file");
@@ -290,6 +297,7 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 var calibrationPeaksFileName = XMLUtils.GetXmlValue(calibrationSection, "RefPeakFileName");
+
                 if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
                 {
                     LogError("Calibration is enabled in the Formularity parameter file, but RefPeakFileName is missing or empty");
@@ -298,6 +306,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var calibrationFilesDirPath = Path.Combine(paramFileStoragePath, "CalibrationFiles");
                 var calibrationFilesDirectory = new DirectoryInfo(calibrationFilesDirPath);
+
                 if (!calibrationFilesDirectory.Exists)
                 {
                     LogError("Calibration files directory not found: " + calibrationFilesDirectory.FullName);
@@ -306,6 +315,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var calibrationPeaksFilePath = Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName);
                 var calibrationPeaksFile = new FileInfo(calibrationPeaksFilePath);
+
                 if (!calibrationPeaksFile.Exists)
                 {
                     LogError("Calibration peaks file not found: " + calibrationPeaksFile.FullName);

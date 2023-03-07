@@ -242,6 +242,7 @@ namespace AnalysisManagerMODPlusPlugin
                         }
 
                         var reMatch = reCheckProgress.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].ToString(), out spectraSearched);

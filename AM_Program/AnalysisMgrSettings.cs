@@ -249,6 +249,7 @@ namespace AnalysisManagerProg
             if (Global.OfflineMode)
             {
                 var successLocal = LoadLocalSettings();
+
                 if (!successLocal)
                     return false;
 
@@ -269,6 +270,7 @@ namespace AnalysisManagerProg
         private bool LoadLocalSettings()
         {
             var settings = ReadLocalSettingsFile();
+
             if (settings == null)
                 return false;
 
@@ -282,6 +284,7 @@ namespace AnalysisManagerProg
             // Validate several key local manager settings
 
             var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
+
             if (string.IsNullOrWhiteSpace(taskQueuePath))
             {
                 ErrMsg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
@@ -290,6 +293,7 @@ namespace AnalysisManagerProg
             }
 
             var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
+
             if (string.IsNullOrWhiteSpace(workDirPath))
             {
                 ErrMsg = "Manager parameter " + MGR_PARAM_LOCAL_WORK_DIR_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
@@ -325,6 +329,7 @@ namespace AnalysisManagerProg
             var loadSettingsFromDB = !Global.OfflineMode;
 
             var success = LoadSettings(configFileSettings, loadSettingsFromDB);
+
             if (!success)
             {
                 return false;
@@ -333,6 +338,7 @@ namespace AnalysisManagerProg
             if (Global.OfflineMode)
             {
                 var successLocal = LoadLocalSettings();
+
                 if (!successLocal)
                     return false;
 
@@ -408,6 +414,7 @@ namespace AnalysisManagerProg
                 // Construct the path to the config document
                 var configFilePath = Path.Combine(mMgrDirectoryPath, LOCAL_MANAGER_SETTINGS_FILE);
                 var configFile = new FileInfo(configFilePath);
+
                 if (!configFile.Exists)
                 {
                     ErrMsg = "ReadLocalSettingsFile; manager config file not found: " + configFilePath;
@@ -440,6 +447,7 @@ namespace AnalysisManagerProg
 
                 // Read each of the settings
                 var settingNodes = appSettingsNode.SelectNodes("//setting[@name]");
+
                 if (settingNodes == null)
                 {
                     ErrMsg = "ReadLocalSettingsFile; settings/*/setting nodes not found";
@@ -464,6 +472,7 @@ namespace AnalysisManagerProg
             {
                 var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
                 var taskQueue = new DirectoryInfo(taskQueuePath);
+
                 if (!taskQueue.Exists)
                 {
                     ErrMsg = "Local task queue directory not found: " + taskQueuePath;
@@ -473,6 +482,7 @@ namespace AnalysisManagerProg
 
                 var localWorkDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
                 var localWorkDir = new DirectoryInfo(localWorkDirPath);
+
                 if (!localWorkDir.Exists)
                 {
                     ErrMsg = "Working directory not found: " + localWorkDirPath;
@@ -482,6 +492,7 @@ namespace AnalysisManagerProg
 
                 var workDirPath = GetParam(MGR_PARAM_WORK_DIR);
                 var workDir = new DirectoryInfo(workDirPath);
+
                 if (workDir.Exists)
                     return true;
 
@@ -517,6 +528,7 @@ namespace AnalysisManagerProg
 
             // Load the config document
             var myDoc = LoadConfigDocument();
+
             if (myDoc == null)
             {
                 // Error message has already been produced by LoadConfigDocument
@@ -536,6 +548,7 @@ namespace AnalysisManagerProg
             {
                 // Select the element containing the value for the specified key containing the key
                 var myElement = (XmlElement)myNode.SelectSingleNode(string.Format("// setting[@name='{0}']/value", key));
+
                 if (myElement != null)
                 {
                     // Set key to specified value

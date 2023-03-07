@@ -65,6 +65,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Determine the path to R
                 var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
+
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
                 {
                     DeleteLockFileIfRequired();
@@ -92,6 +93,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Retrieve the baseline dataset names and corresponding MASIC job numbers
                 var datasetNamesAndJobs = GetPackedDatasetNamesAndJobs();
+
                 if (datasetNamesAndJobs.Count == 0)
                 {
                     LogError("Baseline dataset names/jobs parameter was empty; this is unexpected");
@@ -105,6 +107,7 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     // Look for the result files
                     var postProcessSuccess = PostProcessResults(datasetNamesAndJobs);
+
                     if (!postProcessSuccess)
                         processingSuccess = false;
                 }
@@ -248,6 +251,7 @@ namespace AnalysisManagerQCARTPlugin
                     writer.WriteStartElement("BaselineList");
 
                     var query = (from item in datasetNamesAndJobs orderby item.Key select item);
+
                     foreach (var item in query)
                     {
                         writer.WriteStartElement("BaselineDataset");
@@ -314,6 +318,7 @@ namespace AnalysisManagerQCARTPlugin
             try
             {
                 var lockFile = new FileInfo(lockFilePath);
+
                 if (lockFile.Exists)
                     lockFile.Delete();
             }
@@ -355,12 +360,14 @@ namespace AnalysisManagerQCARTPlugin
                     while (!reader.EndOfStream)
                     {
                         var resultsLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(resultsLine))
                         {
                             continue;
                         }
 
                         var dataCols = resultsLine.Split('\t').ToList();
+
                         if (dataCols.Count < 2)
                         {
                             LogError("QC-ART results file has fewer than 2 columns");
@@ -368,6 +375,7 @@ namespace AnalysisManagerQCARTPlugin
                         }
 
                         var datasetName = dataCols[0];
+
                         if (!Global.IsMatch(mDatasetName, datasetName))
                         {
                             LogError("QC-ART results file has results for an unexpected dataset: " + datasetName);
@@ -449,12 +457,14 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 var success = LoadQCARTResults(resultsFile, out var qcartValue);
+
                 if (!success)
                 {
                     return false;
                 }
 
                 success = StoreResultsInDB(qcartValue);
+
                 if (!success)
                 {
                     return false;
@@ -470,6 +480,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 var newBaselineData = new FileInfo(Path.Combine(mWorkDir, AnalysisResourcesQCART.NEW_BASELINE_DATASETS_CACHE_FILE));
+
                 if (!newBaselineData.Exists)
                 {
                     mMessage = "QC-ART Processing error: new baseline data file not found";
@@ -477,6 +488,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 success = CreateBaselineMetricsMetadataFile(datasetNamesAndJobs, newBaselineData);
+
                 if (success)
                     mJobParams.AddResultFileToSkip(newBaselineData.Name);
 
@@ -663,6 +675,7 @@ namespace AnalysisManagerQCARTPlugin
             }
 
             var program = new FileInfo(rProgLoc);
+
             if (!program.Exists)
             {
                 try

@@ -433,6 +433,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Round up maxThreadsBasedOnMemory only if it is within 0.2 of the next highest integer
             var maxThreadsRoundedUp = (int)Math.Ceiling(maxThreadsBasedOnMemory);
+
             if (maxThreadsRoundedUp - maxThreadsBasedOnMemory <= 0.2)
             {
                 maxThreadsBasedOnMemory = maxThreadsRoundedUp;
@@ -525,6 +526,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 // Move the result files into the results directory
                 var moveSucceed = MoveResultFiles();
+
                 if (moveSucceed)
                 {
                     // Move was a success; update folderPathToArchive
@@ -588,6 +590,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
                 var datasetYearQuarter = AnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
+
                 if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     LogError("Unable to determine DatasetYearQuarter using the DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path");
@@ -695,6 +698,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 else
                 {
                     targetDirectory = new DirectoryInfo(Path.Combine(cacheDirectory.FullName, subdirectoryInTarget));
+
                     if (!targetDirectory.Exists)
                         targetDirectory.Create();
                 }
@@ -703,6 +707,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Determine the year_quarter text for this dataset
                     var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+
                     if (string.IsNullOrEmpty(datasetStoragePath))
                         datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
@@ -712,6 +717,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (!string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     targetDirectory = new DirectoryInfo(Path.Combine(targetDirectory.FullName, datasetYearQuarter));
+
                     if (!targetDirectory.Exists)
                         targetDirectory.Create();
                 }
@@ -728,6 +734,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 var sourceFileName = Path.GetFileName(sourceFilePath);
+
                 if (sourceFileName == null)
                 {
                     LogError("Parameter " + nameof(sourceFilePath) + " is null; nothing to copy");
@@ -887,6 +894,7 @@ namespace AnalysisManagerBase.AnalysisTool
             catch (Exception ex)
             {
                 LogError("Error creating results directory in transfer directory", ex);
+
                 if (!string.IsNullOrEmpty(sourceDirectoryPath))
                 {
                     analysisResults.CopyFailedResultsToArchiveDirectory(sourceDirectoryPath);
@@ -972,6 +980,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     // However, if file sizes differ, replace the file
 
                     var resultsDirectory = new DirectoryInfo(sourceDirectoryPath);
+
                     foreach (var sourceFile in resultsDirectory.GetFiles())
                     {
                         if (!File.Exists(Path.Combine(targetDirectoryPath, sourceFile.Name)))
@@ -1281,6 +1290,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 try
                 {
                     File.Delete(fileNamePath);
+
                     if (debugLevel > 4)
                     {
                         LogTools.LogDebug("AnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
@@ -1293,6 +1303,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     if (debugLevel > 0)
                     {
                         LogTools.LogDebug("File {0} exception ex1: {1}", fileNamePath, ex1.Message);
+
                         if (ex1.InnerException != null)
                         {
                             LogTools.LogDebug("Inner exception: " + ex1.InnerException.Message);
@@ -1705,6 +1716,7 @@ namespace AnalysisManagerBase.AnalysisTool
             foreach (var paramEntry in extractedParams)
             {
                 var equalsIndex = paramEntry.LastIndexOf('=');
+
                 if (equalsIndex > 0)
                 {
                     var key = paramEntry.Substring(0, equalsIndex);
@@ -1739,6 +1751,7 @@ namespace AnalysisManagerBase.AnalysisTool
             foreach (var paramEntry in extractedParams)
             {
                 var equalsIndex = paramEntry.LastIndexOf('=');
+
                 if (equalsIndex > 0)
                 {
                     var key = paramEntry.Substring(0, equalsIndex);
@@ -1860,6 +1873,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             string connectionStringToUse;
+
             if (recursionLevel == 0)
             {
                 connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, managerName);
@@ -2149,6 +2163,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
 
                 var gzippedFile = new FileInfo(fileToCompress.FullName + AnalysisResources.DOT_GZ_EXTENSION);
+
                 if (!gzippedFile.Exists)
                 {
                     LogError("GZip file was not created: " + gzippedFile.Name);
@@ -2195,12 +2210,14 @@ namespace AnalysisManagerBase.AnalysisTool
             else
             {
                 var reMatch = rePercentage.Match(threadCountText);
+
                 if (reMatch.Success)
                 {
                     // Value is similar to 90%
                     // Convert to a double, then compute the number of cores to use
                     var coreCountPct = double.Parse(reMatch.Groups[1].Value);
                     coreCount = (int)Math.Round(coreCountPct / 100.0 * coresOnMachine);
+
                     if (coreCount < 1)
                         coreCount = 1;
                 }
@@ -2215,6 +2232,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (coreCount == 0)
                 coreCount = coresOnMachine;
+
             if (coreCount > coresOnMachine)
                 coreCount = coresOnMachine;
 
@@ -2293,6 +2311,7 @@ namespace AnalysisManagerBase.AnalysisTool
         protected bool LoadSettingsFile()
         {
             var fileName = mJobParams.GetParam("SettingsFileName");
+
             if (fileName.Equals("na", StringComparison.OrdinalIgnoreCase))
             {
                 // Settings file wasn't required
@@ -2355,6 +2374,7 @@ namespace AnalysisManagerBase.AnalysisTool
             RegisterEvents(paramFileReader);
 
             var success = paramFileReader.ParseKeyValueParameterFile(out paramFileEntries, removeComments);
+
             if (success)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -2474,6 +2494,7 @@ namespace AnalysisManagerBase.AnalysisTool
             try
             {
                 var resultsDirectory = new DirectoryInfo(resultsDirectoryNamePath);
+
                 if (!resultsDirectory.Exists)
                     resultsDirectory.Create();
             }
@@ -2528,6 +2549,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (mDebugLevel >= 2)
                 {
                     var logMessage = "Move Result Files to " + currentResultsDirectoryPath;
+
                     if (mDebugLevel >= 3)
                     {
                         logMessage += "; ResultFilesToSkip contains " + mJobParams.ResultFilesToSkip.Count + " entries" + "; " +
@@ -2662,6 +2684,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         foreach (var character in sourceFile.Name)
                         {
                             var asciiValue = (int)character;
+
                             if (asciiValue <= 31 || asciiValue >= 128)
                             {
                                 // Invalid character found
@@ -2848,6 +2871,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var toolJobDescription = string.Format("remote tool {0}, job {1}", StepToolName, Job);
 
             var toolVersionInfoFile = new FileInfo(Path.Combine(mWorkDir, mToolVersionUtilities.ToolVersionInfoFile));
+
             if (!toolVersionInfoFile.Exists)
             {
                 LogErrorNoMessageUpdate(
@@ -2979,6 +3003,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     // Look for a purge check file
                     var purgeCheckFile = new FileInfo(Path.Combine(cacheDirectory.FullName, "PurgeCheckFile.txt"));
+
                     if (purgeCheckFile.Exists)
                     {
                         if (DateTime.UtcNow.Subtract(purgeCheckFile.LastWriteTimeUtc).TotalHours < CACHED_SERVER_FILES_PURGE_INTERVAL_HOURS)
@@ -3049,6 +3074,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     var purgedFileLogEntries = new List<string>();
 
                     var purgeLogFile = new FileInfo(Path.Combine(cacheDirectory.FullName, "PurgeLog_" + DateTime.Now.Year + ".txt"));
+
                     if (!purgeLogFile.Exists)
                     {
                         // Create the purge log file and write the header line
@@ -3104,6 +3130,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             fileDeleteErrorCount++;
 
                             var exceptionName = ex.GetType().ToString();
+
                             if (errorSummary.TryGetValue(exceptionName, out var occurrences))
                             {
                                 errorSummary[exceptionName] = occurrences + 1;
@@ -3125,6 +3152,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     if (fileDeleteErrorCount > 0)
                     {
                         LogMessage("Unable to delete " + fileDeleteErrorCount + " file(s) from " + cacheDirectoryPath, 0, true);
+
                         foreach (var kvItem in errorSummary)
                         {
                             var exceptionName = kvItem.Key;
@@ -3315,10 +3343,12 @@ namespace AnalysisManagerBase.AnalysisTool
                 foreach (var sourceFile in filesToRetrieve)
                 {
                     var fileRequired = sourceFile.Value;
+
                     if (fileRequired)
                         requiredFileCount++;
 
                     var localFile = new FileInfo(Path.Combine(mWorkDir, sourceFile.Key));
+
                     if (localFile.Exists)
                     {
                         retrievedFilePaths.Add(localFile.FullName);
@@ -3331,6 +3361,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+
                 if (modDefsFile.Exists && modDefsFile.Length == 0)
                 {
                     mJobParams.AddResultFileToSkip(modDefsFile.Name);
@@ -3672,6 +3703,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             var startTime = DateTime.UtcNow;
 
                             success = mFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
+
                             if (success)
                             {
                                 LogCopyStats(startTime, targetFile.FullName);
@@ -3679,6 +3711,7 @@ namespace AnalysisManagerBase.AnalysisTool
                             else
                             {
                                 retriesRemaining--;
+
                                 if (retriesRemaining < 0)
                                 {
                                     mMessage = "Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName;

@@ -46,6 +46,7 @@ namespace AnalysisManagerBase.OfflineJobs
             try
             {
                 string targetFilePath;
+
                 if (succeeded)
                     targetFilePath = Path.ChangeExtension(infoFilePath, ".success");
                 else
@@ -71,6 +72,7 @@ namespace AnalysisManagerBase.OfflineJobs
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             writer.WriteLine(dataLine);
@@ -78,6 +80,7 @@ namespace AnalysisManagerBase.OfflineJobs
                         }
 
                         var skipLine = false;
+
                         foreach (var setting in settingsToAppend)
                         {
                             if (dataLine.StartsWith(setting + "=", StringComparison.OrdinalIgnoreCase))

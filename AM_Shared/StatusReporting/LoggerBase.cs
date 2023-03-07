@@ -68,6 +68,7 @@ namespace AnalysisManagerBase.StatusReporting
             ConsoleMsgUtils.ShowErrorCustom(errorMessage, false);
 
             LogTools.LoggerTypes loggerType;
+
             if (logToDb && !Global.OfflineMode)
             {
                 loggerType = LogTools.LoggerTypes.LogDb;

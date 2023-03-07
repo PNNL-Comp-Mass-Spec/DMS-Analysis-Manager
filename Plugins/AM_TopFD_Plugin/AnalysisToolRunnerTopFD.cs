@@ -166,6 +166,7 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 var success = CopyResultsToTransferDirectory(zipSubdirectories);
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -189,6 +190,7 @@ namespace AnalysisManagerTopFDPlugIn
             if (zipSubdirectories)
             {
                 var zipSuccess = ZipTopFDDirectories();
+
                 if (!zipSuccess)
                     return false;
             }
@@ -294,6 +296,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                             var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
                             var match = versionMatcher.Match(dataLine);
+
                             if (match.Success)
                             {
                                 mTopFDVersion = new Version(match.Value);
@@ -309,6 +312,7 @@ namespace AnalysisManagerTopFDPlugIn
                     if (dataLine.StartsWith("Processing spectrum", StringComparison.OrdinalIgnoreCase))
                     {
                         var match = reExtractPercentFinished.Match(dataLine);
+
                         if (match.Success)
                         {
                             actualProgress = short.Parse(match.Groups["PercentComplete"].Value);
@@ -393,6 +397,7 @@ namespace AnalysisManagerTopFDPlugIn
             };
 
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
                 mMessage = paramFileReader.ErrorMessage;
@@ -458,6 +463,7 @@ namespace AnalysisManagerTopFDPlugIn
                 foreach (var fileToFind in filesToFind)
                 {
                     var sourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, fileToFind));
+
                     if (!sourceFile.Exists)
                     {
                         LogError("Cannot retrieve existing TopFD results; existing TopFD results file not found at " + sourceFile.FullName);
@@ -615,6 +621,7 @@ namespace AnalysisManagerTopFDPlugIn
             foreach (var resultFile in resultsFiles)
             {
                 var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultFile.Value));
+
                 if (!resultsFile.Exists)
                 {
                     LogError(string.Format("{0} file was not created by TopFD", resultFile.Key));
@@ -636,6 +643,7 @@ namespace AnalysisManagerTopFDPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("TopFD analysis complete");
@@ -719,6 +727,7 @@ namespace AnalysisManagerTopFDPlugIn
                         var keepLine = true;
 
                         var match = reExtractScan.Match(dataLine);
+
                         if (match.Success)
                         {
                             var scanNumber = int.Parse(match.Groups["Scan"].Value);
@@ -792,6 +801,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var mzMLFilePath = Path.Combine(mWorkDir, sourceMzMLFilename);
                 var sourceMzMLFile = new FileInfo(mzMLFilePath);
+
                 if (!sourceMzMLFile.Exists)
                 {
                     LogError("Unable to create an updated .mzML file with a new instrument class: source mzML file not found");
@@ -824,6 +834,7 @@ namespace AnalysisManagerTopFDPlugIn
                     }
 
                     var matchFound = false;
+
                     foreach (var item in cvParamsToUpdate)
                     {
                         if (dataLine.Contains(item.Key))

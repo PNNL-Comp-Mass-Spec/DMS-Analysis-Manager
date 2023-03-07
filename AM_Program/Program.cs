@@ -83,6 +83,7 @@ namespace AnalysisManagerProg
                 }
 
                 mTraceMode = options.TraceMode;
+
                 if (!Global.OfflineMode)
                 {
                     if (!Global.LinuxOS && options.LinuxOSMode)

@@ -353,6 +353,7 @@ namespace AnalysisManagerPBFGenerator
 
             // Cache the size of the instrument data file
             var instrumentFile = new FileInfo(rawFilePath);
+
             if (!instrumentFile.Exists)
             {
                 LogError("Instrument data not found: " + rawFilePath);
@@ -434,6 +435,7 @@ namespace AnalysisManagerPBFGenerator
 
             mProgress = PROGRESS_PCT_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("PBF Generation Complete");

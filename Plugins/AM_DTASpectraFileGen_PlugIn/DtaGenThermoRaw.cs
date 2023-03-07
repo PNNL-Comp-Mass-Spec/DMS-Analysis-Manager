@@ -205,6 +205,7 @@ namespace DTASpectraFileGen
             }
 
             const string mgfFileExtension = AnalysisResources.DOT_MGF_EXTENSION;
+
             if (File.Exists(Path.Combine(workDir, datasetName + mgfFileExtension)))
             {
                 mErrMsg = string.Empty;
@@ -291,6 +292,7 @@ namespace DTASpectraFileGen
         protected virtual void MakeDTAFilesThreaded()
         {
             mStatus = ProcessStatus.SF_RUNNING;
+
             if (!MakeDTAFiles())
             {
                 if (mStatus != ProcessStatus.SF_ABORTING)
@@ -380,6 +382,7 @@ namespace DTASpectraFileGen
 
             // Get the maximum number of scans in the file
             var rawFilePath = instrumentDataFilePath;
+
             if (!string.Equals(Path.GetExtension(instrumentDataFilePath), AnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase))
             {
                 rawFilePath = Path.ChangeExtension(rawFilePath, AnalysisResources.DOT_RAW_EXTENSION);
@@ -594,6 +597,7 @@ namespace DTASpectraFileGen
                         // Update loopy parameters
                         locScanStart = locScanStop + 1;
                         locScanStop = locScanStart + LOOPING_CHUNK_SIZE;
+
                         if (locScanStop > scanStop)
                         {
                             locScanStop = scanStop;
@@ -672,12 +676,14 @@ namespace DTASpectraFileGen
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
                     if (dataLine.StartsWith("Percent complete"))
                     {
                         var reMatch = reNumber.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             float.TryParse(reMatch.Groups[1].Value, out mProgress);
@@ -687,6 +693,7 @@ namespace DTASpectraFileGen
                     if (dataLine.StartsWith("Number of MSn scans processed"))
                     {
                         var reMatch = reNumber.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].Value, out mSpectraFileCount);
@@ -708,6 +715,7 @@ namespace DTASpectraFileGen
             {
                 // Extract out the scan number from the DTA filename
                 var reMatch = reDTAFile.Match(dtaFileName);
+
                 if (reMatch.Success)
                 {
                     if (int.TryParse(reMatch.Groups[1].Value, out var scanNumber))

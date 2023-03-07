@@ -37,6 +37,7 @@ namespace AnalysisManagerMODaPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -56,6 +57,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Retrieve the FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -65,6 +67,7 @@ namespace AnalysisManagerMODaPlugIn
             if (!FileSearchTool.RetrieveDtaFiles())
             {
                 var sharedResultsFolders = mJobParams.GetParam(JOB_PARAM_SHARED_RESULTS_FOLDERS);
+
                 if (string.IsNullOrEmpty(sharedResultsFolders))
                 {
                     mMessage = Global.AppendToComment(mMessage, "Job parameter SharedResultsFolders is empty");
@@ -131,6 +134,7 @@ namespace AnalysisManagerMODaPlugIn
                 var cdtaFile = new FileInfo(Path.Combine(mWorkDir, DatasetName + CDTA_EXTENSION));
 
                 var success = cdtaUtilities.ConvertCDTAToMGF(cdtaFile, DatasetName, combine2And3PlusCharges, maximumIonsPer100MzInterval, createIndexFile);
+
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))

@@ -148,6 +148,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 var success = CopyResultsToTransferDirectory();
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -455,6 +456,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                             var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Build>\d+)", RegexOptions.Compiled);
                             var match = versionMatcher.Match(dataLine);
+
                             if (!match.Success)
                             {
                                 continue;
@@ -469,6 +471,7 @@ namespace AnalysisManagerTopPICPlugIn
                                 // The beta version released 2021-08-20 has updated code, but the version is unchanged
 
                                 var exeInfo = new FileInfo(mTopPICProgLoc);
+
                                 if (exeInfo.LastWriteTime > new DateTime(2021, 8, 19))
                                 {
                                     mTopPICVersion = new Version(1, 4, 13, 1);
@@ -502,6 +505,7 @@ namespace AnalysisManagerTopPICPlugIn
                         }
 
                         var percentCompleteMatch = percentCompleteMatcher.Match(dataLine);
+
                         if (percentCompleteMatch.Success)
                         {
                             percentCompleteThisTask = float.Parse(percentCompleteMatch.Groups["Progress"].Value);
@@ -513,6 +517,7 @@ namespace AnalysisManagerTopPICPlugIn
                             progressReportedAsPercentComplete = false;
 
                             var progressMatch = incrementalProgressMatcher.Match(dataLine);
+
                             if (progressMatch.Success)
                             {
                                 if (int.TryParse(progressMatch.Groups["Item"].Value, out var itemValue))
@@ -525,6 +530,7 @@ namespace AnalysisManagerTopPICPlugIn
                             }
 
                             var undefinedProgressMatch = undefinedProgressMatcher.Match(dataLine);
+
                             if (undefinedProgressMatch.Success)
                             {
                                 undefinedProgress = true;
@@ -534,6 +540,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 float effectiveProgress;
+
                 if (!undefinedProgress && currentTaskItemsProcessed > 0 && currentTaskTotalItems > 0)
                 {
                     effectiveProgress = ComputeOverallProgress(
@@ -596,6 +603,7 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     var modsFilePath = Path.Combine(mWorkDir, modsFileName);
                     var success = WriteModsFile(modsFilePath, validatedMods);
+
                     if (!success)
                         return false;
 
@@ -656,6 +664,7 @@ namespace AnalysisManagerTopPICPlugIn
             };
 
             cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+
             if (string.IsNullOrWhiteSpace(cmdLineOptions))
             {
                 mMessage = paramFileReader.ErrorMessage;
@@ -868,6 +877,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("TopPIC Search Complete");
@@ -961,6 +971,7 @@ namespace AnalysisManagerTopPICPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             // Skip blank lines
@@ -971,6 +982,7 @@ namespace AnalysisManagerTopPICPlugIn
                         var regexMatched = false;
 
                         var percentCompleteMatch = extractItemWithPercentComplete.Match(dataLine);
+
                         if (percentCompleteMatch.Success)
                         {
                             regexMatched = true;
@@ -988,6 +1000,7 @@ namespace AnalysisManagerTopPICPlugIn
                         else
                         {
                             var match = extractItemWithCount.Match(dataLine);
+
                             if (match.Success)
                             {
                                 regexMatched = true;
@@ -1116,6 +1129,7 @@ namespace AnalysisManagerTopPICPlugIn
                 foreach (var resultFileInfo in resultFileNames)
                 {
                     var sourcePrsmFile = new FileInfo(Path.Combine(mWorkDir, resultFileInfo.BaseName + resultFileInfo.PrsmFileSuffix));
+
                     if (!sourcePrsmFile.Exists)
                         continue;
 
@@ -1282,6 +1296,7 @@ namespace AnalysisManagerTopPICPlugIn
                 foreach (var directorySuffix in directoriesToCompress)
                 {
                     var success = ZipTopPICResultsDirectory(directorySuffix);
+
                     if (success)
                         directoriesZipped++;
                 }
@@ -1385,6 +1400,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                             // Look for the parameters header: ********************** Parameters **********************
                             var match = parametersHeaderMatcher.Match(paramBlockLine);
+
                             if (match.Success)
                             {
                                 if (!foundParamHeaderA)
@@ -1426,11 +1442,13 @@ namespace AnalysisManagerTopPICPlugIn
                         }
 
                         string dataLine;
+
                         if (useCsvReader)
                         {
                             try
                             {
                                 currentLineNumber++;
+
                                 if (!csvReader.Read())
                                 {
                                     break;
@@ -1474,9 +1492,11 @@ namespace AnalysisManagerTopPICPlugIn
                         // Remove the double quotes if present
 
                         var lineParts = dataLine.Split('\t');
+
                         for (var i = 0; i < lineParts.Length; i++)
                         {
                             var match = quoteMatcher.Match(lineParts[i]);
+
                             if (!match.Success)
                                 continue;
 
@@ -1534,6 +1554,7 @@ namespace AnalysisManagerTopPICPlugIn
             modClean = string.Empty;
 
             var poundIndex = mod.IndexOf('#');
+
             if (poundIndex > 0)
             {
                 // comment = mod.Substring(poundIndex);
@@ -1571,6 +1592,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Reconstruct the mod definition, making sure there is no whitespace
             modClean = splitMod[0].Trim();
+
             for (var index = 1; index <= splitMod.Length - 1; index++)
             {
                 modClean += "," + splitMod[index].Trim();
@@ -1637,6 +1659,7 @@ namespace AnalysisManagerTopPICPlugIn
                     // Parameter lines are of the form "Error tolerance:,15 ppm"
                     // Replace the comma with spaces
                     var paramParts = parameter.Split(new[] { ',' }, 2);
+
                     if (paramParts.Length <= 1)
                     {
                         writer.WriteLine(parameter);
@@ -1659,6 +1682,7 @@ namespace AnalysisManagerTopPICPlugIn
                 var zipFilePath = Path.Combine(mWorkDir, mDatasetName + directorySuffix + ".zip");
 
                 var sourceDirectory = new DirectoryInfo(Path.Combine(mWorkDir, mDatasetName + directorySuffix));
+
                 if (!sourceDirectory.Exists)
                     return false;
 
@@ -1673,6 +1697,7 @@ namespace AnalysisManagerTopPICPlugIn
                 }
 
                 var existingZipFile = new FileInfo(zipFilePath);
+
                 if (existingZipFile.Exists)
                 {
                     existingZipFile.Delete();

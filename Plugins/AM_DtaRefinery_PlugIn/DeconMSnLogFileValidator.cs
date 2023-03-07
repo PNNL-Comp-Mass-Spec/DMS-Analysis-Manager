@@ -26,6 +26,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (dataColumns.Count > 0)
             {
                 collapsedLine.Append(dataColumns[0]);
+
                 for (var index = 1; index <= dataColumns.Count - 1; index++)
                 {
                     collapsedLine.AppendFormat("\t{0}", dataColumns[index]);
@@ -60,6 +61,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     {
                         var dataLine = reader.ReadLine();
                         var columnCountUpdated = 0;
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -75,10 +77,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             else if (dataColumns.Length > 1)
                             {
                                 ValidateColumnIsPositive(dataColumns, parentIntensityColIndex, out var parentIntensityColumnUpdated);
+
                                 if (parentIntensityColumnUpdated)
                                     columnCountUpdated++;
 
                                 ValidateColumnIsPositive(dataColumns, monoIntensityColIndex, out var monoIntensityColumnUpdated);
+
                                 if (monoIntensityColumnUpdated)
                                     columnCountUpdated++;
                             }
@@ -184,10 +188,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var splitLine = new List<string>(dataColumns);
 
                 var colIndex = splitLine.IndexOf("Parent_Intensity");
+
                 if (colIndex > 0)
                     parentIntensityColIndex = colIndex;
 
                 colIndex = splitLine.IndexOf("Mono_Intensity");
+
                 if (colIndex > 0)
                     monoIntensityColIndex = colIndex;
             }
@@ -208,6 +214,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return;
 
             var isNumeric = double.TryParse(dataColumns[colIndex], out var result);
+
             if (!isNumeric || result < 1)
             {
                 dataColumns[colIndex] = "1";

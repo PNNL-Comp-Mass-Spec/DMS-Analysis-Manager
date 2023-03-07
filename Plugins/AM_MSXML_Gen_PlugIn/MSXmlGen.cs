@@ -201,6 +201,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var arguments = CreateArguments(msXmlFormat, SourceFilePath);
 
             var success = SetupTool();
+
             if (!success)
             {
                 if (string.IsNullOrEmpty(mErrorMessage))
@@ -236,6 +237,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Note that ProgRunner will have already included them in the ConsoleOutput.txt file
 
                 var consoleError = "Console error: " + cmdRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
+
                 if (string.IsNullOrWhiteSpace(mErrorMessage))
                 {
                     mErrorMessage = consoleError;
@@ -269,6 +271,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Make sure the output file was created and is not empty
             var sourceFile = new FileInfo(SourceFilePath);
+
             if (sourceFile.Directory == null)
             {
                 mErrorMessage = "Unable to determine the parent directory of " + sourceFile.FullName;
@@ -321,12 +324,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var totalMinutes = DateTime.UtcNow.Subtract(startTimeUTC).TotalMinutes;
 
                 var sourceFile = new FileInfo(sourceFilePath);
+
                 if (sourceFile.Exists)
                 {
                     sourceFileSizeMB = Global.BytesToMB(sourceFile.Length);
                 }
 
                 var msXmlFile = new FileInfo(msXmlFilePath);
+
                 if (msXmlFile.Exists)
                 {
                     msXmlSizeMB = Global.BytesToMB(msXmlFile.Length);
@@ -378,6 +383,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (!string.IsNullOrWhiteSpace(dataLine))
                         {
                             mostRecentLine = dataLine;
@@ -386,6 +392,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 mostRecentLine = mostRecentLine.Trim();
+
                 if (mostRecentLine.Length > 250)
                 {
                     mostRecentLine = mostRecentLine.Substring(0, 250);
@@ -397,6 +404,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         if (mostRecentLine != "</mzXML>")
                         {
                             mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </mzXML>";
+
                             if (string.IsNullOrWhiteSpace(mostRecentLine))
                             {
                                 OnErrorEvent("mzXML file is corrupt; file is empty or only contains whitespace");
@@ -413,6 +421,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         if (mostRecentLine != "</indexedmzML>")
                         {
                             mErrorMessage = "File " + outputFile.Name + " is corrupt; it does not end in </indexedmzML>";
+
                             if (string.IsNullOrWhiteSpace(mostRecentLine))
                             {
                                 OnErrorEvent("mzML file is corrupt; file is empty or only contains whitespace");

@@ -32,6 +32,7 @@ namespace MSMSSpectrumFilterAM
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -110,6 +111,7 @@ namespace MSMSSpectrumFilterAM
                 if (!string.IsNullOrEmpty(datasetFileOrFolderPath) && !datasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
                     DirectoryInfo datasetDirectory;
+
                     if (isFolder)
                     {
                         var datasetSubdirectory = new DirectoryInfo(datasetFileOrFolderPath);

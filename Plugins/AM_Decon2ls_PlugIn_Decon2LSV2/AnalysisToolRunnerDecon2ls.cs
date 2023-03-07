@@ -129,18 +129,21 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     var sourceScansFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_SCANS_FILE_SUFFIX));
+
                     if (sourceScansFile.Exists)
                     {
                         sourceScansFile.CopyTo(scansFilePath);
                     }
 
                     var sourceIsosFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX));
+
                     if (sourceIsosFile.Exists)
                     {
                         sourceIsosFile.CopyTo(isosFilePath);
                     }
 
                     var sourcePeaksFile = new FileInfo(Path.Combine(mInputFilePath, mDatasetName + DECON2LS_PEAKS_FILE_SUFFIX));
+
                     if (sourcePeaksFile.Exists)
                     {
                         sourcePeaksFile.CopyTo(peaksFilePath);
@@ -259,6 +262,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             try
             {
                 var isosFilePath = Path.Combine(mWorkDir, mDatasetName + DECON2LS_ISOS_FILE_SUFFIX);
+
                 if (!File.Exists(isosFilePath))
                 {
                     // Do not treat this as a fatal error
@@ -328,6 +332,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     var filesToFind = new List<FileInfo>();
                     string fileDescription;
+
                     if (fileExtension.Contains("|"))
                     {
                         fileDescription = "";
@@ -337,6 +342,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         foreach (var extension in fileExtension.Split('|'))
                         {
                             filesToFind.Add(new FileInfo(Path.Combine(mWorkDir, mDatasetName + extension)));
+
                             if (fileDescription.Length == 0)
                                 fileDescription = extension;
                             else
@@ -350,6 +356,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     var filesFound = 0;
+
                     foreach (var pngFile in filesToFind)
                     {
                         if (pngFile.Exists)
@@ -365,6 +372,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         if (isosDataLineCount < 0)
                         {
                             var isosFileHasData = IsosFileHasData(isosFilePath, out isosDataLineCount, countTotalDataLines: true);
+
                             if (!isosFileHasData || isosDataLineCount == 0)
                             {
                                 LogError("No results in DeconTools Isos file");
@@ -401,6 +409,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private bool FindMSFileInfoScannerDLL()
         {
             var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
+
             if (string.IsNullOrEmpty(msFileInfoScannerDir))
             {
                 LogError("Manager parameter 'MSFileInfoScannerDir' is not defined");
@@ -410,6 +419,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var msFileInfoScannerDLL = new FileInfo(Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll"));
 
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLL.FullName;
+
             if (msFileInfoScannerDLL.Exists)
                 return true;
 
@@ -467,6 +477,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         {
                             // Filter on isotopic Fit value
                             var dataColumns = dataLine.Split(',');
+
                             if (dataColumns.Length < fitColumnIndex)
                                 continue;
 
@@ -556,6 +567,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Run Decon2LS
             var result = RunDecon2Ls();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
@@ -569,6 +581,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     returnCode = result;
+
                     if (string.IsNullOrWhiteSpace(mMessage))
                     {
                         mMessage = "No results in DeconTools Isos file";
@@ -646,6 +659,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 string.Empty);
 
             string paramFileName;
+
             if (string.IsNullOrWhiteSpace(paramFileNameOverride))
             {
                 paramFileName = mJobParams.GetParam("ParamFileName");
@@ -680,6 +694,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Specify Input file or folder
             mInputFilePath = GetInputFilePath(mRawDataType);
+
             if (string.IsNullOrWhiteSpace(mInputFilePath))
             {
                 LogError("AnalysisToolRunnerDecon2lsBase.RunDecon2Ls(), Invalid data file type specified while input file name: " + mRawDataType);
@@ -697,9 +712,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Store the DeconTools version info in the database
             mMessage = string.Empty;
+
             if (!StoreToolVersionInfo(progLoc))
             {
                 LogMessage("Aborting since StoreToolVersionInfo returned false", 0, true);
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Error determining DeconTools version";
@@ -1036,6 +1053,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     if (charIndex >= 0)
                     {
                         var dateValid = false;
+
                         if (charIndex > 1)
                         {
                             // Parse out the date from dataLine
@@ -1069,12 +1087,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     charIndex = dataLine.ToLower().IndexOf("scan/frame", StringComparison.Ordinal);
+
                     if (charIndex >= 0)
                     {
                         scanFrameLine = dataLine.Substring(charIndex);
                     }
 
                     charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
+
                     if (charIndex > 0)
                     {
                         // An exception was reported in the log file; treat this as a fatal error
@@ -1106,6 +1126,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             for (var i = 0; i <= progressStats.Length - 1; i++)
             {
                 var kvStat = ParseKeyValue(progressStats[i]);
+
                 if (string.IsNullOrWhiteSpace(kvStat.Key)) continue;
 
                 switch (kvStat.Key)
@@ -1185,6 +1206,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             while (!reader.EndOfStream && dataLineCount < 2)
             {
                 var lineIn = reader.ReadLine();
+
                 if (!string.IsNullOrWhiteSpace(lineIn))
                 {
                     dataLineCount++;
@@ -1256,6 +1278,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             var deconToolsExe = new FileInfo(deconToolsProgLoc);
+
             if (!deconToolsExe.Exists)
             {
                 try
@@ -1272,6 +1295,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Lookup the version of the DeconConsole application
             var success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsExe.FullName);
+
             if (!success)
                 return false;
 
@@ -1281,6 +1305,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mDeconConsoleBuild = 0;
             var versionMatcher = new Regex(@"Version=\d+\.\d+\.(?<DeconToolsBuild>\d+)");
             var match = versionMatcher.Match(toolVersionInfo);
+
             if (match.Success)
             {
                 if (!int.TryParse(match.Groups["DeconToolsBuild"].Value, out mDeconConsoleBuild))
@@ -1299,6 +1324,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             string deconToolsBackendPath;
+
             if (deconToolsExe.DirectoryName == null)
             {
                 deconToolsBackendPath = string.Empty;
@@ -1308,12 +1334,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Lookup the version of the DeconTools DLL (in the DeconTools folder)
                 deconToolsBackendPath = Path.Combine(deconToolsExe.DirectoryName, "DeconTools.Backend.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, deconToolsBackendPath);
+
                 if (!success)
                     return false;
 
                 // Lookup the version of the UIMF Library (in the DeconTools folder)
                 var dllPath = Path.Combine(deconToolsExe.DirectoryName, "UIMFLibrary.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllPath);
+
                 if (!success)
                     return false;
             }
@@ -1401,6 +1429,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             progressMessage = "DeconTools, " + progressMessage;
 
             int logIntervalMinutes;
+
             if (mDebugLevel >= 5)
             {
                 logIntervalMinutes = 1;
@@ -1425,6 +1454,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             LogProgress(progressMessage, logIntervalMinutes);
 
             const int MAX_LOG_FINISHED_WAIT_TIME_SECONDS = 120;
+
             if (!finishedProcessing)
                 return;
 

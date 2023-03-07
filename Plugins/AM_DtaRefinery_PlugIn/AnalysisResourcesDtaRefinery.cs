@@ -37,6 +37,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -44,6 +45,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -60,6 +62,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "DTA_Refinery";
 
             var dtaRefineryParamFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(dtaRefineryParamFileStoragePath))
             {
                 dtaRefineryParamFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
@@ -131,6 +134,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 LogMessage(
                     "Validating that the _dta.txt file has centroided spectra (required by MS-GF+)");
+
                 if (!ValidateCDTAFileIsCentroided(cdtaPath))
                 {
                     // mMessage is already updated
@@ -152,6 +156,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
             var success = UpdateParameterFile(out var errorMessage);
+
             if (!success)
             {
                 LogError(string.Format(
@@ -257,6 +262,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return;
 
             var filePathToCheck = Path.Combine(mWorkDir, fileName);
+
             if (!ValidateFileHasData(filePathToCheck, fileDescription, out _))
             {
                 if (mDebugLevel >= 1)
@@ -320,14 +326,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     if (root != null)
                     {
                         var exeParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']");
+
                         if (exeParam != null)
                             exeParam.InnerXml = xtandemExePath;
 
                         var inputParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']");
+
                         if (inputParam != null)
                             inputParam.InnerXml = xtandemDefaultInput;
 
                         var taxonomyListParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']");
+
                         if (taxonomyListParam != null)
                             taxonomyListParam.InnerXml = xtandemTaxonomyList;
                     }
@@ -356,6 +365,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             RegisterEvents(validator);
 
             var success = validator.ValidateDeconMSnLogFile(filePath);
+
             if (!success)
             {
                 // The error will have already been logged

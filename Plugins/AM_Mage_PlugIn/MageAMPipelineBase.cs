@@ -75,6 +75,7 @@ namespace AnalysisManager_Mage_PlugIn
         public string RequireMgrParam(string paramName)
         {
             var val = MgrParams.GetParam(paramName);
+
             if (string.IsNullOrWhiteSpace(val))
             {
                 throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));
@@ -85,6 +86,7 @@ namespace AnalysisManager_Mage_PlugIn
         public string RequireJobParam(string paramName)
         {
             var val = JobParams.GetParam(paramName);
+
             if (string.IsNullOrWhiteSpace(val))
             {
                 throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -151,9 +153,11 @@ namespace AnalysisManager_Mage_PlugIn
             var dataPackagePath = Path.Combine(RequireJobParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), RequireJobParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             var stepInputFolderName = GetJobParam("StepInputFolderName");
+
             if (stepInputFolderName != "")
             {
                 var priorResultsDBFilePath = Path.Combine(dataPackagePath, stepInputFolderName, ResultsDBFileName);
+
                 if (File.Exists(priorResultsDBFilePath))
                 {
                     var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
@@ -186,6 +190,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             var reMatch = mProcessingResults.Match(args.Message);
+
             if (reMatch.Success)
             {
                 if (int.TryParse(reMatch.Groups[1].Value, out var job))
@@ -193,6 +198,7 @@ namespace AnalysisManager_Mage_PlugIn
                     if (mLastProgressJob != job)
                     {
                         mLastProgressJob = job;
+
                         if (!JobsProcessed.Contains(job))
                         {
                             JobsProcessed.Add(job);

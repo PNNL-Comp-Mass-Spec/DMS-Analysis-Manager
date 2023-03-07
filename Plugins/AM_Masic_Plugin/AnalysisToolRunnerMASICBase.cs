@@ -134,6 +134,7 @@ namespace AnalysisManagerMasicPlugin
                 // Note that RunMASIC will populate the File Path variables, then will call
                 //  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
                 var processingResult = RunMASIC();
+
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return processingResult;
@@ -150,6 +151,7 @@ namespace AnalysisManagerMasicPlugin
 
             // Run the cleanup routine from the base class
             var postProcessingResult = PerfPostAnalysisTasks();
+
             if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
@@ -193,6 +195,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 // This manager parameter is the full path to the MASIC .exe
                 masicExePath = mMgrParams.GetParam("MasicProgLoc");
+
                 if (!File.Exists(masicExePath))
                 {
                     LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + masicExePath);
@@ -220,6 +223,7 @@ namespace AnalysisManagerMasicPlugin
             };
 
             var arguments = string.Join(" ", argumentList);
+
             if (mDebugLevel >= 1)
             {
                 LogDebug(masicExePath + " " + arguments);
@@ -265,12 +269,14 @@ namespace AnalysisManagerMasicPlugin
                 if (!string.IsNullOrEmpty(mErrorMessage))
                 {
                     LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC Error message: " + mErrorMessage);
+
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = mErrorMessage;
                 }
                 else
                 {
                     LogError("AnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC Error message is blank");
+
                     if (string.IsNullOrEmpty(mMessage))
                         mMessage = "Unknown error running MASIC";
                 }
@@ -372,6 +378,7 @@ namespace AnalysisManagerMasicPlugin
         private int GetColumnIndex(string headerLine, string columnName, int indexIfMissing)
         {
             var columnNames = headerLine.Split('\t');
+
             for (var i = 0; i < columnNames.Length; i++)
             {
                 if (columnNames[i].Equals(columnName, StringComparison.OrdinalIgnoreCase))
@@ -416,6 +423,7 @@ namespace AnalysisManagerMasicPlugin
 
             // Get rid of raw data file
             var stepResult = DeleteDataFile();
+
             if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return stepResult;
@@ -443,6 +451,7 @@ namespace AnalysisManagerMasicPlugin
 
             // If a _RepIonObsRate.txt file was created, read the data and push into DMS
             var success = StoreReporterIonObservationRateStats();
+
             if (!success)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -644,6 +653,7 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 var observationRateFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_RepIonObsRate.txt"));
+
                 if (!observationRateFile.Exists)
                     return true;
 

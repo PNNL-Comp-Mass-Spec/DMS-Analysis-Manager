@@ -57,6 +57,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             if (!StoreToolVersionInfo())
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Error determining CompassXport version";
@@ -104,6 +105,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             var deleteSuccess = DeleteRawDataFiles();
+
             if (!deleteSuccess)
             {
                 LogError("AnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + mMessage);
@@ -185,6 +187,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             var eOutputType = CompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat);
+
             if (eOutputType == CompassXportRunner.MSXMLOutputTypeConstants.Invalid)
             {
                 LogWarning("msXmlFormat string is not recognized (" + msXmlFormat + "); it is typically mzXML, mzML, or CSV; will default to mzXML");
@@ -312,6 +315,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
                 var compassXportPath = mMgrParams.GetParam("CompassXportLoc");
+
                 if (string.IsNullOrEmpty(compassXportPath))
                 {
                     mMessage = "Path defined by manager param CompassXportLoc is empty";

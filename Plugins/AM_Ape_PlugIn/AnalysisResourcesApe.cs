@@ -20,6 +20,7 @@ namespace AnalysisManager_Ape_PlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -59,6 +60,7 @@ namespace AnalysisManager_Ape_PlugIn
                     continue;
 
                 success = RunApeOperation(apeOperation.Trim());
+
                 if (success)
                     continue;
 
@@ -122,6 +124,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             var stepInputDirectoryPath = Path.Combine(dataPackagePath, mJobParams.GetParam("StepInputFolderName"));
             LogMessage("Retrieving SQLite database: " + Path.Combine(stepInputDirectoryPath, "Results.db3"));
+
             if (!CopyFileToWorkDir("Results.db3", stepInputDirectoryPath, mWorkDir))
             {
                 // Errors were reported in method call, so just return

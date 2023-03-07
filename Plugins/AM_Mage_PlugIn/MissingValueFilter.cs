@@ -18,6 +18,7 @@ namespace AnalysisManager_Mage_PlugIn
         protected override bool CheckFilter(ref string[] vals)
         {
             var val = vals[_fillColIdx];
+
             if (string.IsNullOrEmpty(val))
             {
                 vals[_fillColIdx] = _rememberedFillValue;

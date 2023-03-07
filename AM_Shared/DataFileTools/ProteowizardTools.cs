@@ -58,6 +58,7 @@ namespace AnalysisManagerBase.DataFileTools
                     }
 
                     var regSoftware = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software", false);
+
                     if (regSoftware == null)
                         throw new Exception("Unable to open the Software node in the registry");
 
@@ -109,6 +110,7 @@ namespace AnalysisManagerBase.DataFileTools
                 if (subKeyMissing || valueMissing)
                 {
                     var regSoftware = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software", true);
+
                     if (regSoftware == null)
                         throw new Exception("Unable to open the Software node in the registry");
 

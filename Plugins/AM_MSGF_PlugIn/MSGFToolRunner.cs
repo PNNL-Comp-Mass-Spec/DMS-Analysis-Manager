@@ -276,6 +276,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 var copySuccess = CopyResultsToTransferDirectory();
+
                 if (!copySuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -412,6 +413,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     // Look for the equals sign
                     var charIndex = dataLine.IndexOf('=');
+
                     if (charIndex > 0)
                     {
                         var fragModeText = dataLine.Substring(charIndex + 1).Trim();
@@ -496,6 +498,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     // Look for the equals sign
                     var charIndex = dataLine.IndexOf('=');
+
                     if (charIndex > 0)
                     {
                         var ionWeightText = dataLine.Substring(charIndex + 1).Trim();
@@ -643,6 +646,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = mMSXmlCreator.ErrorMessage;
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Unknown error creating the mzXML file";
@@ -831,6 +835,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!File.Exists(sourceFilePath))
             {
                 var sourceFilePathAlternate = Path.Combine(mWorkDir, mDatasetName + "_msgfdb_" + synOrFHT + ".txt");
+
                 if (!File.Exists(sourceFilePathAlternate))
                 {
                     mMessage = "Input file not found: " + Path.GetFileName(sourceFilePath);
@@ -844,6 +849,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!success)
             {
                 mMessage = "Error creating MSGF file for " + Path.GetFileName(sourceFilePath);
+
                 if (!string.IsNullOrEmpty(msgfInputCreator.ErrorMessage))
                 {
                     mMessage += ": " + msgfInputCreator.ErrorMessage;
@@ -875,6 +881,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!success && string.IsNullOrEmpty(mMessage))
             {
                 mMessage = mMSXmlCreator.ErrorMessage;
+
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Unknown error creating the mzXML file";
@@ -893,6 +900,7 @@ namespace AnalysisManagerMSGFPlugin
             // mJavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
             // Note that we need to run MSGF with a 64-bit version of Java since it prefers to use 2 or more GB of ram
             mJavaProgLoc = GetJavaProgLoc();
+
             if (string.IsNullOrEmpty(mJavaProgLoc))
             {
                 return false;
@@ -1244,6 +1252,7 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         // Update the scan number
                         var actualScanNumber = 0;
+
                         if (int.TryParse(scan, out var mgfScanIndex))
                         {
                             actualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(mgfScanIndex);
@@ -1281,6 +1290,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Log the first 5 instances to the log file as warnings
 
                             string originalPeptideInfo;
+
                             if (originalPeptide != peptide)
                             {
                                 originalPeptideInfo = ", original peptide sequence " + originalPeptide;
@@ -1363,6 +1373,7 @@ namespace AnalysisManagerMSGFPlugin
             if (mgfLookupErrorCount > 1)
             {
                 LogError("MGF Index-to-scan lookup failed for " + mgfLookupErrorCount + " entries in the MSGF result file");
+
                 if (linesRead > 0 && mgfLookupErrorCount / (float)linesRead > 0.1)
                 {
                     tooManyErrors = true;
@@ -1669,6 +1680,7 @@ namespace AnalysisManagerMSGFPlugin
                     mETDMode = false;
                     mCollisionModeIteration = 1;
                     var success = RunMSGFonMSGFDBCachedData(cidData, msgfInputFilePath, msgfResultsFilePath, "CID");
+
                     if (!success)
                         return false;
 
@@ -1759,6 +1771,7 @@ namespace AnalysisManagerMSGFPlugin
             string segmentUsageMessage;
 
             var msgfEntriesPerSegment = mJobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
+
             if (mDebugLevel >= 2)
             {
                 LogDebug("MSGFInputFileLineCount = " + msgfInputFileLineCount + "; MSGFEntriesPerSegment = " + msgfEntriesPerSegment);
@@ -1857,6 +1870,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Delete the Console_Output.txt file if it is empty
                 var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
+
                 if (consoleOutputFile.Exists && consoleOutputFile.Length == 0)
                 {
                     consoleOutputFile.Delete();
@@ -1894,6 +1908,7 @@ namespace AnalysisManagerMSGFPlugin
             // Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
             var javaMemorySize = mJobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
+
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
@@ -2006,6 +2021,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
                     var consoleOutputFile = new FileInfo(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
+
                     if (consoleOutputFile.Length == 0)
                     {
                         // File is 0-bytes; delete it
@@ -2041,6 +2057,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Step through the input files and append the results
                 var headerWritten = false;
+
                 foreach (var resultFile in resultFiles)
                 {
                     using var reader = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -2235,6 +2252,7 @@ namespace AnalysisManagerMSGFPlugin
             try
             {
                 segmentFileInfo.Clear();
+
                 if (msgfEntriesPerSegment < 100)
                     msgfEntriesPerSegment = 100;
 
@@ -2250,6 +2268,7 @@ namespace AnalysisManagerMSGFPlugin
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -2453,6 +2472,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (mMSGFInputFileLineCount <= 0)
                     return;
+
                 if (!File.Exists(msgfResultsFilePath))
                     return;
 
@@ -2475,6 +2495,7 @@ namespace AnalysisManagerMSGFPlugin
                     // Divide the progress by 2, then add 0.5 if we're on the second iteration
 
                     fraction /= 2.0;
+
                     if (mCollisionModeIteration > 1)
                     {
                         fraction += 0.5;
@@ -2488,6 +2509,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Log errors the first 3 times they occur
                 errorCount++;
+
                 if (errorCount <= 3)
                 {
                     LogError("Error counting the number of lines in the MSGF results file, " + msgfResultsFilePath, ex);
@@ -2602,6 +2624,7 @@ namespace AnalysisManagerMSGFPlugin
                     try
                     {
                         proteinModsFileNew.MoveTo(proteinModsFile.FullName);
+
                         if (mDebugLevel >= 2)
                         {
                             LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");
@@ -2643,6 +2666,7 @@ namespace AnalysisManagerMSGFPlugin
         private void MSGFInputCreator_ErrorEvent(string message, Exception ex)
         {
             mMSGFInputCreatorErrorCount++;
+
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
             {
                 LogError("Error reported by MSGFInputCreator; " + message + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
@@ -2665,6 +2689,7 @@ namespace AnalysisManagerMSGFPlugin
         private void MSGFInputCreator_WarningEvent(string warningMessage)
         {
             mMSGFInputCreatorWarningCount++;
+
             if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
             {
                 LogWarning("Warning reported by MSGFInputCreator; " + warningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");
@@ -2710,6 +2735,7 @@ namespace AnalysisManagerMSGFPlugin
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT));
+
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();

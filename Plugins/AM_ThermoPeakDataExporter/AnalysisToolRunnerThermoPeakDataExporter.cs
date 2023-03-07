@@ -103,6 +103,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
                 mJobParams.AddResultFileToSkip(THERMO_DATA_EXPORTER_CONSOLE_OUTPUT);
 
                 var success = CopyResultsToTransferDirectory();
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -254,6 +255,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             // Make sure the output file was created and is not zero-bytes
 
             resultsFile.Refresh();
+
             if (!resultsFile.Exists)
             {
                 LogError(string.Format("{0} file was not created by ThermoPeakDataExporter", resultsFile.Name));
@@ -267,6 +269,7 @@ namespace AnalysisManagerThermoPeakDataExporterPlugIn
             }
 
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("ThermoPeakDataExporter analysis complete");

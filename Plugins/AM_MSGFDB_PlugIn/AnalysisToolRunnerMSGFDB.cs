@@ -107,6 +107,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -140,12 +141,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // If it exists, call PostProcessMSGFPlusResults even if processingError is true
 
                 mzidResultsFile.Refresh();
+
                 if (mzidResultsFile.Exists)
                 {
                     // Look for a "dirty" mzid file
                     var dirtyResultsFilename = Path.GetFileNameWithoutExtension(mzidResultsFile.Name) + "_dirty.gz";
 
                     bool dirtyFileExists;
+
                     if (mzidResultsFile.Directory == null)
                     {
                         dirtyFileExists = false;
@@ -164,6 +167,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else
                     {
                         var postProcessingResult = PostProcessMSGFPlusResults(mzidResultsFile.Name);
+
                         if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -172,6 +176,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
 
                             processingError = true;
+
                             if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
                                 processingResult = postProcessingResult;
                         }
@@ -189,6 +194,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!mMSGFPlusComplete)
                 {
                     processingError = true;
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         LogError("MS-GF+ did not reach completion");
@@ -200,6 +206,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Move the enzymes.txt file into the working directory
                     var enzymesFile = new FileInfo(mMSGFPlusUtils.EnzymeDefinitionFilePath);
                     var newEnzymesFile = new FileInfo(Path.Combine(mWorkDir, enzymesFile.Name));
+
                     if (!string.Equals(enzymesFile.FullName, newEnzymesFile.FullName))
                     {
                         if (newEnzymesFile.Exists && enzymesFile.Exists)
@@ -232,6 +239,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var success = CopyResultsToTransferDirectory();
+
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -272,6 +280,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (splitFastaEnabled)
             {
                 var iteration = AnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
+
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                 {
                     mMessage = Global.AppendToComment(mMessage, errorMessage);
@@ -285,6 +294,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!mzidResultsFile.Exists && splitFastaMzidFile.Exists)
                 {
                     var renamed = mFileTools.RenameFileWithRetry(splitFastaMzidFile, mzidResultsFile, out var errorMessageForRename);
+
                     if (!renamed)
                     {
                         mMessage = Global.AppendToComment(mMessage, errorMessageForRename);
@@ -316,6 +326,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mResultFilesToSkipIfNoError.Clear();
 
             var inputFormatResult = DetermineInputFileFormat(true, out var inputFileFormat, out var assumedScanType, out var scanTypeFilePath);
+
             if (inputFormatResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Immediately exit the plugin; results and console output files will not be saved
@@ -465,10 +476,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             bool validExistingResults;
+
             if (mzidResultsFile.Exists)
             {
                 // Don't actually run MS-GF+ if the results file exists and ends in </MzIdentML>
                 validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(mzidResultsFile);
+
                 if (validExistingResults)
                 {
                     LogMessage("Using existing MS-GF+ results: {0} created {1}",
@@ -878,6 +891,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             assumedScanType = mJobParams.GetParam("AssumedScanType");
 
             var mgfFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_MGF_EXTENSION));
+
             if (mgfFile.Exists)
             {
                 inputFileFormat = InputFileFormatTypes.MGF;
@@ -967,6 +981,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Setting MSGFPlusJavaMemorySize is stored in the settings file for this job
             var javaMemorySizeMB = jobParams.GetJobParameter("MSGFPlusJavaMemorySize", 4000);
+
             if (javaMemorySizeMB < 512)
                 javaMemorySizeMB = 512;
 
@@ -977,6 +992,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var fastaBasedMinimumJavaMemoryMB = 20 * fastaFileSizeKB / 1024.0 + 1000;
 
             double spectraBasedMinimumJavaMemoryMB;
+
             if (inputFile == null)
             {
                 spectraBasedMinimumJavaMemoryMB = 0;
@@ -1027,6 +1043,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mLastConsoleOutputParse = DateTime.UtcNow;
 
             ParseConsoleOutputFile(mWorkDir);
+
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
@@ -1097,6 +1114,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
 
                 var iteration = AnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
+
                 if (!string.IsNullOrWhiteSpace(errorMessage))
                     mMessage = errorMessage;
 
@@ -1114,6 +1132,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // The file rename occasionally fails due to another process accessing the file
                 // Try up to 4 times
                 var success = mFileTools.RenameFileWithRetry(resultsFile, newFileInfo, out var errorMessageForRename, 4);
+
                 if (!success)
                 {
                     LogError(errorMessageForRename);
@@ -1139,6 +1158,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return;
 
                 var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
+
                 if (msgfPlusProgress > 0)
                 {
                     mProgress = msgfPlusProgress;
@@ -1180,6 +1200,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Gzip the output file
                 currentTask = "Zipping " + resultsFileName;
                 var result = mMSGFPlusUtils.ZipOutputFile(this, resultsFileName);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -1187,6 +1208,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 string msgfPlusResultsFileName;
                 var extension = Path.GetExtension(resultsFileName);
+
                 if (extension != null && string.Equals(extension, ".mzid", StringComparison.OrdinalIgnoreCase))
                 {
                     // Convert the .mzid file to a .tsv file
@@ -1221,12 +1243,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
                         }
 
                         dataLines++;
+
                         if (dataLines > 2)
                             break;
                     }
@@ -1264,6 +1288,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public override CloseOutType PostProcessRemoteResults()
         {
             var result = base.PostProcessRemoteResults();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 return result;
 
@@ -1281,6 +1306,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkDir);
+
                 if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
                 {
                     LogWarning(
@@ -1375,9 +1401,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 string addOn;
                 var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
                 if (splitFastaEnabled)
                 {
                     var iteration = AnalysisResources.GetSplitFastaIteration(mJobParams, out var errorMessage);
+
                     if (!string.IsNullOrWhiteSpace(errorMessage))
                         mMessage = errorMessage;
 

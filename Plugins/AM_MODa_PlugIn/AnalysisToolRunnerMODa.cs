@@ -68,6 +68,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -183,6 +184,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
             var javaMemorySize = mJobParams.GetJobParameter("MODaJavaMemorySize", 2000);
+
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
@@ -247,6 +249,7 @@ namespace AnalysisManagerMODaPlugIn
 
             mProgress = PROGRESS_PCT_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("MODa Search Complete");
@@ -393,6 +396,7 @@ namespace AnalysisManagerMODaPlugIn
                         if (totalScans == 0)
                         {
                             var scanCountMatch = mScanCountMatcher.Match(dataLine);
+
                             if (scanCountMatch.Success)
                             {
                                 totalScans = int.Parse(scanCountMatch.Groups["ScanCount"].Value);
@@ -400,6 +404,7 @@ namespace AnalysisManagerMODaPlugIn
                         }
 
                         var matchA = mCurrentScanMatcherV1.Match(dataLine);
+
                         if (matchA.Success)
                         {
                             scansProcessed = int.Parse(matchA.Groups["ScansProcessed"].Value);
@@ -412,6 +417,7 @@ namespace AnalysisManagerMODaPlugIn
                         else
                         {
                             var matchB = mCurrentScanMatcherV2.Match(dataLine);
+
                             if (matchB.Success)
                             {
                                 if (true)
@@ -518,6 +524,7 @@ namespace AnalysisManagerMODaPlugIn
                         int scansProcessed;
 
                         var matchA = mCurrentScanMatcherV1.Match(dataLine);
+
                         if (matchA.Success)
                         {
                             scansProcessed = int.Parse(matchA.Groups["ScansProcessed"].Value);
@@ -525,6 +532,7 @@ namespace AnalysisManagerMODaPlugIn
                         else
                         {
                             var matchB = mCurrentScanMatcherV2.Match(dataLine);
+
                             if (matchB.Success)
                             {
                                 scansProcessed = int.Parse(matchB.Groups["ScansProcessed"].Value);

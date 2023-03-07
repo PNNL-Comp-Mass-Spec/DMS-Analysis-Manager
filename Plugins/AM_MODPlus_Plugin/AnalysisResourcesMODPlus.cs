@@ -47,12 +47,14 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
 
                 currentTask = "Retrieve FASTA and param file";
+
                 if (!RetrieveFastaAndParamFile())
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

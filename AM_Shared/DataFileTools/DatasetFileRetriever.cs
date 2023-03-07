@@ -414,6 +414,7 @@ namespace AnalysisManagerBase.DataFileTools
                         case AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER:
                             currentTask = string.Format("Retrieve spectra: {0}; instrument: {1}", rawDataTypeName, instrumentName);
                             var datasetResult = GetDatasetFile(rawDataTypeName);
+
                             if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                 return datasetResult;
 
@@ -432,6 +433,7 @@ namespace AnalysisManagerBase.DataFileTools
                                 // Retrieve the .D directory
                                 currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
                                 var dotDSuccess = mResourceClass.FileSearchTool.RetrieveDotDFolder(false, skipBafAndTdfFiles: true);
+
                                 if (!dotDSuccess)
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
@@ -446,6 +448,7 @@ namespace AnalysisManagerBase.DataFileTools
                                 // Retrieve the .uimf file for these
                                 currentTask = string.Format("Retrieve .UIMF file; instrument: {0}", instrumentName);
                                 var uimfResult = GetDatasetFile(rawDataTypeName);
+
                                 if (uimfResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                     return uimfResult;
 
@@ -490,6 +493,7 @@ namespace AnalysisManagerBase.DataFileTools
                     }
 
                     currentTask = "ProcessMyEMSLDownloadQueue";
+
                     if (mResourceClass.MyEMSLUtils.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         break;

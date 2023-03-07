@@ -142,10 +142,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 else
                 {
                     var obj = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+
                     if (obj != null)
                     {
                         msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner) obj;
                         msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
+
                         if (mDebugLevel >= 1)
                         {
                             OnDebugEvent(msg);

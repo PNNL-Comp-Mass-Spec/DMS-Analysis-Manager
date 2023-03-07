@@ -423,6 +423,7 @@ namespace MSGFResultsSummarizer
                 // Method CheckForScanGaps will update SpectraSearched when isFirstHitsFile is false
 
                 SpectraSearched = 0;
+
                 foreach (var item in uniqueSpectraByDataset)
                 {
                     SpectraSearched += item.Value.Count;
@@ -499,6 +500,7 @@ namespace MSGFResultsSummarizer
                 if (totalMSnSpectra > 0)
                 {
                     var msnScansNoPSM = totalMSnSpectra - scanList.Count;
+
                     if (msnScansNoPSM < 0)
                     {
                         OnWarningEvent("scanListByDataset has more MS/MS spectra than expected for Dataset {0}: {1} vs. {2}",
@@ -556,6 +558,7 @@ namespace MSGFResultsSummarizer
                 foreach (var observation in filteredPSMs.Values.SelectMany(psm => psm.Observations.Where(observation => observation.PassesFilter)))
                 {
                     filterPassingPSMs++;
+
                     if (observation.MissingNTermReporterIon)
                     {
                         missingNTerminalReporterIon++;
@@ -730,17 +733,20 @@ namespace MSGFResultsSummarizer
             var msgfToResultIDMap = new List<KeyValuePair<double, int>>();
 
             var validMSGFOrEValue = false;
+
             foreach (var psmResult in psmResults)
             {
                 if (psmResult.Value.BestMSGF < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
                 {
                     msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGF, psmResult.Key));
+
                     if (psmResult.Value.BestMSGF < 1)
                         validMSGFOrEValue = true;
                 }
                 else
                 {
                     msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestEValue, psmResult.Key));
+
                     if (psmResult.Value.BestEValue < PSMInfo.UNKNOWN_EVALUE)
                         validMSGFOrEValue = true;
                 }
@@ -923,6 +929,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 var residueMatchCount = 0;
+
                 for (var modIndex = 0; modIndex <= newNormalizedPeptide.Modifications.Count - 1; modIndex++)
                 {
                     if (newNormalizedPeptide.Modifications[modIndex].Key != candidate.Modifications[modIndex].Key)
@@ -963,6 +970,7 @@ namespace MSGFResultsSummarizer
             }
 
             var index = synopsisFileName.IndexOf(synopsisFileSuffix, StringComparison.OrdinalIgnoreCase);
+
             if (index < 0)
             {
                 SetErrorMessage(string.Format(
@@ -982,6 +990,7 @@ namespace MSGFResultsSummarizer
         private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
         {
             var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
+
             if (datasetID > 0)
                 return datasetID.ToString();
 
@@ -991,6 +1000,7 @@ namespace MSGFResultsSummarizer
         private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
         {
             var datasetID = currentPSM.GetScoreInt(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.DatasetID));
+
             if (datasetID > 0)
                 return datasetID.ToString();
 
@@ -1167,6 +1177,7 @@ namespace MSGFResultsSummarizer
                 else
                 {
                     SetErrorMessage("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + result);
+
                     if (!string.IsNullOrEmpty(errorMessage))
                     {
                         mErrorMessage += "; " + errorMessage;
@@ -1810,6 +1821,7 @@ namespace MSGFResultsSummarizer
                         psmInfo.SeqIdFirst = seqID;
 
                         var lastResidue = normalizedPeptide.CleanSequence[normalizedPeptide.CleanSequence.Length - 1];
+
                         if (lastResidue == 'K')
                         {
                             psmInfo.CTermK = true;
@@ -2184,6 +2196,7 @@ namespace MSGFResultsSummarizer
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 

@@ -111,6 +111,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
@@ -202,6 +203,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Now confirm that each file was successfully copied locally
                     success = ValidateFiles(fastaFile.Directory.FullName, filesToCopy, usingLegacyFasta, fastaFile.LastWriteTimeUtc,
                                                false);
+
                     if (success)
                     {
                         // Files now exist
@@ -215,6 +217,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var sourceFile = new FileInfo(Path.Combine(remoteIndexDirectory.FullName, entry.Key));
 
                     var targetFile = new FileInfo(Path.Combine(fastaFile.Directory.FullName, sourceFile.Name));
+
                     if (targetFile.Exists &&
                         string.Equals(targetFile.Extension, FileSyncUtils.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                     {
@@ -259,6 +262,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var success = CopyIndexFilesToRemote(fastaFile, remoteIndexDirPath, debugLevel, manager,
                                                  createIndexFileForExistingFiles, out var errorMessage);
+
             if (!success)
             {
                 OnErrorEvent(errorMessage);
@@ -347,6 +351,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var targetFilePath = Path.Combine(remoteIndexDirectory.FullName, entry.Key);
 
                         var success = fileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, managerName, true);
+
                         if (!success)
                         {
                             errorMessage = "CopyFileUsingLocks returned false copying to " + targetFilePath;
@@ -416,6 +421,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var fastaFile = new FileInfo(fastaFilePath);
 
                 var msgfPlus = IsMSGFPlus(msgfPlusProgLoc);
+
                 if (!msgfPlus)
                 {
                     // Running legacy MSGFDB
@@ -462,6 +468,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     for (var index = 0; index <= legacyIndexedFiles.Length - 1; index++)
                     {
                         currentTask = "Deleting indexed file created by legacy MSGFDB: " + legacyIndexedFiles[index].FullName;
+
                         if (debugLevel >= 1)
                         {
                             OnStatusEvent(currentTask);
@@ -493,6 +500,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         reindexingRequired = true;
 
                         currentTask = "Some files are missing: " + existingFiles.Count + " vs. " + filesToFind.Count;
+
                         if (existingFiles.Count > 0)
                         {
                             if (debugLevel >= 1)
@@ -726,6 +734,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // If it exists, another manager just created it and we should abort
                 currentTask = "Look for the lock file one last time";
                 lockFile.Refresh();
+
                 if (lockFile.Exists)
                 {
                     if (debugLevel >= 1)
@@ -738,6 +747,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Create a lock file in the directory that the index files will be created
                 currentTask = "Create the local lock file: " + lockFile.FullName;
                 var success = CreateLockFile(lockFile.FullName);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -811,6 +821,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // Look for known errors in the console output file
                         var consoleOutputError = ParseConsoleOutputFile(consoleOutputFilePath);
+
                         if (!string.IsNullOrWhiteSpace(consoleOutputError))
                         {
                             mErrorMessage += ". " + consoleOutputError;
@@ -918,6 +929,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 lockFile.Refresh();
+
                 if (lockFile.Exists)
                 {
                     lockFile.Delete();
@@ -955,6 +967,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Only delete old files once every 24 hours
                 var purgeInfoFile = new FileInfo(Path.Combine(remoteIndexDirToUse.FullName, "PurgeInfoFile.txt"));
+
                 if (purgeInfoFile.Exists && DateTime.UtcNow.Subtract(purgeInfoFile.LastWriteTimeUtc).TotalHours < 24)
                 {
                     return;
@@ -1008,6 +1021,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // DMS-generated FASTA files will have a name of the form ID_003949_3D6802EE.fasta
             // Parse out the number (003949 in this case)
             var reMatch = reExtractNum.Match(fastaFileName);
+
             if (reMatch.Success)
             {
                 if (int.TryParse(reMatch.Groups[1].Value, out var generatedFastaFileNumber))
@@ -1144,6 +1158,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         continue;
 
                     OnErrorEvent("BuildSA reports: " + dataLine);
+
                     if (dataLine.Contains("too many redundant proteins"))
                     {
                         return "Error while indexing, too many redundant proteins";
@@ -1165,6 +1180,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             try
             {
                 var remoteIndexDir = new DirectoryInfo(remoteIndexDirPath);
+
                 if (!remoteIndexDir.Exists)
                 {
                     OnErrorEvent("Remote index directory not found in UpdateRemoteLastUsedFile: " + remoteIndexDirPath);
@@ -1212,6 +1228,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             var cannoFile = new FileInfo(Path.Combine(fastaFile.DirectoryName, outputNameBase + ".canno"));
+
             if (!cannoFile.Exists)
             {
                 if (debugLevel >= 1)
@@ -1228,6 +1245,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!reader.EndOfStream)
                 {
                     var line1 = reader.ReadLine();
+
                     if (!reader.EndOfStream)
                     {
                         var line2 = reader.ReadLine();
@@ -1235,6 +1253,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (int.TryParse(line1, out _))
                         {
                             corruptFile = false;
+
                             if (!string.IsNullOrWhiteSpace(line2) && char.IsLetter(line2[0]))
                             {
                                 if (debugLevel >= 1)
@@ -1275,6 +1294,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                    DateTime minWriteTimeThresholdUTC, bool verifyingRemoteDirectory)
         {
             string sourceDescription;
+
             if (verifyingRemoteDirectory)
             {
                 sourceDescription = "Remote MS-GF+ index file";

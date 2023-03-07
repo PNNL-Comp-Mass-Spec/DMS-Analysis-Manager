@@ -53,6 +53,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
                 // Cleanup results in the transfer directory
                 var result = PerformResultsCleanup();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -179,6 +180,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
 
                 var combinedDirectory = new DirectoryInfo(Path.Combine(resultsDirectory.FullName, "combined"));
+
                 if (combinedDirectory.Exists)
                 {
                     LogMessage("Deleting contents of " + combinedDirectory.FullName);
@@ -286,6 +288,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     var fileCountDeleted = 0;
 
                     var lnqQuery = from item in resultsFiles where item.Key < lastStep select item;
+
                     foreach (var item in lnqQuery)
                     {
                         try

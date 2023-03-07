@@ -73,6 +73,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         public override CloseOutType GetResources()
         {
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -83,6 +84,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var cacheFolderPath = mJobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_DIRECTORY_PATH);
 
             var resultsFolderName = mJobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
+
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
                 LogError("Job parameter OutputFolderName is empty");
@@ -106,6 +108,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             };
 
             var disableMyEMSL = mJobParams.GetJobParameter("DisableMyEMSL", false);
+
             if (disableMyEMSL)
             {
                 DisableMyEMSLSearch();
@@ -196,6 +199,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         // Look for a StoragePathInfo file
                         mzXmlFilePath += STORAGE_PATH_INFO_FILE_SUFFIX;
+
                         if (!File.Exists(mzXmlFilePath))
                         {
                             if (!datasets.Contains(dataPkgJob.Dataset))
@@ -263,6 +267,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (string.IsNullOrEmpty(templateFileName))
             {
                 templateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
+
                 if (WarnIfJobParamMissing)
                 {
                     LogTools.LogWarning(
@@ -358,6 +363,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // First look for the template file in the data package directory
                 var dataPackagePath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
+
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
                     mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package directory path";
@@ -435,6 +441,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Note that transferDirectoryPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
                 var transferDirectoryPath = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_DIRECTORY_PATH, string.Empty);
+
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                 {
                     mMessage = "Job parameter transferDirectoryPath is missing; unable to determine the data package directory path";
@@ -483,6 +490,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!matchFound)
                 {
                     var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
+
                     if (string.IsNullOrEmpty(paramFileStoragePath))
                     {
                         paramFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";

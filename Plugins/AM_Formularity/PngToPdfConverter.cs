@@ -69,6 +69,7 @@ namespace AnalysisManagerFormularityPlugin
             double width, double height, string header = null)
         {
             var y = currentPage.CurrentPageY;
+
             if (!string.IsNullOrWhiteSpace(header))
             {
                 // Add a header over the image
@@ -104,6 +105,7 @@ namespace AnalysisManagerFormularityPlugin
             }
 
             double x;
+
             if (xOffset < PageMargin || xOffset > currentPage.Page.Width - PageMargin)
             {
                 x = PageMargin;
@@ -121,6 +123,7 @@ namespace AnalysisManagerFormularityPlugin
             position ??= XStringFormats.Default;
 
             var height = textHeight;
+
             if (position.LineAlignment == XLineAlignment.BaseLine)
             {
                 height = 0;
@@ -149,6 +152,7 @@ namespace AnalysisManagerFormularityPlugin
             try
             {
                 var pdfFile = new FileInfo(pdfFilePath);
+
                 if (pdfFile.Exists)
                     pdfFile.Delete();
 
@@ -162,12 +166,14 @@ namespace AnalysisManagerFormularityPlugin
                 var pngFileTableLayout = GetPngFileTableLayout(DatasetName, datasetDetailReportLink);
 
                 var pngFileNames = new SortedSet<string>();
+
                 foreach (var item in pngFiles)
                 {
                     pngFileNames.Add(item.Name);
                 }
 
                 var workDir = pngFiles.First().DirectoryName;
+
                 if (string.IsNullOrWhiteSpace(workDir))
                 {
                     OnErrorEvent("Cannot determine the parent directory of " + pngFiles.First());

@@ -140,6 +140,7 @@ namespace AnalysisManagerProg
                 }
 
                 var pluginInfoFile = new FileInfo(pluginInfoFilePath);
+
                 if (!pluginInfoFile.Exists)
                 {
                     OnErrorEvent("PluginInfo file not found: " + pluginInfoFile.FullName);
@@ -154,6 +155,7 @@ namespace AnalysisManagerProg
                 var doc = XDocument.Parse(reader.ReadToEnd());
 
                 var matchingElements = doc.Elements("Plugins").Elements(parentElementName).Elements(classTypeName).ToList();
+
                 if (matchingElements.Count == 0)
                 {
                     OnErrorEvent("{0} nodes not found in the PluginInfo file: {1}", classTypeName, pluginInfoFile.FullName);
@@ -238,6 +240,7 @@ namespace AnalysisManagerProg
                 {
                     var pluginFolder = new DirectoryInfo(mMgrFolderPath);
                     var nameUpdated = false;
+
                     foreach (var file in pluginFolder.GetFiles("*"))
                     {
                         if (!string.Equals(file.Name, expectedName, StringComparison.OrdinalIgnoreCase))
@@ -306,6 +309,7 @@ namespace AnalysisManagerProg
 #endif
 
             var newToolRunner = LoadObject(className, assemblyName);
+
             if (newToolRunner == null)
                 return null;
 
@@ -338,6 +342,7 @@ namespace AnalysisManagerProg
 #if PLUGIN_DEBUG_MODE_ENABLED
             // This constant is defined on the Build tab of the Analysis Manager solution
             var debugResourcer = DebugModeGetAnalysisResources(className);
+
             if (debugResourcer != null)
             {
                 return debugResourcer;
@@ -345,6 +350,7 @@ namespace AnalysisManagerProg
 #endif
 
             var newResourcer = LoadObject(className, assemblyName);
+
             if (newResourcer == null)
                 return null;
 

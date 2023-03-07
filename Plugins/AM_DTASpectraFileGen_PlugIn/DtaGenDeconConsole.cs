@@ -274,6 +274,7 @@ namespace DTASpectraFileGen
             }
 
             const int MAX_LOG_FINISHED_WAIT_TIME_SECONDS = 120;
+
             if (finishedProcessing)
             {
                 // The DeconConsole Log File reports that the task is complete
@@ -340,6 +341,7 @@ namespace DTASpectraFileGen
                     if (charIndex >= 0)
                     {
                         var dateValid = false;
+
                         if (charIndex > 1)
                         {
                             // Parse out the date from lineIn
@@ -376,6 +378,7 @@ namespace DTASpectraFileGen
                     if (charIndex < 0)
                     {
                         charIndex = dataLine.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
+
                         if (charIndex > 0)
                         {
                             // DeconConsole reports "Finished file processing" at the end of each step in the workflow
@@ -387,6 +390,7 @@ namespace DTASpectraFileGen
                     if (charIndex < 0)
                     {
                         charIndex = dataLine.IndexOf("scan/frame", StringComparison.OrdinalIgnoreCase);
+
                         if (charIndex > 0)
                         {
                             scanLine = dataLine.Substring(charIndex);
@@ -396,6 +400,7 @@ namespace DTASpectraFileGen
                     if (charIndex < 0)
                     {
                         charIndex = dataLine.IndexOf("scan=", StringComparison.OrdinalIgnoreCase);
+
                         if (charIndex > 0)
                         {
                             scanLine = dataLine.Substring(charIndex);
@@ -405,6 +410,7 @@ namespace DTASpectraFileGen
                     if (charIndex < 0)
                     {
                         charIndex = dataLine.IndexOf("ERROR THROWN", StringComparison.Ordinal);
+
                         if (charIndex >= 0)
                         {
                             // An exception was reported in the log file; treat this as a fatal error
@@ -436,6 +442,7 @@ namespace DTASpectraFileGen
                 for (var i = 0; i <= progressStats.Length - 1; i++)
                 {
                     var kvStat = ParseKeyValue(progressStats[i]);
+
                     if (!string.IsNullOrWhiteSpace(kvStat.Key))
                     {
                         switch (kvStat.Key)

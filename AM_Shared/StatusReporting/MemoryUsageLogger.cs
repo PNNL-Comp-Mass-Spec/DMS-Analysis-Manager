@@ -130,9 +130,11 @@ namespace AnalysisManagerBase.StatusReporting
                 }
 
                 var logFilesToMove = (from item in logFilesByDate orderby item.Key select item.Value).Take(logFilesByDate.Count - 1);
+
                 foreach (var logFile in logFilesToMove)
                 {
                     var newPath = Path.Combine(currentLogDirectory.FullName, "Logs", logFile.Name);
+
                     if (File.Exists(newPath))
                         continue;
 

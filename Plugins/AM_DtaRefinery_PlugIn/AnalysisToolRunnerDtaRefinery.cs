@@ -82,6 +82,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // verify that program file exists
             // DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.py"
             var progLoc = mMgrParams.GetParam("DTARefineryLoc");
+
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -94,6 +95,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // Verify that Python.exe exists
             // Python3ProgLoc will be something like this: "C:\Python36"
             var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
+
             if (!Directory.Exists(pythonProgLoc))
             {
                 if (pythonProgLoc.Length == 0)
@@ -162,6 +164,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     while (!consoleOutputReader.EndOfStream)
                     {
                         var dataLine = consoleOutputReader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             continue;
@@ -257,6 +260,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             try
             {
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
+
                 if (!sourceFile.Exists)
                 {
                     LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + sourceFile.Name, 10);
@@ -346,6 +350,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             try
             {
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, mDatasetName + "_dta_DtaRefineryLog.txt"));
+
                 if (!sourceFile.Exists)
                 {
                     mMessage = string.Empty;
@@ -365,6 +370,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     if (!reader.EndOfStream)
                     {
                         dataLine = reader.ReadLine();
+
                         if (dataLine != null && dataLine.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
                         {
                             mMessage = string.Empty;

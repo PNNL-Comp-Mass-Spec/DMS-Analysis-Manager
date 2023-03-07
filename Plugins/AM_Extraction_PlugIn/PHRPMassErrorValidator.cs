@@ -235,6 +235,7 @@ namespace AnalysisManagerExtractionPlugin
                 else
                 {
                     var minValue = largestMassErrors.Keys.Min();
+
                     if (massError > minValue && !largestMassErrors.ContainsKey(massError))
                     {
                         largestMassErrors.Remove(minValue);
@@ -393,9 +394,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 var iterator = 0;
+
                 foreach (var massError in largestMassErrors)
                 {
                     iterator++;
+
                     if (iterator >= largestMassErrors.Count / 2.0)
                     {
                         InformLargeErrorExample(massError);

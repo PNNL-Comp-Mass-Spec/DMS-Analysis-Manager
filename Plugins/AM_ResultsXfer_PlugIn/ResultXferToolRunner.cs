@@ -47,6 +47,7 @@ namespace AnalysisManagerResultsXferPlugin
 
                 // Transfer the results
                 var result = PerformResultsXfer();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -78,6 +79,7 @@ namespace AnalysisManagerResultsXferPlugin
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
             var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionStringToUse);
+
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
@@ -87,6 +89,7 @@ namespace AnalysisManagerResultsXferPlugin
             datasetStoragePath = datasetStorageVolServer;
 
             var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionStringToUse);
+
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferDirectoryPath);
@@ -109,6 +112,7 @@ namespace AnalysisManagerResultsXferPlugin
         private void DeleteTransferDirectoryIfEmpty()
         {
             var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+
             if (string.IsNullOrWhiteSpace(transferDirectoryPath))
             {
                 LogError("Job parameter transferDirectoryPath is empty or not defined");
@@ -304,6 +308,7 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         errorCount++;
+
                         if (errorCount == 1)
                         {
                             LogError("Error moving file " + sourceFile.Name + ": " + ex.Message, ex);
@@ -321,6 +326,7 @@ namespace AnalysisManagerResultsXferPlugin
                 {
                     var subDirSuccess = MoveFilesLocally(subdirectory.FullName, Path.Combine(targetDirectory.FullName, subdirectory.Name),
                         overwriteExisting);
+
                     if (!subDirSuccess)
                     {
                         success = false;
@@ -329,6 +335,7 @@ namespace AnalysisManagerResultsXferPlugin
 
                 // Delete this directory if it is empty
                 sourceDirectory.Refresh();
+
                 if (sourceDirectory.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
                     try
@@ -425,6 +432,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             var inputDirectory = mJobParams.GetParam("InputFolderName");
+
             if (string.IsNullOrWhiteSpace(inputDirectory))
             {
                 LogError("Results transfer failed, job parameter InputFolderName is empty; reset the transfer step to state 1 in T_Job_Steps");
@@ -436,6 +444,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (appendDatasetDirectoryNameForSource)
             {
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
+
                 if (string.IsNullOrWhiteSpace(datasetDirectoryName))
                 {
                     LogError("Results transfer failed, job parameter DatasetFolderName is empty; cannot continue");
@@ -465,6 +474,7 @@ namespace AnalysisManagerResultsXferPlugin
             // If it doesn't exist, we will auto-create it
 
             string datasetDirectoryPath;
+
             if (appendDatasetDirectoryNameForTarget)
             {
                 datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
@@ -559,6 +569,7 @@ namespace AnalysisManagerResultsXferPlugin
                 if (movingLocalFiles)
                 {
                     var success = MoveFilesLocally(directoryToMove, targetDir, overwriteExisting: true);
+
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }

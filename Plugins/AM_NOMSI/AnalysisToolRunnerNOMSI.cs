@@ -79,6 +79,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Unzip the XML files
                 var compressedXMLFiles = Path.Combine(mWorkDir, mDatasetName + "_scans.zip");
                 var unzipSuccess = UnzipFile(compressedXMLFiles, mWorkDir);
+
                 if (!unzipSuccess)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -107,6 +108,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                     var workingDirectory = new DirectoryInfo(mWorkDir);
                     var resultsFiles = workingDirectory.GetFiles("Distributions.zip").ToList();
+
                     if (resultsFiles.Count == 0)
                     {
                         resultsFiles = workingDirectory.GetFiles(COMPRESSED_NOMSI_RESULTS_BASE + "*.zip").ToList();
@@ -187,6 +189,7 @@ namespace AnalysisManagerNOMSIPlugin
             var currentUser = System.Security.Principal.WindowsIdentity.GetCurrent();
             var userName = currentUser.Name;
             var lastSlashIndex = userName.LastIndexOf('\\');
+
             if (lastSlashIndex >= 0)
                 return userName.Substring(lastSlashIndex + 1);
 
@@ -265,6 +268,7 @@ namespace AnalysisManagerNOMSIPlugin
                     }
 
                     var reMatch = reErrorMessage.Match(dataLine);
+
                     if (reMatch.Success)
                     {
                         var errorMessage = reMatch.Groups[1].Value;
@@ -299,6 +303,7 @@ namespace AnalysisManagerNOMSIPlugin
         private void PostProcessResultsOneScan(DirectoryInfo zipWork, int scanCount, int scanNumber)
         {
             zipWork.Refresh();
+
             if (zipWork.Exists)
             {
                 foreach (var fileToRemove in zipWork.GetFiles("*").ToList())
@@ -362,6 +367,7 @@ namespace AnalysisManagerNOMSIPlugin
             scanNumber = filesProcessed;
 
             var reMatch = reGetScanNumber.Match(spectrumFile.Name);
+
             if (reMatch.Success)
             {
                 int.TryParse(reMatch.Groups[1].Value, out scanNumber);
@@ -405,6 +411,7 @@ namespace AnalysisManagerNOMSIPlugin
             // Parse the nomsi_summary file to look for errors
             Global.IdleLoop(0.25);
             var logSummaryFile = new FileInfo(Path.Combine(mWorkDir, "nomsi_summary.txt"));
+
             if (!logSummaryFile.Exists)
             {
                 // Summary file not created
@@ -412,6 +419,7 @@ namespace AnalysisManagerNOMSIPlugin
                 var alternateLogPath = Path.Combine(@"C:\Users", GetUsername(), @"AppData\Local\NOMSI.log");
 
                 var alternateLogFile = new FileInfo(alternateLogPath);
+
                 if (alternateLogFile.Exists)
                     alternateLogFile.CopyTo(logSummaryFile.FullName, true);
             }
@@ -464,6 +472,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Update the parameter file to use the targets file specified by the settings file
                 var success = UpdateParameterFile(paramFilePath, targetsFileName);
+
                 if (!success)
                     return false;
 
@@ -490,6 +499,7 @@ namespace AnalysisManagerNOMSIPlugin
                     mNoPeaksFound = false;
 
                     success = ProcessOneFileWithNOMSI(progLoc, spectrumFile, paramFilePath, filesProcessed, out var scanNumber);
+
                     if (!success)
                         return false;
 
@@ -507,6 +517,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 mProgress = PROGRESS_PCT_COMPLETE;
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("NOMSI processing Complete");
@@ -521,6 +532,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     // None of the scans had peaks
                     mMessage = "No peaks found";
+
                     if (filesProcessed > 1)
                         mEvalMessage = "None of the scans had peaks";
                     else
@@ -582,6 +594,7 @@ namespace AnalysisManagerNOMSIPlugin
             try
             {
                 var paramFile = new FileInfo(paramFilePath);
+
                 if (paramFile.DirectoryName == null)
                 {
                     LogError("Directory for parameter file found to be null in UpdateParameterFile");
@@ -603,6 +616,7 @@ namespace AnalysisManagerNOMSIPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             writer.WriteLine();

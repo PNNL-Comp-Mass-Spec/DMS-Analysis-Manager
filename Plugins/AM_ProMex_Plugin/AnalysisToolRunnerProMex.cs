@@ -82,6 +82,7 @@ namespace AnalysisManagerProMexPlugIn
                     if (resultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessProMexResults(resultsFile);
+
                         if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -232,6 +233,7 @@ namespace AnalysisManagerProMexPlugIn
                         }
 
                         var match = reCheckProgress.Match(dataLine);
+
                         if (match.Success)
                         {
                             float.TryParse(match.Groups[1].ToString(), out progressComplete);
@@ -266,9 +268,11 @@ namespace AnalysisManagerProMexPlugIn
                     while (!resultsReader.EndOfStream)
                     {
                         var lineIn = resultsReader.ReadLine();
+
                         if (!string.IsNullOrEmpty(lineIn))
                         {
                             lineCount++;
+
                             if (lineCount > 2)
                             {
                                 return true;
@@ -387,6 +391,7 @@ namespace AnalysisManagerProMexPlugIn
             if (proMexBruker)
             {
                 success = StorePbfFileInCache();
+
                 if (!success)
                 {
                     return false;
@@ -395,6 +400,7 @@ namespace AnalysisManagerProMexPlugIn
 
             mProgress = PROGRESS_PCT_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("ProMex Search Complete");

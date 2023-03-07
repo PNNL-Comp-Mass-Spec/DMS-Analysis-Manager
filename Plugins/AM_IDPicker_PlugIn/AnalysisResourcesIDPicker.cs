@@ -60,6 +60,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var sharedResourceResult = GetSharedResources();
+
                 if (sharedResourceResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return sharedResourceResult;
@@ -109,6 +110,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (rawDataType == RawDataTypeConstants.ThermoRawFile || rawDataType == RawDataTypeConstants.UIMF)
                     {
                         var noScanStats = mJobParams.GetJobParameter("PepXMLNoScanStats", false);
+
                         if (noScanStats)
                         {
                             LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is true");
@@ -116,6 +118,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         else
                         {
                             var masicResult = RetrieveMASICFilesWrapper();
+
                             if (masicResult != CloseOutType.CLOSEOUT_SUCCESS)
                             {
                                 return masicResult;
@@ -162,6 +165,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Retrieve the FASTA file
                     var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
                     if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         return resultCode;
                 }
@@ -198,6 +202,7 @@ namespace AnalysisManagerIDPickerPlugIn
         private string LookupLegacyFastaFileName()
         {
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
             if (string.IsNullOrWhiteSpace(dmsConnectionString))
             {
                 LogError("Error in LookupLegacyFastaFileName: manager parameter ConnectionString is not defined");
@@ -390,6 +395,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     sourceDirectoryDescription = "data package directory";
 
                     var dataPackageDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATA_PACKAGE_PATH);
+
                     if (string.IsNullOrWhiteSpace(dataPackageDirectoryPath))
                     {
                         LogError(string.Format("Job parameter {0} is an empty string; unable to find the synopsis file", JOB_PARAM_DATA_PACKAGE_PATH));
@@ -397,6 +403,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
 
                     var inputDirectoryName = mJobParams.GetParam(JOB_PARAM_INPUT_FOLDER_NAME);
+
                     if (string.IsNullOrWhiteSpace(dataPackageDirectoryPath))
                     {
                         LogError(string.Format("Job parameter {0} is an empty string; unable to find the synopsis file", JOB_PARAM_INPUT_FOLDER_NAME));
@@ -435,6 +442,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 var index = synopsisFileName.IndexOf(MaxQuantSynFileReader.FILENAME_SUFFIX_SYN, StringComparison.OrdinalIgnoreCase);
+
                 if (index <= 0)
                 {
                     LogError("Cannot determine the base name from the MaxQuant synopsis file name: " + synopsisFileName);
@@ -470,6 +478,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "IDPicker";
             var idPickerParamFilePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(idPickerParamFilePath))
             {
                 idPickerParamFilePath = @"\\gigasax\dms_parameter_Files\IDPicker";
@@ -497,6 +506,7 @@ namespace AnalysisManagerIDPickerPlugIn
             while (retrievalAttempts < 2)
             {
                 retrievalAttempts++;
+
                 if (!RetrieveMASICFiles(DatasetName))
                 {
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

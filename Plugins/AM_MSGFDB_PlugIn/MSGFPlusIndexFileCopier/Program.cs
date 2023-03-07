@@ -62,6 +62,7 @@ namespace MSGFPlusIndexFileCopier
             try
             {
                 var remoteShare = new DirectoryInfo(remoteIndexFolderPath);
+
                 if (!remoteShare.Exists)
                 {
                     ShowErrorMessage("Remote share not found: " + remoteIndexFolderPath);
@@ -105,6 +106,7 @@ namespace MSGFPlusIndexFileCopier
                 {
                     // Confirm that the .MSGFPlusIndexFileInfo file was created
                     var indexFile = new FileInfo(Path.Combine(remoteIndexFolderPath, fastaFile.Name + ".MSGFPlusIndexFileInfo"));
+
                     if (indexFile.Exists)
                     {
                         Console.WriteLine("Index file created: " + indexFile.FullName);
@@ -142,6 +144,7 @@ namespace MSGFPlusIndexFileCopier
                 if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     var badArguments = new List<string>();
+
                     foreach (var item in commandLineParser.InvalidParameters(validParameters))
                     {
                         badArguments.Add("/" + item);
@@ -161,6 +164,7 @@ namespace MSGFPlusIndexFileCopier
                     mRemoteIndexFolderPath = commandLineParser.RetrieveNonSwitchParameter(1);
 
                 if (!ParseParameter(commandLineParser, "F", "a FASTA file name or path", ref mFastaFilePath)) return false;
+
                 if (!ParseParameter(commandLineParser, "R", "a remote MSGFPlus Index Folder path", ref mRemoteIndexFolderPath)) return false;
 
                 if (commandLineParser.IsParameterPresent("X"))

@@ -64,6 +64,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
                 // Note that we need to run MSDeconv with a 64-bit version of Java since it prefers to use 2 or more GB of ram
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -72,6 +73,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Examine the mzXML file to look for large scan gaps (common for data from Agilent IMS TOFs, e.g. AgQTOF05)
                 // Possibly generate a new mzXML file with renumbered scans
                 var mzXmlValidated = RenumberMzXMLIfRequired();
+
                 if (!mzXmlValidated)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -140,6 +142,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     // Make sure the output file was created and is not zero-bytes
                     // If the input .mzXML file only has MS spectra and no MS/MS spectra, the output file will be empty
                     var resultsFile = new FileInfo(Path.Combine(mWorkDir, resultsFileName));
+
                     if (!resultsFile.Exists)
                     {
                         const string msg = "MSDeconv results file not found";
@@ -157,6 +160,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     else
                     {
                         mStatusTools.UpdateAndWrite(mProgress);
+
                         if (mDebugLevel >= 3)
                         {
                             LogDebug("MSDeconv Search Complete");
@@ -290,6 +294,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 if (dataLine.StartsWith("Processing spectrum"))
                                 {
                                     var match = reExtractPercentFinished.Match(dataLine);
+
                                     if (match.Success)
                                     {
                                         if (short.TryParse(match.Groups[1].Value, out var progress))
@@ -385,6 +390,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         if (!success)
                         {
                             mMessage = converter.ErrorMessage;
+
                             if (string.IsNullOrEmpty(mMessage))
                             {
                                 mMessage = "RenumberMzXMLScans returned false while renumbering the scans in the .mzXML file";
@@ -420,6 +426,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
             var javaMemorySize = mJobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
+
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
@@ -546,6 +553,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         var keepLine = true;
 
                         var match = reExtractScan.Match(dataLine);
+
                         if (match.Success)
                         {
                             if (int.TryParse(match.Groups[1].Value, out var scanNumber))

@@ -179,6 +179,7 @@ namespace AnalysisManagerMSGFPlugin
                 while (true)
                 {
                     var spectrumFound = mgfReader.ReadNextSpectrum(out _, out var spectrumHeaderInfo);
+
                     if (!spectrumFound)
                         break;
 
@@ -274,6 +275,7 @@ namespace AnalysisManagerMSGFPlugin
                             var warningMessage = "MSGF Results are empty for result code '" + peptideResultCode +
                                                  "'; this is unexpected";
                             missingValueCount++;
+
                             if (missingValueCount <= MAX_WARNINGS_TO_REPORT)
                             {
                                 if (missingValueCount == MAX_WARNINGS_TO_REPORT)
@@ -302,6 +304,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         // Report the first 10 times this happens
                         missingValueCount++;
+
                         if (missingValueCount <= MAX_WARNINGS_TO_REPORT)
                         {
                             if (missingValueCount == MAX_WARNINGS_TO_REPORT)
@@ -351,12 +354,14 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 string spectrumFileName;
+
                 if (MgfInstrumentData)
                 {
                     spectrumFileName = mDatasetName + ".mgf";
 
                     // Need to read the .mgf file and create a mapping between the actual scan number and the 1-based index of the data in the .mgf file
                     success = CreateMGFScanToIndexMap(Path.Combine(mWorkDir, spectrumFileName));
+
                     if (!success)
                     {
                         return false;
@@ -591,6 +596,7 @@ namespace AnalysisManagerMSGFPlugin
                 var peptideResultCode = ConstructMSGFResultCode(currentPSM.ScanNumber, currentPSM.Charge, currentPSM.Peptide);
 
                 bool passesFilters;
+
                 if (DoNotFilterPeptides)
                 {
                     passesFilters = true;
@@ -667,6 +673,7 @@ namespace AnalysisManagerMSGFPlugin
                             scanNumberToWrite = 0;
 
                             mgfIndexLookupFailureCount++;
+
                             if (mgfIndexLookupFailureCount <= 10)
                             {
                                 ReportError("Unable to find " + scanAndCharge + " in mScanAndChargeToMGFIndex for peptide " + currentPSM.Peptide);

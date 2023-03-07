@@ -400,6 +400,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 List<FileInfo> peptideProphetPepXmlFiles;
 
                 var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
                 if (databaseSplitCount > 1 && options.MS1ValidationMode == MS1ValidationModes.Percolator)
                 {
                     // Split FASTA search
@@ -1047,6 +1048,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 var sampleNumber = 0;
+
                 foreach (var reporterIon in reporterIonNames)
                 {
                     sampleNumber++;
@@ -1403,6 +1405,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Initialize the workspace in the primary working directory
                 var workDirSuccess = InitializePhilosopherWorkspaceWork(mWorkingDirectory, workingDirectoryPadWidth, false);
+
                 if (workDirSuccess != CloseOutType.CLOSEOUT_SUCCESS)
                     return workDirSuccess;
 
@@ -1721,6 +1724,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
 
             var experimentGroupNames = new SortedSet<string>();
+
             foreach (var item in datasetIDsByExperimentGroup.Keys)
             {
                 experimentGroupNames.Add(item);
@@ -2507,6 +2511,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     // Confirm that _quant.csv files were created
                     var quantFiles = mWorkingDirectory.GetFiles("*_quant.csv", SearchOption.AllDirectories);
+
                     if (quantFiles.Length == 0)
                     {
                         LogError("IonQuant did not create any _quant.csv files");
@@ -2871,10 +2876,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 /*
                 // v18: Find the smile-core jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;
+
                 if (!options.LibraryFinder.FindJarFileSmileCore(out var jarFileSmileCore))
                     return false;
 
                 // v18: Find the smile-math jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;
+
                 if (!options.LibraryFinder.FindJarFileSmileMath(out var jarFileSmileMath))
                     return false;
                 */
@@ -4134,6 +4141,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         writer.WriteLine();
@@ -4228,6 +4236,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         var updatedHeaders = new List<string>();
+
                         foreach (var header in dataLine.Split('\t'))
                         {
                             if (!header.StartsWith(mWorkingDirectory.Name))
@@ -4716,6 +4725,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
 
                         var lineParts = dataLine.Split('\t');
+
                         if (lineParts.Length > 1)
                             lineParts[0] = string.Empty;
 

@@ -86,6 +86,7 @@ namespace AnalysisManager_Ape_PlugIn
             else
             {
                 var analysisType = GetJobParam("AnalysisType", string.Empty);
+
                 if (!string.Equals(analysisType, "improv", StringComparison.OrdinalIgnoreCase))
                 {
                     // Add the protein parsimony tables
@@ -107,6 +108,7 @@ namespace AnalysisManager_Ape_PlugIn
                 RegisterEvents(parsimonyRunner);
 
                 var apeDatabaseFile = new FileInfo(apeDatabasePath);
+
                 if (apeDatabaseFile.Directory == null)
                     throw new IOException("Error determining the parent directory path for the Ape database");
 

@@ -166,6 +166,7 @@ namespace AnalysisManagerProg
                 else
                 {
                     success = DeleteStatusFlagFile(debugLevel);
+
                     if (!success)
                     {
                         failureMessage = "error deleting " + FLAG_FILE_NAME;
@@ -260,6 +261,7 @@ namespace AnalysisManagerProg
                     {
                         // Remove the directory if it is empty
                         subdirectory.Refresh();
+
                         if (subdirectory.GetFileSystemInfos().Length != 0)
                             continue;
 
@@ -293,6 +295,7 @@ namespace AnalysisManagerProg
                                 // It's likely not even possible for a directory to have a ReadOnly flag set, but it doesn't hurt to check
                                 subdirectory.Refresh();
                                 var attributes = subdirectory.Attributes;
+
                                 if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly ||
                                     (attributes & FileAttributes.System) == FileAttributes.System)
                                 {
@@ -533,6 +536,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 string errorMessage;
+
                 if (mMgrConfigDBConnectionString == null)
                 {
                     errorMessage = "Error calling " + SP_NAME_REPORT_MGR_ERROR_CLEANUP + " in ReportManagerErrorCleanup; empty connection string";

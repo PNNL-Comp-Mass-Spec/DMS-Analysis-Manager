@@ -100,6 +100,7 @@ namespace AnalysisManagerExtractionPlugin
                 var modDefsFileName = Path.GetFileNameWithoutExtension(paramFileName) + AnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
                 var psmResultsFile = new FileInfo(peptideSearchResultsFilePath);
+
                 if (psmResultsFile.Directory == null)
                 {
                     ReportError("Unable to determine the parent directory of the PSM results file: " + peptideSearchResultsFilePath);
@@ -118,6 +119,7 @@ namespace AnalysisManagerExtractionPlugin
                 else
                 {
                     ignorePeptideToProteinMapErrors = mJobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+
                     if (ignorePeptideToProteinMapErrors)
                     {
                         OnStatusEvent("Ignoring peptide to protein mapping errors since job parameter IgnorePeptideToProteinMapError is true");
@@ -151,6 +153,7 @@ namespace AnalysisManagerExtractionPlugin
                     " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
 
                 var skipProteinMods = mJobParams.GetJobParameter("SkipProteinMods", false);
+
                 if (!skipProteinMods)
                 {
                     arguments += " /ProteinMods";
@@ -361,6 +364,7 @@ namespace AnalysisManagerExtractionPlugin
                 while (!reader.EndOfStream)
                 {
                     var lineIn = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(lineIn))
                     {
                         continue;
@@ -386,9 +390,11 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     Match reMatch;
+
                     if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
                     {
                         reMatch = mProcessingMatcher.Match(lineIn);
+
                         if (reMatch.Success)
                         {
                             float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
@@ -397,6 +403,7 @@ namespace AnalysisManagerExtractionPlugin
                     else
                     {
                         reMatch = mProcessingPhrpMatcher.Match(lineIn);
+
                         if (reMatch.Success)
                         {
                             float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
@@ -435,6 +442,7 @@ namespace AnalysisManagerExtractionPlugin
             while (!reader.EndOfStream)
             {
                 var lineIn = reader.ReadLine();
+
                 if (string.IsNullOrWhiteSpace(lineIn))
                     continue;
 
@@ -475,6 +483,7 @@ namespace AnalysisManagerExtractionPlugin
             while (!reader.EndOfStream)
             {
                 var lineIn = reader.ReadLine();
+
                 if (string.IsNullOrWhiteSpace(lineIn))
                     continue;
 
@@ -502,6 +511,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var files = psmResultsFile.Directory.GetFiles("*" + fileSuffix).ToList();
+
             if (files.Count == 0)
             {
                 ReportError("PHRP did not create a " + fileDescription + " file");

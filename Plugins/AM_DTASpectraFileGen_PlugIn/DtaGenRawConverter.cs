@@ -136,6 +136,7 @@ namespace DTASpectraFileGen
 
                 // Determine the raw file converter .exe name
                 var rawConverter = new FileInfo(mDtaToolNameLoc);
+
                 if (rawConverter.Directory == null)
                 {
                     mErrMsg = "Unable to determine the parent directory of " + rawConverter.FullName;

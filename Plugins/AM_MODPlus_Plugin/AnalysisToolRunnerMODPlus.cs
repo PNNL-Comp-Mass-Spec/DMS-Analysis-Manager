@@ -66,6 +66,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -91,6 +92,7 @@ namespace AnalysisManagerMODPlusPlugin
                 {
                     // Look for the results file(s)
                     var postProcessSuccess = PostProcessMODPlusResults(paramFileList);
+
                     if (!postProcessSuccess)
                     {
                         if (string.IsNullOrEmpty(mMessage))
@@ -170,6 +172,7 @@ namespace AnalysisManagerMODPlusPlugin
             // Set up and execute a program runner to run MSConvert
 
             var msConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", "msconvert.exe");
+
             if (string.IsNullOrWhiteSpace(msConvertProgLoc))
             {
                 if (string.IsNullOrWhiteSpace(mMessage))
@@ -255,6 +258,7 @@ namespace AnalysisManagerMODPlusPlugin
             try
             {
                 var paramFile = new FileInfo(Path.Combine(mWorkDir, paramFileName));
+
                 if (!paramFile.Exists)
                 {
                     LogError("Parameter file not found by CreateParameterFiles");
@@ -293,6 +297,7 @@ namespace AnalysisManagerMODPlusPlugin
             foreach (var mgfFile in mgfFiles)
             {
                 var reMatch = reThreadNumber.Match(mgfFile.Name);
+
                 if (!reMatch.Success)
                 {
                     LogError("RegEx failed to extract the thread number from the MGF file name: " + mgfFile.Name);
@@ -316,6 +321,7 @@ namespace AnalysisManagerMODPlusPlugin
                 if (nodeList?.Count > 0)
                 {
                     var xmlAttributeCollection = nodeList[0].Attributes;
+
                     if (xmlAttributeCollection != null)
                     {
                         xmlAttributeCollection["local_path"].Value = mgfFile.FullName;
@@ -356,6 +362,7 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 // This value will get updated to the correct name later in this method
                 var xmlAttributeCollection = datasetNodes[0].Attributes;
+
                 if (xmlAttributeCollection?["local_path"] == null)
                 {
                     // Match not found; add it
@@ -385,6 +392,7 @@ namespace AnalysisManagerMODPlusPlugin
             if (databaseNodes?.Count > 0)
             {
                 var xmlAttributeCollection = databaseNodes[0].Attributes;
+
                 if (xmlAttributeCollection?["local_path"] == null)
                 {
                     // Match not found; add it
@@ -429,11 +437,13 @@ namespace AnalysisManagerMODPlusPlugin
             if (instrumentResolutionNodes?.Count > 0)
             {
                 var xmlAttributeCollection = instrumentResolutionNodes[0].Attributes;
+
                 if (xmlAttributeCollection != null && (xmlAttributeCollection["msms"].Value == HIGH_RES_FLAG && instrumentResolutionMsMs == "low"))
                 {
                     // Parameter file lists the resolution as high, but it's actually low
                     // Auto-change it
                     var attributeCollection = instrumentResolutionNodes[0].Attributes;
+
                     if (attributeCollection?["msms"] != null)
                     {
                         attributeCollection["msms"].Value = instrumentResolutionMsMs;
@@ -542,6 +552,7 @@ namespace AnalysisManagerMODPlusPlugin
             // Grab the next node name in the xpath; or return parent if empty
             var partsOfXPath = xpath.Trim('/').Split('/');
             var nextNodeInXPath = partsOfXPath.First();
+
             if (string.IsNullOrEmpty(nextNodeInXPath))
             {
                 return parent;
@@ -549,6 +560,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Get or create the node from the name
             var node = parent.SelectSingleNode(nextNodeInXPath);
+
             if (node == null)
             {
                 var newNode = doc.CreateElement(nextNodeInXPath);
@@ -624,6 +636,7 @@ namespace AnalysisManagerMODPlusPlugin
                     }
 
                     var reader = new MODPlusResultsReader(mDatasetName, resultFile);
+
                     if (reader.SpectrumAvailable)
                     {
                         PushReader(nextAvailableScan, reader);
@@ -667,6 +680,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Zip the output file along with the ConsoleOutput files
                 var zipFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Temp_ZipScratch"));
+
                 if (!zipFolder.Exists)
                     zipFolder.Create();
 
@@ -807,6 +821,7 @@ namespace AnalysisManagerMODPlusPlugin
                 var spectrumFileName = mDatasetName;
 
                 var msXmlOutputType = mJobParams.GetJobParameter("MSXMLOutputType", string.Empty);
+
                 if (string.Equals(msXmlOutputType, "mzxml", StringComparison.OrdinalIgnoreCase))
                 {
                     spectrumFileName += AnalysisResources.DOT_MZXML_EXTENSION;
@@ -819,6 +834,7 @@ namespace AnalysisManagerMODPlusPlugin
                 currentTask = "Convert .mzML file to MGF";
 
                 var spectrumFile = new FileInfo(Path.Combine(mWorkDir, spectrumFileName));
+
                 if (!spectrumFile.Exists)
                 {
                     LogError("Spectrum file not found: " + spectrumFile.Name);
@@ -835,6 +851,7 @@ namespace AnalysisManagerMODPlusPlugin
                 else
                 {
                     var convertSuccess = ConvertMsXmlToMGF(spectrumFile, mgfFile);
+
                     if (!convertSuccess)
                     {
                         return false;
@@ -845,6 +862,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Create one MGF file for each thread
                 var mgfFiles = SplitMGFFiles(mgfFile, threadCount);
+
                 if (mgfFiles.Count == 0)
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
@@ -933,6 +951,7 @@ namespace AnalysisManagerMODPlusPlugin
                     foreach (var modPlusRunner in mMODPlusRunners)
                     {
                         var eStatus = modPlusRunner.Value.Status;
+
                         if (eStatus >= MODPlusRunner.MODPlusRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
@@ -972,6 +991,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     var subTaskProgress = progressSum / mMODPlusRunners.Count;
                     var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, (float)subTaskProgress);
+
                     if (updatedProgress > mProgress)
                     {
                         // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
@@ -1022,6 +1042,7 @@ namespace AnalysisManagerMODPlusPlugin
                     if (progRunner == null)
                     {
                         success = false;
+
                         if (string.IsNullOrWhiteSpace(mMessage))
                         {
                             mMessage = "progRunner object is null for thread " + modPlusRunner.Key;
@@ -1064,6 +1085,7 @@ namespace AnalysisManagerMODPlusPlugin
                 mProgress = PROGRESS_PCT_MODPLUS_COMPLETE;
 
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("MODPlus Analysis Complete");

@@ -33,6 +33,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                     return result;
                 }
@@ -40,6 +41,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Retrieve the export script
                 currentTask = "Get parameter BrukerSpectraExportScriptFile";
                 var exportScriptName = mJobParams.GetJobParameter("BrukerSpectraExportScriptFile", string.Empty);
+
                 if (string.IsNullOrEmpty(exportScriptName))
                 {
                     LogError("BrukerSpectraExportScriptFile parameter is empty");
@@ -52,6 +54,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "Bruker_DA_Export";
 
                 var exportScriptStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))
                 {
                     exportScriptStoragePath = @"F:\My Documents\Gigasax_Data\DMS_Parameter_Files\Bruker_Data_Analysis";
@@ -101,6 +104,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     }
 
                     currentTask = "Process the MyEMSL download queue";
+
                     if (ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
                     {
                         break;
@@ -140,6 +144,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 foreach (var searchSpec in searchSpecList)
                 {
                     var fileList = workDirFolder.GetFiles(searchSpec, SearchOption.AllDirectories);
+
                     foreach (var file in fileList)
                     {
                         deleteAttemptCount++;

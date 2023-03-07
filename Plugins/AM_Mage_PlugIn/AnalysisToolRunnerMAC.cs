@@ -36,6 +36,7 @@ namespace AnalysisManager_Mage_PlugIn
                 StoreToolVersionInfo();
 
                 var cachedWarningMessage = mJobParams.GetJobParameter("AnalysisResourcesClass", "Evaluation_Message", string.Empty);
+
                 if (!string.IsNullOrWhiteSpace(cachedWarningMessage))
                 {
                     mEvalMessage = Global.AppendToComment(mEvalMessage, cachedWarningMessage);
@@ -72,6 +73,7 @@ namespace AnalysisManager_Mage_PlugIn
                     processingSuccess = false;
 
                     var dataPackageSourceDirectoryName = mJobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
+
                     if (ex.Message.Contains(dataPackageSourceDirectoryName + "\\--No Files Found"))
                     {
                         LogError(dataPackageSourceDirectoryName + " directory in the data package is empty or does not exist");
@@ -193,6 +195,7 @@ namespace AnalysisManager_Mage_PlugIn
                 }
 
                 reader.Read();
+
                 foreach (var columnName in columns)
                 {
                     try

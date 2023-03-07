@@ -321,6 +321,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (toolType == AnalysisToolRunnerPepProtProphet.PhilosopherToolType.ShowVersion)
                     {
                         var match = PhilosopherVersionMatcher.Match(dataLine);
+
                         if (match.Success)
                         {
                             PhilosopherVersion = "Philosopher " + match.Groups["Version"];

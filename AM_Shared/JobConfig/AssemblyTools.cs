@@ -31,6 +31,7 @@ namespace AnalysisManagerBase.JobConfig
 
             // List the assemblies in the current application domain.
             Console.WriteLine("List of assemblies loaded in current application domain:");
+
             foreach (var item in assemblies)
             {
                 summaryFile.Add(item.ToString());

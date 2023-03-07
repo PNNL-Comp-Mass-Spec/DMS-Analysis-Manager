@@ -116,6 +116,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (resultsFile.Exists)
                     {
                         var postProcessSuccess = PostProcessMSPathFinderResults();
+
                         if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -197,6 +198,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
 
             var proteinOptions = mJobParams.GetParam("ProteinOptions");
+
             if (!string.IsNullOrEmpty(proteinOptions))
             {
                 if (proteinOptions.IndexOf("seq_direction=decoy", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -397,6 +399,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             string errorMessage;
 
                             var colonIndex = dataLine.IndexOf(':');
+
                             if (colonIndex > 0)
                             {
                                 errorMessage = dataLine.Substring(colonIndex + 1).Trim();
@@ -460,6 +463,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         }
 
                         var progressMatch = mCheckProgress.Match(dataLine);
+
                         if (progressMatch.Success)
                         {
                             if (float.TryParse(progressMatch.Groups[1].ToString(), out var progressValue))
@@ -479,6 +483,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         if (unfilteredFeatures == 0)
                         {
                             var promexResultsMatch = mPromexFeatureStats.Match(dataLine);
+
                             if (promexResultsMatch.Success)
                             {
                                 if (int.TryParse(promexResultsMatch.Groups[1].ToString(), out var filteredFeatures))
@@ -493,6 +498,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         }
 
                         var proteinSearchedMatch = mProcessingProteins.Match(dataLine);
+
                         if (proteinSearchedMatch.Success)
                         {
                             if (int.TryParse(proteinSearchedMatch.Groups[1].ToString(), out var proteinsSearched))
@@ -603,6 +609,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             modClean = string.Empty;
 
             var poundIndex = mod.IndexOf('#');
+
             if (poundIndex > 0)
             {
                 comment = mod.Substring(poundIndex);
@@ -627,6 +634,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Reconstruct the mod definition, making sure there is no whitespace
             modClean = splitMod[0].Trim();
+
             for (var index = 1; index <= splitMod.Length - 1; index++)
             {
                 modClean += "," + splitMod[index].Trim();
@@ -653,6 +661,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 AppUtils.GarbageCollectNow();
 
                 var compressDirInfo = new DirectoryInfo(Path.Combine(mWorkDir, "TempCompress"));
+
                 if (compressDirInfo.Exists)
                 {
                     foreach (var fileToDelete in compressDirInfo.GetFiles())
@@ -699,6 +708,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = mDotNetZipTools.Message;
+
                         if (string.IsNullOrEmpty(mMessage))
                         {
                             mMessage = "Unknown error zipping the MSPathFinder results";
@@ -822,6 +832,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             mProgress = PROGRESS_PCT_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("MSPathFinder Search Complete");

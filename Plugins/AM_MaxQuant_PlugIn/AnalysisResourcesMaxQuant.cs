@@ -44,6 +44,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             {
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -167,6 +168,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
                 {
                     var parseRuleResult = DetermineProteinDescriptionParseRule(out proteinDescriptionParseRule);
+
                     if (parseRuleResult != CloseOutType.CLOSEOUT_SUCCESS)
                         return parseRuleResult;
                 }
@@ -471,12 +473,14 @@ namespace AnalysisManagerMaxQuantPlugIn
             out string previousJobStepParameterFilePath)
         {
             previousJobStepParameterFilePath = string.Empty;
+
             if (Global.OfflineMode)
                 return true;
 
             try
             {
                 var stepNum = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
+
                 if (stepNum == 1)
                 {
                     // This is the first step; nothing to retrieve
@@ -499,6 +503,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 // Copy the file, renaming to avoid a naming collision
                 var destinationFilePath = Path.Combine(workingDirectory.FullName, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_PreviousStep.xml");
+
                 if (mFileCopyUtilities.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, overwrite: true, maxCopyAttempts: 3))
                 {
                     if (mDebugLevel > 3)
@@ -544,6 +549,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var rawDataTypeName = mJobParams.GetParam("RawDataType");
                 var rawDataType = GetRawDataType(rawDataTypeName);
+
                 if (rawDataType == RawDataTypeConstants.AgilentDFolder)
                 {
                     // The ScanStatsGenerator class uses the MSFileInfoScanner to generate the ScanStats files
@@ -663,6 +669,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var maxQuantExecutable = new FileInfo(maxQuantProgLoc);
+
                 if (maxQuantExecutable.Directory == null)
                 {
                     LogError(string.Format("Unable to determine the MaxQuant parent directory using {0}", maxQuantProgLoc));
@@ -864,9 +871,11 @@ namespace AnalysisManagerMaxQuantPlugIn
                 Console.WriteLine();
 
                 var groupNumber = 0;
+
                 foreach (var parameterGroup in parameterGroupNodes)
                 {
                     groupNumber++;
+
                     if (parameterGroupNodes.Count > 1)
                     {
                         Console.WriteLine("Parameter group {0}", groupNumber);
@@ -885,6 +894,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
 
                 var hasUnknownModifications = false;
+
                 foreach (var item in modificationGroups)
                 {
                     if (!ValidateMaxQuantModificationNames(maxQuantModificationNames, item))
