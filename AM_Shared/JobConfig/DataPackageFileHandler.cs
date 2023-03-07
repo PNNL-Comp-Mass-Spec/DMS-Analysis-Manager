@@ -1632,39 +1632,46 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="rawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in batch file RetrieveInstrumentData.bat)</param>
         /// <param name="instrumentDataToRetrieve">
         /// Instrument files that need to be copied locally
-        /// Keys are dataPkgJob, values are either an existing .mzML file (or .mzXML file), or an empty string
+        /// Keys are dataPkgJob, values are a KeyValuePair of the existing .mzML file (or .mzXML file) and its hash check file, or empty strings if not found
         /// </param>
         /// <param name="datasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         private bool RetrieveDataPackageInstrumentFile(
             DataPackageJobInfo dataPkgJob,
             DataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, string> rawFileRetrievalCommands,
-            IDictionary<DataPackageJobInfo,
-            KeyValuePair<string, string>> instrumentDataToRetrieve,
+            IDictionary<DataPackageJobInfo, KeyValuePair<string, string>> instrumentDataToRetrieve,
             IDictionary<string, string> datasetRawFilePaths)
         {
             if (retrievalOptions.RetrieveMzXMLFile)
             {
-                // See if a .mzXML file already exists for this dataset
+                // See if a .mzML or .mzXML file already exists for this dataset
 
-                var mzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzML, out var mzMLHashcheckFilePath);
+                // First look for a .mzML file
 
-                string msXMLFilePath;
+                var mzMLFileFound = mAnalysisResources.FileSearchTool.FindMsXmlFileForJobInCache(
+                    AnalysisResources.MSXMLOutputTypeConstants.mzML, false, true, true,
+                    out _, out _, out var mzMLFile, out var mzMLHashcheckFilePath);
+
+                bool msXmlFileFound;
+                FileInfo msXmlFileInfo;
                 string hashcheckFilePath;
 
-                if (string.IsNullOrEmpty(mzMLFilePath))
+                if (!mzMLFileFound)
                 {
-                    msXMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashcheckFilePath);
+                    msXmlFileFound = mAnalysisResources.FileSearchTool.FindMsXmlFileForJobInCache(
+                        AnalysisResources.MSXMLOutputTypeConstants.mzXML, false, true, true,
+                        out _, out _, out msXmlFileInfo, out hashcheckFilePath);
                 }
                 else
                 {
-                    msXMLFilePath = mzMLFilePath;
+                    msXmlFileFound = true;
+                    msXmlFileInfo = mzMLFile;
                     hashcheckFilePath = mzMLHashcheckFilePath;
                 }
 
-                if (string.IsNullOrEmpty(msXMLFilePath))
+                if (!msXmlFileFound)
                 {
-                    // mzXML file not found
+                    // mzML or mzXML file not found
                     if (dataPkgJob.RawDataType == AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES)
                     {
                         // Will need to retrieve the .Raw file for this dataset
@@ -1672,15 +1679,15 @@ namespace AnalysisManagerBase.JobConfig
                     }
                     else
                     {
-                        OnErrorEvent("mzXML/mzML file not found for dataset {0} (job {1}) and the dataset is not a .Raw file, " +
-                                     "so we cannot auto-create the missing mzXML file", dataPkgJob.Dataset, dataPkgJob.Job);
+                        OnErrorEvent("mzML/mzXML file not found for dataset {0} (job {1}) and the dataset is not a .Raw file, " +
+                                     "so we cannot auto-create the missing mzML file", dataPkgJob.Dataset, dataPkgJob.Job);
 
                         return false;
                     }
                 }
                 else
                 {
-                    instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(msXMLFilePath, hashcheckFilePath));
+                    instrumentDataToRetrieve.Add(dataPkgJob, new KeyValuePair<string, string>(msXmlFileInfo.FullName, hashcheckFilePath));
                 }
             }
 
