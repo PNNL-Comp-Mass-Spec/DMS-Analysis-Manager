@@ -1744,6 +1744,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Job param "SharedResultsFolders" typically only contains one directory path,
         /// but it can contain a comma-separated list of directory paths.
         /// </remarks>
+        /// <remarks>
+        /// Shared results folder come from job steps that are skipped or completed (states 3 and 5) and have Shared_Result_Version > 0
+        /// </remarks>
         /// <returns>List of directory names</returns>
         private List<string> GetSharedResultDirList()
         {
@@ -1859,12 +1862,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         /// <summary>
         /// <para>
-        /// Retrieve the dataset's cached .mzXML, .mzML, or .pbf file, checking various locations
+        /// Retrieve the dataset's cached .mzML, .mzXML, or .pbf file, checking various locations
         /// </para>
         /// <para>
         /// The logic in this method is similar to <see cref="FindNewestMsXmlFileInCache"/>, but this method
         /// first looks in the input folder for this job, next looks in the shared folders associated with this job,
-        /// then looks in the cache directory
+        /// then looks in the cache directory(s) that correspond to the shared folders
         /// </para>
         /// </summary>
         /// <remarks>
@@ -1875,7 +1878,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </para>
         /// </remarks>
-        /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
+        /// <param name="resultFileExtension">File extension to retrieve (.mzML, .mzXML, or .pbf)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
@@ -2260,7 +2263,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>
-        /// <param name="hashCheckFilePath"></param>
+        /// <param name="hashCheckFilePath">Hash check file path</param>
         /// <returns>True if success, false if not retrieved or a hash error</returns>
         public bool RetrieveMZXmlFileUsingSourceFile(bool createStoragePathInfoOnly, string sourceFilePath, string hashCheckFilePath)
         {
@@ -2304,7 +2307,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
         /// <param name="sourceFile"></param>
-        /// <param name="hashCheckFilePath"></param>
+        /// <param name="hashCheckFilePath">Hash check file path</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
         private bool RetrieveMzXMLFileVerifyHash(FileSystemInfo sourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)

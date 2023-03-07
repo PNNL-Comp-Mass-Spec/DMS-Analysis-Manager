@@ -169,7 +169,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                         foreach (var chargeInfo in chargeInfoList)
                         {
-                            // Write a blank link before each title line
+                            // Write a blank line before each title line
                             writer.WriteLine();
 
                             // Write the spectrum title line, for example:

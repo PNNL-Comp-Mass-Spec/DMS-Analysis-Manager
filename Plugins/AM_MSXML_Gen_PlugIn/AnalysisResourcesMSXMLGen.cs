@@ -113,6 +113,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var msXMLOutputType = mJobParams.GetJobParameter("MSXMLOutputType", "mzML");
 
+                    // Example message: Skipping MSXMLGen since all 12 datasets in data package 4117 already have a mzML file
+
                     EvalMessage = string.Format(
                         "Skipping MSXMLGen since all {0} datasets in data package {1} already have a {2} file",
                         dataPackageInfo.Datasets.Count,
