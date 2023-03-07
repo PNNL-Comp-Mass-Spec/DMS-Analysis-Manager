@@ -935,6 +935,538 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
+        /// <para>
+        /// Find the dataset's cached .mzML or .mzXML file, checking various locations
+        /// </para>
+        /// <para>
+        /// The logic in this method is similar to <see cref="FindNewestMsXmlFileInCache"/>, but this method
+        /// first looks in the input folder for this job, next looks in the shared folders associated with this job,
+        /// then looks in the cache directory(s) that correspond to the shared folders
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
+        /// </para>
+        /// <para>
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </para>
+        /// </remarks>
+        /// <param name="msXmlType">MsXml file type to find (mzML or mzXML)</param>
+        /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
+        /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
+        /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
+        /// <param name="msXmlFile">Output parameter: FileInfo object for the source .mzML or .mzXML file</param>
+        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        public bool FindMsXmlFileForJobInCache(
+            AnalysisResources.MSXMLOutputTypeConstants msXmlType,
+            bool callingMethodCanRegenerateMissingFile,
+            bool checkOutputFolder,
+            bool warnFileNotFound,
+            out string errorMessage,
+            out bool fileMissingFromCache,
+            out FileInfo msXmlFile,
+            out string hashCheckFilePath)
+        {
+            var resultFileExtension = msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                ? AnalysisResources.DOT_MZXML_EXTENSION
+                : AnalysisResources.DOT_MZML_EXTENSION;
+
+            return FindMsXmlFileForJobInCache(
+                resultFileExtension, callingMethodCanRegenerateMissingFile, checkOutputFolder, warnFileNotFound,
+                out errorMessage, out fileMissingFromCache, out msXmlFile, out hashCheckFilePath);
+        }
+
+        /// <summary>
+        /// <para>
+        /// Find the dataset's cached .mzML, .mzXML, or .pbf file, checking various locations
+        /// </para>
+        /// <para>
+        /// The logic in this method is similar to <see cref="FindNewestMsXmlFileInCache"/>, but this method
+        /// first looks in the input folder for this job, next looks in the shared folders associated with this job,
+        /// then looks in the cache directory(s) that correspond to the shared folders
+        /// </para>
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
+        /// </para>
+        /// <para>
+        /// InputFolderName should be in the form MSXML_Gen_1_93_367204
+        /// </para>
+        /// </remarks>
+        /// <param name="resultFileExtension">File extension to find (.mzML, .mzXML, or .pbf)</param>
+        /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
+        /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
+        /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
+        /// <param name="errorMessage">Output parameter: Error message</param>
+        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
+        /// <param name="sourceFileInfo">Output parameter: FileInfo object for the source .mzML, .mzXML, or .pbf file</param>
+        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <returns>True if success, false if an error or file not found</returns>
+        public bool FindMsXmlFileForJobInCache(
+            string resultFileExtension,
+            bool callingMethodCanRegenerateMissingFile,
+            bool checkOutputFolder,
+            bool warnFileNotFound,
+            out string errorMessage,
+            out bool fileMissingFromCache,
+            out FileInfo sourceFileInfo,
+            out string hashCheckFilePath)
+        {
+            errorMessage = string.Empty;
+            fileMissingFromCache = false;
+
+            if (string.IsNullOrEmpty(resultFileExtension))
+            {
+                errorMessage = "resultFileExtension is empty; should be .mzML, .mzXML, or .pbf";
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            var isPbfFile = string.Equals(resultFileExtension, AnalysisResources.DOT_PBF_EXTENSION, StringComparison.OrdinalIgnoreCase);
+
+            var msXmlOrPbfFilename = DatasetName + resultFileExtension;
+
+            if (Global.OfflineMode)
+            {
+                hashCheckFilePath = string.Empty;
+
+                // Look for the .mzML file in the working directory
+                var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, msXmlOrPbfFilename));
+
+                if (localMsXmlFile.Exists)
+                {
+                    OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir);
+                    sourceFileInfo = localMsXmlFile;
+                    return true;
+                }
+
+                var localMsXmlGzFile = new FileInfo(localMsXmlFile.FullName + AnalysisResources.DOT_GZ_EXTENSION);
+
+                if (!localMsXmlGzFile.Exists)
+                {
+                    errorMessage = string.Format(
+                        "Could not find a {0} file or {1} file for this dataset in the working directory",
+                        resultFileExtension, resultFileExtension + AnalysisResources.DOT_GZ_EXTENSION);
+
+                    OnWarningEvent(errorMessage);
+                    sourceFileInfo = null;
+                    return false;
+                }
+
+                sourceFileInfo = localMsXmlGzFile;
+                return true;
+            }
+
+            var msXmlCacheDirectoryPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
+
+            if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
+            {
+                errorMessage = string.Format("Manager parameter {0} is not defined", AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            var msXmlCacheDirectory = new DirectoryInfo(msXmlCacheDirectoryPath);
+
+            if (!msXmlCacheDirectory.Exists)
+            {
+                errorMessage = "MSXmlCache directory not found: " + msXmlCacheDirectoryPath;
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            var directoriesToSearch = new List<string>();
+
+            var inputDirectoryName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME, string.Empty);
+            var jobStep = mJobParams.GetJobParameter("StepParameters", "Step", 0);
+
+            var sharedResultDirNames = GetSharedResultDirList();
+
+            if (!string.IsNullOrWhiteSpace(inputDirectoryName))
+            {
+                // Step 3 of MSFragger jobs needs the .mzML file, but the input directory name will be of the form MSF202111161124_Auto1977726
+                // Only add the input directory to directoriesToSearch if this is step 1 or 2, or if the name starts with MSXML_Gen
+
+                if (jobStep <= 2)
+                {
+                    directoriesToSearch.Add(inputDirectoryName);
+                }
+                else if (inputDirectoryName.StartsWith("MSXML_Gen", StringComparison.OrdinalIgnoreCase))
+                {
+                    directoriesToSearch.Add(inputDirectoryName);
+                }
+                else if (sharedResultDirNames.Count == 0)
+                {
+                    errorMessage = string.Format(
+                        "Input directory {0} (defined by job parameter {1}) does not start with MSXML_Gen; cannot retrieve the {2} file",
+                        inputDirectoryName,
+                        AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                        resultFileExtension);
+
+                    sourceFileInfo = null;
+                    hashCheckFilePath = string.Empty;
+                    return false;
+                }
+            }
+
+            // Note that shared results folders come from job steps that are skipped or completed (states 3 and 5) and have Shared_Result_Version > 0
+
+            foreach (var sharedResultDirectory in sharedResultDirNames)
+            {
+                if (string.IsNullOrWhiteSpace(sharedResultDirectory))
+                    continue;
+
+                if (!directoriesToSearch.Contains(sharedResultDirectory))
+                {
+                    directoriesToSearch.Add(sharedResultDirectory);
+                }
+            }
+
+            if (directoriesToSearch.Count == 0)
+            {
+                string jobParameterDescription;
+
+                if (checkOutputFolder)
+                {
+                    // Job parameters InputFolderName and SharedResultsFolders are empty; look in the output folder for the current step
+
+                    var outputDirectoryName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, string.Empty);
+
+                    if (!string.IsNullOrWhiteSpace(outputDirectoryName))
+                    {
+                        directoriesToSearch.Add(outputDirectoryName);
+                    }
+
+                    jobParameterDescription = string.Format("{0}, {1}, and {2}",
+                        AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                        AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME,
+                        AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+                }
+                else
+                {
+                    // Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the .mzML file
+                    jobParameterDescription = string.Format("{0} and {1}",
+                        AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                        AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+                }
+
+                if (directoriesToSearch.Count == 0)
+                {
+                    errorMessage = string.Format("Job parameters {0} are empty; cannot retrieve the {1} file",
+                        jobParameterDescription,
+                        resultFileExtension);
+
+                    sourceFileInfo = null;
+                    hashCheckFilePath = string.Empty;
+                    return false;
+                }
+            }
+
+            var msXmlToolNameVersionDirs = new List<string>();
+
+            foreach (var directoryName in directoriesToSearch)
+            {
+                try
+                {
+                    // Remove the DatasetID or Data Package ID suffix on directoryName
+                    var msXmlToolNameVersionDirectory = AnalysisResources.GetMSXmlToolNameVersionFolder(directoryName);
+                    msXmlToolNameVersionDirs.Add(msXmlToolNameVersionDirectory);
+                }
+                catch (Exception)
+                {
+                    // Directory in job param InputFolderName or SharedResultsFolders is not in the expected form of ToolName_Version_DatasetID
+                    errorMessage = string.Format(
+                        "Directory in job param {0} or {1} is not in the expected form of ToolName_Version_DatasetID ({2}); " +
+                        "will not try to find the {3} file in this directory",
+                        AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                        AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
+                        directoryName,
+                        resultFileExtension);
+
+                    OnDebugEvent(errorMessage);
+                }
+            }
+
+            if (msXmlToolNameVersionDirs.Count == 0)
+            {
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = string.Format("Directories in job params {0} and {1} were not in the expected form of ToolName_Version_DatasetID",
+                        AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
+                        AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
+                }
+
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            errorMessage = string.Empty;
+
+            DirectoryInfo sourceDirectory = null;
+            var sourceFilePath = string.Empty;
+            var lookForGzippedFile = !string.Equals(resultFileExtension, AnalysisResources.DOT_PBF_EXTENSION, StringComparison.OrdinalIgnoreCase);
+
+            foreach (var toolNameVersionDir in msXmlToolNameVersionDirs)
+            {
+                var candidateSourceDir =
+                    AnalysisResources.GetMSXmlCacheFolderPath(msXmlCacheDirectory.FullName, mJobParams, toolNameVersionDir, out errorMessage);
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    continue;
+                }
+
+                sourceDirectory = new DirectoryInfo(candidateSourceDir);
+
+                if (sourceDirectory.Exists)
+                {
+                    var candidateFilePath = Path.Combine(sourceDirectory.FullName, msXmlOrPbfFilename);
+                    if (File.Exists(candidateFilePath))
+                    {
+                        sourceFilePath = candidateFilePath;
+                        break;
+                    }
+
+                    if (lookForGzippedFile)
+                    {
+                        var candidateGzFilePath = candidateFilePath + AnalysisResources.DOT_GZ_EXTENSION;
+                        if (File.Exists(candidateGzFilePath))
+                        {
+                            sourceFilePath = candidateGzFilePath;
+                            break;
+                        }
+                    }
+
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(errorMessage))
+                {
+                    errorMessage = "Cache directory does not exist (" + candidateSourceDir;
+                }
+                else
+                {
+                    errorMessage += " or " + candidateSourceDir;
+                }
+            }
+
+            bool useHashCheckFile;
+
+            if (sourceDirectory?.Exists == true)
+            {
+                useHashCheckFile = true;
+            }
+            else if (isPbfFile)
+            {
+                useHashCheckFile = false;
+            }
+            else
+            {
+                // Also look in the dataset directory since some datasets have the .mzML.gz or .mzXML.gz file stored below the dataset
+
+                var gzippedMsXmlFileName = msXmlOrPbfFilename + AnalysisResources.DOT_GZ_EXTENSION;
+
+                var matchingFiles = new List<FileInfo>();
+
+                var msXmlType = resultFileExtension.Equals(AnalysisResources.DOT_MZXML_EXTENSION, StringComparison.OrdinalIgnoreCase)
+                    ? AnalysisResources.MSXMLOutputTypeConstants.mzXML
+                    : AnalysisResources.MSXMLOutputTypeConstants.mzML;
+
+                foreach (var toolNameVersionDir in msXmlToolNameVersionDirs)
+                {
+                    FindMsXmlFilesInDatasetDirectory(gzippedMsXmlFileName, msXmlType, toolNameVersionDir + "*", out var filesToAppend);
+
+                    if (filesToAppend.Count > 0)
+                        matchingFiles.AddRange(filesToAppend);
+                }
+
+                if (matchingFiles.Count == 0)
+                {
+                    errorMessage += ")";
+                    fileMissingFromCache = true;
+                    sourceFileInfo = null;
+                    hashCheckFilePath = string.Empty;
+                    return false;
+                }
+
+                var matchingFile = (from item in matchingFiles orderby item.LastWriteTimeUtc descending select item).Take(1).First();
+                sourceFilePath = matchingFile.FullName;
+                sourceDirectory = matchingFile.Directory;
+
+                errorMessage = string.Empty;
+                useHashCheckFile = false;
+            }
+
+            if (string.IsNullOrWhiteSpace(sourceFilePath))
+            {
+                errorMessage = "msXML file not found in the source directory(s): " + string.Join(",", msXmlToolNameVersionDirs);
+                fileMissingFromCache = true;
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            var expectedFileDescription = resultFileExtension;
+
+            if (lookForGzippedFile)
+            {
+                expectedFileDescription += AnalysisResources.DOT_GZ_EXTENSION;
+            }
+
+            var sourceFile = new FileInfo(sourceFilePath);
+
+            if (!sourceFile.Exists)
+            {
+                if (warnFileNotFound)
+                {
+                    errorMessage = string.Format("Cached {0} file does not exist in {1}",
+                        expectedFileDescription,
+                        sourceDirectory == null ? "the source directory" : sourceDirectory.FullName);
+
+                    if (callingMethodCanRegenerateMissingFile)
+                    {
+                        errorMessage += "; will re-generate it";
+                    }
+                    else
+                    {
+                        errorMessage += "; you must manually re-create it";
+                    }
+                }
+
+                fileMissingFromCache = true;
+                sourceFileInfo = null;
+                hashCheckFilePath = string.Empty;
+                return false;
+            }
+
+            if (useHashCheckFile)
+            {
+                // Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
+
+                hashCheckFilePath = sourceFile.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+
+                const int recheckIntervalDays = 1;
+
+                var validFile = FileSyncUtils.ValidateFileVsHashcheck(sourceFile.FullName, hashCheckFilePath, out errorMessage,
+                    HashUtilities.HashTypeConstants.MD5, recheckIntervalDays);
+
+                if (!validFile)
+                {
+                    errorMessage = string.Format("Cached {0} file does not match the hashcheck file in {1}",
+                        resultFileExtension,
+                        sourceDirectory.FullName);
+
+                    if (callingMethodCanRegenerateMissingFile)
+                    {
+                        errorMessage += "; will re-generate it";
+                    }
+                    else
+                    {
+                        errorMessage += "; you must manually re-create it";
+                    }
+
+                    fileMissingFromCache = true;
+                    sourceFileInfo = sourceFile;
+                    return false;
+                }
+            }
+            else
+            {
+                hashCheckFilePath = string.Empty;
+            }
+
+            if (sourceFile.Directory == null)
+            {
+                NotifyInvalidParentDirectory(sourceFile);
+                sourceFileInfo = sourceFile;
+                return false;
+            }
+
+            sourceFileInfo = sourceFile;
+            return true;
+        }
+
+        /// <summary>
+        /// Find a .mzML or .mzXML file in the specified directory
+        /// </summary>
+        /// <param name="gzippedMsXmlFileName">File to find (should end in .gz)</param>
+        /// <param name="msXmlType"></param>
+        /// <param name="directory"></param>
+        /// <param name="msXmlFile">Output: file if found, otherwise null</param>
+        /// <returns>True if the file is found, otherwise false</returns>
+        private bool FindMsXmlFileInDirectory(
+            string gzippedMsXmlFileName,
+            AnalysisResources.MSXMLOutputTypeConstants msXmlType,
+            DirectoryInfo directory,
+            out FileInfo msXmlFile)
+        {
+            if (!directory.Exists)
+            {
+                msXmlFile = null;
+                return false;
+            }
+
+            var filesToAppend = directory.GetFiles(gzippedMsXmlFileName, SearchOption.TopDirectoryOnly).ToList();
+
+            if (filesToAppend.Count == 0 && msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML)
+            {
+                // Older .mzXML files were not gzipped
+                filesToAppend.AddRange(directory.GetFiles(DatasetName + AnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly));
+            }
+
+            if (filesToAppend.Count == 0)
+            {
+                msXmlFile = null;
+                return false;
+            }
+
+            // Return the newest item
+            msXmlFile = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1).First();
+            return true;
+        }
+
+        /// <summary>
+        /// Find a .mzML or .mzXML file in a subdirectory below the dataset directory
+        /// </summary>
+        /// <param name="gzippedMsXmlFileName">File to find (should end in .gz)</param>
+        /// <param name="msXmlType">File type</param>
+        /// <param name="directorySearchPattern">Search pattern for directory names to find</param>
+        /// <param name="matchingFiles">Output: matching file (or files)</param>
+        private void FindMsXmlFilesInDatasetDirectory(
+            string gzippedMsXmlFileName,
+            AnalysisResources.MSXMLOutputTypeConstants msXmlType,
+            string directorySearchPattern,
+            out List<FileInfo> matchingFiles)
+        {
+            var datasetDirectory = GetDatasetDirectory();
+
+            matchingFiles = new List<FileInfo>();
+
+            foreach (var subdirectory in datasetDirectory.GetDirectories(directorySearchPattern))
+            {
+                var success = FindMsXmlFileInDirectory(
+                    gzippedMsXmlFileName,
+                    msXmlType,
+                    subdirectory,
+                    out var msXmlFile);
+
+                if (success)
+                {
+                    matchingFiles.Add(msXmlFile);
+                }
+            }
+        }
+
+        /// <summary>
         /// <para></para>
         /// Looks for the newest mzXML or mzML file (as specified by argument msXmlType) for this dataset
         /// <para>
@@ -1094,77 +1626,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             OnWarningEvent("Warning: " + errorMessage);
             return string.Empty;
-        }
-
-        /// <summary>
-        /// Find a .mzML or .mzXML file in the specified directory
-        /// </summary>
-        /// <param name="gzippedMsXmlFileName">File to find (should end in .gz)</param>
-        /// <param name="msXmlType"></param>
-        /// <param name="directory"></param>
-        /// <param name="msXmlFile">Output: file if found, otherwise null</param>
-        /// <returns>True if the file is found, otherwise false</returns>
-        private bool FindMsXmlFileInDirectory(
-            string gzippedMsXmlFileName,
-            AnalysisResources.MSXMLOutputTypeConstants msXmlType,
-            DirectoryInfo directory,
-            out FileInfo msXmlFile)
-        {
-            if (!directory.Exists)
-            {
-                msXmlFile = null;
-                return false;
-            }
-
-            var filesToAppend = directory.GetFiles(gzippedMsXmlFileName, SearchOption.TopDirectoryOnly).ToList();
-
-            if (filesToAppend.Count == 0 && msXmlType == AnalysisResources.MSXMLOutputTypeConstants.mzXML)
-            {
-                // Older .mzXML files were not gzipped
-                filesToAppend.AddRange(directory.GetFiles(DatasetName + AnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly));
-            }
-
-            if (filesToAppend.Count == 0)
-            {
-                msXmlFile = null;
-                return false;
-            }
-
-            // Return the newest item
-            msXmlFile = (from item in filesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1).First();
-            return true;
-        }
-
-        /// <summary>
-        /// Find a .mzML or .mzXML file in a subdirectory below the dataset directory
-        /// </summary>
-        /// <param name="gzippedMsXmlFileName">File to find (should end in .gz)</param>
-        /// <param name="msXmlType">File type</param>
-        /// <param name="directorySearchPattern">Search pattern for directory names to find</param>
-        /// <param name="matchingFiles">Output: matching file (or files)</param>
-        private void FindMsXmlFilesInDatasetDirectory(
-            string gzippedMsXmlFileName,
-            AnalysisResources.MSXMLOutputTypeConstants msXmlType,
-            string directorySearchPattern,
-            out List<FileInfo> matchingFiles)
-        {
-            DirectoryInfo datasetDirectory = GetDatasetDirectory();
-
-            matchingFiles = new List<FileInfo>();
-
-            foreach (var subdirectory in datasetDirectory.GetDirectories(directorySearchPattern))
-            {
-                var success = FindMsXmlFileInDirectory(
-                    gzippedMsXmlFileName,
-                    msXmlType,
-                    subdirectory,
-                    out var msXmlFile);
-
-                if (success)
-                {
-                    matchingFiles.Add(msXmlFile);
-                }
-            }
         }
 
         /// <summary>
@@ -1431,370 +1892,43 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             out bool fileMissingFromCache,
             out string sourceDirectoryPath)
         {
-            errorMessage = string.Empty;
-            fileMissingFromCache = false;
-            sourceDirectoryPath = string.Empty;
+            var fileFound = FindMsXmlFileForJobInCache(
+                resultFileExtension,
+                callingMethodCanRegenerateMissingFile,
+                checkOutputFolder,
+                warnFileNotFound,
+                out errorMessage,
+                out fileMissingFromCache,
+                out var sourceFile,
+                out _);
 
-            if (string.IsNullOrEmpty(resultFileExtension))
+            if (!fileFound)
             {
-                errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML";
-                return false;
-            }
-
-            var msXmlType = resultFileExtension.Equals(AnalysisResources.DOT_MZXML_EXTENSION, StringComparison.OrdinalIgnoreCase)
-                ? AnalysisResources.MSXMLOutputTypeConstants.mzXML
-                : AnalysisResources.MSXMLOutputTypeConstants.mzML;
-
-            var msXMLFilename = DatasetName + resultFileExtension;
-
-            if (Global.OfflineMode)
-            {
-                // Look for the .mzML file in the working directory
-                var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, msXMLFilename));
-
-                if (localMsXmlFile.Exists)
-                {
-                    OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir);
-                    sourceDirectoryPath = mWorkDir;
-                    return true;
-                }
-
-                var localMsXmlGzFile = new FileInfo(localMsXmlFile.FullName + AnalysisResources.DOT_GZ_EXTENSION);
-                if (!localMsXmlGzFile.Exists)
-                {
-                    errorMessage = string.Format(
-                        "Could not find a {0} file or {1} file for this dataset in the working directory",
-                        resultFileExtension, resultFileExtension + AnalysisResources.DOT_GZ_EXTENSION);
-
-                    OnWarningEvent(errorMessage);
-                    return false;
-                }
-
-                sourceDirectoryPath = mWorkDir;
-
-                if (!unzip)
-                    return true;
-
-                if (GUnzipFile(localMsXmlGzFile.FullName))
-                    return true;
-
-                errorMessage = mDotNetZipTools.Message;
-                return false;
-            }
-
-            errorMessage = string.Empty;
-            fileMissingFromCache = false;
-            sourceDirectoryPath = string.Empty;
-
-            if (string.IsNullOrEmpty(resultFileExtension))
-            {
-                errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML";
-                return false;
-            }
-
-            if (Global.OfflineMode)
-            {
-                // Look for the .mzML file in the working directory
-                var localMsXmlFile = new FileInfo(Path.Combine(mWorkDir, msXMLFilename));
-                if (localMsXmlFile.Exists)
-                {
-                    OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, localMsXmlFile.Name, mWorkDir);
-                    sourceDirectoryPath = mWorkDir;
-                    return true;
-                }
-
-                var localMsXmlGzFile = new FileInfo(localMsXmlFile.FullName + AnalysisResources.DOT_GZ_EXTENSION);
-                if (!localMsXmlGzFile.Exists)
-                {
-                    errorMessage = string.Format(
-                        "Could not find a {0} file or {1} file for this dataset in the working directory",
-                        resultFileExtension, resultFileExtension + AnalysisResources.DOT_GZ_EXTENSION);
-
-                    OnWarningEvent(errorMessage);
-                    return false;
-                }
-
-                sourceDirectoryPath = mWorkDir;
-
-                if (!unzip)
-                    return true;
-
-                if (GUnzipFile(localMsXmlGzFile.FullName))
-                    return true;
-
-                errorMessage = mDotNetZipTools.Message;
-                return false;
-            }
-
-            var msXmlCacheDirectoryPath = mMgrParams.GetParam(AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH, string.Empty);
-
-            if (string.IsNullOrWhiteSpace(msXmlCacheDirectoryPath))
-            {
-                errorMessage = string.Format("Manager parameter {0} is not defined",
-                                             AnalysisResources.JOB_PARAM_MSXML_CACHE_FOLDER_PATH);
-                return false;
-            }
-
-            var msXmlCacheDirectory = new DirectoryInfo(msXmlCacheDirectoryPath);
-
-            if (!msXmlCacheDirectory.Exists)
-            {
-                errorMessage = "MSXmlCache directory not found: " + msXmlCacheDirectoryPath;
-                return false;
-            }
-
-            var directoriesToSearch = new List<string>();
-
-            var inputDirectoryName = mJobParams.GetJobParameter(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME, string.Empty);
-            var jobStep = mJobParams.GetJobParameter("StepParameters", "Step", 0);
-
-            var sharedResultDirNames = GetSharedResultDirList();
-
-            if (!string.IsNullOrWhiteSpace(inputDirectoryName))
-            {
-                // Step 3 of MSFragger jobs needs the .mzML file, but the input directory name will be of the form MSF202111161124_Auto1977726
-                // Only add the input directory to directoriesToSearch if this is step 1 or 2, or if the name starts with MSXML_Gen
-
-                if (jobStep <= 2)
-                {
-                    directoriesToSearch.Add(inputDirectoryName);
-                }
-                else
-                {
-                    if (inputDirectoryName.StartsWith("MSXML_Gen", StringComparison.OrdinalIgnoreCase))
-                    {
-                        directoriesToSearch.Add(inputDirectoryName);
-                    }
-                    else if (sharedResultDirNames.Count == 0)
-                    {
-                        errorMessage = string.Format("Input directory {0} (defined by job parameter {1}) does not start with MSXML_Gen; cannot retrieve the {2} file",
-                            inputDirectoryName,
-                            AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
-                            resultFileExtension);
-
-                        return false;
-                    }
-                }
-            }
-
-            foreach (var sharedResultDirectory in sharedResultDirNames)
-            {
-                if (string.IsNullOrWhiteSpace(sharedResultDirectory))
-                    continue;
-
-                if (!directoriesToSearch.Contains(sharedResultDirectory))
-                {
-                    directoriesToSearch.Add(sharedResultDirectory);
-                }
-            }
-
-            if (directoriesToSearch.Count == 0)
-            {
-                // Job parameters InputFolderName and SharedResultsFolders are empty; cannot retrieve the .mzML file
-                errorMessage = string.Format("Job parameters {0} and {1} are empty; cannot retrieve the {2} file",
-                    AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
-                    AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
-                    resultFileExtension);
-
-                return false;
-            }
-
-            var msXmlToolNameVersionDirs = new List<string>();
-
-            foreach (var directoryName in directoriesToSearch)
-            {
-                try
-                {
-                    // Remove the DatasetID or Data Package ID suffix on directoryName
-                    var msXmlToolNameVersionDirectory = AnalysisResources.GetMSXmlToolNameVersionFolder(directoryName);
-                    msXmlToolNameVersionDirs.Add(msXmlToolNameVersionDirectory);
-                }
-                catch (Exception)
-                {
-                    // Directory in job param InputFolderName or SharedResultsFolders is not in the expected form of ToolName_Version_DatasetID
-                    errorMessage = string.Format("Directory in job param {0} or {1} is not in the expected form of ToolName_Version_DatasetID ({2}); " +
-                                                 "will not try to find the {3} file in this directory",
-                                                 AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
-                                                 AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS,
-                                                 directoryName,
-                                                 resultFileExtension);
-
-                    OnDebugEvent(errorMessage);
-                }
-            }
-
-            if (msXmlToolNameVersionDirs.Count == 0)
-            {
-                if (string.IsNullOrEmpty(errorMessage))
-                {
-                    errorMessage = string.Format("Directories in job params {0} and {1} were not in the expected form of ToolName_Version_DatasetID",
-                                                 AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME,
-                                                 AnalysisResources.JOB_PARAM_SHARED_RESULTS_FOLDERS);
-                }
-                return false;
-            }
-
-            errorMessage = string.Empty;
-
-            DirectoryInfo sourceDirectory = null;
-            var sourceFilePath = string.Empty;
-            var lookForGzippedFile = !string.Equals(resultFileExtension, AnalysisResources.DOT_PBF_EXTENSION, StringComparison.OrdinalIgnoreCase);
-
-            foreach (var toolNameVersionDir in msXmlToolNameVersionDirs)
-            {
-                var candidateSourceDir = AnalysisResources.GetMSXmlCacheFolderPath(msXmlCacheDirectory.FullName, mJobParams, toolNameVersionDir, out errorMessage);
-                if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    continue;
-                }
-
-                sourceDirectory = new DirectoryInfo(candidateSourceDir);
-                if (sourceDirectory.Exists)
-                {
-                    var candidateFilePath = Path.Combine(sourceDirectory.FullName, msXMLFilename);
-                    if (File.Exists(candidateFilePath))
-                    {
-                        sourceFilePath = candidateFilePath;
-                        break;
-                    }
-
-                    if (lookForGzippedFile)
-                    {
-                        var candidateGzFilePath = candidateFilePath + AnalysisResources.DOT_GZ_EXTENSION;
-                        if (File.Exists(candidateGzFilePath))
-                        {
-                            sourceFilePath = candidateGzFilePath;
-                            break;
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (string.IsNullOrEmpty(errorMessage))
-                {
-                    errorMessage = "Cache directory does not exist (" + candidateSourceDir;
-                }
-                else
-                {
-                    errorMessage += " or " + candidateSourceDir;
-                }
-            }
-
-            bool useHashCheckFile;
-
-            if (sourceDirectory?.Exists == true)
-            {
-                useHashCheckFile = true;
-            }
-            else
-            {
-                // Also look in the dataset directory since some datasets have the .mzML.gz or .mzXML.gz file stored below the dataset
-
-                var gzippedMsXmlFileName = msXMLFilename + AnalysisResources.DOT_GZ_EXTENSION;
-
-                var matchingFiles = new List<FileInfo>();
-
-                foreach (var toolNameVersionDir in msXmlToolNameVersionDirs)
-                {
-                    FindMsXmlFilesInDatasetDirectory(gzippedMsXmlFileName, msXmlType, toolNameVersionDir + "*", out var filesToAppend);
-
-                    if (filesToAppend.Count > 0)
-                        matchingFiles.AddRange(filesToAppend);
-                }
-
-                if (matchingFiles.Count == 0)
-                {
-                    errorMessage += ")";
-                    fileMissingFromCache = true;
-                    return false;
-                }
-
-                var matchingFile = (from item in matchingFiles orderby item.LastWriteTimeUtc descending select item).Take(1).First();
-                sourceFilePath = matchingFile.FullName;
-                sourceDirectory = matchingFile.Directory;
-
-                errorMessage = string.Empty;
-                useHashCheckFile = false;
-            }
-
-            if (string.IsNullOrWhiteSpace(sourceFilePath))
-            {
-                errorMessage = "msXML file not found in the source directory(s): " + string.Join(",", msXmlToolNameVersionDirs);
-                fileMissingFromCache = true;
-                return false;
-            }
-
-            var expectedFileDescription = resultFileExtension;
-            if (lookForGzippedFile)
-            {
-                expectedFileDescription += AnalysisResources.DOT_GZ_EXTENSION;
-            }
-
-            var sourceFile = new FileInfo(sourceFilePath);
-
-            if (!sourceFile.Exists)
-            {
-                if (warnFileNotFound)
-                {
-                    errorMessage = string.Format("Cached {0} file does not exist in {1}",
-                        expectedFileDescription,
-                        sourceDirectory == null ? "the source directory" : sourceDirectory.FullName);
-
-                    if (callingMethodCanRegenerateMissingFile)
-                    {
-                        errorMessage += "; will re-generate it";
-                    }
-                    else
-                    {
-                        errorMessage += "; you must manually re-create it";
-                    }
-                }
-
-                fileMissingFromCache = true;
+                sourceDirectoryPath = string.Empty;
                 return false;
             }
 
             sourceDirectoryPath = sourceFile.DirectoryName;
 
-            if (useHashCheckFile)
+            var isGzipFile = string.Equals(sourceFile.Extension, AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase);
+
+            if (Global.OfflineMode)
             {
-                // Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
+                OnStatusEvent("Using {0} file {1} in {2}", resultFileExtension, sourceFile.Name, sourceDirectoryPath);
 
-                var hashCheckFilePath = sourceFile.FullName + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-
-                const int recheckIntervalDays = 1;
-
-                var validFile = FileSyncUtils.ValidateFileVsHashcheck(sourceFile.FullName, hashCheckFilePath, out errorMessage,
-                    HashUtilities.HashTypeConstants.MD5, recheckIntervalDays);
-
-                if (!validFile)
+                if (!isGzipFile || !unzip)
                 {
-                    errorMessage = string.Format("Cached {0} file does not match the hashcheck file in {1}",
-                        resultFileExtension,
-                        sourceDirectory.FullName);
-
-                    if (callingMethodCanRegenerateMissingFile)
-                    {
-                        errorMessage += "; will re-generate it";
-                    }
-                    else
-                    {
-                        errorMessage += "; you must manually re-create it";
-                    }
-
-                    fileMissingFromCache = true;
-                    return false;
+                    return true;
                 }
-            }
 
-            if (sourceFile.Directory == null)
-            {
-                NotifyInvalidParentDirectory(sourceFile);
+                if (GUnzipFile(sourceFile.FullName))
+                    return true;
+
+                errorMessage = mDotNetZipTools.Message;
                 return false;
             }
 
-            if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFile.Name, sourceFile.Directory.FullName, mWorkDir, BaseLogger.LogLevels.ERROR))
+            if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFile.Name, sourceFile.DirectoryName, mWorkDir, BaseLogger.LogLevels.ERROR))
             {
                 errorMessage = "Error copying " + sourceFile.FullName;
                 return false;
@@ -1803,7 +1937,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             OnStatusEvent("Copied {0} to {1}", sourceFile.FullName, mWorkDir);
 
             // If this is not a .gz file, return true
-            if (!string.Equals(sourceFile.Extension, AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
+            if (!isGzipFile)
                 return true;
 
             // Do not skip all .gz files because we compress MS-GF+ results using .gz and we want to keep those
