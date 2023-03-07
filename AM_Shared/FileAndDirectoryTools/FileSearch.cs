@@ -834,13 +834,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the newest .mzXML file for this dataset (not .mzML)
         /// </summary>
         /// <remarks>Supports both gzipped mzXML/mzML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML or .mzML file was found in the MSXml cache</param>
+        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
-        [Obsolete("Use FindMsXmlFileInCache which can find both .mzXML and .mzML files")]
+        [Obsolete("Use FindNewestMsXmlFileInCache which can find both .mzXML and .mzML files")]
         public string FindMZXmlFile(out string hashCheckFilePath)
         {
             // First look in the MsXML cache directory
-            var matchingFilePath = FindMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
+            var matchingFilePath = FindNewestMsXmlFileInCache(AnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
 
             if (!string.IsNullOrEmpty(matchingFilePath))
             {
@@ -1479,9 +1479,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)
         /// </remarks>
         /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzXML file was found in the MSXml cache</param>
+        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file if a match; empty string if no match</returns>
-        public string FindMsXmlFileInCache(
+        public string FindNewestMsXmlFileInCache(
             AnalysisResources.MSXMLOutputTypeConstants msXmlType,
             out string hashCheckFilePath)
         {
@@ -1862,7 +1862,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieve the dataset's cached .mzXML, .mzML, or .pbf file, checking various locations
         /// </para>
         /// <para>
-        /// The logic in this method is similar to <see cref="FindMsXmlFileInCache"/>, but this method
+        /// The logic in this method is similar to <see cref="FindNewestMsXmlFileInCache"/>, but this method
         /// first looks in the input folder for this job, next looks in the shared folders associated with this job,
         /// then looks in the cache directory
         /// </para>
