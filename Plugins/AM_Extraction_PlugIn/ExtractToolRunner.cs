@@ -1298,6 +1298,15 @@ namespace AnalysisManagerExtractionPlugin
         {
             const string inputFileName = "msms.txt";
 
+            var msmsFileHasData = AnalysisResources.ValidateFileHasData(Path.Combine(mWorkDir, inputFileName), "MaxQuant msms.txt", out var errorMessage);
+
+            if (!msmsFileHasData)
+            {
+                mMessage = errorMessage;
+                LogWarning(errorMessage);
+                return CloseOutType.CLOSEOUT_NO_DATA;
+            }
+
             var synopsisFileName = mDatasetName + "_maxq_syn.txt";
 
             var result = RunPHRPWork(
