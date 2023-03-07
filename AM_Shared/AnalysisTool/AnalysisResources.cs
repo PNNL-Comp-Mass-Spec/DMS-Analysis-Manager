@@ -1998,6 +1998,7 @@ namespace AnalysisManagerBase.AnalysisTool
             foreach (var directoryName in directoryPathNames)
             {
                 var reMatch = reYearQuarter.Match(directoryName);
+
                 if (reMatch.Success)
                 {
                     return reMatch.Value;
@@ -2330,6 +2331,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             // Lookup the output directory name; e.g. MSXML_Gen_1_120_275966
             var outputDirectoryName = jobParams.GetJobParameter(JOB_PARAM_OUTPUT_FOLDER_NAME, string.Empty);
+
             if (string.IsNullOrEmpty(outputDirectoryName))
             {
                 errorMessage = "outputDirectoryName is empty; cannot construct MSXmlCache path";
@@ -2337,6 +2339,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             string msXmlToolNameVersionDirectory;
+
             try
             {
                 msXmlToolNameVersionDirectory = GetMSXmlToolNameVersionFolder(outputDirectoryName);
@@ -2382,6 +2385,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             var yearQuarter = GetDatasetYearQuarter(datasetStoragePath);
+
             if (string.IsNullOrEmpty(yearQuarter))
             {
                 errorMessage = "Unable to extract the dataset Year_Quarter code from " + datasetStoragePath + "; cannot construct MSXmlCache path";
