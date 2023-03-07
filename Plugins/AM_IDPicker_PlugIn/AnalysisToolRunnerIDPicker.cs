@@ -147,7 +147,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
 
-                if (!AnalysisResources.ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
+                if (!AnalysisResources.ValidateFileHasData(synFilePath, "Synopsis", out var errorMessage))
                 {
                     // The synopsis file is empty
                     LogError(errorMessage);

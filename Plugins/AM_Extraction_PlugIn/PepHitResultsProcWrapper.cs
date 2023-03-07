@@ -508,7 +508,8 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var synopsisFileHasData = AnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
+            var synopsisFileHasData = AnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription, out var errorMessage);
+
             if (!synopsisFileHasData)
             {
                 mErrorMessage = errorMessage;

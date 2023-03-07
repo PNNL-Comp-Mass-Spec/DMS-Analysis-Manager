@@ -321,7 +321,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 synFilePath = Path.Combine(mWorkDir, Path.GetFileName(fileToGet));
 
                 // ReSharper disable once InvertIf
-                if (!ValidateFileHasData(synFilePath, "Synopsis file", out var errorMessage))
+                if (!ValidateFileHasData(synFilePath, "Synopsis", out var errorMessage))
                 {
                     // The synopsis file is empty
                     LogWarning(errorMessage);
