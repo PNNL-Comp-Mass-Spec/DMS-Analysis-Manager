@@ -4491,7 +4491,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                     // Look for a mzML.gz file instead
 
                                     var retrieved = FileSearchTool.RetrieveCachedMSXMLFile(
-                                        DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile, true,
+                                        DOT_MZML_EXTENSION, false, callingMethodCanRegenerateMissingFile, false, true,
                                         out var errorMessage, out _, out _);
 
                                     if (!retrieved)

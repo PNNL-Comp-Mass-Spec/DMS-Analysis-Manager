@@ -1809,7 +1809,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
+                AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, false, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
@@ -1831,7 +1831,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_MZXML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
+                AnalysisResources.DOT_MZXML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, false, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
@@ -1853,7 +1853,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             const bool warnFileNotFound = true;
 
             return RetrieveCachedMSXMLFile(
-                AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, warnFileNotFound,
+                AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, false, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
@@ -1878,6 +1878,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
+        /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
         /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
@@ -1887,6 +1888,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string resultFileExtension,
             bool unzip,
             bool callingMethodCanRegenerateMissingFile,
+            bool checkOutputFolder,
             bool warnFileNotFound,
             out string errorMessage,
             out bool fileMissingFromCache,

@@ -1200,14 +1200,23 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (skipDatasetsWithExistingMzML)
                     {
-                        var existingMzMLFilePath = mAnalysisResources.FileSearchTool.FindMsXmlFileInCache(msXmlType, out _);
+                        var fileFound = mAnalysisResources.FileSearchTool.FindMsXmlFileForJobInCache(
+                            msXmlType, false, true, true,
+                            out var errorMessage, out _, out var msXmlFile, out _);
 
-                        if (!string.IsNullOrWhiteSpace(existingMzMLFilePath))
+                        if (fileFound)
                         {
                             OnStatusEvent(
-                                "Skipping dataset {0} since an existing {1} file was found (RetrieveDataPackageDatasetFiles)",
-                                dataPkgDataset.Dataset, msXmlType);
+                                "Skipping dataset {0} since an existing {1} file was found in {2} (by RetrieveCachedMSXMLFile)",
+                                dataPkgDataset.Dataset, msXmlType, msXmlFile.DirectoryName);
                             continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(errorMessage))
+                        {
+                            OnStatusEvent(
+                                "Error looking for the {0} file for dataset {1}: {2}",
+                                msXmlType, dataPkgDataset.Dataset, errorMessage);
                         }
                     }
 
