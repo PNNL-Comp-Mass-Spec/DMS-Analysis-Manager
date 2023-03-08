@@ -2527,8 +2527,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (quantFiles.Length == 0)
                     {
-                        LogError("IonQuant did not create any _quant.csv files");
-                        return false;
+                        // No _quant.csv files were found, likely between IonQuant could not find enough features in common between datasets
+
+                        // Example warning from IonQuant:
+                        //   There are only 2 negative data points in training. We need at least 10
+
+                        // Log a warning, but continue processing
+                        LogWarning("IonQuant did not create any _quant.csv files", true);
                     }
 
                     // Confirm that the output files were created
