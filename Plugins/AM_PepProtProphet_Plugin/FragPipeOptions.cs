@@ -138,7 +138,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             MatchBetweenRuns = jobParams.GetJobParameter("MatchBetweenRuns", false);
 
-            // Class AnalysisToolRunnerPepProtProphet will set this to false if the MSFragger parameter file includes iTRAQ or TMT
+            // Class AnalysisToolRunnerPepProtProphet will set this to false if the MSFragger parameter file includes iTRAQ or TMT16 (FragPipe v19 supports MSBooster for TMT10)
             // Additionally, MSBooster is set to false if running an open search
             RunMSBooster = FraggerOptions.GetParameterValueOrDefault("RunMSBooster", true);
 

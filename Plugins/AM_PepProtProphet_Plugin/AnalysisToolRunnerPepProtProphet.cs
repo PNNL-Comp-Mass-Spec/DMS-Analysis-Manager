@@ -418,15 +418,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     if (options.ReporterIonMode != ReporterIonModes.Disabled)
                     {
-                        LogMessage("Disabling MSBooster since the reporter ion mode is {0}", options.ReporterIonMode);
-                        options.RunMSBooster = false;
+                        if (options.ReporterIonMode is ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11)
+                        {
+                            LogMessage("Running MSBooster since it supports reporter ion mode {0}", options.ReporterIonMode);
+                        }
+                        else
+                        {
+                            LogMessage("Disabling MSBooster since the reporter ion mode is {0}", options.ReporterIonMode);
+                            options.RunMSBooster = false;
+                        }
                     }
                     else if (options.FraggerOptions.OpenSearch)
                     {
                         LogMessage("Disabling MSBooster since running an open search");
                         options.RunMSBooster = false;
                     }
-                    else
+
+                    if (options.RunMSBooster)
                     {
                         var msBoosterSuccess = RunMSBooster(dataPackageInfo, datasetIDsByExperimentGroup, options, paramFilePath);
 
@@ -1002,6 +1010,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 writer.WriteLine("useRT = true");
                 writer.WriteLine("useSpectra = true");
                 writer.WriteLine("fragger = {0}", paramFilePath);
+
+                // ReSharper disable once StringLiteralTypo
+                writer.WriteLine("deletePreds = false");
+
                 writer.WriteLine("mzmlDirectory = {0}", mWorkingDirectory.FullName);
                 writer.WriteLine("pinPepXMLDirectory = {0}", string.Join(" ", pinFiles));
                 writer.WriteLine("useMultipleCorrelatedFeatures = false");
