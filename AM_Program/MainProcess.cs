@@ -1117,6 +1117,7 @@ namespace AnalysisManagerProg
 
             // Close out the job
             mStatusTools.UpdateAndWrite(MgrStatusCodes.RUNNING, TaskStatusCodes.CLOSING, TaskStatusDetailCodes.CLOSING, 100);
+
             try
             {
                 ShowTrace("Task completed successfully; closing the job step task");
@@ -1140,9 +1141,13 @@ namespace AnalysisManagerProg
 
                 // Close out the job as a success
                 // Examine toolRunner.Message to determine if we should use it as the completion message
+
+                // Prior to March 2023, we only updated the completion message if toolRunner.Message started with "Calibration failed"
+                // The current behavior is to always update the completion message, but certain messages may be excluded in the future
+
                 string compMsg;
 
-                if (toolRunner.Message.StartsWith("Calibration failed"))
+                if (!toolRunner.Message.StartsWith("Future tool runner message to ignore"))
                 {
                     compMsg = toolRunner.Message;
                 }
