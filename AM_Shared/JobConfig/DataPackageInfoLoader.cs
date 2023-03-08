@@ -183,6 +183,9 @@ namespace AnalysisManagerBase.JobConfig
                 callingClass.LogMessage("Auto defining MSFragger experiment group names using experiment names");
             }
 
+            var autoDefinedExperimentGroupCount = 0;
+            var customNameExperimentGroupCount = 0;
+
             foreach (DataRow curRow in resultSet.Rows)
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
@@ -196,11 +199,16 @@ namespace AnalysisManagerBase.JobConfig
                     if (autoDefineExperimentGroupWithDatasetName)
                     {
                         datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset;
+                        autoDefinedExperimentGroupCount++;
                     }
                     else if (autoDefineExperimentGroupWithExperimentName)
                     {
                         datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
+                        autoDefinedExperimentGroupCount++;
                     }
+                } else if (!string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup))
+                {
+                    customNameExperimentGroupCount++;
                 }
 
                 if (!dataPackageDatasets.ContainsKey(datasetInfo.DatasetID))
@@ -211,9 +219,26 @@ namespace AnalysisManagerBase.JobConfig
 
             if (dataPackageDatasets.Count == 0)
             {
-                callingClass.LogError(string.Format("No datasets were found using view V_DMS_Data_Package_Datasets for data package ID {0}", dataPackageID));
+                callingClass.LogError(string.Format("No datasets were found for data package ID {0} using view V_DMS_Data_Package_Datasets", dataPackageID));
                 return false;
             }
+
+            if (customNameExperimentGroupCount == 0)
+            {
+                return true;
+            }
+
+            if (dataPackageDatasets.Count == 1)
+            {
+                callingClass.LogMessage(string.Format("Dataset ID {0} had a custom experiment group defined in the dataset's 'Package Comment' field", dataPackageDatasets[0].DatasetID));
+                return true;
+            }
+
+            var datasetDescription = customNameExperimentGroupCount == dataPackageDatasets.Count
+                ? string.Format("All {0} datasets", dataPackageDatasets.Count)
+                : string.Format("{0} / {1} datasets", customNameExperimentGroupCount, dataPackageDatasets.Count);
+
+            callingClass.LogMessage(string.Format("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription));
 
             return true;
         }
