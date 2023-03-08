@@ -2473,10 +2473,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, out datasetCount);
 
-                    // v18:
-                    // arguments.AppendFormat(" --multidir . --filelist {0}", fileListFile.FullName);
+                    if (options.MatchBetweenRuns)
+                    {
+                        arguments.Append(" --multidir .");
+                    }
 
-                    // v19:
                     arguments.AppendFormat(" --filelist {0}", fileListFile.FullName);
 
                     creatingCombinedFile = true;
