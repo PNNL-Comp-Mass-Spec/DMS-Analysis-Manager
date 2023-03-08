@@ -601,15 +601,13 @@ namespace AnalysisManagerBase.AnalysisTool
                     cacheDirectoryPath, toolNameVersionFolder, sourceFilePath, datasetYearQuarter,
                     purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out var remoteCacheFilePath);
 
-                if (!success)
+                if (!success && string.IsNullOrEmpty(mMessage))
                 {
-                    if (string.IsNullOrEmpty(mMessage))
-                    {
-                        LogError(string.Format("CopyFileToServerCache returned false copying the {0} file to {1}",
-                                               Path.GetExtension(sourceFilePath),
-                                               Path.Combine(cacheDirectoryPath, toolNameVersionFolder)));
-                        return string.Empty;
-                    }
+                    LogError(string.Format("CopyFileToServerCache returned false copying the {0} file to {1}",
+                        Path.GetExtension(sourceFilePath),
+                        Path.Combine(cacheDirectoryPath, toolNameVersionFolder)));
+
+                    return string.Empty;
                 }
 
                 return remoteCacheFilePath;
@@ -863,7 +861,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Log this error to the database (the logger will also update the local log file)
                     LogErrorToDatabase("Results directory name is not defined, job " + Job);
-                    mMessage = "Results directory name is not defined";
+                    UpdateStatusMessage("Results directory name is not defined");
 
                     // Without a source directory; there isn't much we can do
                     return false;
@@ -876,7 +874,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     // Log this error to the database
                     LogErrorToDatabase("Results directory not found, " + mJobParams.GetJobStepDescription() + ", directory " + sourceDirectoryPath);
-                    mMessage = "Results directory not found: " + sourceDirectoryPath;
+                    UpdateStatusMessage("Results directory not found: " + sourceDirectoryPath);
 
                     // Without a source directory; there isn't much we can do
                     return false;
@@ -1122,7 +1120,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!success)
             {
                 // MakeResultsDirectory handles posting to local log, so set database error message and exit
-                mMessage = "Error making results directory";
+                UpdateStatusMessage("Error making results directory");
                 return false;
             }
 
@@ -1131,7 +1129,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!moveSucceed)
             {
                 // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
-                mMessage = "Error moving files into results directory";
+                UpdateStatusMessage("Error moving files into results directory");
                 return false;
             }
 
@@ -1173,7 +1171,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (string.IsNullOrEmpty(mResultsDirectoryName))
             {
                 LogError("Results directory name is not defined, " + mJobParams.GetJobStepDescription());
-                mMessage = "Results directory job parameter not defined (OutputFolderName)";
+                UpdateStatusMessage("Results directory job parameter not defined (OutputFolderName)");
                 return string.Empty;
             }
 
@@ -1200,7 +1198,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (string.IsNullOrEmpty(Dataset))
             {
                 LogError("Dataset name is undefined, " + mJobParams.GetJobStepDescription());
-                mMessage = "Dataset name is undefined";
+                UpdateStatusMessage("Dataset name is undefined");
                 return string.Empty;
             }
 
@@ -1465,7 +1463,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 default:
                     // Should never get this value
-                    mMessage = "DeleteRawDataFiles, Invalid RawDataType specified: " + rawDataType;
+                    UpdateStatusMessage("DeleteRawDataFiles, Invalid RawDataType specified: " + rawDataType);
                     return false;
             }
 
@@ -1582,7 +1580,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 // The error has already been logged, but we need to update mMessage
-                mMessage = Global.AppendToComment(mMessage, errorMessage);
+                UpdateStatusMessage(errorMessage);
             }
 
             return progLoc;
@@ -2378,7 +2376,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (success)
                 return CloseOutType.CLOSEOUT_SUCCESS;
 
-            mMessage = paramFileReader.ErrorMessage;
+            UpdateStatusMessage(paramFileReader.ErrorMessage);
 
             return paramFileReader.ParamFileNotFound
                 ? CloseOutType.CLOSEOUT_NO_PARAM_FILE
@@ -3434,11 +3432,11 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (string.IsNullOrWhiteSpace(mSortUtilityErrorMessage))
                 {
-                    mMessage = "Unknown error sorting " + Path.GetFileName(textFilePath);
+                    UpdateStatusMessage("Unknown error sorting " + Path.GetFileName(textFilePath));
                 }
                 else
                 {
-                    mMessage = mSortUtilityErrorMessage;
+                    UpdateStatusMessage(mSortUtilityErrorMessage);
                 }
 
                 return false;
@@ -3714,7 +3712,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                                 if (retriesRemaining < 0)
                                 {
-                                    mMessage = "Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName;
+                                    UpdateStatusMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName);
                                     return false;
                                 }
 
@@ -4027,7 +4025,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <remarks>Text in mMessage will be stored in the Completion_Message column in the database</remarks>
         /// <param name="statusMessage">New status message</param>
         /// <param name="appendToExisting">True to append to mMessage; false to overwrite it</param>
-        protected void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
+        protected void UpdateStatusMessage(string statusMessage, bool appendToExisting = true)
         {
             if (appendToExisting)
             {

@@ -575,7 +575,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         LogMessage(msg);
 
-                        mMessage = Global.AppendToComment(mMessage, msg);
+                        UpdateStatusMessage(msg, true);
                     }
                 }
                 else
@@ -2111,6 +2111,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_RUNTIME_ERROR))
                     {
                         // Clear mMessage so that this text appears at the start of the message:
+                        var existingMessage = mMessage;
+
                         mMessage = string.Empty;
 
                         LogError("Philosopher reported an error while indexing the FASTA file; " +
@@ -2118,6 +2120,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                                  "rename any proteins that start with \"AT\" or \"ZP\" to instead start with \"_AT\" or \"_ZP\", then re-run MSFragger and Philosopher");
 
                         mMessage = Global.AppendToComment(mMessage, mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+
+                        if (!string.IsNullOrWhiteSpace(existingMessage))
+                        {
+                            mMessage = Global.AppendToComment(mMessage, existingMessage);
+                        }
                     }
                     else
                     {
@@ -2567,7 +2574,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             // IonQuant results file not found: mbr_ion.tsv
                             LogWarning(string.Format("IonQuant did not create file {0}; this indicates that insufficient training data could be found and match-between-runs could thus not be performed", mbrIonFile.Name));
 
-                            mEvalMessage = Global.AppendToComment(mEvalMessage, "IonQuant did not create match-between-runs file mbr_ion.tsv");
+                            UpdateStatusMessage("IonQuant did not create match-between-runs file mbr_ion.tsv", true);
                         }
                     }
 

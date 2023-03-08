@@ -142,7 +142,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     if (!string.IsNullOrWhiteSpace(datasetFileRetriever.ErrorMessage))
                     {
-                        mMessage = datasetFileRetriever.ErrorMessage;
+                        UpdateStatusMessage(datasetFileRetriever.ErrorMessage, true);
                     }
 
                     return datasetCopyResult;
@@ -491,7 +491,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             mInsufficientFreeMemory = true;
-            mMessage = "Not enough free memory to run " + programName;
+            UpdateStatusMessage("Not enough free memory to run " + programName, true);
             return false;
         }
     }

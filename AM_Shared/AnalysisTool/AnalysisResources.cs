@@ -1010,7 +1010,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (!targetDirectoryVerified)
                 {
                     LogError(string.Format("Unable to create working directory {0} on host {1}", remoteDirectoryPath, remoteHost));
-                    mMessage = "Unable to create working directory on remote host " + remoteHost;
+                    UpdateStatusMessage("Unable to create working directory on remote host " + remoteHost);
                     return false;
                 }
 
@@ -1030,7 +1030,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 LogError(string.Format("Failure copying {0} files to {1} on host {2}",
                                        filesToCopy.Count, remoteDirectoryPath, remoteHost));
 
-                mMessage = "Failure copying required files to remote host " + remoteHost;
+                UpdateStatusMessage("Failure copying required files to remote host " + remoteHost);
                 return false;
             }
             catch (Exception ex)
@@ -1370,7 +1370,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // Instantiate FASTA tool if not already done
             if (mFastaTools == null && string.IsNullOrWhiteSpace(mFastaToolsCnStr))
             {
-                mMessage = "Protein database connection string not specified";
+                UpdateStatusMessage("Protein database connection string not specified");
                 LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
                 return false;
             }
@@ -1412,7 +1412,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     }
                     else
                     {
-                        mMessage = "Error retrieving protein collection or legacy FASTA file: ";
+                        UpdateStatusMessage("Error retrieving protein collection or legacy FASTA file: ");
 
                         if (ex.Message.Contains("could not open database connection"))
                         {
@@ -1450,11 +1450,11 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (string.IsNullOrWhiteSpace(proteinCollectionInfo.ErrorMessage))
                 {
-                    mMessage = "Unknown error determining the FASTA file or protein collection to use; unable to obtain FASTA file";
+                    UpdateStatusMessage("Unknown error determining the FASTA file or protein collection to use; unable to obtain FASTA file");
                 }
                 else
                 {
-                    mMessage = proteinCollectionInfo.ErrorMessage + "; unable to obtain FASTA file";
+                    UpdateStatusMessage(proteinCollectionInfo.ErrorMessage + "; unable to obtain FASTA file");
                 }
 
                 LogMessage("Error in CreateFastaFile: " + mMessage, 0, true);
@@ -1478,7 +1478,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 legacyFastaToUse = GetSplitFastaFileName(mJobParams, out var errorMessage, out var numberOfClonedSteps);
 
                 if (!string.IsNullOrWhiteSpace(errorMessage))
-                    mMessage = errorMessage;
+                {
+                    UpdateStatusMessage(errorMessage);
+                }
 
                 if (string.IsNullOrEmpty(legacyFastaToUse))
                 {
@@ -1550,7 +1552,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!success)
                 {
-                    mMessage = mSplitFastaFileUtility.ErrorMessage;
+                    UpdateStatusMessage(mSplitFastaFileUtility.ErrorMessage);
                     return false;
                 }
             }
@@ -1623,16 +1625,16 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     if (reMatch.Success)
                     {
-                        mMessage = "Legacy FASTA file not found at " + reMatch.Groups["SourceDirectory"].Value;
+                        UpdateStatusMessage("Legacy FASTA file not found at " + reMatch.Groups["SourceDirectory"].Value);
                     }
                     else
                     {
-                        mMessage = "Legacy FASTA file not found in the organism directory for this job";
+                        UpdateStatusMessage("Legacy FASTA file not found in the organism directory for this job");
                     }
                 }
                 else
                 {
-                    mMessage = "Exception generating OrgDb file";
+                    UpdateStatusMessage("Exception generating OrgDb file");
                 }
 
                 LogError("Exception generating OrgDb file; " + orgDBDescription, ex);
@@ -1743,7 +1745,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!validDirectoryFound && !assumeUnpurged)
             {
-                mMessage = directoryNotFoundMessage;
+                UpdateStatusMessage(directoryNotFoundMessage);
             }
 
             return directoryPath;
@@ -1830,7 +1832,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (!FileSearchTool.RetrieveSpectra(rawDataTypeName))
                 {
                     var extraMsg = mMessage;
-                    mMessage = string.Format("Error retrieving spectra {0}", directoryBasedDataset ? "directory" : "file");
+                    UpdateStatusMessage(string.Format("Error retrieving spectra {0}", directoryBasedDataset ? "directory" : "file"));
 
                     if (!string.IsNullOrWhiteSpace(extraMsg))
                     {
@@ -4392,7 +4394,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 // RetrieveAggregateFiles does not support Split-FASTA jobs, so it does not need NumberOfClonedSteps and thus no need to call RetrieveDataPackagePeptideHitJobInfo
                 if (!LoadDataPackageJobInfo(out dataPackageJobs))
                 {
-                    mMessage = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
+                    UpdateStatusMessage("Error looking up datasets and jobs using LoadDataPackageJobInfo");
                     dataPackageJobs = null;
                     return false;
                 }
@@ -4583,7 +4585,7 @@ namespace AnalysisManagerBase.AnalysisTool
                                     continue;
                                 }
 
-                                mMessage = "Could not find a valid directory with file " + sourceFileName + " for job " + dataPkgJob.Key;
+                                UpdateStatusMessage("Could not find a valid directory with file " + sourceFileName + " for job " + dataPkgJob.Key);
 
                                 if (mDebugLevel >= 1)
                                 {
@@ -4594,7 +4596,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                             if (!mFileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceDirectoryPath, mWorkDir, BaseLogger.LogLevels.ERROR))
                             {
-                                mMessage = "CopyFileToWorkDir returned false for " + sourceFileName + " using directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key;
+                                UpdateStatusMessage("CopyFileToWorkDir returned false for " + sourceFileName + " using directory " + sourceDirectoryPath + " for job " + dataPkgJob.Key);
 
                                 if (mDebugLevel >= 1)
                                 {
@@ -4970,7 +4972,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 if (string.IsNullOrWhiteSpace(mMessage))
                 {
-                    mMessage = "Error retrieving parameter file";
+                    UpdateStatusMessage("Error retrieving parameter file");
                 }
 
                 LogError(mMessage, ex);
@@ -5144,7 +5146,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="statusMessage">New status message</param>
         /// <param name="appendToExisting">True to append to mMessage; false to overwrite it</param>
-        public void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
+        public void UpdateStatusMessage(string statusMessage, bool appendToExisting = true)
         {
             if (appendToExisting)
             {
@@ -5170,7 +5172,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.RemoveSparseSpectra returned false";
+                UpdateStatusMessage("mCDTAUtilities.RemoveSparseSpectra returned false");
             }
 
             return success;
@@ -5196,7 +5198,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.ValidateCDTAFileScanAndCSTags returned false";
+                UpdateStatusMessage("mCDTAUtilities.ValidateCDTAFileScanAndCSTags returned false");
             }
 
             return success;
@@ -5213,7 +5215,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (!success && string.IsNullOrEmpty(mMessage))
             {
-                mMessage = "mCDTAUtilities.ValidateCDTAFileSize returned false";
+                UpdateStatusMessage("mCDTAUtilities.ValidateCDTAFileSize returned false");
             }
 
             return success;
@@ -5271,13 +5273,13 @@ namespace AnalysisManagerBase.AnalysisTool
                     // Less than 80% of the spectra are centroided
                     // Post a message similar to:
                     //   MS-GF+ will likely skip 90% of the spectra because they did not appear centroided
-                    mMessage = "MS-GF+ will likely skip " + ((1 - fractionCentroided) * 100).ToString("0") + "% of the spectra because they do not appear centroided";
+                    UpdateStatusMessage("MS-GF+ will likely skip " + ((1 - fractionCentroided) * 100).ToString("0") + "% of the spectra because they do not appear centroided");
                     LogMessage(mMessage + commentSuffix);
                     return false;
                 }
 
                 // None of the spectra are centroided; unable to process with MS-GF+
-                mMessage = SPECTRA_ARE_NOT_CENTROIDED + " with MS-GF+";
+                UpdateStatusMessage(SPECTRA_ARE_NOT_CENTROIDED + " with MS-GF+");
                 LogMessage(mMessage + commentSuffix, 0, true);
                 return false;
             }
