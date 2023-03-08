@@ -209,6 +209,12 @@ namespace AnalysisManagerBase.JobConfig
                 }
             }
 
+            if (dataPackageDatasets.Count == 0)
+            {
+                callingClass.LogError(string.Format("No datasets were found using view V_DMS_Data_Package_Datasets for data package ID {0}", dataPackageID));
+                return false;
+            }
+
             return true;
         }
 
