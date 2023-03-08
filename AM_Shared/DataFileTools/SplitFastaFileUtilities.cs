@@ -241,7 +241,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// <returns>The path to the file if found; empty string if no match</returns>
         private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
         {
-            const short retryCount = 3;
             const int timeoutSeconds = 120;
 
             var sqlQuery = new System.Text.StringBuilder();
@@ -259,7 +258,7 @@ namespace AnalysisManagerBase.DataFileTools
             var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, timeoutSeconds, debugMode: mTraceMode);
             RegisterEvents(dbTools);
 
-            var success = dbTools.GetQueryResultsDataTable(sqlQuery.ToString(), out var legacyStaticFiles, retryCount);
+            var success = dbTools.GetQueryResultsDataTable(sqlQuery.ToString(), out var legacyStaticFiles);
 
             if (!success)
             {

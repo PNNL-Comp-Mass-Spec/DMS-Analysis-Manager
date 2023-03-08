@@ -1917,7 +1917,7 @@ namespace AnalysisManagerBase.JobConfig
             var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
-            var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
+            var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd);
 
             var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
             var returnCodeValue = Global.GetReturnCodeValue(returnCode);
