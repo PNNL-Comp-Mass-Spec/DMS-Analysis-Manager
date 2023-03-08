@@ -2609,6 +2609,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                                 continue;
 
                             var targetPath = Path.Combine(mWorkingDirectory.FullName, pngFile.Name);
+
+                            if (File.Exists(targetPath))
+                            {
+                                LogWarning(".png file already exists; not replacing {0} with {1}", targetPath, pngFile.FullName);
+                                continue;
+                            }
+
                             pngFile.MoveTo(targetPath);
                         }
                     }
