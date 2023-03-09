@@ -2499,8 +2499,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 arguments.AppendFormat(" --modlist {0}", modMassesFile.FullName);
 
-                mJobParams.AddResultFileToSkip(modMassesFile.Name);
-
                 // ReSharper restore StringLiteralTypo
 
                 InitializeCommandRunner(
