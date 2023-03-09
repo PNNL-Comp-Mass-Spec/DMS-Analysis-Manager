@@ -1229,6 +1229,8 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (!string.IsNullOrWhiteSpace(errorMessage))
                         {
+                            // Example message:
+                            //   Error looking for the mzML file for dataset 51912_Lewis_Bundle_A1: msXML file not found in the source directory(s): MSXML_Gen_1_297
                             OnStatusEvent(
                                 "Error looking for the {0} file for dataset {1}: {2}",
                                 msXmlType, dataPkgDataset.Dataset, errorMessage);
