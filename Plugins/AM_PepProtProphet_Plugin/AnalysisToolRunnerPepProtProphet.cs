@@ -2574,7 +2574,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             // IonQuant results file not found: mbr_ion.tsv
                             LogWarning(string.Format("IonQuant did not create file {0}; this indicates that insufficient training data could be found and match-between-runs could thus not be performed", mbrIonFile.Name));
 
-                            UpdateStatusMessage("IonQuant did not create match-between-runs file mbr_ion.tsv", true);
+                            mEvalMessage = Global.AppendToComment(mEvalMessage, "IonQuant did not create match-between-runs file mbr_ion.tsv");
                         }
                     }
 
