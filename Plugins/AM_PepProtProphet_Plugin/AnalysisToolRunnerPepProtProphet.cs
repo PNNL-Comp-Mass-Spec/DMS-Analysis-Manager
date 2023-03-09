@@ -2527,18 +2527,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    // Confirm that _quant.csv files were created
+                    // IonQuant-1.8.0  (included FragPipe v18) created one _quant.csv file for each dataset
+                    // IonQuant-1.8.10 (included with FragPipe v19) does not create _quant.csv files
+
+                    // Check whether any _quant.csv files were created
                     var quantFiles = mWorkingDirectory.GetFiles("*_quant.csv", SearchOption.AllDirectories);
 
                     if (quantFiles.Length == 0)
                     {
-                        // No _quant.csv files were found, likely between IonQuant could not find enough features in common between datasets
-
-                        // Example warning from IonQuant:
+                        // No _quant.csv files were found
+                        // If IonQuant could not find enough features in common between datasets, this warning will appear in the console output (Java_ConsoleOutput_Combined.txt)
                         //   There are only 2 negative data points in training. We need at least 10
 
                         // Log a warning, but continue processing
-                        LogWarning("IonQuant did not create any _quant.csv files", true);
+                        LogWarning("IonQuant did not create any _quant.csv files, either because of not enough features in common, or because a newer version that does not create _quant.csv files");
                     }
 
                     // Confirm that the output files were created
