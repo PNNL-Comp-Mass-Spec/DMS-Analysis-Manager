@@ -460,7 +460,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (int.TryParse(value, out var parsedInteger))
                 return parsedInteger != 0;
 
-            OnWarningEvent("Parameter {0} should be True, False, 1, 0, or Auto, but it is {1}", parameterName, value);
+            OnWarningEvent("Job parameter {0} should be True, False, 1, 0, or Auto, but it is {1}", parameterName, value);
             return defaultValue;
         }
 
