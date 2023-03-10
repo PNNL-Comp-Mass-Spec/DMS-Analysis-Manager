@@ -2902,6 +2902,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // v19
                 // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
 
+                // Note that with FragPipe v19, MSBooster is calling DiaNN.exe with a TMT mod mass, even for parameter files that do not have TMT as a mod mass
+
+                // Java console output shows these arguments being used on the command line for job 2163338
+                //   DiaNN.exe --lib D:\DMS_WorkDir4\51912_Lewis_nanoPOTS_Set1_Inner_Vascicular_Bundle_A1\spectraRT.tsv --predict --threads 4 --strip-unknown-mods --mod TMT,229.1629 --predict-n-frag 100
+
+                // Contrast with job 2144860
+                //   DiaNN.exe --lib D:\DMS_WorkDir4\51912_Lewis_nanoPOTS_Set1_Inner_Vascicular_Bundle_A1\spectraRT.tsv --predict --threads 4 --strip-unknown-mods
+
+                // Java console output for job 2163338 also shows this:
+                //	 Modification TMT with mass delta 229.163 added to the list of recognised modifications for spectral library-based search
+                //	 Deep learning predictor will predict 100 fragments
+                //	 Cannot find a UniMod modification match for TMT: 73.0618 minimal mass discrepancy; using the original modificaiton name
+
                 // Find the MSBooster jar file
                 if (!options.LibraryFinder.FindJarFileMSBooster(out var jarFileMSBooster))
                     return false;
