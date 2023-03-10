@@ -79,6 +79,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIonQuant => FraggerOptions.RunIonQuant;
 
         /// <summary>
+        /// Whether to run LabelQuant to quantify reporter ions; ignored if <see cref="ReporterIonMode"/> is ReporterIonModes.Disabled
+        /// </summary>
+        /// <remarks>
+        /// If this is false, will also not run TMT-Integrator
+        /// </remarks>
+        public bool RunLabelQuant { get; set; }
+
+        /// <summary>
         /// Whether or not to run iProphet
         /// </summary>
         /// <remarks>
@@ -237,6 +245,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     SetMS1QuantOptions(runFreeQuantJobParam, runIonQuantJobParam);
                 }
+            }
+
+            var runLabelQuantJobParam = jobParams.GetJobParameter("RunLabelQuant", string.Empty);
+
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (FraggerOptions.IsUndefinedOrAuto(runLabelQuantJobParam))
+            {
+                RunLabelQuant = true;
+            }
+            else
+            {
+                RunLabelQuant = FraggerOptions.GetParameterValueOrDefault("RunLabelQuant", true);
             }
 
             RunPTMShepherd = FraggerOptions.GetParameterValueOrDefault("RunPTMShepherd", true);

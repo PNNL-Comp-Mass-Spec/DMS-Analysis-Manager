@@ -535,7 +535,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
                     var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
 
@@ -611,7 +611,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.IonQuantComplete;
                 }
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
                     var tmtIntegratorSuccess = RunTmtIntegrator(experimentGroupWorkingDirectories, options);
 
