@@ -535,14 +535,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
-                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.ReporterIonMode != ReporterIonModes.Disabled)
                 {
-                    var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
+                    if (!options.RunLabelQuant)
+                    {
+                        LogMessage("Skipped LabelQuant and TMT-Integrator since job parameter RunLabelQuant is false");
+                        UpdateStatusMessage("Skipped LabelQuant and TMT-Integrator");
+                    }
+                    else
+                    {
+                        var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
 
-                    if (!labelQuantSuccess)
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        if (!labelQuantSuccess)
+                            return CloseOutType.CLOSEOUT_FAILED;
 
-                    mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
+                        mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
+                    }
                 }
 
                 var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
