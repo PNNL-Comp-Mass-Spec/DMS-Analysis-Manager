@@ -418,7 +418,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     if (options.ReporterIonMode != ReporterIonModes.Disabled)
                     {
-                        if (options.ReporterIonMode is ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11)
+                        if (options.ReporterIonMode is ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11)
                         {
                             LogMessage("Running MSBooster since it supports reporter ion mode {0}", options.ReporterIonMode);
                         }
@@ -2911,6 +2911,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
 
                 // Note that with FragPipe v19, MSBooster is calling DiaNN.exe with a TMT mod mass, even for parameter files that do not have TMT as a mod mass
+                // This is "by design", as confirmed at https://github.com/Nesvilab/FragPipe/issues/1031
+                // However, note that Dia-NN only supports TMT 6/10/11, not TMT 16 or TMT 18
 
                 // Java console output shows these arguments being used on the command line for job 2163338
                 //   DiaNN.exe --lib D:\DMS_WorkDir4\51912_Lewis_nanoPOTS_Set1_Inner_Vascicular_Bundle_A1\spectraRT.tsv --predict --threads 4 --strip-unknown-mods --mod TMT,229.1629 --predict-n-frag 100
@@ -2922,6 +2924,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 //	 Modification TMT with mass delta 229.163 added to the list of recognised modifications for spectral library-based search
                 //	 Deep learning predictor will predict 100 fragments
                 //	 Cannot find a UniMod modification match for TMT: 73.0618 minimal mass discrepancy; using the original modificaiton name
+
+                // These warnings can safely be ignored
 
                 // Find the MSBooster jar file
                 if (!options.LibraryFinder.FindJarFileMSBooster(out var jarFileMSBooster))
