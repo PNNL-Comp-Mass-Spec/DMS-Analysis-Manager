@@ -57,19 +57,19 @@ namespace AnalysisManagerMSFraggerPlugIn
         public bool MS1ValidationModeAutoDefined { get; set; }
 
         /// <summary>
-        /// Dictionary of static modifications
+        /// Dictionary of static modifications, by residue or position
         /// </summary>
         /// <remarks>
-        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
-        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
+        /// <para>Keys are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PROTEIN"/></para> and similar constants)
         /// </remarks>
         public Dictionary<string, SortedSet<double>> StaticModifications { get; }
 
         /// <summary>
-        /// Dictionary of variable (dynamic) modifications
+        /// Dictionary of variable (dynamic) modifications, by residue or position
         /// </summary>
         /// <remarks>
-        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
         /// <para>Keys can alternatively be symbols indicating N or C terminal peptide or protein (e.g., [^ for protein N-terminus or n^ for peptide N-terminus)</para>
         /// </remarks>
         public Dictionary<string, SortedSet<double>> VariableModifications { get; }
@@ -124,9 +124,18 @@ namespace AnalysisManagerMSFraggerPlugIn
             parametersToValidate.Add(parameterName, new IntegerParameter(parameterName, minValue, maxValue, required));
         }
 
-        private void AppendModificationMass(IDictionary<string, SortedSet<double>> modificationList, string residueOrPositionName, double modificationMass)
+        /// <summary>
+        /// Add a static or dynamic modification to the modificationsByResidue dictionary
+        /// </summary>
+        /// <param name="modificationsByResidue">Dictionary of modifications, by residue or position</param>
+        /// <param name="residueOrPositionName"></param>
+        /// <param name="modificationMass"></param>
+        private void AppendModificationMass(
+            IDictionary<string, SortedSet<double>> modificationsByResidue,
+            string residueOrPositionName,
+            double modificationMass)
         {
-            if (modificationList.TryGetValue(residueOrPositionName, out var modMasses))
+            if (modificationsByResidue.TryGetValue(residueOrPositionName, out var modMasses))
             {
                 if (!modMasses.Contains(modificationMass))
                     modMasses.Add(modificationMass);
@@ -134,7 +143,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return;
             }
 
-            modificationList.Add(residueOrPositionName, new SortedSet<double> { modificationMass });
+            modificationsByResidue.Add(residueOrPositionName, new SortedSet<double> { modificationMass });
         }
 
         // ReSharper disable CommentTypo
@@ -315,20 +324,20 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Examine the MSFragger parameters to determine the static and dynamic (variable) modifications
         /// </summary>
         /// <remarks>
-        /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys in the output dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
         /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
         /// </remarks>
         /// <param name="paramFileEntries"></param>
-        /// <param name="staticModifications">Output: dictionary of static modifications</param>
-        /// <param name="variableModifications">Output: dictionary of dynamic modifications</param>
+        /// <param name="staticModsByResidue">Output: dictionary of static modifications, by residue or position</param>
+        /// <param name="variableModsByResidue">Output: dictionary of dynamic modifications, by residue or position</param>
         /// <returns>True if modifications were successfully parsed, false if an error</returns>
         private bool GetMSFraggerModifications(
             IEnumerable<KeyValuePair<string, string>> paramFileEntries,
-            out Dictionary<string, SortedSet<double>> staticModifications,
-            out Dictionary<string, SortedSet<double>> variableModifications)
+            out Dictionary<string, SortedSet<double>> staticModsByResidue,
+            out Dictionary<string, SortedSet<double>> variableModsByResidue)
         {
-            staticModifications = new Dictionary<string, SortedSet<double>>();
-            variableModifications = new Dictionary<string, SortedSet<double>>();
+            staticModsByResidue = new Dictionary<string, SortedSet<double>>();
+            variableModsByResidue = new Dictionary<string, SortedSet<double>>();
 
             // ReSharper disable StringLiteralTypo
 
@@ -365,7 +374,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (modMass != 0)
                     {
-                        AppendModificationMass(staticModifications, staticModParameter.Value, modMass);
+                        AppendModificationMass(staticModsByResidue, staticModParameter.Value, modMass);
                     }
 
                     matchFound = true;
@@ -385,7 +394,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (modMass != 0)
                     {
-                        AppendModificationMass(staticModifications, aminoAcidSymbol, modMass);
+                        AppendModificationMass(staticModsByResidue, aminoAcidSymbol, modMass);
                     }
 
                     matchFound = true;
@@ -411,7 +420,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 foreach (var residue in affectedResidues)
                 {
-                    AppendModificationMass(variableModifications, residue, dynamicModMass);
+                    AppendModificationMass(variableModsByResidue, residue, dynamicModMass);
                 }
             }
 
@@ -527,23 +536,23 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 var validMods = GetMSFraggerModifications(
                     paramFileEntries,
-                    out var staticModifications,
-                    out var variableModifications);
+                    out var staticModsByResidue,
+                    out var variableModsByResidue);
 
                 if (!validMods)
                     return false;
 
-                foreach (var item in staticModifications)
+                foreach (var item in staticModsByResidue)
                 {
                     StaticModifications.Add(item.Key, item.Value);
                 }
 
-                foreach (var item in variableModifications)
+                foreach (var item in variableModsByResidue)
                 {
                     VariableModifications.Add(item.Key, item.Value);
                 }
 
-                var reporterIonModeSuccess = DetermineReporterIonMode(staticModifications, variableModifications, out var reporterIonMode);
+                var reporterIonModeSuccess = DetermineReporterIonMode(staticModsByResidue, variableModsByResidue, out var reporterIonMode);
 
                 if (!reporterIonModeSuccess)
                 {
