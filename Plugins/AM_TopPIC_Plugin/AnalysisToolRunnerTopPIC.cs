@@ -739,18 +739,18 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                     else if (Global.IsMatch(kvSetting.Key, "NTerminalProteinForms"))
                     {
-                        if (!string.IsNullOrWhiteSpace(paramValue))
+                        if (string.IsNullOrWhiteSpace(paramValue))
+                            continue;
+
+                        // Assure the N-terminal protein forms list has no spaces
+                        if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
                         {
-                            // Assure the N-terminal protein forms list has no spaces
-                            if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
-                            {
-                                cmdLineOptions += " --" + argumentName + " " + kvSetting.Value.Replace(" ", "");
-                            }
-                            else
-                            {
-                                LogError("Parameter to argument mapping dictionary does not have NTerminalProteinForms");
-                                return CloseOutType.CLOSEOUT_FAILED;
-                            }
+                            cmdLineOptions += " --" + argumentName + " " + kvSetting.Value.Replace(" ", "");
+                        }
+                        else
+                        {
+                            LogError("Parameter to argument mapping dictionary does not have NTerminalProteinForms");
+                            return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 } // for
