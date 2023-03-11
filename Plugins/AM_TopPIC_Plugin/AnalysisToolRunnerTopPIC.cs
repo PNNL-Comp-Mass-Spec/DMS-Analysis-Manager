@@ -1546,19 +1546,26 @@ namespace AnalysisManagerTopPICPlugIn
         /// Validates the modification definition text
         /// </summary>
         /// <remarks>A valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        /// <param name="mod">Modification definition</param>
+        /// <param name="modificationDefinition">Modification definition</param>
         /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
-        private bool ValidateMod(string mod, out string modClean)
+        private bool ValidateMod(string modificationDefinition, out string modClean)
         {
             modClean = string.Empty;
 
-            var poundIndex = mod.IndexOf('#');
+            var poundIndex = modificationDefinition.IndexOf('#');
 
+            string mod;
+
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
             if (poundIndex > 0)
             {
                 // comment = mod.Substring(poundIndex);
-                mod = mod.Substring(0, poundIndex - 1).Trim();
+                mod = modificationDefinition.Substring(0, poundIndex - 1).Trim();
+            }
+            else
+            {
+                mod = modificationDefinition.Trim();
             }
 
             var splitMod = mod.Split(',');
