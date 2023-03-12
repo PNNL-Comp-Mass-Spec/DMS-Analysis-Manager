@@ -317,7 +317,6 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (residueOrPosition.Length == 1)
                 {
-
                     if (!aminoAcidSymbols.Contains(residueOrPosition) && !residueOrPosition.Equals(N_TERM_PEPTIDE))
                     {
                         OnWarningEvent(
@@ -346,6 +345,45 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 currentChars.Clear();
             }
+        }
+
+        private bool ConvertParameterListToDictionary(
+            List<KeyValuePair<string, string>> paramFileEntries,
+            out Dictionary<string, string> paramFileSettings)
+        {
+            // Populate a dictionary with the parameters (ignoring StaticMod and DynamicMod since those can appear more than once)
+            var parametersToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "StaticMod",
+                "DynamicMod"
+            };
+
+            return ConvertParameterListToDictionary(paramFileEntries, parametersToSkip, out paramFileSettings);
+        }
+
+        private bool ConvertParameterListToDictionary(
+            List<KeyValuePair<string, string>> paramFileEntries,
+            ICollection<string> parametersToSkip,
+            out Dictionary<string, string> paramFileSettings)
+        {
+            paramFileSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var parameter in paramFileEntries)
+            {
+                if (parametersToSkip.Contains(parameter.Key))
+                    continue;
+
+                if (paramFileSettings.ContainsKey(parameter.Key))
+                {
+                    OnErrorEvent("Parameter file setting {0} is defined more than once", parameter.Key);
+                    return false;
+                }
+
+                paramFileSettings.Add(parameter.Key, parameter.Value);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -484,7 +522,7 @@ namespace AnalysisManagerDiaNNPlugIn
         }
 
         /// <summary>
-        /// Parse the MSFragger parameter file to determine certain processing options
+        /// Parse the DIA-NN parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
         /// <param name="paramFilePath"></param>
@@ -521,16 +559,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (!validMods)
                     return false;
 
+                StaticModDefinitions.AddRange(staticModDefinitions);
 
-                foreach (var item in staticModDefinitions)
-                {
-                    StaticModDefinitions.Add(item);
-                }
-
-                foreach (var item in dynamicModDefinitions)
-                {
-                    DynamicModDefinitions.Add(item);
-                }
+                DynamicModDefinitions.AddRange(dynamicModDefinitions);
 
                 foreach (var item in staticModsByResidue)
                 {
@@ -542,25 +573,10 @@ namespace AnalysisManagerDiaNNPlugIn
                     DynamicModifications.Add(item.Key, item.Value);
                 }
 
-                // Populate a dictionary with the parameters
-                var paramFileSettings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var validParameters = ConvertParameterListToDictionary(paramFileEntries, out var paramFileSettings);
 
-                foreach (var parameter in paramFileEntries)
-                {
-                    if (parameter.Key.Equals("StaticMod", StringComparison.OrdinalIgnoreCase) ||
-                        parameter.Key.Equals("StaticMod", StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    if (paramFileSettings.ContainsKey(parameter.Key))
-                    {
-                        OnErrorEvent("Parameter file setting {0} is defined more than once; aborting", parameter.Key);
-                        return false;
-                    }
-
-                    paramFileSettings.Add(parameter.Key, parameter.Value);
-                }
+                if (!validParameters)
+                    return false;
 
                 DeepLearningPredictor = GetParameterValueOrDefault(paramFileSettings, "DeepLearningPredictor", DeepLearningPredictor);
 
@@ -632,13 +648,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogLevel = GetParameterValueOrDefault(paramFileSettings, "LogLevel", LogLevel);
 
-
-
                 return true;
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in LoadMSFraggerOptions", ex);
+                OnErrorEvent("Error in LoadDiaNNOptions", ex);
                 return false;
             }
         }
@@ -714,6 +728,61 @@ namespace AnalysisManagerDiaNNPlugIn
             modInfo = new ModificationInfo(modificationType, modDefinitionClean.ToString(), modificationName, modificationMass, affectedResidues, isFixedLabelMod);
 
             return true;
+        }
+
+        public bool ValidateDiaNNOptions(FileInfo paramFile)
+        {
+            try
+            {
+                if (!paramFile.Exists)
+                {
+                    OnErrorEvent("DIA-NN parameter file not found: " + paramFile.FullName);
+                    return false;
+                }
+
+                var paramFileReader = new KeyValueParamFileReader("DIA-NN", paramFile.DirectoryName, paramFile.Name);
+                RegisterEvents(paramFileReader);
+
+                var paramFileLoaded = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries, true);
+
+                if (!paramFileLoaded)
+                {
+                    return false;
+                }
+
+                var validParameters = ConvertParameterListToDictionary(paramFileEntries, out var paramFileSettings);
+                if (!validParameters)
+                    return false;
+
+                var existingSpectralLibrary = GetParameterValueOrDefault(paramFileSettings, "ExistingSpectralLibrary", string.Empty);
+                var createSpectraLibraryDefault= GetParameterValueOrDefault(paramFileSettings, "CreateSpectralLibrary", false);
+
+                if (createSpectraLibraryDefault && !string.IsNullOrWhiteSpace(existingSpectralLibrary))
+                {
+                    OnErrorEvent("The parameter file has an existing spectral library defined; it should not have CreateSpectralLibrary set to true: {0}", paramFile.Name);
+                    return false;
+                }
+
+                if (!createSpectraLibraryDefault && string.IsNullOrWhiteSpace(existingSpectralLibrary))
+                {
+                    OnErrorEvent("The parameter file has CreateSpectralLibrary set to false, but ExistingSpectralLibrary is not defined: {0}", paramFile.Name);
+                    return false;
+                }
+
+                var proteinInferenceMode = GetParameterValueOrDefault(paramFileSettings, "ProteinInferenceMode", (int)ProteinInferenceMode);
+
+                if (!Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
+                {
+                    OnErrorEvent("The parameter file has an invalid value for ProteinInferenceMode: {0}", paramFile.Name);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in ValidateDiaNNOptions", ex);
+                return false;
+            }
         }
     }
 }
