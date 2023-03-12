@@ -22,7 +22,7 @@ using PRISM.AppSettings;
 namespace AnalysisManagerMSFraggerPlugIn
 {
     /// <summary>
-    /// Class for running MSFragger analysis
+    /// Class for running MSFragger
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSFragger : AnalysisToolRunnerBase
@@ -50,6 +50,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             MSFraggerComplete = 90,
             ProcessingComplete = 99
         }
+
         private bool mToolVersionWritten;
 
         // Populate this with a tool version reported to the console

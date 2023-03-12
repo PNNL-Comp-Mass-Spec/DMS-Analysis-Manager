@@ -117,7 +117,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // In contrast, MaxQuant can work with either .raw files, .mzML files, or .mzXML files
                 const bool retrieveMsXmlFiles = true;
 
-                // Retrieve FASTA file
+                // Retrieve the FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;

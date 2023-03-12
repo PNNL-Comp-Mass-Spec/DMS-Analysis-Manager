@@ -47,6 +47,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         internal const string PROTEIN_NAME_AND_DESCRIPTION_REGEX = ">(.*)";
 
         private string mMaxQuantProgLoc;
+
         private string mConsoleOutputErrorMsg;
 
         private string mLocalFASTAFilePath;

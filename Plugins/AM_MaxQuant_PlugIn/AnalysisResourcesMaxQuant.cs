@@ -157,7 +157,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT;
                 }
 
-                // Retrieve FASTA file
+                // Retrieve the FASTA file
                 var orgDbDirectoryPath = mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
