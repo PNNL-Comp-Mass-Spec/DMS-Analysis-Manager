@@ -29,6 +29,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private const string DIA_NN_EXE_NAME = "diann.exe";
 
+        /// <summary>
+        /// Progress value to use when preparing to run DIA-NN
+        /// </summary>
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
         private enum ProgressPercentValues
@@ -142,6 +145,8 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             if (options.MatchBetweenRuns && datasetCount > 1)
             {
+                // ReSharper disable once StringLiteralTypo
+
                 // Enable Match-Between-Runs
                 arguments.Append(" --reanalyse");
             }

@@ -8,12 +8,25 @@ using PRISM.AppSettings;
 
 namespace AnalysisManagerDiaNNPlugIn
 {
+    /// <summary>
+    /// Post translational modification types
+    /// </summary>
     public enum ModificationTypes
     {
+        /// <summary>
+        /// Dynamic (variable) modification
+        /// </summary>
         Dynamic = 0,
+
+        /// <summary>
+        /// Static (fixed) modification
+        /// </summary>
         Static = 1
     }
 
+    /// <summary>
+    /// Protein inference modes
+    /// </summary>
     public enum ProteinInferenceModes
     {
         /// <summary>
@@ -32,6 +45,9 @@ namespace AnalysisManagerDiaNNPlugIn
         Genes = 2
     }
 
+    /// <summary>
+    /// Class for tracking DIA-NN options
+    /// </summary>
     public class DiaNNOptions : EventNotifier
     {
         private const string N_TERM_PEPTIDE = "n";
@@ -156,7 +172,7 @@ namespace AnalysisManagerDiaNNPlugIn
         // Parameters that control identifying peptides in DIA spectra
 
         /// <summary>
-        /// Existing spectral library to use (overrides the in-silico digestion based spectral library)
+        /// Existing spectral library to use (overrides the spectral library created via an in-silico digest of the FASTA file)
         /// </summary>
         public string ExistingSpectralLibrary { get; set; } = string.Empty;
 
@@ -503,6 +519,7 @@ namespace AnalysisManagerDiaNNPlugIn
             OnWarningEvent("Job parameter {0} should be a number, but it is {1}", parameterName, value);
             return defaultValue;
         }
+
         private double GetParameterValueOrDefault(IReadOnlyDictionary<string, string> paramFileSettings, string parameterName, double defaultValue)
         {
             if (!paramFileSettings.TryGetValue(parameterName, out var value))
