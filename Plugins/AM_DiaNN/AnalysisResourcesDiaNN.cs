@@ -66,7 +66,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 var options = new DiaNNOptions();
                 RegisterEvents(options);
 
-                if (!options.ValidateDiaNNOptions(paramFile))
+                options.LoadDiaNNOptions(paramFile.FullName);
+
+                if (!options.ValidateDiaNNOptions(out var spectralLibraryFile))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

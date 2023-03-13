@@ -37,6 +37,12 @@ namespace AnalysisManagerDiaNNPlugIn
         private const string N_TERM_PEPTIDE = "n";
         private const string N_TERM_PROTEIN = "*n";
 
+        /// <summary>
+        /// Parameter file path for DIA-NN options tracked by this class
+        /// </summary>
+        /// <remarks>Updated when method <see cref="LoadDiaNNOptions"/> is used to read a parameter file</remarks>
+        public string ParameterFilePath { get; private set; } = string.Empty;
+
         // Parameters that control in-silico spectral library generation
 
         /// <summary>
@@ -551,6 +557,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             try
             {
+                // Note that ParseKeyValueParameterFile will log an error if the parameter file is not found
                 var paramFile = new FileInfo(paramFilePath);
 
                 var paramFileReader = new KeyValueParamFileReader("DIA-NN", paramFile.DirectoryName, paramFile.Name);
@@ -562,6 +569,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 {
                     return false;
                 }
+
+                ParameterFilePath = paramFile.FullName;
 
                 var validMods = GetDiaNNModifications(
                     paramFileEntries,
@@ -743,13 +752,29 @@ namespace AnalysisManagerDiaNNPlugIn
             return true;
         }
 
-        public bool ValidateDiaNNOptions(FileInfo paramFile)
+        /// <summary>
+        /// Validate options loaded from a DIA-NN parameter file
+        /// </summary>
+        /// <remarks>Call <see cref="LoadDiaNNOptions"/> before calling this method</remarks>
+        /// <param name="spectralLibraryFile">Output: existing spectral library to use, or null if not using an existing file</param>
+        /// <returns>True if the parameter file is valid, otherwise false</returns>
+        public bool ValidateDiaNNOptions(out FileInfo spectralLibraryFile)
         {
             try
             {
+                if (string.IsNullOrWhiteSpace(ParameterFilePath))
+                {
+                    OnErrorEvent("Call method LoadDiaNNOptions() before calling method ValidateDiaNNOptions()");
+                    spectralLibraryFile = null;
+                    return false;
+                }
+
+                var paramFile = new FileInfo(ParameterFilePath);
+
                 if (!paramFile.Exists)
                 {
                     OnErrorEvent("DIA-NN parameter file not found: " + paramFile.FullName);
+                    spectralLibraryFile = null;
                     return false;
                 }
 
