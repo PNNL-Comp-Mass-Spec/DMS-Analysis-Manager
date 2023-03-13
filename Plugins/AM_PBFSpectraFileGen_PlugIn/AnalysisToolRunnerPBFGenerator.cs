@@ -92,6 +92,7 @@ namespace AnalysisManagerPBFGenerator
                             mPbfFormatVersion = string.Empty;
 
                         var knownVersion = true;
+                        string expectedResultsDirectoryPrefix;
 
                         switch (mPbfFormatVersion)
                         {
@@ -99,25 +100,34 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5311
                                 // Make sure the output folder starts with PBF_Gen_1_191
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="110569"/>)
-                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_191"))
+
+                                expectedResultsDirectoryPrefix = "PBF_Gen_1_191";
+
+                                if (!mResultsDirectoryName.StartsWith(expectedResultsDirectoryPrefix))
                                 {
                                     processingSuccess = false;
                                 }
                                 break;
+
                             case "150604":
                                 // This version is created by Pbf_Gen.exe v1.0.5367
                                 // Make sure the output folder starts with PBF_Gen_1_193
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150604"/>)
-                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_193"))
+                                expectedResultsDirectoryPrefix = "PBF_Gen_1_193";
+
+                                if (!mResultsDirectoryName.StartsWith(expectedResultsDirectoryPrefix))
                                 {
                                     processingSuccess = false;
                                 }
                                 break;
+
                             case "150605":
                                 // This version is created by Pbf_Gen.exe v1.0.6526
                                 // Make sure the output folder starts with PBF_Gen_1_214
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150605"/>)
-                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_214"))
+                                expectedResultsDirectoryPrefix = "PBF_Gen_1_214";
+
+                                if (!mResultsDirectoryName.StartsWith(expectedResultsDirectoryPrefix))
                                 {
                                     processingSuccess = false;
                                 }
@@ -127,13 +137,17 @@ namespace AnalysisManagerPBFGenerator
                                 // This version is created by Pbf_Gen.exe v1.0.5714
                                 // Make sure the output folder starts with PBF_Gen_1_243
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150608"/>)
-                                if (!mResultsDirectoryName.StartsWith("PBF_Gen_1_243"))
+                                expectedResultsDirectoryPrefix = "PBF_Gen_1_243";
+
+                                if (!mResultsDirectoryName.StartsWith(expectedResultsDirectoryPrefix))
                                 {
                                     processingSuccess = false;
                                 }
                                 break;
 
                             default:
+                                expectedResultsDirectoryPrefix = "?undefined?";
+
                                 processingSuccess = false;
                                 knownVersion = false;
                                 break;
@@ -143,22 +157,27 @@ namespace AnalysisManagerPBFGenerator
                         {
                             if (knownVersion)
                             {
-                                LogError("Unrecognized PbfFormatVersion.  Either create a new Settings file with PbfFormatVersion " + mPbfFormatVersion +
-                                         " or update the version listed in the current, default settings file;" +
-                                         " next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)");
+                                LogError(string.Format(
+                                    "Unrecognized results directory prefix (starts with {0} instead of {1}). " +
+                                    "Either create a new Settings file with PbfFormatVersion {2} or update the version listed in the current, default settings file; " +
+                                    "next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)",
+                                    mResultsDirectoryName, expectedResultsDirectoryPrefix, mPbfFormatVersion));
                             }
                             else
                             {
-                                LogError("Unrecognized PbfFormatVersion. Update file AnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin " +
-                                         "of the Analysis Manager to add version " + mPbfFormatVersion + "; next, reset the failed job step");
+                                LogError(string.Format(
+                                    "Unrecognized PbfFormatVersion. " +
+                                    "Update file AnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin of the Analysis Manager to add version {0}; " +
+                                    "next, reset the failed job step",
+                                    mPbfFormatVersion));
                             }
                         }
                         else
                         {
                             // Copy the .pbf file to the MSXML cache
-                            var remoteCachefilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
+                            var remoteCacheFilePath = CopyFileToServerCache(mMSXmlCacheFolder.FullName, resultsFile.FullName, purgeOldFilesIfNeeded: true);
 
-                            if (string.IsNullOrEmpty(remoteCachefilePath))
+                            if (string.IsNullOrEmpty(remoteCacheFilePath))
                             {
                                 if (string.IsNullOrEmpty(mMessage))
                                 {
@@ -171,7 +190,7 @@ namespace AnalysisManagerPBFGenerator
                             var cacheInfoFilePath = resultsFile.FullName + "_CacheInfo.txt";
                             using (var writer = new StreamWriter(new FileStream(cacheInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                             {
-                                writer.WriteLine(remoteCachefilePath);
+                                writer.WriteLine(remoteCacheFilePath);
                             }
 
                             mJobParams.AddResultFileToSkip(resultsFile.Name);
@@ -311,9 +330,7 @@ namespace AnalysisManagerPBFGenerator
                             if (dataLineLCase.StartsWith("PbfFormatVersion:".ToLower()))
                             {
                                 // Parse out the version number
-                                var version = dataLine.Substring("PbfFormatVersion:".Length).Trim();
-
-                                mPbfFormatVersion = version;
+                                mPbfFormatVersion = dataLine.Substring("PbfFormatVersion:".Length).Trim();
                             }
                         }
                     }
