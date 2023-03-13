@@ -704,6 +704,7 @@ namespace AnalysisManagerBase.JobConfig
             return toolRunnerResult is
                        CloseOutType.CLOSEOUT_SUCCESS or
                        CloseOutType.CLOSEOUT_NO_DATA or
+                       CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB or
                        CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT or
                        CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN or
                        CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;

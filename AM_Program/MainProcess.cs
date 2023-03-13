@@ -2774,6 +2774,7 @@ namespace AnalysisManagerProg
         private bool SkippedStepTool(CloseOutType resultCode)
         {
             return resultCode is
+                CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB or
                 CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT or
                 CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN or
                 CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;

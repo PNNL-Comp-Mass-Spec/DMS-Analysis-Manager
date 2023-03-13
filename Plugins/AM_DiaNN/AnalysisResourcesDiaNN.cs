@@ -13,6 +13,10 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class AnalysisResourcesDiaNN : AnalysisResources
     {
+        internal const string DIA_NN_SPEC_LIB_STEP_TOOL = "DIA-NN_SpecLib";
+
+        internal const string DIA_NN_STEP_TOOL = "DIA-NN";
+
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -71,6 +75,18 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (!options.ValidateDiaNNOptions(out var spectralLibraryFile))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (StepToolName.Equals(DIA_NN_SPEC_LIB_STEP_TOOL) && spectralLibraryFile != null)
+                {
+                    var jobStep = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+
+                    // Skip this job step
+                    LogMessage("Skipping step {0} for job {1} since using an existing spectral library: {2}", jobStep, mJob, spectralLibraryFile.FullName);
+
+                    EvalMessage = string.Format("Skipped step since using spectral library {0}", spectralLibraryFile.FullName);
+
+                    return CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB;
                 }
 
                 // Retrieve the FASTA file

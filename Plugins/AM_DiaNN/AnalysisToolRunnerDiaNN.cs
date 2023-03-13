@@ -542,12 +542,12 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 switch (StepToolName)
                 {
-                    case "DIA-NN_SpecLib":
                         buildingSpectraLibrary = true;
+                    case AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL:
                         break;
 
-                    case "DIA-NN":
                         buildingSpectraLibrary = false;
+                    case AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL:
                         break;
 
                     default:

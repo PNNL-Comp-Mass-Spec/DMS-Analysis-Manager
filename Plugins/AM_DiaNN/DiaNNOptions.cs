@@ -827,6 +827,7 @@ namespace AnalysisManagerDiaNNPlugIn
             catch (Exception ex)
             {
                 OnErrorEvent("Error in ValidateDiaNNOptions", ex);
+                spectralLibraryFile = null;
                 return false;
             }
         }

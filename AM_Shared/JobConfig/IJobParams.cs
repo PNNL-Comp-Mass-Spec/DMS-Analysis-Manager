@@ -120,7 +120,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Job failed while running remote
         /// </summary>
-        CLOSEOUT_FAILED_REMOTE = 26
+        CLOSEOUT_FAILED_REMOTE = 26,
+
+        /// <summary>
+        /// Skipped using DIA-NN to create a spectral library using an in-silico digest of a FASTA file
+        /// </summary>
+        CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB = 27
     }
 
     /// <summary>
