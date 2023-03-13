@@ -160,7 +160,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <remarks>
         /// If 0, let DIA-NN auto determine the mass accuracy to use
         /// </remarks>
-        public int MS1MassAccuracy { get; set; }
+        public float MS1MassAccuracy { get; set; }
 
         /// <summary>
         /// MS2 mass accuracy, in ppm
@@ -168,7 +168,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <remarks>
         /// If 0, let DIA-NN auto determine the mass accuracy to use
         /// </remarks>
-        public int MS2MassAccuracy { get; set; }
+        public float MS2MassAccuracy { get; set; }
 
         /// <summary>
         /// Scan window radius (window half width, in scans)
@@ -483,6 +483,20 @@ namespace AnalysisManagerDiaNNPlugIn
             return defaultValue;
         }
 
+        private float GetParameterValueOrDefault(IReadOnlyDictionary<string, string> paramFileSettings, string parameterName, float defaultValue)
+        {
+            if (!paramFileSettings.TryGetValue(parameterName, out var value))
+                return defaultValue;
+
+            if (string.IsNullOrWhiteSpace(value))
+                return defaultValue;
+
+            if (float.TryParse(value, out var parsedValue))
+                return parsedValue;
+
+            OnWarningEvent("Job parameter {0} should be a number, but it is {1}", parameterName, value);
+            return defaultValue;
+        }
         private double GetParameterValueOrDefault(IReadOnlyDictionary<string, string> paramFileSettings, string parameterName, double defaultValue)
         {
             if (!paramFileSettings.TryGetValue(parameterName, out var value))
@@ -611,8 +625,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 MatchBetweenRuns = GetParameterValueOrDefault(paramFileSettings, "MatchBetweenRuns", MatchBetweenRuns);
 
-                var qValue = GetParameterValueOrDefault(paramFileSettings, "PrecursorQValue", PrecursorQValue);
-                PrecursorQValue = (float)qValue;
+                PrecursorQValue = GetParameterValueOrDefault(paramFileSettings, "PrecursorQValue", PrecursorQValue);
 
                 CreateSpectralLibrary = GetParameterValueOrDefault(paramFileSettings, "CreateSpectralLibrary", CreateSpectralLibrary);
 
