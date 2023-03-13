@@ -815,11 +815,16 @@ namespace AnalysisManagerDiaNNPlugIn
                     }
                 }
 
+                if (MS1MassAccuracy < 0)
                 {
+                    OnErrorEvent("MS1MassAccuracy must be 0 or a positive number, not negative: {0}", paramFile.Name);
                     return false;
                 }
 
+                if (MS2MassAccuracy < 0)
                 {
+                    OnErrorEvent("MS1MassAccuracy must be 0 or a positive number, not negative: {0}", paramFile.Name);
+                    return false;
                 }
 
                 return true;
