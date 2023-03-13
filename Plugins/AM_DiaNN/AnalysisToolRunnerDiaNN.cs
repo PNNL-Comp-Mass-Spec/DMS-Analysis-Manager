@@ -538,16 +538,16 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
 
-                bool buildingSpectraLibrary;
+                bool buildingSpectralLibrary;
 
                 switch (StepToolName)
                 {
-                        buildingSpectraLibrary = true;
                     case AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL:
+                        buildingSpectralLibrary = true;
                         break;
 
-                        buildingSpectraLibrary = false;
                     case AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL:
+                        buildingSpectralLibrary = false;
                         break;
 
                     default:
@@ -560,7 +560,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 // Set up and execute a program runner to run DIA-NN
 
-                var processingSuccess = StartDiaNN(options, fastaFile, buildingSpectraLibrary, dataPackageInfo);
+                var processingSuccess = StartDiaNN(options, fastaFile, buildingSpectralLibrary, dataPackageInfo);
 
                 if (!mToolVersionWritten)
                 {
@@ -610,8 +610,8 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private bool StartDiaNN(
             DiaNNOptions options,
-            FileInfo fastaFile,
-            bool buildingSpectraLibrary,
+            FileSystemInfo fastaFile,
+            bool buildingSpectralLibrary,
             DataPackageInfo dataPackageInfo)
         {
             var defaultThreadCount = GetNumThreadsToUse();
@@ -626,11 +626,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
             // Append the .mzML files
             foreach (var item in dataPackageInfo.DatasetFiles)
+            if (buildingSpectralLibrary)
             {
                 arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
             }
 
-            if (buildingSpectraLibrary)
             {
                 // Example command line arguments spectral library building
                 // "C:\DMS_Programs\DIA-NN\DiaNN.exe"
