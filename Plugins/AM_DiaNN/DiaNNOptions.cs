@@ -648,10 +648,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var proteinInferenceMode = GetParameterValueOrDefault(paramFileSettings, "ProteinInferenceMode", (int)ProteinInferenceMode);
 
-                if (Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
+                if (!Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
                 {
-                    ProteinInferenceMode = (ProteinInferenceModes)proteinInferenceMode;
+                    OnErrorEvent("Parameter file {0} has an invalid value for ProteinInferenceMode: {1}", paramFile.Name, proteinInferenceMode);
+                    return false;
                 }
+
+                ProteinInferenceMode = (ProteinInferenceModes)proteinInferenceMode;
 
                 SpeciesGenes = GetParameterValueOrDefault(paramFileSettings, "SpeciesGenes", SpeciesGenes);
 
@@ -807,11 +810,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     return false;
                 }
 
-                var proteinInferenceMode = GetParameterValueOrDefault(paramFileSettings, "ProteinInferenceMode", (int)ProteinInferenceMode);
-
-                if (!Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
                 {
-                    OnErrorEvent("The parameter file has an invalid value for ProteinInferenceMode: {0}", paramFile.Name);
                 }
 
                 return true;
