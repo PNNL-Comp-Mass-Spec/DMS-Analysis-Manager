@@ -624,16 +624,12 @@ namespace AnalysisManagerDiaNNPlugIn
 
             var datasetCount = dataPackageInfo.DatasetFiles.Count;
 
-            // Append the .mzML files
-            foreach (var item in dataPackageInfo.DatasetFiles)
             if (buildingSpectralLibrary)
             {
-                arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
-            }
-
-            {
-                // Example command line arguments spectral library building
+                // Example command line arguments to have DIA-NN create a spectral library using an in-silico digest of a FASTA file
                 // "C:\DMS_Programs\DIA-NN\DiaNN.exe"
+
+                // ReSharper disable once CommentTypo
 
                 // --lib "" --threads 8 --verbose 2 --temp "C:\DMS_WorkDir2" --predictor
                 // --fasta "C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta" --fasta-search
@@ -673,6 +669,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Example command line arguments for using an existing spectral library to search DIA spectra
                 // "C:\DMS_Programs\DIA-NN\DiaNN.exe"
 
+                // ReSharper disable CommentTypo
+
                 // --f "C:\DMS_WorkDir2\Dataset.mzML
                 // --lib lib.predicted.speclib" --threads 8 --verbose 2
                 // --out "C:\DMS_WorkDir1\report.tsv"
@@ -690,6 +688,14 @@ namespace AnalysisManagerDiaNNPlugIn
                 // --reanalyse --relaxed-prot-inf
                 // --smart-profiling  --pg-level 2
 
+                // ReSharper restore CommentTypo
+
+                // Append the .mzML files
+                foreach (var item in dataPackageInfo.DatasetFiles)
+                {
+                    arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
+                }
+
                 arguments.AppendFormat(" --lib {0}", options.ExistingSpectralLibrary);
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
@@ -706,9 +712,14 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 AppendModificationArguments(options, arguments);
 
-                arguments.AppendFormat(" --window {0}", 0);
-                arguments.AppendFormat(" --mass-acc {0}", 0);
-                arguments.AppendFormat(" --mass-acc-ms1 {0}", 0);
+                if (options.ScanWindow != 0)
+                    arguments.AppendFormat(" --window {0}", options.ScanWindow);
+
+                if (options.MS2MassAccuracy > 0)
+                    arguments.AppendFormat(" --mass-acc {0}", options.MS2MassAccuracy);
+
+                if (options.MS1MassAccuracy > 0)
+                    arguments.AppendFormat(" --mass-acc-ms1 {0}", options.MS1MassAccuracy);
 
                 AppendAdditionalArguments(options, datasetCount, arguments);
 
