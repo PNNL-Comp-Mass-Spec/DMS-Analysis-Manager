@@ -784,29 +784,38 @@ namespace AnalysisManagerDiaNNPlugIn
                 var paramFileReader = new KeyValueParamFileReader("DIA-NN", paramFile.DirectoryName, paramFile.Name);
                 RegisterEvents(paramFileReader);
 
-                var paramFileLoaded = paramFileReader.ParseKeyValueParameterFile(out var paramFileEntries, true);
 
-                if (!paramFileLoaded)
+                if (string.IsNullOrWhiteSpace(ExistingSpectralLibrary))
                 {
-                    return false;
+                    spectralLibraryFile = null;
+                }
+                else
+                {
+                    // Verify that the spectral library file exists
+
+                    try
+                    {
+                        spectralLibraryFile = new FileInfo(ExistingSpectralLibrary);
+
+                        if (!spectralLibraryFile.Exists)
+                        {
+                            OnErrorEvent("The spectral library defined in parameter file {0} does not exist: {1}",
+                                paramFile.Name, spectralLibraryFile.FullName);
+
+                            return false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        OnErrorEvent("Error looking for spectral library {0} (defined in parameter file {1}): {2}",
+                            ExistingSpectralLibrary, paramFile.Name, ex.Message);
+
+                        spectralLibraryFile = null;
+                        return false;
+                    }
                 }
 
-                var validParameters = ConvertParameterListToDictionary(paramFileEntries, out var paramFileSettings);
-                if (!validParameters)
-                    return false;
-
-                var existingSpectralLibrary = GetParameterValueOrDefault(paramFileSettings, "ExistingSpectralLibrary", string.Empty);
-                var createSpectraLibraryDefault= GetParameterValueOrDefault(paramFileSettings, "CreateSpectralLibrary", false);
-
-                if (createSpectraLibraryDefault && !string.IsNullOrWhiteSpace(existingSpectralLibrary))
                 {
-                    OnErrorEvent("The parameter file has an existing spectral library defined; it should not have CreateSpectralLibrary set to true: {0}", paramFile.Name);
-                    return false;
-                }
-
-                if (!createSpectraLibraryDefault && string.IsNullOrWhiteSpace(existingSpectralLibrary))
-                {
-                    OnErrorEvent("The parameter file has CreateSpectralLibrary set to false, but ExistingSpectralLibrary is not defined: {0}", paramFile.Name);
                     return false;
                 }
 
