@@ -765,7 +765,9 @@ namespace AnalysisManagerMaxQuantPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + RuntimeOptions.ConsoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate(string.Format(
+                        "Error parsing the MaxQuant console output file ({0}): {1}",
+                        RuntimeOptions.ConsoleOutputFilePath, ex.Message));
                 }
             }
         }

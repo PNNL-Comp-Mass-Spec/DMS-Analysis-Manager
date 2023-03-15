@@ -492,7 +492,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing the DIA-NN console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate(string.Format(
+                        "Error parsing the DIA-NN console output file ({0}): {1}",
+                        consoleOutputFilePath, ex.Message));
                 }
             }
         }

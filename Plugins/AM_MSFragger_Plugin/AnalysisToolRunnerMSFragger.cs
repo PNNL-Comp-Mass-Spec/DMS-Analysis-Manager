@@ -740,7 +740,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing the MSFragger console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate(string.Format(
+                        "Error parsing the MSFragger console output file ({0}): {1}",
+                        consoleOutputFilePath, ex.Message));
                 }
             }
         }

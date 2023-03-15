@@ -567,7 +567,9 @@ namespace AnalysisManagerTopPICPlugIn
                 // Ignore errors here
                 if (mDebugLevel >= 2)
                 {
-                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate(string.Format(
+                        "Error parsing the TopPIC console output file ({0}): {1}",
+                        consoleOutputFilePath, ex.Message));
                 }
             }
         }
