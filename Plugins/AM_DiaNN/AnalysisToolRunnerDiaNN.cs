@@ -8,13 +8,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
-using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
 
@@ -163,7 +161,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory();
+                var success = CopyResultsToTransferDirectory(spectralLibraryFile, remoteSpectralLibraryFile);
 
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -304,9 +302,35 @@ namespace AnalysisManagerDiaNNPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
+        private bool CopyResultsToTransferDirectory(FileSystemInfo spectralLibraryFile, FileSystemInfo remoteSpectralLibraryFile)
         {
+            var currentTask = "preparing to copy results to the transfer directory";
 
+            try
+            {
+                if (mBuildingSpectralLibrary)
+                {
+                    // Copy the spectral library file to the remote location
+                    currentTask = "copying the spectral library to " + remoteSpectralLibraryFile.FullName;
 
+                    mFileTools.CopyFile(spectralLibraryFile.FullName, remoteSpectralLibraryFile.FullName, true);
+
+                    mJobParams.AddResultFileToSkip(remoteSpectralLibraryFile.Name);
+                }
+
+                currentTask = "copying results to the transfer directory";
+                base.CopyResultsToTransferDirectory();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Error copying the spectral library to ...
+                // Error copying results to the transfer directory
+
+                LogError(string.Format("Error {0}", currentTask), ex);
+                return false;
+            }
         }
 
         private int GetCurrentProgress(
