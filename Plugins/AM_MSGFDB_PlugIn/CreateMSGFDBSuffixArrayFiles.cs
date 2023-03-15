@@ -1109,9 +1109,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private string GetPseudoManagerName()
         {
-            var mgrName = mMgrName + "_CreateMSGFDBSuffixArrayFiles";
-
-            return mgrName;
+            return mMgrName + "_CreateMSGFDBSuffixArrayFiles";
         }
 
         /// <summary>
