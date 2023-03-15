@@ -97,6 +97,7 @@
     <Compile Include="DataFileTools\CDTAUtilities.cs" />
     <Compile Include="DataFileTools\DataPackageInfo.cs" />
     <Compile Include="DataFileTools\DatasetFileRetriever.cs" />
+    <Compile Include="DataFileTools\DatasetNameMapUtility.cs" />
     <Compile Include="DataFileTools\ISpectraFileProcessor.cs" />
     <Compile Include="DataFileTools\ISpectraFilter.cs" />
     <Compile Include="DataFileTools\PrecursorInfoFileCreator.cs" />

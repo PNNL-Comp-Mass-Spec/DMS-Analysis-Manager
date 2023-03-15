@@ -44,6 +44,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DatasetNameMapTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="ManagerParameters.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
