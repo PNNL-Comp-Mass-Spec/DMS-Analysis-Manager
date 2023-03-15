@@ -234,6 +234,67 @@ namespace AnalysisManagerDiaNNPlugIn
         }
 
         /// <summary>
+        /// Pre-scan the report file to determine the Run names (which should be the dataset names);
+        /// Look for the longest common text in the names and construct a map of full name to shortened name
+        /// </summary>
+        /// <param name="reportFile">DIA-NN report.tsv file</param>
+        /// <param name="baseNameByDatasetName">Output: Dictionary where keys are dataset names and values are abbreviated names</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ConstructDatasetNameMap(FileSystemInfo reportFile, out Dictionary<string, string> baseNameByDatasetName)
+        {
+            try
+            {
+                var reader = new StreamReader(new FileStream(reportFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                var datasetNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    linesRead++;
+
+                    var lineParts = dataLine.Split('\t');
+
+                    if (linesRead == 1)
+                    {
+                        if (!ValidateReportFileHeaderLine(reportFile, lineParts))
+                        {
+                            baseNameByDatasetName = new Dictionary<string, string>();
+                            return false;
+                        }
+
+                        continue;
+                    }
+
+                    if (!datasetNames.Contains(lineParts[1]))
+                    {
+                        datasetNames.Add(lineParts[1]);
+                    }
+                }
+
+                baseNameByDatasetName = DatasetNameMapUtility.GetDatasetNameMap(datasetNames, out _, out var warnings);
+
+                foreach (var warning in warnings)
+                {
+                    LogWarning(string.Format("{0} (called from AnalysisToolRunnerDiaNN.ConstructDatasetNameMap)", warning.Replace("\n", "; ")));
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ConstructDatasetNameMap", ex);
+                baseNameByDatasetName = new Dictionary<string, string>();
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
         public override void CopyFailedResultsToArchiveDirectory()
@@ -1124,6 +1185,85 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
+        /// <summary>
+        /// Update the report.tsv file to remove duplicate .mzML entries and possibly shorten the Run names
+        /// </summary>
+        /// <param name="reportFile"></param>
+        private bool UpdateReportFile(FileInfo reportFile)
+        {
+            try
+            {
+                // Pre-scan the report file to determine the Run names (which should be the dataset names);
+                // Look for the longest common text in the names and construct a map of full name to shortened name
+                if (!ConstructDatasetNameMap(reportFile, out var baseNameByDatasetName))
+                    return false;
+
+                var updatedFile = new FileInfo(reportFile.FullName + ".new");
+
+                // This sorted set tracks the dataset file names in the File.Name column (typically .mzML files)
+                var datasetFiles = new SortedSet<string>();
+
+                using (var reader = new StreamReader(new FileStream(reportFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    var linesRead = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        linesRead++;
+
+                        var lineParts = dataLine.Split('\t');
+
+                        if (linesRead == 1)
+                        {
+                            if (!ValidateReportFileHeaderLine(reportFile, lineParts))
+                                return false;
+
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        // Store an empty string in the first column if the .mzML file has already been listed once
+                        if (datasetFiles.Contains(lineParts[0]))
+                        {
+                            lineParts[0] = string.Empty;
+                        }
+                        else
+                        {
+                            datasetFiles.Add(lineParts[0]);
+                        }
+
+                        // Possibly shorten the dataset name in the second column
+
+                        if (baseNameByDatasetName.TryGetValue(lineParts[1], out var datasetNameToUse))
+                            lineParts[1] = datasetNameToUse;
+
+                        writer.WriteLine(string.Join("\t", lineParts));
+                    }
+                }
+
+                var filePathFinal = reportFile.FullName;
+                var filePathOld = reportFile.FullName + ".old";
+
+                reportFile.MoveTo(filePathOld);
+                updatedFile.MoveTo(filePathFinal);
+
+                mJobParams.AddResultFileToSkip(filePathOld);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in UpdateReportFile", ex);
+                return false;
+            }
+        }
+
         private bool ValidateFastaFile(out FileInfo fastaFile)
         {
             // Define the path to the FASTA file
@@ -1155,6 +1295,40 @@ namespace AnalysisManagerDiaNNPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Validate the header names in headerNames
+        /// </summary>
+        /// <param name="reportFile"></param>
+        /// <param name="headerNames"></param>
+        /// <returns>True if the first two columns are 'File.Name' and 'Run', otherwise false</returns>
+        private bool ValidateReportFileHeaderLine(FileSystemInfo reportFile, IReadOnlyList<string> headerNames)
+        {
+            // Validate the header line
+            if (headerNames.Count < 3)
+            {
+                LogError(string.Format(
+                    "File {0} has {1} columns in the header line; expecting over 50 columns",
+                    reportFile.Name, headerNames.Count));
+
+                return false;
+            }
+
+            if (!headerNames[0].Equals("File.Name", StringComparison.OrdinalIgnoreCase))
+            {
+                LogWarning(string.Format(
+                    "The first column in file {0} is '{1}', differing from the expected value: File.Name",
+                    reportFile.Name, headerNames[0]), true);
+            }
+
+            if (!headerNames[1].Equals("Run", StringComparison.OrdinalIgnoreCase))
+            {
+                LogWarning(string.Format(
+                    "The second column in file {0} is '{1}', differing from the expected value: Run",
+                    reportFile.Name, headerNames[1]), true);
+            }
+
+            return true;
+        }
 
         private bool ValidateSearchResultFiles()
         {
@@ -1168,6 +1342,11 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 LogError(string.Format("{0} file not created by DIA-NN", reportFile.Name));
                 validResults = false;
+            }
+            else
+            {
+                // Edit the report file to remove duplicate .mzML names and shorten dataset names
+                validResults = UpdateReportFile(reportFile);
             }
 
             if (!reportStatsFile.Exists)
