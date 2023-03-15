@@ -25,9 +25,14 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class AnalysisToolRunnerDiaNN : AnalysisToolRunnerBase
     {
-        private const string DIA_NN_CONSOLE_OUTPUT = "DIA-NN_ConsoleOutput.txt";
 
         private const string DIA_NN_EXE_NAME = "diann.exe";
+
+        private bool mBuildingSpectralLibrary;
+
+        private int mDatasetCount;
+
+        private string mDiaNNConsoleOutputFile;
 
         /// <summary>
         /// Progress value to use when preparing to run DIA-NN
@@ -42,20 +47,30 @@ namespace AnalysisManagerDiaNNPlugIn
             ProcessingComplete = 99
         }
 
-        private bool mToolVersionWritten;
+        private RunDosProgram mCmdRunner;
 
-        // Populate this with a tool version reported to the console
+        private string mConsoleOutputErrorMsg;
+
         private string mDiaNNVersion;
 
         private string mDiaNNProgLoc;
 
-        private string mConsoleOutputErrorMsg;
+        /// <summary>
+        /// This Regex matches the file number line in the console output, e.g. File #1/2
+        /// </summary>
+        private readonly Regex mFileNumberMatcher = new(@"File\s*#(?<FileNumber>\d+)/(?<FileCount>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 
-        private RunDosProgram mCmdRunner;
+        /// <summary>
+        /// This Regex matches the runtime values at the start of console output lines, e.g. [3:56]
+        /// </summary>
+        /// <remarks>
+        /// It also matches a series of times values on the same line, e.g. [0:03] [0:05] [3:56] [4:22]
+        /// </remarks>
+        private readonly Regex mRuntimeMatcher = new(@"\[[\d: \[\]]+\](?<ProgressMessage>.+)", RegexOptions.Compiled);
 
-        private static DotNetZipTools mZipTool;
+        private bool mToolVersionWritten;
 
         /// <summary>
         /// Runs DIA-NN tool
@@ -82,7 +97,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mConsoleOutputErrorMsg = string.Empty;
 
-                // Determine the path to DIA-NN
+                // Determine the path to DIA-NN, typically "C:\DMS_Programs\DIA-NN\DiaNN.exe"
                 mDiaNNProgLoc = DetermineProgramLocation("DiaNNProgLoc", DIA_NN_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(mDiaNNProgLoc))
@@ -101,8 +116,23 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Process the mzML files using DIA-NN
-                var processingResult = StartDiaNN(fastaFile);
+                switch (StepToolName)
+                {
+                    case AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL:
+                        mBuildingSpectralLibrary = true;
+                        mDiaNNConsoleOutputFile = "DIA-NN_ConsoleOutput_CreateLibrary.txt";
+                        break;
+
+                    case AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL:
+                        mBuildingSpectralLibrary = false;
+                        mDiaNNConsoleOutputFile = "DIA-NN_ConsoleOutput_SearchSpectra.txt";
+                        break;
+
+                    default:
+                        LogError("Unrecognized step tool name: " + StepToolName);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 var spectralLibraryFile = GetSpectralLibraryFile(out var remoteSpectralLibraryFile);
 
                 // If mBuildingSpectralLibrary is true, create the spectral library file
@@ -213,20 +243,31 @@ namespace AnalysisManagerDiaNNPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
-        /// <summary>
-        /// Given a linked list of progress values (which should have populated in ascending order), find the next progress value
-        /// </summary>
-        /// <param name="progressValues"></param>
-        /// <param name="currentProgress"></param>
-        /// <returns>Next progress value, or 100 if either the current value is not found, or the next value is not defined</returns>
-        private static int GetNextProgressValue(LinkedList<int> progressValues, int currentProgress)
         {
-            var currentNode = progressValues.Find(currentProgress);
 
-            if (currentNode?.Next == null)
-                return 100;
 
-            return currentNode.Next.Value;
+        }
+
+        private int GetCurrentProgress(
+            SortedList<int, Regex> processingSteps,
+            string dataLine)
+        {
+            // Look for, and remove the runtime value from the start of dataLine
+            // For example, remove [4:38] from "[4:38] Cross-run analysis"
+            var match = mRuntimeMatcher.Match(dataLine);
+
+            var progressMessage = match.Success ? match.Groups["ProgressMessage"].Value : dataLine;
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var processingStep in processingSteps)
+            {
+                if (!processingStep.Value.IsMatch(progressMessage))
+                    continue;
+
+                return processingStep.Key;
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -279,166 +320,83 @@ namespace AnalysisManagerDiaNNPlugIn
             return new FileInfo(spectralLibraryFile);
         }
 
+        private void ParseDiaNNConsoleOutputFile()
+        {
+            var consoleOutputFilePath = Path.Combine(mWorkDir, mDiaNNConsoleOutputFile);
+
+            if (mBuildingSpectralLibrary)
+                ParseDiaNNConsoleOutputFileCreateSpecLib(consoleOutputFilePath);
+            else
+                ParseDiaNNConsoleOutputFileSearchDIA(consoleOutputFilePath);
+        }
+
         /// <summary>
         /// Parse the DIA-NN console output file to determine the DIA-NN version and to track the search progress
         /// </summary>
         /// <param name="consoleOutputFilePath"></param>
-        private void ParseDiaNNConsoleOutputFile(string consoleOutputFilePath)
+        private void ParseDiaNNConsoleOutputFileCreateSpecLib(string consoleOutputFilePath)
         {
-            // ReSharper disable once IdentifierTypo
-            // ReSharper disable once StringLiteralTypo
-            const string BATMASS_IO_VERSION = "Batmass-IO version";
-
             // ReSharper disable CommentTypo
 
             // ----------------------------------------------------
-            // Example Console output
+            // Example Console output when creating a spectral library using an in-silico digest of a FASTA file
             // ----------------------------------------------------
 
-            // DIA-NN version DIA-NN-3.3
-            // Batmass-IO version 1.23.4
-            // timsdata library version timsdata-2-8-7-1
-            // (c) University of Michigan
-            // RawFileReader reading tool. Copyright (c) 2016 by Thermo Fisher Scientific, Inc. All rights reserved.
-            // System OS: Windows 10, Architecture: AMD64
-            // Java Info: 1.8.0_232, OpenJDK 64-Bit Server VM,
-            // JVM started with 8 GB memory
-            // Checking database...
-            // Checking spectral files...
-            // C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML: Scans = 9698
-            // ***********************************FIRST SEARCH************************************
-            // Parameters:
-            // ...
-            // Number of unique peptides
-            //         of length 7: 28622
-            //         of length 8: 27618
-            //         of length 9: 25972
-            // ...
-            //         of length 50: 3193
-            // In total 590010 peptides.
-            // Generated 1061638 modified peptides.
-            // Number of peptides with more than 5000 modification patterns: 0
-            // Selected fragment index width 0.10 Da.
-            // 50272922 fragments to be searched in 1 slices (0.75 GB total)
-            // Operating on slice 1 of 1:
-            //         Fragment index slice generated in 1.38 s
-            //         001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML 1.2 s | deisotoping 0.6 s
-            //                 [progress: 9451/9451 (100%) - 14191 spectra/s] 0.7s | postprocessing 0.1 s
-            // ***************************FIRST SEARCH DONE IN 0.153 MIN**************************
-            //
-            // *********************MASS CALIBRATION AND PARAMETER OPTIMIZATION*******************
-            // ...
-            // ************MASS CALIBRATION AND PARAMETER OPTIMIZATION DONE IN 0.523 MIN*********
-            //
-            // ************************************MAIN SEARCH************************************
-            // Checking database...
-            // Parameters:
-            // ...
-            // Number of unique peptides
-            //         of length 7: 29253
-            //         of length 8: 28510
-            // ...
-            //         of length 50: 6832
-            // In total 778855 peptides.
-            // Generated 1469409 modified peptides.
-            // Number of peptides with more than 5000 modification patterns: 0
-            // Selected fragment index width 0.10 Da.
-            // 76707996 fragments to be searched in 1 slices (1.14 GB total)
-            // Operating on slice 1 of 1:
-            //         Fragment index slice generated in 1.38 s
-            //         001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzBIN_calibrated 0.1 s
-            //                 [progress: 9380/9380 (100%) - 15178 spectra/s] 0.6s | postprocessing 1.5 s
-            // ***************************MAIN SEARCH DONE IN 0.085 MIN***************************
-            //
-            // *******************************TOTAL TIME 0.761 MIN********************************
+            // DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
+            // Compiled on Apr 14 2022 15:31:19
+            // Current date and time: Wed Feb 22 12:52:36 2023
+            // CPU: GenuineIntel Intel(R) Xeon(R) W-2245 CPU @ 3.90GHz
+            // SIMD instructions: AVX AVX2 AVX512CD AVX512F FMA SSE4.1 SSE4.2
+            // Logical CPU cores: 16
+            // C:\DMS_Programs\DIA-NN\DiaNN.exe --lib  --threads 8 --verbose 2 --predictor --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --fasta-search --min-fr-mz 200 --max-fr-mz 1800 --met-excision --cut K*,R* --missed-cleavages 2 --min-pep-len 7 --max-pep-len 30 --min-pr-mz 350 --max-pr-mz 1800 --min-pr-charge 2 --max-pr-charge 4 --unimod4 --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --relaxed-prot-inf --smart-profiling
 
-            // ----------------------------------------------------
-            // Output when multiple datasets:
-            // ----------------------------------------------------
-            // Operating on slice 1 of 1:
-            //         Fragment index slice generated in 1.69 s
-            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 1.1 s | deisotoping 0.7 s
-            //                 [progress: 8271/8271 (100%) - 23631 spectra/s] 0.4s | postprocessing 0.0 s
-            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzML 1.2 s | deisotoping 0.3 s
-            //                 [progress: 20186/20186 (100%) - 19317 spectra/s] 1.0s | postprocessing 0.1 s
-            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzML 1.2 s | deisotoping 0.1 s
-            //                 [progress: 18994/18994 (100%) - 20336 spectra/s] 0.9s | postprocessing 0.1 s
+            // Thread number set to 8
+            // Deep learning will be used to generate a new in silico spectral library from peptides provided
+            // Library-free search enabled
+            // Min fragment m/z set to 200
+            // Max fragment m/z set to 1800
+            // N-terminal methionine excision enabled
+            // In silico digest will involve cuts at K*,R*
+            // Maximum number of missed cleavages set to 2
+            // Min peptide length set to 7
+            // Max peptide length set to 30
+            // Min precursor m/z set to 350
+            // Max precursor m/z set to 1800
+            // Min precursor charge set to 2
+            // Max precursor charge set to 4
+            // Cysteine carbamidomethylation enabled as a fixed modification
+            // Maximum number of variable modifications set to 3
+            // Modification UniMod:35 with mass delta 15.9949 at M will be considered as variable
+            // A spectral library will be created from the DIA runs and used to reanalyse them; .quant files will only be saved to disk during the first step
+            // Highly heuristic protein grouping will be used, to reduce the number of protein groups obtained; this mode is recommended for benchmarking protein ID numbers; use with caution for anything else
+            // When generating a spectral library, in silico predicted spectra will be retained if deemed more reliable than experimental ones
+            // Exclusion of fragments shared between heavy and light peptides from quantification is not supported in FASTA digest mode - disabled; to enable, generate an in silico predicted spectral library and analyse with this library
 
-            // ----------------------------------------------------
-            // Output when multiple slices (and multiple datasets)
-            // ----------------------------------------------------
-            // Selected fragment index width 0.02 Da.
-            // 649333606 fragments to be searched in 2 slices (9.68 GB total)
-            // Operating on slice 1 of 2:
-            //         Fragment index slice generated in 7.69 s
-            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 0.6 s | deisotoping 0.0 s
-            //                 [progress: 8271/8271 (100%) - 38115 spectra/s] 0.2s
-            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
-            //                 [progress: 19979/19979 (100%) - 13518 spectra/s] 1.5s
-            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
-            //                 [progress: 18812/18812 (100%) - 13563 spectra/s] 1.4s
-            // Operating on slice 2 of 2:
-            //         Fragment index slice generated in 9.02 s
-            //         001. CHI_XN_ALKY_44_Bane_06May21_20-11-16.mzML 0.6 s | deisotoping 0.0 s
-            //                 [progress: 8271/8271 (100%) - 37767 spectra/s] 0.2s | postprocessing 1.0 s
-            //         002. CHI_XN_DA_25_Bane_06May21_20-11-16.mzBIN_calibrated 0.3 s
-            //                 [progress: 19979/19979 (100%) - 30690 spectra/s] 0.7s | postprocessing 2.4 s
-            //         003. CHI_XN_DA_26_Bane_06May21_20-11-16.mzBIN_calibrated 0.2 s
-            //                 [progress: 18812/18812 (100%) - 29348 spectra/s] 0.6s | postprocessing 1.7 s
+            // 0 files will be processed
+            // [0:00] Loading FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [0:01] Processing FASTA
+            // [0:02] Assembling elution groups
+            // [0:03] 801607 precursors generated
+            // [0:03] Gene names missing for some isoforms
+            // [0:03] Library contains 1494 proteins, and 1493 genes
+            // [0:03] [0:05] [3:56] [4:22] [4:24] [4:25] Saving the library to lib.predicted.speclib
+            // [4:26] Initialising library
 
-            // ----------------------------------------------------
-            // Output when running a split FASTA search
-            // ----------------------------------------------------
-            // STARTED: slice 1 of 8
-            // ...
-            // DONE: slice 1 of 8
-            // STARTED: slice 2 of 8
-            // ...
-            // DONE: slice 8 of 8
+            // Finished
 
             // ReSharper restore CommentTypo
 
-            const int FIRST_SEARCH_START = (int)ProgressPercentValues.StartingDiaNN + 1;
-            const int FIRST_SEARCH_DONE = 44;
-
-            const int MAIN_SEARCH_START = 50;
-            const int MAIN_SEARCH_DONE = (int)ProgressPercentValues.DiaNNComplete;
-
-            // ToDo: Update this to match DIA-NN output messages
             var processingSteps = new SortedList<int, Regex>
             {
-                { (int)ProgressPercentValues.StartingDiaNN, GetRegEx("^JVM started") },
-                { FIRST_SEARCH_START                      , GetRegEx(@"^\*+FIRST SEARCH\*+") },
-                { FIRST_SEARCH_DONE                       , GetRegEx(@"^\*+FIRST SEARCH DONE") },
-                { FIRST_SEARCH_DONE + 1                   , GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+") },
-                { MAIN_SEARCH_START                       , GetRegEx(@"^\*+MAIN SEARCH\*+") },
-                { MAIN_SEARCH_DONE                        , GetRegEx(@"^\*+MAIN SEARCH DONE") }
+                { (int)ProgressPercentValues.StartingDiaNN, GetRegEx("^Loading FASTA") },
+                { 2                                       , GetRegEx("^Processing FASTA") },
+                { 3                                       , GetRegEx("^Assembling elution groups") },
+                { 5                                       , GetRegEx("^Library contains") },
+                { 95                                      , GetRegEx("^Saving the library to") },
+                // ReSharper disable once StringLiteralTypo
+                { 97                                       , GetRegEx("^Initialising library") },
+                { (int)ProgressPercentValues.DiaNNComplete , GetRegEx("^Finished") }
             };
-
-            // Use a linked list to keep track of the progress values
-            // This makes lookup of the next progress value easier
-            var progressValues = new LinkedList<int>();
-
-            foreach (var item in (from progressValue in processingSteps.Keys orderby progressValue select progressValue))
-            {
-                progressValues.AddLast(item);
-            }
-            progressValues.AddLast(100);
-
-            // RegEx to match lines like:
-            //  001. Sample_Bane_06May21_20-11-16.mzML 1.0 s | deisotoping 0.6 s
-            //	001. QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzBIN_calibrated 0.1 s
-            var datasetMatcher = new Regex(@"^[\t ]+(?<DatasetNumber>\d+)\. .+\.(mzML|mzBIN)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            // RegEx to match lines like:
-            // Operating on slice 1 of 2: 4463ms
-            var sliceMatcher = new Regex(@"Operating on slice (?<Current>\d+) of (?<Total>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            // RegEx to match lines like:
-            // DatasetName.mzML 7042ms [progress: 29940/50420 (59.38%) - 5945.19 spectra/s]
-            var progressMatcher = new Regex(@"progress: \d+/\d+ \((?<PercentComplete>[0-9.]+)%\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-            var splitFastaMatcher = new Regex(@"^[\t ]*(?<Action>STARTED|DONE): slice (?<CurrentSplitFile>\d+) of (?<TotalSplitFiles>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -458,7 +416,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
-                var currentProgress = 0;
+                var currentProgress = (int)ProgressPercentValues.StartingDiaNN;
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
@@ -473,34 +431,17 @@ namespace AnalysisManagerDiaNNPlugIn
 
                     if (linesRead < 5)
                     {
-                        // The first line has the path to the DIA-NN .jar file and the command line arguments
-                        // The second line is dashes
-                        // The third line should have the DIA-NN version
+                        // The first line has the DIA-NN version number
 
                         if (string.IsNullOrEmpty(mDiaNNVersion) &&
-                            dataLine.StartsWith("DIA-NN version", StringComparison.OrdinalIgnoreCase))
+                            dataLine.StartsWith("DIA-NN", StringComparison.OrdinalIgnoreCase))
                         {
-                            LogDebug(dataLine, mDebugLevel);
-                            mDiaNNVersion = string.Copy(dataLine);
-                        }
-
-                        if (dataLine.StartsWith(BATMASS_IO_VERSION, StringComparison.OrdinalIgnoreCase) &&
-                            mDiaNNVersion.IndexOf(BATMASS_IO_VERSION, StringComparison.OrdinalIgnoreCase) < 0)
-                        {
-                            mDiaNNVersion = mDiaNNVersion + "; " + dataLine;
-                        }
-
-                        continue;
-                    }
-
-                    foreach (var processingStep in processingSteps)
-                    {
-                        if (!processingStep.Value.IsMatch(dataLine))
+                            StoreDiaNNVersion(dataLine);
                             continue;
-
-                        currentProgress = processingStep.Key;
-                        break;
+                        }
                     }
+
+                    currentProgress = GetCurrentProgress(processingSteps, dataLine);
 
                     // Check whether the line starts with the text error
                     // Future: possibly adjust this check
@@ -514,6 +455,375 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 var effectiveProgressOverall = currentProgress;
+
+                if (float.IsNaN(effectiveProgressOverall))
+                {
+                    return;
+                }
+
+                mProgress = effectiveProgressOverall;
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (mDebugLevel >= 2)
+                {
+                    LogErrorNoMessageUpdate(string.Format(
+                        "Error parsing the DIA-NN console output file ({0}): {1}",
+                        consoleOutputFilePath, ex.Message));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Parse the DIA-NN console output file to determine the DIA-NN version and to track the search progress
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
+        private void ParseDiaNNConsoleOutputFileSearchDIA(string consoleOutputFilePath)
+        {
+            // ReSharper disable CommentTypo
+
+            // ----------------------------------------------------
+            // Example Console output when searching DIA spectra using a spectral library
+            // ----------------------------------------------------
+
+            // DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
+            // Compiled on Apr 14 2022 15:31:19
+            // Current date and time: Wed Feb 22 13:17:48 2023
+            // CPU: GenuineIntel Intel(R) Xeon(R) W-2245 CPU @ 3.90GHz
+            // SIMD instructions: AVX AVX2 AVX512CD AVX512F FMA SSE4.1 SSE4.2
+            // Logical CPU cores: 16
+            // C:\DMS_Programs\DIA-NN\DiaNN.exe --f C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML  --lib lib.predicted.speclib --threads 8 --verbose 2 --out C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.tsv --qvalue 0.01 --matrices --temp C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2" --out-lib C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv --gen-spec-lib --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --met-excision --cut K*,R* --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --relaxed-prot-inf --smart-profiling
+
+            // Thread number set to 8
+            // Output will be filtered at 0.01 FDR
+            // Precursor/protein x samples expression level matrices will be saved along with the main report
+            // A spectral library will be generated
+            // N-terminal methionine excision enabled
+            // In silico digest will involve cuts at K*,R*
+            // Maximum number of variable modifications set to 3
+            // Modification UniMod:35 with mass delta 15.9949 at M will be considered as variable
+            // A spectral library will be created from the DIA runs and used to reanalyse them; .quant files will only be saved to disk during the first step
+            // Highly heuristic protein grouping will be used, to reduce the number of protein groups obtained; this mode is recommended for benchmarking protein ID numbers; use with caution for anything else
+            // When generating a spectral library, in silico predicted spectra will be retained if deemed more reliable than experimental ones
+            // DIA-NN will optimise the mass accuracy automatically using the first run in the experiment. This is useful primarily for quick initial analyses, when it is not yet known which mass accuracy setting works best for a particular acquisition scheme.
+            // WARNING: MBR turned off, two or more raw files are required
+
+            // 1 files will be processed
+            // [0:00] Loading spectral library lib.predicted.speclib
+            // [0:00] Library annotated with sequence database(s): C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [0:01] Spectral library loaded: 1494 protein isoforms, 1613 protein groups and 801607 precursors in 312599 elution groups.
+            // [0:01] Loading protein annotations from FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [0:01] Annotating library proteins with information from the FASTA database
+            // [0:01] Gene names missing for some isoforms
+            // [0:01] Library contains 1494 proteins, and 1493 genes
+            // [0:01] Initialising library
+
+            // [0:01] File #1/1
+            // [0:01] Loading run C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
+            // [0:15] Run loaded
+            // [0:15] 789178 library precursors are potentially detectable
+            // [0:15] Processing batch #1 out of 394
+            // [0:15] Precursor search
+            // [0:18] Optimising weights
+            // [0:18] Calculating q-values
+            // [0:18] Number of IDs at 0.01 FDR: 0
+            // [0:18] Calibrating retention times
+            // [0:18] 50 precursors used for iRT estimation.
+            // [0:18] Processing batch #2 out of 394
+            // [0:18] Precursor search
+            // ...
+            // [0:45] Processing batches #10-11 out of 394
+            // [0:45] Precursor search
+            // [0:50] Optimising weights
+            // ...
+            // [1:10] Top 70% mass accuracy: 1.75855 ppm
+            // [1:10] Top 70% mass accuracy without correction: 4.66868ppm
+            // [1:10] Top 70% MS1 mass accuracy: 3.11822 ppm
+            // [1:10] Top 70% MS1 mass accuracy without correction: 3.99532ppm
+            // [1:10] Recommended MS1 mass accuracy setting: 15.5911 ppm
+            // [1:10] Processing batch #1 out of 394
+            // [1:10] Precursor search
+            // [1:11] Optimising weights
+            // [1:11] Calculating q-values
+            // ...
+            // [1:14] Processing batches #12-14 out of 394
+            // [1:14] Precursor search
+            // [1:15] Optimising weights
+            // [1:15] Calculating q-values
+            // [1:15] Number of IDs at 0.01 FDR: 520
+            // ...
+            // [4:30] Calculating q-values
+            // [4:30] Number of IDs at 0.01 FDR: 28852
+            // [4:30] Calibrating retention times
+            // [4:30] 28852 precursors used for iRT estimation.
+            // [4:30] Optimising weights
+            // [4:31] Training neural networks: 67444 targets, 40370 decoys
+            // [4:36] Calculating q-values
+            // [4:36] Number of IDs at 0.01 FDR: 35620
+            // [4:36] Calibrating retention times
+            // [4:36] 35620 precursors used for iRT estimation.
+            // [4:37] Calculating protein q-values
+            // [4:37] Number of genes identified at 1% FDR: 1493 (precursor-level), 1493 (protein-level) (inference performed using proteotypic peptides only)
+            // [4:37] Quantification
+            // [4:38] Quantification information saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2/C__DMS_WorkDir2_MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13_mzML.quant.
+
+            // [4:38] Cross-run analysis
+            // [4:38] Reading quantification information: 1 files
+            // [4:38] Quantifying peptides
+            // [4:38] Assembling protein groups
+            // [4:38] Quantifying proteins
+            // [4:38] Calculating q-values for protein and gene groups
+            // [4:38] Calculating global q-values for protein and gene groups
+            // [4:39] Writing report
+            // [4:40] Report saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.tsv.
+            // [4:40] Saving precursor levels matrix
+            // [4:41] Precursor levels matrix (1% precursor and protein group FDR) saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.pr_matrix.tsv.
+            // [4:41] Saving protein group levels matrix
+            // [4:41] Protein group levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.pg_matrix.tsv.
+            // [4:41] Saving gene group levels matrix
+            // [4:41] Gene groups levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.gg_matrix.tsv.
+            // [4:41] Saving unique genes levels matrix
+            // [4:41] Unique genes levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.unique_genes_matrix.tsv.
+            // [4:41] Stats report saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.stats.tsv
+            // [4:41] Generating spectral library:
+            // [4:41] 35620 precursors passing the FDR threshold are to be extracted
+            // [4:41] Loading run C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
+            // [4:54] Run loaded
+            // [4:54] 789178 library precursors are potentially detectable
+            // [4:56] 29046 spectra added to the library
+            // [4:56] Saving spectral library to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv
+            // [4:59] 35620 precursors saved
+            // [4:59] Loading the generated library and saving it in the .speclib format
+            // [4:59] Loading spectral library C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv
+            // [5:01] Spectral library loaded: 1494 protein isoforms, 1556 protein groups and 35620 precursors in 30422 elution groups.
+            // [5:01] Loading protein annotations from FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [5:01] Gene names missing for some isoforms
+            // [5:01] Library contains 1494 proteins, and 1493 genes
+            // [5:01] Saving the library to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv.speclib
+
+            // Finished
+
+            // ----------------------------------------------------
+            // Output when searching DIA spectra in multiple .mzML files
+            // ----------------------------------------------------
+
+            // 2 files will be processed
+            // [0:00] Loading FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [0:00] Processing FASTA
+            // [0:01] Assembling elution groups
+            // [0:02] 536642 precursors generated
+            // [0:02] Gene names missing for some isoforms
+            // [0:02] Library contains 1494 proteins, and 1493 genes
+            // [0:02] [0:03] [2:39] [2:57] [2:59] [2:59] Saving the library to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.predicted.speclib
+            // [3:00] Initialising library
+
+            // [3:00] First pass: generating a spectral library from DIA data
+            // [3:00] File #1/2
+            // [3:00] Loading run C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
+            // [3:15] Run loaded
+            // [3:15] 530823 library precursors are potentially detectable
+            // [3:15] Processing batch #1 out of 265
+            // [3:15] Precursor search
+            // ...
+            // [5:36] Training neural networks: 58686 targets, 33017 decoys
+            // [5:41] Calculating q-values
+            // [5:41] Number of IDs at 0.01 FDR: 31539
+            // [5:41] Calibrating retention times
+            // [5:41] 31539 precursors used for iRT estimation.
+            // [5:41] Calculating protein q-values
+            // [5:41] Number of genes identified at 1% FDR: 1493 (precursor-level), 1493 (protein-level) (inference performed using proteotypic peptides only)
+            // [5:41] Quantification
+            // [5:42] Quantification information saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2/C__DMS_WorkDir2_MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13_mzML.quant.
+
+            // [5:43] File #2/2
+            // [5:43] Loading run C:\DMS_WorkDir2\CHI_XN_DA_25_Bane_06May21_20-11-16.mzML
+            // WARNING: more than 1000 different isolation windows - is this intended?
+            // [5:46] Run loaded
+            // [5:46] 406510 library precursors are potentially detectable
+            // [5:46] Processing batch #1 out of 203
+            // ...
+            // [6:56] 160 precursors used for iRT estimation.
+            // [6:56] Calculating protein q-values
+            // [6:56] Number of genes identified at 1% FDR: 19 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+            // [6:56] Quantification
+            // [6:56] Quantification information saved to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2/C__DMS_WorkDir2_CHI_XN_DA_25_Bane_06May21_20-11-16_mzML.quant.
+
+            // [6:56] Cross-run analysis
+            // [6:56] Reading quantification information: 2 files
+            // [6:56] Quantifying peptides
+            // [6:56] Assembling protein groups
+            // [6:56] Quantifying proteins
+            // [6:56] Calculating q-values for protein and gene groups
+            // [6:56] Calculating global q-values for protein and gene groups
+            // [6:56] Writing report
+            // ...
+            // [6:58] Generating spectral library:
+            // ...
+            // [7:20] Library contains 1494 proteins, and 1493 genes
+            // [7:20] Saving the library to C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv.speclib
+
+            // [7:21] Second pass: using the newly created spectral library to reanalyse the data
+            // [7:21] File #1/2
+            // [7:21] Loading run C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
+            // [7:35] Run loaded
+            // ...
+            // [7:45] 31099 precursors used for iRT estimation.
+            // [7:46] Calculating protein q-values
+            // [7:46] Number of genes identified at 1% FDR: 1493 (precursor-level), 1493 (protein-level) (inference performed using proteotypic peptides only)
+            // [7:46] Quantification
+
+            // [7:46] File #2/2
+            // [7:46] Loading run C:\DMS_WorkDir2\CHI_XN_DA_25_Bane_06May21_20-11-16.mzML
+            // WARNING: more than 1000 different isolation windows - is this intended?
+            // [7:49] Run loaded
+            // [7:49] 28822 library precursors are potentially detectable
+            // ...
+            // [7:53] 156 precursors used for iRT estimation.
+            // [7:53] Optimising weights
+            // [7:53] Too few confident identifications, neural networks will not be used
+            // [7:53] Calculating q-values
+            // [7:53] Number of IDs at 0.01 FDR: 155
+            // [7:53] Calculating q-values
+            // [7:53] Number of IDs at 0.01 FDR: 155
+            // [7:53] Calibrating retention times
+            // [7:53] 155 precursors used for iRT estimation.
+            // [7:53] Calculating protein q-values
+            // [7:53] Number of genes identified at 1% FDR: 21 (precursor-level), 0 (protein-level) (inference performed using proteotypic peptides only)
+            // [7:53] Quantification
+
+            // [7:53] Cross-run analysis
+            // [7:53] Reading quantification information: 2 files
+            // [7:53] Quantifying peptides
+            // [7:54] Quantifying proteins
+            // [7:54] Calculating q-values for protein and gene groups
+            // [7:54] Calculating global q-values for protein and gene groups
+            // [7:54] Writing report
+            // [7:55] Report saved to C:\DMS_WorkDir2\report.tsv.
+            // [7:55] Saving precursor levels matrix
+            // [7:55] Precursor levels matrix (1% precursor and protein group FDR) saved to C:\DMS_WorkDir2\report.pr_matrix.tsv.
+            // [7:55] Saving protein group levels matrix
+            // [7:55] Protein group levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\report.pg_matrix.tsv.
+            // [7:55] Saving gene group levels matrix
+            // [7:55] Gene groups levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\report.gg_matrix.tsv.
+            // [7:55] Saving unique genes levels matrix
+            // [7:55] Unique genes levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\report.unique_genes_matrix.tsv.
+            // [7:55] Stats report saved to C:\DMS_WorkDir2\report.stats.tsv
+            //
+            // Finished
+
+            // ReSharper restore CommentTypo
+
+            var processingSteps = new SortedList<int, Regex>
+            {
+                { (int)ProgressPercentValues.StartingDiaNN, GetRegEx("^Loading spectral library") },
+                // ReSharper disable once StringLiteralTypo
+                { 2, GetRegEx("^Initialising library") }
+            };
+
+            const int PROGRESS_FIRST_PASS = 5;
+            const int PROGRESS_SECOND_PASS = 75;
+            const int PROGRESS_CROSS_RUN_ANALYSIS = 90;
+
+            if (mDatasetCount <= 1)
+            {
+                processingSteps.Add(5, GetRegEx("^File #1"));
+                processingSteps.Add(6, GetRegEx("^Run loaded"));
+                processingSteps.Add(80, GetRegEx("^Number of genes identified"));
+            }
+            else
+            {
+                processingSteps.Add(PROGRESS_FIRST_PASS, GetRegEx("^First pass"));
+                processingSteps.Add(PROGRESS_SECOND_PASS, GetRegEx("^Second pass"));
+            }
+
+            processingSteps.Add(PROGRESS_CROSS_RUN_ANALYSIS, GetRegEx("^Cross-run analysis"));
+            processingSteps.Add(91, GetRegEx("^Writing report"));
+            processingSteps.Add(92, GetRegEx("^Generating spectral library"));
+            processingSteps.Add(97, GetRegEx("^Saving the library to"));
+            processingSteps.Add((int)ProgressPercentValues.DiaNNComplete, GetRegEx("^Finished"));
+
+            try
+            {
+                if (!File.Exists(consoleOutputFilePath))
+                {
+                    if (mDebugLevel >= 4)
+                    {
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (mDebugLevel >= 4)
+                {
+                    LogDebug("Parsing file " + consoleOutputFilePath);
+                }
+
+                mConsoleOutputErrorMsg = string.Empty;
+
+                var effectiveProgressOverall = 0.0f;
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                var currentFileNumber = 0;
+                var totalFileCount = 0;
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    linesRead++;
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (linesRead < 5)
+                    {
+                        // The first line has the DIA-NN version number
+
+                        if (string.IsNullOrEmpty(mDiaNNVersion) &&
+                            dataLine.StartsWith("DIA-NN", StringComparison.OrdinalIgnoreCase))
+                        {
+                            StoreDiaNNVersion(dataLine);
+                            continue;
+                        }
+                    }
+
+                    var match = mFileNumberMatcher.Match(dataLine);
+
+                    if (match.Success)
+                    {
+                        currentFileNumber = int.Parse(match.Groups["FileNumber"].Value);
+                        totalFileCount = int.Parse(match.Groups["FileCount"].Value);
+                        continue;
+                    }
+
+                    var currentProgress = GetCurrentProgress(processingSteps, dataLine);
+
+                    // Check whether the line starts with the text error
+                    // Future: possibly adjust this check
+
+                    if (currentProgress > 1 &&
+                        dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
+                        string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                    {
+                        mConsoleOutputErrorMsg = "Error running DIA-NN: " + dataLine;
+                    }
+
+                    if (mDatasetCount <= 1)
+                    {
+                        effectiveProgressOverall = currentProgress;
+                        continue;
+                    }
+
+                    effectiveProgressOverall = currentProgress switch
+                    {
+                        PROGRESS_FIRST_PASS => ComputeIncrementalProgress(PROGRESS_FIRST_PASS, PROGRESS_SECOND_PASS, currentFileNumber - 1, totalFileCount),
+                        PROGRESS_SECOND_PASS => ComputeIncrementalProgress(PROGRESS_SECOND_PASS, PROGRESS_CROSS_RUN_ANALYSIS, currentFileNumber - 1, totalFileCount),
+                        _ => currentProgress
+                    };
+                }
 
                 if (float.IsNaN(effectiveProgressOverall))
                 {
@@ -572,6 +882,8 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
+                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
+
                 // Load the parameter file
                 var paramFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
@@ -591,42 +903,23 @@ namespace AnalysisManagerDiaNNPlugIn
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, DIA_NN_CONSOLE_OUTPUT)
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, mDiaNNConsoleOutputFile)
                 };
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                bool buildingSpectralLibrary;
-
-                switch (StepToolName)
-                {
-                    case AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL:
-                        buildingSpectralLibrary = true;
-                        break;
-
-                    case AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL:
-                        buildingSpectralLibrary = false;
-                        break;
-
-                    default:
-                        LogError("Unrecognized step tool name: " + StepToolName);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                }
 
                 LogMessage("Running DIA-NN");
                 mProgress = (int)ProgressPercentValues.StartingDiaNN;
 
                 // Set up and execute a program runner to run DIA-NN
 
-                var processingSuccess = StartDiaNN(options, fastaFile, buildingSpectralLibrary, dataPackageInfo);
+                var processingSuccess = StartDiaNN(options, fastaFile, spectralLibraryFile, dataPackageInfo);
 
                 if (!mToolVersionWritten)
                 {
                     if (string.IsNullOrWhiteSpace(mDiaNNVersion))
                     {
-                        ParseDiaNNConsoleOutputFile(Path.Combine(mWorkDir, DIA_NN_CONSOLE_OUTPUT));
+                        ParseDiaNNConsoleOutputFile();
                     }
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
@@ -790,6 +1083,23 @@ namespace AnalysisManagerDiaNNPlugIn
         }
 
         /// <summary>
+        /// Store the DIA-NN version
+        /// </summary>
+        /// <remarks>
+        /// Example value for dataLine:
+        /// DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
+        /// </remarks>
+        /// <param name="dataLine"></param>
+        private void StoreDiaNNVersion(string dataLine)
+        {
+            var charIndex = dataLine.IndexOf('(');
+
+            mDiaNNVersion = charIndex > 0 ? dataLine.Substring(0, charIndex).Trim() : dataLine;
+
+            LogDebug(mDiaNNVersion, mDebugLevel);
+        }
+
+        /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
         private bool StoreToolVersionInfo()
@@ -857,7 +1167,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             mLastConsoleOutputParse = DateTime.UtcNow;
 
-            ParseDiaNNConsoleOutputFile(Path.Combine(mWorkDir, DIA_NN_CONSOLE_OUTPUT));
+            ParseDiaNNConsoleOutputFile();
 
             if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mDiaNNVersion))
             {
