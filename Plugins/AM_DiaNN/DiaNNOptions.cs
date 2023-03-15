@@ -8,6 +8,11 @@ using PRISM.AppSettings;
 
 namespace AnalysisManagerDiaNNPlugIn
 {
+    // ReSharper disable once CommentTypo
+
+    // Ignore Spelling: alkylation, carbamidomethyl, Chymotrypsin, cys, iodoacetamide, isoform, isotopologues, Glu, Lys
+    // Ignore Spelling: proline, prot, proteomes, proteotypicity, silico
+
     /// <summary>
     /// Post translational modification types
     /// </summary>

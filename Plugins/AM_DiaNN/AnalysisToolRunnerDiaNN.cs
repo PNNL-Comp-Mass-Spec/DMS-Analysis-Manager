@@ -23,6 +23,12 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class AnalysisToolRunnerDiaNN : AnalysisToolRunnerBase
     {
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: acc, analyse, carbamidomethylation, Cysteine, eport, fasta, Initialising, isoforms, len
+        // Ignore Spelling: optimise, optimising, qvalue, pre, prot, proteotypic, reanalyse, Regex, silico, Xeon
+
+        // ReSharper restore CommentTypo
 
         private const string DIA_NN_EXE_NAME = "diann.exe";
 
