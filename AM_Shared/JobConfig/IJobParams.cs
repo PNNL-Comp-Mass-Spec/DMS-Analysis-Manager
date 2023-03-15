@@ -125,7 +125,12 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Skipped using DIA-NN to create a spectral library using an in-silico digest of a FASTA file
         /// </summary>
-        CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB = 27
+        CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB = 27,
+
+        /// <summary>
+        /// Waiting for another job to create an in-silico digest of a FASTA file
+        /// </summary>
+        CLOSEOUT_WAITING_FOR_DIA_NN_SPEC_LIB = 28
     }
 
     /// <summary>

@@ -103,6 +103,12 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 // Process the mzML files using DIA-NN
                 var processingResult = StartDiaNN(fastaFile);
+                var spectralLibraryFile = GetSpectralLibraryFile(out var remoteSpectralLibraryFile);
+
+                // If mBuildingSpectralLibrary is true, create the spectral library file
+                // If mBuildingSpectralLibrary is false, process the mzML files using DIA-NN
+
+                var processingResult = StartDiaNN(fastaFile, spectralLibraryFile);
 
                 mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
@@ -141,9 +147,9 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
-        private void AppendAdditionalArguments(DiaNNOptions options, int datasetCount, StringBuilder arguments)
+        private void AppendAdditionalArguments(DiaNNOptions options, StringBuilder arguments)
         {
-            if (options.MatchBetweenRuns && datasetCount > 1)
+            if (options.MatchBetweenRuns && mDatasetCount > 1)
             {
                 // ReSharper disable once StringLiteralTypo
 
@@ -242,6 +248,35 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
             return new Regex(matchPattern, options);
+        }
+
+        /// <summary>
+        /// Get the spectral library file info
+        /// </summary>
+        /// <param name="remoteSpectralLibraryFile">Remote file that corresponds to the local file</param>
+        /// <returns>FileInfo instance for the local spectral library file to use or create; null if an error</returns>
+        private FileInfo GetSpectralLibraryFile(out FileInfo remoteSpectralLibraryFile)
+        {
+            var remoteSpectralLibraryFilePath = mJobParams.GetJobParameter(
+                AnalysisJob.STEP_PARAMETERS_SECTION,
+                AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM,
+                string.Empty);
+
+            if (string.IsNullOrWhiteSpace(remoteSpectralLibraryFilePath))
+            {
+                LogError(
+                    "Cannot determine the spectral library file name since job parameter {0} is not defined in section {1}",
+                    AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM, AnalysisJob.STEP_PARAMETERS_SECTION);
+
+                remoteSpectralLibraryFile = null;
+                return null;
+            }
+
+            remoteSpectralLibraryFile = new FileInfo(remoteSpectralLibraryFilePath);
+
+            var spectralLibraryFile = Path.Combine(mWorkDir, remoteSpectralLibraryFile.Name);
+
+            return new FileInfo(spectralLibraryFile);
         }
 
         /// <summary>
@@ -499,7 +534,25 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
-        private CloseOutType StartDiaNN(FileInfo fastaFile)
+        private bool RenameSpectralLibraryFile(FileInfo specLibFile, FileSystemInfo spectralLibraryFile)
+        {
+            try
+            {
+                var newFilePath = Path.Combine(mWorkDir, spectralLibraryFile.Name);
+                LogMessage("Renaming {0} to {1}", specLibFile.Name, newFilePath);
+
+                specLibFile.MoveTo(newFilePath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error renaming the newly created spectral library file", ex);
+                return false;
+            }
+        }
+
+        private CloseOutType StartDiaNN(FileSystemInfo fastaFile, FileSystemInfo spectralLibraryFile)
         {
             try
             {
@@ -618,7 +671,7 @@ namespace AnalysisManagerDiaNNPlugIn
         private bool StartDiaNN(
             DiaNNOptions options,
             FileSystemInfo fastaFile,
-            bool buildingSpectralLibrary,
+            FileSystemInfo spectralLibraryFile,
             DataPackageInfo dataPackageInfo)
         {
             var defaultThreadCount = GetNumThreadsToUse();
@@ -629,12 +682,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
             var arguments = new StringBuilder();
 
-            var datasetCount = dataPackageInfo.DatasetFiles.Count;
-
-            if (buildingSpectralLibrary)
+            if (mBuildingSpectralLibrary)
             {
                 // Example command line arguments to have DIA-NN create a spectral library using an in-silico digest of a FASTA file
-                // "C:\DMS_Programs\DIA-NN\DiaNN.exe"
 
                 // ReSharper disable once CommentTypo
 
@@ -669,12 +719,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 AppendModificationArguments(options, arguments);
 
-                AppendAdditionalArguments(options, datasetCount, arguments);
+                AppendAdditionalArguments(options, arguments);
             }
             else
             {
                 // Example command line arguments for using an existing spectral library to search DIA spectra
-                // "C:\DMS_Programs\DIA-NN\DiaNN.exe"
 
                 // ReSharper disable CommentTypo
 
@@ -703,7 +752,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
                 }
 
-                arguments.AppendFormat(" --lib {0}", options.ExistingSpectralLibrary);
+                arguments.AppendFormat(" --lib {0}", spectralLibraryFile.FullName);
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
                 arguments.AppendFormat(" --out {0}", Path.Combine(mWorkDir, "report.tsv"));
@@ -728,7 +777,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (options.MS1MassAccuracy > 0)
                     arguments.AppendFormat(" --mass-acc-ms1 {0}", options.MS1MassAccuracy);
 
-                AppendAdditionalArguments(options, datasetCount, arguments);
+                AppendAdditionalArguments(options, arguments);
 
                 arguments.AppendFormat(" --pg-level {0}", (int)options.ProteinInferenceMode);
             }

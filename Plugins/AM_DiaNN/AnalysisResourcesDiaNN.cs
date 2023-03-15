@@ -18,6 +18,52 @@ namespace AnalysisManagerDiaNNPlugIn
         internal const string DIA_NN_STEP_TOOL = "DIA-NN";
 
         /// <summary>
+        /// This job parameter tracks the spectral library file ID
+        /// </summary>
+        internal const string SPECTRAL_LIBRARY_FILE_ID = "SpectralLibraryID";
+
+        /// <summary>
+        /// This job parameter tracks the remote spectral library file path
+        /// </summary>
+        /// <remarks>If a new spectral library, this step tool will copy the file to the remote path after it is created</remarks>
+        internal const string SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM = "SpectralLibraryFileRemotePath";
+
+        internal enum SpectralLibraryStatusCodes
+        {
+            /// <summary>
+            /// Unknown status
+            /// </summary>
+            Unknown = 0,
+
+            /// <summary>
+            /// This job needs to create a new spectral library
+            /// </summary>
+            CreatingNewLibrary = 1,
+
+            /// <summary>
+            /// The spectral library already exists
+            /// </summary>
+            LibraryAlreadyCreated = 2,
+
+            /// <summary>
+            /// Another job is already creating the spectral library that this job needs
+            /// </summary>
+            CreationInProgressByOtherJob = 3,
+
+            /// <summary>
+            /// Indicates that the DIA-NN parameter file has a spectral library defined using option ExistingSpectralLibrary
+            /// </summary>
+            UsingExistingLibrary = 4,
+
+            /// <summary>
+            /// Error determining the spectral library status
+            /// </summary>
+            Error = 5
+        }
+
+        private bool mBuildingSpectralLibrary;
+
+        /// <summary>
         /// Initialize options
         /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, MyEMSLUtilities myEMSLUtilities)
@@ -42,6 +88,21 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
+                }
+
+                switch (StepToolName)
+                {
+                    case DIA_NN_SPEC_LIB_STEP_TOOL:
+                        mBuildingSpectralLibrary = true;
+                        break;
+
+                    case DIA_NN_STEP_TOOL:
+                        mBuildingSpectralLibrary = false;
+                        break;
+
+                    default:
+                        LogError("Unrecognized step tool name: " + StepToolName);
+                        return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -72,19 +133,19 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 options.LoadDiaNNOptions(paramFile.FullName);
 
-                if (!options.ValidateDiaNNOptions(out var spectralLibraryFile))
+                if (!options.ValidateDiaNNOptions(out var existingSpectralLibraryFile))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (StepToolName.Equals(DIA_NN_SPEC_LIB_STEP_TOOL) && spectralLibraryFile != null)
+                var jobStep = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+
+                if (mBuildingSpectralLibrary && existingSpectralLibraryFile != null)
                 {
-                    var jobStep = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-
                     // Skip this job step
-                    LogMessage("Skipping step {0} for job {1} since using an existing spectral library: {2}", jobStep, mJob, spectralLibraryFile.FullName);
+                    LogMessage("Skipping step {0} for job {1} since using an existing spectral library: {2}", jobStep, mJob, existingSpectralLibraryFile.FullName);
 
-                    EvalMessage = string.Format("Skipped step since using spectral library {0}", spectralLibraryFile.FullName);
+                    EvalMessage = string.Format("Skipped step since using spectral library {0}", existingSpectralLibraryFile.FullName);
 
                     return CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB;
                 }
@@ -97,6 +158,84 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, maxLegacyFASTASizeGB, out _))
                     return resultCode;
+
+                var remoteSpectralLibraryFile = GetRemoteSpectralLibraryFile(options, out var libraryStatusCode, out var spectralLibraryID);
+
+                if (remoteSpectralLibraryFile == null)
+                {
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                    {
+                        LogError("GetSpectralLibraryFile returned a null value for the remote spectral library file");
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                switch (libraryStatusCode)
+                {
+                    case SpectralLibraryStatusCodes.Unknown or SpectralLibraryStatusCodes.Error:
+                        if (string.IsNullOrWhiteSpace(mMessage))
+                        {
+                            LogError("Spectral library status code returned by GetRemoteSpectralLibraryFile is {0}", libraryStatusCode);
+                        }
+
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    case SpectralLibraryStatusCodes.CreationInProgressByOtherJob:
+                        EvalMessage = string.Format("Waiting for other job to create spectral library {0}", remoteSpectralLibraryFile.Name);
+
+                        return CloseOutType.CLOSEOUT_WAITING_FOR_DIA_NN_SPEC_LIB;
+                }
+
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SPECTRAL_LIBRARY_FILE_ID, spectralLibraryID);
+                mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM, remoteSpectralLibraryFile.FullName);
+
+                if (mBuildingSpectralLibrary)
+                {
+                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                    switch (libraryStatusCode)
+                    {
+                        case SpectralLibraryStatusCodes.CreatingNewLibrary:
+                            // Do not retrieve any dataset files
+                            return CloseOutType.CLOSEOUT_SUCCESS;
+
+                        case SpectralLibraryStatusCodes.LibraryAlreadyCreated:
+                            // Skip this job step
+                            LogMessage("Skipping step {0} for job {1} since using a spectral library that was previously created: {2}", jobStep, mJob, remoteSpectralLibraryFile.FullName);
+
+                            EvalMessage = string.Format("Skipped step since using spectral library {0}", remoteSpectralLibraryFile.FullName);
+
+                            return CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB;
+
+                        default:
+                            LogError(string.Format(
+                                "Unexpected library status code when mBuildingSpectralLibrary = true; {0}",
+                                (int)libraryStatusCode));
+
+                            return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
+                if (libraryStatusCode != SpectralLibraryStatusCodes.LibraryAlreadyCreated)
+                {
+                    LogError(string.Format(
+                        "Spectral library status code is {0}; expecting LibraryAlreadyCreated ({1})",
+                        (int)libraryStatusCode, (int)SpectralLibraryStatusCodes.LibraryAlreadyCreated));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Retrieve the spectral library file
+
+                LogMessage("Copying spectral library from {0} to the working directory", remoteSpectralLibraryFile.FullName);
+
+                var startTime = DateTime.UtcNow;
+
+                var localSpectralLibraryFile = new FileInfo(Path.Combine(mWorkDir, remoteSpectralLibraryFile.Name));
+
+                mFileTools.CopyFileUsingLocks(remoteSpectralLibraryFile.FullName, localSpectralLibraryFile.FullName);
+
+                LogDebug("Spectral library file retrieved in {0:F2} seconds", DateTime.UtcNow.Subtract(startTime).TotalSeconds);
 
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
@@ -134,6 +273,73 @@ namespace AnalysisManagerDiaNNPlugIn
                 LogError("Error in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
+        }
+
+        /// <summary>
+        /// Determine the filename to use for the spectral library
+        /// </summary>
+        /// <remarks>
+        /// <para>If options.ExistingSpectralLibrary has a filename defined, use it</para>
+        /// <para>Otherwise, contact the database to determine the name to use (possibly creating a new spectral library)</para>
+        /// </remarks>
+        /// <param name="options"></param>
+        /// <param name="libraryStatusCode">Output: spectral library status code</param>
+        /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
+        /// <returns>FileInfo object, or null if an error</returns>
+        private FileInfo GetRemoteSpectralLibraryFile(
+            DiaNNOptions options,
+            out SpectralLibraryStatusCodes libraryStatusCode,
+            out int spectralLibraryID)
+        {
+            if (!string.IsNullOrWhiteSpace(options.ExistingSpectralLibrary))
+            {
+                libraryStatusCode = SpectralLibraryStatusCodes.UsingExistingLibrary;
+                spectralLibraryID = 0;
+
+                var remoteSpectralLibraryFile = new FileInfo(options.ExistingSpectralLibrary);
+
+                if (remoteSpectralLibraryFile.Exists)
+                    return remoteSpectralLibraryFile;
+
+                LogError("Spectral library file defined in the parameter file does not exist: " + remoteSpectralLibraryFile.FullName);
+                return null;
+            }
+
+            // Determine the name to use for the in-silico based spectral library created using the
+            // protein collections or legacy FASTA file associated with this job
+
+            // The spectral library file depends several settings tracked by options, including
+            // the cleavage specificity, peptide lengths, m/z range, charge range, dynamic mods, and static mods
+
+            if (mBuildingSpectralLibrary)
+            {
+                // Contact the database to determine whether an existing file exists,
+                // whether a file is being created by another job, or whether this job should create the file
+
+                return GetSpectraLibraryFromDB(options, true, out libraryStatusCode, out spectralLibraryID);
+            }
+
+            // The DIA-NN_SpecLib step (either for this job or for another job) should have already created the file
+            // Contact the database to determine the spectral library file path
+
+            return GetSpectraLibraryFromDB(options, false, out libraryStatusCode, out spectralLibraryID);
+        }
+
+        /// <summary>
+        /// Contact the database to determine if an existing spectral library exists, or if a new one needs to be created
+        /// </summary>
+        /// <param name="options"></param>
+        /// <param name="allowCreateNewLibrary">True if this step tool can create a new spectral library, false if this step tool requires that a spectral library already exists</param>
+        /// <param name="libraryStatusCode">Output: spectral library status code</param>
+        /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
+        /// <returns>FileInfo instance for the remote spectral library file (the file will not exist if a new library); null if an error</returns>
+        private FileInfo GetSpectraLibraryFromDB(
+            DiaNNOptions options,
+            bool allowCreateNewLibrary,
+            out SpectralLibraryStatusCodes libraryStatusCode,
+            out int spectralLibraryID)
+        {
+            throw new NotImplementedException();
         }
     }
 }
