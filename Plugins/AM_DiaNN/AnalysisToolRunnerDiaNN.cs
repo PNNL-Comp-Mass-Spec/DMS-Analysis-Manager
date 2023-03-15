@@ -945,14 +945,16 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var successCount = 0;
+                // Verify that the expected output file(s) were created
 
-                // ToDo: Validate the output file(s) from DIA-NN
+                var validResults = mBuildingSpectralLibrary
+                    ? ValidateSpectralLibraryOutputFile(spectralLibraryFile)
+                    : ValidateSearchResultFiles();
 
                 mStatusTools.UpdateAndWrite(mProgress);
                 LogDebug("DIA-NN Search Complete", mDebugLevel);
 
-                return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                return validResults ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -1151,6 +1153,73 @@ namespace AnalysisManagerDiaNNPlugIn
             }
 
             return true;
+        }
+
+
+        private bool ValidateSearchResultFiles()
+        {
+            var reportFile = new FileInfo(Path.Combine(mWorkDir, "report.tsv"));
+            var reportStatsFile = new FileInfo(Path.Combine(mWorkDir, "report.stats.tsv"));
+            var reportPdfFile = new FileInfo(Path.Combine(mWorkDir, "report.pdf"));
+
+            bool validResults;
+
+            if (!reportFile.Exists)
+            {
+                LogError(string.Format("{0} file not created by DIA-NN", reportFile.Name));
+                validResults = false;
+            }
+
+            if (!reportStatsFile.Exists)
+            {
+                LogWarning(string.Format("{0} file not created by DIA-NN", reportStatsFile.Name));
+            }
+
+            if (!reportPdfFile.Exists)
+            {
+                LogWarning(string.Format("{0} file not created by DIA-NN", reportPdfFile.Name));
+            }
+
+            return validResults;
+        }
+
+        private bool ValidateSpectralLibraryOutputFile(FileSystemInfo spectralLibraryFile)
+        {
+            var specLib = new FileInfo(Path.Combine(mWorkDir, "lib.predicted.speclib"));
+
+            if (specLib.Exists)
+            {
+                return RenameSpectralLibraryFile(specLib, spectralLibraryFile);
+            }
+
+            // ReSharper disable CommentTypo
+
+            // Look for any files with extension .speclib
+
+            var workingDirectory = new DirectoryInfo(mWorkDir);
+
+            var specLibFiles = workingDirectory.GetFiles("*.speclib");
+
+            // ReSharper disable once ConvertIfStatementToSwitchStatement
+            if (specLibFiles.Length < 1)
+            {
+                // lib.predicted.speclib file not created by DIA-NN
+                LogError(string.Format("{0} file not created by DIA-NN", specLib.Name));
+                return false;
+            }
+
+            // ReSharper restore CommentTypo
+
+            if (specLibFiles.Length > 1)
+            {
+                // ReSharper disable once StringLiteralTypo
+                LogError(string.Format("{0} file not created by DIA-NN; instead, multiple .speclib files were created", specLib.Name));
+                return false;
+            }
+
+            LogWarning(string.Format("{0} file not created by DIA-NN, but found file {1} instead", specLib.Name, specLibFiles[0]));
+
+            return RenameSpectralLibraryFile(specLibFiles[0], spectralLibraryFile);
         }
 
         /// <summary>
