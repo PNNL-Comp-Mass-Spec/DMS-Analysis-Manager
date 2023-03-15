@@ -240,7 +240,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// Use a heuristic protein inference algorithm (similar to the one used by FragPipe)
         /// </summary>
         /// <remarks>
-        /// The Readme says that this mode is only recommended for benchmarking protein ID numbers, and should thus generally not be used
+        /// DIA-NN documentation says that this mode is only recommended for benchmarking protein ID numbers, and should thus generally not be used
         /// </remarks>
         public bool HeuristicProteinInference { get; set; } = true;
 
@@ -525,21 +525,6 @@ namespace AnalysisManagerDiaNNPlugIn
             return defaultValue;
         }
 
-        private double GetParameterValueOrDefault(IReadOnlyDictionary<string, string> paramFileSettings, string parameterName, double defaultValue)
-        {
-            if (!paramFileSettings.TryGetValue(parameterName, out var value))
-                return defaultValue;
-
-            if (string.IsNullOrWhiteSpace(value))
-                return defaultValue;
-
-            if (double.TryParse(value, out var parsedValue))
-                return parsedValue;
-
-            OnWarningEvent("Job parameter {0} should be a number, but it is {1}", parameterName, value);
-            return defaultValue;
-        }
-
         private int GetParameterValueOrDefault(IReadOnlyDictionary<string, string> paramFileSettings, string parameterName, int defaultValue)
         {
             if (!paramFileSettings.TryGetValue(parameterName, out var value))
@@ -805,7 +790,6 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var paramFileReader = new KeyValueParamFileReader("DIA-NN", paramFile.DirectoryName, paramFile.Name);
                 RegisterEvents(paramFileReader);
-
 
                 if (string.IsNullOrWhiteSpace(ExistingSpectralLibrary))
                 {
