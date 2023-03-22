@@ -206,7 +206,8 @@ namespace AnalysisManagerBase.JobConfig
                         datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
                         autoDefinedExperimentGroupCount++;
                     }
-                } else if (!string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup))
+                }
+                else if (!string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup))
                 {
                     customNameExperimentGroupCount++;
                 }
