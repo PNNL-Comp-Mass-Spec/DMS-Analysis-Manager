@@ -575,6 +575,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         else
                             skipList = "Abacus";
 
+                        // Skipping iProphet and Abacus since data package 1234 does not contain two or more experiment group names; see https://prismwiki.pnl.gov/wiki/MSFragger_Experiment_Groups
+                        // Skipping iProphet since data package ...
+                        // Skipping Abacus since data package ...
+
                         var msg = string.Format(
                             "Skipping {0} since data package {1} does not contain two or more experiment group names; see {2}",
                             skipList,
@@ -598,7 +602,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         mProgress = (int)ProgressPercentValues.IProphetComplete;
                     }
 
-                    if (options.RunAbacus)
+                    // Only run Abacus if Protein Prophet was used
+                    if (options.RunAbacus && options.RunProteinProphet)
                     {
                         var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
 
@@ -619,7 +624,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.IonQuantComplete;
                 }
 
-                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled)
+                // Only run TMT-Integrator if Protein Prophet was used, since TMT-Integrator expects that file combined.prot.xml exists
+                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled && options.RunProteinProphet)
                 {
                     var tmtIntegratorSuccess = RunTmtIntegrator(experimentGroupWorkingDirectories, options);
 
@@ -639,7 +645,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.PtmShepherdComplete;
                 }
 
-                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories);
+                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet);
 
                 if (!reportFilesUpdated)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -656,7 +662,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var zipSuccessPsmTsv = ZipPsmTsvFiles(experimentGroupWorkingDirectories);
+                var zipSuccessPsmTsv = ZipPsmTsvFiles(experimentGroupWorkingDirectories, usedProteinProphet);
 
                 return zipSuccessPsmTsv ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
