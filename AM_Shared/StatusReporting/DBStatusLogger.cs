@@ -251,8 +251,6 @@ namespace AnalysisManagerBase.StatusReporting
                 }
                 mLastWriteTime = DateTime.UtcNow;
 
-                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(PipelineDBProcedureExecutor.ConnectStr);
-
                 // Set up the command object prior to SP execution
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_UPDATE_MANAGER_STATUS, CommandType.StoredProcedure);
 
@@ -288,10 +286,7 @@ namespace AnalysisManagerBase.StatusReporting
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@mostRecentJobInfo", SqlType.VarChar, 256, statusInfo.Task.Details.MostRecentJobInfo);
                 PipelineDBProcedureExecutor.AddTypedParameter(cmd, "@spectrumCount", SqlType.Int, 0, statusInfo.Task.Details.SpectrumCount);
 
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty,
-                    dbServerType == DbServerTypes.PostgreSQL
-                        ? ParameterDirection.InputOutput
-                        : ParameterDirection.Output);
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
                 PipelineDBProcedureExecutor.ExecuteSP(cmd);

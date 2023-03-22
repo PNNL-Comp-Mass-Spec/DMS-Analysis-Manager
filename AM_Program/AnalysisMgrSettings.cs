@@ -130,7 +130,6 @@ namespace AnalysisManagerProg
                 }
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
-                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(connectionStringToUse);
 
                 ShowTrace("AckManagerUpdateRequired using " + connectionStringToUse);
 
@@ -141,10 +140,7 @@ namespace AnalysisManagerProg
                 var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,
-                    dbServerType == DbServerTypes.PostgreSQL
-                        ? ParameterDirection.InputOutput
-                        : ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
                 dbTools.ExecuteSP(cmd);
@@ -376,7 +372,6 @@ namespace AnalysisManagerProg
                 }
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
-                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(connectionStringToUse);
 
                 ShowTrace("Pause manager tasks using " + connectionStringToUse);
 
@@ -388,10 +383,7 @@ namespace AnalysisManagerProg
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
                 dbTools.AddParameter(cmd, "@holdoffIntervalMinutes", SqlType.Int).Value = holdoffIntervalMinutes;
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,
-                    dbServerType == DbServerTypes.PostgreSQL
-                        ? ParameterDirection.InputOutput
-                        : ParameterDirection.Output);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
                 dbTools.ExecuteSP(cmd);

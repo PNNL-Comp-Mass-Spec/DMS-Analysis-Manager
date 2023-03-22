@@ -1278,20 +1278,13 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(PipelineDBProcedureExecutor.ConnectStr);
-
-                var outputParameterDirection =
-                    dbServerType == DbServerTypes.PostgreSQL
-                        ? ParameterDirection.InputOutput
-                        : ParameterDirection.Output;
-
                 // Set up the command object prior to SP execution
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
-                var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, outputParameterDirection);
-                var jobParamsParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, outputParameterDirection);
-                var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, outputParameterDirection);
+                var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, 0, ParameterDirection.InputOutput);
+                var jobParamsParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, string.Empty, ParameterDirection.InputOutput);
+                var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
@@ -1299,7 +1292,7 @@ namespace AnalysisManagerBase.JobConfig
                 var remoteInfo = runJobsRemotely ? RemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
-                var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, outputParameterDirection);
+                var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {
@@ -1904,16 +1897,12 @@ namespace AnalysisManagerBase.JobConfig
                 return;
             }
 
-            var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(PipelineDBProcedureExecutor.ConnectStr);
-
             // Setup for execution of the stored procedure
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
             PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, dbServerType == DbServerTypes.PostgreSQL
-                ? ParameterDirection.InputOutput
-                : ParameterDirection.Output);
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
             var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
 
@@ -1956,8 +1945,6 @@ namespace AnalysisManagerBase.JobConfig
             compMsg ??= string.Empty;
 
             evalMsg ??= string.Empty;
-
-            var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(PipelineDBProcedureExecutor.ConnectStr);
 
             // Setup for execution of stored procedure set_step_task_complete
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
@@ -2025,10 +2012,7 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
 
             var messageParam = PipelineDBProcedureExecutor.AddParameter(
-                cmd, "@message", SqlType.VarChar, 512,
-                dbServerType == DbServerTypes.PostgreSQL
-                    ? ParameterDirection.InputOutput
-                    : ParameterDirection.Output);
+                cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
             // Call Stored Procedure set_step_task_complete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);

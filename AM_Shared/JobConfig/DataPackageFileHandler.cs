@@ -149,13 +149,6 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(mDbTools.ConnectStr);
-
-                var outputParameterDirection =
-                    dbServerType == DbServerTypes.PostgreSQL
-                        ? ParameterDirection.InputOutput
-                        : ParameterDirection.Output;
-
                 // Set up the command object prior to SP execution
                 var cmd = mDbTools.CreateCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER, CommandType.StoredProcedure);
 
@@ -163,8 +156,8 @@ namespace AnalysisManagerBase.JobConfig
 
                 var stepToolFilterParam = mDbTools.AddParameter(cmd, "@stepToolFilter", SqlType.VarChar, 8000, stepToolFilter);
 
-                var inputFolderParam = mDbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, outputParameterDirection);
-                var stepToolMatchParam = mDbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, outputParameterDirection);
+                var inputFolderParam = mDbTools.AddParameter(cmd, "@inputFolderName", SqlType.VarChar, 128, string.Empty, ParameterDirection.InputOutput);
+                var stepToolMatchParam = mDbTools.AddParameter(cmd, "@stepToolMatch", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
                 var matchFound = false;
                 var inputDirectoryName = string.Empty;
