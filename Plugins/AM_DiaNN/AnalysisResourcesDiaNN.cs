@@ -1,10 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
+using System.Text;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using Newtonsoft.Json.Linq;
+using PRISM.Logging;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDiaNNPlugIn
 {
@@ -161,7 +167,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, maxLegacyFASTASizeGB, out _))
                     return resultCode;
 
-                var remoteSpectralLibraryFile = GetRemoteSpectralLibraryFile(options, out var libraryStatusCode, out var spectralLibraryID);
+                var remoteSpectralLibraryFile = GetRemoteSpectralLibraryFile(options, out var libraryStatusCode, out var spectralLibraryID, out var createNewLibrary);
 
                 if (remoteSpectralLibraryFile == null)
                 {
@@ -276,6 +282,32 @@ namespace AnalysisManagerDiaNNPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
+        private static int BoolToTinyInt(bool value)
+        {
+            return value ? 1 : 0;
+        }
+
+        /// <summary>
+        /// Convert a list of modification definitions to a semicolon separated string
+        /// </summary>
+        /// <param name="modDefinitions"></param>
+        /// <param name="removeSpaces"></param>
+        private string CollapseModifications(List<ModificationInfo> modDefinitions, bool removeSpaces = true)
+        {
+            var modificationList = new StringBuilder();
+
+            foreach (var item in modDefinitions)
+            {
+                if (modificationList.Length > 0)
+                    modificationList.Append("; ");
+
+                modificationList.Append(item.ModificationDefinition);
+            }
+
+            return removeSpaces
+                ? modificationList.ToString().Replace(" ", string.Empty)
+                : modificationList.ToString();
+        }
 
         /// <summary>
         /// Determine the filename to use for the spectral library
@@ -287,16 +319,19 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <param name="options"></param>
         /// <param name="libraryStatusCode">Output: spectral library status code</param>
         /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
+        /// <param name="createNewLibrary">Output: true if this job should create the spectral library)</param>
         /// <returns>FileInfo object, or null if an error</returns>
         private FileInfo GetRemoteSpectralLibraryFile(
             DiaNNOptions options,
             out SpectralLibraryStatusCodes libraryStatusCode,
-            out int spectralLibraryID)
+            out int spectralLibraryID,
+            out bool createNewLibrary)
         {
             if (!string.IsNullOrWhiteSpace(options.ExistingSpectralLibrary))
             {
                 libraryStatusCode = SpectralLibraryStatusCodes.UsingExistingLibrary;
                 spectralLibraryID = 0;
+                createNewLibrary = false;
 
                 var remoteSpectralLibraryFile = new FileInfo(options.ExistingSpectralLibrary);
 
@@ -318,13 +353,13 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Contact the database to determine whether an existing file exists,
                 // whether a file is being created by another job, or whether this job should create the file
 
-                return GetSpectraLibraryFromDB(options, true, out libraryStatusCode, out spectralLibraryID);
+                return GetSpectraLibraryFromDB(options, true, out libraryStatusCode, out spectralLibraryID, out createNewLibrary);
             }
 
             // The DIA-NN_SpecLib step (either for this job or for another job) should have already created the file
             // Contact the database to determine the spectral library file path
 
-            return GetSpectraLibraryFromDB(options, false, out libraryStatusCode, out spectralLibraryID);
+            return GetSpectraLibraryFromDB(options, false, out libraryStatusCode, out spectralLibraryID, out createNewLibrary);
         }
 
         /// <summary>
@@ -334,14 +369,199 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <param name="allowCreateNewLibrary">True if this step tool can create a new spectral library, false if this step tool requires that a spectral library already exists</param>
         /// <param name="libraryStatusCode">Output: spectral library status code</param>
         /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
+        /// <param name="createNewLibrary">Output: true if this job should create the spectral library</param>
         /// <returns>FileInfo instance for the remote spectral library file (the file will not exist if a new library); null if an error</returns>
         private FileInfo GetSpectraLibraryFromDB(
             DiaNNOptions options,
             bool allowCreateNewLibrary,
             out SpectralLibraryStatusCodes libraryStatusCode,
-            out int spectralLibraryID)
+            out int spectralLibraryID,
+            out bool createNewLibrary)
         {
-            throw new NotImplementedException();
+            const string SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID = "get_spectral_library_id";
+
+            try
+            {
+                var proteinCollectionInfo = new ProteinCollectionInfo(mJobParams);
+
+                // Gigasax.DMS5
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
+
+                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, CommandType.StoredProcedure);
+
+                if (dbServerType == DbServerTypes.PostgreSQL)
+                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Boolean).Value = allowCreateNewLibrary;
+                else
+                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.TinyInt).Value = BoolToTinyInt(allowCreateNewLibrary);
+
+                dbTools.AddParameter(cmd, "@dmsSourceJob", SqlType.Int).Value = mJob;
+                dbTools.AddParameter(cmd, "@proteinCollectionList", SqlType.VarChar, 2000).Value = proteinCollectionInfo.ProteinCollectionList;
+                dbTools.AddParameter(cmd, "@organismDbFile", SqlType.VarChar, 128).Value = proteinCollectionInfo.LegacyFastaName;
+                dbTools.AddParameter(cmd, "@fragmentIonMzMin", SqlType.Real).Value = options.FragmentIonMzMin;
+                dbTools.AddParameter(cmd, "@fragmentIonMzMax", SqlType.Real).Value = options.FragmentIonMzMax;
+
+                if (dbServerType == DbServerTypes.PostgreSQL)
+                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Boolean).Value = options.TrimNTerminalMethionine;
+                else
+                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.TinyInt).Value = BoolToTinyInt(options.TrimNTerminalMethionine);
+
+                dbTools.AddParameter(cmd, "@cleavageSpecificity", SqlType.VarChar, 64).Value = options.CleavageSpecificity;
+                dbTools.AddParameter(cmd, "@missedCleavages", SqlType.Int).Value = options.MissedCleavages;
+                dbTools.AddParameter(cmd, "@peptideLengthMin", SqlType.Int).Value = options.PeptideLengthMin;
+                dbTools.AddParameter(cmd, "@peptideLengthMax", SqlType.Int).Value = options.PeptideLengthMax;
+                dbTools.AddParameter(cmd, "@precursorMzMin", SqlType.Real).Value = options.PrecursorMzMin;
+                dbTools.AddParameter(cmd, "@precursorMzMax", SqlType.Real).Value = options.PrecursorMzMax;
+                dbTools.AddParameter(cmd, "@precursorChargeMin", SqlType.Int).Value = options.PrecursorChargeMin;
+                dbTools.AddParameter(cmd, "@precursorChargeMax", SqlType.Int).Value = options.PrecursorChargeMax;
+
+                if (dbServerType == DbServerTypes.PostgreSQL)
+                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Boolean).Value = options.StaticCysCarbamidomethyl;
+                else
+                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.TinyInt).Value = BoolToTinyInt(options.StaticCysCarbamidomethyl);
+
+                var staticMods = CollapseModifications(options.StaticModDefinitions);
+
+                var dynamicMods = CollapseModifications(options.DynamicModDefinitions);
+
+                dbTools.AddParameter(cmd, "@staticMods", SqlType.VarChar, 512).Value = staticMods;
+                dbTools.AddParameter(cmd, "@dynamicMods", SqlType.VarChar, 512).Value = dynamicMods;
+                dbTools.AddParameter(cmd, "@maxDynamicMods", SqlType.Int).Value = 0;
+
+                // Output parameters
+                var libraryIdParam = dbTools.AddParameter(cmd, "@libraryId", SqlType.Int, ParameterDirection.InputOutput);
+                var libraryStateIdParam = dbTools.AddParameter(cmd, "@libraryStateId", SqlType.Int, ParameterDirection.InputOutput);
+                var libraryNameParam = dbTools.AddParameter(cmd, "@libraryName", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                var storagePathParam = dbTools.AddParameter(cmd, "@storagePath", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+
+                var shouldMakeLibraryParam = dbTools.AddParameter(cmd, "@sourceJobShouldMakeLibrary", dbServerType == DbServerTypes.PostgreSQL ? SqlType.Boolean : SqlType.TinyInt, ParameterDirection.InputOutput);
+
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+
+                // Initialize the output parameter values (required for PostgreSQL)
+                libraryIdParam.Value = 0;
+                libraryStateIdParam.Value = 0;
+                libraryNameParam.Value = string.Empty;
+                storagePathParam.Value = string.Empty;
+
+                shouldMakeLibraryParam.Value = dbServerType == DbServerTypes.PostgreSQL ? false : 0;
+
+                messageParam.Value = string.Empty;
+                returnCodeParam.Value = string.Empty;
+
+                // Execute the SP
+                var returnCode = dbTools.ExecuteSP(cmd, out var errorMessage);
+
+                var success = returnCode == 0;
+
+                if (!success)
+                {
+                    var errorMsg = string.Format(
+                        "Procedure {0} returned error code {1}{2}",
+                        SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, returnCode,
+                        string.IsNullOrWhiteSpace(errorMessage)
+                            ? string.Empty
+                            : ": " + errorMessage);
+
+                    LogError(errorMsg);
+
+                    libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                    spectralLibraryID = 0;
+                    createNewLibrary= false;
+                    return null;
+                }
+
+                spectralLibraryID = Convert.ToInt32(libraryIdParam.Value);
+                var libraryStateID = Convert.ToInt32(libraryStateIdParam.Value);
+                var libraryName = Convert.ToString(libraryNameParam.Value);
+                var storagePath = Convert.ToString(storagePathParam.Value);
+
+                if (dbServerType == DbServerTypes.PostgreSQL)
+                {
+                    createNewLibrary = Convert.ToBoolean(shouldMakeLibraryParam.Value);
+                }
+                else
+                {
+                    var shouldMakeLibrary = Convert.ToInt32(shouldMakeLibraryParam.Value);
+                    createNewLibrary = shouldMakeLibrary > 0;
+                }
+
+                switch (libraryStateID)
+                {
+                    case 1:
+                        // New (no jobs have been assigned to create the library)
+                        libraryStatusCode = SpectralLibraryStatusCodes.Unknown;
+                        var warningMessage = string.Format("Spectral library {0} has library state {1}, meaning no processes are creating the library", libraryName, libraryStateID);
+                        LogWarning(warningMessage);
+                        EvalMessage = warningMessage;
+
+                        break;
+
+                    case 2:
+                        // In Progress
+                        libraryStatusCode = createNewLibrary
+                            ? SpectralLibraryStatusCodes.CreatingNewLibrary
+                            : SpectralLibraryStatusCodes.CreationInProgressByOtherJob;
+
+                        break;
+
+                    case 3:
+                        // Complete
+                        libraryStatusCode = SpectralLibraryStatusCodes.LibraryAlreadyCreated;
+                        break;
+
+                    case 4:
+                        // Failed
+                        libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                        break;
+
+                    case 5:
+                        // Inactive
+                        libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                        break;
+
+                    default:
+                        // Unrecognized case
+                        LogError(string.Format(
+                            "Procedure {0} returned an unrecognized library state of {1} for library {2}",
+                            SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName));
+
+                        libraryStatusCode= SpectralLibraryStatusCodes.Unknown;
+                        return null;
+                }
+
+                if (string.IsNullOrWhiteSpace(libraryName))
+                {
+                    return null;
+                }
+
+                if (string.IsNullOrWhiteSpace(storagePath))
+                {
+                    LogError(string.Format(
+                        "Procedure {0} returned library name {1} but an empty storage path",
+                        SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryName));
+
+                    return null;
+                }
+
+                return new FileInfo(Path.Combine(storagePath, libraryName));
+            }
+            catch (Exception ex)
+            {
+                LogError("Error calling " + SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, ex);
+
+                libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                spectralLibraryID = 0;
+                createNewLibrary = false;
+                return null;
+            }
         }
     }
 }
