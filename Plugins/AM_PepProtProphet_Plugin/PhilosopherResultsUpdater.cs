@@ -108,9 +108,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </para>
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
+        /// <param name="usedProteinProphet">True if protein prophet was used</param>
         /// <param name="totalPeptideCount">Output: total number of result lines in the peptide.tsv file(s)</param>
         /// <returns>True if successful, false if an error</returns>
-        public bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, out int totalPeptideCount)
+        public bool UpdatePhilosopherReportFiles(
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            bool usedProteinProphet,
+            out int totalPeptideCount)
         {
             totalPeptideCount = 0;
 
@@ -140,7 +144,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     totalPeptideCount += peptideCount;
 
-                    var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentGroup.Value);
+                    var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentGroup.Value, usedProteinProphet);
 
                     if (psmSuccess && ionSuccess && peptideSuccess && proteinSuccess)
                         successCount++;
@@ -363,10 +367,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="datasetOrExperimentGroupName"></param>
         /// <param name="workingDirectory"></param>
+        /// <param name="usedProteinProphet">True if protein prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherProteinFile(
             string datasetOrExperimentGroupName,
-            FileSystemInfo workingDirectory)
+            FileSystemInfo workingDirectory,
+            bool usedProteinProphet)
         {
             try
             {
@@ -374,6 +380,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (!inputFile.Exists)
                 {
+                    if (!usedProteinProphet)
+                    {
+                        // Ignore this missing file since we did not run Protein Prophet
+                        OnDebugEvent("Skipping update of {0} since it does not exist (UpdatePhilosopherProteinFile)", inputFile.FullName);
+                        return true;
+                    }
+
                     OnErrorEvent("Input file not found in UpdatePhilosopherProteinFile: " + inputFile.FullName);
                     return false;
                 }

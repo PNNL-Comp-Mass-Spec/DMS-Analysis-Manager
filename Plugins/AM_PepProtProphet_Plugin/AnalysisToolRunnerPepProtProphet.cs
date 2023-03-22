@@ -1816,7 +1816,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Running Abacus", 2);
 
                 // Example command line:
-                // philosopher.exe abacus --picked --razor --reprint --tag XXX_ --protein ExperimentGroupA ExperimentGroupB
+                // philosopher.exe abacus --picked --razor --reprint --tag XXX_ --protein --peptide ExperimentGroupA ExperimentGroupB
 
                 var arguments = new StringBuilder();
 
@@ -3836,9 +3836,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         new(Path.Combine(experimentGroupDirectory.FullName, "psm.tsv")),
                         new(Path.Combine(experimentGroupDirectory.FullName, "ion.tsv")),
-                        new(Path.Combine(experimentGroupDirectory.FullName, "peptide.tsv")),
-                        new(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv"))
+                        new(Path.Combine(experimentGroupDirectory.FullName, "peptide.tsv"))
                     };
+
+                    if (options.RunProteinProphet)
+                    {
+                        outputFiles.Add(new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv")));
+                    }
 
                     var outputFilesExist = ValidateOutputFilesExist("Philosopher report", outputFiles);
 
@@ -4720,13 +4724,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </para>
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="usedProteinProphet">True if protein prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool UpdatePhilosopherReportFiles(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        private bool UpdatePhilosopherReportFiles(
+            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
+            bool usedProteinProphet)
         {
             var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
             RegisterEvents(processor);
 
-            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, out var totalPeptideCount);
+            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet, out var totalPeptideCount);
 
             if (totalPeptideCount > 0)
             {
@@ -4853,6 +4860,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // IonQuant results file not found: combined_ion.tsv
             // iProphet results file not found: combined.pep.xml
             // Philosopher report file not found: psm.tsv
+            // Philosopher report results file not found: protein.tsv
 
             LogError(string.Format(
                 "{0} results file{1} not found: {2}",
@@ -4908,7 +4916,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var datasetName = dataset.Value;
 
                     var pepXmlFiles = AnalysisToolRunnerMSFragger.FindDatasetPinFileAndPepXmlFiles(
-                        mWorkingDirectory, options.FraggerOptions.DIASearchEnabled,  datasetName, out var pinFile);
+                        mWorkingDirectory, options.FraggerOptions.DIASearchEnabled, datasetName, out var pinFile);
 
                     if (pepXmlFiles.Count == 0)
                     {
@@ -4953,8 +4961,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// but only if there are more than three experiment groups
         /// </summary>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
+        /// <param name="usedProteinProphet">True if protein prophet was used</param>
         /// <returns>True if success, false if an error</returns>
-        private bool ZipPsmTsvFiles(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        private bool ZipPsmTsvFiles(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, bool usedProteinProphet)
         {
             try
             {
@@ -4985,7 +4994,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (proteinFile.Exists)
                         filesToZip.Add(proteinFile);
-                    else
+                    else if (usedProteinProphet)
                         LogError("File not found: " + proteinFile.Name);
 
                     if (psmFile.Exists)
@@ -4993,7 +5002,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     else
                         LogError("File not found: " + psmFile.Name);
 
-                    if (ionFile.Exists && peptideFile.Exists && proteinFile.Exists && psmFile.Exists)
+                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists && (proteinFile.Exists || !usedProteinProphet))
                     {
                         validExperimentGroupCount++;
                     }
