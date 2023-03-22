@@ -148,7 +148,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
             JobNum = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             StepNum = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            DatasetName = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+            DatasetName = AnalysisResources.GetDatasetName(jobParams);
 
             TransferUtility = new RemoteTransferUtility(mgrParams, jobParams);
             RegisterEvents(TransferUtility);

@@ -891,7 +891,7 @@ namespace AnalysisManagerProg
             var stepNum = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             var cpuLoadExpected = mAnalysisTask.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "CPU_Load", 1);
 
-            var datasetName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+            var datasetName = AnalysisResources.GetDatasetName(mAnalysisTask);
             var jobToolDescription = mAnalysisTask.GetCurrentJobToolDescription();
 
             var runJobsRemotely = mMgrParams.GetParam("RunJobsRemotely", false);
@@ -2976,7 +2976,7 @@ namespace AnalysisManagerProg
 
                     if (string.IsNullOrEmpty(datasetStoragePath))
                     {
-                        var datasetName = mAnalysisTask.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+                        var datasetName = AnalysisResources.GetDatasetName(mAnalysisTask);
 
                         if (Global.IsMatch(datasetName, AnalysisResources.AGGREGATION_JOB_DATASET))
                         {

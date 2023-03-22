@@ -290,7 +290,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             mJob = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
 
-            mDatasetName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+            mDatasetName = AnalysisResources.GetDatasetName(mJobParams);
 
             mMyEMSLUtilities = myEMSLUtilities ?? new MyEMSLUtilities(mDebugLevel, mWorkDir);
             RegisterEvents(mMyEMSLUtilities);

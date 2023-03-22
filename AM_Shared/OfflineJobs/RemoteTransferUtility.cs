@@ -929,7 +929,7 @@ namespace AnalysisManagerBase.OfflineJobs
             JobNum = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             StepNum = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             StepTool = JobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, "StepTool");
-            DatasetName = JobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME);
+            DatasetName = AnalysisResources.GetDatasetName(JobParams);
 
             if (string.IsNullOrWhiteSpace(WorkDir))
                 throw new Exception("WorkDir parameter is empty; check the manager parameters");

@@ -101,7 +101,7 @@ namespace AnalysisManagerExtractionPlugin
             mDebugLevel = (short)mgrParams.GetParam("DebugLevel", 1);
             mStatusTools = StatusTools;
 
-            mDatasetName = jobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
+            mDatasetName = AnalysisResources.GetDatasetName(jobParams);
             mWorkDir = mgrParams.GetParam("WorkDir");
         }
 

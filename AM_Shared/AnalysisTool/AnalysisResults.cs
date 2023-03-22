@@ -379,7 +379,7 @@ namespace AnalysisManagerBase.AnalysisTool
             // The ToolName job parameter holds the name of the job script we are executing
             writer.WriteLine("Tool" + '\t' + mJobParams.GetParam("ToolName"));
             writer.WriteLine("StepTool" + '\t' + mJobParams.GetParam("StepTool"));
-            writer.WriteLine("Dataset" + '\t' + mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_DATASET_NAME));
+            writer.WriteLine("Dataset" + '\t' + AnalysisResources.GetDatasetName(mJobParams));
             writer.WriteLine("XferFolder" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH));
             writer.WriteLine("ParamFileName" + '\t' + mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
             writer.WriteLine("SettingsFileName" + '\t' + mJobParams.GetParam("SettingsFileName"));

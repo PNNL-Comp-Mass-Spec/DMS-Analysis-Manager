@@ -346,7 +346,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Dataset name
         /// </summary>
-        public const string JOB_PARAM_DATASET_NAME = "DatasetNum";
+        public const string JOB_PARAM_DATASET_NAME = "DatasetName";
+
+        /// <summary>
+        /// Legacy dataset name parameter
+        /// </summary>
+        [Obsolete("Use JOB_PARAM_DATASET_NAME instead")]
+        public const string JOB_PARAM_DATASET_NAME_LEGACY = "DatasetNum";
 
         /// <summary>
         /// Data package path
@@ -833,7 +839,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 int.TryParse(jobNum, out mJob);
             }
 
-            DatasetName = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME);
+            DatasetName = GetDatasetName(mJobParams, string.Empty);
 
             InitFileTools(mMgrName, mDebugLevel);
 
@@ -1912,7 +1918,7 @@ namespace AnalysisManagerBase.AnalysisTool
             const string peptideSearchSection = AnalysisJob.PEPTIDE_SEARCH_SECTION;
 
             var jobNumber = mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            var dataset = mJobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, mDatasetName);
+            var dataset = GetDatasetName(mJobParams, mDatasetName);
 
             var jobInfo = new DataPackageJobInfo(jobNumber, dataset)
             {
@@ -1993,9 +1999,47 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var curRow = resultSet.Rows[0];
 
-            var storagePath = curRow[0].CastDBVal<string>();
+            return curRow[0].CastDBVal<string>();
+        }
 
-            return storagePath;
+        /// <summary>
+        /// Determine the dataset name by first looking for job parameter
+        /// </summary>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="valueIfMissing">Dataset name to use if the parameter is not found</param>
+        /// <returns>Dataset name, or valueIfMissing if the job parameter is not found</returns>
+        private string GetDatasetName(IJobParams jobParams, string valueIfMissing)
+        {
+            var datasetName = GetDatasetName(jobParams);
+
+            if (!string.IsNullOrWhiteSpace(datasetName))
+                return datasetName;
+
+            if (!string.IsNullOrWhiteSpace(valueIfMissing))
+                return valueIfMissing;
+
+            LogWarning("Could not determine the dataset name since missing job parameter {0}", JOB_PARAM_DATASET_NAME);
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Determine the dataset name by first looking for job parameter
+        /// </summary>
+        /// <param name="jobParams">Job parameters</param>
+        /// <returns>Dataset name, or an empty string if the job parameter is not found</returns>
+        public static string GetDatasetName(IJobParams jobParams)
+        {
+            var datasetName = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME);
+
+            if (!string.IsNullOrWhiteSpace(datasetName))
+                return datasetName;
+
+#pragma warning disable CS0618
+            var legacyDatasetName = jobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME_LEGACY);
+#pragma warning restore CS0618
+
+            return string.IsNullOrWhiteSpace(legacyDatasetName) ? string.Empty : legacyDatasetName;
         }
 
         /// <summary>

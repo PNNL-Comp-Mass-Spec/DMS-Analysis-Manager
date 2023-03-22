@@ -510,7 +510,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 // For MaxQuant results, also look in the txt directory below the input directory
 
-                var datasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_NAME);
+                var datasetName = AnalysisResources.GetDatasetName(mJobParams);
                 var datasetDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 var inputDirectoryName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_INPUT_FOLDER_NAME);
 
