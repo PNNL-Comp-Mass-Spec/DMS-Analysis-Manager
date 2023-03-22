@@ -1835,14 +1835,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 arguments.Append(" --razor --reprint --tag XXX_");
 
-                // Version 15 of FragPipe would append --labels if reporter ions were in use
-                // This has been disabled in version 16
-
-                // if (options.ReporterIonMode != ReporterIonModes.Disabled)
-                // {
-                //     arguments.Append(" --labels");
-                // }
-
                 var generatePeptideLevelSummary = options.FraggerOptions.GetParameterValueOrDefault("GeneratePeptideLevelSummary", true);
                 var generateProteinLevelSummary = options.FraggerOptions.GetParameterValueOrDefault("GenerateProteinLevelSummary", true);
 
@@ -1870,6 +1862,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
 
                     arguments.Append(" --protein --peptide");
+                }
+
+                // Version 15 of FragPipe would append --labels if reporter ions were in use
+                // This was disabled in version 16 but was re-enabled in v19 when the "--plex" argument was added
+
+                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                {
+                    var plex = GetReporterIonChannelCount(options.ReporterIonMode);
+
+                    arguments.Append(" --labels");
+                    arguments.AppendFormat(" --plex {0}", plex);
                 }
 
                 // Append the experiment group working directory names
