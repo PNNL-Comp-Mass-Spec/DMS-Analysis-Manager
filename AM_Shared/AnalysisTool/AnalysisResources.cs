@@ -426,12 +426,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Transfer directory path
         /// </summary>
-        public const string JOB_PARAM_TRANSFER_DIRECTORY_PATH = "transferFolderPath";
+        public const string JOB_PARAM_TRANSFER_DIRECTORY_PATH = "TransferFolderPath";
 
         /// <summary>
         /// Name of the XML file with job parameters, created in the working directory
         /// </summary>
-        public const string JOB_PARAM_XML_PARAMS_FILE = "genJobParamsFilename";
+        public const string JOB_PARAM_XML_PARAMS_FILE = "GenJobParamsFilename";
 
         /// <summary>
         /// Manager parameter: local directory for caching FASTA files
