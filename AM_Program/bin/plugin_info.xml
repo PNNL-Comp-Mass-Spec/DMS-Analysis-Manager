@@ -413,6 +413,14 @@
 		Tool="MaxqS3"
 		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant"
 		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<ToolRunner
+		Tool="DiaNN_SpecLib"
+		Class="AnalysisManagerDiaNNPlugIn.AnalysisToolRunnerDiaNN"
+		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
+	<ToolRunner
+		Tool="DiaNN"
+		Class="AnalysisManagerDiaNNPlugIn.AnalysisToolRunnerDiaNN"
+		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
 
 </ToolRunners>
 
@@ -828,6 +836,14 @@
 		Tool="MaxqS3"
 		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant"
 		AssemblyFile="AnalysisManagerMaxQuantPlugIn.dll" />
+	<Resourcer
+		Tool="DiaNN_SpecLib"
+		Class="AnalysisManagerDiaNNPlugIn.AnalysisResourcesDiaNN"
+		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
+	<Resourcer
+		Tool="DiaNN"
+		Class="AnalysisManagerDiaNNPlugIn.AnalysisResourcesDiaNN"
+		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
 
 </Resourcers>
 
