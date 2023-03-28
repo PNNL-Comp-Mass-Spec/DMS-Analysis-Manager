@@ -8,8 +8,6 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
-using Newtonsoft.Json.Linq;
-using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDiaNNPlugIn
@@ -21,9 +19,9 @@ namespace AnalysisManagerDiaNNPlugIn
     {
         // Ignore Spelling: silico
 
-        internal const string DIA_NN_SPEC_LIB_STEP_TOOL = "DIA-NN_SpecLib";
+        internal const string DIA_NN_SPEC_LIB_STEP_TOOL = "DiaNN_SpecLib";
 
-        internal const string DIA_NN_STEP_TOOL = "DIA-NN";
+        internal const string DIA_NN_STEP_TOOL = "DiaNN";
 
         /// <summary>
         /// This job parameter tracks the spectral library file ID
@@ -356,7 +354,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 return GetSpectraLibraryFromDB(options, true, out libraryStatusCode, out spectralLibraryID, out createNewLibrary);
             }
 
-            // The DIA-NN_SpecLib step (either for this job or for another job) should have already created the file
+            // The DiaNN_SpecLib step (either for this job or for another job) should have already created the file
             // Contact the database to determine the spectral library file path
 
             return GetSpectraLibraryFromDB(options, false, out libraryStatusCode, out spectralLibraryID, out createNewLibrary);
