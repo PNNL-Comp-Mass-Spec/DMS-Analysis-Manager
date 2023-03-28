@@ -542,16 +542,17 @@ namespace AnalysisManagerDiaNNPlugIn
                     return null;
                 }
 
-                if (string.IsNullOrWhiteSpace(storagePath))
+                if (!string.IsNullOrWhiteSpace(storagePath))
                 {
-                    LogError(string.Format(
-                        "Procedure {0} returned library name {1} but an empty storage path",
-                        SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryName));
-
-                    return null;
+                    return new FileInfo(Path.Combine(storagePath, libraryName));
                 }
 
-                return new FileInfo(Path.Combine(storagePath, libraryName));
+                LogError(string.Format(
+                    "Procedure {0} returned library name {1} but an empty storage path",
+                    SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryName));
+
+                return null;
+
             }
             catch (Exception ex)
             {
