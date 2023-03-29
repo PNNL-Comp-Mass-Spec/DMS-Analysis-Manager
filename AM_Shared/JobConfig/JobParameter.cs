@@ -34,7 +34,7 @@
         }
 
         /// <summary>
-        /// Return Name and Value
+        /// Show the parameter name and value
         /// </summary>
         public override string ToString()
         {

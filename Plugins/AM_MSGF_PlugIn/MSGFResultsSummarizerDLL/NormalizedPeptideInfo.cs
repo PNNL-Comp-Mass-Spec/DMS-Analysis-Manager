@@ -41,16 +41,15 @@ namespace MSGFResultsSummarizer
             Modifications.AddRange(newModifications);
         }
 
+        /// <summary>
+        /// Show the sequence ID, clean sequence, and number of modified residues
+        /// </summary>
         public override string ToString()
         {
-            if (Modifications == null)
-            {
-                return string.Format("{0}: {1}, ModCount={2}", SeqID, CleanSequence, 0);
-            }
-            else
-            {
-                return string.Format("{0}: {1}, ModCount={2}", SeqID, CleanSequence, Modifications.Count);
-            }
+            return string.Format("{0}: {1}, ModCount={2}",
+                SeqID,
+                CleanSequence,
+                Modifications?.Count ?? 0);
         }
     }
 }

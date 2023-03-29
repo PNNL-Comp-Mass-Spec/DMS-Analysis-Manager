@@ -188,7 +188,7 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Return job number and dataset name
+        /// Show the job number and dataset name
         /// </summary>
         public override string ToString()
         {

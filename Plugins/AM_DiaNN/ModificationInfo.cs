@@ -144,5 +144,13 @@ namespace AnalysisManagerDiaNNPlugIn
             return ModificationName.Equals(modificationName, StringComparison.OrdinalIgnoreCase) ||
                    Math.Abs(ModificationMass - modificationMass) <= massTolerance;
         }
+
+        /// <summary>
+        /// Show the modification type, name, and mass
+        /// </summary>
+        public override string ToString()
+        {
+            return string.Format("{0} {1}: {2}", ModificationType, ModificationName ?? "<Undefined>", ModificationMass);
+        }
     }
 }

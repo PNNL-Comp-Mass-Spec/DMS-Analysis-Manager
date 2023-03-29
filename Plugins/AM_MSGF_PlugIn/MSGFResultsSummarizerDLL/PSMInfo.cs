@@ -137,22 +137,6 @@ namespace MSGFResultsSummarizer
             throw new InvalidOperationException("Observation count cannot be updated in PSMInfo");
         }
 
-        public override string ToString()
-        {
-            if (Observations.Count == 0)
-            {
-                return string.Format("SeqID {0}, {1} (0 observations)", SeqIdFirst, Protein);
-            }
-
-            if (Observations.Count == 1)
-            {
-                return string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, Observations[0].Scan);
-            }
-
-            return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, Observations[0].Scan,
-                                 Observations[Observations.Count - 1].Scan, Observations.Count);
-        }
-
         public class PSMObservation
         {
             public string DatasetIdOrName { get; set; }
@@ -210,10 +194,29 @@ namespace MSGFResultsSummarizer
                 PassesFilter = false;
             }
 
+            /// <summary>
+            /// Show the scan number, FDR, and MS-GF Spec EValue
+            /// </summary>
             public override string ToString()
             {
                 return string.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF);
             }
+        }
+
+        /// <summary>
+        /// Show the sequence ID, protein, and number of observations (spectra)
+        /// </summary>
+        public override string ToString()
+        {
+            // ReSharper disable once UseStringInterpolation
+
+            return Observations.Count switch
+            {
+                0 => string.Format("SeqID {0}, {1} (0 observations)", SeqIdFirst, Protein),
+                1 => string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, Observations[0].Scan),
+                _ => string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, Observations[0].Scan,
+                    Observations[Observations.Count - 1].Scan, Observations.Count)
+            };
         }
     }
 }
