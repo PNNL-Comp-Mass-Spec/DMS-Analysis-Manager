@@ -1319,8 +1319,9 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType RunPHRPForMaxQuant()
         {
             const string inputFileName = "msms.txt";
+            const int numericDataColIndex = 1;
 
-            var msmsFileHasData = AnalysisResources.ValidateFileHasData(Path.Combine(mWorkDir, inputFileName), "MaxQuant msms.txt", out var errorMessage);
+            var msmsFileHasData = AnalysisResources.ValidateFileHasData(Path.Combine(mWorkDir, inputFileName), "MaxQuant msms.txt", out var errorMessage, numericDataColIndex);
 
             if (!msmsFileHasData)
             {
