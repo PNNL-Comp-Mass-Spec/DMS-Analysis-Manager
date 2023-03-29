@@ -397,7 +397,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (dbServerType == DbServerTypes.PostgreSQL)
                     dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Boolean).Value = allowCreateNewLibrary;
                 else
-                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.TinyInt).Value = BoolToTinyInt(allowCreateNewLibrary);
+                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Bit).Value = BoolToTinyInt(allowCreateNewLibrary);
 
                 dbTools.AddParameter(cmd, "@dmsSourceJob", SqlType.Int).Value = mJob;
                 dbTools.AddParameter(cmd, "@proteinCollectionList", SqlType.VarChar, 2000).Value = proteinCollectionInfo.ProteinCollectionList;
@@ -408,7 +408,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (dbServerType == DbServerTypes.PostgreSQL)
                     dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Boolean).Value = options.TrimNTerminalMethionine;
                 else
-                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.TinyInt).Value = BoolToTinyInt(options.TrimNTerminalMethionine);
+                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Bit).Value = BoolToTinyInt(options.TrimNTerminalMethionine);
 
                 dbTools.AddParameter(cmd, "@cleavageSpecificity", SqlType.VarChar, 64).Value = options.CleavageSpecificity;
                 dbTools.AddParameter(cmd, "@missedCleavages", SqlType.Int).Value = options.MissedCleavages;
@@ -422,7 +422,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (dbServerType == DbServerTypes.PostgreSQL)
                     dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Boolean).Value = options.StaticCysCarbamidomethyl;
                 else
-                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.TinyInt).Value = BoolToTinyInt(options.StaticCysCarbamidomethyl);
+                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Bit).Value = BoolToTinyInt(options.StaticCysCarbamidomethyl);
 
                 var staticMods = CollapseModifications(options.StaticModDefinitions);
 
@@ -550,7 +550,6 @@ namespace AnalysisManagerDiaNNPlugIn
                     SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryName));
 
                 return null;
-
             }
             catch (Exception ex)
             {
