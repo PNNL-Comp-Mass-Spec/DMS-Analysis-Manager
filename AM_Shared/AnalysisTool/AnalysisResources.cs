@@ -5098,6 +5098,9 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
             {
+                {"DiaNN", IGenerateFile.ParamFileType.DiaNN},
+                {"DiaNN_SpecLib", IGenerateFile.ParamFileType.DiaNN},
+                {"Inspect", IGenerateFile.ParamFileType.Inspect},
                 {"MaxQuant", IGenerateFile.ParamFileType.MaxQuant},
                 {"MODa", IGenerateFile.ParamFileType.MODa},
                 {"MODPlus", IGenerateFile.ParamFileType.MODPlus},
@@ -5106,7 +5109,6 @@ namespace AnalysisManagerBase.AnalysisTool
                 {"MSFragger", IGenerateFile.ParamFileType.MSFragger},
                 {"MSGFPlus", IGenerateFile.ParamFileType.MSGFPlus},
                 {"MSPathFinder", IGenerateFile.ParamFileType.MSPathFinder},
-                {"Inspect", IGenerateFile.ParamFileType.Inspect},
                 {"Sequest", IGenerateFile.ParamFileType.BioWorks_Current},
                 {"TopPIC", IGenerateFile.ParamFileType.TopPIC},
                 {"XTandem", IGenerateFile.ParamFileType.X_Tandem}
