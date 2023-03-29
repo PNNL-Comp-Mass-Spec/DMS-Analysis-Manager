@@ -5411,7 +5411,15 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!dataFound)
                 {
-                    errorMessage = fileDescription + " is empty (no data)";
+                    // Example messages:
+                    //   MaxQuant msms.txt file is empty (no data)
+                    //   MaxQuant msms.txt file is empty (no numeric data in column 2)
+
+                    var messageDetail = numericDataColIndex < 0
+                        ? "no data"
+                        : string.Format("no numeric data in column {0}", numericDataColIndex + 1);
+
+                    errorMessage = string.Format("{0} file is empty ({1})", fileDescription, messageDetail);
                 }
             }
             catch (Exception)
