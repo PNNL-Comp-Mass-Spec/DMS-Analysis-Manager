@@ -464,15 +464,20 @@ namespace AnalysisManagerDiaNNPlugIn
             // Exclusion of fragments shared between heavy and light peptides from quantification is not supported in FASTA digest mode - disabled; to enable, generate an in silico predicted spectral library and analyse with this library
 
             // 0 files will be processed
-            // [0:00] Loading FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
+            // [0:00] Loading FASTA C:\DMS_Temp_Org\ID_008358_7EC82878.fasta
             // [0:01] Processing FASTA
-            // [0:02] Assembling elution groups
-            // [0:03] 801607 precursors generated
-            // [0:03] Gene names missing for some isoforms
-            // [0:03] Library contains 1494 proteins, and 1493 genes
-            // [0:03] [0:05] [3:56] [4:22] [4:24] [4:25] Saving the library to lib.predicted.speclib
-            // [4:26] Initialising library
-
+            // [0:03] Assembling elution groups
+            // [0:04] 802515 precursors generated
+            // [0:04] Gene names missing for some isoforms
+            // [0:04] Library contains 1506 proteins, and 1505 genes
+            // [0:04] Encoding peptides for spectra and RTs prediction
+            // [0:05] Predicting spectra and IMs
+            // [4:10] Predicting RTs
+            // [4:37] Decoding predicted spectra and IMs
+            // [4:41] Decoding RTs
+            // [4:41] Saving the library to lib.predicted.speclib
+            // [4:42] Initialising library
+            // [4:43] Log saved to lib.log.txt
             // Finished
 
             // ReSharper restore CommentTypo
@@ -483,6 +488,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 { 2                                       , GetRegEx("^Processing FASTA") },
                 { 3                                       , GetRegEx("^Assembling elution groups") },
                 { 5                                       , GetRegEx("^Library contains") },
+                { 90                                      , GetRegEx("^Predicting RTs") },
+                { 92                                      , GetRegEx("^Decoding predicted spectra and IMs") },
+                { 93                                      , GetRegEx("^Decoding RTs") },
                 { 95                                      , GetRegEx("^Saving the library to") },
                 // ReSharper disable once StringLiteralTypo
                 { 97                                       , GetRegEx("^Initialising library") },
@@ -967,7 +975,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
                 RegisterEvents(dataPackageInfo);
 
-                if (dataPackageInfo.DatasetFiles.Count == 0)
+                if (dataPackageInfo.DatasetFiles.Count == 0 && !mBuildingSpectralLibrary)
                 {
                     LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
