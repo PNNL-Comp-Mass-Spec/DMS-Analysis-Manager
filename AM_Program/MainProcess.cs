@@ -1056,7 +1056,7 @@ namespace AnalysisManagerProg
                 {
                     if (SkippedStepTool(resultCode))
                     {
-                        // This is not an error; we're simply skipping the step tool
+                        // This is not an error; we're simply skipping the step tool or waiting for another job to finish creating a file that this job needs
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
 
@@ -2768,7 +2768,8 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Return true if the result code indicates a step tool was skipped
+        /// Return true if the result code indicates a step tool was skipped,
+        /// or if waiting for another job to finish creating a file that this job needs
         /// </summary>
         /// <param name="resultCode"></param>
         private bool SkippedStepTool(CloseOutType resultCode)
@@ -2777,7 +2778,8 @@ namespace AnalysisManagerProg
                 CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB or
                 CloseOutType.CLOSEOUT_SKIPPED_MAXQUANT or
                 CloseOutType.CLOSEOUT_SKIPPED_MSXML_GEN or
-                CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY;
+                CloseOutType.CLOSEOUT_SKIPPED_MZ_REFINERY or
+                CloseOutType.CLOSEOUT_WAITING_FOR_DIA_NN_SPEC_LIB;
         }
 
         /// <summary>
