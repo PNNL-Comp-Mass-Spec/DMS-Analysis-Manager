@@ -169,10 +169,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (remoteSpectralLibraryFile == null)
                 {
-                    if (string.IsNullOrWhiteSpace(mMessage))
-                    {
-                        LogError("GetSpectralLibraryFile returned a null value for the remote spectral library file");
-                    }
+                    if (!string.IsNullOrWhiteSpace(mMessage))
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    LogError(
+                        createNewLibrary
+                        ? "GetSpectralLibraryFile indicated that this job should create a new library, but the library file path is null"
+                        : "GetSpectralLibraryFile returned a null value for the remote spectral library file");
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
