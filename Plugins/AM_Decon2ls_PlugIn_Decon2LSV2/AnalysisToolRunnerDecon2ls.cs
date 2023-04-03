@@ -1242,7 +1242,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 AnalysisResources.RawDataTypeConstants.AgilentQStarWiffFile => datasetName + AnalysisResources.DOT_WIFF_EXTENSION,
                 AnalysisResources.RawDataTypeConstants.UIMF => datasetName + AnalysisResources.DOT_UIMF_EXTENSION,
                 AnalysisResources.RawDataTypeConstants.AgilentDFolder => datasetName + AnalysisResources.DOT_D_EXTENSION,
-                AnalysisResources.RawDataTypeConstants.MicromassRawFolder => datasetName + AnalysisResources.DOT_RAW_EXTENSION + "/_FUNC001.DAT",
+                AnalysisResources.RawDataTypeConstants.MicromassRawFolder => Path.Combine(datasetName + AnalysisResources.DOT_RAW_EXTENSION, "_FUNC001.DAT"),
                 AnalysisResources.RawDataTypeConstants.ZippedSFolders => datasetName,
 
                 // Bruker_FT folders are actually .D folders
