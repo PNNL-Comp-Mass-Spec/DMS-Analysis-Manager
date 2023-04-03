@@ -47,7 +47,7 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             Initializing = 0,
             StartingDiaNN = 1,
-            DiaNNComplete = 90,
+            DiaNNComplete = 98,
             ProcessingComplete = 99
         }
 
@@ -347,7 +347,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // For example, remove [4:38] from "[4:38] Cross-run analysis"
             var match = mRuntimeMatcher.Match(dataLine);
 
-            var progressMessage = match.Success ? match.Groups["ProgressMessage"].Value : dataLine;
+            var progressMessage = match.Success ? match.Groups["ProgressMessage"].Value.Trim() : dataLine;
 
             // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var processingStep in processingSteps)
@@ -540,7 +540,10 @@ namespace AnalysisManagerDiaNNPlugIn
                         }
                     }
 
-                    currentProgress = GetCurrentProgress(processingSteps, dataLine);
+                    var progressForLine = GetCurrentProgress(processingSteps, dataLine);
+
+                    if (progressForLine > currentProgress)
+                        currentProgress = progressForLine;
 
                     // Check whether the line starts with the text error
                     // Future: possibly adjust this check
@@ -860,6 +863,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
+                var currentProgress = (int)ProgressPercentValues.StartingDiaNN;
 
                 var effectiveProgressOverall = 0.0f;
 
@@ -898,7 +902,10 @@ namespace AnalysisManagerDiaNNPlugIn
                         continue;
                     }
 
-                    var currentProgress = GetCurrentProgress(processingSteps, dataLine);
+                    var progressForLine = GetCurrentProgress(processingSteps, dataLine);
+
+                    if (progressForLine > currentProgress)
+                        currentProgress = progressForLine;
 
                     // Check whether the line starts with the text error
                     // Future: possibly adjust this check
