@@ -149,7 +149,17 @@ namespace AnalysisManagerDiaNNPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var spectralLibraryFile = GetSpectralLibraryFile(out var remoteSpectralLibraryFile);
+                var spectralLibraryFile = GetSpectralLibraryFile(out var remoteSpectralLibraryFile, out var spectralLibraryID);
+
+                if (spectralLibraryFile == null)
+                {
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                    {
+                        LogError("GetSpectralLibraryFile returned null for the spectral library file");
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 // If mBuildingSpectralLibrary is true, create the spectral library file
                 // If mBuildingSpectralLibrary is false, process the mzML files using DIA-NN
@@ -417,10 +427,26 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Get the spectral library file info
         /// </summary>
-        /// <param name="remoteSpectralLibraryFile">Remote file that corresponds to the local file</param>
+        /// <param name="remoteSpectralLibraryFile">Output: Remote file that corresponds to the local file</param>
+        /// <param name="spectralLibraryID">Output: Spectral Library ID</param>
         /// <returns>FileInfo instance for the local spectral library file to use or create; null if an error</returns>
-        private FileInfo GetSpectralLibraryFile(out FileInfo remoteSpectralLibraryFile)
+        private FileInfo GetSpectralLibraryFile(out FileInfo remoteSpectralLibraryFile, out int spectralLibraryID)
         {
+            spectralLibraryID = mJobParams.GetJobParameter(
+                AnalysisJob.STEP_PARAMETERS_SECTION,
+                AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_ID,
+                0);
+
+            if (spectralLibraryID == 0)
+            {
+                LogError(
+                    "Cannot determine the spectral library ID since job parameter {0} is not defined in section {1}",
+                    AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_ID, AnalysisJob.STEP_PARAMETERS_SECTION);
+
+                remoteSpectralLibraryFile = null;
+                return null;
+            }
+
             var remoteSpectralLibraryFilePath = mJobParams.GetJobParameter(
                 AnalysisJob.STEP_PARAMETERS_SECTION,
                 AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM,
@@ -433,6 +459,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     AnalysisResourcesDiaNN.SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM, AnalysisJob.STEP_PARAMETERS_SECTION);
 
                 remoteSpectralLibraryFile = null;
+                spectralLibraryID = 0;
                 return null;
             }
 
