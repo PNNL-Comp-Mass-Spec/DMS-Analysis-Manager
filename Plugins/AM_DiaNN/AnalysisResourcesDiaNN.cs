@@ -379,7 +379,7 @@ namespace AnalysisManagerDiaNNPlugIn
             out int spectralLibraryID,
             out bool createNewLibrary)
         {
-            const string SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID = "get_spectral_library_id";
+            const string SP_NAME_GET_SPECTRAL_LIBRARY_ID = "get_spectral_library_id";
 
             try
             {
@@ -395,7 +395,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var dbServerType = DbToolsFactory.GetServerTypeFromConnectionString(dbTools.ConnectStr);
 
-                var cmd = dbTools.CreateCommand(SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, CommandType.StoredProcedure);
+                var cmd = dbTools.CreateCommand(SP_NAME_GET_SPECTRAL_LIBRARY_ID, CommandType.StoredProcedure);
 
                 if (dbServerType == DbServerTypes.PostgreSQL)
                     dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Boolean).Value = allowCreateNewLibrary;
@@ -466,7 +466,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 {
                     var errorMsg = string.Format(
                         "Procedure {0} returned error code {1}{2}",
-                        SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, returnCode,
+                        SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCode,
                         string.IsNullOrWhiteSpace(errorMessage)
                             ? string.Empty
                             : ": " + errorMessage);
@@ -532,7 +532,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         // Unrecognized case
                         LogError(string.Format(
                             "Procedure {0} returned an unrecognized library state of {1} for library {2}",
-                            SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName));
+                            SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName));
 
                         libraryStatusCode= SpectralLibraryStatusCodes.Unknown;
                         return null;
@@ -550,13 +550,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogError(string.Format(
                     "Procedure {0} returned library name {1} but an empty storage path",
-                    SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, libraryName));
+                    SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryName));
 
                 return null;
             }
             catch (Exception ex)
             {
-                LogError("Error calling " + SP_NAME_REPORT_GET_SPECTRAL_LIBRARY_ID, ex);
+                LogError("Error calling " + SP_NAME_GET_SPECTRAL_LIBRARY_ID, ex);
 
                 libraryStatusCode = SpectralLibraryStatusCodes.Error;
                 spectralLibraryID = 0;
