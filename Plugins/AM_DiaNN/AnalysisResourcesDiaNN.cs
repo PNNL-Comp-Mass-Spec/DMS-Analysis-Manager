@@ -196,6 +196,16 @@ namespace AnalysisManagerDiaNNPlugIn
                         return CloseOutType.CLOSEOUT_WAITING_FOR_DIA_NN_SPEC_LIB;
                 }
 
+                if (spectralLibraryID == 0)
+                {
+                    if (!string.IsNullOrWhiteSpace(mMessage))
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    LogError(string.Format("The spectral library ID for {0} is 0, which is invalid", remoteSpectralLibraryFile.Name));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SPECTRAL_LIBRARY_FILE_ID, spectralLibraryID);
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, SPECTRAL_LIBRARY_FILE_REMOTE_PATH_JOB_PARAM, remoteSpectralLibraryFile.FullName);
 
@@ -228,8 +238,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (libraryStatusCode != SpectralLibraryStatusCodes.LibraryAlreadyCreated)
                 {
                     LogError(string.Format(
-                        "Spectral library status code is {0}; expecting LibraryAlreadyCreated ({1})",
-                        (int)libraryStatusCode, (int)SpectralLibraryStatusCodes.LibraryAlreadyCreated));
+                        "Spectral library status code is {0} ({1}); expecting LibraryAlreadyCreated ({2})",
+                        libraryStatusCode, (int)libraryStatusCode, (int)SpectralLibraryStatusCodes.LibraryAlreadyCreated));
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
