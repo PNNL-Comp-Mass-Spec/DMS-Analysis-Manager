@@ -7,6 +7,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,6 +16,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDiaNNPlugIn
 {
@@ -205,7 +207,19 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var success = CopyResultsToTransferDirectory(spectralLibraryFile, remoteSpectralLibraryFile, ref completionCode);
 
-                return processingResult;
+                bool success2;
+
+                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                if (mBuildingSpectralLibrary)
+                {
+                    // Update the library state
+                    success2 = SetSpectralLibraryCreateTaskComplete(spectralLibraryID, completionCode);
+                }
+                else
+                {
+                    success2 = true;
+                }
+
                 if (success && success2)
                     return processingResult;
 
@@ -1032,6 +1046,64 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
+        /// <summary>
+        /// Contact the database to determine if an existing spectral library exists, or if a new one needs to be created
+        /// </summary>
+        /// <param name="spectralLibraryID">Spectral library ID</param>
+        /// <param name="completionCode">CompletionCode</param>
+        /// <returns>FileInfo instance for the remote spectral library file (the file will not exist if a new library); null if an error</returns>
+        private bool SetSpectralLibraryCreateTaskComplete(int spectralLibraryID, LibraryCreationCompletionCode completionCode)
+        {
+            const string SP_NAME_SET_CREATE_TASK_COMPLETE = "set_spectral_library_create_task_complete";
+
+            try
+            {
+                // Gigasax.DMS5
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var cmd = dbTools.CreateCommand(SP_NAME_SET_CREATE_TASK_COMPLETE, CommandType.StoredProcedure);
+
+                dbTools.AddParameter(cmd, "@libraryId", SqlType.Int).Value = spectralLibraryID;
+                dbTools.AddParameter(cmd, "@completionCode", SqlType.Int).Value = (int)completionCode;
+
+                var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+
+                messageParam.Value = string.Empty;
+                returnCodeParam.Value = string.Empty;
+
+                // Execute the SP
+                var returnCode = dbTools.ExecuteSP(cmd, out var errorMessage);
+
+                var success = returnCode == 0;
+
+                if (!success)
+                {
+                    var errorMsg = string.Format(
+                        "Procedure {0} returned error code {1}{2}",
+                        SP_NAME_SET_CREATE_TASK_COMPLETE, returnCode,
+                        string.IsNullOrWhiteSpace(errorMessage)
+                            ? string.Empty
+                            : ": " + errorMessage);
+
+                    LogError(errorMsg);
+
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error calling " + SP_NAME_SET_CREATE_TASK_COMPLETE, ex);
+                return false;
+            }
+        }
 
         private CloseOutType StartDiaNN(
             FileSystemInfo fastaFile,
