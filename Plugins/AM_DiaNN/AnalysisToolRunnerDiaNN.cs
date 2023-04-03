@@ -204,6 +204,9 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Define additional files to skip
+                mJobParams.AddResultFileToSkip("report-lib.tsv");
+                mJobParams.AddResultFileExtensionToSkip("_mzML.quant");
 
                 var success = CopyResultsToTransferDirectory(spectralLibraryFile, remoteSpectralLibraryFile, ref completionCode);
 

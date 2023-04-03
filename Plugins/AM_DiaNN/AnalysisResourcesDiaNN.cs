@@ -256,6 +256,8 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogDebug("Spectral library file retrieved in {0:F2} seconds", DateTime.UtcNow.Subtract(startTime).TotalSeconds);
 
+                mJobParams.AddResultFileToSkip(localSpectralLibraryFile.Name);
+
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
 
