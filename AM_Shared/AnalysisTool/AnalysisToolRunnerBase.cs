@@ -2265,6 +2265,19 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (dataPackageID <= 0)
             {
+                const string NOT_DEFINED = "job parameter not defined";
+
+                var dataPackageText = mJobParams.GetJobParameter("DataPackageID", NOT_DEFINED);
+
+                errorMessage = dataPackageText.Equals(NOT_DEFINED)
+                    ? "Job parameter DataPackageID is not defined"
+                    : "Job parameter DataPackageID is 0";
+
+                if (logErrors)
+                {
+                    LogError(errorMessage);
+                }
+
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
             }
