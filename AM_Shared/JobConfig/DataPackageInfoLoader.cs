@@ -205,6 +205,7 @@ namespace AnalysisManagerBase.JobConfig
                 callingClass.LogMessage("Auto defining MSFragger experiment group names using experiment names");
             }
 
+            // ReSharper disable once NotAccessedVariable
             var autoDefinedExperimentGroupCount = 0;
             var customNameExperimentGroupCount = 0;
 
