@@ -1268,6 +1268,14 @@ namespace AnalysisManagerExtractionPlugin
                 var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, out var dataPackageError, storeJobParameters: true);
 
                 if (!success && dataPackageError)
+                {
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                    {
+                        mMessage = string.Format("Error retrieving the metadata for the datasets associated with data package {0}", dataPackageID);
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 if (!success || datasetIDsByExperimentGroup.Count <= 1)
                 {
