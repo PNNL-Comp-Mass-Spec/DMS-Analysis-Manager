@@ -2249,8 +2249,14 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Looks up dataset information for the data package associated with this analysis job
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out string errorMessage,
+            bool logErrors
+            )
         {
             // Gigasax.DMS_Pipeline
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -2268,7 +2274,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets, out errorMessage, logErrors);
         }
 
         /// <summary>

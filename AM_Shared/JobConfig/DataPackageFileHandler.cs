@@ -1153,13 +1153,20 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets);
+                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets, out var errorMessage, false);
 
                 if (!success || dataPackageDatasets.Count == 0)
                 {
-                    ErrorMessage = string.Format(
-                        "Did not find any datasets associated with this job's data package (ID {0})",
-                        mDataPackageInfoLoader.DataPackageID);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        ErrorMessage = string.Format(
+                            "Did not find any datasets associated with this job's data package (ID {0})",
+                            mDataPackageInfoLoader.DataPackageID);
+                    }
+                    else
+                    {
+                        ErrorMessage = errorMessage;
+                    }
 
                     OnErrorEvent(ErrorMessage);
                     return false;
@@ -1417,17 +1424,22 @@ namespace AnalysisManagerBase.JobConfig
                 throw new Exception(ErrorMessage);
             }
 
-            var workDirInfo = new DirectoryInfo(workingDir);
-
             try
             {
-                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets);
+                var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dataPackageDatasets, out var errorMessage, false);
 
                 if (!success || dataPackageDatasets.Count == 0)
                 {
-                    ErrorMessage = string.Format(
-                        "Did not find any datasets associated with this job's data package (ID {0})",
-                        mDataPackageInfoLoader.DataPackageID);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        ErrorMessage = string.Format(
+                            "Did not find any datasets associated with this job's data package (ID {0})",
+                            mDataPackageInfoLoader.DataPackageID);
+                    }
+                    else
+                    {
+                        ErrorMessage = errorMessage;
+                    }
 
                     OnErrorEvent(ErrorMessage);
                     return false;
@@ -1466,6 +1478,8 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
+                var workDirInfo = new DirectoryInfo(workingDir);
+
                 var dotNetTools = new DotNetZipTools(debugLevel, workDirInfo.FullName);
                 RegisterEvents(dotNetTools);
 
@@ -1607,6 +1621,7 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     // Create a batch file with commands for retrieve the dataset files
                     var batchFilePath = Path.Combine(workDirInfo.FullName, "RetrieveInstrumentData.bat");
+
                     using (var writer = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         foreach (var item in rawFileRetrievalCommands.Values)

@@ -184,7 +184,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private int GetDatasetCount()
         {
-            var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets);
+            var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets, out _, true);
 
             return dataPackageDefined ? dataPackageDatasets.Count : 1;
         }

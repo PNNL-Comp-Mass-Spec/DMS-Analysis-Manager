@@ -112,16 +112,22 @@ namespace AnalysisManagerBase.JobConfig
         /// Looks up dataset information for a data package
         /// </summary>
         /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        public bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
+        public bool LoadDataPackageDatasetInfo(
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out string errorMessage,
+            bool logErrors = true)
         {
             if (DataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+                errorMessage = string.Empty;
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(mCallingClass, DBTools, DataPackageID, out dataPackageDatasets);
+            return LoadDataPackageDatasetInfo(mCallingClass, DBTools, DataPackageID, out dataPackageDatasets, out errorMessage, logErrors);
         }
 
         /// <summary>
@@ -130,15 +136,21 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="callingClass">Analysis resources or analysis tools class</param>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dataPackageDatasets">Datasets associated with the given data package; keys are DatasetID</param>
-        /// <returns>True if a data package is defined and it has datasets associated with it</returns>
+        /// <param name="dataPackageDatasets">Output: datasets associated with the given data package; keys are DatasetID</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logErrors">Log errors if true (default)</param>
+        /// <returns>True if a data package is defined and it has datasets associated with it, false if an error (including if the data package has a placeholder dataset)</returns>
         public static bool LoadDataPackageDatasetInfo(
             AnalysisMgrBase callingClass,
             IDBTools dbTools,
             int dataPackageID,
-            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out string errorMessage,
+            bool logErrors = true)
         {
             dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+
+            var placeholderDatasetMatcher = new Regex(@"^DataPackage_\d+", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
             var sqlStr = new StringBuilder();
 
@@ -157,8 +169,13 @@ namespace AnalysisManagerBase.JobConfig
 
             if (!success)
             {
-                const string errorMessage = "LoadDataPackageDatasetInfo: Excessive failures attempting to retrieve data package dataset info from database";
-                LogTools.LogError(errorMessage);
+                errorMessage = "LoadDataPackageDatasetInfo: Excessive failures attempting to retrieve data package dataset info from database";
+
+                if (logErrors)
+                {
+                    callingClass.LogError(errorMessage);
+                }
+
                 return false;
             }
 
@@ -166,8 +183,13 @@ namespace AnalysisManagerBase.JobConfig
             if (resultSet.Rows.Count < 1)
             {
                 // No data was returned
-                var warningMessage = "LoadDataPackageDatasetInfo: No datasets were found for data package " + dataPackageID;
-                LogTools.LogWarning(warningMessage);
+                errorMessage = "LoadDataPackageDatasetInfo: No datasets were found for data package " + dataPackageID;
+
+                if (logErrors)
+                {
+                    callingClass.LogWarning(errorMessage);
+                }
+
                 return false;
             }
 
@@ -189,6 +211,23 @@ namespace AnalysisManagerBase.JobConfig
             foreach (DataRow curRow in resultSet.Rows)
             {
                 var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
+
+                if (placeholderDatasetMatcher.IsMatch(datasetInfo.Dataset))
+                {
+                    // ReSharper disable once CommentTypo
+
+                    // Somebody added a data package placeholder dataset to the data package (e.g. DataPackage_3442_PlexedPiperTestData)
+                    // See also https://dms2.pnl.gov/data_package_dataset/report/-/StartsWith__DataPackage/-/-/-/-
+
+                    errorMessage = string.Format("Data package {0} contains a data package placeholder dataset, which is not allowed; remove dataset {1} from the data package", dataPackageID, datasetInfo.Dataset);
+
+                    if (logErrors)
+                    {
+                        callingClass.LogError(errorMessage);
+                    }
+
+                    return false;
+                }
 
                 if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup) || int.TryParse(datasetInfo.DatasetExperimentGroup, out _))
                 {
@@ -220,18 +259,26 @@ namespace AnalysisManagerBase.JobConfig
 
             if (dataPackageDatasets.Count == 0)
             {
-                callingClass.LogError(string.Format("No datasets were found for data package ID {0} using view V_DMS_Data_Package_Datasets", dataPackageID));
+                errorMessage = string.Format("No datasets were found for data package ID {0} using view V_DMS_Data_Package_Datasets", dataPackageID);
+
+                if (logErrors)
+                {
+                    callingClass.LogError(errorMessage);
+                }
+
                 return false;
             }
 
             if (customNameExperimentGroupCount == 0)
             {
+                errorMessage = string.Empty;
                 return true;
             }
 
             if (dataPackageDatasets.Count == 1)
             {
                 callingClass.LogMessage(string.Format("Dataset ID {0} had a custom experiment group defined in the dataset's 'Package Comment' field", dataPackageDatasets[0].DatasetID));
+                errorMessage = string.Empty;
                 return true;
             }
 
@@ -241,6 +288,7 @@ namespace AnalysisManagerBase.JobConfig
 
             callingClass.LogMessage(string.Format("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription));
 
+            errorMessage = string.Empty;
             return true;
         }
 

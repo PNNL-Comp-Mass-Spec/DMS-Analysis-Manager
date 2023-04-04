@@ -1265,7 +1265,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Retrieve metadata about the datasets in this data package
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-                var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, true);
+                var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, out var dataPackageError, storeJobParameters: true);
+
+                if (!success && dataPackageError)
 
                 if (!success || datasetIDsByExperimentGroup.Count <= 1)
                 {

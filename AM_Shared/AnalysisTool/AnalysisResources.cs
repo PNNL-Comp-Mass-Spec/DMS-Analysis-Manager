@@ -3165,8 +3165,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Looks up dataset information for a data package
         /// </summary>
         /// <param name="dataPackageDatasets"></param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and it has datasets associated with it, otherwise false</returns>
-        protected bool LoadDataPackageDatasetInfo(out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets)
+        protected bool LoadDataPackageDatasetInfo(
+            out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out string errorMessage,
+            bool logErrors)
         {
             // Gigasax.DMS_Pipeline
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
@@ -3176,6 +3181,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (dataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+                errorMessage = string.Empty;
                 return false;
             }
 
@@ -3184,7 +3190,7 @@ namespace AnalysisManagerBase.AnalysisTool
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets);
+            return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets, out errorMessage, logErrors);
         }
 
         /// <summary>
@@ -3249,13 +3255,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="datasetIDsByExperimentGroup">
         /// Output: dictionary where keys are experiment group name and values are dataset ID (this is used by MSFragger)
         /// </param>
-        /// <param name="storeJobParameters">
-        /// When true, store the data package info as packed dictionary job parameters
-        /// </param>
+        /// <param name="dataPackageError">Output: true if a database error or the data package has a placeholder dataset</param>
+        /// <param name="storeJobParameters">When true, store the data package info as packed dictionary job parameters</param>
         /// <returns>True if the data package is defined and it has datasets associated with it</returns>
         protected bool LookupDataPackageInfo(
             int dataPackageID,
             out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            out bool dataPackageError,
             bool storeJobParameters)
         {
             try
@@ -3273,7 +3279,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var dataPackageInfoLoader = new DataPackageInfoLoader(this, dbTools, dataPackageID);
 
-                var success = dataPackageInfoLoader.LoadDataPackageDatasetInfo(out var dataPackageDatasets);
+                var success = dataPackageInfoLoader.LoadDataPackageDatasetInfo(out var dataPackageDatasets, out var errorMessage, false);
 
                 if (success && dataPackageDatasets.Count > 0)
                 {
@@ -3287,14 +3293,20 @@ namespace AnalysisManagerBase.AnalysisTool
                         dataPackageInfo.StorePackedDictionaries(this);
                     }
 
+                    dataPackageError = false;
                     return true;
                 }
 
-                var errorMessage = string.Format(
-                    "Did not find any datasets associated with this job's data package (ID {0})",
-                    dataPackageInfoLoader.DataPackageID);
-
-                LogError(errorMessage);
+                if (string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    LogError(string.Format("Did not find any datasets associated with this job's data package (ID {0})", dataPackageInfoLoader.DataPackageID));
+                    dataPackageError = false;
+                }
+                else
+                {
+                    LogError(errorMessage);
+                    dataPackageError = true;
+                }
 
                 datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
                 return false;
@@ -3302,6 +3314,7 @@ namespace AnalysisManagerBase.AnalysisTool
             catch (Exception ex)
             {
                 LogError("Error in LookupDataPackageInfo calling LoadDataPackageDatasetInfo", ex);
+                dataPackageError = true;
 
                 datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
                 return false;

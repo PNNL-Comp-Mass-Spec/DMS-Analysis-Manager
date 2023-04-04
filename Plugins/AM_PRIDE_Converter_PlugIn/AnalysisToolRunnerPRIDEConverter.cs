@@ -351,11 +351,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogMessage("Running PRIDEConverter");
 
                 // Initialize dataPackageDatasets
-                if (!LoadDataPackageDatasetInfo(out var dataPackageDatasets))
+                if (!LoadDataPackageDatasetInfo(out var dataPackageDatasets, out var errorMessage, false))
                 {
                     const string msg = "Error loading data package dataset info";
-                    LogError(msg + ": AnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
-                    mMessage = msg;
+
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        LogError(string.Format("{0}: AnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false", msg));
+                        mMessage = msg;
+                    }
+                    else
+                    {
+                        LogError(string.Format("{0}: {1}", msg, errorMessage));
+                        mMessage = errorMessage;
+                    }
+
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
