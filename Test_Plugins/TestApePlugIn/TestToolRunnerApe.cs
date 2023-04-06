@@ -21,7 +21,7 @@ namespace TestApePlugIn
             };
 
         private readonly Dictionary<string, string> mRunWorkflowJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
-                //{ "DatasetNum", "Aggregation" },
+                //{ "DatasetName", "Aggregation" },
                 { "Job", "678425" },
                 { "ApeOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\159_MAC_Test_Data_Package_For_Improv" },

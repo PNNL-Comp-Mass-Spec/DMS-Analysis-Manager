@@ -32,7 +32,7 @@ namespace TestMultiAlignPlugIn
                 { "Step", "1" },
                 { "StepTool", "MultiAlign" },
                 { "StepOutputFolderName", "Step_1_MULTIALIGN" },
-                { "DatasetNum", "Aggregation" },
+                { "DatasetName", "Aggregation" },
                 { "DataPackageID", "157" },
                 { "AMTDB", "MT_Human_Sarcopenia_P724" },
                 { "AMTDBServer", "Elmer" },

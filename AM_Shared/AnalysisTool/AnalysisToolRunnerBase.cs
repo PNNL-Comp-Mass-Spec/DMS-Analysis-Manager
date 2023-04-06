@@ -1194,7 +1194,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             // Determine if dataset directory in transfer directory already exists; make directory if it doesn't exist
-            // First make sure "DatasetFolderName" or "DatasetNum" is defined
+            // First make sure "DatasetFolderName" or "DatasetName" is defined
             if (string.IsNullOrEmpty(Dataset))
             {
                 LogError("Dataset name is undefined, " + mJobParams.GetJobStepDescription());

@@ -37,7 +37,7 @@ namespace TestAScorePlugIn
                 { "Step", "1" },
                 { "StepTool", "ASCORE" },
                 { "StepOutputFolderName", "Step_1_ASCORE" },
-                { "DatasetNum", "Aggregation" },
+                { "DatasetName", "Aggregation" },
                 { "TargetJobFileList", "sequest:_syn.txt:copy,sequest:_fht.txt:copy,sequest:_dta.zip:copy,masic_finnigan:_reporterions.txt:copy,masic_finnigan:_ScanStatsEx.txt:copy" },
                 { "DataPackageID", "162" },
 
