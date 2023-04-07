@@ -9,6 +9,7 @@ using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
@@ -438,12 +439,32 @@ namespace AnalysisManagerTopFDPlugIn
                 // Copy the existing TopFD results files to the working directory
                 // Do not copy the _html.zip file; TopPIC doesn't need it (and it can be huge)
 
+                // TopPIC v1.4 creates files named
+                // DatasetName_ms1.feature
+                // DatasetName_ms2.feature
+                // DatasetName_ms2.msalign
+                // DatasetName_feature.xml
+
+                // TopPIC v1.5 creates three versions of each file type
+                // DatasetName_0_ms1.feature
+                // DatasetName_1_ms1.feature
+                // DatasetName_2_ms1.feature
+                // DatasetName_0_ms2.feature
+                // DatasetName_1_ms2.feature
+                // DatasetName_2_ms2.feature
+                // DatasetName_0_ms2.msalign
+                // DatasetName_1_ms2.msalign
+                // DatasetName_2_ms2.msalign
+                // DatasetName_0_feature.xml
+                // DatasetName_1_feature.xml
+                // DatasetName_2_feature.xml
+
                 var filesToFind = new List<string>
                 {
-                    mDatasetName + "_ms1.feature",
-                    mDatasetName + "_ms2.feature",
-                    mDatasetName + "_ms2.msalign",
-                    mDatasetName + "_feature.xml",
+                    mDatasetName + "*_ms1.feature",
+                    mDatasetName + "*_ms2.feature",
+                    mDatasetName + "*_ms2.msalign",
+                    mDatasetName + "*_feature.xml",
                     "TopFD_ConsoleOutput.txt"
                 };
 
@@ -459,19 +480,23 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                var analysisResults = new AnalysisResults(mMgrParams, mJobParams);
 
                 foreach (var fileToFind in filesToFind)
                 {
-                    var sourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, fileToFind));
+                    var candidateFiles = sourceDirectory.GetFiles(fileToFind).ToList();
 
-                    if (!sourceFile.Exists)
+                    if (candidateFiles.Count == 0)
                     {
-                        LogError("Cannot retrieve existing TopFD results; existing TopFD results file not found at " + sourceFile.FullName);
+                        LogError("Cannot retrieve existing TopFD results; existing TopFD results file matching {0} not found in {1}", fileToFind, sourceDirectory.FullName);
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    var destinationFilePath = Path.Combine(mWorkDir, sourceFile.Name);
-                    sourceFile.CopyTo(destinationFilePath, true);
+                    foreach (var sourceFile in candidateFiles)
+                    {
+                        var destinationFilePath = Path.Combine(mWorkDir, sourceFile.Name);
+                        analysisResults.CopyFileWithRetry(sourceFile.FullName, destinationFilePath, true);
+                    }
                 }
 
                 mEvalMessage = string.Format(
