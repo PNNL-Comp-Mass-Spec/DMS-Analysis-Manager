@@ -115,7 +115,10 @@ namespace AnalysisManagerExtractionPlugin
 
                 switch (resultTypeName)
                 {
+                    case AnalysisResources.RESULT_TYPE_DIANN:
                         // Run PHRP
+                        currentAction = "running peptide hits result processor for DIA-NN";
+                        result = RunPhrpForDiaNN();
                         break;
 
                     case AnalysisResources.RESULT_TYPE_INSPECT:

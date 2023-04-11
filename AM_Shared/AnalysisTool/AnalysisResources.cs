@@ -150,7 +150,9 @@ namespace AnalysisManagerBase.AnalysisTool
         // ReSharper restore CommentTypo
 
         /// <summary>
+        /// Result type for DIA-NN
         /// </summary>
+        public const string RESULT_TYPE_DIANN = "DNN_Peptide_Hit";
 
         /// <summary>
         /// Result type for Inspect
@@ -2604,6 +2606,11 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = jobParams.GetParam("ToolName");
+
+            if (scriptName.StartsWith("DiaNN", StringComparison.OrdinalIgnoreCase))
+            {
+                return RESULT_TYPE_DIANN;
+            }
 
             if (scriptName.StartsWith("MaxQuant", StringComparison.OrdinalIgnoreCase))
             {

@@ -102,6 +102,7 @@ namespace AnalysisManagerExtractionPlugin
                     runAscore = CheckAScoreRequiredMSGFPlus(searchToolParamFilePath);
                     break;
 
+                case RESULT_TYPE_DIANN:
                 case RESULT_TYPE_INSPECT:
                 case RESULT_TYPE_MAXQUANT:
                 case RESULT_TYPE_MODA:
