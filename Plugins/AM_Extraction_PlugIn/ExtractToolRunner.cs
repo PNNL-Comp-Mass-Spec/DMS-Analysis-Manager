@@ -115,40 +115,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 switch (resultTypeName)
                 {
-                    case AnalysisResources.RESULT_TYPE_SEQUEST:
-                        // Run the SEQUEST Results Processor DLL
-                        currentAction = "running peptide extraction for SEQUEST";
-                        result = PerformPeptideExtraction();
-
-                        // Check for no data first. If no data, exit but still copy results to server
-                        if (result == CloseOutType.CLOSEOUT_NO_DATA)
-                        {
-                            break;
-                        }
-
                         // Run PHRP
-                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            mProgress = PROGRESS_EXTRACTION_DONE;     // 33% done
-                            UpdateStatusRunning(mProgress);
-
-                            currentAction = "running peptide hits result processor for SEQUEST";
-                            result = RunPhrpForSEQUEST();
-                        }
-
-                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            mProgress = PROGRESS_PHRP_DONE;   // 66% done
-                            UpdateStatusRunning(mProgress);
-                            currentAction = "running peptide prophet for SEQUEST";
-                            RunPeptideProphet();
-                        }
-                        break;
-
-                    case AnalysisResources.RESULT_TYPE_XTANDEM:
-                        // Run PHRP
-                        currentAction = "running peptide hits result processor for X!Tandem";
-                        result = RunPhrpForXTandem();
                         break;
 
                     case AnalysisResources.RESULT_TYPE_INSPECT:
@@ -157,23 +124,10 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPhrpForInSpecT();
                         break;
 
-                    case AnalysisResources.RESULT_TYPE_MSGFPLUS:
+                    case AnalysisResources.RESULT_TYPE_MAXQUANT:
                         // Run PHRP
-                        currentAction = "running peptide hits result processor for MS-GF+";
-                        result = RunPhrpForMSGFPlus();
-
-                        var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
-
-                        if (result == CloseOutType.CLOSEOUT_SUCCESS && splitFastaEnabled)
-                        {
-                            result = RunMzidMerger(Dataset + "_msgfplus_Part*.mzid", Dataset + "_msgfplus.mzid");
-                        }
-                        break;
-
-                    case AnalysisResources.RESULT_TYPE_MSALIGN:
-                        // Run PHRP
-                        currentAction = "running peptide hits result processor for MSAlign";
-                        result = RunPhrpForMSAlign();
+                        currentAction = "running peptide hits result processor for MaxQuant";
+                        result = RunPHRPForMaxQuant();
                         break;
 
                     case AnalysisResources.RESULT_TYPE_MODA:
@@ -232,10 +186,65 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         break;
 
+                    case AnalysisResources.RESULT_TYPE_MSALIGN:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for MSAlign";
+                        result = RunPhrpForMSAlign();
+                        break;
+
+                    case AnalysisResources.RESULT_TYPE_MSFRAGGER:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for MSFragger";
+                        result = RunPHRPForMSFragger();
+                        break;
+
+                    case AnalysisResources.RESULT_TYPE_MSGFPLUS:
+                        // Run PHRP
+                        currentAction = "running peptide hits result processor for MS-GF+";
+                        result = RunPhrpForMSGFPlus();
+
+                        var splitFastaEnabled = mJobParams.GetJobParameter("SplitFasta", false);
+
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS && splitFastaEnabled)
+                        {
+                            result = RunMzidMerger(Dataset + "_msgfplus_Part*.mzid", Dataset + "_msgfplus.mzid");
+                        }
+                        break;
+
                     case AnalysisResources.RESULT_TYPE_MSPATHFINDER:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MSPathFinder";
                         result = RunPHRPForMSPathFinder();
+                        break;
+
+                    case AnalysisResources.RESULT_TYPE_SEQUEST:
+                        // Run the SEQUEST Results Processor DLL
+                        currentAction = "running peptide extraction for SEQUEST";
+                        result = PerformPeptideExtraction();
+
+                        // Check for no data first. If no data, exit but still copy results to server
+                        if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                        {
+                            break;
+                        }
+
+                        // Run PHRP
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            mProgress = PROGRESS_EXTRACTION_DONE; // 33% done
+                            UpdateStatusRunning(mProgress);
+
+                            currentAction = "running peptide hits result processor for SEQUEST";
+                            result = RunPhrpForSEQUEST();
+                        }
+
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            mProgress = PROGRESS_PHRP_DONE; // 66% done
+                            UpdateStatusRunning(mProgress);
+                            currentAction = "running peptide prophet for SEQUEST";
+                            RunPeptideProphet();
+                        }
                         break;
 
                     case AnalysisResources.RESULT_TYPE_TOPPIC:
@@ -244,16 +253,10 @@ namespace AnalysisManagerExtractionPlugin
                         result = RunPHRPForTopPIC();
                         break;
 
-                    case AnalysisResources.RESULT_TYPE_MAXQUANT:
+                    case AnalysisResources.RESULT_TYPE_XTANDEM:
                         // Run PHRP
-                        currentAction = "running peptide hits result processor for MaxQuant";
-                        result = RunPHRPForMaxQuant();
-                        break;
-
-                    case AnalysisResources.RESULT_TYPE_MSFRAGGER:
-                        // Run PHRP
-                        currentAction = "running peptide hits result processor for MSFragger";
-                        result = RunPHRPForMSFragger();
+                        currentAction = "running peptide hits result processor for X!Tandem";
+                        result = RunPhrpForXTandem();
                         break;
 
                     default:

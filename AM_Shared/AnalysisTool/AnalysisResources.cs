@@ -150,14 +150,7 @@ namespace AnalysisManagerBase.AnalysisTool
         // ReSharper restore CommentTypo
 
         /// <summary>
-        /// Result type for SEQUEST
         /// </summary>
-        public const string RESULT_TYPE_SEQUEST = "Peptide_Hit";
-
-        /// <summary>
-        /// Result type for X!Tandem
-        /// </summary>
-        public const string RESULT_TYPE_XTANDEM = "XT_Peptide_Hit";
 
         /// <summary>
         /// Result type for Inspect
@@ -165,15 +158,9 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string RESULT_TYPE_INSPECT = "IN_Peptide_Hit";
 
         /// <summary>
-        /// Result type for MS-GF+ (aka MSGF+)
-        /// (and previously MSGFDB)
+        /// Result type for MaxQuant
         /// </summary>
-        public const string RESULT_TYPE_MSGFPLUS = "MSG_Peptide_Hit";
-
-        /// <summary>
-        /// Result type for MSAlign
-        /// </summary>
-        public const string RESULT_TYPE_MSALIGN = "MSA_Peptide_Hit";
+        public const string RESULT_TYPE_MAXQUANT = "MXQ_Peptide_Hit";
 
         /// <summary>
         /// Result type for MODa
@@ -186,9 +173,30 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string RESULT_TYPE_MODPLUS = "MODPlus_Peptide_Hit";
 
         /// <summary>
+        /// Result type for MSAlign
+        /// </summary>
+        public const string RESULT_TYPE_MSALIGN = "MSA_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for MSFragger
+        /// </summary>
+        public const string RESULT_TYPE_MSFRAGGER = "MSF_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for MS-GF+ (aka MSGF+)
+        /// (and previously MSGFDB)
+        /// </summary>
+        public const string RESULT_TYPE_MSGFPLUS = "MSG_Peptide_Hit";
+
+        /// <summary>
         /// Result type for MSPathfinder
         /// </summary>
         public const string RESULT_TYPE_MSPATHFINDER = "MSP_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for SEQUEST
+        /// </summary>
+        public const string RESULT_TYPE_SEQUEST = "Peptide_Hit";
 
         /// <summary>
         /// Result type for TopPIC
@@ -196,14 +204,9 @@ namespace AnalysisManagerBase.AnalysisTool
         public const string RESULT_TYPE_TOPPIC = "TPC_Peptide_Hit";
 
         /// <summary>
-        /// Result type for MaxQuant
+        /// Result type for X!Tandem
         /// </summary>
-        public const string RESULT_TYPE_MAXQUANT = "MXQ_Peptide_Hit";
-
-        /// <summary>
-        /// Result type for MSFragger
-        /// </summary>
-        public const string RESULT_TYPE_MSFRAGGER = "MSF_Peptide_Hit";
+        public const string RESULT_TYPE_XTANDEM = "XT_Peptide_Hit";
 
         /// <summary>
         /// Concatenated dta file
@@ -2627,14 +2630,14 @@ namespace AnalysisManagerBase.AnalysisTool
                 return RESULT_TYPE_MSFRAGGER;
             }
 
-            if (scriptName.StartsWith("MSPathFinder", StringComparison.OrdinalIgnoreCase))
-            {
-                return RESULT_TYPE_MSPATHFINDER;
-            }
-
             if (scriptName.StartsWith("MSGFPlus", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSGFPLUS;
+            }
+
+            if (scriptName.StartsWith("MSPathFinder", StringComparison.OrdinalIgnoreCase))
+            {
+                return RESULT_TYPE_MSPATHFINDER;
             }
 
             if (scriptName.StartsWith("TopPIC", StringComparison.OrdinalIgnoreCase))

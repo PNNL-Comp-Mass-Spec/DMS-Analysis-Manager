@@ -103,13 +103,13 @@ namespace AnalysisManagerExtractionPlugin
                     break;
 
                 case RESULT_TYPE_INSPECT:
-                case RESULT_TYPE_MSALIGN:
+                case RESULT_TYPE_MAXQUANT:
                 case RESULT_TYPE_MODA:
                 case RESULT_TYPE_MODPLUS:
+                case RESULT_TYPE_MSALIGN:
+                case RESULT_TYPE_MSFRAGGER:
                 case RESULT_TYPE_MSPATHFINDER:
                 case RESULT_TYPE_TOPPIC:
-                case RESULT_TYPE_MAXQUANT:
-                case RESULT_TYPE_MSFRAGGER:
                     LogDebug(string.Format("{0} does not support running AScore as part of data extraction", resultType));
                     runAscore = false;
                     break;
@@ -522,24 +522,16 @@ namespace AnalysisManagerExtractionPlugin
                 CloseOutType result;
                 switch (resultTypeName)
                 {
-                    case RESULT_TYPE_SEQUEST:
-                        result = GetSEQUESTFiles();
-                        break;
-
-                    case RESULT_TYPE_XTANDEM:
-                        result = GetXTandemFiles();
+                    case RESULT_TYPE_DIANN:
+                        result = GetDiaNNFiles();
                         break;
 
                     case RESULT_TYPE_INSPECT:
                         result = GetInspectFiles();
                         break;
 
-                    case RESULT_TYPE_MSGFPLUS:
-                        result = GetMSGFPlusFiles(out createPepToProtMapFile);
-                        break;
-
-                    case RESULT_TYPE_MSALIGN:
-                        result = GetMSAlignFiles();
+                    case RESULT_TYPE_MAXQUANT:
+                        result = GetMaxQuantFiles();
                         break;
 
                     case RESULT_TYPE_MODA:
@@ -550,21 +542,33 @@ namespace AnalysisManagerExtractionPlugin
                         result = GetMODPlusFiles();
                         break;
 
+                    case RESULT_TYPE_MSALIGN:
+                        result = GetMSAlignFiles();
+                        break;
+
+                    case RESULT_TYPE_MSFRAGGER:
+                        result = GetMSFraggerFiles();
+                        break;
+
+                    case RESULT_TYPE_MSGFPLUS:
+                        result = GetMSGFPlusFiles(out createPepToProtMapFile);
+                        break;
+
                     case RESULT_TYPE_MSPATHFINDER:
                         result = GetMSPathFinderFiles();
                         mJobParams.AddResultFileExtensionToSkip(".tsv");
+                        break;
+
+                    case RESULT_TYPE_SEQUEST:
+                        result = GetSEQUESTFiles();
                         break;
 
                     case RESULT_TYPE_TOPPIC:
                         result = GetTopPICFiles();
                         break;
 
-                    case RESULT_TYPE_MAXQUANT:
-                        result = GetMaxQuantFiles();
-                        break;
-
-                    case RESULT_TYPE_MSFRAGGER:
-                        result = GetMSFraggerFiles();
+                    case RESULT_TYPE_XTANDEM:
+                        result = GetXTandemFiles();
                         break;
 
                     default:
