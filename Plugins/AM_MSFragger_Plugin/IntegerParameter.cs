@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace AnalysisManagerMSFraggerPlugIn
+﻿namespace AnalysisManagerMSFraggerPlugIn
 {
     internal class IntegerParameter
     {
