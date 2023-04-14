@@ -344,7 +344,10 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (mDebugLevel >= 2)
                     {
-                        OnStatusEvent("All " + psmCount + " peptides have a mass error below " + precursorMassTolerance.ToString("0.0") + " Da");
+                        OnStatusEvent("All {0:#,###} peptides have a mass error below {1:F1} Da{2}",
+                            psmCount,
+                            precursorMassTolerance,
+                            resultType == PeptideHitResultTypes.DiaNN ? "; DIA-NN results do not include mass errors, so this is to be expected" : string.Empty);
                     }
                     return true;
                 }
@@ -354,7 +357,7 @@ namespace AnalysisManagerExtractionPlugin
                     "{0:F2}% of the peptides have a mass error over {1:F1} Da",
                     percentInvalid, precursorMassTolerance);
 
-                var warningMessage = string.Format("{0} ({1} / {2})", ErrorMessage, errorCount, psmCount);
+                var warningMessage = string.Format("{0} ({1:#,###} / {2:#,###})", ErrorMessage, errorCount, psmCount);
 
                 if (percentInvalid <= ErrorThresholdPercent || errorCount <= ErrorThresholdCount)
                 {
