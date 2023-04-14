@@ -963,12 +963,9 @@ namespace AnalysisManagerExtractionPlugin
                                     // Done processing the last peptide; we can now update pepProtMappingWritten to true for this peptide
                                     // to prevent it from getting added to the merged file again in the future
 
-                                    if (!string.IsNullOrWhiteSpace(lastPeptideFull))
+                                    if (!string.IsNullOrWhiteSpace(lastPeptideFull) && !pepProtMappingWritten.Contains(lastPeptideFull))
                                     {
-                                        if (!pepProtMappingWritten.Contains(lastPeptideFull))
-                                        {
-                                            pepProtMappingWritten.Add(lastPeptideFull);
-                                        }
+                                        pepProtMappingWritten.Add(lastPeptideFull);
                                     }
 
                                     lastPeptideFull = peptideFull;
