@@ -4441,12 +4441,13 @@
             <param name="peptideSequence">Peptide sequence (can optionally contain modification symbols; can optionally contain prefix and suffix residues)</param>
             <param name="updateCleanSequence"></param>
         </member>
-        <member name="M:PHRPReader.Data.PSM.SetPeptide(System.String,PHRPReader.PeptideCleavageStateCalculator)">
+        <member name="M:PHRPReader.Data.PSM.SetPeptide(System.String,PHRPReader.PeptideCleavageStateCalculator,System.Boolean)">
             <summary>
             Update the peptide sequence (auto-determines the clean sequence); also auto-update the cleavage state info
             </summary>
             <param name="peptide">Peptide sequence (can optionally contain modification symbols; can optionally contain prefix and suffix residues)</param>
             <param name="cleavageStateCalculator">Cleavage state calculator object</param>
+            <param name="assumeTryptic">When true, if the peptide sequence does not have prefix or suffix letters, assume the peptide is tryptic</param>
         </member>
         <member name="M:PHRPReader.Data.PSM.SetScore(System.String,System.String)">
             <summary>
@@ -4468,6 +4469,13 @@
             Auto-determine the number of missed cleavages, cleavage state, and number of tryptic termini based on the peptide sequence
             </summary>
             <param name="cleavageStateCalculator"></param>
+        </member>
+        <member name="M:PHRPReader.Data.PSM.UpdateCleavageInfo(PHRPReader.PeptideCleavageStateCalculator,System.String)">
+            <summary>
+            Auto-determine the number of missed cleavages, cleavage state, and number of tryptic termini based on the given peptide sequence
+            </summary>
+            <param name="cleavageStateCalculator"></param>
+            <param name="sequenceWithPrefixAndSuffix">Peptide sequence, including prefix and suffix residues</param>
         </member>
         <member name="T:PHRPReader.Data.ScanStatsExInfo">
             <summary>
@@ -5018,6 +5026,13 @@
             <summary>
             Custom amino acid definition parameter file keyword
             </summary>
+            <remarks>Only used by MS-GF+</remarks>
+        </member>
+        <member name="F:PHRPReader.MSGFPlusParamFileModExtractor.PARAM_TAG_STATIC_CYS_CARBAMIDOMETHYL">
+            <summary>
+            DIA-NN parameter indicating that static Cys carbamidomethyl (+57.021) was used (aka iodoacetamide alkylation)
+            </summary>
+            <remarks>Only used by DIA-NN</remarks>
         </member>
         <member name="T:PHRPReader.MSGFPlusParamFileModExtractor.MSGFPlusModType">
             <summary>
@@ -5204,7 +5219,7 @@
         </member>
         <member name="M:PHRPReader.MSGFPlusParamFileModExtractor.ExtractModInfoFromParamFile(System.String,PHRPReader.MSGFPlusParamFileModExtractor.ModSpecFormats,System.Collections.Generic.List{PHRPReader.MSGFPlusParamFileModExtractor.ModInfo}@)">
             <summary>
-            Extracts mod info from a MS-GF+, MSPathFinder, MSFragger, or DIA-NN param file, or from a MSGFPlus_Mods.txt file (previously MSGFDB_Mods.txt)
+            Extracts mod info from a MS-GF+, MSPathFinder, TopPIC, or DIA-NN param file, or from a MSGFPlus_Mods.txt file (previously MSGFDB_Mods.txt)
             </summary>
             <param name="paramFilePath"></param>
             <param name="modSpecFormat"></param>
@@ -5249,6 +5264,15 @@
             </summary>
             <param name="modList"></param>
             <param name="peptideMods"></param>
+        </member>
+        <member name="M:PHRPReader.MSGFPlusParamFileModExtractor.ValidateIsValidModSpec(System.String,System.String)">
+            <summary>
+            If the data line starts with text in parameter modTag followed by an equals sign, return the text after the equals sign
+            </summary>
+            <remarks>If the line has a comment (which starts with #), the comment will not be included in the returned text</remarks>
+            <param name="lineIn"></param>
+            <param name="modTag"></param>
+            <returns>Modification definition if found, otherwise an empty string</returns>
         </member>
         <member name="T:PHRPReader.PeptideCleavageStateCalculator">
             <summary>
