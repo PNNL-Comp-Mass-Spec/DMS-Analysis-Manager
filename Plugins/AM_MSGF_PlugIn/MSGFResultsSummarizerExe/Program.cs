@@ -221,7 +221,7 @@ namespace MSGFResultsSummarizerExe
 
                 var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName, false)
                 {
-                    MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD,
+                    MSGFSpecEValueOrPEPThreshold = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD,
                     EValueThreshold = ResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
                     FDRThreshold = ResultsSummarizer.DEFAULT_FDR_THRESHOLD,
                     OutputDirectoryPath = mOutputDirectoryPath,
@@ -263,7 +263,7 @@ namespace MSGFResultsSummarizerExe
                 }
                 else
                 {
-                    Console.WriteLine("MSGF Threshold: ".PadRight(25) + summarizer.MSGFThreshold.ToString("0.00E+00"));
+                    Console.WriteLine("MSGF SpecEValue Threshold: ".PadRight(25) + summarizer.MSGFSpecEValueOrPEPThreshold.ToString("0.00E+00"));
                     filterText = "MSGF";
                 }
 

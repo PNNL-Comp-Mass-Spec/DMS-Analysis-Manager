@@ -2422,7 +2422,7 @@ namespace AnalysisManagerMSGFPlugin
                 UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
                 summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-                summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+                summarizer.MSGFSpecEValueOrPEPThreshold = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD;
 
                 summarizer.ContactDatabase = true;
                 summarizer.PostJobPSMResultsToDB = true;
