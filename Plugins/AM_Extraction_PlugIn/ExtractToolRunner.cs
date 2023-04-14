@@ -3107,7 +3107,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Use 10% for MaxQuant
                 // For small FASTA files, this percent may need to be even higher
 
-                if (toolName.StartsWith("MaxQuant"))
+                if (resultType == PeptideHitResultTypes.MaxQuant || toolName.StartsWith("MaxQuant"))
                 {
                     massErrorValidator.ErrorThresholdPercent = 10;
                 }
