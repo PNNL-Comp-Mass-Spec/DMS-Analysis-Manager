@@ -256,9 +256,9 @@ namespace MSGFResultsSummarizerExe
                     Console.WriteLine("EValue Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
                     filterText = "EValue";
                 }
-                else if (summarizer.ResultType == PeptideHitResultTypes.MaxQuant)
+                else if (summarizer.ResultType is PeptideHitResultTypes.DiaNN or PeptideHitResultTypes.MaxQuant)
                 {
-                    Console.WriteLine("PEP Threshold: ".PadRight(25) + summarizer.EValueThreshold.ToString("0.00E+00"));
+                    Console.WriteLine("PEP Threshold: ".PadRight(25) + summarizer.MSGFSpecEValueOrPEPThreshold.ToString("0.00E+00"));
                     filterText = "PEP";
                 }
                 else
