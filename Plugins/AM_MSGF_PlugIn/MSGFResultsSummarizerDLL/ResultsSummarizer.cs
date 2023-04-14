@@ -168,7 +168,13 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public int MaximumScanGapAdjacentMSn { get; private set; }
 
-        public double MSGFThreshold { get; set; } = DEFAULT_MSGF_THRESHOLD;
+        /// <summary>
+        /// MSGF SpecEValue Threshold
+        /// </summary>
+        /// <remarks>
+        /// DIA-NN and MaxQuant use Posterior Error Probability (PEP) instead of SpecEValue
+        /// </remarks>
+        public double MSGFSpecEValueOrPEPThreshold { get; set; } = DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD;
 
         public string MSGFSynopsisFileName
         {
@@ -618,10 +624,10 @@ namespace MSGFResultsSummarizer
                     success = FilterPSMsByEValue(EValueThreshold, normalizedPSMs, filteredPSMs);
                     filterPSMs = true;
                 }
-                else if (MSGFThreshold < 1)
+                else if (MSGFSpecEValueOrPEPThreshold < 1)
                 {
-                    // Filter on MSGF (though for MSPathFinder we're using SpecEValue)
-                    success = FilterPSMsByMSGF(MSGFThreshold, normalizedPSMs, filteredPSMs);
+                    // Filter on MSGF (though for MSPathFinder we're using SpecEValue, and for DIA-NN and MaxQuant we're using Posterior Error Probability (PEP))
+                    success = FilterPSMsByMSGFSpecEValueOrPEP(MSGFSpecEValueOrPEPThreshold, normalizedPSMs, filteredPSMs);
                     filterPSMs = true;
                 }
                 else
@@ -736,11 +742,11 @@ namespace MSGFResultsSummarizer
 
             foreach (var psmResult in psmResults)
             {
-                if (psmResult.Value.BestMSGF < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
+                if (psmResult.Value.BestMSGFSpecEValueOrPEP < PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
                 {
-                    msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGF, psmResult.Key));
+                    msgfToResultIDMap.Add(new KeyValuePair<double, int>(psmResult.Value.BestMSGFSpecEValueOrPEP, psmResult.Key));
 
-                    if (psmResult.Value.BestMSGF < 1)
+                    if (psmResult.Value.BestMSGFSpecEValueOrPEP < 1)
                         validMSGFOrEValue = true;
                 }
                 else
@@ -875,15 +881,15 @@ namespace MSGFResultsSummarizer
             return true;
         }
 
-        private bool FilterPSMsByMSGF(double msgfThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
+        private bool FilterPSMsByMSGFSpecEValueOrPEP(double msgfThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
         {
             filteredPSMs.Clear();
 
-            foreach (var item in from item in psmResults where item.Value.BestMSGF <= msgfThreshold select item)
+            foreach (var item in from item in psmResults where item.Value.BestMSGFSpecEValueOrPEP <= msgfThreshold select item)
             {
                 foreach (var observation in item.Value.Observations)
                 {
-                    observation.PassesFilter = observation.MSGF <= msgfThreshold;
+                    observation.PassesFilter = observation.MSGFSpecEValueOrPEP <= msgfThreshold;
                 }
                 filteredPSMs.Add(item.Key, item.Value);
             }
@@ -1084,7 +1090,7 @@ namespace MSGFResultsSummarizer
             }
             else
             {
-                reportThreshold = MSGFThreshold;
+                reportThreshold = MSGFSpecEValueOrPEPThreshold;
                 thresholdIsEValue = false;
             }
 
@@ -1432,7 +1438,7 @@ namespace MSGFResultsSummarizer
             out SortedList<int, List<ProteinInfo>> seqToProteinMap,
             out SortedList<int, SequenceInfo> sequenceInfo)
         {
-            var specEValue = PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
+            var specEValueOrPEP = PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
             var eValue = PSMInfo.UNKNOWN_EVALUE;
 
             var loadMSGFResults = true;
@@ -1610,7 +1616,7 @@ namespace MSGFResultsSummarizer
                         if (currentPSM.TryGetScore(MSPathFinderSynFileReader.GetColumnNameByID(MSPathFinderSynFileColumns.SpecEValue), out var specEValueText) &&
                             !string.IsNullOrWhiteSpace(specEValueText))
                         {
-                            valid = double.TryParse(specEValueText, out specEValue);
+                            valid = double.TryParse(specEValueText, out specEValueOrPEP);
                         }
 
                         // SpecEValue was not present
@@ -1621,7 +1627,7 @@ namespace MSGFResultsSummarizer
                         // Use PEP for specEValue
                         if (currentPSM.TryGetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.PEP), out var posteriorErrorProbabilityText))
                         {
-                            valid = double.TryParse(posteriorErrorProbabilityText, out specEValue);
+                            valid = double.TryParse(posteriorErrorProbabilityText, out specEValueOrPEP);
                         }
                     }
                     else if (ResultType == PeptideHitResultTypes.MSFragger)
@@ -1629,12 +1635,12 @@ namespace MSGFResultsSummarizer
                         // Use expectation score (E-Value) for specEValue
                         if (currentPSM.TryGetScore(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.EValue), out var eValueText))
                         {
-                            valid = double.TryParse(eValueText, out specEValue);
+                            valid = double.TryParse(eValueText, out specEValueOrPEP);
                         }
                     }
                     else
                     {
-                        valid = double.TryParse(currentPSM.MSGFSpecEValue, out specEValue);
+                        valid = double.TryParse(currentPSM.MSGFSpecEValue, out specEValueOrPEP);
                     }
 
                     if (!valid)
@@ -1649,7 +1655,7 @@ namespace MSGFResultsSummarizer
 
                     psmInfo.Protein = currentPSM.ProteinFirst;
 
-                    var psmMSGF = specEValue;
+                    var psmSpecEValueOrPEP = specEValueOrPEP;
                     var psmEValue = eValue;
                     double psmFDR;
 
@@ -1765,9 +1771,9 @@ namespace MSGFResultsSummarizer
                                 observation.FDR = psmFDR;
                             }
 
-                            if (psmMSGF < observation.MSGF)
+                            if (psmSpecEValueOrPEP < observation.MSGFSpecEValueOrPEP)
                             {
-                                observation.MSGF = psmMSGF;
+                                observation.MSGFSpecEValueOrPEP = psmSpecEValueOrPEP;
                             }
 
                             if (psmEValue < observation.EValue)
@@ -1786,7 +1792,7 @@ namespace MSGFResultsSummarizer
                                 DatasetIdOrName = datasetIdOrName,
                                 Scan = currentPSM.ScanNumber,
                                 FDR = psmFDR,
-                                MSGF = psmMSGF,
+                                MSGFSpecEValueOrPEP = psmSpecEValueOrPEP,
                                 EValue = psmEValue
                             };
 
@@ -1894,7 +1900,7 @@ namespace MSGFResultsSummarizer
                             DatasetIdOrName = datasetIdOrName,
                             Scan = currentPSM.ScanNumber,
                             FDR = psmFDR,
-                            MSGF = psmMSGF,
+                            MSGFSpecEValueOrPEP = psmSpecEValueOrPEP,
                             EValue = psmEValue
                         };
 
@@ -2300,7 +2306,7 @@ namespace MSGFResultsSummarizer
                 {
                     mDatasetName,
                     mJob.ToString(),
-                    MSGFThreshold.ToString("0.00E+00"),
+                    MSGFSpecEValueOrPEPThreshold.ToString("0.00E+00"),
                     FDRThreshold.ToString("0.000"),
                     SpectraSearched.ToString()
                 };

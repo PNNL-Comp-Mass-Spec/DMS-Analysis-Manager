@@ -3007,8 +3007,6 @@ namespace AnalysisManagerExtractionPlugin
             UnregisterEventHandler(summarizer, BaseLogger.LogLevels.ERROR);
             summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-            summarizer.MSGFThreshold = ResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
-
             summarizer.ContactDatabase = true;
             summarizer.SaveResultsToTextFile = false;
             summarizer.DatasetName = mDatasetName;

@@ -36,7 +36,10 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public List<PSMObservation> Observations { get; }
 
-        public double BestMSGF
+        /// <summary>
+        /// Lowest value stored in MSGFSpecEValueOrPEP
+        /// </summary>
+        public double BestMSGFSpecEValueOrPEP
         {
             get
             {
@@ -45,7 +48,7 @@ namespace MSGFResultsSummarizer
                     return UNKNOWN_MSGF_SPEC_EVALUE;
                 }
 
-                return (from item in Observations orderby item.MSGF select item.MSGF).First();
+                return (from item in Observations orderby item.MSGFSpecEValueOrPEP select item.MSGFSpecEValueOrPEP).First();
             }
         }
 
@@ -149,13 +152,20 @@ namespace MSGFResultsSummarizer
             public double FDR { get; set; }
 
             /// <summary>
-            /// MSGF SpecEValue; will be UNKNOWN_MSGF_SPEC_EVALUE (10) if MSGF SpecEValue is not available
+            /// For MS-GF+, stores MSGF SpecEValue; will be UNKNOWN_MSGF_SPEC_EVALUE (10) if MSGF SpecEValue is not available
             /// </summary>
             /// <remarks>
-            /// MSPathFinder results use this field to store SpecEValue
-            /// MaxQuant results use this field to store PEP
+            /// <para>
+            /// MaxQuant results store Posterior Error Probability (PEP) in this field
+            /// </para>
+            /// <para>
+            /// MSPathFinder results store SpecEValue in this field
+            /// </para>
+            /// <para>
+            /// MSGFDB (the precursor to MS-GF+) stored MSGF SpecProb values in this field
+            /// </para>
             /// </remarks>
-            public double MSGF { get; set; }
+            public double MSGFSpecEValueOrPEP { get; set; }
 
             /// <summary>
             /// Only used when MSGF SpecEValue is not available
@@ -187,7 +197,7 @@ namespace MSGFResultsSummarizer
                 DatasetIdOrName = string.Empty;
                 Scan = 0;
                 FDR = UNKNOWN_FDR;
-                MSGF = UNKNOWN_MSGF_SPEC_EVALUE;
+                MSGFSpecEValueOrPEP = UNKNOWN_MSGF_SPEC_EVALUE;
                 EValue = UNKNOWN_EVALUE;
                 MissingNTermReporterIon = false;
                 MissingReporterIon = false;
@@ -195,11 +205,11 @@ namespace MSGFResultsSummarizer
             }
 
             /// <summary>
-            /// Show the scan number, FDR, and MS-GF Spec EValue
+            /// Show the scan number, FDR, and MSGF Spec EValue (or PEP)
             /// </summary>
             public override string ToString()
             {
-                return string.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGF);
+                return string.Format("Scan {0}, FDR {1:F4}, MSGF {2:E3}", Scan, FDR, MSGFSpecEValueOrPEP);
             }
         }
 
