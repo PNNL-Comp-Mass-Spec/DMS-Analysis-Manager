@@ -19,7 +19,7 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
-using System.Data;
+
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -593,59 +593,12 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private CloseOutType GetSEQUESTFiles()
         {
-            // Get the concatenated .out file
-            if (!FileSearchTool.RetrieveOutFiles(false))
+
             {
                 // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
-            // Note that we'll obtain the SEQUEST parameter file in RetrieveMiscFiles
-
-            // Add all the extensions of the files to delete after run
-            mJobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
-            mJobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
-            mJobParams.AddResultFileExtensionToSkip("_out.zip");    // Zipped OUT
-            mJobParams.AddResultFileExtensionToSkip("_out.txt");    // Unzipped, concatenated OUT
-            mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
-            mJobParams.AddResultFileExtensionToSkip(".out");        // DTA files
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
-        private CloseOutType GetXTandemFiles()
-        {
-            var fileToGet = DatasetName + "_xt.zip";
-
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
-            {
-                // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_NO_XT_FILES;
-            }
-            mJobParams.AddResultFileToSkip(fileToGet);
-
-            // Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
-            mJobParams.AddResultFileToSkip(DatasetName + "_xt.xml");
-
-            // Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
-
-            // However, we need to obtain the "input.xml" file and "default_input.xml" files now
-            fileToGet = "input.xml";
-
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
-            {
-                // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-            }
-            mJobParams.AddResultFileToSkip(fileToGet);
-
-            if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir))
-            {
-                LogError("Failed retrieving default_input.xml file");
-                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
-            }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -845,6 +798,151 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Note that we'll obtain the MODPlus parameter file in RetrieveMiscFiles
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType GetMSAlignFiles()
+        {
+            var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            // Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+
+        private CloseOutType GetMSFraggerFiles()
+        {
+            var filesToGet = new List<string>();
+
+            // First copy the _psm.tsv file locally
+            if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
+            {
+                // The results directory will have a file named Aggregation_psm.tsv if no experiment groups were defined
+                // However, if experiment groups were defined, there will be one _psm.tsv file for each experiment group
+
+                // Retrieve metadata about the datasets in this data package
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+                var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, out var dataPackageError, storeJobParameters: true);
+
+                if (!success && dataPackageError)
+                {
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                    {
+                        mMessage = string.Format("Error retrieving the metadata for the datasets associated with data package {0}", dataPackageID);
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!success || datasetIDsByExperimentGroup.Count <= 1)
+                {
+                    // Retrieve file Aggregation_psm.tsv
+                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
+                }
+                else
+                {
+                    // The results directory may have a file named Dataset_PSM_tsv.zip with _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files
+                    // This file is only created if more than three experiment groups exist, and was not created prior to 2022-04-28
+
+                    filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
+
+                    // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+                    foreach (var item in datasetIDsByExperimentGroup)
+                    {
+                        var experimentGroupName = item.Key;
+                        filesToGet.Add(experimentGroupName + "_psm.tsv");
+                    }
+                }
+            }
+            else
+            {
+                filesToGet.Add(DatasetName + "_psm.tsv");
+            }
+
+            var sourceDirPath = string.Empty;
+            var retrievedFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var fileName in filesToGet)
+            {
+                if (fileName.Equals(ZIPPED_MSFRAGGER_PSM_TSV_FILES))
+                {
+                    // Zip file Dataset_PSM_tsv.zip is optional
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathZipFile, logFileNotFound: false))
+                    {
+                        if (string.IsNullOrWhiteSpace(sourceDirPath))
+                            sourceDirPath = sourceDirPathZipFile;
+
+                        mJobParams.AddResultFileToSkip(fileName);
+
+                        // Extract the TSV files from the zip file
+                        var zipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
+                        RegisterEvents(zipTools);
+
+                        var zipFilePath = Path.Combine(mWorkDir, fileName);
+                        zipTools.UnzipFile(zipFilePath, mWorkDir);
+
+                        foreach (var tsvFile in zipTools.MostRecentUnzippedFiles)
+                        {
+                            mJobParams.AddResultFileToSkip(tsvFile.Key);
+                            retrievedFiles.Add(tsvFile.Key);
+                        }
+                    }
+
+                    continue;
+                }
+
+                if (retrievedFiles.Contains(fileName))
+                {
+                    // File already retrieved (via zip file Dataset_PSM_tsv.zip)
+                    continue;
+                }
+
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))
+                {
+                    // Errors were reported in method call, so just return
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                if (string.IsNullOrWhiteSpace(sourceDirPath))
+                    sourceDirPath = sourceDirPathCurrent;
+
+                mJobParams.AddResultFileToSkip(fileName);
+                retrievedFiles.Add(fileName);
+            }
+
+            // Now copy the individual Dataset.tsv file(s), which we'll treat as optional
+            // PHRP reads data from columns num_matched_ions and tot_num_ions and includes these in the synopsis file
+
+            var sourceDirectory = new DirectoryInfo(sourceDirPath);
+
+            foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv"))
+            {
+                if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    retrievedFiles.Contains(tsvFile.Name))
+                {
+                    // Either this is not a Dataset_psm.tsv file, or the file was already retrieved (via Dataset_PSM_tsv.zip)
+                    continue;
+                }
+
+                if (FileSearchTool.FindAndRetrieveMiscFiles(tsvFile.Name, false))
+                {
+                    mJobParams.AddResultFileToSkip(tsvFile.Name);
+                }
+            }
+
+            // Note that we'll obtain the MSFragger parameter file in RetrieveMiscFiles
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -1241,150 +1339,6 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private CloseOutType GetMSAlignFiles()
-        {
-            var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
-
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
-            {
-                // Errors were reported in method call, so just return
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
-            mJobParams.AddResultFileToSkip(fileToGet);
-
-            // Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
-        private CloseOutType GetMSFraggerFiles()
-        {
-            var filesToGet = new List<string>();
-
-            // First copy the _psm.tsv file locally
-            if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
-            {
-                // The results directory will have a file named Aggregation_psm.tsv if no experiment groups were defined
-                // However, if experiment groups were defined, there will be one _psm.tsv file for each experiment group
-
-                // Retrieve metadata about the datasets in this data package
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
-
-                var success = LookupDataPackageInfo(dataPackageID, out var datasetIDsByExperimentGroup, out var dataPackageError, storeJobParameters: true);
-
-                if (!success && dataPackageError)
-                {
-                    if (string.IsNullOrWhiteSpace(mMessage))
-                    {
-                        mMessage = string.Format("Error retrieving the metadata for the datasets associated with data package {0}", dataPackageID);
-                    }
-
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (!success || datasetIDsByExperimentGroup.Count <= 1)
-                {
-                    // Retrieve file Aggregation_psm.tsv
-                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
-                }
-                else
-                {
-                    // The results directory may have a file named Dataset_PSM_tsv.zip with _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files
-                    // This file is only created if more than three experiment groups exist, and was not created prior to 2022-04-28
-
-                    filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
-
-                    // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-                    foreach (var item in datasetIDsByExperimentGroup)
-                    {
-                        var experimentGroupName = item.Key;
-                        filesToGet.Add(experimentGroupName + "_psm.tsv");
-                    }
-                }
-            }
-            else
-            {
-                filesToGet.Add(DatasetName + "_psm.tsv");
-            }
-
-            var sourceDirPath = string.Empty;
-            var retrievedFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var fileName in filesToGet)
-            {
-                if (fileName.Equals(ZIPPED_MSFRAGGER_PSM_TSV_FILES))
-                {
-                    // Zip file Dataset_PSM_tsv.zip is optional
-                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathZipFile, logFileNotFound: false))
-                    {
-                        if (string.IsNullOrWhiteSpace(sourceDirPath))
-                            sourceDirPath = sourceDirPathZipFile;
-
-                        mJobParams.AddResultFileToSkip(fileName);
-
-                        // Extract the TSV files from the zip file
-                        var zipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
-                        RegisterEvents(zipTools);
-
-                        var zipFilePath = Path.Combine(mWorkDir, fileName);
-                        zipTools.UnzipFile(zipFilePath, mWorkDir);
-
-                        foreach (var tsvFile in zipTools.MostRecentUnzippedFiles)
-                        {
-                            mJobParams.AddResultFileToSkip(tsvFile.Key);
-                            retrievedFiles.Add(tsvFile.Key);
-                        }
-                    }
-
-                    continue;
-                }
-
-                if (retrievedFiles.Contains(fileName))
-                {
-                    // File already retrieved (via zip file Dataset_PSM_tsv.zip)
-                    continue;
-                }
-
-                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))
-                {
-                    // Errors were reported in method call, so just return
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                }
-
-                if (string.IsNullOrWhiteSpace(sourceDirPath))
-                    sourceDirPath = sourceDirPathCurrent;
-
-                mJobParams.AddResultFileToSkip(fileName);
-                retrievedFiles.Add(fileName);
-            }
-
-            // Now copy the individual Dataset.tsv file(s), which we'll treat as optional
-            // PHRP reads data from columns num_matched_ions and tot_num_ions and includes these in the synopsis file
-
-            var sourceDirectory = new DirectoryInfo(sourceDirPath);
-
-            foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv"))
-            {
-                if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
-                    tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
-                    tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
-                    retrievedFiles.Contains(tsvFile.Name))
-                {
-                    // Either this is not a Dataset_psm.tsv file, or the file was already retrieved (via Dataset_PSM_tsv.zip)
-                    continue;
-                }
-
-                if (FileSearchTool.FindAndRetrieveMiscFiles(tsvFile.Name, false))
-                {
-                    mJobParams.AddResultFileToSkip(tsvFile.Name);
-                }
-            }
-
-            // Note that we'll obtain the MSFragger parameter file in RetrieveMiscFiles
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
         private CloseOutType GetMSPathFinderFiles()
         {
             var fileToGet = DatasetName + "_IcTsv.zip";
@@ -1399,6 +1353,28 @@ namespace AnalysisManagerExtractionPlugin
             mJobParams.AddResultFileExtensionToSkip(".tsv");
 
             // Note that we'll obtain the MSPathFinder parameter file in RetrieveMiscFiles
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType GetSEQUESTFiles()
+        {
+            // Get the concatenated .out file
+            if (!FileSearchTool.RetrieveOutFiles(false))
+            {
+                // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_NO_OUT_FILES;
+            }
+
+            // Note that we'll obtain the SEQUEST parameter file in RetrieveMiscFiles
+
+            // Add all the extensions of the files to delete after run
+            mJobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            mJobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            mJobParams.AddResultFileExtensionToSkip("_out.zip");    // Zipped OUT
+            mJobParams.AddResultFileExtensionToSkip("_out.txt");    // Unzipped, concatenated OUT
+            mJobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
+            mJobParams.AddResultFileExtensionToSkip(".out");        // DTA files
+
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -1420,6 +1396,42 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Note that we'll obtain the TopPIC parameter file in RetrieveMiscFiles
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+
+        private CloseOutType GetXTandemFiles()
+        {
+            var fileToGet = DatasetName + "_xt.zip";
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, true))
+            {
+                // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_NO_XT_FILES;
+            }
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            // Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
+            mJobParams.AddResultFileToSkip(DatasetName + "_xt.xml");
+
+            // Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
+
+            // However, we need to obtain the "input.xml" file and "default_input.xml" files now
+            fileToGet = "input.xml";
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
+            {
+                // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+            mJobParams.AddResultFileToSkip(fileToGet);
+
+            if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir))
+            {
+                LogError("Failed retrieving default_input.xml file");
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
+
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

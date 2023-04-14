@@ -1290,36 +1290,93 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        /// <summary>
-        /// Runs PeptideHitsResultsProcessor on SEQUEST output
-        /// </summary>
-        /// <returns>CloseOutType representing success or failure</returns>
-        private CloseOutType RunPhrpForSEQUEST()
         {
-            var inputFileName = mDatasetName + "_syn.txt";
 
-            // Note that for SEQUEST, the synopsis file is the input file
-            return RunPHRPWork(
-                "SEQUEST",
-                inputFileName,
-                PeptideHitResultTypes.Sequest,
                 inputFileName,
                 true,
-                true);
         }
 
-        private CloseOutType RunPhrpForXTandem()
+        private CloseOutType RunPhrpForInSpecT()
         {
-            var inputFileName = mDatasetName + "_xt.xml";
-            var synopsisFileName = mDatasetName + "_xt.txt";
+            try
+            {
+                // Part 1
+                // Create the First Hits file
 
-            return RunPHRPWork(
-                "X!Tandem",
-                inputFileName,
-                PeptideHitResultTypes.XTandem,
-                synopsisFileName,
-                true,
-                true);
+                // Extract _inspect.txt from the _inspect_fht.zip file
+                var fhtZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect_fht.zip");
+                var successUnzipFht = UnzipFile(fhtZipFilePath);
+
+                if (!successUnzipFht)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var inputFileName = mDatasetName + "_inspect.txt";
+
+                RunPHRPWork(
+                    "Inspect",
+                    inputFileName,
+                    PeptideHitResultTypes.Inspect,
+                    string.Empty,
+                    true,
+                    false);
+
+                try
+                {
+                    // Delete the _inspect.txt file
+                    File.Delete(Path.Combine(mWorkDir, inputFileName));
+                }
+                catch (Exception)
+                {
+                    // Ignore errors here
+                }
+
+                // Part 2
+                // Create the Synopsis file
+
+                // Extract _inspect.txt from the _inspect.zip file
+                var synZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.zip");
+                var successUnzipSyn = UnzipFile(synZipFilePath);
+
+                if (!successUnzipSyn)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var synFileName = mDatasetName + "_inspect_syn.txt";
+
+                var resultSyn = RunPHRPWork(
+                    "Inspect",
+                    inputFileName,
+                    PeptideHitResultTypes.Inspect,
+                    synFileName,
+                    false,
+                    true);
+
+                try
+                {
+                    // Delete the _inspect.txt file
+                    File.Delete(Path.Combine(mWorkDir, inputFileName));
+                }
+                catch (Exception)
+                {
+                    // Ignore errors here
+                }
+
+                if (resultSyn == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Message has already been logged
+                    return resultSyn;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception running PHRP for Inspect", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private CloseOutType RunPHRPForMaxQuant()
@@ -1947,6 +2004,24 @@ namespace AnalysisManagerExtractionPlugin
                 true);
         }
 
+        /// <summary>
+        /// Runs PeptideHitsResultsProcessor on SEQUEST output
+        /// </summary>
+        /// <returns>CloseOutType representing success or failure</returns>
+        private CloseOutType RunPhrpForSEQUEST()
+        {
+            var inputFileName = mDatasetName + "_syn.txt";
+
+            // Note that for SEQUEST, the synopsis file is the input file
+            return RunPHRPWork(
+                "SEQUEST",
+                inputFileName,
+                PeptideHitResultTypes.Sequest,
+                inputFileName,
+                true,
+                true);
+        }
+
         private CloseOutType RunPHRPForTopPIC()
         {
             const string SYNOPSIS_FILE_SUFFIX = "_toppic_syn.txt";
@@ -1997,6 +2072,20 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType RunPhrpForXTandem()
+        {
+            var inputFileName = mDatasetName + "_xt.xml";
+            var synopsisFileName = mDatasetName + "_xt.txt";
+
+            return RunPHRPWork(
+                "X!Tandem",
+                inputFileName,
+                PeptideHitResultTypes.XTandem,
+                synopsisFileName,
+                true,
+                true);
         }
 
         /// <summary>
@@ -2287,89 +2376,6 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             return success;
-        }
-
-        private CloseOutType RunPhrpForInSpecT()
-        {
-            try
-            {
-                // Part 1
-                // Create the First Hits file
-
-                // Extract _inspect.txt from the _inspect_fht.zip file
-                var fhtZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect_fht.zip");
-                var successUnzipFht = UnzipFile(fhtZipFilePath);
-
-                if (!successUnzipFht)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var inputFileName = mDatasetName + "_inspect.txt";
-
-                RunPHRPWork(
-                    "Inspect",
-                    inputFileName,
-                    PeptideHitResultTypes.Inspect,
-                    string.Empty,
-                    true,
-                    false);
-
-                try
-                {
-                    // Delete the _inspect.txt file
-                    File.Delete(Path.Combine(mWorkDir, inputFileName));
-                }
-                catch (Exception)
-                {
-                    // Ignore errors here
-                }
-
-                // Part 2
-                // Create the Synopsis file
-
-                // Extract _inspect.txt from the _inspect.zip file
-                var synZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_inspect.zip");
-                var successUnzipSyn = UnzipFile(synZipFilePath);
-
-                if (!successUnzipSyn)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var synFileName = mDatasetName + "_inspect_syn.txt";
-
-                var resultSyn = RunPHRPWork(
-                    "Inspect",
-                    inputFileName,
-                    PeptideHitResultTypes.Inspect,
-                    synFileName,
-                    false,
-                    true);
-
-                try
-                {
-                    // Delete the _inspect.txt file
-                    File.Delete(Path.Combine(mWorkDir, inputFileName));
-                }
-                catch (Exception)
-                {
-                    // Ignore errors here
-                }
-
-                if (resultSyn == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                    // Message has already been logged
-                    return resultSyn;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception running PHRP for Inspect", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private void RunPeptideProphet()
