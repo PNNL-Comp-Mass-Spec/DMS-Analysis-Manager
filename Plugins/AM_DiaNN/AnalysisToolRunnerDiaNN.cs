@@ -413,6 +413,63 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
+        private bool GeneratePdfReport(FileSystemInfo reportFile, FileSystemInfo reportStatsFile, FileSystemInfo reportPdfFile)
+        {
+            try
+            {
+                var diannProgram = new FileInfo(mDiaNNProgLoc);
+
+                if (diannProgram.DirectoryName == null)
+                {
+                    LogError(string.Format("Unable to determine the parent directory of the DIA-NN executable: {0}", diannProgram.FullName));
+                    return false;
+                }
+
+                var diannPlotterProgram = new FileInfo(Path.Combine(diannProgram.DirectoryName, "DIA-NN-plotter.exe"));
+
+                if (!diannPlotterProgram.Exists)
+                {
+                    LogError(string.Format("DIA-NN Plotter executable not found: {0}", diannPlotterProgram.FullName));
+                    return false;
+                }
+
+                var arguments = new StringBuilder();
+
+                // ReSharper disable CommentTypo
+
+                // Example command line:
+                // DIA-NN-plotter.exe "C:\DMS_WorkDir\report.stats.tsv" "C:\DMS_WorkDir\report.tsv" "C:\DMS_WorkDir\report.pdf"
+
+                // ReSharper restore CommentTypo
+
+                arguments.AppendFormat("{0} {1} {2}", reportStatsFile.FullName, reportFile.FullName, reportPdfFile.FullName);
+
+                LogDebug(diannPlotterProgram + " " + arguments);
+
+                var diaNNPlotterConsoleOutputFile = Path.Combine(mWorkDir, "DIA-NN-Plotter_ConsoleOutput.txt");
+
+                // Start the program and wait for it to finish
+
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, diaNNPlotterConsoleOutputFile)
+                };
+                RegisterEvents(cmdRunner);
+
+                return cmdRunner.RunProgram(diannPlotterProgram.FullName, arguments.ToString(), "DIA-NN-Plotter", true);
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in GeneratePdfReport", ex);
+
+                return false;
+            }
+        }
+
         private int GetCurrentProgress(
             SortedList<int, Regex> processingSteps,
             string dataLine)
