@@ -220,7 +220,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 // Define additional files to skip
+                mJobParams.AddResultFileToSkip("lib.log.txt");
                 mJobParams.AddResultFileToSkip("report-lib.tsv");
+                mJobParams.AddResultFileToSkip("report.log.txt");
                 mJobParams.AddResultFileExtensionToSkip("_mzML.quant");
 
                 var success = CopyResultsToTransferDirectory(spectralLibraryFile, remoteSpectralLibraryFile, ref completionCode);
