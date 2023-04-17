@@ -182,7 +182,22 @@ namespace AnalysisManagerDiaNNPlugIn
                 Global.IdleLoop(0.5);
                 AppUtils.GarbageCollectNow();
 
-                if (!AnalysisJob.SuccessOrNoData(processingResult))
+                bool reportUpdateError;
+
+                if (!mBuildingSpectralLibrary && AnalysisJob.SuccessOrNoData(processingResult))
+                {
+                    // Edit the report file to remove duplicate .mzML names and shorten dataset names
+                    var reportFile = new FileInfo(Path.Combine(mWorkDir, "report.tsv"));
+                    var reportUpdated = UpdateReportFile(reportFile);
+
+                    reportUpdateError = !reportUpdated;
+                }
+                else
+                {
+                    reportUpdateError = false;
+                }
+
+                if (!AnalysisJob.SuccessOrNoData(processingResult) || reportUpdateError)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -1451,6 +1466,10 @@ namespace AnalysisManagerDiaNNPlugIn
                 var filePathFinal = reportFile.FullName;
                 var filePathOld = reportFile.FullName + ".old";
 
+                AppUtils.SleepMilliseconds(100);
+
+                LogMessage("Created updated report.tsv file; replacing {0} with {1}", reportFile.FullName, updatedFile.Name);
+
                 reportFile.MoveTo(filePathOld);
                 updatedFile.MoveTo(filePathFinal);
 
@@ -1546,8 +1565,8 @@ namespace AnalysisManagerDiaNNPlugIn
             }
             else
             {
-                // Edit the report file to remove duplicate .mzML names and shorten dataset names
-                validResults = UpdateReportFile(reportFile);
+                // Use the DIA-NN plotter to create the PDF report
+                validResults = GeneratePdfReport(reportFile, reportStatsFile, reportPdfFile);
             }
 
             if (!reportStatsFile.Exists)
