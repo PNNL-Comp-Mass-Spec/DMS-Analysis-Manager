@@ -344,6 +344,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         continue;
                     }
 
+                    // ReSharper disable once RedundantSetContainsBeforeAdding
                     if (!datasetNames.Contains(lineParts[1]))
                     {
                         datasetNames.Add(lineParts[1]);
@@ -1622,6 +1623,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             if (!reportFile.Exists)
             {
+                // report.tsv file not created by DIA-NN
                 LogError(string.Format("{0} file not created by DIA-NN", reportFile.Name));
                 validResults = false;
             }
@@ -1633,11 +1635,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
             if (!reportStatsFile.Exists)
             {
+                // report.stats.tsv file not created by DIA-NN
                 LogWarning(string.Format("{0} file not created by DIA-NN", reportStatsFile.Name));
             }
 
             if (!reportPdfFile.Exists)
             {
+                // report.pdf file not created by DIA-NN
                 LogWarning(string.Format("{0} file not created by DIA-NN", reportPdfFile.Name));
             }
 
