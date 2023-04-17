@@ -456,6 +456,11 @@ namespace AnalysisManagerDiaNNPlugIn
             return new Regex(matchPattern, options);
         }
 
+        private string GetDiannResultsFilePath(string fileName = "report.tsv")
+        {
+            return Path.Combine(mWorkDir, fileName);
+        }
+
         /// <summary>
         /// Get the spectral library file info
         /// </summary>
@@ -1327,7 +1332,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --lib {0}", spectralLibraryFile.FullName);
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
-                arguments.AppendFormat(" --out {0}", Path.Combine(mWorkDir, "report.tsv"));
+                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath());
                 arguments.AppendFormat(" --qvalue {0}", options.PrecursorQValue);
                 arguments.Append(" --matrices");
                 arguments.AppendFormat(" --temp {0}", mWorkDir);
@@ -1552,9 +1557,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private bool ValidateSearchResultFiles()
         {
-            var reportFile = new FileInfo(Path.Combine(mWorkDir, "report.tsv"));
-            var reportStatsFile = new FileInfo(Path.Combine(mWorkDir, "report.stats.tsv"));
-            var reportPdfFile = new FileInfo(Path.Combine(mWorkDir, "report.pdf"));
+            var reportFile = new FileInfo(GetDiannResultsFilePath());
+            var reportStatsFile = new FileInfo(GetDiannResultsFilePath("report.stats.tsv"));
+            var reportPdfFile = new FileInfo(GetDiannResultsFilePath("report.pdf"));
 
             bool validResults;
 
