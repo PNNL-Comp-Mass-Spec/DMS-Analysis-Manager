@@ -187,7 +187,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (!mBuildingSpectralLibrary && AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Edit the report file to remove duplicate .mzML names and shorten dataset names
-                    var reportFile = new FileInfo(Path.Combine(mWorkDir, "report.tsv"));
+                    var reportFile = GetDiannResultsFilePath("report.tsv");
                     var reportUpdated = UpdateReportFile(reportFile);
 
                     reportUpdateError = !reportUpdated;
@@ -221,7 +221,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 // Define additional files to skip
                 mJobParams.AddResultFileToSkip("lib.log.txt");
-                mJobParams.AddResultFileToSkip("report-lib.tsv");
+                mJobParams.AddResultFileToSkip(GetDiannResultsFilePath("report-lib.tsv").Name);
                 mJobParams.AddResultFileToSkip("report.log.txt");
                 mJobParams.AddResultFileExtensionToSkip("_mzML.quant");
 
@@ -514,11 +514,6 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
             return new Regex(matchPattern, options);
-        }
-
-        private string GetDiannResultsFilePath(string fileName = "report.tsv")
-        {
-            return Path.Combine(mWorkDir, fileName);
         }
 
         /// <summary>
@@ -1392,11 +1387,11 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --lib {0}", spectralLibraryFile.FullName);
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
-                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath());
+                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
                 arguments.AppendFormat(" --qvalue {0}", options.PrecursorQValue);
                 arguments.Append(" --matrices");
                 arguments.AppendFormat(" --temp {0}", mWorkDir);
-                arguments.AppendFormat(" --out-lib {0}", Path.Combine(mWorkDir, "report-lib.tsv"));
+                arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
                 arguments.Append(" --gen-spec-lib");
                 arguments.AppendFormat(" --fasta {0}", fastaFile.FullName);
                 arguments.Append(" --met-excision");
@@ -1617,9 +1612,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private bool ValidateSearchResultFiles()
         {
-            var reportFile = new FileInfo(GetDiannResultsFilePath());
-            var reportStatsFile = new FileInfo(GetDiannResultsFilePath("report.stats.tsv"));
-            var reportPdfFile = new FileInfo(GetDiannResultsFilePath("report.pdf"));
+            var reportFile = GetDiannResultsFilePath("report.tsv");
+            var reportStatsFile = GetDiannResultsFilePath("report.stats.tsv");
+            var reportPdfFile = GetDiannResultsFilePath("report.pdf");
 
             bool validResults;
 

@@ -595,15 +595,15 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetDiaNNFiles()
         {
-            const string reportTsvFile = "report.tsv";
+            var reportTsvFile = AnalysisToolRunnerBase.GetDiannResultsFilePath(mWorkDir, DatasetName, "report.tsv");
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(reportTsvFile, false))
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(reportTsvFile.Name, false))
             {
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            mJobParams.AddResultFileToSkip(reportTsvFile);
+            mJobParams.AddResultFileToSkip(reportTsvFile.Name);
 
             // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;

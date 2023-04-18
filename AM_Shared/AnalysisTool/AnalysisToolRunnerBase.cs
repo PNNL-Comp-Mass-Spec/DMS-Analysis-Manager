@@ -1853,6 +1853,30 @@ namespace AnalysisManagerBase.AnalysisTool
             return false;
         }
 
+        /// <summary>
+        /// Get the full path to a DIA-NN result file
+        /// </summary>
+        /// <remarks>The file will be in the working directory, and its name starts with the dataset name and ends with the text in the baseFileName argument</remarks>
+        /// <param name="baseFileName">Base file name</param>
+        /// <returns>File info object</returns>
+        protected FileInfo GetDiannResultsFilePath(string baseFileName)
+        {
+            return GetDiannResultsFilePath(mWorkDir, mDatasetName, baseFileName);
+        }
+
+        /// <summary>
+        /// Get the full path to a DIA-NN result file
+        /// </summary>
+        /// <remarks>The file will be in the working directory, and its name starts with the dataset name and ends with the text in the baseFileName argument</remarks>
+        /// <param name="workDir">Working directory path</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="baseFileName">Base file name</param>
+        /// <returns>File info object</returns>
+        public static FileInfo GetDiannResultsFilePath(string workDir, string datasetName, string baseFileName)
+        {
+            return new FileInfo(Path.Combine(workDir, string.Format("{0}_{1}", datasetName, baseFileName)));
+        }
+
         private static short GetManagerDebugLevel(
             string connectionString,
             string managerName,

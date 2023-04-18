@@ -1289,12 +1289,13 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForDiaNN()
         {
-            const string inputFileName = "report.tsv";
+            var inputFile = GetDiannResultsFilePath("report.tsv");
+
             var synopsisFileName = mDatasetName + "_diann_syn.txt";
 
             var result = RunPHRPWork(
                 "DIA-NN",
-                inputFileName,
+                inputFile.Name,
                 PeptideHitResultTypes.DiaNN,
                 synopsisFileName,
                 false,
