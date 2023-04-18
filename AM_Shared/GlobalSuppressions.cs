@@ -18,4 +18,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.DBTask")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.Global")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerBase.Global.AnalysisResourceOptions")]
+[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerBase.DataFileTools.ProteowizardTools.RegisterProteoWizardWindows~System.Boolean")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "module")]

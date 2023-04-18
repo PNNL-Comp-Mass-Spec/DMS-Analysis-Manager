@@ -25,4 +25,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerProg.MainProcess")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerProg.PluginLoader")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestStatusLogging")]
+[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "Leave as-is for readability", Scope = "member", Target = "~M:AnalysisManagerProg.PluginLoader.LoadObject(System.String,System.String)~System.Object")]
 [assembly: SuppressMessage("Usage", "RCS1246:Use element access.", Justification = "Prefer to use .First()", Scope = "module")]
