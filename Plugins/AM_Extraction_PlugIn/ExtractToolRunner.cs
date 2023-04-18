@@ -1457,7 +1457,9 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in the synopsis file
             // This is done by this class since the MSAlign script does not have an MSGF job step
 
-            return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFileNameFromPHRP);
+            const double thresholdForMSGFSpecEValueOrPEP = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD;
+
+            return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFileNameFromPHRP, thresholdForMSGFSpecEValueOrPEP);
         }
 
         private CloseOutType RunPHRPForMSFragger()
@@ -1713,7 +1715,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Summarize the number of PSMs in the synopsis file
                 // This is done by this class since the MSFragger script does not have an MSGF job step
 
-                var summarizeResult = SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFileNameFromPHRP, postJobPSMResultsToDB, out var psmResultsToAdd);
+                const double thresholdForMSGFSpecEValueOrPEP = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD;
+
+                var summarizeResult = SummarizePSMs(PeptideHitResultTypes.MSFragger, synopsisFileNameFromPHRP, thresholdForMSGFSpecEValueOrPEP, postJobPSMResultsToDB, out var psmResultsToAdd);
 
                 if (summarizeResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {

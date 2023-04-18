@@ -44,9 +44,9 @@ namespace MSGFResultsSummarizer
         public const string AGGREGATION_JOB_DATASET = "Aggregation";
 
         /// <summary>
-        /// Default MSGF score threshold, 1E-10
+        /// Default MSGF SpecEValue threshold, 1E-10
         /// </summary>
-        public const double DEFAULT_MSGF_THRESHOLD = 1E-10;
+        public const double DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD = 1E-10;
 
         /// <summary>
         /// Default MSGF score threshold, 1E-4
