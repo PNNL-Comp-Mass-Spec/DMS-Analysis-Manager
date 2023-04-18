@@ -20,7 +20,6 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
 
-
 namespace AnalysisManagerExtractionPlugin
 {
     /// <summary>
@@ -824,7 +823,6 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-
         private CloseOutType GetMSFraggerFiles()
         {
             var filesToGet = new List<string>();
@@ -1404,7 +1402,6 @@ namespace AnalysisManagerExtractionPlugin
             // Note that we'll obtain the TopPIC parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
 
         private CloseOutType GetXTandemFiles()
         {
