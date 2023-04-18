@@ -49,6 +49,11 @@ namespace MSGFResultsSummarizer
         public const double DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD = 1E-10;
 
         /// <summary>
+        /// Default Posterior Error Probability (PEP) threshold, 0.01
+        /// </summary>
+        public const double DEFAULT_POSTERIOR_ERROR_PROBABILITY_THRESHOLD = 0.01;
+
+        /// <summary>
         /// Default MSGF score threshold, 1E-4
         /// </summary>
         /// <remarks>
