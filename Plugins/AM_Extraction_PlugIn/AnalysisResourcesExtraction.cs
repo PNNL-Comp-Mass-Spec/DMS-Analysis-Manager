@@ -593,13 +593,19 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
+        private CloseOutType GetDiaNNFiles()
         {
+            const string reportTsvFile = "report.tsv";
 
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(reportTsvFile, false))
             {
                 // Errors were reported in method call, so just return
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
+            mJobParams.AddResultFileToSkip(reportTsvFile);
 
+            // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

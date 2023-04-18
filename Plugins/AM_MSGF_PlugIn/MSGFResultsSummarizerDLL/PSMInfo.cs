@@ -156,6 +156,9 @@ namespace MSGFResultsSummarizer
             /// </summary>
             /// <remarks>
             /// <para>
+            /// DIA-NN results store Posterior Error Probability (PEP) in this field
+            /// </para>
+            /// <para>
             /// MaxQuant results store Posterior Error Probability (PEP) in this field
             /// </para>
             /// <para>

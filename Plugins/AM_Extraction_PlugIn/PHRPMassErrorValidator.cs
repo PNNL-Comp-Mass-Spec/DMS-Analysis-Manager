@@ -188,6 +188,7 @@ namespace AnalysisManagerExtractionPlugin
                 // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
 
                 // For MaxQuant, precursor m/z values are loaded from the _PrecursorInfo.txt file, since precursor m/z values reported by MaxQuant are often several Da away from the observed m/z
+                // DIA-NN does not report observed precursor m/z values, so massError will be zero (or very close to zero) for all PSMs
 
                 var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
 

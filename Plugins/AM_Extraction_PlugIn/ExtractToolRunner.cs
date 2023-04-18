@@ -1290,10 +1290,30 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
+        private CloseOutType RunPhrpForDiaNN()
         {
+            const string inputFileName = "report.tsv";
+            var synopsisFileName = mDatasetName + "_diann_syn.txt";
 
+            var result = RunPHRPWork(
+                "DIA-NN",
                 inputFileName,
+                PeptideHitResultTypes.DiaNN,
+                synopsisFileName,
+                false,
                 true,
+                string.Empty,
+                out var synopsisFileNameFromPHRP);
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
+
+            // Summarize the number of PSMs in the synopsis file
+            // This is done by this class since the DiaNN script does not have an MSGF job step
+
+            const double thresholdForMSGFSpecEValueOrPEP = ResultsSummarizer.DEFAULT_POSTERIOR_ERROR_PROBABILITY_THRESHOLD;
+
+            return SummarizePSMs(PeptideHitResultTypes.DiaNN, synopsisFileNameFromPHRP, thresholdForMSGFSpecEValueOrPEP);
         }
 
         private CloseOutType RunPhrpForInSpecT()
@@ -3045,7 +3065,7 @@ namespace AnalysisManagerExtractionPlugin
             summarizer.PostJobPSMResultsToDB = postJobPSMResultsToDB;
             summarizer.MSGFSpecEValueOrPEPThreshold = thresholdForMSGFSpecEValueOrPEP;
 
-            if (resultType is PeptideHitResultTypes.MaxQuant)
+            if (resultType is PeptideHitResultTypes.MaxQuant or PeptideHitResultTypes.DiaNN)
             {
                 summarizer.MSGFSpecEValueOrPEPThreshold = ResultsSummarizer.DEFAULT_POSTERIOR_ERROR_PROBABILITY_THRESHOLD;
             }

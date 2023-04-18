@@ -395,6 +395,7 @@ namespace MSGFResultsSummarizer
 
                     var datasetIdOrName = ResultType switch
                     {
+                        PeptideHitResultTypes.DiaNN => GetDiaNNDatasetIdOrName(currentPSM),
                         PeptideHitResultTypes.MaxQuant => GetMaxQuantDatasetIdOrName(currentPSM),
                         PeptideHitResultTypes.MSFragger => GetMSFraggerDatasetIdOrName(currentPSM),
                         _ => string.Empty
@@ -998,6 +999,16 @@ namespace MSGFResultsSummarizer
             return baseName + modSummaryFileSuffix;
         }
 
+        private string GetDiaNNDatasetIdOrName(PSM currentPSM)
+        {
+            var datasetID = currentPSM.GetScoreInt(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.DatasetID));
+
+            if (datasetID > 0)
+                return datasetID.ToString();
+
+            return currentPSM.GetScore(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.Dataset));
+        }
+
         private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
         {
             var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
@@ -1250,6 +1261,7 @@ namespace MSGFResultsSummarizer
                 bool isFirstHitsFile;
 
                 if (ResultType is
+                    PeptideHitResultTypes.DiaNN or
                     PeptideHitResultTypes.MaxQuant or
                     PeptideHitResultTypes.MODa or
                     PeptideHitResultTypes.MODPlus or
@@ -1466,6 +1478,7 @@ namespace MSGFResultsSummarizer
             try
             {
                 if (ResultType is
+                    PeptideHitResultTypes.DiaNN or
                     PeptideHitResultTypes.MaxQuant or
                     PeptideHitResultTypes.MODa or
                     PeptideHitResultTypes.MODPlus or
@@ -1567,20 +1580,27 @@ namespace MSGFResultsSummarizer
                     string datasetIdOrName;
                     string scanKey;
 
-                    if (ResultType == PeptideHitResultTypes.MaxQuant)
+                    switch (ResultType)
                     {
-                        datasetIdOrName = GetMaxQuantDatasetIdOrName(currentPSM);
-                        scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
-                    }
-                    else if (ResultType == PeptideHitResultTypes.MSFragger)
-                    {
-                        datasetIdOrName = GetMSFraggerDatasetIdOrName(currentPSM);
-                        scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
-                    }
-                    else
-                    {
-                        datasetIdOrName = string.Empty;
-                        scanKey = currentPSM.ScanNumber.ToString();
+                        case PeptideHitResultTypes.DiaNN:
+                            datasetIdOrName = GetDiaNNDatasetIdOrName(currentPSM);
+                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            break;
+
+                        case PeptideHitResultTypes.MaxQuant:
+                            datasetIdOrName = GetMaxQuantDatasetIdOrName(currentPSM);
+                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            break;
+
+                        case PeptideHitResultTypes.MSFragger:
+                            datasetIdOrName = GetMSFraggerDatasetIdOrName(currentPSM);
+                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            break;
+
+                        default:
+                            datasetIdOrName = string.Empty;
+                            scanKey = currentPSM.ScanNumber.ToString();
+                            break;
                     }
 
                     if (currentPSM.ScanNumber > 0 && scansStored.Contains(scanKey))
@@ -1627,6 +1647,14 @@ namespace MSGFResultsSummarizer
                         // SpecEValue was not present
                         // That's OK, QValue should be present
                     }
+                    else if (ResultType == PeptideHitResultTypes.DiaNN)
+                    {
+                        // Use PEP for specEValue
+                        if (currentPSM.TryGetScore(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.PEP), out var posteriorErrorProbabilityText))
+                        {
+                            valid = double.TryParse(posteriorErrorProbabilityText, out specEValueOrPEP);
+                        }
+                    }
                     else if (ResultType == PeptideHitResultTypes.MaxQuant)
                     {
                         // Use PEP for specEValue
@@ -1666,6 +1694,10 @@ namespace MSGFResultsSummarizer
 
                     switch (ResultType)
                     {
+                        case PeptideHitResultTypes.DiaNN:
+                            psmFDR = currentPSM.GetScoreDbl(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
+                            break;
+
                         case PeptideHitResultTypes.MaxQuant:
                             psmFDR = currentPSM.GetScoreDbl(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.QValue), PSMInfo.UNKNOWN_FDR);
                             break;
