@@ -1877,6 +1877,62 @@ namespace AnalysisManagerBase.AnalysisTool
             return new FileInfo(Path.Combine(workDir, string.Format("{0}_{1}", datasetName, baseFileName)));
         }
 
+        /// <summary>
+        /// Determine the path to java.exe
+        /// </summary>
+        /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
+        protected string GetJavaProgLoc()
+        {
+            var javaProgLoc = GetJavaProgLoc(mMgrParams, out var errorMessage);
+
+            if (!string.IsNullOrEmpty(javaProgLoc))
+                return javaProgLoc;
+
+            LogError(string.IsNullOrWhiteSpace(errorMessage) ? "GetJavaProgLoc could not find Java" : errorMessage);
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Determine the path to java.exe
+        /// </summary>
+        /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
+        public static string GetJavaProgLoc(IMgrParams mgrParams, out string errorMessage)
+        {
+            string paramName;
+
+            if (Global.LinuxOS)
+            {
+                // On Linux, the Java location is tracked via manager parameter JavaLocLinux, loaded from file ManagerSettingsLocal.xml
+                // For example: /usr/bin/java
+                paramName = "JavaLocLinux";
+            }
+            else
+            {
+                // JavaLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                paramName = "JavaLoc";
+            }
+
+            var javaProgLoc = mgrParams.GetParam(paramName);
+
+            if (string.IsNullOrEmpty(javaProgLoc))
+            {
+                errorMessage = string.Format("Parameter '{0}' not defined for this manager", paramName);
+                return string.Empty;
+            }
+
+            var javaProg = new FileInfo(javaProgLoc);
+
+            if (javaProg.Exists)
+            {
+                errorMessage = string.Empty;
+                return javaProgLoc;
+            }
+
+            errorMessage = "Cannot find Java: " + javaProgLoc;
+            return string.Empty;
+        }
+
         private static short GetManagerDebugLevel(
             string connectionString,
             string managerName,
@@ -1941,62 +1997,6 @@ namespace AnalysisManagerBase.AnalysisTool
             }
 
             return currentDebugLevel;
-        }
-
-        /// <summary>
-        /// Determine the path to java.exe
-        /// </summary>
-        /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
-        protected string GetJavaProgLoc()
-        {
-            var javaProgLoc = GetJavaProgLoc(mMgrParams, out var errorMessage);
-
-            if (!string.IsNullOrEmpty(javaProgLoc))
-                return javaProgLoc;
-
-            LogError(string.IsNullOrWhiteSpace(errorMessage) ? "GetJavaProgLoc could not find Java" : errorMessage);
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Determine the path to java.exe
-        /// </summary>
-        /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
-        public static string GetJavaProgLoc(IMgrParams mgrParams, out string errorMessage)
-        {
-            string paramName;
-
-            if (Global.LinuxOS)
-            {
-                // On Linux, the Java location is tracked via manager parameter JavaLocLinux, loaded from file ManagerSettingsLocal.xml
-                // For example: /usr/bin/java
-                paramName = "JavaLocLinux";
-            }
-            else
-            {
-                // JavaLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
-                paramName = "JavaLoc";
-            }
-
-            var javaProgLoc = mgrParams.GetParam(paramName);
-
-            if (string.IsNullOrEmpty(javaProgLoc))
-            {
-                errorMessage = string.Format("Parameter '{0}' not defined for this manager", paramName);
-                return string.Empty;
-            }
-
-            var javaProg = new FileInfo(javaProgLoc);
-
-            if (javaProg.Exists)
-            {
-                errorMessage = string.Empty;
-                return javaProgLoc;
-            }
-
-            errorMessage = "Cannot find Java: " + javaProgLoc;
-            return string.Empty;
         }
 
         /// <summary>
