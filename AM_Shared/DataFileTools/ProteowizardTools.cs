@@ -87,12 +87,9 @@ namespace AnalysisManagerBase.DataFileTools
                         {
                             valueMissing = true;
                         }
-                        else
+                        else if(!bool.Parse(Convert.ToString(registryValue)))
                         {
-                            if (!bool.Parse(Convert.ToString(registryValue)))
-                            {
-                                valueMissing = true;
-                            }
+                            valueMissing = true;
                         }
 
                         regProteoWizard.Close();
