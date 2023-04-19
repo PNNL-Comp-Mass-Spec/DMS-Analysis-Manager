@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
@@ -1378,10 +1379,40 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 // ReSharper restore CommentTypo
 
-                // Append the .mzML files
-                foreach (var item in dataPackageInfo.DatasetFiles)
+                switch (dataPackageInfo.DatasetFiles.Count)
                 {
-                    arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
+                    case 0:
+                        LogError("DatasetFiles list in dataPackageInfo is empty");
+                        return false;
+
+                    case > 1:
+                        // One way to run DIA-NN is by listing each .mzML file to process
+                        // Since the Windows command line is limited to 8191 characters, if there are too many datasets, we'll use the "--dir" switch instead
+
+                        // Construct the list of dataset files to append
+
+                        var inputFileList = new StringBuilder();
+
+                        foreach (var item in dataPackageInfo.DatasetFiles)
+                        {
+                            inputFileList.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, item.Value));
+                        }
+
+                        if (inputFileList.Length < 7000)
+                        {
+                            arguments.Append(inputFileList);
+                        }
+                        else
+                        {
+                            arguments.AppendFormat(" --dir {0}", mWorkDir);
+                        }
+
+                        break;
+
+                    default:
+                        // Processing a single .mzML file
+                        arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles.First().Value));
+                        break;
                 }
 
                 arguments.AppendFormat(" --lib {0}", spectralLibraryFile.FullName);
