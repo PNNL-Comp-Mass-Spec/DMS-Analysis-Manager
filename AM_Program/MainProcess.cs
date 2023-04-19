@@ -995,6 +995,7 @@ namespace AnalysisManagerProg
 
                 if (mInsufficientFreeMemory)
                 {
+                    LogWarning("Pausing the manager for 60 minutes since not enough free system memory");
                     mMgrParams.PauseManagerTaskRequests();
                 }
 
@@ -1008,15 +1009,32 @@ namespace AnalysisManagerProg
 
                 if (string.IsNullOrEmpty(mMostRecentErrorMessage))
                 {
-                    mMostRecentErrorMessage = "Insufficient free space (location undefined)";
+                    mMostRecentErrorMessage = string.Format(
+                        "Insufficient free space: {0}",
+                        string.IsNullOrWhiteSpace(directoryWithInsufficientSpace)
+                            ? "location undefined"
+                            : directoryWithInsufficientSpace);
+
+                    LogError(mMostRecentErrorMessage);
                 }
+
                 mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_RESET_JOB_STEP, mMostRecentErrorMessage);
                 mMgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
 
                 // Drive free space issues are unlikely to resolve themselves quickly
-                // Pause the manager for 6 hours
-                mMgrParams.PauseManagerTaskRequests(360);
+                // Pausing the manager for 6 hours since not enough free disk space
+
+                const int pauseDurationHours = 6;
+
+                LogWarning(string.Format(
+                    "Pausing the manager for {0} hours since not enough free disk space: {1}",
+                    pauseDurationHours,
+                    string.IsNullOrWhiteSpace(directoryWithInsufficientSpace)
+                        ? "location undefined"
+                        : directoryWithInsufficientSpace));
+
+                mMgrParams.PauseManagerTaskRequests(pauseDurationHours * 60);
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2403,6 +2421,7 @@ namespace AnalysisManagerProg
 
                     if (mInsufficientFreeMemory)
                     {
+                        LogWarning("Pausing the manager for 60 minutes since not enough free system memory");
                         mMgrParams.PauseManagerTaskRequests();
                     }
 
@@ -2528,6 +2547,7 @@ namespace AnalysisManagerProg
 
                     if (mInsufficientFreeMemory)
                     {
+                        LogWarning("Pausing the manager for 60 minutes since not enough free system memory");
                         mMgrParams.PauseManagerTaskRequests();
                     }
                 }
