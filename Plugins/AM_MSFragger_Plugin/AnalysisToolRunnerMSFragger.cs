@@ -1014,10 +1014,47 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             arguments.AppendFormat(" {0}", paramFilePath);
 
-            // Append the .mzML files
-            foreach (var item in dataPackageInfo.DatasetFiles)
+            switch (dataPackageInfo.DatasetFiles.Count)
             {
-                arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, item.Value));
+                case 0:
+                    LogError("DatasetFiles list in dataPackageInfo is empty");
+                    return false;
+
+                case > 1:
+                    // One way to run MSFragger is by listing each .mzML file to process, but this can lead to path length issues
+                    // Instead, use a wildcard to specify the input files
+                    // Assure that the input files all have the same extension (which should be .mzML)
+
+                    var datasetFileExtension = string.Empty;
+
+                    foreach (var item in dataPackageInfo.DatasetFiles)
+                    {
+                        if (string.IsNullOrEmpty(datasetFileExtension))
+                        {
+                            datasetFileExtension = Path.GetExtension(item.Value);
+                            continue;
+                        }
+
+                        var fileExtension = Path.GetExtension(item.Value);
+
+                        if (fileExtension.Equals(datasetFileExtension, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        LogError(string.Format(
+                            "Files in dataPackageInfo.DatasetFiles do not all have the same file extension; expecting {0} but found {1}",
+                            datasetFileExtension, fileExtension));
+
+                        return false;
+                    }
+
+                    // Append text of the form C:\DMS_WorkDir1\*.mzML
+                    arguments.AppendFormat(" {0}{1}*{2}", mWorkDir, Path.DirectorySeparatorChar, datasetFileExtension);
+                    break;
+
+                default:
+                    // Processing a single .mzML file
+                    arguments.AppendFormat(" {0}", Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles.First().Value));
+                    break;
             }
 
             LogDebug(javaProgLoc + " " + arguments);
