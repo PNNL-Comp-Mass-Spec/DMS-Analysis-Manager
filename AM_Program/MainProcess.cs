@@ -1001,8 +1001,8 @@ namespace AnalysisManagerProg
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer directory
-            if (!ValidateFreeDiskSpace(toolResourcer, out mMostRecentErrorMessage))
+            // Make sure we have enough free space on the drive with the working directory, in the transfer directory, and in the local organism DB cache directory
+            if (!ValidateFreeDiskSpace(toolResourcer, out mMostRecentErrorMessage, out var directoryWithInsufficientSpace))
             {
                 ShowTrace("Insufficient free space; closing job step task");
 
@@ -2952,8 +2952,9 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
         /// <param name="toolResourcer"></param>
-        /// <param name="errorMessage"></param>
-        private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage)
+        /// <param name="errorMessage">Output: error message (empty string if no issues)</param>
+        /// <param name="directoryWithInsufficientSpace">Output: path to the directory with insufficient space (empty string if no issues)</param>
+        private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage, out string directoryWithInsufficientSpace)
         {
             const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 10;
             const int DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB = 10;
@@ -2988,6 +2989,7 @@ namespace AnalysisManagerProg
                             {
                                 errorMessage = "DataPackagePath job parameter is empty";
                                 LogError(errorMessage);
+                                directoryWithInsufficientSpace = string.Empty;
                                 return false;
                             }
                         }
@@ -2997,6 +2999,7 @@ namespace AnalysisManagerProg
                     {
                         errorMessage = "DatasetStoragePath job parameter is empty";
                         LogError(errorMessage);
+                        directoryWithInsufficientSpace = string.Empty;
                         return false;
                     }
 
@@ -3014,7 +3017,16 @@ namespace AnalysisManagerProg
                         datasetStoragePath = datasetStorageDirectory.FullName;
                     }
 
-                    return ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage);
+                    var sufficientSpace = ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage);
+
+                    if (sufficientSpace)
+                    {
+                        directoryWithInsufficientSpace = string.Empty;
+                        return true;
+                    }
+
+                    directoryWithInsufficientSpace = datasetStoragePath;
+                    return false;
                 }
 
                 var workingDirMinFreeSpaceMB = mMgrParams.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
@@ -3034,8 +3046,9 @@ namespace AnalysisManagerProg
                 // Verify that the working directory exists and that its drive has sufficient free space
                 if (!ValidateFreeDiskSpaceWork("Working directory", mWorkDirPath, workingDirMinFreeSpaceMB, out errorMessage, true))
                 {
-                    LogError("Disabling manager since working directory problem");
+                    LogError("Disabling manager since working directory problem; see " + mWorkDirPath);
                     DisableManagerLocally();
+                    directoryWithInsufficientSpace = mWorkDirPath;
                     return false;
                 }
 
@@ -3061,6 +3074,7 @@ namespace AnalysisManagerProg
                             }
 
                             LogError(errorMessage);
+                            directoryWithInsufficientSpace = string.Empty;
                             return false;
                         }
                     }
@@ -3091,6 +3105,7 @@ namespace AnalysisManagerProg
                     // Verify that the remote transfer directory exists and that its drive has sufficient free space
                     if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage))
                     {
+                        directoryWithInsufficientSpace = transferDir;
                         return false;
                     }
 
@@ -3114,6 +3129,7 @@ namespace AnalysisManagerProg
                     if (!ValidateFreeDiskSpaceWork("Organism DB directory", orgDbDir, orgDbDirMinFreeSpaceMB, out errorMessage))
                     {
                         DisableManagerLocally();
+                        directoryWithInsufficientSpace = orgDbDir;
                         return false;
                     }
                 }
@@ -3121,9 +3137,11 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception validating free space", ex);
+                directoryWithInsufficientSpace = string.Empty;
                 return false;
             }
 
+            directoryWithInsufficientSpace = string.Empty;
             return true;
         }
 
