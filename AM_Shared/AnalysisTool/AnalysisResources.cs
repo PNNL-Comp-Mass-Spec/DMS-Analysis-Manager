@@ -340,6 +340,7 @@ namespace AnalysisManagerBase.AnalysisTool
         ///   PRIDE_Converter: \\protoapps\MassIVE_Staging
         ///   MaxQuant:        \\protoapps\MaxQuant_Staging
         ///   MSFragger:       \\proto-9\MSFragger_Staging
+        ///   DiaNN:           \\proto-9\DiaNN_Staging
         /// </remarks>
         public const string JOB_PARAM_CACHE_FOLDER_ROOT_PATH = "CacheFolderRootPath";
 

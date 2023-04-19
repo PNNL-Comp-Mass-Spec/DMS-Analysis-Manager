@@ -1021,7 +1021,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return false;
 
                 case > 1:
-                    // One way to run MSFragger is by listing each .mzML file to process, but this can lead to path length issues
+                    // One way to run MSFragger is by listing each .mzML file to process
+                    // However, the Windows command line is limited to 8191 characters, which is likely to be exceeded if the data package has over ~75 datasets
                     // Instead, use a wildcard to specify the input files
                     // Assure that the input files all have the same extension (which should be .mzML)
 
