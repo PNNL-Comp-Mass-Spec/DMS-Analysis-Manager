@@ -786,6 +786,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
+        /// Look for _diann_syn.txt files in the given directory
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>List of found files; empty list if no match</returns>
+        public static List<FileInfo> FindDiaNNSynopsisFiles(string directoryPath, out string errorMessage)
+        {
+            const string searchPattern = "*" + PHRPReader.Reader.DiaNNSynFileReader.FILENAME_SUFFIX_SYN;
+
+            return FindSynopsisFiles(directoryPath, searchPattern, out errorMessage);
+        }
+
+        /// <summary>
         /// Look for _maxq_syn.txt files in the given directory
         /// </summary>
         /// <param name="directoryPath"></param>

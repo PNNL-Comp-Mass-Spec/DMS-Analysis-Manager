@@ -2254,6 +2254,10 @@ namespace AnalysisManagerExtractionPlugin
                             synopsisFiles = FileSearch.FindMSFraggerSynopsisFiles(mWorkDir, out errorMessage);
                             break;
 
+                        case PeptideHitResultTypes.DiaNN:
+                            synopsisFiles = FileSearch.FindDiaNNSynopsisFiles(mWorkDir, out errorMessage);
+                            break;
+
                         default:
                             LogError("Cannot validate mass errors for this aggregation job, unsupported result type: " + resultType);
                             synopsisFileNameFromPHRP = string.Empty;

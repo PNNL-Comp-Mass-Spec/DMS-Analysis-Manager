@@ -70,11 +70,6 @@ namespace AnalysisManagerExtractionPlugin
             out bool diaSearchEnabled)
         {
             largestMassErrors = new SortedDictionary<double, string>();
-            precursorMassTolerance = 0;
-            psmCount = 0;
-            errorCount = 0;
-            diaSearchEnabled = false;
-
             var peptideMassCalculator = new PeptideMassCalculator();
 
             var startupOptions = new StartupOptions
@@ -106,7 +101,14 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             if (reader.ErrorMessages.Count > 0)
+            {
+                precursorMassTolerance = 0;
+                psmCount = 0;
+                errorCount = 0;
+                diaSearchEnabled = false;
+
                 return false;
+            }
 
             // Report any warnings cached during instantiation of mPHRPReader
             foreach (var message in reader.WarningMessages)
@@ -160,11 +162,22 @@ namespace AnalysisManagerExtractionPlugin
                 OnDebugEvent("Will use mass tolerance of {0:0.0} Da when determining PHRP mass errors", precursorMassTolerance);
             }
 
-            diaSearchEnabled = MSFraggerDIASearchEnabled(resultType, searchEngineParams);
+            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+            if (resultType == PeptideHitResultTypes.DiaNN)
+            {
+                diaSearchEnabled = true;
+            }
+            else
+            {
+                diaSearchEnabled = MSFraggerDIASearchEnabled(resultType, searchEngineParams);
+            }
 
             // Count the number of PSMs with a mass error greater than precursorMassTolerance
 
             var lastProgressTime = DateTime.UtcNow;
+
+            psmCount = 0;
+            errorCount = 0;
 
             while (reader.MoveNext())
             {

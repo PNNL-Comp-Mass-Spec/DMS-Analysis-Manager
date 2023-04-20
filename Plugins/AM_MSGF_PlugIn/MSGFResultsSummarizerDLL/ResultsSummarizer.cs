@@ -1290,6 +1290,8 @@ namespace MSGFResultsSummarizer
 
                 var defaultModSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
 
+                const string DIANN_MOD_SUMMARY_FILE_SUFFIX = "_diann_syn_ModSummary.txt";
+
                 const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
 
                 const string MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX = "_msfragger_syn_ModSummary.txt";
@@ -1297,7 +1299,22 @@ namespace MSGFResultsSummarizer
                 string modSummaryFileName;
 
                 // ReSharper disable once ConvertIfStatementToSwitchStatement
-                if (ResultType is PeptideHitResultTypes.MaxQuant &&
+                if (ResultType is PeptideHitResultTypes.DiaNN &&
+                    defaultModSummaryFileName.Equals("Aggregation" + DIANN_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_diann_syn_ModSummary to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
+
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_diann_syn",
+                        DIANN_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
+                        return false;
+                }
+                else if (ResultType is PeptideHitResultTypes.MaxQuant &&
                     defaultModSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                 {
                     // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name,
