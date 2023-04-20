@@ -124,7 +124,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the DIA-NN version info in the database after the first line is written to file DIA-NN_ConsoleOutput.txt
+                // Store the DIA-NN version info in the database after the first line is written to file DiaNN_ConsoleOutput.txt
                 mToolVersionWritten = false;
                 mDiaNNVersion = string.Empty;
 
@@ -139,12 +139,12 @@ namespace AnalysisManagerDiaNNPlugIn
                 {
                     case AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL:
                         mBuildingSpectralLibrary = true;
-                        mDiaNNConsoleOutputFile = "DIA-NN_ConsoleOutput_CreateLibrary.txt";
+                        mDiaNNConsoleOutputFile = "DiaNN_ConsoleOutput_CreateLibrary.txt";
                         break;
 
                     case AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL:
                         mBuildingSpectralLibrary = false;
-                        mDiaNNConsoleOutputFile = "DIA-NN_ConsoleOutput_SearchSpectra.txt";
+                        mDiaNNConsoleOutputFile = "DiaNN_ConsoleOutput_SearchSpectra.txt";
                         break;
 
                     default:
@@ -450,7 +450,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogDebug(diannPlotterProgram + " " + arguments);
 
-                var diaNNPlotterConsoleOutputFile = Path.Combine(mWorkDir, "DIA-NN-Plotter_ConsoleOutput.txt");
+                var diaNNPlotterConsoleOutputFile = Path.Combine(mWorkDir, "DiaNN-Plotter_ConsoleOutput.txt");
 
                 // Start the program and wait for it to finish
 
@@ -464,7 +464,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 };
                 RegisterEvents(cmdRunner);
 
-                return cmdRunner.RunProgram(diannPlotterProgram.FullName, arguments.ToString(), "DIA-NN-Plotter", true);
+                return cmdRunner.RunProgram(diannPlotterProgram.FullName, arguments.ToString(), "DiaNN-Plotter", true);
             }
             catch (Exception ex)
             {
