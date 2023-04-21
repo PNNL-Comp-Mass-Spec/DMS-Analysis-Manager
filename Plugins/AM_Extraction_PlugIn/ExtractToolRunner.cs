@@ -3172,21 +3172,32 @@ namespace AnalysisManagerExtractionPlugin
         /// Update the DIA-NN report.tsv file to remove duplicate .mzML entries and possibly shorten the Run names
         /// </summary>
         /// <param name="reportFile"></param>
-        private bool UpdateDiannReportFile(FileInfo reportFile)
+        private bool UpdateDiannReportFile(FileSystemInfo reportFile)
         {
             try
             {
+                var filePathOld = reportFile.FullName + ".old";
+
+                // Rename the report.tsv file (use a new FileInfo instance so that the path in reportFile remains unchanged)
+                var sourceReportFile = new FileInfo(reportFile.FullName);
+
+                LogDebug("Renaming {0} to {1}", sourceReportFile.FullName, filePathOld);
+
+                sourceReportFile.MoveTo(filePathOld);
+
+                mJobParams.AddResultFileToSkip(sourceReportFile.Name);
+
                 // Pre-scan the report file to determine the Run names (which should be the dataset names);
                 // Look for the longest common text in the names and construct a map of full name to shortened name
-                if (!ConstructDatasetNameMap(reportFile, out var baseNameByDatasetName))
+                if (!ConstructDatasetNameMap(sourceReportFile, out var baseNameByDatasetName))
                     return false;
 
-                var updatedFile = new FileInfo(reportFile.FullName + ".new");
+                var updatedFile = new FileInfo(reportFile.FullName);
 
                 // This sorted set tracks the dataset file names in the File.Name column (typically .mzML files)
                 var datasetFiles = new SortedSet<string>();
 
-                using (var reader = new StreamReader(new FileStream(reportFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(sourceReportFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var linesRead = 0;
@@ -3204,7 +3215,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (linesRead == 1)
                         {
-                            if (!ValidateDiannReportFileHeaderLine(reportFile, lineParts))
+                            if (!ValidateDiannReportFileHeaderLine(sourceReportFile, lineParts))
                                 return false;
 
                             writer.WriteLine(dataLine);
@@ -3230,17 +3241,18 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                var filePathFinal = reportFile.FullName;
-                var filePathOld = reportFile.FullName + ".old";
-
                 AppUtils.SleepMilliseconds(100);
 
-                LogMessage("Created updated report.tsv file; replacing {0} with {1}", reportFile.FullName, updatedFile.Name);
+                LogMessage("Created updated report.tsv file; deleting {0}", sourceReportFile.FullName);
 
-                reportFile.MoveTo(filePathOld);
-                updatedFile.MoveTo(filePathFinal);
-
-                mJobParams.AddResultFileToSkip(filePathOld);
+                try
+                {
+                    sourceReportFile.Delete();
+                }
+                catch (Exception ex)
+                {
+                    LogWarning("Unable to delete the old DIA-NN report.tsv file", ex);
+                }
 
                 return true;
             }
