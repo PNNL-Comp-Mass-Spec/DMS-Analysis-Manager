@@ -187,8 +187,8 @@ namespace AnalysisManager_AScore_PlugIn
             const string sqlTemplate = "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE data_package_id = {0} AND tool LIKE '%{1}%'";
             var connStr = mMgrParams.RequireMgrParam("ConnectionString");
             var sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
-            var jobList = GetListOfItemsFromDB(sql, connStr);
-            return jobList;
+
+            return GetListOfItemsFromDB(sql, connStr);
         }
 
         /// <summary>
@@ -267,11 +267,10 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="connectionString"></param>
         public static SQLReader MakeDBReaderModule(string sql, string connectionString)
         {
-            var reader = new SQLReader(connectionString)
+            return new SQLReader(connectionString)
             {
                 SQLText = sql
             };
-            return reader;
         }
 
         /// <summary>
