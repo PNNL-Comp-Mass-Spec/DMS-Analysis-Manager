@@ -2539,7 +2539,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
-                var currentStep = "IonQuant";
+                const string currentStep = "IonQuant";
                 UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                 if (processingSuccess)
@@ -2991,7 +2991,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
-                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, "MSBooster");
+                const string currentStep = "MSBooster";
+                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
 
                 if (!processingSuccess)
                 {
@@ -4094,70 +4095,177 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 arguments.AppendFormat(" {0}", tmtIntegratorConfigFile.Name);
 
+                // Since the Windows command line cannot be over 8192 characters long, populate a list of string builders with the space separated list of input files
+                // If there is a small number of datasets, there will only be one item in this list
+
+                var inputFileLists = new List<StringBuilder>();
+
+                const int maximumFileListLength = 7000;
+
+                var currentFileList = new StringBuilder();
+
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-                    arguments.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
+                    currentFileList.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
+
+                    if (currentFileList.Length <= maximumFileListLength)
+                        continue;
+
+                    inputFileLists.Add(currentFileList);
+
+                    currentFileList = new StringBuilder();
                 }
 
-                InitializeCommandRunner(
-                    mWorkingDirectory,
-                    Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
-                    CmdRunnerModes.TmtIntegrator,
-                    500);
-
-                LogCommandToExecute(mWorkingDirectory, options.JavaProgLoc, arguments.ToString());
-
-                var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments.ToString(), "Java", true);
-
-                if (!mConsoleOutputFileParsed)
+                if (currentFileList.Length > 0)
                 {
-                    ParseConsoleOutputFile();
+                    inputFileLists.Add(currentFileList);
                 }
 
-                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                if (inputFileLists.Count == 0)
                 {
-                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                    LogError("List inputFileLists is empty; either experimentGroupWorkingDirectories is empty, or there is a programming bug in RunTmtIntegrator");
+                    return false;
                 }
 
-                var currentStep = "TMT-Integrator";
-                UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+                var groupNumber = 0;
 
-                if (processingSuccess)
+                foreach (var inputFileList in inputFileLists)
                 {
-                    var abundanceFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "abundance_gene_MD.tsv"));
-                    var ratioFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ratio_gene_MD.tsv"));
+                    groupNumber++;
 
-                    if (!abundanceFile.Exists)
-                    {
-                        LogError("TMT Integrator abundance file not found: " + abundanceFile.Name);
+                    var success = RunTmtIntegratorWork(options.JavaProgLoc, arguments, inputFileList, out var resultFiles);
+
+                    if (!success)
                         return false;
-                    }
 
-                    if (!ratioFile.Exists)
+                    if (inputFileLists.Count == 1)
+                        break;
+
+                    // Rename the output files since we're running TmtIntegrator with multiple groups of input files
+
+                    foreach (var resultFile in resultFiles)
                     {
-                        LogError("TMT Integrator ratio file not found: " + ratioFile.Name);
-                        return false;
+                        var newFileName = string.Format("{0}_Group{1}{2}",
+                            Path.GetFileNameWithoutExtension(resultFile.Name),
+                            groupNumber,
+                            Path.GetExtension(resultFile.Name));
+
+                        string newPath;
+
+                        if (resultFile.DirectoryName == null)
+                        {
+                            LogWarning("Unable to determine the parent directory of result file {0}; will use the working directory instead", resultFile.FullName);
+                            newPath = Path.Combine(mWorkDir, newFileName);
+                        }
+                        else
+                        {
+                            newPath = Path.Combine(resultFile.DirectoryName, newFileName);
+                        }
+
+                        LogMessage("Renaming TMT Integrator result file {0} to {1}", resultFile.FullName, newFileName);
+
+                        try
+                        {
+                            resultFile.MoveTo(newPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogError("Error renaming TMT Integrator result file to " + newFileName, ex);
+
+                            if (resultFile.Exists)
+                            {
+                                LogMessage("Copying TMT Integrator result file from {0} to {1}", resultFile.FullName, newPath);
+                                resultFile.CopyTo(newPath);
+                            }
+                            else
+                            {
+                                LogWarning("Result file not found ({0}); this indicates a programming error", resultFile.FullName);
+                            }
+                        }
                     }
-
-                    return true;
                 }
 
-                if (mCmdRunner.ExitCode != 0)
-                {
-                    LogWarning("Java returned a non-zero exit code while calling tmt-integrator: " + mCmdRunner.ExitCode);
-                }
-                else
-                {
-                    LogWarning("Call to Java failed while calling tmt-integrator (but exit code is 0)");
-                }
-
-                return false;
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Error in RunTmtIntegrator", ex);
                 return false;
             }
+        }
+
+        private bool RunTmtIntegratorWork(
+            string javaProgLoc,
+            StringBuilder arguments,
+            StringBuilder inputFileList,
+            out List<FileInfo> resultFiles)
+        {
+            // inputFileList should start with a space
+            var argumentsWithFiles = string.Format("{0}{1}", arguments, inputFileList);
+
+            InitializeCommandRunner(
+                mWorkingDirectory,
+                Path.Combine(mWorkingDirectory.FullName, JAVA_CONSOLE_OUTPUT),
+                CmdRunnerModes.TmtIntegrator,
+                500);
+
+            LogCommandToExecute(mWorkingDirectory, javaProgLoc, argumentsWithFiles);
+
+            var processingSuccess = mCmdRunner.RunProgram(javaProgLoc, argumentsWithFiles, "Java", true);
+
+            if (!mConsoleOutputFileParsed)
+            {
+                ParseConsoleOutputFile();
+            }
+
+            if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+            {
+                LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+            }
+
+            const string currentStep = "TMT-Integrator";
+            UpdateCombinedJavaConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, currentStep);
+
+            resultFiles = new List<FileInfo>();
+
+            if (processingSuccess)
+            {
+                var abundanceFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "abundance_gene_MD.tsv"));
+                var ratioFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ratio_gene_MD.tsv"));
+
+                if (abundanceFile.Exists)
+                {
+                    resultFiles.Add(abundanceFile);
+                }
+                else
+                {
+                    LogError("TMT Integrator abundance file not found: " + abundanceFile.Name);
+                    return false;
+                }
+
+                if (ratioFile.Exists)
+                {
+                    resultFiles.Add(ratioFile);
+                }
+                else
+                {
+                    LogError("TMT Integrator ratio file not found: " + ratioFile.Name);
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (mCmdRunner.ExitCode != 0)
+            {
+                LogWarning("Java returned a non-zero exit code while calling tmt-integrator: " + mCmdRunner.ExitCode);
+            }
+            else
+            {
+                LogWarning("Call to Java failed while calling tmt-integrator (but exit code is 0)");
+            }
+
+            return false;
         }
 
         private bool StoreToolVersionInfo()
