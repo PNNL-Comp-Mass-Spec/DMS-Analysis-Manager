@@ -378,6 +378,7 @@ namespace AnalysisManager_AScore_PlugIn
         private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo resultsDirectory, int jobNumber, string toolName, string connectionString)
         {
             AScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
+
             var archiveFiles = AScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", resultsDirectory.Name, datasetName);
 
             if (archiveFiles.Count == 0)
@@ -482,13 +483,19 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
-                var sqlWhere = "WHERE job = " + jobNumber + " AND tool LIKE '%" + toolName + "%' AND (Coalesce(input_folder, '') <> '')"; // TODO: Updates for postgres!!
+                var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+                var sqlWhere = string.Format("job = {0} AND tool LIKE '%{1}%' AND (Coalesce(input_folder, '') <> '')", jobNumber, toolName);
 
-                var sqlQuery =
-                    " SELECT input_folder, 1 AS preference, '" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' AS saved FROM DMS_Pipeline.dbo.V_Job_Steps_Export " + sqlWhere +
+                var serverType = DbToolsFactory.GetServerTypeFromConnectionString(connectionString);
+
+                var schemaName = serverType == DbServerTypes.PostgreSQL ? "sw" : "DMS_Pipeline.dbo";
+
+                var sqlQuery = string.Format(
+                    " SELECT input_folder, 1 AS preference, {0}' AS saved FROM {1}.V_Job_Steps_Export WHERE {2}" +
                     " UNION " +
-                    " SELECT input_folder, 2 AS preference, saved FROM DMS_Pipeline.dbo.V_Job_Steps_History_Export " + sqlWhere +
-                    " ORDER BY preference, saved";
+                    " SELECT input_folder, 2 AS preference, saved FROM {1}.V_Job_Steps_History_Export WHERE {2}" +
+                    " ORDER BY preference, saved",
+                    timestamp, schemaName, sqlWhere);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);
                 RegisterEvents(dbTools);
