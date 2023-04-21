@@ -251,7 +251,9 @@ namespace AnalysisManagerBase.JobConfig
                 }
             }
 
-            mRecentlyFoundMyEMSLFiles = mMyEMSLDatasetListInfo.FindFiles(fileName, subdirectoryName, datasetName, recurse);
+            var fileIDList = string.Empty;
+
+            mRecentlyFoundMyEMSLFiles = mMyEMSLDatasetListInfo.FindFiles(fileName, subdirectoryName, datasetName, fileIDList, recurse);
 
             if (!mMyEMSLAutoDisabled)
             {
