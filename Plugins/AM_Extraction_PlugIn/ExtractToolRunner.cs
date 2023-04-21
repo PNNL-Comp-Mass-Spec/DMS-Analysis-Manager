@@ -382,6 +382,9 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
+                // Assure that the reader is closed (so that method UpdateDiannReportFile can delete the old version of the report.tsv file)
+                reader.Close();
+
                 baseNameByDatasetName = DatasetNameMapUtility.GetDatasetNameMap(datasetNames, out _, out var warnings);
 
                 foreach (var warning in warnings)
