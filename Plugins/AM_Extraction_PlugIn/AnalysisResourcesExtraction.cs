@@ -602,7 +602,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            mJobParams.AddResultFileToSkip(reportTsvFile.Name);
+            // Do not add the report.tsv file to the list of files to skip, since method UpdateDiannReportFile() updates it to remove duplicate .mzML file names
 
             // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;
