@@ -197,10 +197,10 @@
       <Version>1.0.111</Version>
     </PackageReference>
     <PackageReference Include="ThermoRawFileReader">
-      <Version>4.1.42</Version>
+      <Version>4.1.64</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.8.1</Version>
+      <Version>3.8.2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
