@@ -346,6 +346,17 @@ namespace AnalysisManagerTopFDPlugIn
                             mMzMLInstrumentIdAdjustmentRequired = true;
                             break;
                         }
+
+                        if (dataLine.Contains("1003356"))
+                        {
+                            LogWarning(
+                                "TopFD is unable to process this .mzML file since it comes from " +
+                                "an unrecognized instrument (Orbitrap Ascend, MS:1003356); " +
+                                "will update the .mzML file and try again");
+
+                            mMzMLInstrumentIdAdjustmentRequired = true;
+                            break;
+                        }
                     }
                 }
 
@@ -821,7 +832,8 @@ namespace AnalysisManagerTopFDPlugIn
                 // Keys are the accession to find; values are the new accession
                 // The instrument name for the cvParam will be left unchanged to assure that the file size doesn't change
                 var cvParamsToUpdate = new Dictionary<string, string> {
-                    {"MS:1003029", "MS:1002416"}    // Replace the accession for "Orbitrap Eclipse" with that for "Orbitrap Fusion"
+                    {"MS:1003029", "MS:1002732"},   // Replace the accession for "Orbitrap Eclipse" with that for "Orbitrap Fusion Lumos"
+                    {"MS:1003356", "MS:1002732"}    // Replace the accession for "Orbitrap Ascend" with that for "Orbitrap Fusion Lumos"
                 };
 
                 var mzMLFilePath = Path.Combine(mWorkDir, sourceMzMLFilename);

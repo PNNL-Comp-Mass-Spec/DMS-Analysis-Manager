@@ -24,7 +24,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Arg, Bruker, ccm, centroided, Chymotrypsin, cid, Conc, cp, defs, endopeptidase, etd, Exactive, frag
+        // Ignore Spelling: Arg, Bruker, ccm, centroided, Chymotrypsin, cid, Conc, cp, defs, endopeptidase, etd, Exactive, Exploris, frag
         // Ignore Spelling: Glu, glutamyl, hashcheck, hcd, hmsn, Hydroxyproline, hyperthreading, ident, iso, Lumos, Lys, msn, mzid, MZIDto
         // Ignore Spelling: na, nnet, novo, ntt, Orbitrap, phosphorylated, phospho, Phosphorylation, pre, prepended, prot
         // Ignore Spelling: tda, tims, Tryp, tryptic, Tsv, utils, Xmx
@@ -492,9 +492,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool CanDetermineInstIdFromInstGroup(string instrumentGroup, out string instrumentIDNew, out string autoSwitchReason)
         {
             if (Global.IsMatch(instrumentGroup, "QExactive") ||
-                Global.IsMatch(instrumentGroup, "QEHFX"))
+                Global.IsMatch(instrumentGroup, "QEHFX") ||
+                Global.IsMatch(instrumentGroup, "Exploris"))
             {
-                // Thermo Q Exactive or Q Exactive HFX
+                // Thermo Q Exactive, Q Exactive HFX, or Exploris
                 instrumentIDNew = "3";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
@@ -2915,12 +2916,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // InstrumentID values:
             // #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap and Lumos instruments with high res MS2 spectra
+            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap, Lumos, Eclipse, and Ascend instruments with high res MS2 spectra
             // #  2 means TOF
-            // #  3 means Q-Exactive; use InstrumentID=3 for Q Exactive and QEHFX instruments
+            // #  3 means Q-Exactive; use InstrumentID=3 for Q Exactive, QEHFX, and Exploris instruments
 
             // The logic for determining InstrumentID is:
-            // If the instrument is a QExactive or QEHFX, use InstrumentID 3
+            // If the instrument is a QExactive, QEHFX, or Exploris, use InstrumentID 3
             // If the instrument has HCD spectra (which are typically high res MS2, but sometimes low res), use InstrumentID 1
             // If the instrument has high res MS2 spectra, use InstrumentID 1
             // If the instrument has low res MS2 spectra, use InstrumentID 0

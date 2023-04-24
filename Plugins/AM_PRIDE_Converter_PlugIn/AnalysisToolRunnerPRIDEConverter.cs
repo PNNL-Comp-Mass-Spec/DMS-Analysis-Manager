@@ -22,7 +22,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     // Ignore Spelling: acetylated, Bio, bool, const, Cv, dynode, electrospray, fasta, fourier, Frac, gzip, msg, msgf, msgfplus, musculus
     // Ignore Spelling: na, proteome, ProteomeXchange, proteomics, pubmed, Px, reportfile, roc, sapiens, sourcefile, spectrafile
     // Ignore Spelling: udt, Unimod, Unmarshaller, Xmx, Xpath, XpathPos, xtandem, yyyy-MM-dd
-    // Ignore Spelling: amaZon, Bruker, Daltonics, Deca, Exactive, Lumos, Orbitrap, SolariX, Velos
+    // Ignore Spelling: amaZon, Bruker, Daltonics, Deca, Exactive, Exploris, Lumos, Orbitrap, SolariX, Velos
 
     // ReSharper restore CommentTypo
 
@@ -3317,6 +3317,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "Eclipse":
                     accession = "MS:1003029";
                     description = "Orbitrap Eclipse";
+                    break;
+
+                case "Exploris":
+                    if (instrumentName.StartsWith("Exploris02", StringComparison.OrdinalIgnoreCase))
+                    {
+                        accession = "MS:1003094";
+                        description = "Orbitrap Exploris 240";
+                    }
+                    else
+                    {
+                        // Exploris01 is a 480, but coupled to FT-ICR; Exploris03 is also a 480
+                        accession = "MS:1003028";
+                        description = "Orbitrap Exploris 480";
+                    }
+                    break;
+
+                case "Ascend":
+                    accession = "MS:1003356";
+                    description = "Orbitrap Ascend";
                     break;
             }
         }
