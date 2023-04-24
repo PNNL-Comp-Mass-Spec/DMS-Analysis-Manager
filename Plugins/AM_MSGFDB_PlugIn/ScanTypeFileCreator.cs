@@ -136,7 +136,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             filterText = dataCols[scanFilterColIndex];
 
                             // Parse the filter text to determine scan type
-                            collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText);
+                            collisionMode = XRawFileIO.GetScanTypeNameFromThermoScanFilterText(filterText, false);
 
                             storeData = true;
                         }
