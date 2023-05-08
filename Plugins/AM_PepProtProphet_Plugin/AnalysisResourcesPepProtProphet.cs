@@ -32,6 +32,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         // ReSharper restore CommentTypo
 
+        internal const string JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID = "PackedParam_ExperimentsByDatasetID";
+
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -71,7 +73,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
 
-                var datasetCount = GetDatasetCount();
+                // Check whether this job is associated with a data package; if it is, count the number of datasets
+                // Cache the experiment names in a packed job parameter
+                var datasetCount = GetDatasetCountAndCacheExperimentNames();
 
                 var optionsLoaded = LoadMSFraggerOptions(paramFilePath, datasetCount, out var options);
 
@@ -182,9 +186,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private int GetDatasetCount()
+        private int GetDatasetCountAndCacheExperimentNames()
         {
             var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets, out _, true);
+
+            // Populate a SortedSet with the experiments in the data package (or, if no data package, this job's experiment)
+            var experimentNames = new SortedSet<string>();
+
+            if (dataPackageDatasets.Count == 0)
+            {
+                var experiment = mJobParams.GetJobParameter("Experiment", string.Empty);
+
+                if (experiment.Length == 0)
+                {
+                    LogWarning("Job parameter 'Experiment' is not defined");
+                }
+
+                experimentNames.Add(experiment);
+            }
+            else
+            {
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var item in dataPackageDatasets)
+                {
+                    // Add the experiment name if not yet present
+                    experimentNames.Add(item.Value.Experiment);
+                }
+            }
+
+            // Store the list of experiment in a packed job parameter
+            StorePackedJobParameterList(experimentNames, JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
 
             return dataPackageDefined ? dataPackageDatasets.Count : 1;
         }
