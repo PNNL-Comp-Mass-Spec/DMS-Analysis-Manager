@@ -9,6 +9,7 @@ using AnalysisManagerBase;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,6 +19,8 @@ using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSFraggerPlugIn;
+using PRISMDatabaseUtils;
+
 
 namespace AnalysisManagerPepProtProphetPlugIn
 {
@@ -306,8 +309,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 foreach (var modificationMass in residueOrLocation.Value)
                 {
-                    if (!modificationMasses.Contains(modificationMass))
-                        modificationMasses.Add(modificationMass);
+                    // Add the modification mass if not present
+                    modificationMasses.Add(modificationMass);
                 }
             }
         }
@@ -380,6 +383,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!optionsLoaded)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (options.ReporterIonMode == ReporterIonModes.Tmt16)
+                {
+                    // Switch to 18-plex TMT if any of the datasets associated with this job has TMT18 labeling defined for the experiment in DMS
+                    var success = UpdateReporterIonModeIfRequired(options);
+
+                    if (!success)
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
 
                 options.WorkingDirectoryPadWidth = workingDirectoryPadWidth;
@@ -4924,6 +4938,92 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in ValidatePINFile for " + sourcePinFile.Name, ex);
+                return false;
+            }
+        }
+
+
+        private bool UpdateReporterIonModeIfRequired(FragPipeOptions options)
+        {
+            try
+            {
+                // Keys in this dictionary are dataset IDs, values are experiment names
+                var experimentNames = ExtractPackedJobParameterList(AnalysisResourcesPepProtProphet.JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
+
+                if (experimentNames.Count == 0)
+                {
+                    LogWarning("Packed job parameter {0} is missing or empty; this is unexpected and likely a bug",
+                        AnalysisResourcesPepProtProphet.JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
+
+                    var experiment = mJobParams.GetJobParameter("Experiment", string.Empty);
+
+                    experimentNames.Add(experiment);
+                }
+
+                // Keys in this dictionary are experiment names, values are quoted experiment names
+                var quotedExperimentNames = new Dictionary<string, string>();
+
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var experiment in experimentNames)
+                {
+                    if (quotedExperimentNames.ContainsKey(experiment))
+                        continue;
+
+                    quotedExperimentNames.Add(experiment, string.Format("'{0}'", experiment));
+                }
+
+                // Gigasax.DMS5
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var sqlStr = new StringBuilder();
+
+                sqlStr.Append(" SELECT labelling, count(*) as experiments");
+                sqlStr.Append(" FROM V_Experiment_Export");
+                sqlStr.AppendFormat(" WHERE experiment in ({0})", string.Join(",", quotedExperimentNames.Values));
+                sqlStr.Append(" GROUP BY labelling");
+
+                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
+
+                if (!success)
+                {
+                    LogError("Error querying V_Experiment_Export in UpdateReporterIonModeIfRequired");
+                    return false;
+                }
+
+                var experimentLabels = new Dictionary<string, int>();
+
+                foreach (DataRow curRow in resultSet.Rows)
+                {
+                    var labelName = curRow[0].CastDBVal<string>();
+
+                    if (experimentLabels.TryGetValue(labelName, out var experimentCount))
+                    {
+                        experimentLabels[labelName] = experimentCount + 1;
+                        continue;
+                    }
+
+                    experimentLabels.Add(labelName, 1);
+                }
+
+                if (experimentLabels.ContainsKey("TMT18"))
+                {
+                    LogMessage("Changing the reporter ion mode from {0} to {1} based on experiment labelling info",
+                        options.ReporterIonMode,
+                        ReporterIonModes.Tmt18);
+
+                    options.ReporterIonMode = ReporterIonModes.Tmt18;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in UpdateReporterIonModeIfRequired", ex);
                 return false;
             }
         }

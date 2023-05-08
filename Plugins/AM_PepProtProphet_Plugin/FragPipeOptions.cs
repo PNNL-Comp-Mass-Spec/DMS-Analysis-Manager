@@ -49,7 +49,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Reporter ion mode defined in the parameter file
         /// </summary>
-        public ReporterIonModes ReporterIonMode => FraggerOptions.ReporterIonMode;
+        /// <remarks>
+        /// In the PepProtProphet plugIn, method UpdateReporterIonModeIfRequired will change this to TMT18 if the data package has experiments with TMT 18 labeling
+        /// </remarks>
+        public ReporterIonModes ReporterIonMode
+        {
+            get => FraggerOptions.ReporterIonMode;
+            set => FraggerOptions.ReporterIonMode = value;
+        }
 
         /// <summary>
         /// Whether or not to run Abacus

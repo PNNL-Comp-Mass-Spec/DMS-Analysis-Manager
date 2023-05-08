@@ -3175,7 +3175,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
-        /// <param name="dataPackageDatasets"></param>
+        /// <remarks>
+        /// The dataPackageDatasets dictionary will be empty if this job is not associated with a data package
+        /// </remarks>
+        /// <param name="dataPackageDatasets">Output: datasets associated with the given data package; keys are DatasetID</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and it has datasets associated with it, otherwise false</returns>
