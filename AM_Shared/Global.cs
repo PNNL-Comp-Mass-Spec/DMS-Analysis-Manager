@@ -309,6 +309,21 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Flatten a list of items into a single string, with items separated by delimiter
+        /// </summary>
+        /// <param name="itemList"></param>
+        /// <param name="delimiter"></param>
+        public static string FlattenList(SortedSet<string> itemList, string delimiter)
+        {
+            if (itemList == null || itemList.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return string.Join(delimiter, itemList);
+        }
+
+        /// <summary>
         /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>

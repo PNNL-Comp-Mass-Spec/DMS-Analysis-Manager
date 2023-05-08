@@ -5188,6 +5188,16 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
+        /// Convert a string list to a packed job parameter (items are separated by tab characters)
+        /// </summary>
+        /// <param name="packedJobParams">Packed job parameters to store as param parameterName</param>
+        /// <param name="parameterName">Packed job parameter name</param>
+        protected void StorePackedJobParameterList(SortedSet<string> packedJobParams, string parameterName)
+        {
+            mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, parameterName, Global.FlattenList(packedJobParams, "\t"));
+        }
+
+        /// <summary>
         /// Unzips all files in the specified Zip file
         /// If the file is less than 1.25 GB in size then uses Ionic.Zip
         /// Otherwise, uses PKZipC (provided PKZipC.exe exists)
