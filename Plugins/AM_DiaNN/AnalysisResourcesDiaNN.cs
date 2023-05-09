@@ -227,9 +227,9 @@ namespace AnalysisManagerDiaNNPlugIn
                             return CloseOutType.CLOSEOUT_SKIPPED_DIA_NN_SPEC_LIB;
 
                         default:
-                            LogError(string.Format(
+                            LogError(
                                 "Unexpected library status code when mBuildingSpectralLibrary = true; {0}",
-                                (int)libraryStatusCode));
+                                (int)libraryStatusCode);
 
                             return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -237,9 +237,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (libraryStatusCode != SpectralLibraryStatusCodes.LibraryAlreadyCreated)
                 {
-                    LogError(string.Format(
+                    LogError(
                         "Spectral library status code is {0} ({1}); expecting LibraryAlreadyCreated ({2})",
-                        libraryStatusCode, (int)libraryStatusCode, (int)SpectralLibraryStatusCodes.LibraryAlreadyCreated));
+                        libraryStatusCode, (int)libraryStatusCode, (int)SpectralLibraryStatusCodes.LibraryAlreadyCreated);
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -547,9 +547,9 @@ namespace AnalysisManagerDiaNNPlugIn
 
                     default:
                         // Unrecognized case
-                        LogError(string.Format(
+                        LogError(
                             "Procedure {0} returned an unrecognized library state of {1} for library {2}",
-                            SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName));
+                            SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName);
 
                         libraryStatusCode= SpectralLibraryStatusCodes.Unknown;
                         return null;
@@ -565,9 +565,9 @@ namespace AnalysisManagerDiaNNPlugIn
                     return new FileInfo(Path.Combine(storagePath, libraryName));
                 }
 
-                LogError(string.Format(
+                LogError(
                     "Procedure {0} returned library name {1} but an empty storage path",
-                    SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryName));
+                    SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryName);
 
                 return null;
             }

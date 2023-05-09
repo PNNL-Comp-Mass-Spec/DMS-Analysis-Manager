@@ -597,7 +597,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 if (validatedMods.Count != modList.Count)
                 {
-                    LogError(string.Format("One or more {0} mods failed validation: {1}", modDescription, string.Join(", ", invalidMods)));
+                    LogError("One or more {0} mods failed validation: {1}", modDescription, string.Join(", ", invalidMods));
                     return false;
                 }
 
@@ -693,7 +693,7 @@ namespace AnalysisManagerTopPICPlugIn
                     threadsToUse--;
                 }
 
-                LogMessage(string.Format("The system has {0} cores and {1:F1} GB of free memory; TopPIC will use {2} threads", coreCount, freeMemoryGB, threadsToUse));
+                LogMessage("The system has {0} cores and {1:F1} GB of free memory; TopPIC will use {2} threads", coreCount, freeMemoryGB, threadsToUse);
 
                 cmdLineOptions += " --thread-number " + threadsToUse;
 
@@ -1145,9 +1145,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     if (!sourceProteoformFile.Exists)
                     {
-                        LogError(string.Format(
-                            "TopPIC Prsm results file exists ({0}) but the proteoform results file is missing ({1})",
-                            sourcePrsmFile.Name, sourceProteoformFile.Name));
+                        LogError("TopPIC Prsm results file exists ({0}) but the proteoform results file is missing ({1})", sourcePrsmFile.Name, sourceProteoformFile.Name);
                         break;
                     }
 
@@ -1206,9 +1204,7 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                     else if (validPrsmResults > 0)
                     {
-                        LogError(string.Format(
-                            "{0} / {1} TopPIC Prsm results files were not valid",
-                            expectedPrsmResults - validPrsmResults, expectedPrsmResults));
+                        LogError("{0} / {1} TopPIC Prsm results files were not valid", expectedPrsmResults - validPrsmResults, expectedPrsmResults);
                     }
                     else
                     {
@@ -1226,9 +1222,7 @@ namespace AnalysisManagerTopPICPlugIn
                     }
                     else if (validPrsmResults > 0)
                     {
-                        LogError(string.Format(
-                            "{0} / {1} TopPIC Proteoform results files were not valid",
-                            expectedPrsmResults - validProteoformResults, expectedPrsmResults));
+                        LogError("{0} / {1} TopPIC Proteoform results files were not valid", expectedPrsmResults - validProteoformResults, expectedPrsmResults);
                     }
                     else
                     {

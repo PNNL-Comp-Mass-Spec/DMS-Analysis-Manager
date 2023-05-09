@@ -88,7 +88,7 @@ namespace AnalysisManagerMasicPlugin
 
                 if (errorCount > 10)
                 {
-                    LogWarning(string.Format(" ... {0} total errors", errorCount));
+                    LogWarning(" ... {0} total errors", errorCount);
                 }
             }
             catch (Exception ex)
@@ -385,9 +385,7 @@ namespace AnalysisManagerMasicPlugin
                     return i;
             }
 
-            LogWarning(string.Format(
-                "Header line does not contain column '{0}'; will presume the data is in column {1}",
-                columnName, indexIfMissing + 1));
+            LogWarning("Header line does not contain column '{0}'; will presume the data is in column {1}", columnName, indexIfMissing + 1);
 
             return indexIfMissing;
         }
@@ -511,17 +509,13 @@ namespace AnalysisManagerMasicPlugin
 
                     if (lineParts.Length < medianColumnIndex + 1)
                     {
-                        LogError(string.Format(
-                            "Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}",
-                            channel, intensityStatsFile.FullName));
+                        LogError("Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}", channel, intensityStatsFile.FullName);
                         return false;
                     }
 
                     if (!int.TryParse(lineParts[medianColumnIndex], out var medianTopNPct))
                     {
-                        LogError(string.Format(
-                            "Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}",
-                            channel, lineParts[medianColumnIndex]));
+                        LogError("Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}", channel, lineParts[medianColumnIndex]);
                         return false;
                     }
 
@@ -577,17 +571,13 @@ namespace AnalysisManagerMasicPlugin
 
                     if (lineParts.Length < obsRateColumnIndex + 1)
                     {
-                        LogError(string.Format(
-                            "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
-                            channel, observationRateFile.FullName));
+                        LogError("Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}", channel, observationRateFile.FullName);
                         return false;
                     }
 
                     if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                     {
-                        LogError(string.Format(
-                            "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
-                            channel, lineParts[obsRateColumnIndex]));
+                        LogError("Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}", channel, lineParts[obsRateColumnIndex]);
                         return false;
                     }
 
@@ -624,9 +614,7 @@ namespace AnalysisManagerMasicPlugin
                         if (DateTime.UtcNow.Subtract(item.LastWriteTimeUtc).TotalDays < 180)
                             continue;
 
-                        LogMessage(string.Format(
-                            "Removing old MASIC status file: {0} (last modified {1:yyyy-MM-dd})",
-                            item.FullName, item.LastWriteTime));
+                        LogMessage("Removing old MASIC status file: {0} (last modified {1:yyyy-MM-dd})", item.FullName, item.LastWriteTime);
 
                         item.Delete();
                     }
@@ -681,10 +669,8 @@ namespace AnalysisManagerMasicPlugin
                 // Note that reporterIonName must match a Label in T_Sample_Labelling_Reporter_Ions
                 if (string.IsNullOrWhiteSpace(mReporterIonName))
                 {
-                    LogError(string.Format(
-                        "Reporter ion name is empty for job {0}; " +
-                        "cannot store reporter ion observation stats in the database",
-                        mJob));
+                    LogError("Reporter ion name is empty for job {0}; " +
+                             "cannot store reporter ion observation stats in the database", mJob);
 
                     return false;
                 }

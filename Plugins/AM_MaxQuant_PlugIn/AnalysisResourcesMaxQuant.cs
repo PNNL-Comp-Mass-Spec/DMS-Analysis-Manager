@@ -133,7 +133,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (stepIdUpdateResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        LogError(string.Format("Error updating the DMSSteps in {0}: {1}", targetParameterFile.Name, errorMessage));
+                        LogError("Error updating the DMSSteps in {0}: {1}", targetParameterFile.Name, errorMessage);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -346,17 +346,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                     }
 
                     // Skip this step tool
-                    LogMessage(string.Format(
-                        "Skipping step tool {0} since the StartStepID value in the MaxQuant parameter file is negative",
-                        StepToolName));
+                    LogMessage("Skipping step tool {0} since the StartStepID value in the MaxQuant parameter file is negative", StepToolName);
 
                     return true;
                 }
 
                 // Match not found
-                LogMessage(string.Format(
-                    "Skipping step tool {0} since none of the tool names in the dmsSteps section of the MaxQuant parameter file matched this step tool",
-                    StepToolName));
+                LogMessage("Skipping step tool {0} since none of the tool names in the dmsSteps section of the MaxQuant parameter file matched this step tool", StepToolName);
 
                 return true;
             }
@@ -664,7 +660,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (string.IsNullOrWhiteSpace(maxQuantProgLoc))
                 {
-                    LogError(string.Format("MaxQuant location could not be determined using manager parameter {0} and relative path {1}", "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME));
+                    LogError("MaxQuant location could not be determined using manager parameter {0} and relative path {1}", "MaxQuantProgLoc", AnalysisToolRunnerMaxQuant.MAXQUANT_EXE_NAME);
                     return new SortedSet<string>();
                 }
 
@@ -788,7 +784,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (!copySuccess)
                     {
-                        LogError(string.Format("Error copying file {0} to {1}", item.FullName, targetFile.FullName));
+                        LogError("Error copying file {0} to {1}", item.FullName, targetFile.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -808,7 +804,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (!unzipSuccess)
                     {
-                        LogError(string.Format("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory));
+                        LogError("Error unzipping file {0} to {1}", targetFile.FullName, targetDirectory);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 

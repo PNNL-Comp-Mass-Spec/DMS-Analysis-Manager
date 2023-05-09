@@ -160,11 +160,12 @@ namespace AnalysisManagerMSGFPlugin
                         default:
                             mMessage = "Dataset type " + rawDataType + " is not supported by MSGF";
 
-                            LogDebug(string.Format("{0}; must be one of the following: {1}, {2}, {3}",
+                            LogDebug(
+                                "{0}; must be one of the following: {1}, {2}, {3}",
                                 mMessage,
                                 RAW_DATA_TYPE_DOT_RAW_FILES,
                                 RAW_DATA_TYPE_DOT_MZML_FILES,
-                                RAW_DATA_TYPE_DOT_MZXML_FILES));
+                                RAW_DATA_TYPE_DOT_MZXML_FILES);
 
                             return CloseOutType.CLOSEOUT_FAILED;
                     }

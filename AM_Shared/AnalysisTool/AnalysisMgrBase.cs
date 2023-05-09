@@ -145,8 +145,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Note that mFileTools may have been waiting for a lock file queue to subside,
                 // in which case the copyRate doesn't represent the actual connection speed between the two computers
-                LogDebug(string.Format("  Copied {0:N0} MB file in {1:N0} seconds, transferring at {2:N0} MB/sec: {3}",
-                    fileSizeMB, elapsedSeconds, copyRateMBPerSec, destinationFile.Name));
+                LogDebug(
+                    "  Copied {0:N0} MB file in {1:N0} seconds, transferring at {2:N0} MB/sec: {3}",
+                    fileSizeMB, elapsedSeconds, copyRateMBPerSec, destinationFile.Name);
             }
             else
             {
@@ -308,11 +309,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (mDebugLevel >= 1)
             {
-                LogDebug(string.Format(
-                    "Waiting for lock file queue to fall below threshold ({0}); " +
-                    "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
-                    "Source={3}, Target={4}",
-                    mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath));
+                LogDebug("Waiting for lock file queue to fall below threshold ({0}); " +
+                         "SourceBacklog={1:N0} MB, TargetBacklog={2:N0} MB, " +
+                         "Source={3}, Target={4}", mDerivedClassName, backlogSourceMB, backlogTargetMB, sourceFilePath, targetFilePath);
             }
         }
 
@@ -320,8 +319,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             if (string.IsNullOrWhiteSpace(adminBypassMessage))
             {
-                LogMessage(string.Format("Waiting for lock file queue to fall below threshold; see lock file(s) at {0} and {1}",
-                                         sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)"));
+                LogMessage("Waiting for lock file queue to fall below threshold; see lock file(s) at {0} and {1}", sourceLockFilePath ?? "(n/a)", targetLockFilePath ?? "(n/a)");
                 return;
             }
 

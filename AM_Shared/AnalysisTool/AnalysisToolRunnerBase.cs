@@ -603,9 +603,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!success && string.IsNullOrEmpty(mMessage))
                 {
-                    LogError(string.Format("CopyFileToServerCache returned false copying the {0} file to {1}",
-                        Path.GetExtension(sourceFilePath),
-                        Path.Combine(cacheDirectoryPath, toolNameVersionFolder)));
+                    LogError(
+                    "CopyFileToServerCache returned false copying the {0} file to {1}",
+                    Path.GetExtension(sourceFilePath),
+                    Path.Combine(cacheDirectoryPath, toolNameVersionFolder));
 
                     return string.Empty;
                 }

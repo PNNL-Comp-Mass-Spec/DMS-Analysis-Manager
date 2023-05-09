@@ -267,9 +267,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 };
                 RegisterEvents(cmdRunner);
 
-                LogMessage(string.Format(
-                    "Verifying that the .mzML {0} centroided",
-                    dataPackageInfo.DatasetFiles.Count == 1 ? "file is" : "files are"));
+                LogMessage("Verifying that the .mzML {0} centroided", dataPackageInfo.DatasetFiles.Count == 1 ? "file is" : "files are");
 
                 // Set up and execute a program runner to run CheckCentroid
 
@@ -675,9 +673,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                             }
                             else
                             {
-                                LogWarning(string.Format(
-                                    "CurrentDatasetId is greater than mDatasetCount in ParseMSFraggerConsoleOutputFile; this indicates a programming bug. " +
-                                    "Auto-updating dataset count from {0} to {1}", mDatasetCount, currentDatasetId));
+                                LogWarning("CurrentDatasetId is greater than mDatasetCount in ParseMSFraggerConsoleOutputFile; this indicates a programming bug. " +
+                                           "Auto-updating dataset count from {0} to {1}", mDatasetCount, currentDatasetId);
                             }
 
                             mWarnedInvalidDatasetCount = true;
@@ -1041,9 +1038,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                         if (fileExtension.Equals(datasetFileExtension, StringComparison.OrdinalIgnoreCase))
                             continue;
 
-                        LogError(string.Format(
-                            "Files in dataPackageInfo.DatasetFiles do not all have the same file extension; expecting {0} but found {1}",
-                            datasetFileExtension, fileExtension));
+                        LogError("Files in dataPackageInfo.DatasetFiles do not all have the same file extension; expecting {0} but found {1}", datasetFileExtension, fileExtension);
 
                         return false;
                     }
@@ -1245,9 +1240,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                                 // Auto-change the output format to tsv_pepxml_pin
                                 WriteParameterFileSetting(writer, "output_format", REQUIRED_OUTPUT_FORMAT, comment);
 
-                                LogWarning(string.Format(
-                                    "Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files",
-                                    setting.ParamValue, REQUIRED_OUTPUT_FORMAT));
+                                LogWarning("Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files", setting.ParamValue, REQUIRED_OUTPUT_FORMAT);
                             }
 
                             outputFormatDefined = true;
@@ -1387,15 +1380,11 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (decoyCount == 0)
                 {
-                    LogDebug(string.Format(
-                        "FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins",
-                        fastaFile.Name, fileSizeMB, forwardCount));
+                    LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins", fastaFile.Name, fileSizeMB, forwardCount);
                     return false;
                 }
 
-                LogDebug(string.Format(
-                    "FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins",
-                    fastaFile.Name, fileSizeMB, forwardCount, decoyCount));
+                LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins", fastaFile.Name, fileSizeMB, forwardCount, decoyCount);
 
                 return true;
             }
@@ -1481,7 +1470,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 }
 
                 // pepXML file created by MSFragger is empty for dataset
-                toolRunner.LogError(string.Format("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo));
+                toolRunner.LogError("pepXML file created by MSFragger is empty{0}", optionalDatasetInfo);
             }
 
             var success = ZipPepXmlAndPinFile(toolRunner, datasetName, primaryPepXmlFile[0], addPinFile);
@@ -1507,9 +1496,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (successCount == additionalPepXmlFiles.Count)
                 return true;
 
-            toolRunner.LogError(string.Format(
-                "Zip failure for {0} / {1} .pepXML files created by MSFragger",
-                additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count));
+            toolRunner.LogError("Zip failure for {0} / {1} .pepXML files created by MSFragger", additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count);
 
             return false;
         }
@@ -1554,7 +1541,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             if (existingTargetFile.Exists)
             {
-                toolRunner.LogMessage(string.Format("Replacing {0} with updated version", existingTargetFile.Name));
+                toolRunner.LogMessage("Replacing {0} with updated version", existingTargetFile.Name);
                 existingTargetFile.Delete();
             }
 
@@ -1580,7 +1567,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return true;
             }
 
-            toolRunner.LogError(string.Format("Error adding {0} to {1}", pinFile.Name, zipFile.FullName));
+            toolRunner.LogError("Error adding {0} to {1}", pinFile.Name, zipFile.FullName);
             return false;
         }
 

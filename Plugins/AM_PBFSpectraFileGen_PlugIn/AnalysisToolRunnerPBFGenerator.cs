@@ -157,11 +157,9 @@ namespace AnalysisManagerPBFGenerator
                         {
                             if (knownVersion)
                             {
-                                LogError(string.Format(
-                                    "Unrecognized results directory prefix (starts with {0} instead of {1}). " +
-                                    "Either create a new Settings file with PbfFormatVersion {2} or update the version listed in the current, default settings file; " +
-                                    "next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)",
-                                    mResultsDirectoryName, expectedResultsDirectoryPrefix, mPbfFormatVersion));
+                                LogError("Unrecognized results directory prefix (starts with {0} instead of {1}). " +
+                                         "Either create a new Settings file with PbfFormatVersion {2} or update the version listed in the current, default settings file; " +
+                                         "next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)", mResultsDirectoryName, expectedResultsDirectoryPrefix, mPbfFormatVersion);
                             }
                             else
                             {

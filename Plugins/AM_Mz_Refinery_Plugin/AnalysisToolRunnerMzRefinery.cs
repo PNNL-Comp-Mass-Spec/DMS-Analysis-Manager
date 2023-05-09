@@ -1772,7 +1772,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                                 {
                                     lastProgress = DateTime.UtcNow;
                                     var progress = scanNumber / (float)maxScanMS2 * 100;
-                                    LogDebug(string.Format("Updating parent ion m/z's in the mzML file, {0:F1}% complete", progress));
+                                    LogDebug("Updating parent ion m/z's in the mzML file, {0:F1}% complete", progress);
                                 }
                             }
                         }
@@ -1842,11 +1842,10 @@ namespace AnalysisManagerMzRefineryPlugIn
                     }
                 }
 
-                LogMessage(string.Format("Updated parent ion values in the mzML file. " +
-                                         "{0:#,##0} updated; " +
-                                         "{1:#,##0} skipped due to ambiguous charge; " +
-                                         "{2:#,##0} skipped since not in the _dta.txt file",
-                                         parentIonsUpdated, parentIonsWithMultiChargeState, parentIonsNotMatched));
+                LogMessage("Updated parent ion values in the mzML file. " +
+                           "{0:#,##0} updated; " +
+                           "{1:#,##0} skipped due to ambiguous charge; " +
+                           "{2:#,##0} skipped since not in the _dta.txt file", parentIonsUpdated, parentIonsWithMultiChargeState, parentIonsNotMatched);
 
                 try
                 {

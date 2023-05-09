@@ -369,7 +369,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                             if (scanNumberIndex < 0)
                             {
-                                LogError(string.Format("{0} column not found in {1}", "columnMap", sourcePinFile.FullName));
+                                LogError("{0} column not found in {1}", "columnMap", sourcePinFile.FullName);
                                 return false;
                             }
 
@@ -500,7 +500,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 foreach (var aliasNameFile in dataPackageDirectory.GetFiles("AliasName*.txt"))
                 {
-                    LogDebug(string.Format("Copying {0} to the working directory", aliasNameFile));
+                    LogDebug("Copying {0} to the working directory", aliasNameFile);
                     var targetFilePath = Path.Combine(mWorkDir, aliasNameFile.Name);
                     aliasNameFile.CopyTo(targetFilePath);
                 }

@@ -188,7 +188,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
                 else
                 {
-                    LogWarning(string.Format("Combined directory not found ({0}); this is unexpected", combinedDirectory));
+                    LogWarning("Combined directory not found ({0}); this is unexpected", combinedDirectory);
                 }
 
                 // Delete the .index files, along with the corresponding .zip files
@@ -201,7 +201,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 {
                     if (indexFile.Directory == null)
                     {
-                        LogWarning(string.Format("Unable to determine the parent directory of {0}; skipping", indexFile.FullName));
+                        LogWarning("Unable to determine the parent directory of {0}; skipping", indexFile.FullName);
                         continue;
                     }
 
@@ -214,7 +214,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     }
                     else
                     {
-                        LogWarning(string.Format("Zip file for dataset not found ({0}); this is unexpected", zipFile.FullName));
+                        LogWarning("Zip file for dataset not found ({0}); this is unexpected", zipFile.FullName);
                     }
 
                     indexFile.Delete();
@@ -227,9 +227,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
                 else if (indexFilesDeleted > 1 || zipFilesDeleted > 1)
                 {
-                    LogMessage(string.Format(
-                        "In the transfer directory, deleted {0} .index files and {1} .zip files",
-                        indexFilesDeleted, zipFilesDeleted));
+                    LogMessage("In the transfer directory, deleted {0} .index files and {1} .zip files", indexFilesDeleted, zipFilesDeleted);
                 }
                 else if (indexFilesDeleted == 1)
                 {

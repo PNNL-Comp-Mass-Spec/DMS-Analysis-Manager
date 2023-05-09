@@ -278,14 +278,12 @@ namespace AnalysisManagerFormularityPlugin
                     {
                         if (string.Equals(value, regressionSetting, StringComparison.OrdinalIgnoreCase))
                         {
-                            LogError(string.Format("The Regression value in the Calibration section is {0}; it needs to be lowercase {1}",
-                                regressionSetting, value));
+                            LogError("The Regression value in the Calibration section is {0}; it needs to be lowercase {1}", regressionSetting, value);
                             return false;
                         }
                     }
 
-                    LogError(string.Format("Invalid Regression value in the Calibration section: {0}; allowed values are {1}",
-                        regressionSetting, string.Join(", ", allowedValues)));
+                    LogError("Invalid Regression value in the Calibration section: {0}; allowed values are {1}", regressionSetting, string.Join(", ", allowedValues));
                     return false;
                 }
 

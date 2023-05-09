@@ -367,9 +367,9 @@ namespace AnalysisManagerBase.JobConfig
 
                     // Example message:
                     // Deleting aged lock file modified 26 hours ago: /file1/temp/DMSTasks/Test_MSGFPlus/Job1451055_Step3_20180308_2148.lock
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Deleting aged {0} file modified {1:F0} hours ago: {2}",
-                        targetFileDescription, fileAgeHours, agedFile.FullName));
+                        targetFileDescription, fileAgeHours, agedFile.FullName);
 
                     agedFile.Delete();
                 }
@@ -1047,9 +1047,7 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (workDir.Parent == null)
                         {
-                            LogWarning(string.Format(
-                                "Unable to determine the parent directory of {0}; cannot update the name to contain x_",
-                                workDir.FullName));
+                            LogWarning("Unable to determine the parent directory of {0}; cannot update the name to contain x_", workDir.FullName);
                             continue;
                         }
 
@@ -1059,24 +1057,22 @@ namespace AnalysisManagerBase.JobConfig
                         {
                             if (Directory.Exists(newWorkDirPath))
                             {
-                                LogMessage(string.Format(
+                                LogMessage(
                                     "Deleting old working directory prior to renaming another old working directory; deleting {0}",
-                                    newWorkDirPath));
+                                    newWorkDirPath);
 
                                 Directory.Delete(newWorkDirPath, true);
                             }
 
-                            LogMessage(string.Format(
+                            LogMessage(
                                 "Renaming old working directory since no current .info files refer to it; moving {0} to {1}",
-                                workDir.FullName, Path.GetFileName(newWorkDirPath)));
+                                workDir.FullName, Path.GetFileName(newWorkDirPath));
 
                             workDir.MoveTo(newWorkDirPath);
                         }
                         catch (Exception ex)
                         {
-                            LogWarning(string.Format(
-                                "Error renaming {0} to {1}: {2}",
-                                workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message));
+                            LogWarning("Error renaming {0} to {1}: {2}", workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message);
                         }
                     }
 
@@ -1123,17 +1119,13 @@ namespace AnalysisManagerBase.JobConfig
 
                         try
                         {
-                            LogMessage(string.Format(
-                                "Deleting old working directory since over {0} days old: {1}",
-                                PURGE_THRESHOLD_DAYS, oldWorkDir.FullName));
+                            LogMessage("Deleting old working directory since over {0} days old: {1}", PURGE_THRESHOLD_DAYS, oldWorkDir.FullName);
 
                             oldWorkDir.Delete(true);
                         }
                         catch (Exception ex)
                         {
-                            LogWarning(string.Format(
-                                "Error deleting {0}: {1}",
-                                oldWorkDir.FullName, ex.Message));
+                            LogWarning("Error deleting {0}: {1}", oldWorkDir.FullName, ex.Message);
                         }
                     }
                 }
@@ -1345,16 +1337,16 @@ namespace AnalysisManagerBase.JobConfig
                             {
                                 if (string.Equals(existingValue, paramInfo.Value))
                                 {
-                                    LogDebug(string.Format(
+                                    LogDebug(
                                         "Skipping duplicate task parameter in section {0} named {1}: the new value matches the existing value of '{2}'",
-                                        paramInfo.Section, paramInfo.ParamName, existingValue));
+                                        paramInfo.Section, paramInfo.ParamName, existingValue);
 
                                     continue;
                                 }
 
-                                LogError(string.Format(
+                                LogError(
                                     "Duplicate task parameters in section {0} have the same name ({1}), but conflicting values: existing value is '{2}' vs. new value of '{3}'",
-                                    paramInfo.Section, paramInfo.ParamName, existingValue, paramInfo.Value));
+                                    paramInfo.Section, paramInfo.ParamName, existingValue, paramInfo.Value);
 
                                 return RequestTaskResult.ResultError;
                             }
@@ -1622,7 +1614,7 @@ namespace AnalysisManagerBase.JobConfig
                     return false;
                 }
 
-                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", mJobId, stepNum, workDirPath, staged));
+                LogMessage("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", mJobId, stepNum, workDirPath, staged);
 
                 mOfflineJobInfoFile = infoFile;
 
@@ -1798,9 +1790,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (lockFile.Exists)
                 {
-                    LogWarning(string.Format(
-                        "Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob",
-                        mJobId, lockFile.FullName));
+                    LogWarning("Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob", mJobId, lockFile.FullName);
 
                     TaskClosed = false;
                 }
@@ -1809,9 +1799,7 @@ namespace AnalysisManagerBase.JobConfig
             if (TaskClosed)
             {
                 // Job 1234567 has already been closed; will not call set_step_task_complete again
-                LogWarning(string.Format(
-                    "Job {0} has already been closed; will not call {1} again",
-                    mJobId, SP_NAME_SET_COMPLETE));
+                LogWarning("Job {0} has already been closed; will not call {1} again", mJobId, SP_NAME_SET_COMPLETE);
 
                 return;
             }
@@ -2026,7 +2014,7 @@ namespace AnalysisManagerBase.JobConfig
             var errorMessage = resCode != 0
                 ? string.Format("ExecuteSP() reported result code {0} setting analysis job complete, job {1}", resCode, job)
                 : string.Format(
-                    "Stored procedure {0} reported return code {1}, job {2}", 
+                    "Stored procedure {0} reported return code {1}, job {2}",
                     SP_NAME_SET_COMPLETE, returnCodeParam.Value.CastDBVal<string>(), job);
 
             var messageDetails = messageParam.Value?.CastDBVal<string>();

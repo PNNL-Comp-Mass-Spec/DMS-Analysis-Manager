@@ -403,9 +403,9 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (!string.IsNullOrWhiteSpace(cacheFolderRootPath) && Directory.Exists(cacheFolderRootPath))
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Transfer directory not found ({0}) but the cache folder root path does exist; updating the transfer directory to: {1}",
-                        transferDirectoryPath, cacheFolderRootPath));
+                        transferDirectoryPath, cacheFolderRootPath);
 
                     transferDirectoryPath = cacheFolderRootPath;
                 }

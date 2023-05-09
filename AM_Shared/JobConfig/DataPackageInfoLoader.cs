@@ -287,7 +287,7 @@ namespace AnalysisManagerBase.JobConfig
                 ? string.Format("All {0} datasets", dataPackageDatasets.Count)
                 : string.Format("{0} / {1} datasets", customNameExperimentGroupCount, dataPackageDatasets.Count);
 
-            callingClass.LogMessage(string.Format("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription));
+            callingClass.LogMessage("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription);
 
             errorMessage = string.Empty;
             return true;
@@ -431,7 +431,6 @@ namespace AnalysisManagerBase.JobConfig
             out string errorMsg)
         {
             jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            errorMsg = string.Empty;
 
             // Throttle the calls to this method to avoid overloading the database for data packages with hundreds of jobs
             while (DateTime.UtcNow.Subtract(mLastJobParameterFromHistoryLookup).TotalMilliseconds < 50)

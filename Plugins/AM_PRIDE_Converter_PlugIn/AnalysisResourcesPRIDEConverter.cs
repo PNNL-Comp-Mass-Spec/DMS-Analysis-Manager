@@ -499,18 +499,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (string.IsNullOrEmpty(dataPackageStoragePath))
                     {
-                        LogWarning(string.Format(
-                            "View V_DMS_Data_Packages does not have data package {0} (or column Share_Path is empty);" +
-                            "unable to retrieve the PX Submission template file from the data package directory", dataPackageID));
+                        LogWarning("View V_DMS_Data_Packages does not have data package {0} (or column Share_Path is empty);" +
+                                   "unable to retrieve the PX Submission template file from the data package directory", dataPackageID);
                     }
                     else
                     {
-                        LogWarning(string.Format(
-                            "PX Submission template file not found in the data package directory: {0}; looked for both {1} and any .px file",
-                            dataPackageStoragePath, DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME));
+                        LogWarning("PX Submission template file not found in the data package directory: {0}; looked for both {1} and any .px file", dataPackageStoragePath, DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME);
                     }
 
-                    LogWarning(string.Format("Retrieving {0} from {1}", templateFileName, paramFileStoragePath));
+                    LogWarning("Retrieving {0} from {1}", templateFileName, paramFileStoragePath);
 
                     if (!FileSearchTool.RetrieveFile(templateFileName, paramFileStoragePath, 1))
                     {

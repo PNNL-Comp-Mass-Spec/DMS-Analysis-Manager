@@ -94,9 +94,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (splitFastaEnabled && fastaFileSizeMB < 0.1)
                 {
-                    LogError(string.Format(
-                        "FASTA file is too small to be used in a split FASTA search ({0:F0} KB); make a new job that does not use MSGFPlus_MzML_SplitFasta",
-                        fastaFileSizeMB * 1024.0));
+                    LogError("FASTA file is too small to be used in a split FASTA search ({0:F0} KB); make a new job that does not use MSGFPlus_MzML_SplitFasta", fastaFileSizeMB * 1024.0);
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

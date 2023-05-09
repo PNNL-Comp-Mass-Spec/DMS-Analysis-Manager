@@ -395,8 +395,8 @@ namespace AnalysisManagerBase.DataFileTools
 
                 if (returnCode != 0)
                 {
-                    // Error occurred
-                    OnErrorEvent("Call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " reported return code : " + returnCode);
+                    OnErrorEvent("Error calling {0}, return code {1}",
+                        SP_NAME_REFRESH_CACHED_ORG_DB_INFO, returnCodeParam.Value.CastDBVal<string>());
                 }
             }
             catch (Exception ex)

@@ -1475,13 +1475,13 @@ namespace AnalysisManagerDiaNNPlugIn
             if (!reportStatsFile.Exists)
             {
                 // report.stats.tsv file not created by DIA-NN
-                LogWarning(string.Format("{0} file not created by DIA-NN", reportStatsFile.Name));
+                LogWarning("{0} file not created by DIA-NN", reportStatsFile.Name);
             }
 
             if (!reportPdfFile.Exists)
             {
                 // report.pdf file not created by DIA-NN
-                LogWarning(string.Format("{0} file not created by DIA-NN", reportPdfFile.Name));
+                LogWarning("{0} file not created by DIA-NN", reportPdfFile.Name);
             }
 
             return validResults;
@@ -1525,7 +1525,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 return false;
             }
 
-            LogWarning(string.Format("{0} file not created by DIA-NN, but found file {1} instead", specLib.Name, specLibFiles[0]));
+            LogWarning("{0} file not created by DIA-NN, but found file {1} instead", specLib.Name, specLibFiles[0]);
 
             return RenameSpectralLibraryFile(specLibFiles[0], spectralLibraryFile, out completionCode);
         }

@@ -117,9 +117,9 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (databaseSplitCount > 1 && fastaFileSizeMB < 0.1)
                 {
-                    LogError(string.Format(
+                    LogError(
                         "FASTA file is too small to be used in a split FASTA search ({0:F0} KB); update the job to use a different settings file",
-                        fastaFileSizeMB * 1024.0));
+                        fastaFileSizeMB * 1024.0);
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -241,9 +241,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
-            LogMessage(string.Format(
-                "Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file",
-                msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB));
+            LogMessage("Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file", msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

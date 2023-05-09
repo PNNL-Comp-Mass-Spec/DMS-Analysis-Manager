@@ -433,10 +433,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (fileCountFound > 1)
                 {
-                    LogError(string.Format(
-                        "Multiple PHRP synopsis files were found in the {0} for this aggregation job: {1}",
-                        sourceDirectoryDescription,
-                        string.IsNullOrWhiteSpace(dataPackageResultDirectoryPath) ? transferDirectoryPath : dataPackageResultDirectoryPath));
+                    LogError("Multiple PHRP synopsis files were found in the {0} for this aggregation job: {1}", sourceDirectoryDescription, string.IsNullOrWhiteSpace(dataPackageResultDirectoryPath) ? transferDirectoryPath : dataPackageResultDirectoryPath);
 
                     return false;
                 }

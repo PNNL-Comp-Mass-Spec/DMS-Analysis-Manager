@@ -436,7 +436,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var coreCount = Global.GetCoreCount();
                 var threadsToUse = (int)Math.Floor(coreCount * 0.88);
 
-                LogMessage(string.Format("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse));
+                LogMessage("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse);
                 cmdLineOptions += " --thread-number " + threadsToUse;
             }
 
@@ -936,7 +936,7 @@ namespace AnalysisManagerTopFDPlugIn
                     }
 
                     var zipFilePath = Path.Combine(mWorkDir, subdirectoryName + ".zip");
-                    LogMessage(string.Format("Zipping {0} to create {1}", directoryToFind.FullName, Path.GetFileName(zipFilePath)));
+                    LogMessage("Zipping {0} to create {1}", directoryToFind.FullName, Path.GetFileName(zipFilePath));
 
                     mDotNetZipTools.ZipDirectory(directoryToFind.FullName, zipFilePath, true);
                 }

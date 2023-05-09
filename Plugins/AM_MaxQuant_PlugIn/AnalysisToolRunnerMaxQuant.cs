@@ -1032,8 +1032,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (processedParameterFilePaths.Contains(parameterFile.FullName))
                     continue;
 
-                LogWarning(string.Format(
-                    "The aplfiles parameter file mentioned a file in an unexpected location, {0}: processing now", parameterFile.FullName));
+                LogWarning("The aplfiles parameter file mentioned a file in an unexpected location, {0}: processing now", parameterFile.FullName);
 
                 processedParameterFilePaths.Add(parameterFile.FullName);
 
@@ -1055,10 +1054,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            LogMessage(string.Format(
-                "Updated the FASTA file path in {0} Andromeda parameter files; {1} were already up-to-date",
-                countUpdated,
-                processedParameterFilePaths.Count - countUpdated));
+            LogMessage("Updated the FASTA file path in {0} Andromeda parameter files; {1} were already up-to-date", countUpdated, processedParameterFilePaths.Count - countUpdated);
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -1131,9 +1127,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                         if (!updatedPath.Equals(generatedFastaFilePath))
                         {
-                            LogWarning(string.Format(
-                                "Mismatch between FASTA file path in andromeda parameter file {0} and the generated FASTA file: {1} vs. {2}",
-                                parameterFile.FullName, updatedPath, generatedFastaFilePath));
+                            LogWarning("Mismatch between FASTA file path in andromeda parameter file {0} and the generated FASTA file: {1} vs. {2}", parameterFile.FullName, updatedPath, generatedFastaFilePath);
                         }
 
                         dataLines.Add(string.Format("fasta file path=\"{0}\"", updatedPath));
@@ -1221,8 +1215,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (lineParts.Count < 2)
                     {
-                        LogWarning(string.Format("Line {0} in file {1} does not have a tab; this is unexpected: {2}",
-                            linesRead, metadataFile.FullName, dataLine));
+                        LogWarning("Line {0} in file {1} does not have a tab; this is unexpected: {2}", linesRead, metadataFile.FullName, dataLine);
                         continue;
                     }
 
@@ -1232,15 +1225,13 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     if (!aplMatch.Success)
                     {
-                        LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 1; this is unexpected: {2}",
-                            linesRead, metadataFile.FullName, dataLine));
+                        LogWarning("Line {0} in file {1} did not contain a directory named combined in column 1; this is unexpected: {2}", linesRead, metadataFile.FullName, dataLine);
                         continue;
                     }
 
                     if (!aprMatch.Success)
                     {
-                        LogWarning(string.Format("Line {0} in file {1} did not contain a directory named combined in column 2; this is unexpected: {2}",
-                            linesRead, metadataFile.FullName, dataLine));
+                        LogWarning("Line {0} in file {1} did not contain a directory named combined in column 2; this is unexpected: {2}", linesRead, metadataFile.FullName, dataLine);
                         continue;
                     }
 
@@ -1849,10 +1840,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     foreach (var dmsStep in dmsSteps.Where(dmsStep => !dmsStep.Value.StartStepID.HasValue))
                     {
-                        LogError(string.Format(
-                            "In the MaxQuant parameter file, DMS step {0} has startStepName '{1}', " +
-                            "which did not match any of the task messages shown by MaxQuant during the dry run",
-                            dmsStep.Key, dmsStep.Value.StartStepName));
+                        LogError("In the MaxQuant parameter file, DMS step {0} has startStepName '{1}', " +
+                                 "which did not match any of the task messages shown by MaxQuant during the dry run", dmsStep.Key, dmsStep.Value.StartStepName);
 
                         unresolvedStepCount++;
                     }
@@ -1888,10 +1877,8 @@ namespace AnalysisManagerMaxQuantPlugIn
                 {
                     if (!dmsStep.Value.StartStepID.HasValue)
                     {
-                        LogError(string.Format(
-                            "In the {0}, DMS step {1} (with startStepName '{2}') " +
-                            "does not have an integer defined for StartStepID, indicating an unresolved start step name",
-                            dataSourceDescription, dmsStep.Key, dmsStep.Value.StartStepName));
+                        LogError("In the {0}, DMS step {1} (with startStepName '{2}') " +
+                                 "does not have an integer defined for StartStepID, indicating an unresolved start step name", dataSourceDescription, dmsStep.Key, dmsStep.Value.StartStepName);
 
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -1908,10 +1895,8 @@ namespace AnalysisManagerMaxQuantPlugIn
                     {
                         if (!nextDmsStep.StartStepID.HasValue)
                         {
-                            LogError(string.Format(
-                                "In the {0}, DMS step {1} (with startStepName '{2}') " +
-                                "does not have an integer defined for StartStepID, indicating an unresolved start step name",
-                                dataSourceDescription, nextStepID, nextDmsStep.StartStepName));
+                            LogError("In the {0}, DMS step {1} (with startStepName '{2}') " +
+                                     "does not have an integer defined for StartStepID, indicating an unresolved start step name", dataSourceDescription, nextStepID, nextDmsStep.StartStepName);
 
                             return CloseOutType.CLOSEOUT_FAILED;
                         }

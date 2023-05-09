@@ -110,7 +110,7 @@ namespace AnalysisManagerExtractionPlugin
                 case RESULT_TYPE_MSFRAGGER:
                 case RESULT_TYPE_MSPATHFINDER:
                 case RESULT_TYPE_TOPPIC:
-                    LogDebug(string.Format("{0} does not support running AScore as part of data extraction", resultType));
+                    LogDebug("{0} does not support running AScore as part of data extraction", resultType);
                     runAscore = false;
                     break;
 
@@ -1316,8 +1316,7 @@ namespace AnalysisManagerExtractionPlugin
                     // One or more PHRP files was missing; we'll run PHRP
                     if (existingPhrpFileCount > 0)
                     {
-                        LogMessage(string.Format("Found {0} out of {1} existing PHRP files; will re-run PHRP",
-                                                 existingPhrpFileCount, phrpFilesToFind.Count));
+                        LogMessage("Found {0} out of {1} existing PHRP files; will re-run PHRP", existingPhrpFileCount, phrpFilesToFind.Count);
                     }
                 }
                 else if (oldestPhrpFile > newestMzIdOrTsvFile)
@@ -1325,10 +1324,11 @@ namespace AnalysisManagerExtractionPlugin
                     // PHRP files are up-to-date; no need to re-run PHRP
                     var fileLabel = splitFastaEnabled ? "files" : "file";
 
-                    LogMessage(string.Format("PHRP files are all newer than the .mzid.gz {0} ({1} > {2}); will skip running PHRP on this job",
-                                             fileLabel,
-                                             oldestPhrpFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT),
-                                             newestMzIdOrTsvFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT)));
+                    LogMessage(
+                        "PHRP files are all newer than the .mzid.gz {0} ({1} > {2}); will skip running PHRP on this job",
+                        fileLabel,
+                        oldestPhrpFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                        newestMzIdOrTsvFile.ToString(AnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                     mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
                 }
@@ -1596,8 +1596,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (mzidGzFiles.Length == 0 && mzidFiles.Length == 0)
                     {
-                        LogWarning(string.Format("Changing job parameter {0} back to false because no .mzid files were found",
-                                                 JOB_PARAM_SKIP_PHRP));
+                        LogWarning("Changing job parameter {0} back to false because no .mzid files were found", JOB_PARAM_SKIP_PHRP);
                         mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
                     }
                 }

@@ -723,8 +723,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (sourcePngFiles.Count < MINIMUM_PNG_FILE_COUNT)
                 {
-                    LogError(string.Format("NOMSI created {0} PNG files, but it should have created {1} files",
-                                           sourcePngFiles.Count, MINIMUM_PNG_FILE_COUNT));
+                    LogError("NOMSI created {0} PNG files, but it should have created {1} files", sourcePngFiles.Count, MINIMUM_PNG_FILE_COUNT);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -738,8 +737,7 @@ namespace AnalysisManagerFormularityPlugin
                     }
                     else
                     {
-                        LogWarning(string.Format("PNG file did not end with {0}; this is unexpected: {1}",
-                                                 REPORT_PNG_FILE_SUFFIX, pngFile.Name));
+                        LogWarning("PNG file did not end with {0}; this is unexpected: {1}", REPORT_PNG_FILE_SUFFIX, pngFile.Name);
                         pngFiles.Add(pngFile);
                     }
                 }

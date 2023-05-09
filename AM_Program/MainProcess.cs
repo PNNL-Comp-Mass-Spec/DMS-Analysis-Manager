@@ -1027,12 +1027,12 @@ namespace AnalysisManagerProg
 
                 const int pauseDurationHours = 6;
 
-                LogWarning(string.Format(
+                LogWarning(
                     "Pausing the manager for {0} hours since not enough free disk space: {1}",
                     pauseDurationHours,
                     string.IsNullOrWhiteSpace(directoryWithInsufficientSpace)
                         ? "location undefined"
-                        : directoryWithInsufficientSpace));
+                        : directoryWithInsufficientSpace);
 
                 mMgrParams.PauseManagerTaskRequests(pauseDurationHours * 60);
 
@@ -2667,8 +2667,9 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                LogMessage(string.Format("Job {0}, step {1} staged to run remotely on {2}; remote info file at {3}",
-                                         jobNum, stepNum, transferUtility.RemoteHostName, infoFilePathRemote));
+                LogMessage(
+                    "Job {0}, step {1} staged to run remotely on {2}; remote info file at {3}",
+                    jobNum, stepNum, transferUtility.RemoteHostName, infoFilePathRemote);
 
                 resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                 return true;
@@ -3201,9 +3202,8 @@ namespace AnalysisManagerProg
 
                 if (sourceDirs.Length == 0)
                 {
-                    LogWarning(string.Format(
-                        "Did not find any SQLite_1.x.y directories in the manager directory; " +
-                        "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+                    LogWarning("Did not find any SQLite_1.x.y directories in the manager directory; " +
+                               "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL);
 
                     return;
                 }
@@ -3220,8 +3220,7 @@ namespace AnalysisManagerProg
 
                     if (!match.Success)
                     {
-                        LogDebug(string.Format(
-                            "Ignoring {0} since did not end with a version of the form X.Y.Z", sourceDir.Name));
+                        LogDebug("Ignoring {0} since did not end with a version of the form X.Y.Z", sourceDir.Name);
 
                         continue;
                     }
@@ -3240,9 +3239,8 @@ namespace AnalysisManagerProg
 
                 if (sourceDirVersions.Count == 0)
                 {
-                    LogWarning(string.Format(
-                        "Did not find any SQLite_1.x.y directories in the manager directory; " +
-                        "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+                    LogWarning("Did not find any SQLite_1.x.y directories in the manager directory; " +
+                               "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL);
 
                     return;
                 }
@@ -3254,9 +3252,9 @@ namespace AnalysisManagerProg
 
                 if (!newestDll.Exists)
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "{0} is missing file {1}; cannot validate against the DLL in the manager directory",
-                        newestSrcDir.FullName, newestDll.Name));
+                        newestSrcDir.FullName, newestDll.Name);
 
                     return;
                 }
@@ -3264,7 +3262,7 @@ namespace AnalysisManagerProg
                 if (!activeDll.Exists || activeDll.Length != newestDll.Length)
                 {
                     // File sizes differ; replace the active DLL
-                    LogMessage(string.Format("Copying {0} to {1}", newestDll.FullName, mgrDir.FullName));
+                    LogMessage("Copying {0} to {1}", newestDll.FullName, mgrDir.FullName);
                     newestDll.CopyTo(activeDll.FullName, true);
                 }
 
@@ -3274,18 +3272,18 @@ namespace AnalysisManagerProg
 
                 if (soFiles.Length == 0)
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "{0} is missing file {1}; cannot validate against the .so file in the manager directory",
-                        newestSrcDir.FullName, SQLITE_INTEROP_FILE));
+                        newestSrcDir.FullName, SQLITE_INTEROP_FILE);
 
                     return;
                 }
 
                 if (soFiles.Length > 1)
                 {
-                    LogWarning(string.Format(
+                    LogWarning(
                         "Found multiple {0} files in {1} (including subdirectories); cannot validate against the .so file in the manager directory",
-                        SQLITE_INTEROP_FILE, newestSrcDir.FullName));
+                        SQLITE_INTEROP_FILE, newestSrcDir.FullName);
 
                     return;
                 }
@@ -3296,7 +3294,7 @@ namespace AnalysisManagerProg
                 if (!activeInterop.Exists || activeInterop.Length != newestInterop.Length)
                 {
                     // File sizes differ; replace the active Interop.so file
-                    LogMessage(string.Format("Copying {0} to {1}", newestInterop.FullName, mgrDir.FullName));
+                    LogMessage("Copying {0} to {1}", newestInterop.FullName, mgrDir.FullName);
                     newestInterop.CopyTo(activeInterop.FullName, true);
                 }
             }

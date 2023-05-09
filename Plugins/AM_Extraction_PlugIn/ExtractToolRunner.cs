@@ -389,7 +389,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 foreach (var warning in warnings)
                 {
-                    LogWarning(string.Format("{0} (called from AnalysisToolRunnerDiaNN.ConstructDatasetNameMap)", warning.Replace("\n", "; ")));
+                    LogWarning("{0} (called from AnalysisToolRunnerDiaNN.ConstructDatasetNameMap)", warning.Replace("\n", "; "));
                 }
 
                 return true;
@@ -845,8 +845,7 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 if (columnMap[headerName] < 0)
                                 {
-                                    LogError(string.Format("Header {0} not found in {1}; unable to merge the MS-GF+ .tsv files",
-                                        headerName, Path.GetFileName(sourceFilePath)));
+                                    LogError("Header {0} not found in {1}; unable to merge the MS-GF+ .tsv files", headerName, Path.GetFileName(sourceFilePath));
                                     return CloseOutType.CLOSEOUT_FAILED;
                                 }
                             }
@@ -2158,7 +2157,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (successCodes.Count < prsmFiles.Count)
             {
-                LogError(string.Format("Only processed {0} / {1} TopPIC_PrSMs.txt files in the working directory", successCodes.Count, prsmFiles.Count));
+                LogError("Only processed {0} / {1} TopPIC_PrSMs.txt files in the working directory", successCodes.Count, prsmFiles.Count);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2259,7 +2258,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!File.Exists(peptideSearchResultsFilePath))
                     {
-                        LogError(string.Format("{0} results file not found: {1}", toolName, Path.GetFileName(peptideSearchResultsFilePath)));
+                        LogError("{0} results file not found: {1}", toolName, Path.GetFileName(peptideSearchResultsFilePath));
                         synopsisFileNameFromPHRP = string.Empty;
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -3274,9 +3273,7 @@ namespace AnalysisManagerExtractionPlugin
             // Validate the header line
             if (headerNames.Count < 3)
             {
-                LogError(string.Format(
-                    "File {0} has {1} columns in the header line; expecting over 50 columns",
-                    reportFile.Name, headerNames.Count));
+                LogError("File {0} has {1} columns in the header line; expecting over 50 columns", reportFile.Name, headerNames.Count);
 
                 return false;
             }
@@ -3403,7 +3400,7 @@ namespace AnalysisManagerExtractionPlugin
                 DateTime.UtcNow.Subtract(mLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
             {
                 mLastPHRPStatusLog = DateTime.UtcNow;
-                LogDebug(string.Format("Running PHRP: {0}; {1}% complete", taskDescription, percentComplete));
+                LogDebug("Running PHRP: {0}; {1}% complete", taskDescription, percentComplete);
             }
         }
 

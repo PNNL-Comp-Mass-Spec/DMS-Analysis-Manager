@@ -194,13 +194,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (processedDatasetIDs.Contains(datasetId))
                     {
-                        LogError(string.Format("Data package {0} has multiple instances of dataset ID {1}; aborting", dataPackageID, datasetId));
+                        LogError("Data package {0} has multiple instances of dataset ID {1}; aborting", dataPackageID, datasetId);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
                     if (processedDatasets.Contains(datasetName))
                     {
-                        LogError(string.Format("Data package {0} has multiple instances of dataset {1}; aborting", dataPackageID, datasetName));
+                        LogError("Data package {0} has multiple instances of dataset {1}; aborting", dataPackageID, datasetName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
