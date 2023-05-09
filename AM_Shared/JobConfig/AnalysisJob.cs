@@ -1290,88 +1290,84 @@ namespace AnalysisManagerBase.JobConfig
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                if (returnCode != 0)
+                if (returnCode is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
                 {
-                    if (returnCode is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
-                    {
-                        // No jobs found
-                        return RequestTaskResult.NoTaskFound;
-                    }
-
-                    var outputMessage = messageParam.Value.CastDBVal<string>();
-
-                    var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
-
-                    // The return code was not an empty string, which indicates an error
-                    LogError("RequestAnalysisJobFromDB(), SP execution has return code {0}; message: {1}",
-                        returnCodeParam.Value.CastDBVal<string>(), message);
-
-                    return RequestTaskResult.ResultError;
+                    // No jobs found
+                    return RequestTaskResult.NoTaskFound;
                 }
 
-                switch (resCode)
+                if (resCode == 0 && returnCode == 0)
                 {
-                    case RET_VAL_OK:
+                    // Step task was found; get the data for it
 
-                        // No errors found in SP call, so see if any step tasks were found
+                    mJobId = jobNumberParam.Value.CastDBVal<int>();
 
-                        // Note that Convert.ToInt32 will convert null values to 0
-                        mJobId = Convert.ToInt32(jobNumberParam.Value);
+                    var jobParamsXML = jobParamsParam.Value.CastDBVal<string>();
 
-                        var jobParamsXML = Convert.ToString(jobParamsParam.Value);
+                    var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
 
-                        // Step task was found; get the data for it
-                        var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
+                    if (jobParameters.Count == 0)
+                    {
+                        LogWarning("Unable to parse out job parameters from the job parameters XML");
+                        return RequestTaskResult.ResultError;
+                    }
 
-                        if (jobParameters.Count == 0)
+                    foreach (var paramInfo in jobParameters)
+                    {
+                        // Check for conflicting values
+                        if (mJobParams.TryGetValue(paramInfo.Section, out var existingSection) &&
+                            existingSection.TryGetValue(paramInfo.ParamName, out var existingValue))
                         {
-                            LogWarning("Unable to parse out job parameters from the job parameters XML");
+                            if (string.Equals(existingValue, paramInfo.Value))
+                            {
+                                LogDebug(
+                                    "Skipping duplicate task parameter in section {0} named {1}: the new value matches the existing value of '{2}'",
+                                    paramInfo.Section, paramInfo.ParamName, existingValue);
+
+                                continue;
+                            }
+
+                            LogError(
+                                "Duplicate task parameters in section {0} have the same name ({1}), but conflicting values: existing value is '{2}' vs. new value of '{3}'",
+                                paramInfo.Section, paramInfo.ParamName, existingValue, paramInfo.Value);
+
                             return RequestTaskResult.ResultError;
                         }
 
-                        foreach (var paramInfo in jobParameters)
-                        {
-                            // Check for conflicting values
-                            if (mJobParams.TryGetValue(paramInfo.Section, out var existingSection) &&
-                                existingSection.TryGetValue(paramInfo.ParamName, out var existingValue))
-                            {
-                                if (string.Equals(existingValue, paramInfo.Value))
-                                {
-                                    LogDebug(
-                                        "Skipping duplicate task parameter in section {0} named {1}: the new value matches the existing value of '{2}'",
-                                        paramInfo.Section, paramInfo.ParamName, existingValue);
+                        SetParam(paramInfo.Section, paramInfo.ParamName, paramInfo.Value);
+                    }
 
-                                    continue;
-                                }
-
-                                LogError(
-                                    "Duplicate task parameters in section {0} have the same name ({1}), but conflicting values: existing value is '{2}' vs. new value of '{3}'",
-                                    paramInfo.Section, paramInfo.ParamName, existingValue, paramInfo.Value);
-
-                                return RequestTaskResult.ResultError;
-                            }
-
-                            SetParam(paramInfo.Section, paramInfo.ParamName, paramInfo.Value);
-                        }
-
-                        SaveJobParameters(mMgrParams.GetParam("WorkDir"), jobParamsXML, mJobId);
-                        return RequestTaskResult.TaskFound;
-
-                    case DbUtilsConstants.RET_VAL_EXCESSIVE_RETRIES:
-                        // Too many retries
-                        return RequestTaskResult.TooManyRetries;
-
-                    case DbUtilsConstants.RET_VAL_DEADLOCK:
-                        // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-                        return RequestTaskResult.Deadlock;
-
-                    default:
-                        // There was an SP error
-                        LogError("AnalysisJob.RequestAnalysisJob(), ExecuteSP returned result code {0}, message: {1}",
-                            resCode, messageParam.Value.CastDBVal<string>());
-
-                        return RequestTaskResult.ResultError;
+                    SaveJobParameters(mMgrParams.GetParam("WorkDir"), jobParamsXML, mJobId);
+                    return RequestTaskResult.TaskFound;
                 }
+
+                var outputMessage = messageParam.Value.CastDBVal<string>();
+                var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
+
+                if (resCode != 0 && returnCode == 0)
+                {
+                    switch (resCode)
+                    {
+                        case DbUtilsConstants.RET_VAL_EXCESSIVE_RETRIES:
+                            // Too many retries
+                            return RequestTaskResult.TooManyRetries;
+
+                        case DbUtilsConstants.RET_VAL_DEADLOCK:
+                            // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
+                            return RequestTaskResult.Deadlock;
+
+                        default:
+                            // There was an SP error
+                            LogError("ExecuteSP() reported result code {0} calling {1}, message: {2}", resCode, SP_NAME_REQUEST_TASK, message);
+                            return RequestTaskResult.ResultError;
+                    }
+                }
+
+                // The return code was not an empty string, which indicates an error
+                LogError("Error requesting a step task, {0} returned {1}; message: {2}",
+                    SP_NAME_REQUEST_TASK, returnCodeParam.Value.CastDBVal<string>(), message);
+
+                return RequestTaskResult.ResultError;
             }
             catch (Exception ex)
             {
