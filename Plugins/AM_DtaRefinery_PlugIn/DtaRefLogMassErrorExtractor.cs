@@ -229,7 +229,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return true;
                 }
 
-                OnErrorEvent("Error storing DTA Refinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode);
                 if (resCode != 0)
                 {
                     OnErrorEvent(
@@ -238,6 +237,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                     return false;
                 }
+
+                OnErrorEvent(
+                    "Error storing DTA Refinery Mass Error results in the database, {0} returned {1}",
+                    STORE_MASS_ERROR_STATS_SP_NAME, returnParam.Value.CastDBVal<string>());
 
                 return false;
             }

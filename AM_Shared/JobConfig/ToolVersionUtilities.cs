@@ -605,12 +605,13 @@ namespace AnalysisManagerBase.JobConfig
 
             if (resCode != 0)
             {
-                OnErrorEvent("Error " + resCode + " storing tool version in database for current processing step");
+                OnErrorEvent("ExecuteSP() reported result code {0} storing tool version in database for current processing step", resCode);
+                return false;
             }
-            else
-            {
-                OnErrorEvent(SP_NAME_SET_TASK_TOOL_VERSION + " reported return code " + returnCode);
-            }
+
+            OnErrorEvent(
+                "Stored procedure {0} reported return code {1}",
+                SP_NAME_SET_TASK_TOOL_VERSION, returnCodeParam.Value.CastDBVal<string>());
 
             return false;
         }

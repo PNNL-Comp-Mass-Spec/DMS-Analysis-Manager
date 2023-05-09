@@ -474,17 +474,21 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-
-                if (!success)
+                if (resCode != 0 || returnCode != 0)
                 {
-                    var errorMsg = string.Format(
-                        "Procedure {0} returned error code {1}{2}",
-                        SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCode,
-                        string.IsNullOrWhiteSpace(errorMessage)
-                            ? string.Empty
-                            : ": " + errorMessage);
-
-                    LogError(errorMsg);
+                    if (resCode != 0)
+                    {
+                        LogError("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_GET_SPECTRAL_LIBRARY_ID);
+                    }
+                    else
+                    {
+                        LogError(
+                            "Procedure {0} returned error code {1}{2}",
+                            SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCodeParam.Value.CastDBVal<string>(),
+                            string.IsNullOrWhiteSpace(errorMessage)
+                                ? string.Empty
+                                : ": " + errorMessage);
+                    }
 
                     libraryStatusCode = SpectralLibraryStatusCodes.Error;
                     spectralLibraryID = 0;

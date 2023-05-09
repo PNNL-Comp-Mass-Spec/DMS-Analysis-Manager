@@ -637,8 +637,6 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool success;
-
             try
             {
                 if (mDebugLevel >= 2)
@@ -685,22 +683,28 @@ namespace AnalysisManagerSMAQCPlugIn
                     return true;
                 }
 
+                if (resCode != 0)
+                {
+                    mMessage = string.Format(
+                        "ExecuteSP() reported result code {0} storing SMAQC results in database using {1}",
+                        resCode, STORE_SMAQC_RESULTS_SP_NAME);
                 }
                 else
                 {
-                    mMessage = "Error storing SMAQC Results in database, " + STORE_SMAQC_RESULTS_SP_NAME + " returned " + resCode;
-                    LogError(mMessage);
-                    success = false;
+                    mMessage = string.Format(
+                        "Error storing SMAQC results in database, {0} returned {1}",
+                        STORE_SMAQC_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
                 }
+
+                LogError(mMessage);
+                return false;
             }
             catch (Exception ex)
             {
                 mMessage = "Exception storing SMAQC Results in database";
                 LogError(mMessage, ex);
-                success = false;
+                return false;
             }
-
-            return success;
         }
 
         /// <summary>

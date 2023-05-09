@@ -640,7 +640,10 @@ namespace AnalysisManagerQCARTPlugin
 
                 var cmd = dbTools.CreateCommand(STORE_QCART_RESULTS, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlData;
 
@@ -653,7 +656,19 @@ namespace AnalysisManagerQCARTPlugin
                     return true;
                 }
 
-                LogError("Error storing the QC-ART result in the database");
+                if (resCode != 0)
+                {
+                    LogError(
+                        "ExecuteSP() reported result code {0} storing the QC-ART result in database using {1}",
+                        resCode, STORE_QCART_RESULTS);
+                }
+                else
+                {
+                    LogError(
+                        "Error storing the QC-ART result in database, {0} returned {1}",
+                        STORE_QCART_RESULTS, returnParam.Value.CastDBVal<string>());
+                }
+
                 return false;
             }
             catch (Exception ex)

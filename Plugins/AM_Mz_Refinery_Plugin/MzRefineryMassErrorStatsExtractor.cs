@@ -182,8 +182,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool PostMassErrorInfoToDB(int datasetID, string xmlResults)
         {
-            bool success;
-
             try
             {
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
@@ -219,18 +217,17 @@ namespace AnalysisManagerMzRefineryPlugIn
                 else
                 {
                     ErrorMessage = string.Format(
-                        "Error storing MzRefinery Mass Error Results in the database, {0} returned {1}",
-                        STORE_MASS_ERROR_STATS_SP_NAME, resCode);
-                    success = false;
+                        "Error storing MzRefinery Mass Error results in database, {0} returned {1}",
+                        STORE_MASS_ERROR_STATS_SP_NAME, returnParam.Value.CastDBVal<string>());
                 }
+
+                return false;
             }
             catch (Exception ex)
             {
                 ErrorMessage = "Exception storing MzRefinery Mass Error Results in the database: " + ex.Message;
-                success = false;
+                return false;
             }
-
-            return success;
         }
     }
 }

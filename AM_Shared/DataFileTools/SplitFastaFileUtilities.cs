@@ -326,16 +326,19 @@ namespace AnalysisManagerBase.DataFileTools
                     if (resCode == 0 && returnCode == 0)
                         continue;
 
-                        var statusMessage = messageParam.Value;
+                    ErrorMessage = resCode != 0
+                        ? string.Format("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_UPDATE_ORGANISM_DB_FILE)
+                        : string.Format("{0} reported return code {1}", SP_NAME_UPDATE_ORGANISM_DB_FILE, returnCodeParam.Value.CastDBVal<string>());
 
-                        if (statusMessage != null)
-                        {
-                            ErrorMessage = ErrorMessage + "; " + Convert.ToString(statusMessage);
-                        }
+                    var message = messageParam.Value.CastDBVal<string>();
 
-                        OnErrorEvent(ErrorMessage);
-                        return false;
+                    if (!string.IsNullOrWhiteSpace(message))
+                    {
+                        ErrorMessage = ErrorMessage + "; message: " + message;
                     }
+
+                    OnErrorEvent(ErrorMessage);
+                    return false;
                 }
             }
             catch (Exception ex)

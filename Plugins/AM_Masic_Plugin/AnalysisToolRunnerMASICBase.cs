@@ -711,13 +711,20 @@ namespace AnalysisManagerMasicPlugin
                     return true;
                 }
 
-                var errorMessage = string.IsNullOrWhiteSpace(messageParam.Value.ToString())
-                                       ? "No error message"
-                                       : messageParam.Value.CastDBVal<string>();
+                if (resCode != 0)
+                {
+                    LogError("ExecuteSP() reported result code {0} storing reporter ion observation stats and median intensities in the database using {1}",
+                        resCode, STORE_REPORTER_ION_OBS_STATS_SP_NAME);
 
-                LogError(string.Format(
+                    return false;
+                }
+
+                var message = messageParam.Value.CastDBVal<string>();
+                var errorMessage = string.IsNullOrWhiteSpace(message) ? "No error message" : message;
+
+                LogError(
                     "Error storing reporter ion observation stats and median intensities in the database, {0} returned {1}: {2}",
-                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
+                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, returnParam.Value.CastDBVal<string>(), errorMessage);
 
                 return false;
             }

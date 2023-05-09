@@ -1152,8 +1152,6 @@ namespace MSGFResultsSummarizer
 
         public bool PostJobPSMResults(int job, PSMResults psmResults)
         {
-            bool success;
-
             try
             {
                 // Call stored procedure store_job_psm_stats in DMS5
@@ -1202,25 +1200,35 @@ namespace MSGFResultsSummarizer
                     return true;
                 }
 
+                string logMessage;
+
+                if (resCode != 0)
+                {
+                    logMessage = string.Format(
+                        "ExecuteSP() reported result code {0} storing PSM results in database using {1}",
+                        resCode, STORE_JOB_PSM_RESULTS_SP_NAME);
                 }
                 else
                 {
-                    SetErrorMessage("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + result);
-
-                    if (!string.IsNullOrEmpty(errorMessage))
-                    {
-                        mErrorMessage += "; " + errorMessage;
-                    }
-                    success = false;
+                    logMessage = string.Format(
+                        "Error storing PSM results in database, {0} returned {1}",
+                        STORE_JOB_PSM_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
                 }
+
+                SetErrorMessage(logMessage);
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    mErrorMessage += "; " + errorMessage;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
                 SetErrorMessage("Exception storing PSM Results in database: " + ex.Message, ex);
-                success = false;
+                return false;
             }
-
-            return success;
         }
 
         /// <summary>

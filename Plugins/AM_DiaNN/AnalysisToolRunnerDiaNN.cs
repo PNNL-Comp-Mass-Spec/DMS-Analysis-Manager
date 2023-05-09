@@ -1084,21 +1084,27 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                if (!success)
+                if (resCode == 0 && returnCode == 0)
                 {
-                    var errorMsg = string.Format(
-                        "Procedure {0} returned error code {1}{2}",
-                        SP_NAME_SET_CREATE_TASK_COMPLETE, returnCode,
-                        string.IsNullOrWhiteSpace(errorMessage)
-                            ? string.Empty
-                            : ": " + errorMessage);
+                    return true;
+                }
 
-                    LogError(errorMsg);
+                if (resCode != 0)
+                {
+                    LogError("ExecuteSP() reported result code {0} calling {1}",
+                        resCode, SP_NAME_SET_CREATE_TASK_COMPLETE);
 
                     return false;
                 }
 
-                return true;
+                LogError(
+                    "Procedure {0} returned error code {1}{2}",
+                    SP_NAME_SET_CREATE_TASK_COMPLETE, returnCodeParam.Value.CastDBVal<string>(),
+                    string.IsNullOrWhiteSpace(errorMessage)
+                        ? string.Empty
+                        : ": " + errorMessage);
+
+                return false;
             }
             catch (Exception ex)
             {
