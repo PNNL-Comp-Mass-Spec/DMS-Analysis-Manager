@@ -385,6 +385,10 @@ namespace AnalysisManagerBase.DataFileTools
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
+                if (resCode != 0)
+                {
+                    OnErrorEvent("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REFRESH_CACHED_ORG_DB_INFO);
+                }
 
                 if (returnCode != 0)
                 {

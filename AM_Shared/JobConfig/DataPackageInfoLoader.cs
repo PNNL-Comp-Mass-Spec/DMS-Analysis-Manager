@@ -449,10 +449,9 @@ namespace AnalysisManagerBase.JobConfig
                 dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 1;
 
                 // Execute the SP
-                var returnCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet);
-                var success = returnCode == 0;
+                var resCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet);
 
-                if (!success)
+                if (resCode != 0)
                 {
                     errorMsg = "Unable to retrieve job parameters from history for job " + jobNumber;
                     return false;
@@ -487,6 +486,7 @@ namespace AnalysisManagerBase.JobConfig
                     }
                 }
 
+                errorMsg = string.Empty;
                 return true;
             }
             catch (Exception ex)

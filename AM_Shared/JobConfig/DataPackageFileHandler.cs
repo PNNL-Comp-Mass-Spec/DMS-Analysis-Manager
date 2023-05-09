@@ -170,7 +170,13 @@ namespace AnalysisManagerBase.JobConfig
                 while (!matchFound)
                 {
                     // Execute the SP
-                    mDbTools.ExecuteSP(cmd, 1);
+                    var resCode = mDbTools.ExecuteSP(cmd, 1);
+
+                    if (resCode != 0)
+                    {
+                        OnErrorEvent("ExecuteSP() reported result code {0} calling {1}",
+                            resCode, SP_NAME_GET_JOB_STEP_INPUT_FOLDER);
+                    }
 
                     inputDirectoryName = Convert.ToString(inputFolderParam.Value);
                     stepToolMatch = Convert.ToString(stepToolMatchParam.Value);

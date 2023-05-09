@@ -527,7 +527,14 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
-                dbTools.ExecuteSP(cmd);
+                var resCode = dbTools.ExecuteSP(cmd);
+
+                if (resCode == 0)
+                {
+                    return;
+                }
+
+                LogError("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REPORT_MGR_ERROR_CLEANUP);
             }
             catch (Exception ex)
             {

@@ -143,7 +143,13 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
-                dbTools.ExecuteSP(cmd);
+                var resCode = dbTools.ExecuteSP(cmd);
+
+                if (resCode != 0)
+                {
+                    OnErrorEvent("ExecuteSP() reported result code {0} calling {1}",
+                        resCode, SP_NAME_ACK_MANAGER_UPDATE);
+                }
             }
             catch (Exception ex)
             {
@@ -386,7 +392,13 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
-                dbTools.ExecuteSP(cmd);
+                var resCode = dbTools.ExecuteSP(cmd);
+
+                if (resCode != 0)
+                {
+                    OnErrorEvent("ExecuteSP() reported result code {0} calling {1}",
+                        resCode, SP_NAME_PAUSE_MANAGER_TASK_REQUESTS);
+                }
             }
             catch (Exception ex)
             {
