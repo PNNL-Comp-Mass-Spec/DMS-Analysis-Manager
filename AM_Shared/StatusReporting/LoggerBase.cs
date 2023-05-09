@@ -19,12 +19,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a status message at the console, tagging it as a debug message
         /// </summary>
-        /// <param name="formatString"></param>
+        /// <param name="format"></param>
         /// <param name="args"></param>
         [StringFormatMethod("format")]
-        public void LogDebug(string formatString, params object[] args)
+        public void LogDebug(string format, params object[] args)
         {
-            LogDebug(string.Format(formatString, args));
+            LogDebug(string.Format(format, args));
         }
 
         /// <summary>
@@ -49,12 +49,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// Log an error message
         /// </summary>
         /// <remarks>The error is shown in red in the console</remarks>
-        /// <param name="formatString"></param>
+        /// <param name="format"></param>
         /// <param name="args"></param>
         [StringFormatMethod("format")]
-        public void LogError(string formatString, params object[] args)
+        public void LogError(string format, params object[] args)
         {
-            LogError(string.Format(formatString, args));
+            LogError(string.Format(format, args));
         }
 
         /// <summary>
@@ -103,12 +103,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a status message at the console
         /// </summary>
-        /// <param name="formatString"></param>
+        /// <param name="format"></param>
         /// <param name="args"></param>
         [StringFormatMethod("format")]
-        public void LogMessage(string formatString, params object[] args)
+        public void LogMessage(string format, params object[] args)
         {
-            LogMessage(string.Format(formatString, args));
+            LogMessage(string.Format(format, args));
         }
 
         /// <summary>
@@ -132,12 +132,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a warning message at the console and write to the log file
         /// </summary>
-        /// <param name="formatString"></param>
+        /// <param name="format"></param>
         /// <param name="args"></param>
         [StringFormatMethod("format")]
-        public void LogWarning(string formatString, params object[] args)
+        public void LogWarning(string format, params object[] args)
         {
-            LogMessage(string.Format(formatString, args));
+            LogWarning(string.Format(format, args));
         }
 
         /// <summary>
