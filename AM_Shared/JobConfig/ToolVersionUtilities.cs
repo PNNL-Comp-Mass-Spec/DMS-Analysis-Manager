@@ -590,7 +590,7 @@ namespace AnalysisManagerBase.JobConfig
 
             dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0));
             dbTools.AddTypedParameter(cmd, "@step", SqlType.Int, value: mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0));
-            dbTools.AddParameter(cmd, "@ToolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
+            dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             // Execute the stored procedure (retry the call up to 4 times)
