@@ -1302,6 +1302,14 @@ namespace AnalysisManagerBase.JobConfig
 
                     mJobId = jobNumberParam.Value.CastDBVal<int>();
 
+                    if (mJobId == 0)
+                    {
+                        LogError("Error requesting a step task, {0} returned 0 for both the result code and the return code indicating that an available step task was found; " +
+                                 "however, the job number procedure argument is 0, meaning a step task was not actually assigned", SP_NAME_REQUEST_TASK);
+
+                        return RequestTaskResult.ResultError;
+                    }
+
                     var jobParamsXML = jobParamsParam.Value.CastDBVal<string>();
 
                     var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
