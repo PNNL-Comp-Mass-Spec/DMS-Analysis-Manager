@@ -1089,7 +1089,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     return true;
                 }
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     LogError("ExecuteSP() reported result code {0} calling {1}",
                         resCode, SP_NAME_SET_CREATE_TASK_COMPLETE);

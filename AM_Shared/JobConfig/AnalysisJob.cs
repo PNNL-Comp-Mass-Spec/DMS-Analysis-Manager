@@ -1898,7 +1898,7 @@ namespace AnalysisManagerBase.JobConfig
                 return;
             }
 
-            if (resCode != 0)
+            if (resCode != 0 && returnCode == 0)
             {
                 LogError("ExecuteSP() reported result code {0} calling stored procedure {1}", resCode, SP_NAME_REPORT_IDLE);
                 return;
@@ -2011,7 +2011,7 @@ namespace AnalysisManagerBase.JobConfig
                 return true;
             }
 
-            var errorMessage = resCode != 0
+            var errorMessage = resCode != 0 && returnCode == 0
                 ? string.Format("ExecuteSP() reported result code {0} setting analysis job complete, job {1}", resCode, job)
                 : string.Format(
                     "Stored procedure {0} reported return code {1}, job {2}",

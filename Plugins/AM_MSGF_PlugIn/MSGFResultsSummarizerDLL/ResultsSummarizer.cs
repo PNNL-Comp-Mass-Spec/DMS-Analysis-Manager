@@ -1202,7 +1202,7 @@ namespace MSGFResultsSummarizer
 
                 string logMessage;
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     logMessage = string.Format(
                         "ExecuteSP() reported result code {0} storing PSM results in database using {1}",

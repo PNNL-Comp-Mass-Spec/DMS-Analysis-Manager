@@ -476,7 +476,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (resCode != 0 || returnCode != 0)
                 {
-                    if (resCode != 0)
+                    if (resCode != 0 && returnCode == 0)
                     {
                         LogError("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_GET_SPECTRAL_LIBRARY_ID);
                     }

@@ -603,7 +603,7 @@ namespace AnalysisManagerBase.JobConfig
                 return true;
             }
 
-            if (resCode != 0)
+            if (resCode != 0 && returnCode == 0)
             {
                 OnErrorEvent("ExecuteSP() reported result code {0} storing tool version in database for current processing step", resCode);
                 return false;

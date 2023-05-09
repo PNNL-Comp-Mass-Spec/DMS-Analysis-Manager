@@ -697,7 +697,7 @@ namespace AnalysisManagerMasicPlugin
                     return true;
                 }
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     LogError("ExecuteSP() reported result code {0} storing reporter ion observation stats and median intensities in the database using {1}",
                         resCode, STORE_REPORTER_ION_OBS_STATS_SP_NAME);

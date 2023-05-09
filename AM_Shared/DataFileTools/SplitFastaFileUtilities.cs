@@ -326,7 +326,7 @@ namespace AnalysisManagerBase.DataFileTools
                     if (resCode == 0 && returnCode == 0)
                         continue;
 
-                    ErrorMessage = resCode != 0
+                    ErrorMessage = resCode != 0 && returnCode == 0
                         ? string.Format("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_UPDATE_ORGANISM_DB_FILE)
                         : string.Format("{0} reported return code {1}", SP_NAME_UPDATE_ORGANISM_DB_FILE, returnCodeParam.Value.CastDBVal<string>());
 
@@ -388,7 +388,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     OnErrorEvent("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REFRESH_CACHED_ORG_DB_INFO);
                 }

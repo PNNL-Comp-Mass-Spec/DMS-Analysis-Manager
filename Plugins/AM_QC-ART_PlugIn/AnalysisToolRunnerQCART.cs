@@ -656,7 +656,7 @@ namespace AnalysisManagerQCARTPlugin
                     return true;
                 }
 
-                if (resCode != 0)
+                if (resCode != 0 && returnCode == 0)
                 {
                     LogError(
                         "ExecuteSP() reported result code {0} storing the QC-ART result in database using {1}",
