@@ -1896,7 +1896,7 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
             PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-            var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
+            var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd);
@@ -1947,7 +1947,7 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@completionMessage", SqlType.VarChar, 512, compMsg.Trim('\r', '\n'));
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationCode", SqlType.Int).Value = evalCode;
             PipelineDBProcedureExecutor.AddParameter(cmd, "@evaluationMessage", SqlType.VarChar, 512, evalMsg.Trim('\r', '\n'));
-            var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
+            var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             if (!TryGetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
