@@ -250,10 +250,8 @@ namespace AnalysisManagerBase.JobConfig
             if (string.IsNullOrWhiteSpace(fileExtension))
                 return;
 
-            if (!mResultFileExtensionsToSkip.Contains(fileExtension))
-            {
-                mResultFileExtensionsToSkip.Add(fileExtension);
-            }
+            // Add the file extension if not yet present
+            mResultFileExtensionsToSkip.Add(fileExtension);
         }
 
         /// <summary>
@@ -267,10 +265,8 @@ namespace AnalysisManagerBase.JobConfig
 
             fileName = Path.GetFileName(fileName);
 
-            if (!mResultFilesToKeep.Contains(fileName))
-            {
-                mResultFilesToKeep.Add(fileName);
-            }
+            // Add the file name if not yet present
+            mResultFilesToKeep.Add(fileName);
         }
 
         /// <summary>
@@ -284,10 +280,8 @@ namespace AnalysisManagerBase.JobConfig
 
             fileName = Path.GetFileName(fileName);
 
-            if (!mResultFilesToSkip.Contains(fileName))
-            {
-                mResultFilesToSkip.Add(fileName);
-            }
+            // Add the file name if not yet present
+            mResultFilesToSkip.Add(fileName);
         }
 
         /// <summary>
@@ -299,10 +293,8 @@ namespace AnalysisManagerBase.JobConfig
             if (string.IsNullOrWhiteSpace(filePath))
                 return;
 
-            if (!mServerFilesToDelete.Contains(filePath))
-            {
-                mServerFilesToDelete.Add(filePath);
-            }
+            // Add the file path if not yet present
+            mServerFilesToDelete.Add(filePath);
         }
 
         /// <summary>
