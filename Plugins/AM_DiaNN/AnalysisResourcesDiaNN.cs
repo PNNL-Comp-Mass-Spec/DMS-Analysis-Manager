@@ -470,9 +470,10 @@ namespace AnalysisManagerDiaNNPlugIn
                 returnCodeParam.Value = string.Empty;
 
                 // Execute the SP
-                var returnCode = dbTools.ExecuteSP(cmd, out var errorMessage);
+                var resCode = dbTools.ExecuteSP(cmd, out var errorMessage);
 
-                var success = returnCode == 0;
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
+
 
                 if (!success)
                 {

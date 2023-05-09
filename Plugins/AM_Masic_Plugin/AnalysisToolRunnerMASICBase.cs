@@ -689,7 +689,10 @@ namespace AnalysisManagerMasicPlugin
                     return false;
                 }
 
-                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddTypedParameter(sqlCmd, "@job", SqlType.Int, value: mJob);
                 dbTools.AddParameter(sqlCmd, "@reporterIon", SqlType.VarChar, 64).Value = mReporterIonName;
                 dbTools.AddParameter(sqlCmd, "@topNPct", SqlType.Int).Value = mReporterIonObservationRateTopNPct;
@@ -701,7 +704,9 @@ namespace AnalysisManagerMasicPlugin
                 // Execute the SP (retry the call up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (resCode == 0 && returnCode == 0)
                 {
                     return true;
                 }

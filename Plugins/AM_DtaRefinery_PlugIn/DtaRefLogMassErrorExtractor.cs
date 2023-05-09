@@ -212,14 +212,19 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 var cmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 4 times)
                 var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (resCode == 0 && returnCode == 0)
                 {
                     return true;
                 }

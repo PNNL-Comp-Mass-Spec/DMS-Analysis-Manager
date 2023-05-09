@@ -193,16 +193,22 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Data is stored in table T_Dataset_QC
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(sqlCmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddTypedParameter(sqlCmd, "@datasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(sqlCmd, "@resultsXML", SqlType.XML).Value = xmlResults;
 
                 // Execute the SP (retry the call up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd);
 
-                if (resCode == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (resCode == 0 && returnCode == 0)
                 {
-                    success = true;
+                    return true;
+                }
                 }
                 else
                 {

@@ -1162,7 +1162,10 @@ namespace MSGFResultsSummarizer
 
                 var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
 
-                dbTools.AddParameter(cmd, "@return", SqlType.Int, ParameterDirection.ReturnValue);
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
                 dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: job);
                 dbTools.AddTypedParameter(cmd, "@msgfThreshold", SqlType.Float, value: psmResults.MSGFThreshold);
                 dbTools.AddTypedParameter(cmd, "@fdrThreshold", SqlType.Float, value: psmResults.FDRThreshold);
@@ -1190,11 +1193,15 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
 
                 // Execute the SP (retry the call up to 3 times)
-                var result = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
+                var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
 
-                if (result == 0)
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (resCode == 0 && returnCode == 0)
                 {
-                    success = true;
+                    return true;
+                }
+
                 }
                 else
                 {

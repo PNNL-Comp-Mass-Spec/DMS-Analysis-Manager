@@ -596,10 +596,9 @@ namespace AnalysisManagerBase.JobConfig
             // Execute the stored procedure (retry the call up to 4 times)
             var resCode = dbTools.ExecuteSP(cmd, 4);
 
-            var returnCode = dbTools.GetString(returnParam.Value);
-            var returnCodeValue = Global.GetReturnCodeValue(returnCode);
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-            if (resCode == 0 && returnCodeValue == 0)
+            if (resCode == 0 && returnCode == 0)
             {
                 return true;
             }

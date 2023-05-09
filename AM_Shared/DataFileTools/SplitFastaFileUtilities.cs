@@ -316,17 +316,15 @@ namespace AnalysisManagerBase.DataFileTools
                     dbTools.AddTypedParameter(cmd, "@numResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
                     dbTools.AddTypedParameter(cmd, "@fileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
                     var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty);
-                    var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
+                    var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                     const int retryCount = 3;
-                    dbTools.ExecuteSP(cmd, retryCount, 2);
+                    var resCode = dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                    var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+                    var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                    if (returnCode != 0)
-                    {
-                        // Error occurred
-                        ErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " reported return code " + returnCode;
+                    if (resCode == 0 && returnCode == 0)
+                        continue;
 
                         var statusMessage = messageParam.Value;
 
@@ -380,12 +378,13 @@ namespace AnalysisManagerBase.DataFileTools
                 // Setup for execution of the stored procedure
                 var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);
 
-                var returnParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.Output);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                 const int retryCount = 3;
-                dbTools.ExecuteSP(cmd, retryCount, 2);
+                var resCode = dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                var returnCode = Global.GetReturnCodeValue(dbTools.GetString(returnParam.Value));
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
+
 
                 if (returnCode != 0)
                 {

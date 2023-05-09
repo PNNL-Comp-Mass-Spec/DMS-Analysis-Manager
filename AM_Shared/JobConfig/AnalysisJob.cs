@@ -1284,7 +1284,7 @@ namespace AnalysisManagerBase.JobConfig
                 var remoteInfo = runJobsRemotely ? RemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
-                var returnParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
+                var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {
@@ -1296,13 +1296,11 @@ namespace AnalysisManagerBase.JobConfig
                 // Execute the SP
                 var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
-                var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-                var returnCodeValue = Global.GetReturnCodeValue(returnCode);
-
-                if (returnCodeValue != 0)
+                if (returnCode != 0)
                 {
-                    if (returnCodeValue is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
+                    if (returnCode is RET_VAL_TASK_NOT_AVAILABLE or RET_VAL_TASK_NOT_AVAILABLE_ALT)
                     {
                         // No jobs found
                         return RequestTaskResult.NoTaskFound;
@@ -1901,10 +1899,9 @@ namespace AnalysisManagerBase.JobConfig
             // Execute the Stored Procedure (retry the call up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd);
 
-            var returnCode = PipelineDBProcedureExecutor.GetString(returnParam.Value);
-            var returnCodeValue = Global.GetReturnCodeValue(returnCode);
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
 
-            if (resCode == 0 && returnCodeValue == 0)
+            if (resCode == 0 && returnCode == 0)
             {
                 return;
             }

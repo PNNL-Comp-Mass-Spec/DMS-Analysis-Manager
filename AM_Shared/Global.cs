@@ -453,31 +453,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Convert returnCode to an integer
-        /// </summary>
-        /// <param name="returnCode"></param>
-        /// <returns>
-        /// If returnCode is blank or '0', returns 0
-        /// If returnCode is an integer or if it ends with an integer, returns the integer
-        /// Otherwise, returns -1
-        /// </returns>
-        public static int GetReturnCodeValue(string returnCode)
-        {
-            if (string.IsNullOrWhiteSpace(returnCode))
-                return 0;
-
-            if (int.TryParse(returnCode, out var returnCodeValue))
-                return returnCodeValue;
-
-            var match = mReturnCodeMatcher.Match(returnCode);
-
-            if (match.Success)
-                return int.Parse(match.Groups["Number"].Value);
-
-            return -1;
-        }
-
-        /// <summary>
         /// Sleep for the specified seconds
         /// </summary>
         /// <param name="waitTimeSeconds"></param>
