@@ -21,7 +21,6 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSFraggerPlugIn;
 using PRISMDatabaseUtils;
 
-
 namespace AnalysisManagerPepProtProphetPlugIn
 {
     /// <summary>
@@ -4941,7 +4940,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return false;
             }
         }
-
 
         private bool UpdateReporterIonModeIfRequired(FragPipeOptions options)
         {

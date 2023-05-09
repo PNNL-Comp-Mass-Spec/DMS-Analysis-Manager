@@ -1316,7 +1316,7 @@ namespace AnalysisManagerBase.JobConfig
 
                     if (jobParameters.Count == 0)
                     {
-                        LogWarning("Unable to parse out job parameters from the job parameters XML");
+                        LogError("Unable to parse out job parameters from the job parameters XML");
                         return RequestTaskResult.ResultError;
                     }
 
