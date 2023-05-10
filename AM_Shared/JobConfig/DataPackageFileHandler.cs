@@ -1235,11 +1235,22 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (!string.IsNullOrWhiteSpace(errorMessage))
                         {
-                            // Example message:
-                            //   Error looking for the mzML file for dataset 51912_Lewis_Bundle_A1: msXML file not found in the source directory(s): MSXML_Gen_1_297
-                            OnStatusEvent(
-                                "Error looking for the {0} file for dataset {1}: {2}",
-                                msXmlType, dataPkgDataset.Dataset, errorMessage);
+                            if (retrieveMsXmlFiles)
+                            {
+                                // Example message:
+                                //   Error looking for the mzML file for dataset 51912_Lewis_Bundle_A1: msXML file not found in the source directory(s): MSXML_Gen_1_297
+                                OnWarningEvent(
+                                    "Error looking for the {0} file for dataset {1}: {2}",
+                                    msXmlType, dataPkgDataset.Dataset, errorMessage);
+                            }
+                            else
+                            {
+                                // Example message:
+                                //   mzML file not found for dataset 51912_Lewis_Bundle_A1; will copy the instrument file locally
+                                OnStatusEvent(
+                                    "{0} file not found for dataset {1}; will copy the instrument file locally",
+                                    msXmlType, dataPkgDataset.Dataset);
+                            }
                         }
                     }
 
@@ -1259,6 +1270,7 @@ namespace AnalysisManagerBase.JobConfig
                         return false;
 
                     datasetsProcessed++;
+
                     var progress = AnalysisToolRunnerBase.ComputeIncrementalProgress(
                         progressPercentAtStart, progressPercentAtFinish, datasetsProcessed,
                         dataPackageDatasets.Count);
