@@ -121,7 +121,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// (and thus do not search MyEMSL or the archive for the file)
         /// </param>
         /// <returns>The full path to the dataset file or directory</returns>
-        public string FindDatasetFileOrDirectory(int maxAttempts, out bool isDirectory, bool assumeUnpurged = false)
+        public string FindDatasetFileOrDirectory(
+            int maxAttempts,
+            out bool isDirectory,
+            bool assumeUnpurged = false)
         {
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var storagePath = mJobParams.GetParam("DatasetStoragePath");
@@ -180,8 +183,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 case AnalysisResources.RawDataTypeConstants.mzXML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
-
                     break;
+
                 case AnalysisResources.RawDataTypeConstants.mzML:
                     fileOrDirectoryPath = FindDatasetFile(maxAttempts, AnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
                     break;
@@ -241,8 +244,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="maxAttempts">Maximum number of attempts to look for the directory</param>
         /// <param name="fileExtension"></param>
         /// <param name="assumeUnpurged"></param>
-        /// <returns>The full path to the directory; an empty string if no match</returns>
-        public string FindDatasetFile(int maxAttempts, string fileExtension, bool assumeUnpurged = false)
+        /// <returns>The full path to the file; an empty string if no match</returns>
+        public string FindDatasetFile(
+            int maxAttempts,
+            string fileExtension,
+            bool assumeUnpurged = false)
         {
             if (!fileExtension.StartsWith("."))
             {
@@ -654,7 +660,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Determines whether the directory specified by pathToCheck is appropriate for retrieving dataset files
         /// </summary>
-        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in directoryNameToFind</remarks>
+        /// <remarks>FileNameToFind is a file in the dataset directory; it is NOT a file in subdirectoryName</remarks>
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subdirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
