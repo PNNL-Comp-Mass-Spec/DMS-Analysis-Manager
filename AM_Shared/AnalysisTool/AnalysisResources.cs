@@ -1753,7 +1753,11 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var directoryPath = DirectorySearchTool.FindValidDirectory(
                 datasetName, fileNameToFind, directoryNameToFind, maxAttempts, logDirectoryNotFound,
-                retrievingInstrumentDataDir, assumeUnpurged, out validDirectoryFound, out directoryNotFoundMessage);
+                retrievingInstrumentDataDir,
+                assumeUnpurged,
+                out validDirectoryFound,
+                out directoryNotFoundMessage,
+                out _);
 
             if (!validDirectoryFound && !assumeUnpurged)
             {

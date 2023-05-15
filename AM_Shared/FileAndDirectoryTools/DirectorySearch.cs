@@ -309,7 +309,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _,
-                directoryNotFoundMessage: out _);
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out _);
 
             if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
@@ -336,10 +337,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // Data files are in a subdirectory off of the main dataset directory
             // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-            var serverPath = FindValidDirectory(DatasetName, "", "*" + AnalysisResources.DOT_D_EXTENSION, maxAttempts,
+            var serverPath = FindValidDirectory(
+                DatasetName, "", "*" + AnalysisResources.DOT_D_EXTENSION, maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out _, directoryNotFoundMessage: out _);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out _);
 
             var datasetDirectory = new DirectoryInfo(serverPath);
 
@@ -370,7 +374,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var datasetDirectoryPath = FindValidDirectory(DatasetName, fileNameToFind, AnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: true,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out _, directoryNotFoundMessage: out _);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out _);
 
             if (!string.IsNullOrEmpty(datasetDirectoryPath))
             {
@@ -416,7 +422,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out _, directoryNotFoundMessage: out _);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out _);
         }
 
         /// <summary>
@@ -453,9 +461,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             string dsName, string fileNameToFind, string directoryNameToFind,
             int maxRetryCount, bool logDirectoryNotFound, bool retrievingInstrumentDataDir)
         {
-            return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, maxRetryCount, logDirectoryNotFound, retrievingInstrumentDataDir,
+            return FindValidDirectory(
+                dsName, fileNameToFind, directoryNameToFind, maxRetryCount,
+                logDirectoryNotFound, retrievingInstrumentDataDir,
                 assumeUnpurged: false,
-                validDirectoryFound: out _, directoryNotFoundMessage: out _);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out _);
         }
 
         /// <summary>
@@ -473,6 +485,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
         /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
         /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
+        /// <param name="myEmslFileIDsInBestPath">Output parameter: when the directory returned by this method is MyEMSL, this will have the FileID of the file found in the directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         public string FindValidDirectory(
             string datasetName,
@@ -483,11 +496,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             bool retrievingInstrumentDataDir,
             bool assumeUnpurged,
             out bool validDirectoryFound,
-            out string directoryNotFoundMessage)
+            out string directoryNotFoundMessage,
+            out SortedSet<long> myEmslFileIDsInBestPath)
         {
             var bestPath = string.Empty;
+            myEmslFileIDsInBestPath = new SortedSet<long>();
 
-            // The tuples in this list are the path to check, and true if we should warn that the directory was not found
+            // The tuples in this list are the path to check, and true if we should warn when that the directory was not found
             var pathsToCheck = new List<Tuple<string, bool>>();
 
             var validDirectory = false;
@@ -565,7 +580,22 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
                         {
                             const bool recurseMyEMSL = false;
-                            validDirectory = FindValidDirectoryMyEMSL(datasetName, fileNameToFind, directoryNameToFind, false, recurseMyEMSL);
+
+                            validDirectory = FindValidDirectoryMyEMSL(
+                                datasetName,
+                                fileNameToFind,
+                                directoryNameToFind,
+                                false,
+                                recurseMyEMSL,
+                                out var matchingMyEMSLFiles);
+
+                            if (validDirectory)
+                            {
+                                foreach (var item in matchingMyEMSLFiles)
+                                {
+                                    myEmslFileIDsInBestPath.Add(item.FileID);
+                                }
+                            }
                         }
                         else
                         {
@@ -666,8 +696,15 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="subdirectoryName">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="recurse">True to look for fileNameToFind in all subdirectories of a dataset; false to only look in the primary dataset directory</param>
+        /// <param name="matchingMyEMSLFiles">List of matching MyEMSL files (there should only be one file if a match was found)</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
-        private bool FindValidDirectoryMyEMSL(string dataset, string fileNameToFind, string subdirectoryName, bool logDirectoryNotFound, bool recurse)
+        private bool FindValidDirectoryMyEMSL(
+            string dataset,
+            string fileNameToFind,
+            string subdirectoryName,
+            bool logDirectoryNotFound,
+            bool recurse,
+            out List<DatasetDirectoryOrFileInfo> matchingMyEMSLFiles)
         {
             if (string.IsNullOrEmpty(fileNameToFind))
                 fileNameToFind = "*";
@@ -676,8 +713,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             {
                 OnDebugEvent("FindValidDirectoryMyEMSL, querying MyEMSL for this dataset's files");
             }
-
-            List<DatasetDirectoryOrFileInfo> matchingMyEMSLFiles;
 
             if (string.IsNullOrEmpty(subdirectoryName))
             {
