@@ -260,7 +260,25 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var datasetDirPath = FindValidDirectory(DatasetName, dataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
-                validDirectoryFound: out _, directoryNotFoundMessage: out _);
+                validDirectoryFound: out _,
+                directoryNotFoundMessage: out _,
+                myEmslFileIDsInBestPath: out var myEmslFileIDs);
+
+            if (!datasetDirPath.StartsWith(MYEMSL_PATH_FLAG) || dataFileName.Contains(DatasetInfoBase.MYEMSL_FILE_ID_TAG))
+                return string.IsNullOrEmpty(datasetDirPath) ? string.Empty : Path.Combine(datasetDirPath, dataFileName);
+
+            if (myEmslFileIDs.Count > 0)
+            {
+                if (myEmslFileIDs.Count > 1)
+                {
+                    OnWarningEvent("FindValidDirectory returned more than one file in the list of MyEMSL File IDs found in MyEMSL; will use the ID of the newest file");
+                }
+
+                // Append the MyEMSL File ID to give a path of the form "\\MyEMSL\DatasetName.raw@MyEMSLID_31890681"
+                return Path.Combine(datasetDirPath, string.Format("{0}{1}{2}", dataFileName, DatasetInfoBase.MYEMSL_FILE_ID_TAG, myEmslFileIDs.Last()));
+            }
+
+            OnErrorEvent("Found a file in MyEMSL, but FindValidDirectory returned an empty list of MyEMSL File IDs");
 
             return string.IsNullOrEmpty(datasetDirPath) ? string.Empty : Path.Combine(datasetDirPath, dataFileName);
         }

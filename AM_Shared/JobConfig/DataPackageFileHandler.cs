@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
+using MyEMSLReader;
 using PHRPReader;
 using PRISM;
 using PRISM.Logging;
@@ -1304,11 +1305,20 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
-            var fileName = Path.GetFileName(rawFilePath);
+            string fileName;
+
+            if (rawFilePath.Contains(DatasetInfoBase.MYEMSL_FILE_ID_TAG))
+            {
+                DatasetInfoBase.ExtractMyEMSLFileID(rawFilePath, out var newFilePath);
+                fileName = Path.GetFileName(newFilePath);
+            }
+            else
+            {
+                fileName = Path.GetFileName(rawFilePath);
+            }
 
             if (rawFilePath.StartsWith(MyEMSLUtilities.MYEMSL_PATH_FLAG))
             {
-                // ToDo: Validate correct handling of MyEMSL files
                 mAnalysisResources.MyEMSLUtils.AddFileToDownloadQueue(rawFilePath);
 
                 var myEmslSuccess = mAnalysisResources.ProcessMyEMSLDownloadQueue();
