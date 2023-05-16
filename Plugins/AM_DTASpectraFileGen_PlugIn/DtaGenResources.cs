@@ -115,7 +115,8 @@ namespace DTASpectraFileGen
                         retrievingInstrumentDataDir: false,
                         assumeUnpurged: false,
                         validDirectoryFound: out var validFolderFound,
-                        directoryNotFoundMessage: out _);
+                        directoryNotFoundMessage: out _,
+                        myEmslFileIDsInBestPath: out _);
 
                     if (validFolderFound)
                     {
