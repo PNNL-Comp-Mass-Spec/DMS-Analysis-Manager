@@ -241,7 +241,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
-            LogMessage("Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file", msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB);
+            if (recommendedMemorySizeMB > msFraggerJavaMemorySizeMB)
+            {
+                LogMessage("Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file",
+                    msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB);
+            }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
