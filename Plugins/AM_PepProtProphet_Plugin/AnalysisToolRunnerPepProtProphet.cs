@@ -2578,7 +2578,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (creatingCombinedFile)
                     {
-                        outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_ion.tsv")));
+                        var combinedIonFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_ion.tsv"));
+
+                        if (!combinedIonFile.Exists && quantFiles.Length == 0)
+                        {
+                            LogMessage("IonQuant did not create file combined_ion.tsv; however, it did not create any _quant.csv files so this is expected");
+                        }
+                        else
+                        {
+                            outputFiles.Add(combinedIonFile);
+                        }
+
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_peptide.tsv")));
                         outputFiles.Add(new FileInfo(Path.Combine(mWorkingDirectory.FullName, "combined_protein.tsv")));
                     }
@@ -5068,9 +5078,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Philosopher report file not found: psm.tsv
             // Philosopher report results file not found: protein.tsv
 
-            LogError(string.Format(
-                "{0} results file{1} not found: {2}",
-                toolName, missingFiles.Count > 1 ? "s" : string.Empty, string.Join(", ", missingFiles)));
+            LogError("{0} results file{1} not found: {2}",
+                toolName,
+                missingFiles.Count > 1 ? "s" : string.Empty,
+                string.Join(", ", missingFiles));
 
             return false;
         }
