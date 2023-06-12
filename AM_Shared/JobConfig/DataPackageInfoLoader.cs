@@ -442,18 +442,36 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
-                var cmd = dbTools.CreateCommand("get_job_step_params_as_table_use_history", CommandType.StoredProcedure);
+                DataTable resultSet;
+                const int stepNumber = 1;
 
-                dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
-                dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 1;
-
-                // Execute the SP
-                var resCode = dbTools.ExecuteSPDataTable(cmd, out var resultSet);
-
-                if (resCode != 0)
+                if (dbTools.DbServerType == DbServerTypes.PostgreSQL)
                 {
-                    errorMsg = "Unable to retrieve job parameters from history for job " + jobNumber;
-                    return false;
+                    // Query function sw.get_job_step_params_as_table_use_history()
+
+                    var sqlStr = string.Format(
+                        "SELECT Section, Name, Value FROM sw.get_job_step_params_as_table_use_history({0}, {1})",
+                        jobNumber, stepNumber);
+
+                    dbTools.GetQueryResultsDataTable(sqlStr, out resultSet);
+                }
+                else
+                {
+                    // Call stored procedure get_job_step_params_as_table_use_history
+
+                    var cmd = dbTools.CreateCommand("get_job_step_params_as_table_use_history", CommandType.StoredProcedure);
+
+                    dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
+                    dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = stepNumber;
+
+                    // Execute the SP
+                    var resCode = dbTools.ExecuteSPDataTable(cmd, out resultSet);
+
+                    if (resCode != 0)
+                    {
+                        errorMsg = "Unable to retrieve job parameters from history for job " + jobNumber;
+                        return false;
+                    }
                 }
 
                 // Verify at least one row returned
