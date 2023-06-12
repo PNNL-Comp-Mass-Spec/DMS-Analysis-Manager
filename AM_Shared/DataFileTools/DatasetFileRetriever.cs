@@ -404,10 +404,12 @@ namespace AnalysisManagerBase.DataFileTools
 
                 currentTask = "Get the primary dataset file";
                 var retrievalAttempts = 0;
+                var directoryLayoutForMyEMSLFiles = MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories;
 
                 while (retrievalAttempts < 2)
                 {
                     retrievalAttempts++;
+
                     switch (rawDataTypeName.ToLower())
                     {
                         case AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES:
@@ -419,6 +421,11 @@ namespace AnalysisManagerBase.DataFileTools
 
                             if (datasetResult == CloseOutType.CLOSEOUT_FILE_NOT_FOUND)
                                 return datasetResult;
+
+                            if (!rawDataTypeName.ToLower().Equals(AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES))
+                            {
+                                directoryLayoutForMyEMSLFiles = MyEMSLReader.Downloader.DownloadLayout.SingleDataset;
+                            }
 
                             break;
 
@@ -444,6 +451,7 @@ namespace AnalysisManagerBase.DataFileTools
                                 // Override the raw data type
                                 rawDataType = AnalysisResources.RawDataTypeConstants.AgilentDFolder;
                                 rawDataTypeName = AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS;
+                                directoryLayoutForMyEMSLFiles = MyEMSLReader.Downloader.DownloadLayout.SingleDataset;
                             }
                             else
                             {
@@ -496,7 +504,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                     currentTask = "ProcessMyEMSLDownloadQueue";
 
-                    if (mResourceClass.MyEMSLUtils.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories))
+                    if (mResourceClass.MyEMSLUtils.ProcessMyEMSLDownloadQueue(workingDirectory.FullName, directoryLayoutForMyEMSLFiles))
                     {
                         break;
                     }

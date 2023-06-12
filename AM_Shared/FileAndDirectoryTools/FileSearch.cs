@@ -3097,22 +3097,63 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // Find the instrument data directory (e.g. Dataset.D or Dataset.Raw) in the dataset directory
             var datasetDirectoryPath = mDirectorySearch.FindDotXFolder(directoryExtension, assumeUnpurged: false);
 
-            if (string.IsNullOrEmpty(datasetDirectoryPath))
+            if (string.IsNullOrWhiteSpace(datasetDirectoryPath))
             {
                 return false;
             }
 
-            if (datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
+            if (!datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
             {
-                // Queue the MyEMSL files for download
-                foreach (var archiveFile in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles)
+                // Copy the files
+                return RetrieveDotXFolderFiles(datasetDirectoryPath, createStoragePathInfoOnly, fileNamesToSkip);
+            }
+
+            var localFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (directoryExtension.Equals(AnalysisResources.DOT_D_EXTENSION))
+            {
+                // Retrieving files in a .D directory for a purged dataset
+                // We likely only need to retrieve three .bin files from MyEMSL: MSPeak.bin, MSProfile.bin, MSScan.bin
+                // The other files are likely still available on the storage server
+
+                // Look for the directory on the storage server
+                var datasetDirectoryOnStorageServer = mDirectorySearch.FindDotXFolder(directoryExtension, assumeUnpurged: true);
+
+                if (!string.IsNullOrWhiteSpace(datasetDirectoryOnStorageServer))
+                {
+                    // Copy the files
+                    var success = RetrieveDotXFolderFiles(datasetDirectoryOnStorageServer, createStoragePathInfoOnly, fileNamesToSkip);
+
+                    if (!success)
+                        return false;
+
+                    // Cache the files that were successfully copied
+                    var sourceDirectory = new DirectoryInfo(datasetDirectoryOnStorageServer);
+                    var localDatasetDirectory = new DirectoryInfo(Path.Combine(mWorkDir, sourceDirectory.Name));
+
+                    foreach (var localFile in localDatasetDirectory.GetFiles("*", SearchOption.AllDirectories))
+                    {
+                        // Construct the relative path to the file, starting with the dataset name
+                        var pathToStore = string.Format("{0}\\{1}", DatasetName, localFile.FullName.Substring(mWorkDir.Length + 1));
+                        localFiles.Add(pathToStore);
+                    }
+                }
+            }
+
+            // Queue the MyEMSL files for download, skipping those that were already successfully copied
+            foreach (var archiveFile in mMyEMSLUtilities.RecentlyFoundMyEMSLFiles)
+            {
+                if (!localFiles.Contains(archiveFile.FileInfo.PathWithDataset))
                 {
                     mMyEMSLUtilities.AddFileToDownloadQueue(archiveFile.FileInfo);
                 }
-                return true;
             }
 
-            // Do the copy
+            return true;
+        }
+
+        private bool RetrieveDotXFolderFiles(string datasetDirectoryPath, bool createStoragePathInfoOnly, List<string> fileNamesToSkip)
+        {
             try
             {
                 var sourceDirectory = new DirectoryInfo(datasetDirectoryPath);
@@ -3140,15 +3181,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     mFileCopyUtilities.CopyDirectory(sourceDirectory.FullName, destinationDirPath, fileNamesToSkip);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error copying directory " + datasetDirectoryPath, ex);
                 return false;
             }
-
-            // If we get here, all is fine
-            return true;
         }
 
         /// <summary>

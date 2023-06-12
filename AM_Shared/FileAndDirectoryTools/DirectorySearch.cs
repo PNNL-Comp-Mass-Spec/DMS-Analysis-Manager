@@ -597,7 +597,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                         if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
                         {
-                            const bool recurseMyEMSL = false;
+                            var recurseMyEMSL = directoryNameToFind.Equals("*.d");
 
                             validDirectory = FindValidDirectoryMyEMSL(
                                 datasetName,
