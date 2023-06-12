@@ -1262,6 +1262,10 @@ namespace AnalysisManagerBase.JobConfig
 
             try
             {
+                // Call request_step_task_xml to look for an available step task
+                // If a task is available, the procedure will return the task parameters as a result set
+                // On Postgres, the procedure returns the parameters using a RefCursor, but ExecuteSPData auto-converts that to a result set
+
                 // Set up the command object prior to SP execution
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
@@ -1269,14 +1273,13 @@ namespace AnalysisManagerBase.JobConfig
                 var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, 0, ParameterDirection.InputOutput);
                 var jobParamsParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, string.Empty, ParameterDirection.InputOutput);
                 var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
+                var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
 
                 var remoteInfo = runJobsRemotely ? RemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
-
-                var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
                 if (mDebugLevel > 4 || TraceMode)
                 {

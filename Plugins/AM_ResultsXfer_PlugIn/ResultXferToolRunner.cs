@@ -366,7 +366,21 @@ namespace AnalysisManagerResultsXferPlugin
         /// <returns>CloseOutType indicating success or failure></returns>
         protected virtual CloseOutType PerformResultsXfer()
         {
+            // Note that ChangeDirectoryPathsToLocal will update the transfer directory path to use local drive letters
+            // if the transfer directory and the dataset directory are on the server running this instance of the analysis manager
+
+            // This data is tracked in table T_Storage_Path and is determined using queries of the form:
+
+            // SELECT vol_server, storage_path FROM V_Storage_Path_Export
+            // WHERE (machine_name = 'Proto-5') AND (storage_path = 'LTQ_Orb_1\2008_1' OR storage_path = 'LTQ_Orb_1\2008_1\')
+            // ORDER BY CASE WHEN storage_path_function = 'raw-storage' THEN 1 ELSE 2 END, id DESC
+
+            // SELECT vol_server, storage_path FROM V_Storage_Path_Export
+            // WHERE (machine_name = 'Proto-5') AND (storage_path = 'DMS3_Xfer' OR storage_path = 'DMS3_Xfer\')
+            // ORDER BY CASE WHEN storage_path_function = 'results_transfer' THEN 1 ELSE 2 END, id DESC
+
             var transferDirectoryPath = mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+
             string datasetStoragePath;
 
             bool appendDatasetDirectoryNameForSource;
