@@ -1366,7 +1366,38 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Call a stored procedure
+        /// Obtain job step parameters by querying a function
+        /// </summary>
+        public void TestQueryFunction()
+        {
+            const string connectionString = "Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;";
+            const short retryCount = 2;
+            const int timeoutSeconds = 30;
+
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_TestQueryFunction");
+
+            var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, debugMode: true);
+            RegisterEvents(dbTools);
+
+            const int jobNumber = 2191759;
+            const int stepNumber = 1;
+
+            // Query function sw.get_job_step_params_as_table_use_history()
+
+            var sqlStr = string.Format(
+                "SELECT Section, Name, Value FROM sw.get_job_step_params_as_table_use_history({0}, {1})",
+                jobNumber, stepNumber);
+
+            dbTools.GetQueryResultsDataTable(sqlStr, out var results, retryCount);
+
+            foreach (DataRow row in results.Rows)
+            {
+                Console.WriteLine("{0,-16} {1, -30} {2}", row[0], row[1] + ":", row[2]);
+            }
+        }
+
+        /// <summary>
+        /// Obtain job step parameters using a stored procedure
         /// </summary>
         public void TestRunSP()
         {
@@ -1379,17 +1410,20 @@ namespace AnalysisManagerProg
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, timeoutSeconds, debugMode: true);
             RegisterEvents(dbTools);
 
+            const int jobNumber = 1026591;
+            const int stepNumber = 1;
+
             var cmd = dbTools.CreateCommand("get_job_step_params_as_table", CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = 1026591;
-            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = 3;
+            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
+            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = stepNumber;
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-            var success = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
+            var resCode = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
 
             foreach (DataRow row in results.Rows)
             {
-                Console.WriteLine(row[0] + ": " + row[1]);
+                Console.WriteLine("{0}: {1}", row[0], row[1]);
             }
         }
 

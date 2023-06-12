@@ -140,7 +140,8 @@ namespace AnalysisManagerProg
 
                         // testHarness.ExamineInstrumentID("1148175, 1149263, 1895608, 1895769, 2069091, 2069104, 2074398, 2074417");
 
-                        testHarness.TestGetSystemPath();
+                        // testHarness.TestGetSystemPath();
+                        testHarness.TestQueryFunction();
                     }
                     catch (Exception ex)
                     {
