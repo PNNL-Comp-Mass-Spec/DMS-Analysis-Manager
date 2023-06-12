@@ -26,6 +26,8 @@ namespace AnalysisManagerProg
     /// </summary>
     public static class Program
     {
+        // Ignore Spelling: Prog
+
         /// <summary>
         /// Program date
         /// </summary>

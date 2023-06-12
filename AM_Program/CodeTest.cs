@@ -34,9 +34,9 @@ namespace AnalysisManagerProg
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acq, Archaea, Bem, bemidjiensis, bool, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
+        // Ignore Spelling: Acq, Archaea, Bem, bemidjiensis, bool, Centroided, const, dd, dmsarch, dta, fasta, filetype, Formularity, Geobacter, gimli, gzip
         // Ignore Spelling: hh, Inj, lovelyi, luteus, Mam, metallireducens, mgf, Micrococcus, msgfspecprob, mslevel, na, nr,
-        // Ignore Spelling: pek, perf, Pos, proteinseqs, Qonvert, Rar, sp, Sprot, ss, svc-dms, Trembl, tt, yyyy
+        // Ignore Spelling: pek, perf, Pos, Postgres, prog, proteinseqs, Qonvert, Rar, sp, Sprot, SQL, ss, svc-dms, Trembl, tt, yyyy
 
         // ReSharper restore CommentTypo
 

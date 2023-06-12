@@ -23,7 +23,7 @@ namespace AnalysisManagerBase.JobConfig
     public class DataPackageFileHandler : EventNotifier
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: cryptum, gzip, kv, mzid, msgfplus
+        // Ignore Spelling: cryptum, gzip, kv, mzid, msgfplus, unpurged
 
         /// <summary>
         /// Job info file prefix

@@ -19,8 +19,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FileSearch : EventNotifier
     {
-        // Ignore Spelling: Bruker, CompassXtract, Deconcatenate, dta, Finalizers, gzipped, gzipping
-        // Ignore Spelling: hashcheck, mgf, Micromass, msgfdb, msgfplus, pre, protoapps, ser, txt, wildcards, Workflows
+        // Ignore Spelling: Baf, Bruker, CompassXtract, Deconcatenate, dia, dta, EMSL, Finalizers, fragger, gzip, gzipped, gzipping
+        // Ignore Spelling: hashcheck, loc, masic, mgf, Micromass, msgfdb, msgfplus, omics,
+        // Ignore Spelling: pre, prog, protoapps, quant, ser, Tdf, txt, wildcards, Workflows
 
         private const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 

@@ -12,6 +12,8 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class DatasetFileRetriever : PRISM.EventNotifier
     {
+        // Ignore Spelling: resourcer
+
         /// <summary>
         /// Error message
         /// </summary>

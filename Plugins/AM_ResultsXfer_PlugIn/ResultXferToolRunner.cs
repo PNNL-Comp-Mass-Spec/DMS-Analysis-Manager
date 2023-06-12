@@ -23,6 +23,8 @@ namespace AnalysisManagerResultsXferPlugin
     /// </summary>
     public class ResultXferToolRunner : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Xfer
+
         /// <summary>
         /// Runs the results transfer tool
         /// </summary>

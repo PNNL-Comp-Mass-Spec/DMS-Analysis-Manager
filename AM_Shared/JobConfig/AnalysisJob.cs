@@ -28,7 +28,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class AnalysisJob : DBTask, IJobParams
     {
-        // Ignore Spelling: dir, dirs, ok
+        // Ignore Spelling: dir, dirs, lvl, ok
 
         /// <summary>
         /// Job parameters section

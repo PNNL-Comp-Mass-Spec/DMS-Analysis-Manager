@@ -36,9 +36,9 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public abstract class AnalysisResources : AnalysisMgrBase, IAnalysisResources
     {
-        // Ignore Spelling: acqu, baf, centroided, Cn, deconv, dta, fht, fid, Formularity, hashcheck, histone, loc
-        // Ignore Spelling: maldi, MaxQuant, MODa, msalign, msgf, msgfdb, msgfplus, MSPathFinder, mzml, mzxml, na, num
-        // Ignore Spelling: parm, protoapps, resourcer, sequest, ser, tdf, tims, tof, uimf, wiff, xt, xtandem
+        // Ignore Spelling: acqu, baf, cdf, cdta, centroided, Cn, deconv, dta, Fasta, fht, fid, Formularity, gz, gzip, hashcheck, histone, loc
+        // Ignore Spelling: maldi, MaxQuant, mgf, MODa, msalign, MSFragger, msgf, msgfdb, msgfplus, MSPathFinder, msxml, myemsl, mzml, mzxml, na, num
+        // Ignore Spelling: parm, pbf, protoapps, psm, ReporterIons, resourcer, sequest, ser, tdf, tims, tof, tsv, uimf, unpurged, utils, wiff, xt, xtandem
         // Ignore Spelling: Bruker, Micromass, Orbitrap
 
         /// <summary>
