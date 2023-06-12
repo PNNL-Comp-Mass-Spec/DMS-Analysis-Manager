@@ -30,7 +30,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             /// <summary>
             /// Show the filename
             /// </summary>
-            public override string ToString()
+            public readonly override string ToString()
             {
                 return Name;
             }

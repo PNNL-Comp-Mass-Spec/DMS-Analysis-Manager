@@ -268,7 +268,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             public string DeltaScoreOther;
             public string Protein;
 
-            public override string ToString()
+            /// <summary>
+            /// Show Result ID and peptide
+            /// </summary>
+            public readonly override string ToString()
             {
                 if (string.IsNullOrWhiteSpace(Peptide))
                     return "ResultID " + ResultID;
