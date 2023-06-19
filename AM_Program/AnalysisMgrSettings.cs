@@ -258,6 +258,7 @@ namespace AnalysisManagerProg
                 return ValidateOfflineTaskDirectories();
             }
 
+            // This method calls LoadMgrSettingsFromDBWork
             var success = LoadMgrSettingsFromDB(retryCount: 6);
 
             if (!success)
@@ -330,6 +331,7 @@ namespace AnalysisManagerProg
         {
             var loadSettingsFromDB = !Global.OfflineMode;
 
+            // This calls LoadMgrSettingsFromDBWork
             var success = LoadSettings(configFileSettings, loadSettingsFromDB);
 
             if (!success)
