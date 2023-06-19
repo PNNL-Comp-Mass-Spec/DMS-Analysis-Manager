@@ -445,7 +445,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 dbTools.AddParameter(cmd, "@staticMods", SqlType.VarChar, 512).Value = staticMods;
                 dbTools.AddParameter(cmd, "@dynamicMods", SqlType.VarChar, 512).Value = dynamicMods;
-                dbTools.AddParameter(cmd, "@maxDynamicMods", SqlType.Int).Value = 0;
+                dbTools.AddParameter(cmd, "@maxDynamicMods", SqlType.Int).Value = options.MaxDynamicModsPerPeptide;
 
                 // Output parameters
                 var libraryIdParam = dbTools.AddParameter(cmd, "@libraryId", SqlType.Int, ParameterDirection.InputOutput);
