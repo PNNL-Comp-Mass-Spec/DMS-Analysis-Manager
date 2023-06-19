@@ -474,7 +474,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         if (string.IsNullOrWhiteSpace(paramValue) || Global.IsMatch(paramValue, "none") || Global.IsMatch(paramValue, "defaults"))
                             continue;
 
-                        if (!ParseModificationDefinition(ModificationTypes.Static, paramValue, out var dynamicMod))
+                        if (!ParseModificationDefinition(ModificationTypes.Dynamic, paramValue, out var dynamicMod))
                         {
                             // An error should have already been logged
                             return false;
