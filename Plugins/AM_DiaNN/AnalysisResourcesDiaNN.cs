@@ -482,12 +482,25 @@ namespace AnalysisManagerDiaNNPlugIn
                     }
                     else
                     {
-                        LogError(
-                            "Procedure {0} returned error code {1}{2}",
-                            SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCodeParam.Value.CastDBVal<string>(),
-                            string.IsNullOrWhiteSpace(errorMessage)
-                                ? string.Empty
-                                : ": " + errorMessage);
+                        if (returnCode == 5225)
+                        {
+                            // messageParam.Value is of the form "Spectral library not found, and @allowAddNew is 0; not creating H_sapiens_UniProt_SPROT_2021-06-20_Tryp_Pig_Bov_93658B34.predicted.speclib"
+
+                            // Spectral library not found, and the DiaNN job step is not allowed to create a new one
+                            LogError(string.Format(
+                                "Spectral library not found, and the {0} job step is not allowed to create a new one",
+                                StepToolName));
+                        }
+                        else
+                        {
+
+                            LogError(
+                                "Procedure {0} returned error code {1}{2}",
+                                SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCodeParam.Value.CastDBVal<string>(),
+                                string.IsNullOrWhiteSpace(errorMessage)
+                                    ? string.Empty
+                                    : ": " + errorMessage);
+                        }
                     }
 
                     libraryStatusCode = SpectralLibraryStatusCodes.Error;
@@ -551,7 +564,7 @@ namespace AnalysisManagerDiaNNPlugIn
                             "Procedure {0} returned an unrecognized library state of {1} for library {2}",
                             SP_NAME_GET_SPECTRAL_LIBRARY_ID, libraryStateID, libraryName);
 
-                        libraryStatusCode= SpectralLibraryStatusCodes.Unknown;
+                        libraryStatusCode = SpectralLibraryStatusCodes.Unknown;
                         return null;
                 }
 
