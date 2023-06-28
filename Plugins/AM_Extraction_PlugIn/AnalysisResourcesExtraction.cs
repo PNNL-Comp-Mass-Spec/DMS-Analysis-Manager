@@ -29,9 +29,9 @@ namespace AnalysisManagerExtractionPlugin
     {
         // ReSharper disable once CommentTypo
 
-        // Ignore Spelling: bioml, Defs, diff, dta, foreach, gzipped
+        // Ignore Spelling: ascore, bioml, Defs, diff, dta, foreach, gzipped
         // Ignore Spelling: mgf, MSGFPlus, MODa, msgfdb, mzml, mzxml
-        // Ignore Spelling: Parm, phospho, phosphorylation, resourcer, txt
+        // Ignore Spelling: Parm, phospho, phosphorylation, PHRP, resourcer, txt
 
         /// <summary>
         /// ModDefs file suffix

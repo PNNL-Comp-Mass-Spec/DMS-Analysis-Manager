@@ -29,7 +29,7 @@ namespace AnalysisManagerExtractionPlugin
     /// </summary>
     public class PepHitResultsProcWrapper : EventNotifier
     {
-        // Ignore Spelling: MODa, Parm, Pvalue, PepToProt
+        // Ignore Spelling: FASTA, MODa, Parm, PHRP, Pvalue, PepToProt
 
         public const string PHRP_LOG_FILE_NAME = "PHRP_LogFile.txt";
 

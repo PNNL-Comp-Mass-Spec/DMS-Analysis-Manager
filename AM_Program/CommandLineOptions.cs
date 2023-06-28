@@ -7,6 +7,8 @@ namespace AnalysisManagerProg
     /// </summary>
     public class CommandLineOptions
     {
+        // Ignore Spelling: Prog
+
         /// <summary>
         /// When true, disable posting status messages to the message queue
         /// </summary>

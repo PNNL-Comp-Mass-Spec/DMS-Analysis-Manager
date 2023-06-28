@@ -2,6 +2,8 @@
 {
     internal class IntegerParameter
     {
+        // Ignore Spelling: Fragger
+
         /// <summary>
         /// True if the parameter has a value
         /// </summary>

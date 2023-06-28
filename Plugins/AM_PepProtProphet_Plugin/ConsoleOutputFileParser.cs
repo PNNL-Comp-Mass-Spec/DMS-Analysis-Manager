@@ -10,7 +10,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: degen, dev, Flammagenitus, Insilicos
+        // Ignore Spelling: degen, dev, Flammagenitus, Insilicos, Prot
 
         // ReSharper restore CommentTypo
 

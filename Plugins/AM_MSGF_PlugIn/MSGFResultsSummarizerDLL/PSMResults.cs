@@ -2,7 +2,7 @@
 {
     public class PSMResults
     {
-        // Ignore Spelling: acetyl, acetylated, phosphopeptide, phosphopeptides, tryptic
+        // Ignore Spelling: acetyl, acetylated, MSGF, phospho, phosphopeptide, phosphopeptides, PSM, tryptic
 
         /// <summary>
         /// MS-GF SpecProb threshold

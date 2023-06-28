@@ -15,7 +15,7 @@ namespace AnalysisManagerProg
     /// </summary>
     public class CleanupMgrErrors : LoggerBase
     {
-        // Ignore Spelling: holdoff
+        // Ignore Spelling: Decon, holdoff, Prog
 
         private const string SP_NAME_REPORT_MGR_ERROR_CLEANUP = "report_manager_error_cleanup";
 

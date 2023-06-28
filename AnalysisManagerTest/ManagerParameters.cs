@@ -6,6 +6,8 @@ namespace AnalysisManagerTest
 {
     internal class ManagerParameters : MgrSettingsDB, IMgrParams
     {
+        // Ignore Spelling: ack, Holdoff
+
         public void AckManagerUpdateRequired()
         {
         }

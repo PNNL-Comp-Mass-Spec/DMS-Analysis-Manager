@@ -12,6 +12,8 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public abstract class AnalysisMgrBase : LoggerBase
     {
+        // Ignore Spelling: UTC
+
         private DateTime mLastLockQueueWaitTimeLog = DateTime.UtcNow;
 
         private DateTime mLockQueueWaitTimeStart = DateTime.UtcNow;

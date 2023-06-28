@@ -6,7 +6,7 @@ namespace MSGFResultsSummarizer
 {
     public sealed class PSMInfo : UniqueSeqInfo
     {
-        // Ignore Spelling: phosphopeptide
+        // Ignore Spelling: EValue, MSGF, phosphopeptide
 
         public const double UNKNOWN_MSGF_SPEC_EVALUE = 10;
 

@@ -28,7 +28,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: hyperscore, ntt, nmc, resourcer, retentiontime
+        // Ignore Spelling: hyperscore, ntt, nmc, Prot, resourcer, retentiontime
 
         // ReSharper restore CommentTypo
 

@@ -2,7 +2,7 @@
 {
     internal class PSMStats
     {
-        // Ignore Spelling: acetylated, phosphopeptide, phosphopeptides, phosphorylated, tryptic
+        // Ignore Spelling: acetyl, acetylated, phospho, phosphopeptide, phosphopeptides, phosphorylated, tryptic
 
         /// <summary>
         /// Number of spectra with a match

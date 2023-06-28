@@ -2,6 +2,8 @@
 {
     internal class MaxQuantRuntimeOptions
     {
+        // Ignore Spelling: MaxQuant, Quant
+
         public const int MAX_STEP_NUMBER = 9999;
 
         /// <summary>

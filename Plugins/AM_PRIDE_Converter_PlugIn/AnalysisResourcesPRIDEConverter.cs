@@ -14,7 +14,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <remarks>Named PRIDEConverter due to us previously pushing data to PRIDE</remarks>
     public class AnalysisResourcesPRIDEConverter : AnalysisResources
     {
-        // Ignore Spelling: msgf, MZid, Parm, protoapps, Xchange
+        // Ignore Spelling: FASTA, msgf, MzID, MzXML, Parm, protoapps, Xchange
 
         /// <summary>
         /// Packed parameter DatasetsMissingMzXMLFiles

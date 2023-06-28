@@ -15,6 +15,8 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// </summary>
     public class MzRefineryMassErrorStatsExtractor
     {
+        // Ignore Spelling: PSM
+
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "store_dta_ref_mass_error_stats";
         private readonly IMgrParams mMgrParams;
         private readonly short mDebugLevel;

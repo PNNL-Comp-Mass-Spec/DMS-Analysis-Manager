@@ -17,7 +17,7 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class AnalysisResourcesDiaNN : AnalysisResources
     {
-        // Ignore Spelling: silico
+        // Ignore Spelling: DIA, silico
 
         internal const string DIA_NN_SPEC_LIB_STEP_TOOL = "DiaNN_SpecLib";
 
@@ -493,7 +493,6 @@ namespace AnalysisManagerDiaNNPlugIn
                         }
                         else
                         {
-
                             LogError(
                                 "Procedure {0} returned error code {1}{2}",
                                 SP_NAME_GET_SPECTRAL_LIBRARY_ID, returnCodeParam.Value.CastDBVal<string>(),

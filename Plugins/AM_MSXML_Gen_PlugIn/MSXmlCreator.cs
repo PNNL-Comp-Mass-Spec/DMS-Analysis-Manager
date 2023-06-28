@@ -21,7 +21,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
     /// </summary>
     public class MSXMLCreator : EventNotifier
     {
-        // Ignore Spelling: Centroiding, msconvert, readw
+        // Ignore Spelling: App, Centroiding, msconvert, readw
 
         private readonly string mMSXmlGeneratorAppPath;
         private readonly IJobParams mJobParams;

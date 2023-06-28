@@ -8,7 +8,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 {
     internal class FragPipeOptions : EventNotifier
     {
-        // Ignore Spelling: quantitation
+        // Ignore Spelling: Frag, Fragger, Loc, Prog, Prot, quantitation, Quant
 
         /// <summary>
         /// Number of datasets in the data package for this job

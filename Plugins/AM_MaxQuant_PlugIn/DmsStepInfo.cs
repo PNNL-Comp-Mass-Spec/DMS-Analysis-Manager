@@ -1,9 +1,9 @@
 ﻿namespace AnalysisManagerMaxQuantPlugIn
 {
-    // Ignore Spelling: MaxQuant
-
     internal class DmsStepInfo
     {
+        // Ignore Spelling: DMS, MaxQuant, Quant
+
         /// <summary>
         /// Step ID
         /// </summary>

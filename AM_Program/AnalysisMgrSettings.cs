@@ -28,7 +28,7 @@ namespace AnalysisManagerProg
     public class AnalysisMgrSettings : MgrSettingsDB, IMgrParams
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: ack, holdoff, mgractive, proteinseqs
+        // Ignore Spelling: ack, DMS, holdoff, mgractive, Prog, proteinseqs
 
         /// <summary>
         /// Stored procedure used to acknowledge that a manager update is required

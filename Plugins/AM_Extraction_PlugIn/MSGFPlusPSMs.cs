@@ -6,6 +6,8 @@ namespace AnalysisManagerExtractionPlugin
 {
     public class MSGFPlusPSMs
     {
+        // Ignore Spelling: PSM
+
         public struct PSMInfo
         {
             public string Peptide;

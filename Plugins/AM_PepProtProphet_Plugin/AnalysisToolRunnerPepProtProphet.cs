@@ -34,7 +34,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // Ignore Spelling: accmass, acetyl, acetylation, annot, antivirus, batmass-io, bruker, ccee, clevel, contam, cp, crystalc, decoyprobs, dir, expectscore
         // Ignore Spelling: fasta, filelist, fragger, fragpipe, freequant, glycan, glyco, glycosylation, groupby, iprophet, itraq, java, javacpp, jfreechart, labelquant, linux, locprob
         // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, msbooster, multidir, nocheck, nonparam, nonsp, num, openblas, overlabelling, outlier
-        // Ignore Spelling: peptideprophet, pepxml, phospho, phosphorylation, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot
+        // Ignore Spelling: peptideprophet, pepxml, phospho, phosphorylation, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot, Quant
         // Ignore Spelling: razorbin, sp, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
 

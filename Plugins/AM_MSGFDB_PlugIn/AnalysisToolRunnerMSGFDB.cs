@@ -21,7 +21,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSGFDB : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: centroided, conf, Gzip, mzid, mzml, mzxml, Utils, Xmx
+        // Ignore Spelling: centroided, conf, FASTA, Gzip, mzid, mzml, mzxml, Utils, Xmx
 
         private enum InputFileFormatTypes
         {

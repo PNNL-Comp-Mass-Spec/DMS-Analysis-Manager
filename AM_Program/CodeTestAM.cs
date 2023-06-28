@@ -20,6 +20,8 @@ namespace AnalysisManagerProg
     // ReSharper disable once UnusedMember.Global
     public class CodeTestAM : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: Prog
+
         /// <summary>
         /// Initializes class
         /// </summary>

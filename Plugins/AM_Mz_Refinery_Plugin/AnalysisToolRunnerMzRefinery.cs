@@ -28,7 +28,8 @@ namespace AnalysisManagerMzRefineryPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Caulo, conf, cv, Cyano, Cyanothece, Dta, endian, identfile, indexedmzML, modplus, mzxml, outfile, Prepend, Utils, Xmx
+        // Ignore Spelling: Caulo, conf, cv, Cyano, Cyanothece, Dta, endian, identfile, indexedmzML,
+        // Ignore Spelling: modplus, MSGFPlus, MzID, mzxml, outfile, Prepend, Utils, Xmx
 
         // ReSharper restore CommentTypo
 

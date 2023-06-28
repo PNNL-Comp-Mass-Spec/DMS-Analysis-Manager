@@ -9,7 +9,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 {
     public abstract class MSXmlGen : EventNotifier
     {
-        // Ignore Spelling: mgf
+        // Ignore Spelling: mgf, MzML, MzXML, Prog
 
         /// <summary>
         /// Maximum runtime: 36 hours
