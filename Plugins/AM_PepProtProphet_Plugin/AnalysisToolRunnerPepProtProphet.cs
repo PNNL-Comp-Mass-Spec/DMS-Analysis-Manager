@@ -523,10 +523,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.DBAnnotationComplete;
 
-                var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options, usedProteinProphet);
+                if (peptideProphetPepXmlFiles.Count > 0)
+                {
+                    var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options, usedProteinProphet);
 
-                if (!filterSuccess)
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    if (!filterSuccess)
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 mProgress = (int)ProgressPercentValues.ResultsFilterComplete;
 
@@ -566,10 +569,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
+                bool reportFilesCreated;
 
-                if (!reportSuccess)
-                    return CloseOutType.CLOSEOUT_FAILED;
+                if (peptideProphetPepXmlFiles.Count == 0)
+                {
+                    reportFilesCreated = false;
+                }
+                else
+                {
+                    var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
+
+                    if (!reportSuccess)
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    reportFilesCreated = true;
+                }
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
@@ -658,10 +672,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.PtmShepherdComplete;
                 }
 
-                var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet);
+                if (reportFilesCreated)
+                {
+                    var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet);
 
-                if (!reportFilesUpdated)
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    if (!reportFilesUpdated)
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
 
