@@ -450,7 +450,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Examines the value for the given job parameter
         /// If missing or "auto", returns the default value
-        /// Otherwise, parses as a boolean and returns the result if "true" or "false" or "1" or "0"
+        /// Otherwise, parses as a boolean and returns the result if "true", "false", "1", "0", "yes", "no"
         /// If not a boolean or 0 or 1, logs a warning and returns the default value
         /// </summary>
         /// <param name="parameterName">Parameter name</param>
@@ -469,7 +469,13 @@ namespace AnalysisManagerMSFraggerPlugIn
             if (int.TryParse(value, out var parsedInteger))
                 return parsedInteger != 0;
 
-            OnWarningEvent("Job parameter {0} should be True, False, 1, 0, or Auto, but it is {1}", parameterName, value);
+            if (value.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (value.Equals("No", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            OnWarningEvent("Job parameter {0} should be True, False, 1, 0, Yes, No, or Auto, but it is {1}", parameterName, value);
             return defaultValue;
         }
 
