@@ -179,7 +179,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             {
                 var runPeptideProphet = FraggerOptions.GetParameterValueOrDefault("RunPeptideProphet", true);
 
-                var runPercolator = !string.IsNullOrWhiteSpace(runPercolatorJobParam) && bool.Parse(runPercolatorJobParam);
+                var runPercolator = FraggerOptions.GetParameterValueOrDefault("RunPercolator", false);
 
                 if (runPercolator && databaseSplitCount <= 1)
                 {
