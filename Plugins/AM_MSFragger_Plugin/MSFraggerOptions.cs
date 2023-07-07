@@ -10,7 +10,7 @@ using PRISM.AppSettings;
 namespace AnalysisManagerMSFraggerPlugIn
 {
     // ReSharper disable once CommentTypo
-    // Ignore Spelling: acetylation, deisotope, deneutralloss, nc, plex, quantitation
+    // Ignore Spelling: acetylation, deisotope, deneutralloss, fragger, nc, plex, quant, quantitation
 
     public enum MS1ValidationModes
     {
