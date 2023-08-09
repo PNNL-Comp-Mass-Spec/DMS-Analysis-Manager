@@ -33,7 +33,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         // Ignore Spelling: accmass, acetyl, acetylation, annot, antivirus, batmass-io, bruker, ccee, clevel, contam, cp, crystalc, decoyprobs, dir, expectscore
         // Ignore Spelling: fasta, filelist, fragger, fragpipe, freequant, glycan, glyco, glycosylation, groupby, iprophet, itraq, java, javacpp, jfreechart, labelquant, linux, locprob
-        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, msbooster, multidir, nocheck, nonparam, nonsp, num, openblas, overlabelling, outlier
+        // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, msbooster, msstats, multidir, nocheck, nonparam, nonsp, num, openblas, overlabelling, outlier
         // Ignore Spelling: peptideprophet, pepxml, phospho, phosphorylation, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot, Quant
         // Ignore Spelling: razorbin, sp, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \grppr, \ionquant, \ptmshepherd, \thermo, \tools
@@ -3860,6 +3860,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --decoys");
                     }
 
+                    var msStatsEnabled = mJobParams.GetJobParameter("Philosopher", "PhilosopherGenerateMSstats", false);
+
+                    if (msStatsEnabled)
+                    {
+                        // ReSharper disable once CommentTypo
+
+                        // Generate MSstats files
+                        arguments.Append(" --msstats");
+                    }
+
                     var success = RunPhilosopher(
                         PhilosopherToolType.GenerateReport,
                         arguments.ToString(),
@@ -3883,6 +3893,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (options.RunProteinProphet)
                     {
                         outputFiles.Add(new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv")));
+                    }
+
+                    if (msStatsEnabled)
+                    {
+                        outputFiles.Add(new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "msstats.csv")));
                     }
 
                     var outputFilesExist = ValidateOutputFilesExist("Philosopher report", outputFiles);
