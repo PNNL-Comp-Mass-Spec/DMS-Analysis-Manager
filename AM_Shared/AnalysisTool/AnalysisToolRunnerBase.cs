@@ -587,7 +587,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // Determine the year_quarter text for this dataset
                 if (string.IsNullOrEmpty(datasetStoragePath))
+                {
                     datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                }
 
                 var datasetYearQuarter = AnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
 
@@ -708,7 +710,9 @@ namespace AnalysisManagerBase.AnalysisTool
                     var datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
 
                     if (string.IsNullOrEmpty(datasetStoragePath))
+                    {
                         datasetStoragePath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                    }
 
                     datasetYearQuarter = AnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
                 }

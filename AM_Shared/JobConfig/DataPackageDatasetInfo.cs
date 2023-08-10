@@ -6,7 +6,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class DataPackageDatasetInfo
     {
-        // Ignore Spelling: Maxq, quantitation
+        // Ignore Spelling: Maxq, Quant, quantitation
 
         /// <summary>
         /// Dataset name
