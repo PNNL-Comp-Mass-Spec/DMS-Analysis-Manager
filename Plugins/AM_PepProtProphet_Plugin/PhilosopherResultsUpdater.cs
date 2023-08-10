@@ -126,9 +126,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable once LoopCanBeConvertedToQuery
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
-                    var datasetOrExperimentGroupName = experimentGroupWorkingDirectories.Count <= 1
-                        ? DatasetName
-                        : experimentGroup.Key;
+                    var datasetOrExperimentGroupName =
+                        experimentGroupWorkingDirectories.Count <= 1
+                            ? DatasetName
+                            : experimentGroup.Key;
+
+                    if (experimentGroupWorkingDirectories.Count > 1)
+                    {
+                        // Rename file msstats.csv since there are multiple experiment groups
+                        GetFilePaths(datasetOrExperimentGroupName, experimentGroup.Value, "msstats",
+                            out var sourceMSStatsFile, out var updatedMSStatsFile, "csv");
+
+                        if (sourceMSStatsFile.Exists)
+                        {
+                            sourceMSStatsFile.MoveTo(updatedMSStatsFile.FullName);
+                        }
+                    }
 
                     var psmSuccess = UpdatePhilosopherPSMFile(datasetOrExperimentGroupName, experimentGroup.Value);
                     var ionSuccess = UpdatePhilosopherIonFile(datasetOrExperimentGroupName, experimentGroup.Value);
