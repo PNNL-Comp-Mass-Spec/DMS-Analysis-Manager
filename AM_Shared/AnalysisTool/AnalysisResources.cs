@@ -2798,7 +2798,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
             try
             {
-                jobInfo.ArchiveStoragePath = GetParentDirectoryPath(datasetInfo.DatasetArchivePath);
+                jobInfo.ArchiveStoragePath = string.IsNullOrWhiteSpace(datasetInfo.DatasetArchivePath)
+                    ? string.Empty
+                    : GetParentDirectoryPath(datasetInfo.DatasetArchivePath);
             }
             catch (Exception)
             {
@@ -3604,8 +3606,14 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (string.IsNullOrEmpty(dataPkgDataset.DatasetArchivePath))
                 {
-                    LogError("OverrideCurrentDatasetInfo; Column 'ArchiveStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
-                    return false;
+                    if (Environment.MachineName.StartsWith("CBDMS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogMessage("OverrideCurrentDatasetInfo; Column 'ArchiveStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package; this is normal for CBDMS");
+                    }
+                    else
+                    {
+                        LogWarning("OverrideCurrentDatasetInfo; Column 'ArchiveStoragePath' not defined for dataset " + dataPkgDataset.Dataset + " in the data package");
+                    }
                 }
             }
 
@@ -3624,7 +3632,12 @@ namespace AnalysisManagerBase.AnalysisTool
             // In contrast, in datasetInfo, DatasetDirectoryPath and DatasetArchivePath track the actual dataset directory path
 
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", GetParentDirectoryPath(dataPkgDataset.DatasetDirectoryPath));
-            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", GetParentDirectoryPath(dataPkgDataset.DatasetArchivePath));
+
+            var datasetArchivePath = string.IsNullOrWhiteSpace(dataPkgDataset.DatasetArchivePath)
+                ? string.Empty
+                : GetParentDirectoryPath(dataPkgDataset.DatasetArchivePath);
+
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", datasetArchivePath);
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgDataset.Dataset);
             mJobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgDataset.RawDataType);
@@ -3659,8 +3672,14 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (string.IsNullOrEmpty(dataPkgJob.ArchiveStoragePath))
                 {
-                    LogError("OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " + dataPkgJob.Job + " in the data package");
-                    return false;
+                    if (Environment.MachineName.StartsWith("CBDMS", StringComparison.OrdinalIgnoreCase))
+                    {
+                        LogMessage("OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " + dataPkgJob.Job + " in the data package; this is normal for CBDMS");
+                    }
+                    else
+                    {
+                        LogWarning("OverrideCurrentDatasetAndJobInfo; Column 'ArchiveStoragePath' not defined for job " + dataPkgJob.Job + " in the data package");
+                    }
                 }
 
                 if (string.IsNullOrEmpty(dataPkgJob.ResultsFolderName))
