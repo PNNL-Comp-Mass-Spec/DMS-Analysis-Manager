@@ -1680,6 +1680,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         if (!pinSuccess)
                             return false;
+
+                        var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                        var msstatsFiles = sourceDirectory.GetFiles("*msstats.csv");
+
+                        if (msstatsFiles.Length == 0)
+                            continue;
+
+                        foreach (var msstatsFile in msstatsFiles)
+                        {
+                            var msstatsSuccess = MoveFile(sourceDirectoryPath, msstatsFile.Name, targetDirectoryPath);
+
+                            if (!msstatsSuccess)
+                                return false;
+                        }
                     }
                 }
 
