@@ -41,15 +41,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
             FileSystemInfo workingDirectory,
             string reportFileName,
             out FileInfo inputFile,
-            out FileInfo updatedFile)
+            out FileInfo updatedFile,
+            string fileExtension = "tsv")
         {
             inputFile = new FileInfo(Path.Combine(
                 workingDirectory.FullName,
-                string.Format("{0}.tsv", reportFileName)));
+                string.Format("{0}.{1}", reportFileName, fileExtension)));
 
             updatedFile = new FileInfo(Path.Combine(
                 workingDirectory.FullName,
-                string.Format("{0}_{1}.tsv", datasetOrExperimentGroupName, reportFileName)));
+                string.Format("{0}_{1}.{2}", datasetOrExperimentGroupName, reportFileName, fileExtension)));
         }
 
         /// <summary>
