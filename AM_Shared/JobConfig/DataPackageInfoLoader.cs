@@ -278,6 +278,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (dataPackageDatasets.Count == 1)
             {
+                // ReSharper disable once StringLiteralTypo
                 callingClass.LogMessage(string.Format("Dataset ID {0} had a custom experiment group defined in the dataset's 'Package Comment' field", dataPackageDatasets[0].DatasetID));
                 errorMessage = string.Empty;
                 return true;
@@ -287,6 +288,7 @@ namespace AnalysisManagerBase.JobConfig
                 ? string.Format("All {0} datasets", dataPackageDatasets.Count)
                 : string.Format("{0} / {1} datasets", customNameExperimentGroupCount, dataPackageDatasets.Count);
 
+            // ReSharper disable once StringLiteralTypo
             callingClass.LogMessage("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription);
 
             errorMessage = string.Empty;

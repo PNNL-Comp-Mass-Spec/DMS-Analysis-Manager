@@ -1502,6 +1502,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             return false;
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Zip the .pepXML file created by MSFragger
         /// </summary>

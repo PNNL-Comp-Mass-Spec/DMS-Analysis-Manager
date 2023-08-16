@@ -729,6 +729,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             if (mDebugLevel > 3)
             {
+                // ReSharper disable once StringLiteralTypo
                 OnDebugEvent("FindValidDirectoryMyEMSL, querying MyEMSL for this dataset's files");
             }
 

@@ -8,11 +8,15 @@ using PRISM;
 
 namespace AnalysisManagerBase.DataFileTools
 {
+    // ReSharper disable once CommentTypo
+
     /// <summary>
     /// This class creates a _PrecursorInfo.txt file using the dataset's _ScanStats.txt and _ScanStatsEx.txt files
     /// </summary>
     public class PrecursorInfoFileCreator : EventNotifier
     {
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Create a _PrecursorInfo.txt file using the dataset's _ScanStats.txt and _ScanStatsEx.txt files
         /// </summary>
@@ -35,6 +39,8 @@ namespace AnalysisManagerBase.DataFileTools
                 return false;
             }
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Create a _PrecursorInfo.txt file using the dataset's _ScanStats.txt and _ScanStatsEx.txt files

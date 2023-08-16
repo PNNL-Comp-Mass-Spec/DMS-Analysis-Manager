@@ -1456,6 +1456,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                             filePathNodes.Add(new XElement("string", Path.Combine(mWorkDir, datasetFileOrDirectoryName)));
 
+                            // ReSharper disable once CommentTypo
+                            
                             // If Dataset Experiment Group is an empty string or an integer, use the dataset's experiment name as the experiment name in the parameter file
                             // Dataset Experiment Group is parsed from the data package comment field for datasets in a Data Package
                             experimentNodes.Add(new XElement("string",

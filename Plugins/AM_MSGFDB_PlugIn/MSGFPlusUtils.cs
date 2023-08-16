@@ -2982,6 +2982,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             return string.IsNullOrWhiteSpace(paramValue) || Global.IsMatch(paramValue, "None");
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Determine the instrument mode based on the number of low res and high res MS2 spectra
         /// This method is used when the dataset's instrument group does not have a preferred Instrument ID value

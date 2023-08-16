@@ -1232,6 +1232,8 @@ namespace MSGFResultsSummarizer
             }
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Process this dataset's synopsis file to determine the PSM stats
         /// </summary>

@@ -55,6 +55,7 @@ namespace AnalysisManagerBase.DataFileTools
                 return true;
             }
 
+            // ReSharper disable once StringLiteralTypo
             OnStatusEvent("Did not find a .d directory for " + datasetName + "; will process the dataset's .UIMF file");
             return false;
         }

@@ -953,6 +953,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return string.Empty;
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// <para>
         /// Find the dataset's cached .mzML or .mzXML file, checking various locations
@@ -998,6 +1000,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 resultFileExtension, callingMethodCanRegenerateMissingFile, checkOutputFolder, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out msXmlFile, out hashCheckFilePath);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// <para>
@@ -1819,6 +1823,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             OnErrorEvent("Unable to determine the parent directory of " + sourceFile.FullName);
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Retrieve the dataset's cached .mzML file from the MsXML Cache
         /// </summary>
@@ -1840,6 +1846,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 AnalysisResources.DOT_MZML_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, false, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Retrieve the dataset's cached .mzXML file from the MsXML Cache
@@ -1863,6 +1871,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Retrieve the dataset's cached .PBF file from the MsXML Cache
         /// </summary>
@@ -1884,6 +1894,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 AnalysisResources.DOT_PBF_EXTENSION, unzip, callingMethodCanRegenerateMissingFile, false, warnFileNotFound,
                 out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// <para>
@@ -2288,6 +2300,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, sourceFilePath, hashCheckFilePath);
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Retrieves this dataset's .mzXML or .mzML file
         /// </summary>
@@ -2466,6 +2480,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return true;
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC directory that exists for the dataset
@@ -2480,6 +2496,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 retrieveScanStatsFile: true,
                 retrieveScanStatsExFile: true);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
@@ -2498,6 +2516,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 retrieveScanStatsFile,
                 retrieveScanStatsExFile);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Looks for this dataset's MASIC results files
@@ -2525,6 +2545,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 RETRIEVE_REPORTERIONS_FILE,
                 nonCriticalFileSuffixes);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Looks for this dataset's MASIC results files
@@ -3218,6 +3240,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     return false;
                 }
 
+                // ReSharper disable once CommentTypo
+
                 // Delete any subdirectories at ChameleonCachedDataFolder that do not have this dataset's name
                 chameleonCachedDataDir = new DirectoryInfo(chameleonCachedDataDirPath);
 
@@ -3257,6 +3281,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         }
                     }
                 }
+
+                // ReSharper disable once CommentTypo
 
                 // Delete any .mis files that do not start with this dataset's name
                 foreach (var misFile in chameleonCachedDataDir.GetFiles("*.mis"))
