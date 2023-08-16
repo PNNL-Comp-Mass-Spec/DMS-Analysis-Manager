@@ -299,6 +299,7 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source directory path</param>
         /// <param name="traceMode">When true, show database queries</param>
+        [Obsolete("Use the method that accepts a connection string")]
         public ResultsSummarizer(PeptideHitResultTypes resultType, string datasetName, int job, string sourceDirectoryPath, bool traceMode)
             : this(resultType, datasetName, job, sourceDirectoryPath, DEFAULT_CONNECTION_STRING, debugLevel: 1, traceMode: traceMode)
         {

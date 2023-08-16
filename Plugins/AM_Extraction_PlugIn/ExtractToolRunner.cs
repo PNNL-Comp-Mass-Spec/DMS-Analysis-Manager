@@ -3101,7 +3101,16 @@ namespace AnalysisManagerExtractionPlugin
 
         private ResultsSummarizer GetPsmResultsSummarizer(PeptideHitResultTypes resultType)
         {
-            var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, mWorkDir, traceMode: TraceMode);
+            // Gigasax.DMS5
+            var connectionString = mMgrParams.GetParam("ConnectionString");
+
+            var summarizer = new ResultsSummarizer(
+                resultType, mDatasetName, mJob,
+                mWorkDir,
+                connectionString,
+                mDebugLevel,
+                TraceMode);
+
             RegisterEvents(summarizer);
 
             // Monitor events for "permission was denied"
