@@ -162,7 +162,7 @@ namespace AnalysisManagerBase.JobConfig
             sqlStr.Append("        experiment_newt_id, experiment_newt_name, experiment_tissue_id, experiment_tissue_name,");
             sqlStr.Append("        dataset_folder_path, archive_folder_path, raw_data_type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-            sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
+            sqlStr.Append(" WHERE data_pkg_id = " + dataPackageID);
             sqlStr.Append(" ORDER BY dataset");
 
             var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
@@ -329,7 +329,7 @@ namespace AnalysisManagerBase.JobConfig
             sqlStr.Append("        server_storage_path, archive_storage_path, results_folder, dataset_folder,");
             sqlStr.Append("        step, shared_results_folder, raw_data_type");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
+            sqlStr.Append(" WHERE data_pkg_id = " + dataPackageID);
             sqlStr.Append(" ORDER BY dataset, tool, job, step");
 
             var successForJobs = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageJobQueryResults);
@@ -355,7 +355,7 @@ namespace AnalysisManagerBase.JobConfig
                 sqlStr.Clear();
                 sqlStr.Append(" SELECT Count(*) AS datasets");
                 sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-                sqlStr.Append(" WHERE data_package_id = " + dataPackageID);
+                sqlStr.Append(" WHERE data_pkg_id = " + dataPackageID);
 
                 var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
 

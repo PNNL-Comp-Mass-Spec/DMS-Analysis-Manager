@@ -113,7 +113,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             {
                 // default values
                 DatabaseTagName = TagName.Main;
-                IdColName = "Data_Package_ID";
+                IdColName = "Data_Pkg_ID";
                 BaseSQL = string.Empty;
             }
 
