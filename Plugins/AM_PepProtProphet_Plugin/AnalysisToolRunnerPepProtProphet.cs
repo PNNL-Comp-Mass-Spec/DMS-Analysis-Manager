@@ -3675,12 +3675,28 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var success = RunPhilosopher(PhilosopherToolType.ProteinProphet, arguments.ToString(), "run ProteinProphet");
 
-                if (!success)
-                    return false;
-
-                // Verify that the ProteinProphet results file was created
-
+                // Look for the ProteinProphet results file
                 var proteinGroupsFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
+
+                if (!success)
+                {
+                    // ReSharper disable once CommentTypo
+
+                    // If the ProteinProphet results file exists, but success is false, this is most likely because ProteinProphet was unable to delete either BatchCoverage.exe or DatabaseParser (as described above)
+                    // Examine file Philosopher_ConsoleOutput.txt to look for errors of the form:
+                    //  remove C:\Users\D3L243\AppData\Local\Temp\a7785d27-366e-4048-a23f-c1867454f9f0\batchcoverage.exe: The process cannot access the file because it is being used by another process.
+
+                    var removeFileError = mConsoleOutputFileParser.FileHasRemoveFileError(Path.Combine(mWorkingDirectory.FullName, PHILOSOPHER_CONSOLE_OUTPUT));
+
+                    if (removeFileError && proteinGroupsFile.Exists)
+                    {
+                        // Ignore the non-zero error code from Philosopher since Protein Prophet created combined.prot.xml
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
 
                 if (!proteinGroupsFile.Exists)
                 {

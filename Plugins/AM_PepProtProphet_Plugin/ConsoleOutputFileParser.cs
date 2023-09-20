@@ -141,6 +141,79 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Looks for errors of the form
+        /// remove C:\Users\D3L243\AppData\Local\Temp\a7785d27-366e-4048-a23f-c1867454f9f0\batchcoverage.exe: The process cannot access the file because it is being used by another process
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
+        /// <returns>True if the console output file has a file removal access in use error, otherwise false</returns>
+        public bool FileHasRemoveFileError(string consoleOutputFilePath)
+        {
+            try
+            {
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+
+                if (!consoleOutputFile.Exists)
+                {
+                    OnWarningEvent("Cannot check for remove file errors; console output file not found: " + consoleOutputFilePath);
+                    return false;
+                }
+
+                if (DebugLevel >= 4)
+                {
+                    OnDebugEvent("Parsing file {0} to look for errors removing files", consoleOutputFilePath);
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLineWithColor = reader.ReadLine() ?? string.Empty;
+
+                    var dataLine = ColorTagMatcher.Replace(dataLineWithColor, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // ReSharper disable once StringLiteralTypo
+                    if (!dataLine.StartsWith("ERRO") || ConsoleOutputErrorMsg.Contains(dataLine))
+                        continue;
+
+                    if (LineHasRemoveFileError(dataLine))
+                    {
+                        // The message is similar to the following, and can be ignored
+                        // remove C:\Users\D3L243\AppData\Local\Temp\8c5fd63b-9cb8-4fdb-ab2a-62cef7285253\DatabaseParser.exe: The process cannot access the file because it is being used by another process.
+
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (DebugLevel >= 2)
+                {
+                    OnErrorNoMessageUpdate("Error parsing the Philosopher console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Return true if the data line has an error of the form
+        /// remove C:\Users\D3L243\AppData\Local\Temp\a7785d27-366e-4048-a23f-c1867454f9f0\DatabaseParser.exe: The process cannot access the file because it is being used by another process
+        /// </summary>
+        /// <param name="dataLine"></param>
+        private static bool LineHasRemoveFileError(string dataLine)
+        {
+            var removeMatcher = new Regex(@"remove .+\.exe", RegexOptions.IgnoreCase);
+
+            return removeMatcher.IsMatch(dataLine);
+        }
+
         /// <summary>
         /// Parse the Percolator console output file
         /// </summary>
@@ -331,9 +404,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable once StringLiteralTypo
                     if (dataLine.StartsWith("ERRO") && !ConsoleOutputErrorMsg.Contains(dataLine))
                     {
-                        var removeMatcher = new Regex(@"remove .+\.exe", RegexOptions.IgnoreCase);
-
-                        if (removeMatcher.IsMatch(dataLine))
+                        if (LineHasRemoveFileError(dataLine))
                         {
                             // The message is similar to the following, and can be ignored
                             // remove C:\Users\D3L243\AppData\Local\Temp\8c5fd63b-9cb8-4fdb-ab2a-62cef7285253\DatabaseParser.exe: The process cannot access the file because it is being used by another process.
