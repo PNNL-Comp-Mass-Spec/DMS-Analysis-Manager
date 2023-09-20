@@ -731,6 +731,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var targetPsmFile = GetPercolatorFileName(datasetName, false);
                 var decoyPsmFile = GetPercolatorFileName(datasetName, true);
                 var pinFile = string.Format("{0}.pin", datasetName);
+                var mzMLFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("{0}{1}", datasetName, AnalysisResources.DOT_MZML_EXTENSION)));
 
                 string dataMode;
                 string probabilityThreshold;
@@ -748,13 +749,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var arguments = string.Format(
                     "-cp {0}/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML " +
-                    "{1} " +               // DatasetName.pin
-                    "{2} " +               // DatasetName
-                    "{3} " +               // DatasetName_percolator_target_psms.tsv
-                    "{4} " +               // DatasetName_percolator_decoy_psms.tsv
-                    "interact-{5} " +      // interact-DatasetName
-                    "{6} " +               // DDA or DIA
-                    "{7}",                 // Minimum probability threshold
+                    "{1} " +            // DatasetName.pin
+                    "{2} " +            // DatasetName
+                    "{3} " +            // DatasetName_percolator_target_psms.tsv
+                    "{4} " +            // DatasetName_percolator_decoy_psms.tsv
+                    "interact-{5} " +   // interact-DatasetName
+                    "{6} " +            // DDA or DIA
+                    "{7} " +            // Minimum probability threshold
+                    "{8}",              // C:\DMS_WorkDir\DatasetName.mzML
                     fragPipeLibDirectory.FullName,
                     pinFile,
                     datasetName,
@@ -762,7 +764,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     decoyPsmFile,
                     datasetName,
                     dataMode,
-                    probabilityThreshold);
+                    probabilityThreshold,
+                    mzMLFile.FullName);
 
                 // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
@@ -1969,7 +1972,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable IdentifierTypo
 
                 // Run Crystal-C for this dataset; example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo" -Xmx17G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar" crystalc.Run C:\DMS_WorkDir\ExperimentGroup\crystalc-0-DatasetName.pepXML.params C:\DMS_WorkDir\ExperimentGroup\DatasetName.pepXML
 
                 // Find the thermo lib directory
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
@@ -2356,14 +2359,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // v18
                 // java -Xmx10G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.5\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.0.jar"  ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 100000 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --multidir . --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt
 
-                // v19
-                // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.10.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10     --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt --modlist C:\FragPipe_Test3\Results\modmasses_ionquant.txt
+                // v19.1
+                // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.10.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10     --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt --modlist C:\FragPipe_Test3\Results\modmasses_ionquant.txt
 
-                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\bruker
+                // v20
+                // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.9.8.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10     --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt --modlist C:\FragPipe_Test3\Results\modmasses_ionquant.txt
+
+                // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
                     return false;
 
-                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo
+                // Find the Thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -2372,7 +2378,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindJarFileJFreeChart(out var jarFileJFreeChart))
                     return false;
 
-                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.10.jar
+                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.9.8.jar
                 if (!options.LibraryFinder.FindJarFileIonQuant(out var jarFileIonQuant))
                     return false;
 
@@ -2391,7 +2397,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // if (!options.LibraryFinder.FindCppPresetsPlatformDirectory(out var cppPresetsPlatformDirectory))
                 //     return false;
 
-                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar
                 if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
                     return false;
 
@@ -2426,7 +2432,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                // v18 and v19
+                // v18, v19, and v20
                 arguments.AppendFormat(
                    "-Xmx{0}G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4};{5}\" ionquant.IonQuant",
                    ION_QUANT_MEMORY_SIZE_GB,
@@ -2590,6 +2596,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     // IonQuant-1.8.0  (included FragPipe v18) created one _quant.csv file for each dataset
                     // IonQuant-1.8.10 (included with FragPipe v19) does not create _quant.csv files
+                    // IonQuant-1.9.8  (included with FragPipe v20) does not create _quant.csv files
 
                     // Check whether any _quant.csv files were created
                     var quantFiles = mWorkingDirectory.GetFiles("*_quant.csv", SearchOption.AllDirectories);
@@ -2600,8 +2607,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         // If IonQuant could not find enough features in common between datasets, this warning will appear in the console output (Java_ConsoleOutput_Combined.txt)
                         //   There are only 2 negative data points in training. We need at least 10
 
-                        // Log a warning, but continue processing
-                        LogWarning("IonQuant did not create any _quant.csv files, either because of not enough features in common, or because a newer version that does not create _quant.csv files");
+                        // Previously logged a warning, but continued processing
+                        // No longer log a warning since FragPipe v19 and v20 do not create _quant.csv files
+
+                        // LogWarning("IonQuant did not create any _quant.csv files, either because of not enough features in common, or because a newer version that does not create _quant.csv files");
                     }
 
                     // Confirm that the output files were created
@@ -2970,17 +2979,20 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // v18
                 // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.4.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.25.5.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
 
-                // v19
+                // v19.1
                 // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
+
+                // v20
+                // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
 
                 // Note that with FragPipe v19, MSBooster is calling DiaNN.exe with a TMT mod mass, even for parameter files that do not have TMT as a mod mass
                 // This is "by design", as confirmed at https://github.com/Nesvilab/FragPipe/issues/1031
                 // However, note that Dia-NN only supports TMT 6/10/11, not TMT 16 or TMT 18
 
-                // Java console output shows these arguments being used on the command line for job 2163338
+                // Java console output shows these arguments being used on the command line for job 2163338 (using FragPipe v19)
                 //   DiaNN.exe --lib D:\DMS_WorkDir4\51912_Lewis_nanoPOTS_Set1_Inner_Vascicular_Bundle_A1\spectraRT.tsv --predict --threads 4 --strip-unknown-mods --mod TMT,229.1629 --predict-n-frag 100
 
-                // Contrast with job 2144860
+                // Contrast with job 2144860 (using FragPipe v18)
                 //   DiaNN.exe --lib D:\DMS_WorkDir4\51912_Lewis_nanoPOTS_Set1_Inner_Vascicular_Bundle_A1\spectraRT.tsv --predict --threads 4 --strip-unknown-mods
 
                 // Java console output for job 2163338 also shows this:
@@ -3006,7 +3018,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return false;
                 */
 
-                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar
                 if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
                     return false;
 
@@ -3389,10 +3401,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // percolator-305\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
+                // percolator-306\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
 
                 // If MSBooster was used, it will have created _edited.pin files
-                // percolator-305\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName_edited.pin
+                // percolator-306\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName_edited.pin
 
                 var targetPsmFileName = GetPercolatorFileName(datasetName, false);
                 var decoyPsmFileName = GetPercolatorFileName(datasetName, true);
@@ -3405,6 +3417,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     "--only-psms --no-terminate --post-processing-tdc --num-threads {0} " +
                     "--results-psms {1} " +
                     "--decoy-results-psms {2} " +
+                    "--protein-decoy-pattern XXX_ " +       // New for FragPipe v20, though percolator is smart enough to recognize XXX_ as a decoy protein prefix even if argument "--protein-decoy-pattern" is not used
                     "{3}",
                     PERCOLATOR_THREAD_COUNT,
                     targetPsmFileName,
@@ -3702,9 +3715,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable StringLiteralTypo
 
                 // Run PTMShepherd, example command line:
-                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.6.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
+                // java -Dbatmass.io.libs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\ptmshepherd-1.2.6.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar" edu.umich.andykong.ptmshepherd.PTMShepherd "C:DMS_WorkDir\shepherd.config"
 
-                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo
+                // Find the thermo lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo
                 if (!options.LibraryFinder.FindVendorLibDirectory("thermo", out var thermoLibDirectory))
                     return false;
 
@@ -3712,7 +3725,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindJarFilePtmShepherd(out var jarFilePtmShepherd))
                     return false;
 
-                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar
+                // Find the Batmass-IO jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar
 
                 // ReSharper disable once IdentifierTypo
                 if (!options.LibraryFinder.FindJarFileBatmassIO(out var jarFileBatmassIO))
@@ -3874,6 +3887,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --decoys");
                     }
 
+                    // ReSharper disable once StringLiteralTypo
                     var msStatsEnabled = mJobParams.GetJobParameter("Philosopher", "PhilosopherGenerateMSstats", false);
 
                     if (msStatsEnabled)
@@ -4052,7 +4066,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // The filter command should have created four .bin files in the .meta directory:
                     //   psm.bin, ion.bin, pep.bin, and pro.bin
 
-                    // Verify that psm.bin was created
+                    // Verify that file psm.bin was created
 
                     var outputFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, ".meta", "psm.bin"));
 
@@ -4083,7 +4097,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-4.0.4.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
+                // java -Xmx14G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\tmt-integrator-4.0.5.jar" TMTIntegrator C:\DMS_WorkDir\Results\tmt-integrator-conf.yml C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv C:\DMS_WorkDir\Results\ExperimentGroupB\psm.tsv
 
                 // ReSharper restore CommentTypo
 

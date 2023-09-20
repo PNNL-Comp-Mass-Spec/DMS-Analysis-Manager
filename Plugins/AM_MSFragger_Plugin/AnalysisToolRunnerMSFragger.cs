@@ -101,7 +101,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 // ReSharper disable once CommentTypo
                 // Construct the relative path to the .jar file, for example:
-                // fragpipe\tools\MSFragger-3.7\MSFragger-3.7.jar
+                // fragpipe\tools\MSFragger-3.8\MSFragger-3.8.jar
 
                 var jarFileRelativePath = Path.Combine(FragPipeLibFinder.MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH, FragPipeLibFinder.MSFRAGGER_JAR_NAME);
 
@@ -304,7 +304,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     // ReSharper disable CommentTypo
 
                     // Run CheckCentroid, example command line:
-                    // java -Xmx4G -cp "C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-19.1.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar" com.dmtavt.fragpipe.util.CheckCentroid DatasetName.mzML 4
+                    // java -Xmx4G -cp "C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-20.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar" com.dmtavt.fragpipe.util.CheckCentroid DatasetName.mzML 4
 
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format(
@@ -1001,7 +1001,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             // ReSharper disable CommentTypo
 
             // Example command line:
-            // java -jar -Dfile.encoding=UTF-8 -Xmx11G C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\MSFragger-3.7.jar C:\DMS_WorkDir\fragger.params C:\DMS_WorkDir\Dataset.mzML
+            // java -jar -Dfile.encoding=UTF-8 -Xmx11G C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\MSFragger-3.8.jar C:\DMS_WorkDir\fragger.params C:\DMS_WorkDir\Dataset.mzML
 
             // ReSharper restore CommentTypo
 
@@ -1098,7 +1098,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             // ReSharper disable CommentTypo
 
             // Example command line:
-            // C:\Python39\python.exe C:\DMS_Programs\MSFragger\fragpipe\tools\msfragger_pep_split.py 2 "java -jar -Dfile.encoding=UTF-8 -Xmx14G" C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\MSFragger-3.7.jar C:\DMS_WorkDir\MSFragger_ParamFile.params C:\DMS_WorkDir\DatasetName.mzML
+            // C:\Python39\python.exe C:\DMS_Programs\MSFragger\fragpipe\tools\msfragger_pep_split.py 2 "java -jar -Dfile.encoding=UTF-8 -Xmx14G" C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\MSFragger-3.8.jar C:\DMS_WorkDir\MSFragger_ParamFile.params C:\DMS_WorkDir\DatasetName.mzML
 
             // ReSharper restore CommentTypo
 

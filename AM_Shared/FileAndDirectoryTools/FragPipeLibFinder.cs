@@ -22,12 +22,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the batmass-io .jar file
         /// </summary>
-        private const string BATMASS_JAR_NAME = "batmass-io-1.28.9.jar";
+        private const string BATMASS_JAR_NAME = "batmass-io-1.28.12.jar";
 
         /// <summary>
         /// Name of the Crystal-C .jar file
         /// </summary>
-        private const string CRYSTALC_JAR_NAME = "original-crystalc-1.5.1.jar";
+        private const string CRYSTALC_JAR_NAME = "original-crystalc-1.5.2.jar";
 
         /// <summary>
         /// Relative path to the Data-Independent Acquisition by Neural Networks (DIA-NN) executable
@@ -38,7 +38,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the FragPipe .jar file
         /// </summary>
-        private const string FRAGPIPE_JAR_NAME = "fragpipe-19.1.jar";
+        private const string FRAGPIPE_JAR_NAME = "fragpipe-20.0.jar";
 
         /// <summary>
         /// Name of the grppr .jar file
@@ -48,11 +48,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the IonQuant jar file
         /// </summary>
-        private const string IONQUANT_JAR_NAME = "IonQuant-1.8.10.jar";
+        private const string IONQUANT_JAR_NAME = "IonQuant-1.9.8.jar";
 
         /// <summary>
         /// Name of the Java C++ presets platform directory
         /// </summary>
+        [Obsolete("Deprecated with FragPipe v18")]
         private const string JAVA_CPP_PRESETS_DIRECTORY_NAME = "javacpp-presets-platform-1.5.6-bin";
 
         /// <summary>
@@ -68,12 +69,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the directory with the MSFragger .jar file
         /// </summary>
-        public const string MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.7";
+        public const string MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.8";
 
         /// <summary>
         /// Name of the MSFragger .jar file
         /// </summary>
-        public const string MSFRAGGER_JAR_NAME = "MSFragger-3.7.jar";
+        public const string MSFRAGGER_JAR_NAME = "MSFragger-3.8.jar";
 
         /// <summary>
         /// Relative path to philosopher.exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
@@ -83,12 +84,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the percolator .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
-        public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-305\percolator.exe";
+        public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-306\percolator.exe";
 
         /// <summary>
         /// Name of the PTM Shepherd jar file
         /// </summary>
-        private const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-2.0.0.jar";
+        private const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-2.0.5.jar";
 
         /// <summary>
         /// Name of the smile-core library
@@ -103,7 +104,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the TMT integrator jar file
         /// </summary>
-        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.4.jar";
+        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.5.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
@@ -225,7 +226,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the Batmass IO .jar file
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.9.jar
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar
         /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -301,7 +302,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the fragpipe .jar file
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-19.1.jar
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-20.0.jar
         /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -356,7 +357,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileIonQuant(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.8.10.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.9.8.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -588,9 +589,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <remarks>
         /// Typically at
-        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\bruker
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker
         /// and
-        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\thermo
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo
         /// </remarks>
         /// <param name="vendorName">Vendor name: either bruker or thermo</param>
         /// <param name="vendorLibDirectory">Output: directory info, if found</param>
@@ -607,7 +608,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             // Look for the MSFragger external library directory, e.g.
-            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.7\ext\
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\
 
             var msfraggerDirectoryName = Path.GetFileName(MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH);
 
