@@ -410,6 +410,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 bool psmValidationSuccess;
+
+                // This tracks the files created by either Peptide Prophet or Percolator
                 List<FileInfo> peptideProphetPepXmlFiles;
 
                 var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
@@ -538,7 +540,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogMessage("Based on static and/or dynamic mods, the reporter ion mode is {0}", options.ReporterIonMode);
                 }
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant)
+                var ms1QuantDisabled = mJobParams.GetJobParameter("MS1QuantDisabled", false);
+
+                if (!ms1QuantDisabled && (options.ReporterIonMode != ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant))
                 {
                     // Always run FreeQuant when we have reporter ions
                     // If no reporter ions, either run FreeQuant or run IonQuant
@@ -641,7 +645,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                if (options.RunIonQuant)
+                if (options.RunIonQuant && !ms1QuantDisabled)
                 {
                     var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
 
