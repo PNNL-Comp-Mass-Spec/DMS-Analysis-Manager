@@ -48,7 +48,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Whether to run PeptideProphet, Percolator, or nothing
         /// </summary>
-        /// <remarks>Defaults to Percolator, but auto-set to PeptideProphet if iTRAQ is in use</remarks>
+        /// <remarks>Defaults to Percolator (prior to v20, would set this to PeptideProphet if using iTRAQ)</remarks>
         public MS1ValidationModes MS1ValidationMode { get; set; }
 
         /// <summary>
@@ -589,12 +589,16 @@ namespace AnalysisManagerMSFraggerPlugIn
                             break;
 
                         case "precursor_mass_units":
+
+                            // Precursor mass tolerance units (0=Da, 1=ppm)
                             if (!GetParamValueInt(parameter, out precursorMassUnits))
                                 return false;
 
                             break;
 
                         case "data_type":
+
+                            // Data type (0=DDA, 1=DIA, 2=Gas-phase fractionation DIA, aka DIA-narrow-window)
                             if (!GetParamValueInt(parameter, out dataTypeMode))
                                 return false;
 
@@ -620,19 +624,22 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (MS1ValidationModeAutoDefined && MS1ValidationMode != MS1ValidationModes.Disabled)
                     {
-                        if (MS1ValidationMode == MS1ValidationModes.Percolator &&
-                            ReporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
-                        {
-                            // Switch from Percolator to PeptideProphet since using iTRAQ
-                            MS1ValidationMode = MS1ValidationModes.PeptideProphet;
-                        }
+                        // Prior to FragPipe v20, we would set the MS1 validation mode to PeptideProphet when using iTRAQ
+                        // FragPipe v19 and newer support iTRAQ with Percolator
+
+                        // if (MS1ValidationMode == MS1ValidationModes.Percolator &&
+                        //     ReporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
+                        // {
+                        //     // Switch from Percolator to PeptideProphet since using iTRAQ
+                        //     MS1ValidationMode = MS1ValidationModes.PeptideProphet;
+                        // }
 
                         if (MS1ValidationMode == MS1ValidationModes.PeptideProphet &&
                             ReporterIonMode is
                                 ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or
                                 ReporterIonModes.Tmt16 or ReporterIonModes.Tmt18)
                         {
-                            // Switch from PeptideProphet to Percolator  since using TMT
+                            // Switch from PeptideProphet to Percolator since using TMT
                             MS1ValidationMode = MS1ValidationModes.Percolator;
                         }
                     }
