@@ -5083,7 +5083,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return false;
                 }
 
-                var experimentLabels = new Dictionary<string, int>();
+                var experimentLabels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (DataRow curRow in resultSet.Rows)
                 {
