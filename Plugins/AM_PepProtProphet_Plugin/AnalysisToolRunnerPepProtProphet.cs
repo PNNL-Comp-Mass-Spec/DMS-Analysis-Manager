@@ -32,7 +32,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: accmass, acetyl, acetylation, annot, antivirus, batmass-io, bruker, ccee, clevel, contam, cp, crystalc, decoyprobs, dir, expectscore
-        // Ignore Spelling: fasta, filelist, fragger, fragpipe, freequant, glycan, glyco, glycosylation, groupby, iprophet, itraq, java, javacpp, jfreechart, labelquant, linux, locprob
+        // Ignore Spelling: fasta, filelist, fragger, fragpipe, freequant, glycan, glyco, glycosylation, groupby, iprophet, itraq, java, javacpp, jfreechart, labelquant, labelling, linux, locprob
         // Ignore Spelling: mapmods, masswidth, maxlfq, maxppmdiff, minprob, msbooster, msstats, multidir, nocheck, nonparam, nonsp, num, openblas, overlabelling, outlier
         // Ignore Spelling: peptideprophet, pepxml, phospho, phosphorylation, plex, ppm, proteinprophet, protxml, psm, psms, --ptw, prot, Quant
         // Ignore Spelling: razorbin, sp, specdir, tdc, tmt, tmtintegrator, --tol, unimod, Xmx
@@ -786,6 +786,27 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // However, while it's running, LoopWaiting will get called via events
                 var processingSuccess = mCmdRunner.RunProgram(options.JavaProgLoc, arguments, "Java", true);
 
+                // Note that fragpipe.tools.percolator.PercolatorOutputToPepXML writes various status messages to the error stream
+                // The following messages are not actually errors:
+
+                // Console error: Iteration 7:     Estimated 6315 PSMs with q<0.01
+                // Learned normalized SVM weights for the 3 cross-validation splits:
+                // Split1   Split2  Split3 FeatureName
+                // 0.0000   0.0000  0.0000 rank
+                // 0.4576  -0.6424 -0.5811 abs_ppm
+                // 0.0837  -0.2854 -0.1592 isotope_errors
+                // 0.5453  -0.3633 -0.3602 log10_evalue
+                // 0.0867  -0.1044 -0.5247 hyperscore
+                // 1.0133   0.9964  1.1500 delta_hyperscore
+                // 0.7742   0.5430  1.6079 matched_ion_num
+                // ...
+                // Found 6154 test set PSMs with q<0.01.
+                // Selected best-scoring PSM per scan+expMass (target-decoy competition): 19345 target PSMs and 11905 decoy PSMs.
+                // Calculating q values.
+                // Final list yields 6170 target PSMs with q<0.01.
+                // Calculating posterior error probabilities (PEPs).
+                // Processing took 3.6920 cpu seconds or 4 seconds wall clock time.
+
                 if (!mConsoleOutputFileParsed)
                 {
                     ParseConsoleOutputFile();
@@ -1513,6 +1534,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     targetDirectory.Create();
                 }
 
+                // ReSharper disable once CommentTypo
+
+                // FragPipe uses the --temp parameter to define the temporary directory; the analysis manager does not include "--temp"
+                // philosopher.exe workspace --init --nocheck --temp C:\Users\D3L243\AppData\Local\Temp\c38b98c8-a78b-40ad-bcf5-57e81b91af61
+
                 // ReSharper disable once StringLiteralTypo
                 var arguments = "workspace --init --nocheck";
 
@@ -2112,6 +2138,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // This was used in February 2023 while diagnosing an indexing error with Philosopher
                 // See GitHub issue https://github.com/Nesvilab/philosopher/issues/411
 
+                // If this code is used, be sure to uncomment the "if (filesSwapped)" code in two places later in this method (after the call to RunDatabaseAnnotation)
                 const string fastaFileName = "ID_008341_110ECBC1.fasta";
 
                 var fastaFile = new FileInfo(mFastaFilePath);
