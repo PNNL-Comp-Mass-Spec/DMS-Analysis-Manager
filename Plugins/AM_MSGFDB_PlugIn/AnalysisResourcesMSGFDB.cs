@@ -256,10 +256,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         return false;
                     }
 
-                    LogMessage(string.Format("LookupScanTypesForDataset returned false for dataset {0}; " +
-                                             "however, AssumedScanType is {1} and thus the scan stats are not required",
-                                             DatasetName,
-                                             assumedScanType));
+                    LogMessage("LookupScanTypesForDataset returned false for dataset {0}; however, AssumedScanType is {1} and thus the scan stats are not required",
+                        DatasetName,
+                        assumedScanType);
                 }
 
                 mJobParams.AddAdditionalParameter(AnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCAN_COUNT_LOW_RES_MSN, countLowResMSn);

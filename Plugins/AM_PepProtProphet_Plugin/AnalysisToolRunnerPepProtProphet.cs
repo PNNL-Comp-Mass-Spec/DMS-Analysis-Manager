@@ -1136,7 +1136,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogWarning(string.Format("Error deleting directory {0}: {1}", directory.FullName, ex.Message));
+                    LogWarning("Error deleting directory {0}: {1}", directory.FullName, ex.Message);
                 }
             }
         }
@@ -2643,7 +2643,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         if (!mbrIonFile.Exists)
                         {
                             // IonQuant results file not found: mbr_ion.tsv
-                            LogWarning(string.Format("IonQuant did not create file {0}; this indicates that insufficient training data could be found and match-between-runs could thus not be performed", mbrIonFile.Name));
+                            LogWarning("IonQuant did not create file {0}; this indicates that insufficient training data could be found and match-between-runs could thus not be performed", mbrIonFile.Name);
 
                             mEvalMessage = Global.AppendToComment(mEvalMessage, "IonQuant did not create match-between-runs file mbr_ion.tsv");
                         }
@@ -2876,9 +2876,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                     else
                     {
-                        LogMessage(string.Format(
+                        LogMessage(
                             "{0} alias file not found; will auto-generate file {1} for use with LabelQuant",
-                            reporterIonType, experimentSpecificAliasFile.Name));
+                            reporterIonType, experimentSpecificAliasFile.Name);
 
                         string prefixToUse;
 
@@ -3353,7 +3353,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                             }
                             catch (Exception ex)
                             {
-                                LogWarning(string.Format("Error deleting {0}: {1}", psmFile.FullName, ex.Message));
+                                LogWarning("Error deleting {0}: {1}", psmFile.FullName, ex.Message);
                             }
                         }
 

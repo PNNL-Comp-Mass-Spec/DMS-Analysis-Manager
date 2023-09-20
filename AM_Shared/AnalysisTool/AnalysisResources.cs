@@ -1034,14 +1034,11 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (success)
                 {
-                    LogMessage(string.Format("Copied {0} files to {1} on host {2}",
-                                             filesToCopy.Count, remoteDirectoryPath, remoteHost));
+                    LogMessage("Copied {0} files to {1} on host {2}", filesToCopy.Count, remoteDirectoryPath, remoteHost);
                     return true;
                 }
 
-                LogError(string.Format("Failure copying {0} files to {1} on host {2}",
-                                       filesToCopy.Count, remoteDirectoryPath, remoteHost));
-
+                LogError("Failure copying {0} files to {1} on host {2}", filesToCopy.Count, remoteDirectoryPath, remoteHost);
                 UpdateStatusMessage("Failure copying required files to remote host " + remoteHost);
                 return false;
             }
@@ -1369,9 +1366,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Creating FASTA file in ...
                 // or
                 // Preview retrieval of FASTA file ...
-                LogMessage(string.Format("{0} FASTA file in {1}",
+                LogMessage("{0} FASTA file in {1}",
                     previewMode ? "Preview retrieval of" : "Creating",
-                    targetDirectory));
+                    targetDirectory);
             }
 
             if (!Directory.Exists(targetDirectory))
@@ -1593,12 +1590,12 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     if (mDebugLevel >= 1)
                     {
-                        LogMessage(string.Format(
+                        LogMessage(
                             "Simulate call to mFastaTools.ExportFASTAFile for " +
-                            "ProteinCollectionList '{0}', ProteinCollectionOptions '{1}',  and legacy FASTA {2}",
+                            "ProteinCollectionList '{0}', ProteinCollectionOptions '{1}',  and legacy FASTA {2}", 
                             proteinCollectionInfo.ProteinCollectionList,
                             proteinCollectionInfo.ProteinCollectionOptions,
-                            legacyFastaToUse));
+                            legacyFastaToUse);
                     }
 
                     if ((string.IsNullOrEmpty(proteinCollectionInfo.ProteinCollectionList) ||
@@ -3917,11 +3914,11 @@ namespace AnalysisManagerBase.AnalysisTool
                     else
                         baseErrorMessage = "Orb DB directory path does not have a colon and could not find file " + maxDirSizeFile.Name;
 
-                    LogWarning(string.Format("Warning: {0}; cannot manage drive space usage: {1}", baseErrorMessage, orgDbDirectory.FullName));
+                    LogWarning("Warning: {0}; cannot manage drive space usage: {1}", baseErrorMessage, orgDbDirectory.FullName);
 
-                    LogMessage(string.Format(
+                    LogMessage(
                         "Create file {0} with 'MaxSizeGB=50' on a single line. " +
-                        "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+                        "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name);
 
                     return;
                 }
@@ -3933,7 +3930,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     if (mDebugLevel >= 2)
                     {
                         var freeSpaceGB = Global.BytesToGB(localDriveInfo.AvailableFreeSpace);
-                        LogMessage(string.Format("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent));
+                        LogMessage("Free space on {0} ({1:F1} GB) is over {2}% of the total space; purge not required", localDriveInfo.Name, freeSpaceGB, freeSpaceThresholdPercent);
                     }
                 }
                 else
@@ -3978,8 +3975,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (logInfoMessages)
             {
-                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
-                    localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
+                LogMessage("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
+                    localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent);
             }
 
             // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
@@ -4042,8 +4039,8 @@ namespace AnalysisManagerBase.AnalysisTool
                         // Target threshold reached
                         if (mDebugLevel >= 1)
                         {
-                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; deleted {3:F1} GB of cached files",
-                                localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, Global.BytesToGB(totalBytesPurged)));
+                            LogMessage("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; deleted {3:F1} GB of cached files",
+                                localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, Global.BytesToGB(totalBytesPurged));
                         }
                         break;
                     }
@@ -4071,10 +4068,10 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
             {
-                LogMessage(string.Format(
+                LogMessage(
                     "Warning: unable to delete enough files to free up the required space on {0} " +
                     "({1:F1} GB vs. {2:F1} GB); deleted {3:F1} GB of cached files",
-                    localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, Global.BytesToGB(totalBytesPurged)));
+                    localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, Global.BytesToGB(totalBytesPurged));
             }
         }
 
@@ -4672,8 +4669,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                                     if (mDebugLevel >= 1)
                                     {
-                                        LogMessage(string.Format("Retrieved the .mzML file for {0}, job {1}, from {2}",
-                                                                 dataPkgJob.Value.Dataset, dataPkgJob.Key, sourceDirectoryPath));
+                                        LogMessage("Retrieved the .mzML file for {0}, job {1}, from {2}", dataPkgJob.Value.Dataset, dataPkgJob.Key, sourceDirectoryPath);
                                     }
 
                                     continue;
@@ -4909,9 +4905,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     if (fastaFileSizeGB > maxLegacyFASTASizeGB)
                     {
-                        LogWarning(string.Format(
+                        LogWarning(
                             "Not retrieving FASTA file {0} since it is {1:F2} GB, which is larger than the max size threshold of {2:F1} GB",
-                            legacyFastaName, fastaFileSizeGB, maxLegacyFASTASizeGB));
+                            legacyFastaName, fastaFileSizeGB, maxLegacyFASTASizeGB);
 
                         resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
@@ -5620,7 +5616,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 LogError("FASTA validation error: hash validation failed for " + fastaFile.FullName);
 
                 if (!string.Equals(expectedHash, crc32Hash))
-                    LogWarning(string.Format("For {0}, expected hash {1} but actually {2}", fastaFile.Name, expectedHash, crc32Hash));
+                    LogWarning("For {0}, expected hash {1} but actually {2}", fastaFile.Name, expectedHash, crc32Hash);
 
                 return false;
             }
