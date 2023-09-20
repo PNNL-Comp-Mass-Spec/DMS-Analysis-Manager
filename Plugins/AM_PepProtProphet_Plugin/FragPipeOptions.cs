@@ -286,23 +286,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             if (FraggerOptions.IsUndefinedOrAuto(runFreeQuantJobParam) && FraggerOptions.IsUndefinedOrAuto(runIonQuantJobParam))
             {
-                FraggerOptions.RunFreeQuant = false;
                 FraggerOptions.RunIonQuant = false;
+                FraggerOptions.RunFreeQuant = false;
                 FraggerOptions.QuantModeAutoDefined = true;
                 return;
             }
 
-            var runFreeQuant = FraggerOptions.GetParameterValueOrDefault("RunFreeQuant", false);
+            var runIonQuant = FraggerOptions.GetParameterValueOrDefault("RunIonQuant", false);
 
-            if (runFreeQuant)
+            if (runIonQuant)
             {
-                FraggerOptions.RunFreeQuant = true;
-                FraggerOptions.RunIonQuant = false;
+                FraggerOptions.RunIonQuant = true;
+                FraggerOptions.RunFreeQuant = false;
             }
             else
             {
-                FraggerOptions.RunFreeQuant = false;
-                FraggerOptions.RunIonQuant = FraggerOptions.GetParameterValueOrDefault("RunIonQuant", false);
+                FraggerOptions.RunIonQuant = false;
+                FraggerOptions.RunFreeQuant = FraggerOptions.GetParameterValueOrDefault("RunFreeQuant", false);
             }
 
             FraggerOptions.QuantModeAutoDefined = false;
