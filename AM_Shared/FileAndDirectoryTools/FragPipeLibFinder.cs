@@ -94,11 +94,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the smile-core library
         /// </summary>
+        [Obsolete("Deprecated with FragPipe v18")]
         private const string SMILE_CORE_JAR_NAME = "smile-core-2.6.0.jar";
 
         /// <summary>
         /// Name of the smile-math library
         /// </summary>
+        [Obsolete("Deprecated with FragPipe v18")]
         private const string SMILE_MATH_JAR_NAME = "smile-math-2.6.0.jar";
 
         /// <summary>
@@ -451,6 +453,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
+        [Obsolete("Deprecated with FragPipe v18")]
         public bool FindJarFileSmileCore(out FileInfo jarFile)
         {
             // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-core-2.6.0.jar
@@ -475,6 +478,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
+        [Obsolete("Deprecated with FragPipe v18")]
         public bool FindJarFileSmileMath(out FileInfo jarFile)
         {
             // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\smile-math-2.6.0.jar
@@ -499,6 +503,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="cppPresetsDirectory"></param>
         /// <returns>True if found, otherwise false</returns>
+        [Obsolete("Deprecated with FragPipe v18")]
         public bool FindCppPresetsPlatformDirectory(out DirectoryInfo cppPresetsDirectory)
         {
             // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\javacpp-presets-platform-1.5.6-bin
