@@ -1660,10 +1660,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private void LogCommandToExecute(FileSystemInfo workingDirectory, string exePath, string arguments, int workingDirectoryPadWidth = 0)
         {
-            LogDebug(string.Format("[{0}] {1} {2}",
-                workingDirectory.FullName.PadRight(workingDirectoryPadWidth),
-                exePath,
-                arguments));
+            LogDebug("[{0}] {1} {2}", workingDirectory.FullName.PadRight(workingDirectoryPadWidth), exePath, arguments);
         }
 
         private bool MoveFile(string sourceDirectoryPath, string fileName, string targetDirectoryPath)
