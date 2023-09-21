@@ -3995,6 +3995,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Use Philosopher to filter the data
+        /// </summary>
+        /// <remarks>
+        /// This will create four binary files in the .meta subdirectory for each experiment group (or in the single .meta directory if just one experiment group)
+        /// .meta\pro.bin
+        /// .meta\psm.bin
+        /// .meta\ion.bin
+        /// .meta\pep.bin
+        /// </remarks>
+        /// <param name="experimentGroupWorkingDirectories"></param>
+        /// <param name="options"></param>
+        /// <param name="usedProteinProphet"></param>
         private bool RunResultsFilter(
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options,
@@ -4013,9 +4026,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // The first time we call philosopher.exe with the filter command, use argument --razor
                 // That will create file .meta\razor.bin in the first experiment group's working directory
-                // On subsequent calls, use --razorbin and reference this file
+                // On subsequent calls, use --probin and reference the first working directory
+                // For example: --probin C:\FragPipe_Test5\Results\Leaf --razor
 
-                var razorBinFilePath = Path.Combine(experimentGroupWorkingDirectories.Values.First().FullName, @".meta\razor.bin");
+                // In FragPipe v19 and earlier, we would use --razorbin and reference file razor.bin in the first experiment group's .meta directory
+                // For example: --razorbin C:\DMS_WorkDir\Leaf\.meta\razor.bin
+
+                var firstWorkingDirectoryPath = experimentGroupWorkingDirectories.Values.First().FullName;
 
                 // ReSharper restore CommentTypo
 
@@ -4095,7 +4112,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         else
                         {
                             // Use the existing razor.bin file
-                            arguments.AppendFormat(" --razorbin {0}", razorBinFilePath);
+                            arguments.AppendFormat(" --probin {0} --razor", firstWorkingDirectoryPath);
                         }
 
                         // ReSharper restore StringLiteralTypo
