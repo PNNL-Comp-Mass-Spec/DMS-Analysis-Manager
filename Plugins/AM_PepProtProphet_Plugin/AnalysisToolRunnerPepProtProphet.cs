@@ -2574,11 +2574,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, out datasetCount);
 
-                    if (options.MatchBetweenRuns)
-                    {
-                        arguments.Append(" --multidir .");
-                    }
+                    // In FragPipe v19 and earlier, if Match-between-runs was enabled, dry-run includes "--multidir ." in the argument list
+                    // FragPipe v20 does not include "--multidir .", but testing reveals that it is required when "--mbr 1" is used
+                    // FragPipe v20 does include "--multidir ." when using TMT, even if MatchBetweenRuns is not enabled
+                    // Thus, always add "--multidir ." when there are multiple experiment group directories
 
+                    // FragPipe v19 and earlier used this:
+                    //if (options.MatchBetweenRuns)
+                    // {
+                    //     arguments.Append(" --multidir .");
+                    // }
+
+                    arguments.Append(" --multidir .");
                     arguments.AppendFormat(" --filelist {0}", fileListFile.FullName);
 
                     creatingCombinedFile = true;
