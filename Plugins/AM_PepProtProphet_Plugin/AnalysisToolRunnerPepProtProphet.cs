@@ -399,6 +399,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ProcessingStarted;
 
+                if (experimentGroupWorkingDirectories.Count > 1)
+                {
+                    // FragPipe v20 creates file experiment_annotation.tsv, listing .mzML files and the sample (aka experiment group) that each is associated with
+                    // It is unknown which tool uses the experiment_annotation.tsv file, but it doesn't hurt to create it
+
+                    CreateExperimentAnnotationFile(dataPackageInfo, datasetIDsByExperimentGroup);
+                }
+
                 if (options.OpenSearch)
                 {
                     var crystalCSuccess = RunCrystalC(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
@@ -926,6 +934,58 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogError("Error in CreateCrystalCParamFile", ex);
                 crystalcParamFile = new FileInfo("NonExistentFile.params");
                 return false;
+            }
+        }
+
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Create the file listing each dataset's .mzML file and the associated experiment group name
+        /// </summary>
+        /// <param name="dataPackageInfo"></param>
+        /// <param name="datasetIDsByExperimentGroup"></param>
+        private void CreateExperimentAnnotationFile(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup
+            )
+        {
+            var experimentAnnotationFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "experiment_annotation.tsv"));
+
+            using var writer = new StreamWriter(new FileStream(experimentAnnotationFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+            // Initially populate this list with the header names
+            // Later, use it for the values to write for each dataset
+            var dataValues = new List<string>
+            {
+                "file",
+                "sample",
+                "sample_name",
+                "condition",
+                "replicate"
+            };
+
+            // Header line
+            writer.WriteLine(string.Join("\t", dataValues));
+
+            foreach (var item in datasetIDsByExperimentGroup)
+            {
+                var experimentGroupName = item.Key;
+
+                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                foreach (var datasetId in item.Value)
+                {
+                    var datasetName = dataPackageInfo.Datasets[datasetId];
+                    var mzMLFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("{0}{1}", datasetName, AnalysisResources.DOT_MZML_EXTENSION)));
+
+                    dataValues.Clear();
+                    dataValues.Add(mzMLFile.FullName);
+                    dataValues.Add(experimentGroupName);
+                    dataValues.Add(experimentGroupName);
+                    dataValues.Add(experimentGroupName);
+                    dataValues.Add("1");
+
+                    writer.WriteLine(string.Join("\t", dataValues));
+                }
             }
         }
 
