@@ -648,7 +648,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                     {
                         // RunFreeQuant since TMT or iTRAQ is defined
                         RunFreeQuant = true;
-                        RunIonQuant = false;
+
+                        // Do not change the value for RunIonQuant; FragPipe v20 supports running both
                     }
                 }
 

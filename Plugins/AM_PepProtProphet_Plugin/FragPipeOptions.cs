@@ -240,7 +240,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                     else
                     {
-                        SetMS1QuantOptions(runFreeQuantJobParam, runIonQuantJobParam);
+                        SetMS1QuantOptions(datasetCount, runFreeQuantJobParam, runIonQuantJobParam);
                     }
 
                     // After loading the MSFragger parameter file, if the mods include TMT or iTRAQ, FreeQuant will be auto-enabled
@@ -250,7 +250,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Single dataset job
                     // Only enable MS1 quantitation if RunFreeQuant or RunIonQuant is defined as a job parameter
 
-                    SetMS1QuantOptions(runFreeQuantJobParam, runIonQuantJobParam);
+                    SetMS1QuantOptions(datasetCount, runFreeQuantJobParam, runIonQuantJobParam);
                 }
             }
 
@@ -282,11 +282,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return FraggerOptions.LoadMSFraggerOptions(paramFilePath);
         }
 
-        private void SetMS1QuantOptions(string runFreeQuantJobParam, string runIonQuantJobParam)
+        private void SetMS1QuantOptions(int datasetCount, string runFreeQuantJobParam, string runIonQuantJobParam)
         {
             if (FraggerOptions.IsUndefinedOrAuto(runFreeQuantJobParam) && FraggerOptions.IsUndefinedOrAuto(runIonQuantJobParam))
             {
-                FraggerOptions.RunIonQuant = false;
+                // Enable running IonQuant if processing multiple datasets
+                FraggerOptions.RunIonQuant = datasetCount > 1;
                 FraggerOptions.RunFreeQuant = false;
                 FraggerOptions.QuantModeAutoDefined = true;
                 return;
