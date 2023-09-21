@@ -1238,7 +1238,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Obtain a dictionary mapping the experiment group names to abbreviations versions, assuring that each abbreviation is unique
+        /// Obtain a dictionary mapping the experiment group names to abbreviated versions, assuring that each abbreviation is unique
         /// </summary>
         /// <remarks>If there is only one experiment group, the dictionary will have an empty string for the abbreviated name</remarks>
         /// <param name="experimentGroupNames"></param>
@@ -4312,7 +4312,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 arguments.AppendFormat(" {0}", tmtIntegratorConfigFile.Name);
 
                 // Since the Windows command line cannot be over 8192 characters long, populate a list of string builders with the space separated list of input files
-                // If there is a small number of datasets, there will only be one item in this list
+                // If there is a small number of datasets, there will only be one item in inputFileLists
 
                 var inputFileLists = new List<StringBuilder>();
 
@@ -5267,6 +5267,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // Abacus results file not found: reprint.spc.tsv
             // IonQuant results file not found: combined_ion.tsv
+            // IonQuant results files not found: combined_peptide.tsv, combined_protein.tsv
             // iProphet results file not found: combined.pep.xml
             // Philosopher report file not found: psm.tsv
             // Philosopher report results file not found: protein.tsv
