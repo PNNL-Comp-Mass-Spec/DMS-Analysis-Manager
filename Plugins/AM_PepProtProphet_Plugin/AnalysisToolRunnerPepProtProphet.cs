@@ -633,16 +633,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         mProgress = (int)ProgressPercentValues.IProphetComplete;
                     }
 
+                    // FragPipe v20 does not appear to run Abacus, so the following is commented out
+
                     // Only run Abacus if Protein Prophet was used
-                    if (options.RunAbacus && options.RunProteinProphet)
-                    {
-                        var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
+                    // if (options.RunAbacus && options.RunProteinProphet)
+                    // {
+                    //     var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
 
-                        if (!abacusSuccess)
-                            return CloseOutType.CLOSEOUT_FAILED;
+                    //     if (!abacusSuccess) {
+                    //         return CloseOutType.CLOSEOUT_FAILED;
+                    //     }
 
-                        mProgress = (int)ProgressPercentValues.AbacusComplete;
-                    }
+                    //     mProgress = (int)ProgressPercentValues.AbacusComplete;
+                    // }
                 }
 
                 if (options.RunIonQuant && !ms1QuantDisabled)
@@ -1886,6 +1889,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        [Obsolete("No longer used by FragPipe v19 or newer")]
         private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
