@@ -2126,10 +2126,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Create a db.bin file in the .meta subdirectory of the working directory and in any experiment directories
+        /// Create a db.bin file in the .meta subdirectory of the first working directory in experimentGroupWorkingDirectories
         /// </summary>
         /// <remarks>
-        /// The files will have the same size but are not identical, and thus we need to run the annotation command on each directory
+        /// In FragPipe v19 and earlier, the .meta subdirectory was updated at both C:\DMS_WorkDir\.meta and in each experiment group's subdirectory
+        /// With FragPipe v20 we only update the first experiment group's working directory (or only C:\DMS_WorkDir\.meta if there is only one experiment group)
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
@@ -2187,59 +2188,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 */
 
-                // First process the working directory
-                var workDirSuccess = RunDatabaseAnnotation(mWorkingDirectory, options.WorkingDirectoryPadWidth);
+                var workingDirectory = experimentGroupWorkingDirectories.Count <= 1
+                    ? mWorkingDirectory
+                    : experimentGroupWorkingDirectories.Values.First();
 
-                if (!workDirSuccess)
-                {
-                    // ReSharper disable CommentTypo
+                var workDirSuccess = RunDatabaseAnnotation(workingDirectory, options.WorkingDirectoryPadWidth);
 
-                    // Philosopher makes several assumptions about protein names, which can lead to "index out of range" errors while indexing the FASTA file
-
-                    // For example, ">AT10A_MOUSE" is assumed to be Arabidopsis thaliana because it starts with "AT"
-                    // Also, ">ZP1_MOUSE" is assumed to be an NCBI protein because it starts with "ZP"
-
-                    // Protein lines like these lead to "index out of range" errors due to erroneous assumptions in the code
-                    // For more info, see GitHub issue https://github.com/Nesvilab/philosopher/issues/411
-
-                    // Use the following commands to manually index a FASTA file to confirm that protein names are supported:
-
-                    // cd \DMS_WorkDir1
-                    // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe workspace --init --nocheck
-                    // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe database --annotate c:\DMS_Temp_Org\ID_008341_110ECBC1.fasta --prefix XXX_
-
-                    // ReSharper restore CommentTypo
-
-                    // Look for "panic:" and "runtime error:" in the cached console output error messages
-                    if (mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_PANIC_ERROR) ||
-                        mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_RUNTIME_ERROR))
-                    {
-                        // Clear mMessage so that this text appears at the start of the message:
-                        var existingMessage = mMessage;
-
-                        mMessage = string.Empty;
-
-                        LogError("Philosopher reported an error while indexing the FASTA file; " +
-                                 "it makes assumptions about protein names that can fail; " +
-                                 "rename any proteins that start with \"AT\" or \"ZP\" to instead start with \"_AT\" or \"_ZP\", then re-run MSFragger and Philosopher");
-
-                        mMessage = Global.AppendToComment(mMessage, mConsoleOutputFileParser.ConsoleOutputErrorMsg);
-
-                        if (!string.IsNullOrWhiteSpace(existingMessage))
-                        {
-                            mMessage = Global.AppendToComment(mMessage, existingMessage);
-                        }
-                    }
-                    else
-                    {
-                        mMessage = Global.AppendToComment("Philosopher reported an error while indexing the FASTA file", mMessage);
-                        LogErrorNoMessageUpdate("Philosopher reported an error while indexing the FASTA file");
-                    }
-
-                    return false;
-                }
-
-                if (experimentGroupWorkingDirectories.Count <= 1)
+                if (workDirSuccess)
                 {
                     /*
 
@@ -2254,16 +2209,48 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return true;
                 }
 
-                // Next process each of the experiment directories
-                var successCount = 0;
+                // ReSharper disable CommentTypo
 
-                // ReSharper disable once LoopCanBeConvertedToQuery
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                // Philosopher makes several assumptions about protein names, which can lead to "index out of range" errors while indexing the FASTA file
+
+                // For example, ">AT10A_MOUSE" is assumed to be Arabidopsis thaliana because it starts with "AT"
+                // Also, ">ZP1_MOUSE" is assumed to be an NCBI protein because it starts with "ZP"
+
+                // Protein lines like these lead to "index out of range" errors due to erroneous assumptions in the code
+                // For more info, see GitHub issue https://github.com/Nesvilab/philosopher/issues/411
+
+                // Use the following commands to manually index a FASTA file to confirm that protein names are supported:
+
+                // cd \DMS_WorkDir1
+                // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe workspace --init --nocheck
+                // C:\DMS_Programs\MSFragger\fragpipe\tools\philosopher\philosopher.exe database --annotate c:\DMS_Temp_Org\ID_008341_110ECBC1.fasta --prefix XXX_
+
+                // ReSharper restore CommentTypo
+
+                // Look for "panic:" and "runtime error:" in the cached console output error messages
+                if (mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_PANIC_ERROR) ||
+                    mConsoleOutputFileParser.ConsoleOutputErrorMsg.Contains(ConsoleOutputFileParser.PHILOSOPHER_RUNTIME_ERROR))
                 {
-                    var success = RunDatabaseAnnotation(experimentGroupDirectory, options.WorkingDirectoryPadWidth);
+                    // Clear mMessage so that this text appears at the start of the message:
+                    var existingMessage = mMessage;
 
-                    if (success)
-                        successCount++;
+                    mMessage = string.Empty;
+
+                    LogError("Philosopher reported an error while indexing the FASTA file; " +
+                             "it makes assumptions about protein names that can fail; " +
+                             "rename any proteins that start with \"AT\" or \"ZP\" to instead start with \"_AT\" or \"_ZP\", then re-run MSFragger and Philosopher");
+
+                    mMessage = Global.AppendToComment(mMessage, mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+
+                    if (!string.IsNullOrWhiteSpace(existingMessage))
+                    {
+                        mMessage = Global.AppendToComment(mMessage, existingMessage);
+                    }
+                }
+                else
+                {
+                    mMessage = Global.AppendToComment("Philosopher reported an error while indexing the FASTA file", mMessage);
+                    LogErrorNoMessageUpdate("Philosopher reported an error while indexing the FASTA file");
                 }
 
                 /*
@@ -2276,7 +2263,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 */
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return false;
             }
             catch (Exception ex)
             {
