@@ -1238,9 +1238,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (experimentGroupCount <= 1)
                 return mWorkingDirectory;
 
-            experimentGroupName = Global.ReplaceInvalidPathChars(experimentGroupName);
+            var cleanName = Global.ReplaceInvalidPathChars(experimentGroupName);
 
-            return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroupName));
+            return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, cleanName));
         }
 
         private float GetJobParameterOrDefault(string sectionName, string parameterName, float valueIfMissing, out bool jobParameterExists)
@@ -1475,7 +1475,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             out int workingDirectoryPadWidth)
         {
             experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
-            workingDirectoryPadWidth = 0;
 
             try
             {
@@ -1518,6 +1517,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             catch (Exception ex)
             {
                 LogError("Error in InitializePhilosopherWorkspace", ex);
+                workingDirectoryPadWidth = 0;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
