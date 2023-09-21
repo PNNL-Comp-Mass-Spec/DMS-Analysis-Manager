@@ -625,6 +625,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     if (options.RunIProphet)
                     {
+                        // Note that FragPipe v20 does not run iProphet when "Generate peptide-level summary" is checked; this may or may not be correct behavior
+
                         var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
 
                         if (!iProphetSuccess)
@@ -965,6 +967,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ReSharper disable once StringLiteralTypo
             writer.WriteLine("--specdir\t{0}", mWorkingDirectory.FullName);
+
+            // Add "--pepxml" lines with references to each experiment group's .pepXML file
+            // Note that FragPipe v20 does not include "--pepxml" lines in the IonQuant file list file, but it does not hurt to include them
 
             foreach (var item in datasetIDsByExperimentGroup)
             {
