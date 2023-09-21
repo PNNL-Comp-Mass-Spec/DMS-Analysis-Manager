@@ -4049,8 +4049,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Closed search, without match between runs:
                     // filter --sequential --picked --prot 0.01 --tag XXX_
 
-                    // Closed search, with match between runs enabled:
-                    // filter --sequential --prot 0.01 --tag XXX_
+                    // Closed search, with match between runs enabled (prior to FragPipe v20, did not include "--picked" here):
+                    // filter --sequential --picked --prot 0.01 --tag XXX_
 
                     // Open search:
                     // filter --sequential --prot 0.01 --mapmods --tag XXX_
@@ -4064,7 +4064,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --sequential");
                     }
 
-                    if (!options.MatchBetweenRuns && !options.OpenSearch)
+                    // Prior to FragPipe v20, we did not use "--picked" when match between runs was enabled
+                    // if (!options.MatchBetweenRuns && !options.OpenSearch)
+                    // {
+                    //     arguments.Append(" --picked");
+                    // }
+
+                    if (!options.OpenSearch)
                     {
                         arguments.Append(" --picked");
                     }
