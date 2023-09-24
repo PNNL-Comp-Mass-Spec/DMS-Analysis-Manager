@@ -533,7 +533,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
 
                     mProgress = (int)ProgressPercentValues.PTMProphetComplete;
-
                 }
 
                 bool usedProteinProphet;
@@ -1641,7 +1640,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var arguments = "workspace --init --nocheck";
 
                 // Run the workspace init command
-                var success = RunPhilosopher(toolType, arguments, "initialize the workspace", targetDirectory, workingDirectoryPadWidth);
+                var success = RunPhilosopher(
+                    toolType,
+                    arguments,
+                    "initialize the workspace",
+                    targetDirectory,
+                    workingDirectoryPadWidth);
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2399,7 +2403,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Since our FASTA files have both forward and reverse sequences, we use "--annotate" and "--prefix"
             var arguments = string.Format("database --annotate {0} --prefix XXX_", mFastaFilePath);
 
-            var success = RunPhilosopher(PhilosopherToolType.AnnotateDatabase, arguments, "annotate the database", workingDirectory, workingDirectoryPadWidth);
+            var success = RunPhilosopher(
+                PhilosopherToolType.AnnotateDatabase,
+                arguments,
+                "annotate the database",
+                workingDirectory,
+                workingDirectoryPadWidth);
 
             if (!success)
                 return false;
