@@ -120,6 +120,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunProteinProphet { get; set; }
 
         /// <summary>
+        /// Whether to run PTM Prophet
+        /// </summary>
+        /// <remarks>
+        /// Defaults to false, but auto-set to true if a TMT search that also looks for phospho STY
+        /// </remarks>
+        public bool RunPTMProphet { get; set; }
+
+        /// <summary>
         /// Whether to run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
@@ -270,6 +278,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             RunPTMShepherd = FraggerOptions.GetParameterValueOrDefault("RunPTMShepherd", true);
+
+            // After loading the MSFragger parameter file, if the mods include TMT and STY Phospho, PTMProphet will be auto-enabled (provided job parameter RunPTMProphet is not false)
+            RunPTMProphet = FraggerOptions.GetParameterValueOrDefault("RunPTMProphet", false);
 
             RunProteinProphet = FraggerOptions.GetParameterValueOrDefault("RunProteinProphet", true);
         }

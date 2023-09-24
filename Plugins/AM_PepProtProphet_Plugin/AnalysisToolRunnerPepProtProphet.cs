@@ -53,6 +53,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const string PHILOSOPHER_CONSOLE_OUTPUT = "Philosopher_ConsoleOutput.txt";
         private const string PHILOSOPHER_CONSOLE_OUTPUT_COMBINED = "Philosopher_ConsoleOutput_Combined.txt";
 
+        private const string PTM_PROPHET_CONSOLE_OUTPUT = "PTMProphet_ConsoleOutput.txt";
         private const string PTM_SHEPHERD_CONSOLE_OUTPUT = "PTMShepherd_ConsoleOutput.txt";
 
         /// <summary>
@@ -154,10 +155,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
             Percolator = 3,
             PercolatorOutputToPepXml = 4,
             TmtIntegrator = 5,
-            PtmShepherd = 6,
-            RewritePepXml = 7,
-            IonQuant = 8,
-            MSBooster = 9
+            PtmProphet = 6,
+            PtmShepherd = 7,
+            RewritePepXml = 8,
+            IonQuant = 9,
+            // ReSharper disable once InconsistentNaming
+            MSBooster = 10
         }
 
         private string mFastaFilePath;
@@ -165,6 +168,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private string mDiaNNProgLoc;
         private string mPercolatorProgLoc;
         private string mPhilosopherProgLoc;
+        private string mPtmProphetProgLoc;
         private string mTmtIntegratorProgLoc;
 
         private ConsoleOutputFileParser mConsoleOutputFileParser;
@@ -227,6 +231,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mPercolatorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PERCOLATOR_RELATIVE_PATH);
 
                 mPhilosopherProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PHILOSOPHER_RELATIVE_PATH);
+
+                mPtmProphetProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.PTM_PROPHET_RELATIVE_PATH);
 
                 mTmtIntegratorProgLoc = DetermineProgramLocation("MSFraggerProgLoc", FragPipeLibFinder.TMT_INTEGRATOR_JAR_RELATIVE_PATH);
 
@@ -396,6 +402,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
+                var phosphoSearch = PhosphoModDefined(options.FraggerOptions.VariableModifications);
+
+                if (options.FraggerOptions.ReporterIonMode != ReporterIonModes.Disabled && phosphoSearch)
+                {
+                    var runPTMProphetParam = mJobParams.GetJobParameter("RunPTMProphet", string.Empty);
+
+                    if (options.FraggerOptions.IsUndefinedOrAuto(runPTMProphetParam))
+                    {
+                        options.RunPTMProphet = true;
+                    }
+                }
+
                 options.WorkingDirectoryPadWidth = workingDirectoryPadWidth;
 
                 mProgress = (int)ProgressPercentValues.ProcessingStarted;
@@ -504,9 +522,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.PeptideProphetOrPercolatorComplete;
 
-                if (options.OpenSearch)
+                if (options.OpenSearch || options.RunPTMProphet)
                 {
                     // ToDo: Possibly run PTM Prophet
+                    // ToDo: Run PTM Prophet if a Phospho TMT search (and possibly for any phospho search)
+
+                    var ptmProphetSuccess = RunPTMProphet(peptideProphetPepXmlFiles, options);
+
+                    if (!ptmProphetSuccess)
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    mProgress = (int)ProgressPercentValues.PTMProphetComplete;
+
                 }
 
                 bool usedProteinProphet;
@@ -1946,12 +1973,39 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCurrentPhilosopherTool);
                     break;
 
+                case CmdRunnerModes.PtmProphet:
+                    mConsoleOutputFileParser.ParsePTMProphetConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
+                    break;
+
                 case CmdRunnerModes.Undefined:
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+        }
+
+        /// <summary>
+        /// This method looks for phosphorylated S, T, or Y in the dynamic (variable) modifications
+        /// </summary>
+        /// <param name="variableModifications">Dictionary of variable (dynamic) modifications, by residue or position</param>
+        /// <remarks>
+        /// <para>Keys in variableModifications are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
+        /// <para>Keys can alternatively be symbols indicating N or C terminal peptide or protein (e.g., [^ for protein N-terminus or n^ for peptide N-terminus)</para>
+        /// </remarks>
+        /// <returns>True if phospho S, T, or Y is defined as a dynamic modification</returns>
+        private static bool PhosphoModDefined(Dictionary<string, SortedSet<double>> variableModifications)
+        {
+            // ReSharper disable once LoopCanBeConvertedToQuery
+            foreach (var modItem in variableModifications.Where(modItem => modItem.Key.Equals("S") || !modItem.Key.Equals("T") || modItem.Key.Equals("Y")))
+            {
+                if (modItem.Value.Any(modMass => Math.Abs(79.966331 - modMass) < 0.01))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         [Obsolete("No longer used by FragPipe v19 or newer")]
@@ -3816,6 +3870,155 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        // ReSharper disable once InconsistentNaming
+
+        /// <summary>
+        /// Run PTM prophet on each .pep.xml file tracked by peptideProphetPepXmlFiles
+        /// </summary>
+        /// <param name="peptideProphetPepXmlFiles"></param>
+        /// <param name="options"></param>
+        /// <returns>True if successful, false if error</returns>
+        private bool RunPTMProphet(
+            List<FileInfo> peptideProphetPepXmlFiles,
+            FragPipeOptions options)
+        {
+            try
+            {
+                if (!options.LibraryFinder.FindFragPipeToolsDirectory(out var fragPipeToolsDirectory))
+                    return false;
+
+                var successCount = 0;
+
+                // Run PTM Prophet on each dataset
+
+                foreach (var pepXmlFile in peptideProphetPepXmlFiles)
+                {
+                    var success = RunPTMProphetOnDataset(
+                        pepXmlFile,
+                        options);
+
+                    if (!success)
+                        continue;
+
+                    successCount++;
+                }
+
+                return successCount == peptideProphetPepXmlFiles.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunPTMProphet", ex);
+                return false;
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
+        private bool RunPTMProphetOnDataset(FileInfo pepXmlFile, FragPipeOptions options)
+        {
+            const string PEP_XML_FILE_SUFFIX = ".pep.xml";
+            const string MOD_PEP_XML_FILE_SUFFIX = ".mod.pep.xml";
+
+            try
+            {
+                LogDebug("Running PTM Prophet", 2);
+
+                // ReSharper disable CommentTypo
+
+                // Example command line:
+                // C:\DMS_Programs\MSFragger\fragpipe\tools\PTMProphet\PTMProphetParser.exe KEEPOLD STATIC EM=1 NIONS=b STY:79.966331,M:15.9949 MINPROB=0.5 MAXTHREADS=1 interact-DatasetName.pep.xml interact-DatasetName.mod.pep.xml
+
+                // ReSharper restore CommentTypo
+
+                if (!pepXmlFile.Exists)
+                {
+                    // Peptide Prophet .pep.xml file not found
+                    LogError("Cannot run PTM Prophet; Peptide Prophet {0} file not found: {1}", PEP_XML_FILE_SUFFIX, pepXmlFile.FullName);
+                    return false;
+                }
+
+                if (!pepXmlFile.FullName.EndsWith(PEP_XML_FILE_SUFFIX))
+                {
+                    // Peptide Prophet result file does not end in '.pep.xml'
+                    LogError("Cannot run PTM Prophet; Peptide Prophet result file does not end in '{0}': {1}", PEP_XML_FILE_SUFFIX, pepXmlFile.FullName);
+                    return false;
+                }
+
+                var modPepXmlFile = new FileInfo(pepXmlFile.FullName.Replace(PEP_XML_FILE_SUFFIX, MOD_PEP_XML_FILE_SUFFIX));
+
+                if (!modPepXmlFile.Exists)
+                {
+                    // Peptide Prophet .mod.pep.xml file not found
+                    LogError("Cannot run PTM Prophet; Peptide Prophet {0} file not found: {1}", MOD_PEP_XML_FILE_SUFFIX, modPepXmlFile.FullName);
+                    return false;
+                }
+
+                // ReSharper disable StringLiteralTypo
+
+                var arguments = string.Format(
+                    "KEEPOLD STATIC EM=1 NIONS=b STY:79.966331,M:15.9949 MINPROB=0.5 MAXTHREADS=1 " +
+                    "{0} " +
+                    "{1}",
+                    pepXmlFile.Name,
+                    modPepXmlFile.Name);
+
+                // ReSharper restore StringLiteralTypo
+
+                InitializeCommandRunner(
+                    pepXmlFile.Directory,
+                    Path.Combine(mWorkingDirectory.FullName, PTM_PROPHET_CONSOLE_OUTPUT),
+                    CmdRunnerModes.PtmProphet);
+
+                LogCommandToExecute(pepXmlFile.Directory, mPtmProphetProgLoc, arguments, options.WorkingDirectoryPadWidth);
+
+                // Start the program and wait for it to finish
+                // However, while it's running, LoopWaiting will get called via events
+                var processingSuccess = mCmdRunner.RunProgram(mPtmProphetProgLoc, arguments, "PTMProphetParser", true);
+
+                if (!mConsoleOutputFileParsed)
+                {
+                    ParseConsoleOutputFile();
+                }
+
+                if (!string.IsNullOrEmpty(mConsoleOutputFileParser.ConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
+                }
+
+                if (processingSuccess)
+                {
+                    // ToDo: Verify that the PTM Prophet results file was created
+
+                    // var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Prophet_Results.txt"));
+
+                    //if (!outputFile.Exists)
+                    //{
+                    //    LogError("IonQuant results file not found: " + outputFile.Name);
+                    //    return false;
+                    //}
+
+                    return true;
+                }
+
+                if (mCmdRunner.ExitCode != 0)
+                {
+                    LogWarning("PTM Prophet returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                }
+                else
+                {
+                    LogWarning("Call to PTM Prophet failed (but exit code is 0)");
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RunPTMProphetOnDataset", ex);
+                mCmdRunner.RaiseConsoleErrorEvents = true;
+                return false;
+            }
+        }
+
+        // ReSharper disable once InconsistentNaming
         private bool RunPTMShepherd(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
         {
             try
@@ -3845,6 +4048,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Find the Commons-Math3 jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar
                 if (!options.LibraryFinder.FindJarFileCommonsMath(out var jarFileCommonsMath))
                     return false;
+
+                // ReSharper restore CommentTypo
 
                 // Create the PTM-Shepherd config file
                 var ptmShepherdConfigFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "shepherd.config"));

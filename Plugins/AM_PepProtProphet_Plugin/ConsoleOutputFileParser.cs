@@ -576,6 +576,79 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        /// <summary>
+        /// Parse the PTM Prophet console output file
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
+        public void ParsePTMProphetConsoleOutputFile(string consoleOutputFilePath)
+        {
+            // ----------------------------------------------------
+            // Example Console output
+            //
+            // ToDo: add example console output
+            // ----------------------------------------------------
+
+            try
+            {
+                var consoleOutputFile = new FileInfo(consoleOutputFilePath);
+
+                if (!consoleOutputFile.Exists)
+                {
+                    if (DebugLevel >= 4)
+                    {
+                        OnDebugEvent("Console output file not found: " + consoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                ConsoleOutputErrorMsg = string.Empty;
+
+                if (DebugLevel >= 4)
+                {
+                    OnDebugEvent("Parsing file " + consoleOutputFile.FullName);
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLineWithColor = reader.ReadLine() ?? string.Empty;
+
+                    var dataLine = ColorTagMatcher.Replace(dataLineWithColor, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    // ToDo: customize the check for errors
+
+                    // ReSharper disable once InvertIf
+                    if (dataLine.StartsWith("Error:") && !ConsoleOutputErrorMsg.Contains(dataLine))
+                    {
+                        // Fatal error
+                        if (string.IsNullOrWhiteSpace(ConsoleOutputErrorMsg))
+                        {
+                            ConsoleOutputErrorMsg = string.Format("Error running {0}: {1}", "PTM Prophet", dataLine);
+                            OnWarningEvent(ConsoleOutputErrorMsg);
+                        }
+                        else
+                        {
+                            ConsoleOutputErrorMsg += "; " + dataLine;
+                            OnWarningEvent(dataLine);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (DebugLevel >= 2)
+                {
+                    OnErrorNoMessageUpdate("Error parsing the PTM Prophet console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                }
+            }
+        }
+
         [Obsolete("Old method, superseded by ParsePhilosopherConsoleOutputFile and ParsePercolatorConsoleOutputFile")]
         private void ParseConsoleOutputFile()
         {

@@ -16,7 +16,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FragPipeLibFinder : EventNotifier
     {
-        // Ignore Spelling: batmass-io, bruker, cd, crystalc, diann, fragpipe, grppr, ionquant, javacpp, jfreechart, msbooster, ptmshepherd, tmt, usr
+        // Ignore Spelling: batmass-io, bruker, cd, crystalc, diann, frag, fragpipe, grppr, ionquant
+        // Ignore Spelling: javacpp, jfreechart, msbooster, MSFragger, PTM, ptmshepherd, tmt, usr
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
         /// <summary>
@@ -85,6 +86,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Relative path to the percolator .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
         public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-306\percolator.exe";
+
+        /// <summary>
+        /// Relative path to the PTM Prophet .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
+        /// </summary>
+        public const string PTM_PROPHET_RELATIVE_PATH = @"fragpipe\tools\PTMProphet\PTMProphetParser.exe";
 
         /// <summary>
         /// Name of the PTM Shepherd jar file
