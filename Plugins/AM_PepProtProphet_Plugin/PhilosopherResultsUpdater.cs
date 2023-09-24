@@ -109,7 +109,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </para>
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Experiment group working directories</param>
-        /// <param name="usedProteinProphet">True if protein prophet was used</param>
+        /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <param name="totalPeptideCount">Output: total number of result lines in the peptide.tsv file(s)</param>
         /// <returns>True if successful, false if an error</returns>
         public bool UpdatePhilosopherReportFiles(
@@ -381,7 +381,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="datasetOrExperimentGroupName"></param>
         /// <param name="workingDirectory"></param>
-        /// <param name="usedProteinProphet">True if protein prophet was used</param>
+        /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherProteinFile(
             string datasetOrExperimentGroupName,

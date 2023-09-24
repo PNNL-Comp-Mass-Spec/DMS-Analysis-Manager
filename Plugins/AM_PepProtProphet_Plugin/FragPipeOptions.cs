@@ -108,11 +108,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Whether or not to run MSBooster
         /// </summary>
-        /// <remarks>When MSBooster is used, Percolator must be used (and peptide prophet should not be used)</remarks>
+        /// <remarks>When MSBooster is used, Percolator must be used (and Peptide Prophet should not be used)</remarks>
         public bool RunMSBooster { get; set; }
 
         /// <summary>
-        /// Whether to run protein prophet (if peptide prophet was used)
+        /// Whether to run Protein Prophet (if Peptide Prophet was used)
         /// </summary>
         /// <remarks>
         /// Defaults to true
@@ -246,7 +246,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         SetMS1QuantOptions(datasetCount, runFreeQuantJobParam, runIonQuantJobParam);
                     }
 
-                    // After loading the MSFragger parameter file, if the mods include TMT or iTRAQ, FreeQuant will be auto-enabled
+                    // After loading the MSFragger parameter file, if the mods include TMT or iTRAQ, FreeQuant will be auto-enabled (provided job parameter RunFreeQuant is not false)
                 }
                 else
                 {

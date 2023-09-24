@@ -420,6 +420,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 bool psmValidationSuccess;
 
                 // This tracks the files created by either Peptide Prophet or Percolator
+                // Example filename: interact-DatasetName.pep.xml
                 List<FileInfo> peptideProphetPepXmlFiles;
 
                 var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
@@ -745,6 +746,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Example command line:
                 // java -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML DatasetName.pin DatasetName DatasetName_percolator_target_psms.tsv DatasetName_percolator_decoy_psms.tsv interact-DatasetName DDA 0.5
 
+                // ReSharper restore CommentTypo
+
                 var targetPsmFile = GetPercolatorFileName(datasetName, false);
                 var decoyPsmFile = GetPercolatorFileName(datasetName, true);
                 var pinFile = string.Format("{0}.pin", datasetName);
@@ -784,7 +787,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     probabilityThreshold,
                     mzMLFile.FullName);
 
-                // ReSharper restore CommentTypo
                 // ReSharper restore StringLiteralTypo
 
                 InitializeCommandRunner(
@@ -1102,7 +1104,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetIDsByExperimentGroup"></param>
         /// <param name="paramFilePath"></param>
         /// <param name="msBoosterParamFile"></param>
-        /// <returns>True if success, false if an error</returns>
+        /// <returns>True if successful, false if error</returns>
         private bool CreateMSBoosterParamFile(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -1630,7 +1632,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="datasetCount"></param>
         /// <param name="paramFilePath"></param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
-        /// <returns>True if success, false if an error</returns>
+        /// <returns>True if successful, false if error</returns>
         private bool LoadMSFraggerOptions(FileInfo philosopherExe, int datasetCount, string paramFilePath, out FragPipeOptions options)
         {
             options = new FragPipeOptions(mJobParams, philosopherExe, datasetCount);
@@ -3034,6 +3036,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ToDo: Verify that the LabelQuant results file was created
                     var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
+
                     //if (!outputFile.Exists)
                     //{
                     //    LogError("LabelQuant results file not found: " + outputFile.Name);
@@ -3238,7 +3241,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (options.FraggerOptions.DIASearchEnabled)
                     {
-                        // Each dataset will have multiple .pepXML files; run peptide prophet separately on each one
+                        // Each dataset will have multiple .pepXML files; run Peptide Prophet separately on each one
                         foreach (var item in (workingDirectory.Parent.GetFiles(string.Format("{0}_rank*.pepXML", datasetName))))
                         {
                             pepXmlFiles.Add(string.Format(@"..\{0}", item.Name));
@@ -3913,7 +3916,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 );
 
                 // ReSharper restore StringLiteralTypo
-                // ReSharper restore CommentTypo
 
                 InitializeCommandRunner(
                     mWorkingDirectory,
@@ -4089,9 +4091,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // In FragPipe v19 and earlier, we would use --razorbin and reference file razor.bin in the first experiment group's .meta directory
                 // For example: --razorbin C:\DMS_WorkDir\Leaf\.meta\razor.bin
 
-                var firstWorkingDirectoryPath = experimentGroupWorkingDirectories.Values.First().FullName;
-
                 // ReSharper restore CommentTypo
+
+                var firstWorkingDirectoryPath = experimentGroupWorkingDirectories.Values.First().FullName;
 
                 foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
                 {
@@ -4781,7 +4783,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
-        /// <returns>True if success, false if an error</returns>
+        /// <returns>True if successful, false if error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
@@ -4910,7 +4912,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="interactFilesByDatasetID"></param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pep.xml files created by PeptideProphet</param>
-        /// <returns>True if success, false if an error</returns>
+        /// <returns>True if successful, false if error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
             DataPackageInfo dataPackageInfo,
             Dictionary<int, DirectoryInfo> workspaceDirectoryByDatasetId,
@@ -5045,7 +5047,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </para>
         /// </remarks>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <param name="usedProteinProphet">True if protein prophet was used</param>
+        /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherReportFiles(
             IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
@@ -5312,7 +5314,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="options"></param>
-        /// <returns>True if success, false if an error</returns>
+        /// <returns>True if successful, false if error</returns>
         private bool ZipPepXmlAndPinFiles(DataPackageInfo dataPackageInfo, FragPipeOptions options)
         {
             try
@@ -5369,8 +5371,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// but only if there are more than three experiment groups
         /// </summary>
         /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <param name="usedProteinProphet">True if protein prophet was used</param>
-        /// <returns>True if success, false if an error</returns>
+        /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
+        /// <returns>True if successful, false if error</returns>
         private bool ZipPsmTsvFiles(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, bool usedProteinProphet)
         {
             try
