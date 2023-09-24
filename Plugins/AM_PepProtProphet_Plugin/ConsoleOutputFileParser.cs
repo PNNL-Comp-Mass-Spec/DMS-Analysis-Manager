@@ -79,9 +79,71 @@ namespace AnalysisManagerPepProtProphetPlugIn
             string consoleOutputFilePath,
             AnalysisToolRunnerPepProtProphet.CmdRunnerModes cmdRunnerMode)
         {
+            // ReSharper disable CommentTypo
+
             // ----------------------------------------------------
-            // Example Console output
+            // Example MSBooster Console output (excerpt)
+            //
+            // MSBooster v1.1.11
+            // Using 4 threads
+            // Generating input file for DIA-NN
+            // 98095 unique peptides from 145365 PSMs
+            // Writing DIA-NN input file
+            // Diann input file generation took 1119 milliseconds
+            // Input file at  D:\DMS_WorkDir4\Leaf\spectraRT.tsv
+            // 98095 unique peptides from 145365 PSMs
+            // createFull input file generation took 649 milliseconds
+            // Input file at  D:\DMS_WorkDir4\Leaf\spectraRT_full.tsv
+            // Generating DIA-NN predictions
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\diann\1.8.2_beta_8\win\DiaNN.exe --lib D:\DMS_WorkDir4\Leaf\spectraRT.tsv --predict --threads 4 --strip-unknown-mods --mod TMT,229.1629 --predict-n-frag 100
+            // DIA-NN 1.8.2 beta 8 (Data-Independent Acquisition by Neural Networks)
+            // ...
+            // DIA-NN will use deep learning to predict spectra/RTs/IMs even for peptides carrying modifications which are not recognised by the deep learning predictor. In this scenario, if also generating a spectral library from the DIA data or using the MBR mode, it might or might not be better (depends on the data) to also use the --out-measured-rt option - it's recommended to test it with and without this option
+            // Modification TMT with mass delta 229.163 added to the list of recognised modifications for spectral library-based search
+            // Deep learning predictor will predict 100 fragments
+            // Cannot find a UniMod modification match for TMT: 73.0618 minimal mass discrepancy; using the original modificaiton name
+            // ...
+            // Done generating DIA-NN predictions
+            // Model running took 67742 milliseconds
+            // Generating edited pin with following features: [unweightedSpectralEntropy, deltaRTLOESS]
+            // Loading predicted spectra
+            // Processing Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10.mzML
+            // RT regression using 4158 PSMs
+            // Edited pin file at D:\DMS_WorkDir4\Leaf\Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10_edited.pin
+            // ...
+            // Done in 24566 ms
             // ----------------------------------------------------
+
+            // ----------------------------------------------------
+            // Example IonQuant Console output (excerpt)
+            //
+            // IonQuant version IonQuant-1.9.8
+            // Batmass-IO version 1.28.12
+            // timsdata library version timsdata-2-21-0-4
+            // (c) University of Michigan
+            // System OS: Windows 10, Architecture: AMD64
+            // Java Info: 11.0.12, OpenJDK 64-Bit Server VM, Eclipse Foundation
+            // JVM started with 16 GB memory
+            // 2023-09-20 19:30:33 [WARNING] - There are only 2 experiments. Will not calculate MaxLFQ intensity.
+            // 2023-09-20 19:30:33 [INFO] - Collecting variable modifications from all psm.tsv files...
+            // 2023-09-20 19:30:33 [INFO] - Loading and indexing all psm.tsv files...
+            // 2023-09-20 19:30:34 [INFO] - Collecting all compensation voltages if applicable...
+            // ...
+            // 2023-09-20 19:30:53 [INFO] - Quantifying...
+            // ...
+            // 2023-09-20 19:31:15 [INFO] - Training LDA models for all matched features.
+            // ...
+            // 2023-09-20 19:31:27 [INFO] - Fitting a mixture model...
+            // 2023-09-20 19:31:28 [INFO] - Estimating match-between-runs FDR...
+            // 2023-09-20 19:31:28 [INFO] - With ion FDR 0.010000, ion probability threshold is 0.964800
+            // 2023-09-20 19:31:28 [INFO] - With peptide FDR 1.000000, peptide probability threshold is -0.000100
+            // 2023-09-20 19:31:28 [INFO] - With protein FDR 1.000000, protein probability threshold is -0.000100
+            // 2023-09-20 19:31:28 [INFO] - Updating Philosopher's tables...
+            // 2023-09-20 19:31:30 [INFO] - Combining experiments and estimating protein intensity...
+            // 2023-09-20 19:31:32 [INFO] - Done!
+            // ----------------------------------------------------
+
+            // ReSharper restore CommentTypo
 
             try
             {
@@ -220,9 +282,49 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="consoleOutputFilePath"></param>
         public void ParsePercolatorConsoleOutputFile(string consoleOutputFilePath)
         {
+            // ReSharper disable CommentTypo
+
             // ----------------------------------------------------
-            // Example Console output
+            // Example Console output (excerpt)
+            //
+            // Protein decoy-preix used is _ARATH
+            // All files have been read
+            // Percolator version 3.06.0, Build Date May 11 2022 12:43:39
+            // Copyright (c) 2006-9 University of Washington. All rights reserved.
+            // Written by Lukas Käll (lukall@u.washington.edu) in the
+            // Department of Genome Sciences at the University of Washington.
+            // Issued command:
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\percolator-306\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10_percolator_target_psms.tsv --decoy-results-psms Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10_edited.pin
+            // Started Wed Sep 20 19:27:27 2023
+            // Hyperparameters: selectionFdr=0.01, Cpos=0, Cneg=0, maxNiter=10
+            // Reading tab-delimited input from datafile Arabid_Leaf_2_DDM_BU_3June22_Rage_Rep-22-03-10_edited.pin
+            // Features:
+            // rank abs_ppm isotope_errors log10_evalue hyperscore delta_hyperscore matched_ion_num complementary_ions ion_series weighted_average_abs_fragment_ppm peptide_length ntt nmc charge_1 charge_2 charge_3 charge_4 charge_5 charge_6 charge_7_or_more group_1 group_2 group_3 group_other 15.994915M unweighted_spectral_entropy delta_RT_loess
+            // Found 27965 PSMs
+            // Concatenated search input detected and --post-processing-tdc flag set. Applying target-decoy competition on Percolator scores.
+            // Train/test set contains 18978 positives and 8987 negatives, size ratio=2.11172 and pi0=1
+            // Selecting Cpos by cross-validation.
+            // Selecting Cneg by cross-validation.
+            // Split 1:	Selected feature 4 as initial direction. Could separate 5428 training set positives with q<0.01 in that direction.
+            // Split 2:	Selected feature 4 as initial direction. Could separate 5302 training set positives with q<0.01 in that direction.
+            // Split 3:	Selected feature 4 as initial direction. Could separate 5422 training set positives with q<0.01 in that direction.
+            // Found 8034 test set positives with q<0.01 in initial direction
+            // Reading in data and feature calculation took 0.5210 cpu seconds or 1 seconds wall clock time.
+            // ---Training with Cpos selected by cross validation, Cneg selected by cross validation, initial_fdr=0.01, fdr=0.01
+            // Iteration 1:	Estimated 9378 PSMs with q<0.01
+            // ...
+            // Learned normalized SVM weights for the 3 cross-validation splits:
+            // ...
+            // Found 9557 test set PSMs with q<0.01.
+            // Selected best-scoring PSM per scan+expMass (target-decoy competition): 18978 target PSMs and 8987 decoy PSMs.
+            // Calculating q values.
+            // Final list yields 9559 target PSMs with q<0.01.
+            // Calculating posterior error probabilities (PEPs).
+            // Processing took 4.9100 cpu seconds or 5 seconds wall clock time.
+            //
             // ----------------------------------------------------
+
+            // ReSharper restore CommentTypo
 
             try
             {
@@ -342,18 +444,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ----------------------------------------------------
             // Example Console output when running FreeQuant
+            //
+            // INFO[19:00:24] Executing Label-free quantification  v5.0.0
+            // INFO[19:00:24] Indexing PSM information
+            // INFO[19:00:24] Reading spectra and tracing peaks
+            // INFO[19:00:24] Processing Emory_Rush_TMT_b02_04
+            // INFO[19:00:53] Assigning intensities to data layers
+            // INFO[19:00:53] Done
+            //
             // ----------------------------------------------------
-            // ToDo: add functionality for this
 
             // ----------------------------------------------------
             // Example Console output when running LabelQuant
+            //
+            // INFO[19:01:58] Executing Isobaric-label quantification  v5.0.0
+            // INFO[19:01:58] Calculating intensities and ion interference
+            // INFO[19:01:58] Processing Emory_Rush_TMT_b02_04
+            // INFO[19:02:25] Filtering spectra for label quantification
+            // INFO[19:02:25] Removing 313 PSMs from isobaric quantification
+            // INFO[19:02:25] Saving
+            // INFO[19:02:26] Done
+            //
             // ----------------------------------------------------
-            // ToDo: add functionality for this
 
             // ----------------------------------------------------
-            // Example Console output when running Abacus
+            // Example Console output when running iProphet
+            //
+            // INFO[19:29:20] Executing InterProphet  v5.0.0
+            // Running FPKM NSS NRS NSE NSI NSM Model EM:
+            // Computing NSS values ...
             // ----------------------------------------------------
-            // ToDo: add functionality for this
 
             // ReSharper restore CommentTypo
 
