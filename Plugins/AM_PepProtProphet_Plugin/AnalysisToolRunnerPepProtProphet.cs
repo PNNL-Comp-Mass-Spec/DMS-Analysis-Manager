@@ -128,13 +128,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
             CrystalCComplete = 5,
             MSBoosterComplete = 10,
             PeptideProphetOrPercolatorComplete = 15,
+            PTMProphetComplete = 18,
             ProteinProphetComplete = 30,
             DBAnnotationComplete = 45,
             ResultsFilterComplete = 60,
             FreeQuantOrLabelQuantComplete = 75,
             ReportGenerated = 85,
             IProphetComplete = 86,
-            AbacusComplete = 87,
+            // Deprecated: AbacusComplete = 87,
             IonQuantComplete = 90,
             TmtIntegratorComplete = 93,
             PtmShepherdComplete = 95,
@@ -145,7 +146,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Command runner modes
         /// </summary>
-        public enum CmdRunnerModes
+        internal enum CmdRunnerModes
         {
             Undefined = 0,
             Philosopher = 1,
