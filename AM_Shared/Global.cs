@@ -80,11 +80,6 @@ namespace AnalysisManagerBase
         public static bool OfflineMode { get; private set; }
 
         /// <summary>
-        /// Looks for strings that end with an integer
-        /// </summary>
-        private static readonly Regex mReturnCodeMatcher = new(@"(?<Number>\d+)\s*$", RegexOptions.Compiled);
-
-        /// <summary>
         /// When true, show trace messages
         /// </summary>
         public static bool TraceMode { get; set; }
