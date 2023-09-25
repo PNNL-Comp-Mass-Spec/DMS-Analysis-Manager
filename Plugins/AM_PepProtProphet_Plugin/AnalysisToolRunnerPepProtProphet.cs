@@ -3953,14 +3953,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return false;
                 }
 
+                // Define the PTM Prophet output file
                 var modPepXmlFile = new FileInfo(pepXmlFile.FullName.Replace(PEP_XML_FILE_SUFFIX, MOD_PEP_XML_FILE_SUFFIX));
-
-                if (!modPepXmlFile.Exists)
-                {
-                    // Peptide Prophet .mod.pep.xml file not found
-                    LogError("Cannot run PTM Prophet; Peptide Prophet {0} file not found: {1}", MOD_PEP_XML_FILE_SUFFIX, modPepXmlFile.FullName);
-                    return false;
-                }
 
                 // ReSharper disable StringLiteralTypo
 
@@ -3994,19 +3988,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
+
+
+
                 if (processingSuccess)
                 {
-                    // ToDo: Verify that the PTM Prophet results file was created
+                    if (modPepXmlFile.Exists)
+                        return true;
 
-                    // var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Prophet_Results.txt"));
-
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("IonQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
-
-                    return true;
+                    LogError("PTM Prophet results file not found: " + modPepXmlFile.Name);
+                    return false;
                 }
 
                 if (mCmdRunner.ExitCode != 0)
