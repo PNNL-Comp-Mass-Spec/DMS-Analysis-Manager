@@ -1592,7 +1592,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         LogMessage(
                             "Simulate call to mFastaTools.ExportFASTAFile for " +
-                            "ProteinCollectionList '{0}', ProteinCollectionOptions '{1}',  and legacy FASTA {2}", 
+                            "ProteinCollectionList '{0}', ProteinCollectionOptions '{1}',  and legacy FASTA {2}",
                             proteinCollectionInfo.ProteinCollectionList,
                             proteinCollectionInfo.ProteinCollectionOptions,
                             legacyFastaToUse);

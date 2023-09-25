@@ -13,8 +13,8 @@ namespace TestMagePlugIn {
 
         private Dictionary<string, string> mJobParms = new Dictionary<string, string>() {
                 {"DataPackageID", "161"},
-                {"ExtractionSource", "JobsFromDataPackageIDForTool"}, 
- //               {"Tool", "MASIC_Finnigan"}, 
+                {"ExtractionSource", "JobsFromDataPackageIDForTool"},
+ //               {"Tool", "MASIC_Finnigan"},
 
                 {"transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\159_MAC_Test_Data_Package_For_Improv"},
                 {"DataPackageSourceFolderName", "ImportFiles"},
@@ -39,7 +39,7 @@ namespace TestMagePlugIn {
             JobParamsStub m_jobParams = new JobParamsStub(mJobParms);
 
             MageAMOperations ops = new MageAMOperations(m_jobParams, m_mgrParams);
- 
+
             ops.ImportFirstHits();
             ops.ImportReporterIons();
         }
