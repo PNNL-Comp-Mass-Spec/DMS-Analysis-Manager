@@ -124,6 +124,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <remarks>
         /// Defaults to false, but auto-set to true if a TMT search that also looks for phospho STY
+        /// Also auto-set to true if running an Open Search
+        /// Not set to true if job parameter RunPTMProphet is false
         /// </remarks>
         public bool RunPTMProphet { get; set; }
 

@@ -404,7 +404,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var phosphoSearch = PhosphoModDefined(options.FraggerOptions.VariableModifications);
 
-                if (options.FraggerOptions.ReporterIonMode != ReporterIonModes.Disabled && phosphoSearch)
+                if (options.OpenSearch || options.FraggerOptions.ReporterIonMode != ReporterIonModes.Disabled && phosphoSearch)
                 {
                     var runPTMProphetParam = mJobParams.GetJobParameter("RunPTMProphet", string.Empty);
 
@@ -522,10 +522,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.PeptideProphetOrPercolatorComplete;
 
-                if (options.OpenSearch || options.RunPTMProphet)
+                if (options.RunPTMProphet)
                 {
-                    // ToDo: Possibly run PTM Prophet
-                    // ToDo: Run PTM Prophet if a Phospho TMT search (and possibly for any phospho search)
+                    // By default, PTM Prophet is run when MSFragger searched for iTRAQ or TMT labeled peptides and also looked for phospho STY
+                    // Additionally, PTM Prophet is used when performing an Open Search
+                    // However, if job parameter RunPTMProphet is false, options.RunPTMProphet will be false
 
                     var ptmProphetSuccess = RunPTMProphet(peptideProphetPepXmlFiles, options);
 
