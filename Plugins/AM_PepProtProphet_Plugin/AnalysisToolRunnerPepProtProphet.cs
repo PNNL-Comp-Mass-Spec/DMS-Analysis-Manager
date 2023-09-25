@@ -2466,14 +2466,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         continue;
                     }
 
-                    // ToDo: Verify that the FreeQuant results file was created
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
-
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("FreeQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
+                    // FreeQuant updates files in the .meta directory, so there is not a text file to look for to verify that FreeQuant completed successfully
 
                     successCount++;
                 }
@@ -3102,14 +3095,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         continue;
                     }
 
-                    // ToDo: Verify that the LabelQuant results file was created
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "Philosopher_Results.txt"));
-
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("LabelQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
+                    // LabelQuant updates files in the .meta directory, so there is not a text file to look for to verify that LabelQuant completed successfully
 
                     successCount++;
                 }
