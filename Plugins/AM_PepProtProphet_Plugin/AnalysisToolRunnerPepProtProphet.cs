@@ -97,6 +97,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private const string TEMP_PEP_PROPHET_DIR_SUFFIX = ".pepXML-temp";
 
+        private const string META_SUBDIRECTORY = ".meta";
+
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
         private const string TMT_REPORT_DIRECTORY = "tmt-report";
@@ -311,8 +313,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mJobParams.AddResultFileToSkip("reprint.int.tsv");
                 mJobParams.AddResultFileToSkip("reprint.spc.tsv");
 
-                var success = CopyResultsToTransferDirectory();
+                var subdirectoriesToSkip = new SortedSet<string>
+                {
+                    Path.Combine(mWorkingDirectory.FullName, META_SUBDIRECTORY)
+                };
 
+                if (mExperimentGroupWorkingDirectories.Count > 1)
+                {
+                    foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories)
+                    {
+                        subdirectoriesToSkip.Add(experimentGroupDirectory.Value.FullName);
+                    }
+                }
+
+                var success = CopyResultsToTransferDirectory(true, subdirectoriesToSkip);
+
+                // ReSharper disable once ConvertIfStatementToReturnStatement
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -382,7 +398,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var versionSuccess = DeterminePhilosopherVersion();
 
                 if (!versionSuccess)
+                {
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 var moveFilesSuccess = OrganizePepXmlAndPinFiles(
                     out var dataPackageInfo,
@@ -2468,7 +2486,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // The database annotation command should have created db.bin in the .meta directory:
             // Verify that it was created
 
-            var outputFile = new FileInfo(Path.Combine(workingDirectory.FullName, ".meta", "db.bin"));
+            var outputFile = new FileInfo(Path.Combine(workingDirectory.FullName, META_SUBDIRECTORY, "db.bin"));
 
             if (outputFile.Exists)
             {
@@ -4449,7 +4467,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // Verify that file psm.bin was created
 
-                    var outputFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, ".meta", "psm.bin"));
+                    var outputFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, META_SUBDIRECTORY, "psm.bin"));
 
                     if (!outputFile.Exists)
                     {
