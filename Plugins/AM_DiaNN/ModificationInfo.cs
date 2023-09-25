@@ -11,6 +11,8 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </remarks>
     public class ModificationInfo
     {
+        // Ignore Spelling: DIA
+
         /// <summary>
         /// Affected residues or peptide/protein position
         /// </summary>

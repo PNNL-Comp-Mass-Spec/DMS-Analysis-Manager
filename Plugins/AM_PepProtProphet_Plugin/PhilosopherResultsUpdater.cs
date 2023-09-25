@@ -11,7 +11,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Hyperscore, Nextscore, Prev, psm
+        // Ignore Spelling: Hyperscore, Nextscore, Prev, prot, psm
 
         // ReSharper restore CommentTypo
 

@@ -16,8 +16,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
     /// </summary>
     public class FragPipeLibFinder : EventNotifier
     {
-        // Ignore Spelling: batmass-io, bruker, cd, crystalc, diann, frag, fragpipe, grppr, ionquant
-        // Ignore Spelling: javacpp, jfreechart, msbooster, MSFragger, PTM, ptmshepherd, tmt, usr
+        // Ignore Spelling: batmass-io, bruker, cd, cpp, crystalc, diann, frag, fragpipe, grppr, ionquant
+        // Ignore Spelling: javacpp, jfreechart, msbooster, MSFragger, PTM, ptmshepherd, quant, tmt, usr
         // Ignore Spelling: \batmass, \bruker, \fragpipe, \thermo, \tools
 
         /// <summary>

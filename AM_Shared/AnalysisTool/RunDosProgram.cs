@@ -17,7 +17,7 @@ namespace AnalysisManagerBase.AnalysisTool
     /// </summary>
     public class RunDosProgram : EventNotifier
     {
-        // Ignore Spelling: usr
+        // Ignore Spelling: prog, usr
 
         /// <summary>
         /// Monitor interval, in milliseconds
