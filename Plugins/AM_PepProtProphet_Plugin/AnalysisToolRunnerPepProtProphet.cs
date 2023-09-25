@@ -79,9 +79,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public const int MSBOOSTER_MEMORY_SIZE_GB = 16;
 
         /// <summary>
-        /// Reserve 16 GB when running TMT-Integrator
+        /// Reserve 11 GB when running TMT-Integrator
         /// </summary>
-        public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 16;
+        public const int TMT_INTEGRATOR_MEMORY_SIZE_GB = 11;
 
         /// <summary>
         /// Extension for peptide XML files
@@ -4480,6 +4480,36 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Create the TMT-Integrator config file
                 var tmtIntegratorConfigFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "tmt-integrator-conf.yml"));
 
+                var phosphoSearch = PhosphoModDefined(options.FraggerOptions.VariableModifications);
+
+                // ReSharper disable once CommentTypo
+
+                string groupBy;                 // Summarization level: 0=aggregation at the gene level, -1=generate reports at all levels, see below for others
+                string minPepProb;              // Minimum PSM probability
+                string minIntensityPercent;     // Minimum Intensity percent; remove low intensity PSMs based on summed TMT reporter ion intensity
+                string minPurity;               // Ion purity score threshold
+                string minSiteProbability;      // Site localization confidence threshold
+                string ptmModTag;
+
+                if (phosphoSearch)
+                {
+                    groupBy = "-1";
+                    minPepProb = "0.5";
+                    minIntensityPercent = "0.025";
+                    minPurity = "0.5";
+                    minSiteProbability = options.RunPTMProphet ? "0.75" : "-1";
+                    ptmModTag = "S(79.9663),T(79.9663),Y(79.9663)";
+                }
+                else
+                {
+                    groupBy = "0";
+                    minPepProb = "0.9";
+                    minIntensityPercent = "0.05";
+                    minPurity = "0.5";
+                    minSiteProbability = "-1";
+                    ptmModTag = "none";
+                }
+
                 using (var writer = new StreamWriter(new FileStream(tmtIntegratorConfigFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // ReSharper disable StringLiteralTypo
@@ -4492,16 +4522,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     writer.WriteLine("  best_psm: true                           # keep the best PSM only (highest summed TMT intensity) among all redundant PSMs within the same LC-MS run");
                     writer.WriteLine("{0,-42} {1}", string.Format("  channel_num: {0}", plex), "# number of channels in the multiplex (e.g. 10, 11)");
                     writer.WriteLine("  glyco_qval: -1                           # (optional) filter modified PSMs to those with glycan q-value less than provided value. 0 <= value <= 1. Value of -1 or not specified ignores");   // Introduced with TMT-Integrator 3.3.3
-                    writer.WriteLine("  groupby: 0                               # level of data summarization(0: PSM aggregation to the gene level; 1: protein; 2: peptide sequence; 3: multiple PTM sites; 4: single PTM site; 5: multi-mass (for glycosylation); -1: generate reports at all levels)");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  groupby: {0}", groupBy), "# level of data summarization(0: PSM aggregation to the gene level; 1: protein; 2: peptide sequence; 3: multiple PTM sites; 4: single PTM site; 5: multi-mass (for glycosylation); -1: generate reports at all levels)");
                     writer.WriteLine("  log2transformed: true                    # report ratio and abundance reports in the log2 scale");                                                                                           // Introduced with TMT-Integrator 4.0
                     writer.WriteLine("  max_pep_prob_thres: 0.9                  # the threshold for maximum peptide probability");
-                    writer.WriteLine("{0,-42} {1}", "  memory: 16", "# memory allocation, in GB");
+                    writer.WriteLine("  memory: 11                               # memory allocation, in GB");
                     writer.WriteLine("  min_ntt: 0                               # minimum allowed number of enzymatic termini");
-                    writer.WriteLine("  min_pep_prob: 0.9                        # minimum PSM probability threshold (in addition to FDR-based filtering by Philosopher)");
-                    writer.WriteLine("  min_percent: 0.05                        # remove low intensity PSMs (e.g. value of 0.05 indicates removal of PSMs with the summed TMT reporter ions intensity in the lowest 5% of all PSMs)");
-                    writer.WriteLine("  min_purity: 0.5                          # ion purity score threshold");
-                    writer.WriteLine("  min_site_prob: -1                        # site localization confidence threshold (-1: for Global; 0: as determined by the search engine; above 0 (e.g. 0.75): PTMProphet probability, to be used with phosphorylation only)");
-                    writer.WriteLine("  mod_tag: none                            # PTM info for generation of PTM-specific reports (none: for Global data; S(79.9663),T(79.9663),Y(79.9663): for Phospho; K(42.0105): for K-Acetyl; M(15.9949): for M-Oxidation; N-glyco: for N-glycosylation; O-glyco: for O-glycosylation)");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  min_pep_prob: {0}", minPepProb), "# minimum PSM probability threshold (in addition to FDR-based filtering by Philosopher)");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  min_percent: {0}", minIntensityPercent), "# remove low intensity PSMs (e.g. value of 0.05 indicates removal of PSMs with the summed TMT reporter ions intensity in the lowest 5% of all PSMs)");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  min_purity: {0}", minPurity), "# ion purity score threshold");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  min_site_prob: {0}", minSiteProbability), "# site localization confidence threshold (-1: for Global; 0: as determined by the search engine; above 0 (e.g. 0.75): PTMProphet probability, to be used with phosphorylation only)");
+                    writer.WriteLine("{0,-42} {1}", string.Format("  mod_tag: {0}", ptmModTag), "# PTM info for generation of PTM-specific reports (none: for Global data; S(79.9663),T(79.9663),Y(79.9663): for Phospho; K(42.0105): for K-Acetyl; M(15.9949): for M-Oxidation; N-glyco: for N-glycosylation; O-glyco: for O-glycosylation)");
                     writer.WriteLine("  ms1_int: true                            # use MS1 precursor ion intensity (if true) or MS2 reference intensity (if false) as part of the reference sample abundance estimation ");
                     writer.WriteLine("  outlier_removal: true                    # perform outlier removal");
                     writer.WriteLine("{0,-42} {1}", string.Format("  output: {0}", mWorkingDirectory.FullName), "# the location of output files");
