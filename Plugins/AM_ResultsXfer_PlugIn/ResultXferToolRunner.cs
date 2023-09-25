@@ -477,7 +477,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (!Directory.Exists(directoryToMove))
             {
-                LogError(string.Format("Results transfer failed, directory {0} not found", directoryToMove));
+                LogError(string.Format("Results transfer failed, directory {0} not found (see V_Storage_Path_Export and SELECT * FROM T_Storage_Path WHERE SP_function = 'results_transfer')", directoryToMove));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
