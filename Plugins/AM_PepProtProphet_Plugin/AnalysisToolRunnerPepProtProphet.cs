@@ -3897,8 +3897,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             try
             {
-                if (!options.LibraryFinder.FindFragPipeToolsDirectory(out var fragPipeToolsDirectory))
-                    return false;
+                if (!File.Exists(mPtmProphetProgLoc))
+                {
+                    LogError("PTM Prophet program does not exist: ", mPtmProphetProgLoc);
+                }
 
                 var successCount = 0;
 
