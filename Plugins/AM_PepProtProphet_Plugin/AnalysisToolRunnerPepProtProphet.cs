@@ -189,6 +189,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private CmdRunnerModes mCmdRunnerMode;
 
+        /// <summary>
+        /// Dictionary of experiment group working directories
+        /// </summary>
+        /// <remarks>
+        /// Keys are experiment group name, values are the corresponding working directory
+        /// </remarks>
+        private Dictionary<string, DirectoryInfo> mExperimentGroupWorkingDirectories;
+
         private DirectoryInfo mWorkingDirectory;
 
         /// <summary>
@@ -224,6 +232,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mFastaFilePath = string.Empty;
+
+                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
                 // Determine the path to DiaNN, Percolator, Philosopher, and TMT Integrator
@@ -374,7 +385,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var moveFilesSuccess = OrganizePepXmlAndPinFiles(
                     out var dataPackageInfo,
                     out var datasetIDsByExperimentGroup,
-                    out var experimentGroupWorkingDirectories,
                     out var workingDirectoryPadWidth);
 
                 if (moveFilesSuccess != CloseOutType.CLOSEOUT_SUCCESS)
@@ -421,7 +431,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ProcessingStarted;
 
-                if (experimentGroupWorkingDirectories.Count > 1)
+                if (mExperimentGroupWorkingDirectories.Count > 1)
                 {
                     // FragPipe v20 creates file experiment_annotation.tsv, listing .mzML files and the sample (aka experiment group) that each is associated with
                     // It is unknown which tool uses the experiment_annotation.tsv file, but it doesn't hurt to create it
@@ -431,7 +441,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.OpenSearch)
                 {
-                    var crystalCSuccess = RunCrystalC(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+                    var crystalCSuccess = RunCrystalC(dataPackageInfo, datasetIDsByExperimentGroup, options);
 
                     if (!crystalCSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -500,7 +510,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     psmValidationSuccess = RunPeptideProphet(
                         dataPackageInfo,
                         datasetIDsByExperimentGroup,
-                        experimentGroupWorkingDirectories,
                         options,
                         out peptideProphetPepXmlFiles);
                 }
@@ -510,7 +519,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     psmValidationSuccess = RunPercolator(
                         dataPackageInfo,
                         datasetIDsByExperimentGroup,
-                        experimentGroupWorkingDirectories,
                         options,
                         out peptideProphetPepXmlFiles);
                 }
@@ -558,7 +566,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     usedProteinProphet = false;
                 }
 
-                var dbAnnotateSuccess = RunDatabaseAnnotation(experimentGroupWorkingDirectories, options);
+                var dbAnnotateSuccess = RunDatabaseAnnotation(options);
 
                 if (!dbAnnotateSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -567,7 +575,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (peptideProphetPepXmlFiles.Count > 0)
                 {
-                    var filterSuccess = RunResultsFilter(experimentGroupWorkingDirectories, options, usedProteinProphet);
+                    var filterSuccess = RunResultsFilter(options, usedProteinProphet);
 
                     if (!filterSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -587,7 +595,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Always run FreeQuant when we have reporter ions
                     // If no reporter ions, either run FreeQuant or run IonQuant
 
-                    var freeQuantSuccess = RunFreeQuant(experimentGroupWorkingDirectories, options);
+                    var freeQuantSuccess = RunFreeQuant(options);
 
                     if (!freeQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -604,7 +612,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                     else
                     {
-                        var labelQuantSuccess = RunLabelQuant(experimentGroupWorkingDirectories, options);
+                        var labelQuantSuccess = RunLabelQuant(options);
 
                         if (!labelQuantSuccess)
                             return CloseOutType.CLOSEOUT_FAILED;
@@ -621,7 +629,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
                 else
                 {
-                    var reportSuccess = RunReportGeneration(experimentGroupWorkingDirectories, options);
+                    var reportSuccess = RunReportGeneration(options);
 
                     if (!reportSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -631,7 +639,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportGenerated;
 
-                if (experimentGroupWorkingDirectories.Count <= 1)
+                if (mExperimentGroupWorkingDirectories.Count <= 1)
                 {
                     if (dataPackageInfo.DataPackageID > 0 && (options.RunIProphet || options.RunAbacus))
                     {
@@ -658,7 +666,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                         LogMessage(msg);
 
-                        UpdateStatusMessage(msg, true);
+                        UpdateStatusMessage(msg);
                     }
                 }
                 else
@@ -667,7 +675,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         // Note that FragPipe v20 does not run iProphet when "Generate peptide-level summary" is checked; this may or may not be correct behavior
 
-                        var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+                        var iProphetSuccess = RunIProphet(dataPackageInfo, datasetIDsByExperimentGroup, options);
 
                         if (!iProphetSuccess)
                             return CloseOutType.CLOSEOUT_FAILED;
@@ -680,7 +688,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Only run Abacus if Protein Prophet was used
                     // if (options.RunAbacus && options.RunProteinProphet)
                     // {
-                    //     var abacusSuccess = RunAbacus(experimentGroupWorkingDirectories, options);
+                    //     var abacusSuccess = RunAbacus(options);
 
                     //     if (!abacusSuccess) {
                     //         return CloseOutType.CLOSEOUT_FAILED;
@@ -692,7 +700,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.RunIonQuant && !ms1QuantDisabled)
                 {
-                    var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, options);
+                    var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, options);
 
                     if (!ionQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -703,7 +711,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Only run TMT-Integrator if Protein Prophet was used, since TMT-Integrator expects that file combined.prot.xml exists
                 if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled && options.RunProteinProphet)
                 {
-                    var tmtIntegratorSuccess = RunTmtIntegrator(experimentGroupWorkingDirectories, options);
+                    var tmtIntegratorSuccess = RunTmtIntegrator(options);
 
                     if (!tmtIntegratorSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -713,7 +721,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.OpenSearch && options.RunPTMShepherd)
                 {
-                    var ptmShepherdSuccess = RunPTMShepherd(experimentGroupWorkingDirectories, options);
+                    var ptmShepherdSuccess = RunPTMShepherd(options);
 
                     if (!ptmShepherdSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -723,7 +731,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (reportFilesCreated)
                 {
-                    var reportFilesUpdated = UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet);
+                    var reportFilesUpdated = UpdatePhilosopherReportFiles(usedProteinProphet);
 
                     if (!reportFilesUpdated)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -731,7 +739,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ReportFilesUpdated;
 
-                var moveSuccess = MoveResultsOutOfSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
+                var moveSuccess = MoveResultsOutOfSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
 
                 if (!moveSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -741,7 +749,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                var zipSuccessPsmTsv = ZipPsmTsvFiles(experimentGroupWorkingDirectories, usedProteinProphet);
+                var zipSuccessPsmTsv = ZipPsmTsvFiles(usedProteinProphet);
 
                 return zipSuccessPsmTsv ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1027,13 +1035,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="experimentGroupWorkingDirectories"></param>
         /// <param name="datasetCount"></param>
         /// <returns>File list file</returns>
         private FileInfo CreateIonQuantFileListFile(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             out int datasetCount
             )
         {
@@ -1046,13 +1052,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Header line
             writer.WriteLine("flag{0}value", '\t');
 
-            if (experimentGroupWorkingDirectories.Count <= 1)
+            if (mExperimentGroupWorkingDirectories.Count <= 1)
             {
                 writer.WriteLine("--psm\tpsm.tsv");
             }
             else
             {
-                foreach (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupWorkingDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     writer.WriteLine("--psm\t{0}", Path.Combine(experimentGroupWorkingDirectory.Name, "psm.tsv"));
                 }
@@ -1067,14 +1073,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
             foreach (var item in datasetIDsByExperimentGroup)
             {
                 var experimentGroupName = item.Key;
-                var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                 // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var datasetId in item.Value)
                 {
                     var datasetName = dataPackageInfo.Datasets[datasetId];
 
-                    if (experimentGroupWorkingDirectories.Count <= 1)
+                    if (mExperimentGroupWorkingDirectories.Count <= 1)
                     {
                         writer.WriteLine("--pepxml\t{0}", datasetName + ".pepXML");
                     }
@@ -1348,9 +1354,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return mJobParams.GetJobParameter(sectionName, parameterName, valueIfMissing);
         }
 
-        private static int GetLongestWorkingDirectoryName(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+        private int GetLongestWorkingDirectoryName()
         {
-            return GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories.Values.ToList());
+            return GetLongestWorkingDirectoryName(mExperimentGroupWorkingDirectories.Values.ToList());
         }
 
         private static int GetLongestWorkingDirectoryName(IReadOnlyCollection<DirectoryInfo> workingDirectories)
@@ -1516,12 +1522,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <returns>Dictionary where keys are dataset names and values are DirectoryInfo instances</returns>
         private Dictionary<int, DirectoryInfo> InitializePeptideProphetWorkspaceDirectories(
             DataPackageInfo dataPackageInfo,
-            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
         {
             var workspaceDirectoryByDatasetId = new Dictionary<int, DirectoryInfo>();
 
@@ -1529,7 +1533,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             foreach (var item in datasetIDsByExperimentGroup)
             {
                 var experimentGroupName = item.Key;
-                var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                var experimentGroupDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                 // Create a separate temp directory for each dataset
                 foreach (var datasetId in item.Value)
@@ -1559,16 +1563,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
         /// <param name="experimentGroupNames"></param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <param name="workingDirectoryPadWidth">Longest directory path in experimentGroupWorkingDirectories</param>
+        /// <param name="workingDirectoryPadWidth">Longest directory path in mExperimentGroupWorkingDirectories</param>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
             SortedSet<string> experimentGroupNames,
-            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             out int workingDirectoryPadWidth)
         {
-            experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
-
             try
             {
                 LogDebug("Initializing the Philosopher Workspace");
@@ -1582,10 +1582,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
 
-                    experimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
+                    mExperimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
                 }
 
-                workingDirectoryPadWidth = GetLongestWorkingDirectoryName(experimentGroupWorkingDirectories);
+                workingDirectoryPadWidth = GetLongestWorkingDirectoryName();
 
                 // Initialize the workspace in the primary working directory
                 var workDirSuccess = InitializePhilosopherWorkspaceWork(mWorkingDirectory, workingDirectoryPadWidth, false);
@@ -1597,7 +1597,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // Since we have multiple experiment groups, initialize the workspace for each one
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     var success = InitializePhilosopherWorkspaceWork(experimentGroupDirectory, workingDirectoryPadWidth);
 
@@ -1725,13 +1725,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         private bool MoveResultsIntoSubdirectories(
             DataPackageInfo dataPackageInfo,
-            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
         {
-            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, true);
+            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, true);
         }
 
         /// <summary>
@@ -1739,13 +1737,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </summary>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         private bool MoveResultsOutOfSubdirectories(
             DataPackageInfo dataPackageInfo,
-            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories)
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
         {
-            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, false);
+            return MoveResultsToFromSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, false);
         }
 
         /// <summary>
@@ -1756,7 +1752,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="sourceIsWorkDirectory">
         /// When true, the source directory is the working directory
         /// When false, the working directory is the target directory
@@ -1764,7 +1759,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool MoveResultsToFromSubdirectories(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             bool sourceIsWorkDirectory)
         {
             try
@@ -1780,7 +1774,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var datasetId in item.Value)
@@ -1888,17 +1882,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
         /// </param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
-        /// <param name="workingDirectoryPadWidth">Longest directory path in experimentGroupWorkingDirectories</param>
+        /// <param name="workingDirectoryPadWidth">Longest directory path in mExperimentGroupWorkingDirectories</param>
         /// <returns>Result code</returns>
         private CloseOutType OrganizePepXmlAndPinFiles(
             out DataPackageInfo dataPackageInfo,
             out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            out Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             out int workingDirectoryPadWidth)
         {
             // Keys in this dictionary are experiment group names, values are the working directory to use
-            experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+            mExperimentGroupWorkingDirectories.Clear();
 
             // If this job applies to a single dataset, dataPackageID will be 0
             // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
@@ -1921,7 +1913,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (!success)
             {
-                experimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
                 workingDirectoryPadWidth = 64;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1938,7 +1929,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             var initResult = InitializePhilosopherWorkspace(
                 experimentGroupNames,
-                out experimentGroupWorkingDirectories,
                 out workingDirectoryPadWidth);
 
             if (initResult != CloseOutType.CLOSEOUT_SUCCESS)
@@ -1952,7 +1942,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             // Since we have multiple experiment groups, move the pepXML and .pin files into subdirectories
-            var moveSuccess = MoveResultsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories);
+            var moveSuccess = MoveResultsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
@@ -2016,8 +2006,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return false;
         }
 
+
+        // ReSharper disable once UnusedMember.Local
+
         [Obsolete("No longer used by FragPipe v19 or newer")]
-        private bool RunAbacus(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunAbacus(FragPipeOptions options)
         {
             try
             {
@@ -2084,7 +2077,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // Append the experiment group working directory names
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     arguments.AppendFormat(" {0}", experimentGroupDirectory.Name);
                 }
@@ -2122,7 +2115,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunCrystalC(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options)
         {
             try
@@ -2161,7 +2153,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentGroupDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     foreach (var datasetId in item.Value)
                     {
@@ -2248,15 +2240,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Create a db.bin file in the .meta subdirectory of the first working directory in experimentGroupWorkingDirectories
+        /// Create a db.bin file in the .meta subdirectory of the first working directory in mExperimentGroupWorkingDirectories
         /// </summary>
         /// <remarks>
         /// In FragPipe v19 and earlier, the .meta subdirectory was updated at both C:\DMS_WorkDir\.meta and in each experiment group's subdirectory
         /// With FragPipe v20 we only update the first experiment group's working directory (or only C:\DMS_WorkDir\.meta if there is only one experiment group)
         /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
-        private bool RunDatabaseAnnotation(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunDatabaseAnnotation(FragPipeOptions options)
         {
             try
             {
@@ -2310,9 +2301,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 */
 
-                var workingDirectory = experimentGroupWorkingDirectories.Count <= 1
+                var workingDirectory = mExperimentGroupWorkingDirectories.Count <= 1
                     ? mWorkingDirectory
-                    : experimentGroupWorkingDirectories.Values.First();
+                    : mExperimentGroupWorkingDirectories.Values.First();
 
                 var workDirSuccess = RunDatabaseAnnotation(workingDirectory, options.WorkingDirectoryPadWidth);
 
@@ -2431,7 +2422,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return false;
         }
 
-        private bool RunFreeQuant(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunFreeQuant(FragPipeOptions options)
         {
             try
             {
@@ -2449,7 +2440,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var successCount = 0;
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable once StringLiteralTypo
                     var arguments = string.Format("freequant --ptw 0.4 --tol 10 --dir {0}", mWorkingDirectory.FullName);
@@ -2471,7 +2462,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     successCount++;
                 }
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return successCount == mExperimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
@@ -2483,7 +2474,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunIonQuant(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options)
         {
             try
@@ -2638,7 +2628,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var datasetCount = 0;
                 bool creatingCombinedFile;
 
-                if (experimentGroupWorkingDirectories.Count <= 1 && !options.MatchBetweenRuns)
+                if (mExperimentGroupWorkingDirectories.Count <= 1 && !options.MatchBetweenRuns)
                 {
                     arguments.AppendFormat(" --psm {0} --specdir {1}", "psm.tsv", mWorkingDirectory.FullName);
 
@@ -2669,7 +2659,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // Option 1: append each psm.tsv file and each .pepXML file
                     //
-                    // for each (var experimentGroupWorkingDirectory in experimentGroupWorkingDirectories.Values)
+                    // for each (var experimentGroupWorkingDirectory in mExperimentGroupWorkingDirectories.Values)
                     // {
                     //    arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);
                     // }
@@ -2679,7 +2669,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // for each (var item in datasetIDsByExperimentGroup)
                     // {
                     //    var experimentGroupName = item.Key;
-                    //    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    //    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
                     //
                     //    for each (var datasetId in item.Value)
                     //    {
@@ -2692,7 +2682,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
 
-                    var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, experimentGroupWorkingDirectories, out datasetCount);
+                    var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, out datasetCount);
 
                     // In FragPipe v19 and earlier, if Match-between-runs was enabled, dry-run includes "--multidir ." in the argument list
                     // FragPipe v20 does not include "--multidir .", but testing reveals that it is required when "--mbr 1" is used
@@ -2867,7 +2857,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     bool success;
 
-                    if (creatingCombinedFile && experimentGroupWorkingDirectories.Count <= 1)
+                    if (creatingCombinedFile && mExperimentGroupWorkingDirectories.Count <= 1)
                     {
                         // IonQuant assumes that the experiment group name is the parent directory name
                         // This will be valid when multiple experiment groups are present, but is not valid if a single experiment group is present
@@ -2903,7 +2893,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunIProphet(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options)
         {
             try
@@ -2939,7 +2928,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentWorkingDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     foreach (var datasetId in item.Value)
                     {
@@ -2978,9 +2967,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Results will appear in the.tsv files created by the Report step (ion.tsv, peptide.tsv, protein.tsv, and psm.tsv),
         /// in columns corresponding to labels in the AliasNames.txt file (or experiment group specific alias name file)
         /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
-        private bool RunLabelQuant(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunLabelQuant(FragPipeOptions options)
         {
             try
             {
@@ -3011,9 +2999,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var autoGeneratedAliasNameFile = false;
 
                 // If multiple experiment groups are defined, try to get shorter experiment group names, which will be used for the sample names in the AliasNames.txt files
-                var experimentGroupAbbreviations = GetAbbreviatedExperimentGroupNames(experimentGroupWorkingDirectories.Keys.ToList());
+                var experimentGroupAbbreviations = GetAbbreviatedExperimentGroupNames(mExperimentGroupWorkingDirectories.Keys.ToList());
 
-                foreach (var experimentGroup in experimentGroupWorkingDirectories)
+                foreach (var experimentGroup in mExperimentGroupWorkingDirectories)
                 {
                     FileInfo aliasFile;
 
@@ -3100,7 +3088,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     successCount++;
                 }
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return successCount == mExperimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
@@ -3245,7 +3233,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunPeptideProphet(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
@@ -3258,7 +3245,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return RunPeptideProphetForOpenSearch(
                         dataPackageInfo,
                         datasetIDsByExperimentGroup,
-                        experimentGroupWorkingDirectories,
                         options,
                         out peptideProphetPepXmlFiles);
                 }
@@ -3266,8 +3252,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Keys in this dictionary are dataset names, values are DirectoryInfo instances
                 var workspaceDirectoryByDatasetId = InitializePeptideProphetWorkspaceDirectories(
                     dataPackageInfo,
-                    datasetIDsByExperimentGroup,
-                    experimentGroupWorkingDirectories);
+                    datasetIDsByExperimentGroup);
 
                 var workingDirectoryPadWidth = GetLongestWorkingDirectoryName(workspaceDirectoryByDatasetId.Values);
 
@@ -3366,7 +3351,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunPeptideProphetForOpenSearch(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
@@ -3377,7 +3361,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentGroupDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     // ReSharper disable StringLiteralTypo
 
@@ -3433,7 +3417,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return UpdateMsMsRunSummaryInCombinedPepXmlFiles(
                     dataPackageInfo,
                     datasetIDsByExperimentGroup,
-                    experimentGroupWorkingDirectories,
                     options,
                     out peptideProphetPepXmlFiles);
             }
@@ -3448,7 +3431,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private bool RunPercolator(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
@@ -3469,7 +3451,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentGroupDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     LogDebug("Running Percolator in " + experimentGroupDirectory.FullName);
 
@@ -4026,7 +4008,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         // ReSharper disable once InconsistentNaming
-        private bool RunPTMShepherd(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunPTMShepherd(FragPipeOptions options)
         {
             try
             {
@@ -4065,7 +4047,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     writer.WriteLine("database = " + mFastaFilePath);
 
-                    foreach (var experimentGroup in experimentGroupWorkingDirectories)
+                    foreach (var experimentGroup in mExperimentGroupWorkingDirectories)
                     {
                         // dataset = ExperimentGroupA C:\DMS_WorkDir\Results\ExperimentGroupA\psm.tsv WorkingDirectoryPath");
 
@@ -4153,6 +4135,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     // ToDo: Verify that the PTM Shepherd results file was created
                     var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Shepherd_Results.txt"));
+
                     //if (!outputFile.Exists)
                     //{
                     //    LogError("IonQuant results file not found: " + outputFile.Name);
@@ -4180,7 +4163,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunReportGeneration(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunReportGeneration(FragPipeOptions options)
         {
             try
             {
@@ -4191,7 +4174,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                 // ReSharper disable once LoopCanBeConvertedToQuery
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     // ReSharper disable CommentTypo
 
@@ -4258,7 +4241,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return successCount == mExperimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
@@ -4277,13 +4260,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// .meta\ion.bin
         /// .meta\pep.bin
         /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories"></param>
         /// <param name="options"></param>
         /// <param name="usedProteinProphet"></param>
-        private bool RunResultsFilter(
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            FragPipeOptions options,
-            bool usedProteinProphet)
+        private bool RunResultsFilter(FragPipeOptions options, bool usedProteinProphet)
         {
             try
             {
@@ -4306,9 +4285,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                var firstWorkingDirectoryPath = experimentGroupWorkingDirectories.Values.First().FullName;
+                var firstWorkingDirectoryPath = mExperimentGroupWorkingDirectories.Values.First().FullName;
 
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     arguments.Clear();
                     iteration++;
@@ -4424,7 +4403,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     successCount++;
                 }
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return successCount == mExperimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
@@ -4433,7 +4412,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private bool RunTmtIntegrator(IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, FragPipeOptions options)
+        private bool RunTmtIntegrator(FragPipeOptions options)
         {
             try
             {
@@ -4562,7 +4541,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var currentFileList = new StringBuilder();
 
-                foreach (var experimentGroup in experimentGroupWorkingDirectories)
+                foreach (var experimentGroup in mExperimentGroupWorkingDirectories)
                 {
                     currentFileList.AppendFormat(" {0}", Path.Combine(experimentGroup.Value.FullName, "psm.tsv"));
 
@@ -4581,7 +4560,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (inputFileLists.Count == 0)
                 {
-                    LogError("List inputFileLists is empty; either experimentGroupWorkingDirectories is empty, or there is a programming bug in RunTmtIntegrator");
+                    LogError("List inputFileLists is empty; either mExperimentGroupWorkingDirectories is empty, or there is a programming bug in RunTmtIntegrator");
                     return false;
                 }
 
@@ -5028,14 +5007,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// </remarks>
         /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="options"></param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
         /// <returns>True if successful, false if error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
             FragPipeOptions options,
             out List<FileInfo> peptideProphetPepXmlFiles)
         {
@@ -5061,7 +5038,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 foreach (var item in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = item.Key;
-                    var experimentGroupDirectory = experimentGroupWorkingDirectories[experimentGroupName];
+                    var experimentGroupDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
                     var pepXmlFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "interact.pep.xml"));
 
@@ -5294,17 +5271,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// If experiment group working directories are present, will move the updated files to the main working directory
         /// </para>
         /// </remarks>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
-        private bool UpdatePhilosopherReportFiles(
-            IReadOnlyDictionary<string, DirectoryInfo> experimentGroupWorkingDirectories,
-            bool usedProteinProphet)
+        private bool UpdatePhilosopherReportFiles(bool usedProteinProphet)
         {
             var processor = new PhilosopherResultsUpdater(mDatasetName, mWorkingDirectory);
             RegisterEvents(processor);
 
-            var success = processor.UpdatePhilosopherReportFiles(experimentGroupWorkingDirectories, usedProteinProphet, out var totalPeptideCount);
+            var success = processor.UpdatePhilosopherReportFiles(mExperimentGroupWorkingDirectories, usedProteinProphet, out var totalPeptideCount);
 
             if (totalPeptideCount > 0)
             {
@@ -5312,7 +5286,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
 
             var warningMessage = string.Format("No peptides were confidently identified ({0})",
-                experimentGroupWorkingDirectories.Count > 1
+                mExperimentGroupWorkingDirectories.Count > 1
                     ? "the peptide.tsv files are all empty"
                     : "the peptide.tsv file is empty");
 
@@ -5618,20 +5592,19 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Zip the _ion.tsv, _peptide.tsv, and _protein.tsv files created for each experiment group,
         /// but only if there are more than three experiment groups
         /// </summary>
-        /// <param name="experimentGroupWorkingDirectories">Keys are experiment group name, values are the corresponding working directory</param>
         /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <returns>True if successful, false if error</returns>
-        private bool ZipPsmTsvFiles(Dictionary<string, DirectoryInfo> experimentGroupWorkingDirectories, bool usedProteinProphet)
+        private bool ZipPsmTsvFiles(bool usedProteinProphet)
         {
             try
             {
-                if (experimentGroupWorkingDirectories.Count <= 3)
+                if (mExperimentGroupWorkingDirectories.Count <= 3)
                     return true;
 
                 var validExperimentGroupCount = 0;
                 var filesToZip = new List<FileInfo>();
 
-                foreach (var experimentGroupDirectory in experimentGroupWorkingDirectories.Values)
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
                 {
                     var experimentGroup = experimentGroupDirectory.Name;
 
@@ -5669,7 +5642,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Zip the files to create Dataset_PSM_tsv.zip
                 var zipSuccess = ZipFiles("PSM .tsv files", filesToZip, AnalysisResources.ZIPPED_MSFRAGGER_PSM_TSV_FILES);
 
-                return zipSuccess && validExperimentGroupCount == experimentGroupWorkingDirectories.Count;
+                return zipSuccess && validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
             }
             catch (Exception ex)
             {
