@@ -54,6 +54,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private const string PHILOSOPHER_CONSOLE_OUTPUT_COMBINED = "Philosopher_ConsoleOutput_Combined.txt";
 
         private const string PTM_PROPHET_CONSOLE_OUTPUT = "PTMProphet_ConsoleOutput.txt";
+        private const string PTM_PROPHET_CONSOLE_OUTPUT_COMBINED = "PTMProphet_ConsoleOutput_Combined.txt";
+
         private const string PTM_SHEPHERD_CONSOLE_OUTPUT = "PTMShepherd_ConsoleOutput.txt";
 
         /// <summary>
@@ -287,6 +289,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mJobParams.AddResultFileToSkip(JAVA_CONSOLE_OUTPUT);
                 mJobParams.AddResultFileToSkip(PERCOLATOR_CONSOLE_OUTPUT);
                 mJobParams.AddResultFileToSkip(PHILOSOPHER_CONSOLE_OUTPUT);
+                mJobParams.AddResultFileToSkip(PTM_PROPHET_CONSOLE_OUTPUT);
 
                 // Skip the filtered FASTA file, created when method RunReportGeneration is called
                 mJobParams.AddResultFileToSkip("protein.fas");
@@ -3923,6 +3926,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// Run PTM prophet on the given .pep.xml file
+        /// </summary>
+        /// <param name="pepXmlFile">Peptide Prophet or Percolator results file, e.g. interact-DatasetName.pep.xml</param>
+        /// <param name="options"></param>
+        /// <returns>True if successful, false if an error</returns>
         private bool RunPTMProphetOnDataset(FileInfo pepXmlFile, FragPipeOptions options)
         {
             const string PEP_XML_FILE_SUFFIX = ".pep.xml";
@@ -3972,6 +3981,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     Path.Combine(mWorkingDirectory.FullName, PTM_PROPHET_CONSOLE_OUTPUT),
                     CmdRunnerModes.PtmProphet);
 
+                // PTM Prophet reports all of its messages via the console error stream
+                // Instruct mCmdRunner to treat them as normal messages
+                mCmdRunner.RaiseConsoleErrorEvents = false;
+
                 LogCommandToExecute(pepXmlFile.Directory, mPtmProphetProgLoc, arguments, options.WorkingDirectoryPadWidth);
 
                 // Start the program and wait for it to finish
@@ -3988,8 +4001,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogError(mConsoleOutputFileParser.ConsoleOutputErrorMsg);
                 }
 
+                var datasetName = pepXmlFile.Name.StartsWith("interact-", StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetFileNameWithoutExtension(pepXmlFile.Name).Substring("interact-".Length)
+                    : pepXmlFile.Name;
 
+                UpdateCombinedPTMProphetConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, datasetName);
 
+                mCmdRunner.RaiseConsoleErrorEvents = true;
 
                 if (processingSuccess)
                 {
@@ -4777,6 +4795,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         private void UpdateCombinedPhilosopherConsoleOutputFile(string consoleOutputFilepath, string currentStep, PhilosopherToolType toolType)
         {
             UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PHILOSOPHER_CONSOLE_OUTPUT_COMBINED, currentStep, toolType);
+        }
+
+        private void UpdateCombinedPTMProphetConsoleOutputFile(string consoleOutputFilepath, string currentStep)
+        {
+            UpdateCombinedConsoleOutputFile(consoleOutputFilepath, PTM_PROPHET_CONSOLE_OUTPUT_COMBINED, currentStep);
         }
 
         /// <summary>
