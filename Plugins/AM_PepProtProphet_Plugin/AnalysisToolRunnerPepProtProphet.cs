@@ -99,6 +99,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
+        private const string TMT_REPORT_DIRECTORY = "tmt-report";
+
         public const string ZIPPED_QUANT_CSV_FILES = "Dataset_quant_csv.zip";
 
         /// <summary>
@@ -2006,6 +2008,61 @@ namespace AnalysisManagerPepProtProphetPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Rename the TMT Integrator result files to end with _Group1.tsv
+        /// </summary>
+        /// <param name="groupNumber">Group number</param>
+        /// <param name="resultFiles">TMT Integrator result files</param>
+        /// <returns>List of the renamed files</returns>
+        private List<FileInfo> RenameTmtIntegratorResultFiles(int groupNumber, List<FileInfo> resultFiles)
+        {
+            var renamedFiles = new List<FileInfo>();
+
+            foreach (var resultFile in resultFiles)
+            {
+                var newFileName = string.Format("{0}_Group{1}{2}",
+                    Path.GetFileNameWithoutExtension(resultFile.Name),
+                    groupNumber,
+                    Path.GetExtension(resultFile.Name));
+
+                string newPath;
+
+                if (resultFile.DirectoryName == null)
+                {
+                    LogWarning("Unable to determine the parent directory of result file {0}; will use the working directory instead", resultFile.FullName);
+                    newPath = Path.Combine(mWorkDir, newFileName);
+                }
+                else
+                {
+                    newPath = Path.Combine(resultFile.DirectoryName, newFileName);
+                }
+
+                LogMessage("Renaming TMT Integrator result file {0} to {1}", resultFile.FullName, newFileName);
+
+                try
+                {
+                    resultFile.MoveTo(newPath);
+                    renamedFiles.Add(new FileInfo(newPath));
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error renaming TMT Integrator result file to " + newFileName, ex);
+
+                    if (resultFile.Exists)
+                    {
+                        LogMessage("Copying TMT Integrator result file from {0} to {1}", resultFile.FullName, newPath);
+                        resultFile.CopyTo(newPath);
+                        renamedFiles.Add(new FileInfo(newPath));
+                    }
+                    else
+                    {
+                        LogWarning("Result file not found ({0}); this indicates a programming error", resultFile.FullName);
+                    }
+                }
+            }
+
+            return renamedFiles;
+        }
 
         // ReSharper disable once UnusedMember.Local
 
@@ -4575,50 +4632,22 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (!success)
                         return false;
 
-                    if (inputFileLists.Count == 1)
-                        break;
+                    // When inputFileLists has more than one item, rename the TMT Integrator result files to avoid naming conflicts
 
-                    // Rename the output files since we're running TmtIntegrator with multiple groups of input files
+                    var filesToMove = inputFileLists.Count == 1
+                        ? resultFiles :
+                        RenameTmtIntegratorResultFiles(groupNumber, resultFiles);
 
-                    foreach (var resultFile in resultFiles)
+                    // Move the files into a subdirectory named "tmt-report"
+                    var targetDirectory = new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, TMT_REPORT_DIRECTORY));
+
+                    if (!targetDirectory.Exists)
+                        targetDirectory.Create();
+
+                    foreach (var tsvFile in filesToMove)
                     {
-                        var newFileName = string.Format("{0}_Group{1}{2}",
-                            Path.GetFileNameWithoutExtension(resultFile.Name),
-                            groupNumber,
-                            Path.GetExtension(resultFile.Name));
-
-                        string newPath;
-
-                        if (resultFile.DirectoryName == null)
-                        {
-                            LogWarning("Unable to determine the parent directory of result file {0}; will use the working directory instead", resultFile.FullName);
-                            newPath = Path.Combine(mWorkDir, newFileName);
-                        }
-                        else
-                        {
-                            newPath = Path.Combine(resultFile.DirectoryName, newFileName);
-                        }
-
-                        LogMessage("Renaming TMT Integrator result file {0} to {1}", resultFile.FullName, newFileName);
-
-                        try
-                        {
-                            resultFile.MoveTo(newPath);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError("Error renaming TMT Integrator result file to " + newFileName, ex);
-
-                            if (resultFile.Exists)
-                            {
-                                LogMessage("Copying TMT Integrator result file from {0} to {1}", resultFile.FullName, newPath);
-                                resultFile.CopyTo(newPath);
-                            }
-                            else
-                            {
-                                LogWarning("Result file not found ({0}); this indicates a programming error", resultFile.FullName);
-                            }
-                        }
+                        var newPath = Path.Combine(targetDirectory.FullName, tsvFile.Name);
+                        tsvFile.MoveTo(newPath);
                     }
                 }
 
@@ -4667,8 +4696,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             if (processingSuccess)
             {
+                // ReSharper disable CommentTypo
+                // These two files are created when tmt-integrator-conf.yml has "groupby: 0"
+                // If "groupby: -1" is used, additional _MD.tsv files will be created
+
                 var abundanceFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "abundance_gene_MD.tsv"));
                 var ratioFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "ratio_gene_MD.tsv"));
+
+                // ReSharper restore CommentTypo
 
                 if (abundanceFile.Exists)
                 {
@@ -4688,6 +4723,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     LogError("TMT Integrator ratio file not found: " + ratioFile.Name);
                     return false;
+                }
+
+                // Look for additional _MD.tsv files
+
+                // ReSharper disable once LoopCanBeConvertedToQuery
+                foreach (var tsvFile in mWorkingDirectory.GetFiles("*_MD.tsv"))
+                {
+                    if (tsvFile.Name.Equals(abundanceFile.Name) || tsvFile.Name.Equals(ratioFile.Name))
+                        continue;
+
+                    resultFiles.Add(tsvFile);
                 }
 
                 return true;
