@@ -315,7 +315,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var subdirectoriesToSkip = new SortedSet<string>
                 {
-                    Path.Combine(mWorkingDirectory.FullName, META_SUBDIRECTORY)
+                    Path.Combine(mWorkingDirectory.FullName, META_SUBDIRECTORY),
+                    Path.Combine(mWorkingDirectory.FullName, "MSBooster_RTplots")
                 };
 
                 if (mExperimentGroupWorkingDirectories.Count > 1)
