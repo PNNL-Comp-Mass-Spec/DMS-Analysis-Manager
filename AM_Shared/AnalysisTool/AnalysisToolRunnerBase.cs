@@ -2618,6 +2618,9 @@ namespace AnalysisManagerBase.AnalysisTool
                         if (subdirectoriesToSkip.Contains(subdirectory.FullName))
                             continue;
 
+                        if (subdirectory.GetFiles("*", SearchOption.AllDirectories).Length == 0)
+                            continue;
+
                         currentResultsDirectoryPath = Path.Combine(resultsDirectoryPath, subdirectory.Name);
                         var subDirTargetDirectory = new DirectoryInfo(currentResultsDirectoryPath);
                         subDirTargetDirectory.Create();
