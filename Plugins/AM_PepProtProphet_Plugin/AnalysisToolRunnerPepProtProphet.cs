@@ -3138,8 +3138,30 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     // ReSharper disable StringLiteralTypo
 
+                    var phosphoSearch = PhosphoModDefined(options.FraggerOptions.VariableModifications);
+
+                    string minProb;
+                    string purity;
+                    string removeLow;
+
+                    if (phosphoSearch)
+                    {
+                        minProb = "0.500";
+                        purity = "0.500";
+                        removeLow = "0.025";
+                    }
+                    else
+                    {
+                        minProb = "0.900";
+                        purity = "0.500";
+                        removeLow = "0.050";
+                    }
+
                     var arguments = string.Format(
-                        "labelquant --tol 20 --level 2 --minprob 0.900 --purity 0.500 --removelow 0.050 --plex {0} --annot {1} --brand {2} --dir {3}",
+                        "labelquant --tol 20 --level 2 --minprob {0} --purity {1} --removelow {2} --plex {3} --annot {4} --brand {5} --dir {6}",
+                        minProb,
+                        purity,
+                        removeLow,
                         plex,
                         aliasFile.FullName,
                         reporterIonType.ToLower(),
