@@ -513,6 +513,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (options.RunMSBooster)
                     {
+                        // Run DIA-NN (aka MSBooster)
                         var msBoosterSuccess = RunMSBooster(dataPackageInfo, datasetIDsByExperimentGroup, options, paramFilePath);
 
                         if (!msBoosterSuccess)
@@ -770,6 +771,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
+                // Zip the _ion.tsv, _peptide.tsv, and _protein.tsv files created for each experiment group,
+                // but only if there are more than three experiment groups
                 var zipSuccessPsmTsv = ZipPsmTsvFiles(usedProteinProphet);
 
                 return zipSuccessPsmTsv ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
@@ -1989,6 +1992,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     break;
 
                 case CmdRunnerModes.Philosopher:
+                    // Includes DB Annotation, FreeQuant, iProphet, LabelQuant, Peptide Prophet, Protein Prophet, Report Generation and Results Filter
                     mConsoleOutputFileParser.ParsePhilosopherConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath, mCurrentPhilosopherTool);
                     break;
 
