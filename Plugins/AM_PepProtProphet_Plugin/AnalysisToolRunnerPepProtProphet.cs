@@ -4815,7 +4815,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private void UpdateCombinedConsoleOutputFile(string consoleOutputFilepath, string combinedFileName, string currentStep, PhilosopherToolType currentTool = PhilosopherToolType.Undefined)
+        private void UpdateCombinedConsoleOutputFile(
+            string consoleOutputFilepath,
+            string combinedFileName,
+            string currentStep,
+            PhilosopherToolType currentTool = PhilosopherToolType.Undefined)
         {
             try
             {
@@ -4853,6 +4857,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     if (currentTool == PhilosopherToolType.Undefined)
                     {
                         writer.WriteLine(dataLine);
+                        continue;
                     }
 
                     // Remove any color tags
