@@ -582,11 +582,46 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <param name="consoleOutputFilePath"></param>
         public void ParsePTMProphetConsoleOutputFile(string consoleOutputFilePath)
         {
+            // ReSharper disable CommentTypo
+
             // ----------------------------------------------------
             // Example Console output
             //
-            // ToDo: add example console output
+            // [INFO:] Using statically set 15 PPM tolerance ...
+            // [INFO:] Writing file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pep.xml.tmp.a52124 ...
+            // [INFO:] Creating 1 threads
+            // [INFO:] Wait for threads to finish ...
+            // [INFO:] Reading file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pep.xml ...
+            // [INFO:] processed 1000/8771 spectrum_queries
+            // [INFO:] processed 2000/8771 spectrum_queries
+            // [INFO:] processed 3000/8771 spectrum_queries
+            // [INFO:] processed 4000/8771 spectrum_queries
+            // [INFO:] processed 5000/8771 spectrum_queries
+            // [INFO:] processed 6000/8771 spectrum_queries
+            // [INFO:] processed 7000/8771 spectrum_queries
+            // [INFO:] processed 8000/8771 spectrum_queries
+            // [INFO:] done ...
+            // [INFO:] Computing EM Models ...
+            // [INFO:] Iterating PTM Model: ....5....done
+            // [INFO:] done ...
+            // [INFO:] done ...
+            // [INFO:] Creating 1 threads
+            // [INFO:] Wait for threads to finish ...
+            // [INFO:] Reading file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pep.xml ...
+            // [INFO:] written 1000/8771 spectrum_queries
+            // [INFO:] written 2000/8771 spectrum_queries
+            // [INFO:] written 3000/8771 spectrum_queries
+            // [INFO:] written 4000/8771 spectrum_queries
+            // [INFO:] written 5000/8771 spectrum_queries
+            // [INFO:] written 6000/8771 spectrum_queries
+            // [INFO:] written 7000/8771 spectrum_queries
+            // [INFO:] written 8000/8771 spectrum_queries
+            // [INFO:] done ...
+            // [INFO:] Writing file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml ...
+            // [INFO:] done ...
             // ----------------------------------------------------
+
+            // ReSharper restore CommentTypo
 
             try
             {
