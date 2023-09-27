@@ -23,7 +23,7 @@ namespace MSGFResultsSummarizerExe
     {
         // Ignore Spelling: msgfdb, mspath, Phosphopeptides, Tryptic, xt
 
-        private const string PROGRAM_DATE = "January 21, 2022";
+        private const string PROGRAM_DATE = "September 27, 2023";
 
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
@@ -425,9 +425,9 @@ namespace MSGFResultsSummarizerExe
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Directory defines the input directory to process (and also to create the text result file in if /O is not used)"));
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Dataset defines the dataset name; if /Dataset is not used, then the name will be auto-determined"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Dataset defines the dataset name; if /Dataset is not used, the name will be auto-determined"));
                 Console.WriteLine();
-                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Job defines the analysis job; if /Job is not provided, then will auto-determine the job number using the input directory name"));
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph("/Job defines the analysis job; if /Job is not provided, the job number will be auto-determined using the input directory name"));
                 Console.WriteLine();
                 Console.WriteLine("Use /O to define a custom output directory path");
                 Console.WriteLine();
