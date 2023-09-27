@@ -114,6 +114,8 @@ namespace AnalysisManagerBase.JobConfig
         // ReSharper disable once InconsistentNaming
         public bool GetMSConvertToolVersion(string msConvertPath, out string versionInfo)
         {
+            const string MSCONVERT_CONSOLE_OUTPUT = "MSConvert_ConsoleOutput.txt";
+
             versionInfo = string.Empty;
 
             try
@@ -126,12 +128,15 @@ namespace AnalysisManagerBase.JobConfig
                     return false;
                 }
 
+                mJobParams.AddResultFileToSkip(MSCONVERT_CONSOLE_OUTPUT);
+
                 var progRunner = new RunDosProgram(Global.GetAppDirectoryPath(), DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
                     EchoOutputToConsole = false,
-                    WriteConsoleOutputToFile = false,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = Path.Combine(WorkDir, MSCONVERT_CONSOLE_OUTPUT),
                     MonitorInterval = 250,
                 };
 
@@ -139,11 +144,12 @@ namespace AnalysisManagerBase.JobConfig
                 progRunner.StatusEvent += OnStatusEvent;
                 progRunner.WarningEvent += OnWarningEvent;
 
-                // MSConvert shows its syntax via the console error stream
-                // Instruct progRunner to treat them as normal messages
-                progRunner.RaiseConsoleErrorEvents = false;
+                // MSConvert releases prior to August 2023 showed program syntax via the console error stream (when MSConvert is called with --help)
+                // "progRunner.RaiseConsoleErrorEvents = false" and " progRunner.SkipConsoleWriteIfNoErrorListener = true" were previously used to treat error messages as normal messages
+                // (then the using loop below would examine progRunner.CachedConsoleErrors)
 
-                progRunner.SkipConsoleWriteIfNoErrorListener = true;
+                // Commit https://github.com/ProteoWizard/pwiz/commit/de117c0441f7858275fc69342972f4482d810d92 changed the behavior
+                // such that MSConvert --help writes to the normal console output, but running the program without any arguments will still use the error stream
 
                 const string args = "--help";
 
@@ -154,12 +160,9 @@ namespace AnalysisManagerBase.JobConfig
                     return false;
                 }
 
-                // MSConvert reports the syntax and the version via the error stream
-                // This has been cached in progRunner.CachedConsoleErrors
+                // Read the console output and look for the ProteoWizard version and Build Date
 
-                // Read the console errors and look for the ProteoWizard version and Build Date
-
-                using (var reader = new StringReader(progRunner.CachedConsoleErrors))
+                using (var reader = new StreamReader(new FileStream(progRunner.ConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (reader.Peek() >= 0)
                     {
