@@ -1949,8 +1949,8 @@ namespace MSGFResultsSummarizer
                             psmInfo.Tryptic = true;
                         }
 
-                        // Check whether this is a phosphopeptide
-                        // This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph
+                        // Check whether this is a phosphopeptide or an acetylated peptide
+                        // This check only works if the _ModSummary.txt file was loaded because it relies on the mod name being Phosph, Acetyl, AcNoTMT, or AcNoTMT16
                         foreach (var modification in normalizedPeptide.Modifications)
                         {
                             if (string.Equals(modification.Key, "Phosph", StringComparison.OrdinalIgnoreCase))
@@ -1960,7 +1960,8 @@ namespace MSGFResultsSummarizer
                             }
 
                             if (string.Equals(modification.Key, "Acetyl", StringComparison.OrdinalIgnoreCase) ||
-                                string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase))
+                                string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "AcNoTMT16", StringComparison.OrdinalIgnoreCase))
                             {
                                 psmInfo.AcetylPeptide = true;
                                 break;
