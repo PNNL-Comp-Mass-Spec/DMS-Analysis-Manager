@@ -199,7 +199,7 @@ namespace AnalysisManagerExtractionPlugin
                     case AnalysisResources.RESULT_TYPE_MSFRAGGER:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MSFragger";
-                        result = RunPHRPForMSFragger();
+                        result = RunPhrpForMSFragger();
                         break;
 
                     case AnalysisResources.RESULT_TYPE_MSGFPLUS:
@@ -1555,11 +1555,11 @@ namespace AnalysisManagerExtractionPlugin
             return SummarizePSMs(PeptideHitResultTypes.MSAlign, synopsisFileNameFromPHRP, thresholdForMSGFSpecEValueOrPEP);
         }
 
-        private CloseOutType RunPHRPForMSFragger()
+        private CloseOutType RunPhrpForMSFragger()
         {
             if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
             {
-                return RunPHRPForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
+                return RunPhrpForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
             }
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -1574,7 +1574,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (datasetIDsByExperimentGroup.Count <= 1)
             {
-                return RunPHRPForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
+                return RunPhrpForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
             }
 
             // Multiple experiment groups
@@ -1600,7 +1600,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     var inputFileName = experimentGroup + "_psm.tsv";
 
-                    var experimentGroupResult = RunPHRPForMSFragger(
+                    var experimentGroupResult = RunPhrpForMSFragger(
                         experimentGroup,
                         inputFileName,
                         false,
@@ -1658,7 +1658,7 @@ namespace AnalysisManagerExtractionPlugin
                 return resultOverall;
 
             // Process combinedPsmTsvFilePath
-            var combinedTsvResult = RunPHRPForMSFragger(
+            var combinedTsvResult = RunPhrpForMSFragger(
                 COMBINED_TSV_BASE_NAME,
                 Path.GetFileName(combinedPsmTsvFilePath),
                 false,
@@ -1740,7 +1740,7 @@ namespace AnalysisManagerExtractionPlugin
             return resultOverall;
         }
 
-        private CloseOutType RunPHRPForMSFragger(
+        private CloseOutType RunPhrpForMSFragger(
             string baseDatasetName,
             string inputFileName,
             bool postJobPSMResultsToDB,
