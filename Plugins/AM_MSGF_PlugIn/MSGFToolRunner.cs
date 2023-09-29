@@ -744,16 +744,15 @@ namespace AnalysisManagerMSGFPlugin
             if (!success)
             {
                 LogError("mMSGFInputCreator.MSGFDataFileLineCount returned false");
-            }
-            else
-            {
-                if (mDebugLevel >= 2)
-                {
-                    LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + msgfInputFileLineCount + " lines of data");
-                }
+                return false;
             }
 
-            return success;
+            if (mDebugLevel >= 2)
+            {
+                LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + msgfInputFileLineCount + " lines of data");
+            }
+
+            return true;
         }
 
         private bool SummarizeMODaResults()
@@ -823,9 +822,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Summarize the results in the _syn_MSGF.txt file
             // Post the results to the database
-            var success = SummarizeMSGFResults(PeptideHitResultTypes.MSGFPlus);
-
-            return success;
+            return SummarizeMSGFResults(PeptideHitResultTypes.MSGFPlus);
         }
 
         private bool CreateMSGFResultsFromMSGFPlusResults(MSGFInputCreatorMSGFDB msgfInputCreator, string synOrFHT)

@@ -644,9 +644,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Re-index the mzML file using MSConvert
 
-                var success = ReindexMzML(finalMsXmlFilePath);
-
-                return success;
+                return ReindexMzML(finalMsXmlFilePath);
             }
             catch (Exception ex)
             {
