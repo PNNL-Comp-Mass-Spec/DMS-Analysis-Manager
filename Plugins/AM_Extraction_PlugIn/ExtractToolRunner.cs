@@ -204,6 +204,10 @@ namespace AnalysisManagerExtractionPlugin
 
                     case AnalysisResources.RESULT_TYPE_MSGFPLUS:
                         // Run PHRP
+
+                        // Note that this plugin does not summarize the number of PSMs for MS-GF+ jobs
+                        // That task is performed by method method SummarizeMSGFResults in the MSGF plugin (project AnalysisManagerMSGFPlugin)
+
                         currentAction = "running peptide hits result processor for MS-GF+";
                         result = RunPhrpForMSGFPlus();
 
@@ -2075,6 +2079,9 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                // This plugin does not summarize the number of PSMs for MS-GF+ jobs
+                // That task is performed by method method PostProcessMSGFResults in the MSGF plugin (project AnalysisManagerMSGFPlugin), calling method SummarizeMSGFResults
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
