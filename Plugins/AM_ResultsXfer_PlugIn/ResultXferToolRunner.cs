@@ -255,8 +255,53 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // No data was returned
-            msg = "LookupLocalPath; could not resolve a local volume name for path '" + uncSharePath + "' on server " + serverName;
-            LogError(msg);
+            LogError("LookupLocalPath; could not resolve a local drive letter for path '{0}' on server {1}", trimmedPath, serverName);
+
+            // ReSharper disable CommentTypo
+            // ReSharper disable StringLiteralTypo
+
+            if (!trimmedPath.StartsWith(@"DataPkgs\", StringComparison.OrdinalIgnoreCase))
+            {
+                return string.Empty;
+            }
+            // This job's dataset is a data package based dataset
+            // Re-query V_Storage_Path_Export using only "DataPkgs\"
+
+            sql.Clear();
+            sql.Append(" SELECT vol_server, storage_path");
+            sql.Append(" FROM V_Storage_Path_Export");
+            sql.AppendFormat(" WHERE machine_name = '{0}' AND", serverName);
+            sql.Append(" storage_path IN ('DataPkgs', 'DataPkgs\\')");
+
+            // ReSharper restore StringLiteralTypo
+            // ReSharper restore CommentTypo
+
+            var dataPackageStorageQuery = sql.ToString();
+
+            LogMessage("Looking for data package storage path using query {0}", dataPackageStorageQuery);
+
+            // Get a table to hold the results of the query
+            var dataPackageSuccess = dbTools.GetQueryResultsDataTable(dataPackageStorageQuery, out var dataPackageResult);
+
+            if (!dataPackageSuccess)
+            {
+                LogError("LookupLocalPath; Excessive failures attempting to retrieve directory info from database");
+                return string.Empty;
+            }
+
+            foreach (DataRow curRow in dataPackageResult.Rows)
+            {
+                // Only return the first result
+                var volServer = curRow["vol_server"].CastDBVal<string>();
+
+                var localDataPkgStoragePath = Path.Combine(volServer, trimmedPath);
+
+                LogMessage("Local data package storage path found: {0}", localDataPkgStoragePath);
+                return localDataPkgStoragePath;
+            }
+
+            // No data was returned
+            LogError("Data package storage path not found in V_Storage_Path_Export on server " + serverName);
             return string.Empty;
         }
 
