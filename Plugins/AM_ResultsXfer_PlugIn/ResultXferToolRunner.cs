@@ -80,21 +80,27 @@ namespace AnalysisManagerResultsXferPlugin
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
-            var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionStringToUse);
+            var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionStringToUse, out var rawStorageQuery);
 
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
+                LogError("{0} using query {1}", mMessage, rawStorageQuery);
+                mMessage += "; see manager log file for query";
+
                 return false;
             }
 
             datasetStoragePath = datasetStorageVolServer;
 
-            var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionStringToUse);
+            var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionStringToUse, out var resultsTransferQuery);
 
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
                 mMessage = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferDirectoryPath);
+                LogError("{0} using query {1}", mMessage, resultsTransferQuery);
+                mMessage += "; see manager log file for query";
+
                 return false;
             }
 
@@ -181,13 +187,14 @@ namespace AnalysisManagerResultsXferPlugin
             return machineName;
         }
 
-        private string LookupLocalPath(string serverName, string uncSharePath, string directoryFunction, string connectionString)
+        private string LookupLocalPath(string serverName, string uncSharePath, string directoryFunction, string connectionString, out string sqlQuery)
         {
             string msg;
 
             if (!uncSharePath.StartsWith(@"\\"))
             {
                 // Not a network path; cannot convert
+                sqlQuery = "N/A: path does not start with two backslashes: " + uncSharePath;
                 return string.Empty;
             }
 
@@ -202,6 +209,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (charIndex < 0)
             {
                 // Match not found
+                sqlQuery = "N/A: path does not have at least three backslashes: " + uncSharePath;
                 return string.Empty;
             }
 
@@ -216,7 +224,7 @@ namespace AnalysisManagerResultsXferPlugin
             var sql = new StringBuilder();
 
             // Query V_Storage_Path_Export for the local volume name of the given path
-            //
+
             sql.Append(" SELECT vol_server, storage_path");
             sql.Append(" FROM V_Storage_Path_Export");
             sql.AppendFormat(" WHERE (machine_name = '{0}') AND", serverName);
@@ -227,8 +235,10 @@ namespace AnalysisManagerResultsXferPlugin
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
 
+            sqlQuery = sql.ToString();
+
             // Get a table to hold the results of the query
-            var success = dbTools.GetQueryResultsDataTable(sql.ToString(), out var dt);
+            var success = dbTools.GetQueryResultsDataTable(sqlQuery, out var dt);
 
             if (!success)
             {
