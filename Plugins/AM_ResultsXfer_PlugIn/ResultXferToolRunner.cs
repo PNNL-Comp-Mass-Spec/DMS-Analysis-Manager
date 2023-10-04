@@ -74,13 +74,25 @@ namespace AnalysisManagerResultsXferPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool ChangeDirectoryPathsToLocal(string serverName, ref string transferDirectoryPath, ref string datasetStoragePath)
+        private bool ChangeDirectoryPathsToLocal(string serverName, ref string transferDirectoryPath, ref string datasetStoragePath, out bool useNetworkShare)
         {
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, mMgrName);
 
-            var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionStringToUse, out var rawStorageQuery);
+            var datasetStorageVolServer = LookupLocalPath(
+                serverName,
+                datasetStoragePath,
+                "raw-storage",
+                connectionStringToUse,
+                out var rawStorageQuery,
+                out var useNetworkShareForRawStorage);
+
+            if (useNetworkShareForRawStorage)
+            {
+                useNetworkShare = true;
+                return true;
+            }
 
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
@@ -88,12 +100,25 @@ namespace AnalysisManagerResultsXferPlugin
                 LogError("{0} using query {1}", mMessage, rawStorageQuery);
                 mMessage += "; see manager log file for query";
 
+                useNetworkShare = false;
                 return false;
             }
 
-            datasetStoragePath = datasetStorageVolServer;
+            var transferVolServer = LookupLocalPath(
+                serverName,
+                transferDirectoryPath,
+                "results_transfer",
+                connectionStringToUse,
+                out var resultsTransferQuery,
+                out var useNetworkShareForResultsTransfer);
 
-            var transferVolServer = LookupLocalPath(serverName, transferDirectoryPath, "results_transfer", connectionStringToUse, out var resultsTransferQuery);
+            if (useNetworkShareForResultsTransfer)
+            {
+                useNetworkShare = true;
+                return true;
+            }
+
+            useNetworkShare = false;
 
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
@@ -104,6 +129,7 @@ namespace AnalysisManagerResultsXferPlugin
                 return false;
             }
 
+            datasetStoragePath = datasetStorageVolServer;
             transferDirectoryPath = transferVolServer;
 
             return true;
@@ -183,18 +209,22 @@ namespace AnalysisManagerResultsXferPlugin
                 return string.Empty;
             }
 
-            var machineName = uncSharePath.Substring(2, charIndex - 2);
-            return machineName;
+            return uncSharePath.Substring(2, charIndex - 2);
         }
 
-        private string LookupLocalPath(string serverName, string uncSharePath, string directoryFunction, string connectionString, out string sqlQuery)
+        private string LookupLocalPath(
+            string serverName,
+            string uncSharePath,
+            string directoryFunction,
+            string connectionString,
+            out string sqlQuery,
+            out bool useNetworkShare)
         {
-            string msg;
-
             if (!uncSharePath.StartsWith(@"\\"))
             {
                 // Not a network path; cannot convert
                 sqlQuery = "N/A: path does not start with two backslashes: " + uncSharePath;
+                useNetworkShare = false;
                 return string.Empty;
             }
 
@@ -210,26 +240,22 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 // Match not found
                 sqlQuery = "N/A: path does not have at least three backslashes: " + uncSharePath;
+                useNetworkShare = false;
                 return string.Empty;
             }
 
-            uncSharePath = uncSharePath.Substring(charIndex + 1);
-
-            // Make sure uncSharePath does not end in a slash
-            if (uncSharePath.EndsWith("\\"))
-            {
-                uncSharePath = uncSharePath.TrimEnd('\\');
-            }
+            // Remove the leading back slashes and the trailing backslash (if present)
+            var trimmedPath = uncSharePath.Substring(charIndex + 1).TrimEnd('\\');
 
             var sql = new StringBuilder();
 
-            // Query V_Storage_Path_Export for the local volume name of the given path
+            // Query V_Storage_Path_Export for the local drive letter (aka volume name) of the given path
 
             sql.Append(" SELECT vol_server, storage_path");
             sql.Append(" FROM V_Storage_Path_Export");
             sql.AppendFormat(" WHERE (machine_name = '{0}') AND", serverName);
-            sql.AppendFormat("       (storage_path = '{0}' OR", uncSharePath);
-            sql.AppendFormat("        storage_path = '{0}\\')", uncSharePath);
+            sql.AppendFormat("       (storage_path = '{0}' OR", trimmedPath);
+            sql.AppendFormat("        storage_path = '{0}\\')", trimmedPath);
             sql.AppendFormat(" ORDER BY CASE WHEN storage_path_function = '{0}' THEN 1 ELSE 2 END, id DESC", directoryFunction);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
@@ -242,8 +268,8 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (!success)
             {
-                msg = "LookupLocalPath; Excessive failures attempting to retrieve directory info from database";
-                LogError(msg);
+                LogError("LookupLocalPath; Excessive failures attempting to retrieve directory info from database");
+                useNetworkShare = false;
                 return string.Empty;
             }
 
@@ -251,7 +277,23 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 // Only return the first result
                 var volServer = curRow["vol_server"].CastDBVal<string>();
-                return Path.Combine(volServer, uncSharePath);
+                useNetworkShare = false;
+                return Path.Combine(volServer, trimmedPath);
+            }
+
+
+            if (trimmedPath.StartsWith("MassIVE_Staging") ||
+                trimmedPath.StartsWith("MaxQuant_Staging") ||
+                trimmedPath.StartsWith("MSFragger_Staging") ||
+                trimmedPath.StartsWith("DiaNN_Staging"))
+            {
+                // Use the UNC path
+                LogMessage(
+                    "Could not resolve a local drive letter for path '{0}' on server {1}; will use the UNC path since this is a file staging share: {2}",
+                    trimmedPath, serverName, uncSharePath);
+
+                useNetworkShare = true;
+                return uncSharePath;
             }
 
             // No data was returned
@@ -262,6 +304,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (!trimmedPath.StartsWith(@"DataPkgs\", StringComparison.OrdinalIgnoreCase))
             {
+                useNetworkShare = false;
                 return string.Empty;
             }
             // This job's dataset is a data package based dataset
@@ -286,6 +329,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (!dataPackageSuccess)
             {
                 LogError("LookupLocalPath; Excessive failures attempting to retrieve directory info from database");
+                useNetworkShare = false;
                 return string.Empty;
             }
 
@@ -297,11 +341,14 @@ namespace AnalysisManagerResultsXferPlugin
                 var localDataPkgStoragePath = Path.Combine(volServer, trimmedPath);
 
                 LogMessage("Local data package storage path found: {0}", localDataPkgStoragePath);
+                useNetworkShare = false;
                 return localDataPkgStoragePath;
             }
 
             // No data was returned
             LogError("Data package storage path not found in V_Storage_Path_Export on server " + serverName);
+
+            useNetworkShare = false;
             return string.Empty;
         }
 
@@ -484,22 +531,30 @@ namespace AnalysisManagerResultsXferPlugin
 
             // Check whether the transfer directory and the dataset directory reside on the same server as this manager
             var serverName = Environment.MachineName;
-            var movingLocalFiles = false;
+            bool movingLocalFiles;
 
             if (string.Equals(GetMachineNameFromPath(transferDirectoryPath), serverName, StringComparison.OrdinalIgnoreCase) &&
                 string.Equals(GetMachineNameFromPath(datasetStoragePath), serverName, StringComparison.OrdinalIgnoreCase))
             {
                 // Update the paths to use local file paths instead of network share paths
 
-                if (!ChangeDirectoryPathsToLocal(serverName, ref transferDirectoryPath, ref datasetStoragePath))
+                // If LookupLocalPath() is unable to determine a local path and we are transferring data to a data package,
+                // or to a staging share (like \\protoapps\MaxQuant_Staging), useNetworkShare will have been set to true
+
+                if (!ChangeDirectoryPathsToLocal(serverName, ref transferDirectoryPath, ref datasetStoragePath, out var useNetworkShare))
                 {
                     if (string.IsNullOrWhiteSpace(mMessage))
                         mMessage = "Unknown error calling ChangeDirectoryPathsToLocal";
+
                     LogError(mMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                movingLocalFiles = true;
+                movingLocalFiles = !useNetworkShare;
+            }
+            else
+            {
+                movingLocalFiles = false;
             }
 
             var inputDirectory = mJobParams.GetParam("InputFolderName");
