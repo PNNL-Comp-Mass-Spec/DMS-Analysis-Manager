@@ -75,6 +75,7 @@ namespace GlyQResultsSummarizer
             var toolRunner = new AnalysisToolRunnerGlyQIQ();
 
             var resultsFile = new FileInfo(resultsFilePath);
+
             if (!resultsFile.Exists)
             {
                 ShowErrorMessage("File not found: " + resultsFile.FullName);
@@ -125,6 +126,7 @@ namespace GlyQResultsSummarizer
                 if (parseCommandLine.InvalidParametersPresent(validParameters))
                 {
                     var badArguments = new List<string>();
+
                     foreach (var item in parseCommandLine.InvalidParameters(validParameters))
                     {
                         badArguments.Add("/" + item);

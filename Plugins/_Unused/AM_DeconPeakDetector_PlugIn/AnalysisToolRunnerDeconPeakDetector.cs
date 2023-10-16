@@ -63,9 +63,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 // Store the PeakDetector version info in the database
                 mMessage = string.Empty;
+
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Error determining DeconPeakDetector version";
@@ -266,6 +268,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             mProgress = PROGRESS_PCT_COMPLETE;
             mStatusTools.UpdateAndWrite(mProgress);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("DeconPeakDetector Search Complete");

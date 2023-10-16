@@ -255,6 +255,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -540,6 +541,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var scanNumberOutputThreshold = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();

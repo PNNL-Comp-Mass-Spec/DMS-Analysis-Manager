@@ -126,6 +126,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     // FilterInspectResultsByPValue will create file _inspect_filtered.txt
                     var pValueFilterResult = FilterInspectResultsByPValue();
+
                     if (pValueFilterResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         processingSuccess = false;
@@ -156,6 +157,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     // Rename and zip up files _inspect_filtered.txt and _inspect.txt
                     var zipResult = ZipInspectResults();
+
                     if (zipResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         processingSuccess = false;
@@ -166,6 +168,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     // Create the Peptide to Protein map file
                     var pepToProteinMappingResult = CreatePeptideToProteinMapping();
+
                     if (pepToProteinMappingResult == CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         filteredResultsAreEmpty = true;
@@ -250,6 +253,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 // Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
                 var result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, numResultFiles);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -262,6 +266,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 var fileName = mDatasetName + "_error.txt";
                 result = AssembleFiles(fileName, ResultFileType.INSPECT_ERROR, numResultFiles);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -275,6 +280,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 fileName = "InspectSearchLog.txt";
                 result = AssembleFiles(fileName, ResultFileType.INSPECT_SEARCH, numResultFiles);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -288,6 +294,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 fileName = "InspectConsoleOutput.txt";
                 result = AssembleFiles(fileName, ResultFileType.INSPECT_CONSOLE, numResultFiles);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -328,6 +335,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 var datasetName = mDatasetName;
 
                 var writer = CreateNewExportFile(Path.Combine(mWorkDir, combinedFileName));
+
                 if (writer == null)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -428,11 +436,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                 try
                                 {
                                     var tabIndex = dataLine.IndexOf('\t');
+
                                     if (tabIndex > 0)
                                     {
                                         // Note: .LastIndexOf will start at index tabIndex and search backwards until the first match is found
                                         // (this is a bit counter-intuitive, but that's what it does)
                                         var slashIndex = dataLine.LastIndexOf(Path.DirectorySeparatorChar, tabIndex);
+
                                         if (slashIndex > 0)
                                         {
                                             dataLine = dataLine.Substring(slashIndex + 1);
@@ -515,6 +525,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     while (!reader.EndOfStream && linesRead < 10)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (!string.IsNullOrEmpty(dataLine))
                         {
                             linesRead++;
@@ -756,6 +767,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             var targetFilePath = Path.Combine(mWorkDir, mInspectResultsFileName);
+
             if (mDebugLevel >= 3)
             {
                 LogDebug("Renaming " + fileInfo.FullName + " to " + targetFilePath);
@@ -855,6 +867,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             // verify that python program file exists
             var progLoc = pythonProgLoc;
+
             if (!File.Exists(progLoc))
             {
                 LogError("Cannot find python.exe program file: " + progLoc);
@@ -863,6 +876,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             // verify that PValue python script exists
             var pvalueScriptPath = Path.Combine(inspectDir, PVALUE_MINLENGTH5_SCRIPT);
+
             if (!File.Exists(pvalueScriptPath))
             {
                 LogError("Cannot find PValue script: " + pvalueScriptPath);
@@ -965,18 +979,22 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             // Store version information for the PeptideToProteinMapEngine and its associated DLLs
             var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, Path.Combine(appFolderPath, "PeptideToProteinMapEngine.dll"));
+
             if (!success)
                 return false;
 
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, Path.Combine(appFolderPath, "ProteinFileReader.dll"));
+
             if (!success)
                 return false;
 
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, Path.Combine(appFolderPath, "System.Data.SQLite.dll"));
+
             if (!success)
                 return false;
 
             success = StoreToolVersionInfoOneFile(ref toolVersionInfo, Path.Combine(appFolderPath, "ProteinCoverageSummarizer.dll"));
+
             if (!success)
                 return false;
 
@@ -1047,6 +1065,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             while (!reader.EndOfStream)
                             {
                                 var dataLine = reader.ReadLine();
+
                                 if (string.IsNullOrWhiteSpace(dataLine))
                                     continue;
 
@@ -1070,6 +1089,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                             var matchFound = false;
 
                                             int index;
+
                                             for (index = 0; index < modList.Count; index++)
                                             {
                                                 if (modList[index].ModName.ToLower() == modName)
@@ -1145,6 +1165,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             try
                             {
                                 var ptModsFilePathOld = ptModsFilePath + ".old";
+
                                 if (File.Exists(ptModsFilePathOld))
                                 {
                                     File.Delete(ptModsFilePathOld);

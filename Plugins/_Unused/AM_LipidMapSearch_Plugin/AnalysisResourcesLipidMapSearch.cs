@@ -27,6 +27,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -175,6 +176,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             var dataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
+
             if (string.IsNullOrEmpty(dataset2))
             {
                 mMessage = "SourceJob2Dataset job parameter not found; this is unexpected";
@@ -230,6 +232,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // Search the dataset directory first, then the archive folder
 
             var fileToFind = datasetName + DOT_RAW_EXTENSION;
+
             if (!CopyFileToWorkDir(fileToFind, datasetFolderPath, mWorkDir, BaseLogger.LogLevels.INFO))
             {
                 // Raw file not found on the storage server; try the archive
@@ -238,6 +241,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     // Raw file still not found; try MyEMSL
 
                     var datasetDirectoryPath = DirectorySearchTool.FindValidDirectory(datasetName, fileToFind, retrievingInstrumentDataDir: false);
+
                     if (datasetDirectoryPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download

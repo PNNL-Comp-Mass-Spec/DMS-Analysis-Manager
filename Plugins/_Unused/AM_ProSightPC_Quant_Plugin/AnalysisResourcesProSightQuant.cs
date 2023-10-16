@@ -30,6 +30,7 @@ namespace AnalysisManagerProSightQuantPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -52,6 +53,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MSAlign_Quant";
 
             paramFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(paramFileStoragePath))
             {
                 paramFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
@@ -61,6 +63,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
 
             var paramFileName = mJobParams.GetParam("ProSightQuantParamFile");
+
             if (string.IsNullOrEmpty(paramFileName))
             {
                 mMessage = AnalysisToolRunnerBase.NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
@@ -77,6 +80,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             // Retrieve the ProSightPC results for this job
             const string proSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(proSightPCResultsFile, false))
             {
                 // Errors were reported in method call, so just return

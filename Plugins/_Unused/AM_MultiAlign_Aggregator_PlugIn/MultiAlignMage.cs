@@ -101,6 +101,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             var dataPackageID = mJobParams.RequireJobParam("DataPackageID");
 
             var success = GetMultiAlignParameterFile();
+
             if (!success)
                 return false;
 
@@ -117,10 +118,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             success = CopyMultiAlignInputFiles(multialignJobsToProcess, mSearchType);
+
             if (!success)
                 return false;
 
             success = BuildMultiAlignInputTextFile(mSearchType);
+
             if (!success)
                 return false;
 
@@ -202,6 +205,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
                 var parameterFileStoragePath = mMgrParams.RequireMgrParam(paramFileStoragePathKeyName);
+
                 if (string.IsNullOrEmpty(parameterFileStoragePath))
                 {
                     parameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
@@ -382,6 +386,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 writer.WriteLine("[Files]");
 
                 var alignmentDataset = mJobParams.GetJobParam("AlignmentDataset");
+
                 foreach (var datasetFile in foundFiles)
                 {
                     if (!string.IsNullOrWhiteSpace(alignmentDataset) && datasetFile.IndexOf(alignmentDataset, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -397,6 +402,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 // Check to see if a mass tag database has been defined and NO alignment dataset has been defined
                 var amtDb = mJobParams.GetJobParam("AMTDB");
+
                 if (!string.IsNullOrEmpty(amtDb.Trim()))
                 {
                     writer.WriteLine("[Database]");
@@ -697,6 +703,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             {
                 // get array of column names
                 var cols = new List<string>();
+
                 foreach (var colDef in this.InputColumnDefs)
                 {
                     cols.Add(colDef.Name);
@@ -743,6 +750,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             private static string[] ConvertObjectArrayToStringArray(IEnumerable<object> row)
             {
                 var obj = new List<string>();
+
                 foreach (var fld in row)
                 {
                     obj.Add(fld.ToString());
@@ -805,6 +813,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             public string RequireJobParam(string paramName)
             {
                 var val = mJobParams.GetParam(paramName);
+
                 if (string.IsNullOrWhiteSpace(val))
                 {
                     throw new MageException(string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -820,6 +829,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             public string RequireJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParams.GetParam(paramName);
+
                 if (string.IsNullOrWhiteSpace(val))
                 {
                     mJobParams.AddAdditionalParameter(AnalysisJob.JOB_PARAMETERS_SECTION, paramName, defaultValue);
@@ -845,6 +855,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             public string GetJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParams.GetParam(paramName);
+
                 if (string.IsNullOrWhiteSpace(val))
                     val = defaultValue;
                 return val;
@@ -874,6 +885,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             public string RequireMgrParam(string paramName)
             {
                 var val = mMgrParams.GetParam(paramName);
+
                 if (string.IsNullOrWhiteSpace(val))
                 {
                     throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));

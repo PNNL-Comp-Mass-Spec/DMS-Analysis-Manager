@@ -20,6 +20,7 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             // Start with base class method to get settings information
             var resultCode = base.RunTool();
+
             if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 return resultCode;
 
@@ -34,6 +35,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Verify a param file has been specified
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
+
             if (!File.Exists(paramFilePath))
             {
                 // Param file wasn't specified, but is required for ICR-2LS analysis
@@ -56,6 +58,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Assemble the data file name and path
             var datasetNamePath = Path.Combine(mWorkDir, mDatasetName + ".raw");
+
             if (!File.Exists(datasetNamePath))
             {
                 mMessage = "Raw file not found: " + datasetNamePath;
@@ -125,6 +128,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Allow extra time for ICR2LS to release file locks
                 Global.IdleLoop(5);
                 var foundFiles = Directory.GetFiles(mWorkDir, "*.raw");
+
                 foreach (var targetFile in foundFiles)
                 {
                     // Add the file to .FilesToDelete just in case the deletion fails

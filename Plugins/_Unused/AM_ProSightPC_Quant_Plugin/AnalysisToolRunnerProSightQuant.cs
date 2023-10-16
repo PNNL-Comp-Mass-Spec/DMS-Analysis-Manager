@@ -83,9 +83,11 @@ namespace AnalysisManagerProSightQuantPlugIn
                 mProgress = PROGRESS_PCT_CREATING_PARAMETERS;
 
                 var targetedQuantParamFilePath = CreateTargetedQuantParamFile();
+
                 if (string.IsNullOrEmpty(targetedQuantParamFilePath))
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned false");
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
@@ -160,6 +162,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 {
                     // Make sure that the quantitation output file was created
                     var outputFileName = mDatasetName + "_quant.txt";
+
                     if (!File.Exists(Path.Combine(mWorkDir, outputFileName)))
                     {
                         mMessage = "ProSight_Quant result file not found (" + outputFileName + ")";
@@ -193,6 +196,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 {
                     mProgress = PROGRESS_PCT_COMPLETE;
                     mStatusTools.UpdateAndWrite(mProgress);
+
                     if (mDebugLevel >= 3)
                     {
                         LogDebug("TargetedWorkflowsConsole Quantitation Complete");
@@ -257,6 +261,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 const string proSightPCResultsFile = AnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
                 var workflowParamFileName = mJobParams.GetParam("ProSightQuantParamFile");
+
                 if (string.IsNullOrEmpty(workflowParamFileName))
                 {
                     mMessage = NotifyMissingParameter(mJobParams, "ProSightQuantParamFile");
@@ -364,6 +369,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -388,6 +394,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             if (effectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                             {
                                 var match = reSubProgress.Match(dataLine);
+
                                 if (match.Success)
                                 {
                                     if (double.TryParse(match.Groups[1].Value, out subProgressAddon))
@@ -398,6 +405,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             }
 
                             var charIndex = dataLineLCase.IndexOf("exception of type", StringComparison.OrdinalIgnoreCase);
+
                             if (charIndex < 0)
                             {
                                 charIndex = dataLineLCase.IndexOf("\terror", StringComparison.OrdinalIgnoreCase);

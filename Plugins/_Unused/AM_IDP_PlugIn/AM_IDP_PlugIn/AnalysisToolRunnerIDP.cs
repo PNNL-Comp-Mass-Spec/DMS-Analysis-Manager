@@ -111,6 +111,7 @@ namespace AnalysisManager_IDP_PlugIn
                 mJobParams.SetParam("StepParameters", "OutputFolderName", mResultsDirectoryName);
 
                 success = MakeResultsDirectory();
+
                 if (!success)
                 {
                     // MakeResultsDirectory handles posting to local log, so set database error message and exit
@@ -118,6 +119,7 @@ namespace AnalysisManager_IDP_PlugIn
                 }
 
                 success = MoveResultFiles();
+
                 if (!success)
                 {
                     // Note that MoveResultFiles should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory
@@ -135,6 +137,7 @@ namespace AnalysisManager_IDP_PlugIn
                 }
 
                 success = CopyResultsFolderToServer();
+
                 if (!success)
                 {
                     // Note that CopyResultsFolderToServer should have already called AnalysisResults.CopyFailedResultsToArchiveDirectory

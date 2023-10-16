@@ -914,6 +914,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     LogWarning("Sleeping for 5 minutes to allow for diagnosis");
 
                     var startTime = DateTime.UtcNow;
+
                     while (DateTime.UtcNow.Subtract(startTime).TotalMinutes < 5)
                     {
                         Console.Write(". ");

@@ -30,6 +30,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 // Retrieve shared resources, including the JobParameters file from the previous job step
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -41,6 +42,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 var success = FileSearchTool.RetrieveFile(paramFileName, paramFileStoragePath);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -49,6 +51,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 currentTask = "Process the MyEMSL download queue";
 
                 success = ProcessMyEMSLDownloadQueue(mWorkDir, MyEMSLReader.Downloader.DownloadLayout.FlatNoSubdirectories);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

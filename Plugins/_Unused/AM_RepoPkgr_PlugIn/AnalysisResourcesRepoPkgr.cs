@@ -39,6 +39,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -69,6 +70,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var includeMzXmlFiles = mJobParams.GetJobParameter("IncludeMzXMLFiles", true);
 
             success = FindInstrumentDataFiles(dataPackageInfoLoader, dataPackagePeptideHitJobs, additionalJobs, includeMzXmlFiles);
+
             if (!success)
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
@@ -119,6 +121,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             foreach (var jobInfo in jobsToProcess)
             {
                 jobsProcessed++;
+
                 if (datasetRawDataTypes.ContainsKey(jobInfo.Dataset))
                     continue;
 
@@ -221,6 +224,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     lastProgressUpdate = DateTime.UtcNow;
 
                     var progressMsg = "Finding instrument data";
+
                     if (includeMzXmlFiles)
                         progressMsg += " and mzXML files";
 
@@ -368,6 +372,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         OverrideCurrentDatasetAndJobInfo(analysisJob);
                         mJobParams.AddAdditionalParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
+
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
                             if (string.IsNullOrEmpty(mMessage))
@@ -375,6 +380,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             return false;
                         }
                         orgDbNameGenerated = mJobParams.GetJobParameter(AnalysisJob.PEPTIDE_SEARCH_SECTION, "GeneratedFastaName", string.Empty);
+
                         if (string.IsNullOrEmpty(orgDbNameGenerated))
                         {
                             mMessage = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";

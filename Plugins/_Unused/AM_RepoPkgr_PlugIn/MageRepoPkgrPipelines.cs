@@ -233,6 +233,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         private SimpleSink CopyFiles(SimpleSink sourceObject, string outputDirectory, string prefixCol = "")
         {
             var result = new SimpleSink();
+
             if (sourceObject.Rows.Count == 0)
                 return result;
 
@@ -243,6 +244,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var source = new SinkWrapper(sourceObject);
             var copier = new FileCopy { OutputDirectoryPath = outputDirectory, OverwriteExistingFiles = true };
+
             if (!string.IsNullOrEmpty(prefixCol) && CheckForDuplicateFileNames(copier.OutputFileColumnName))
             {
                 copier.ColumnToUseForPrefix = prefixCol;

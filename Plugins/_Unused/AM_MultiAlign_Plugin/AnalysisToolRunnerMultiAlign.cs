@@ -83,6 +83,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             mCmdRunner.WriteConsoleOutputToFile = false;
 
             bool processingSuccess;
+
             if (!mCmdRunner.RunProgram(progLoc, arguments, "MultiAlign", true))
             {
                 mMessage = "Error running MultiAlign";
@@ -117,6 +118,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             RenameLogFile();
 
             var resultsFolderCreated = MakeResultsDirectory();
+
             if (!resultsFolderCreated)
             {
                 CopyFailedResultsToArchiveDirectory();
@@ -188,6 +190,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             var multiAlignProg = new FileInfo(multiAlignProgLoc);
+
             if (!multiAlignProg.Exists)
             {
                 try
@@ -206,6 +209,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Lookup the version of MultiAlign
             var success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignProg.FullName);
+
             if (!success)
                 return false;
 
@@ -215,21 +219,25 @@ namespace AnalysisManagerMultiAlignPlugIn
             {
                 // Lookup the version of additional DLLs
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(multiAlignProg.DirectoryName, "PNNLOmics.dll"));
+
                 if (!success)
                     return false;
 
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
                                                               Path.Combine(multiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
+
                 if (!success)
                     return false;
 
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
                                                               Path.Combine(multiAlignProg.DirectoryName, "MultiAlignCore.dll"));
+
                 if (!success)
                     return false;
 
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo,
                                                               Path.Combine(multiAlignProg.DirectoryName, "PNNLControls.dll"));
+
                 if (!success)
                     return false;
 

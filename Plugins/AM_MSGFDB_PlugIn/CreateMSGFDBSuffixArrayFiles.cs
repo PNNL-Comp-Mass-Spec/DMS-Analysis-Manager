@@ -1371,6 +1371,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Lock file found; wait up to maxWaitTimeHours
             var staleFile = false;
+
             while (lockFile.Exists)
             {
                 // Sleep for 2 seconds

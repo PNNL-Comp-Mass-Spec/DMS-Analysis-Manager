@@ -151,6 +151,7 @@ namespace AnalysisManagerSequestPlugin
             mOutFileWatcher.EnableRaisingEvents = true;
 
             var sequestProgLoc = mMgrParams.GetParam("SeqProgLoc");
+
             if (!File.Exists(sequestProgLoc))
             {
                 mMessage = "SEQUEST .Exe not found";
@@ -196,6 +197,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Define the arguments to pass to the SEQUEST .Exe
                 var arguments = " -P" + mJobParams.GetParam("parmFileName") + " *.dta";
+
                 if (mDebugLevel >= 1)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "  " + sequestProgLoc + " " + arguments);
@@ -225,6 +227,7 @@ namespace AnalysisManagerSequestPlugin
                     if (dtaCountRemaining > 0)
                     {
                         success = false;
+
                         if (mNodeCountSpawnErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS && mNodeCountActiveErrorOccurrences < MAX_NODE_RESPAWN_ATTEMPTS)
                         {
                             const int maxPVMResetAttempts = 4;
@@ -295,6 +298,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             var outFiles = Directory.GetFiles(mWorkDir, "*.out");
+
             if (mDebugLevel >= 1)
             {
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
@@ -323,6 +327,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             var iterationsRemaining = 3;
+
             do
             {
                 // Process the remaining .Out files in mOutFileCandidates
@@ -626,6 +631,7 @@ namespace AnalysisManagerSequestPlugin
                             //    9.  received ready message from p6(c0002)
 
                             var reMatch = reReceivedReadyMsg.Match(dataLine);
+
                             if (reMatch.Success)
                             {
                                 mSequestNodesSpawned++;
@@ -633,6 +639,7 @@ namespace AnalysisManagerSequestPlugin
                             else
                             {
                                 reMatch = reSpawnedSlaveProcesses.Match(dataLine);
+
                                 if (reMatch.Success)
                                 {
                                     foundSpawned = true;
@@ -721,6 +728,7 @@ namespace AnalysisManagerSequestPlugin
             mRecentOutFileSearchTimes.CopyTo(outFileProcessingTimes, 0);
 
             Array.Sort(outFileProcessingTimes);
+
             if (outFileProcessingTimes.Length <= 2)
             {
                 midPoint = 0;
@@ -843,12 +851,14 @@ namespace AnalysisManagerSequestPlugin
                 appendSuccess = true;
 
                 KeyValuePair<string, DateTime> entry;
+
                 if (mOutFileCandidates.Count > 0 && !mSequestVersionInfoStored)
                 {
                     // Determine tool version
 
                     // Pass the path to the first out file created
                     entry = mOutFileCandidates.Peek();
+
                     if (StoreToolVersionInfo(Path.Combine(mWorkDir, entry.Key)))
                     {
                         mSequestVersionInfoStored = true;
@@ -914,6 +924,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         string sourceFileName;
                         bool success;
+
                         if (!mTempJobParamsCopied)
                         {
                             sourceFileName = "JobParameters_" + mJob + ".xml";
@@ -996,12 +1007,14 @@ namespace AnalysisManagerSequestPlugin
             while (maxPVMResetAttempts > 0)
             {
                 success = ResetPVM();
+
                 if (success)
                 {
                     break;
                 }
 
                 maxPVMResetAttempts--;
+
                 if (maxPVMResetAttempts > 0)
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
@@ -1024,6 +1037,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Folder with PVM
                 var pvmProgramDirectory = mMgrParams.GetParam("PVMProgLoc");
+
                 if (string.IsNullOrWhiteSpace(pvmProgramDirectory))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
@@ -1033,6 +1047,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Full path to PVM exe
                 var exePath = Path.Combine(pvmProgramDirectory, "pvm.exe");
+
                 if (!File.Exists(exePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "PVM not found: " + exePath);
@@ -1042,24 +1057,28 @@ namespace AnalysisManagerSequestPlugin
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, " ... Resetting PVM");
 
                 var success = ResetPVMHalt(pvmProgramDirectory);
+
                 if (!success)
                 {
                     return false;
                 }
 
                 success = ResetPVMWipeTemp(pvmProgramDirectory);
+
                 if (!success)
                 {
                     return false;
                 }
 
                 success = ResetPVMStartPVM(pvmProgramDirectory);
+
                 if (!success)
                 {
                     return false;
                 }
 
                 success = ResetPVMAddNodes(pvmProgramDirectory);
+
                 if (!success)
                 {
                     return false;
@@ -1082,6 +1101,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var batchFilePath = Path.Combine(pvmProgramDirectory, "HaltPVM.bat");
+
                 if (!File.Exists(batchFilePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
@@ -1095,6 +1115,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 const string taskName = "HaltPVM";
+
                 if (!InitializeUtilityRunner(taskName, pvmProgramDirectory))
                 {
                     return false;
@@ -1127,6 +1148,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var batchFilePath = Path.Combine(pvmProgramDirectory, "wipe_temp.bat");
+
                 if (!File.Exists(batchFilePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
@@ -1140,6 +1162,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 const string taskName = "WipeTemp";
+
                 if (!InitializeUtilityRunner(taskName, pvmProgramDirectory))
                 {
                     return false;
@@ -1180,6 +1203,7 @@ namespace AnalysisManagerSequestPlugin
                 // quit
 
                 var batchFilePath = Path.Combine(pvmProgramDirectory, "StartPVM.bat");
+
                 if (!File.Exists(batchFilePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
@@ -1193,6 +1217,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 const string taskName = "StartPVM";
+
                 if (!InitializeUtilityRunner(taskName, pvmProgramDirectory))
                 {
                     return false;
@@ -1225,6 +1250,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var batchFilePath = Path.Combine(pvmProgramDirectory, "AddHosts.bat");
+
                 if (!File.Exists(batchFilePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
@@ -1238,6 +1264,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 const string taskName = "AddHosts";
+
                 if (!InitializeUtilityRunner(taskName, pvmProgramDirectory))
                 {
                     return false;
@@ -1326,6 +1353,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Node machine count
             var numNodeMachines = GetIntegerFromSeqLogFileString(fileContents, @"starting the SEQUEST task on\s+\d+\s+node");
+
             if (numNodeMachines == 0)
             {
                 const string message = "UpdateNodeStats: node machine count line not found";
@@ -1344,6 +1372,7 @@ namespace AnalysisManagerSequestPlugin
 
             // SEQUEST process count
             var numSlaveProcesses = GetIntegerFromSeqLogFileString(fileContents, "Spawned\\s+\\d+\\s+slave processes");
+
             if (numSlaveProcesses == 0)
             {
                 const string message = "UpdateNodeStats: slave process count line not found";
@@ -1362,6 +1391,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Total search time
             double TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(fileContents, @"Total search time:\s+\d+");
+
             if (TotalSearchTimeSeconds <= 0)
             {
                 // Total search time line not found (or error)
@@ -1373,6 +1403,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Searched file count
             var searchedFileCount = GetIntegerFromSeqLogFileString(fileContents, @"secs for\s+\d+\s+files");
+
             if (searchedFileCount <= 0)
             {
                 // Searched file count line not found (or error)
@@ -1414,6 +1445,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Determine the number of Active Nodes using PVM
                 var pvmProgramDirectory = mMgrParams.GetParam("PVMProgLoc");
+
                 if (string.IsNullOrWhiteSpace(pvmProgramDirectory))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
@@ -1422,6 +1454,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var batchFilePath = Path.Combine(pvmProgramDirectory, "CheckActiveNodes.bat");
+
                 if (!File.Exists(batchFilePath))
                 {
                     LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + batchFilePath);
@@ -1436,6 +1469,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 const string taskName = "CheckActiveNodes";
+
                 if (!InitializeUtilityRunner(taskName, pvmProgramDirectory))
                 {
                     return;
@@ -1468,6 +1502,7 @@ namespace AnalysisManagerSequestPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -1475,6 +1510,7 @@ namespace AnalysisManagerSequestPlugin
                         //    p6    c0007     6/c,f sequest27_slave
 
                         var reMatch = mActiveNodeRegEx.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             var nodeName = reMatch.Groups["node"].Value;
@@ -1504,6 +1540,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Look for nodes that have been missing for at least 5 minutes
                 var nodeCountActive = 0;
+
                 foreach (var sequestNode in mSequestNodes)
                 {
                     if (DateTime.UtcNow.Subtract(sequestNode.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)

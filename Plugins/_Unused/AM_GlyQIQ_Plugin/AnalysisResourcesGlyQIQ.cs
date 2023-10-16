@@ -72,6 +72,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -84,6 +85,7 @@ namespace AnalysisManagerGlyQIQPlugin
             // Use all the cores if the system has 4 or fewer cores
             // Otherwise, use TotalCoreCount - 1
             var maxAllowedCores = mStatusTools.GetCoreCount();
+
             if (maxAllowedCores > 4)
                 maxAllowedCores--;
 
@@ -92,6 +94,7 @@ namespace AnalysisManagerGlyQIQPlugin
             mJobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
 
             mGlyQIQParams.WorkingParameterFolders = CreateSubdirectories(coreCount);
+
             if (mGlyQIQParams.WorkingParameterFolders.Count == 0)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -196,6 +199,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Determine the path to the IQGlyQ program
 
                 var progLoc = AnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", mMgrParams, out mMessage);
+
                 if (string.IsNullOrEmpty(progLoc))
                 {
                     LogError("DetermineProgramLocation returned an empty string: " + mMessage);
@@ -276,6 +280,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
 
                     var locksDirectory = new DirectoryInfo(Path.Combine(workingDirectory.Value.FullName, LOCKS_FOLDER_NAME));
+
                     if (!locksDirectory.Exists)
                         locksDirectory.Create();
                 }
@@ -299,6 +304,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 var paramFileStoragePathBase = mJobParams.GetParam("ParamFileStoragePath");
 
                 mGlyQIQParams.IQParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
+
                 if (string.IsNullOrEmpty(mGlyQIQParams.IQParamFileName))
                 {
                     LogError("Job Parameter File name is empty");
@@ -360,6 +366,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Count the number of targets
                 mGlyQIQParams.NumTargets = CountTargets(targetsFile.FullName);
+
                 if (mGlyQIQParams.NumTargets < 1)
                 {
                     LogError("Targets file is empty: " + Path.Combine(sourceFolderPath, sourceFileName));
@@ -456,6 +463,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Retrieve the _peaks.txt file
 
                 var fileToFind = DatasetName + "_peaks.txt";
+
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToFind, false, false, out var sourceFolderPath))
                 {
                     mMessage = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted";
@@ -466,6 +474,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 var transferDirectory = new DirectoryInfo(mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH));
                 var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+
                 if (sourceDirectory.FullName.StartsWith(transferDirectory.FullName, StringComparison.OrdinalIgnoreCase))
                 {
                     // The Peaks.txt file is in the transfer folder
@@ -515,6 +524,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Create the output files
                 var writers = new List<StreamWriter>();
+
                 foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
                 {
                     var core = workingDirectory.Key;
@@ -533,6 +543,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // When targetsWritten reaches nextThreshold, we will switch to the next file
                 var nextThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count);
+
                 if (nextThreshold < 1)
                     nextThreshold = 1;
 
@@ -554,12 +565,14 @@ namespace AnalysisManagerGlyQIQPlugin
                     writers[outputFileIndex].WriteLine(lineIn);
 
                     targetsWritten++;
+
                     if (targetsWritten >= nextThreshold)
                     {
                         // Advance the output file index
                         outputFileIndex++;
 
                         var newThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count * (outputFileIndex + 1));
+
                         if (newThreshold > nextThreshold)
                         {
                             nextThreshold = newThreshold;

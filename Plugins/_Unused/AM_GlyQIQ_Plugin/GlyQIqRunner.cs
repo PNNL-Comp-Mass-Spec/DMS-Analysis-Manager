@@ -84,6 +84,7 @@ namespace AnalysisManagerGlyQIQPlugin
         private void CacheTargets()
         {
             var batchFile = new FileInfo(BatchFilePath);
+
             if (!batchFile.Exists)
             {
                 throw new FileNotFoundException("Batch file not found", BatchFilePath);
@@ -126,12 +127,14 @@ namespace AnalysisManagerGlyQIQPlugin
                 var workingParametersFolderPath = parameterListFiltered[6];
 
                 var workingParametersDirectory = new DirectoryInfo(workingParametersFolderPath);
+
                 if (!workingParametersDirectory.Exists)
                 {
                     throw new DirectoryNotFoundException("Folder not found, " + workingParametersDirectory.FullName);
                 }
 
                 var targetsFile = new FileInfo(Path.Combine(workingParametersDirectory.FullName, targetsFileName));
+
                 if (!targetsFile.Exists)
                 {
                     throw new FileNotFoundException("Targets file not found, " + targetsFile.FullName);
@@ -146,10 +149,12 @@ namespace AnalysisManagerGlyQIQPlugin
                     if (!reader.EndOfStream)
                     {
                         var headerLine = reader.ReadLine();
+
                         if (headerLine == null)
                             throw new Exception("Header line in the targets file is empty, " + targetsFile.Name);
 
                         var headers = headerLine.Split('\t');
+
                         if (headers.Length < 3)
                         {
                             throw new Exception("Header line in the targets file does not have enough columns, " + targetsFile.Name);
@@ -165,6 +170,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -173,6 +179,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         if (targetInfoColumns.Length > CODE_COLUMN_INDEX + 1)
                         {
                             var targetName = targetInfoColumns[CODE_COLUMN_INDEX];
+
                             if (!mTargets.ContainsKey(targetName))
                             {
                                 mTargets.Add(targetName, false);
@@ -270,6 +277,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 var targetsProcessed = (from item in mTargets where item.Value select item).Count() - 1;
+
                 if (targetsProcessed < 0)
                     targetsProcessed = 0;
 

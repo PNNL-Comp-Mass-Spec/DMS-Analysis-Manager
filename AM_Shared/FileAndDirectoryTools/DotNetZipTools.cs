@@ -685,6 +685,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             using var reader = entry.OpenReader();
 
             int n;
+
             do
             {
                 n = reader.Read(buffer, 0, buffer.Length);

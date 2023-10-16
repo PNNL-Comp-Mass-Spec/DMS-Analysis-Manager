@@ -163,11 +163,13 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (!mPEKResultsFile.Exists)
                 {
                     mPEKResultsFile.Refresh();
+
                     if (!mPEKResultsFile.Exists)
                         return;
                 }
 
                 var transferDirectoryPath = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+
                 if (string.IsNullOrEmpty(transferDirectoryPath))
                     return;
 
@@ -175,6 +177,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 transferDirectoryPath = Path.Combine(transferDirectoryPath, mJobParams.GetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 var transferDirectory = new DirectoryInfo(transferDirectoryPath);
+
                 if (!transferDirectory.Exists)
                 {
                     transferDirectory.Create();
@@ -223,10 +226,12 @@ namespace AnalysisManagerICR2LSPlugIn
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
                     var reMatch = reScanNumber.Match(dataLine);
+
                     if (!reMatch.Success)
                     {
                         reMatch = reScanNumberFromFilename.Match(dataLine);
@@ -311,6 +316,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             continue;
 
                         var charIndex = dataLine.IndexOf('=');
+
                         if (charIndex <= 0)
                             continue;
 
@@ -336,6 +342,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                                 // New: ScansProcessed is truly the number of scans processed
                                 scansProcessed = result;
+
                                 if (scansProcessed < 0)
                                 {
                                     scansProcessed = result;
@@ -369,6 +376,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (statusDate.Length > 0 && statusTime.Length > 0)
                 {
                     statusDate += " " + statusTime;
+
                     if (!DateTime.TryParse(statusDate, out _))
                     {
                     }
@@ -448,6 +456,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Get rid of raw data file
             var result = DeleteDataFile();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Error deleting raw files; the error will have already been logged
@@ -517,6 +526,7 @@ namespace AnalysisManagerICR2LSPlugIn
             const int MONITOR_INTERVAL_SECONDS = 4;
 
             var logFolder = Path.GetDirectoryName(resultsFileNamePath);
+
             if (string.IsNullOrWhiteSpace(logFolder))
                 mStatusFilePath = "Status.log";
             else
@@ -549,6 +559,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE);
 
             var tempResultsFile = new FileInfo(pekTempFilePath);
+
             if (tempResultsFile.Exists)
             {
                 // Open the .pek.tmp file and determine the last scan number that has "Number of isotopic distributions detected"
@@ -738,6 +749,7 @@ namespace AnalysisManagerICR2LSPlugIn
             if (!string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_FINISHED, StringComparison.InvariantCultureIgnoreCase))
             {
                 BaseLogger.LogLevels eLogLevel;
+
                 if (string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_ERROR, StringComparison.InvariantCultureIgnoreCase) ||
                     string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) || mProgress < 100)
                 {
@@ -789,6 +801,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             var progLoc = mMgrParams.GetParam("ICR2LSProgLoc");
+
             if (string.IsNullOrEmpty(progLoc))
             {
                 mMessage = "Manager parameter ICR2LSProgLoc is not defined";
@@ -841,6 +854,7 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 var folder = new DirectoryInfo(folderPath);
+
                 if (folder.Exists)
                 {
                     if (folder.GetFiles(datasetName + "*.pek").Length > 0)
@@ -871,6 +885,7 @@ namespace AnalysisManagerICR2LSPlugIn
             var logStatus = false;
 
             var minutesElapsed = DateTime.UtcNow.Subtract(mLastStatusLogTime).TotalMinutes;
+
             if (mDebugLevel > 0)
             {
                 if (minutesElapsed >= DEBUG_LOG_INTERVAL_MINUTES && mDebugLevel >= 2)

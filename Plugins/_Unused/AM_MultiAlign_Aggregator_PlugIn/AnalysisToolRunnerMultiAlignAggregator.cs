@@ -116,6 +116,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
                 var resultsDirectoryCreated = MakeResultsDirectory();
+
                 if (!resultsDirectoryCreated)
                 {
                     CopyFailedResultsToArchiveDirectory();
@@ -200,6 +201,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
 
             var multiAlignInfo = new FileInfo(multiAlignProgLoc);
+
             if (!multiAlignInfo.Exists)
             {
                 try
@@ -218,6 +220,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             // Lookup the version of the Feature Finder
             var success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignInfo.FullName);
+
             if (!success)
                 return false;
 
@@ -232,12 +235,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Lookup the version of MultiAlignEngine (in the MultiAlign directory)
                 var multiAlignEngineDllLoc = Path.Combine(multiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignEngineDllLoc);
+
                 if (!success)
                     return false;
 
                 // Lookup the version of MultiAlignCore (in the MultiAlign directory)
                 var multiAlignCoreDllLoc = Path.Combine(multiAlignInfo.DirectoryName, "MultiAlignCore.dll");
                 success = mToolVersionUtilities.StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, multiAlignCoreDllLoc);
+
                 if (!success)
                     return false;
 
@@ -269,6 +274,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     fileCountThreshold = 10;
 
                 plotsDirectory.Refresh();
+
                 if (plotsDirectory.Exists)
                 {
                     var pngFileCount = plotsDirectory.GetFiles("*.png").Length;
@@ -300,6 +306,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     if (!success)
                     {
                         const string msg = "Error zipping the plot files";
+
                         if (!string.IsNullOrEmpty(mDotNetZipTools.Message))
                             LogError(msg + ": " + mDotNetZipTools.Message);
                         else
@@ -310,6 +317,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     // Delete the PNG files in the Plots directory
                     var errorCount = 0;
+
                     foreach (var targetFile in plotsDirectory.GetFiles("*.png"))
                     {
                         try
@@ -319,6 +327,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         catch (Exception ex)
                         {
                             errorCount++;
+
                             if (errorCount < 10)
                                 LogError("Exception deleting file " + targetFile.Name + ": " + ex.Message);
                             else if (errorCount == 10)

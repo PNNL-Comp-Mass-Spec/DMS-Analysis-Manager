@@ -1597,6 +1597,7 @@ namespace AnalysisManagerMSGFPlugin
                 using (var reader = new StreamReader(new FileStream(msgfInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -2060,6 +2061,7 @@ namespace AnalysisManagerMSGFPlugin
                     using var reader = new StreamReader(new FileStream(resultFile, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -2194,6 +2196,7 @@ namespace AnalysisManagerMSGFPlugin
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var linesRead = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
@@ -2477,6 +2480,7 @@ namespace AnalysisManagerMSGFPlugin
                 using var reader = new StreamReader(new FileStream(msgfResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var lineCount = 0;
+
                 while (!reader.EndOfStream)
                 {
                     reader.ReadLine();

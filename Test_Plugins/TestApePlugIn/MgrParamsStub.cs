@@ -45,6 +45,7 @@ namespace TestApePlugIn
 
         public string GetParam(string Name) {
             var val = "";
+
             if (mParms.ContainsKey(Name)) {
                 val = mParms[Name];
             }
@@ -64,6 +65,7 @@ namespace TestApePlugIn
         public string GetParam(string ItemKey, string ValueIfMissing)
         {
             var paramValue = GetParam(ItemKey);
+
             if (string.IsNullOrEmpty(value))
             {
                 return ValueIfMissing;

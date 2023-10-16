@@ -81,6 +81,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     // Look for the result files
                     var postProcessSuccess = PostProcessResults();
+
                     if (!postProcessSuccess)
                         processingError = true;
                 }
@@ -307,6 +308,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
 
             var program = new FileInfo(progLoc);
+
             if (!program.Exists)
             {
                 try

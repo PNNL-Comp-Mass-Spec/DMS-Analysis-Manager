@@ -123,6 +123,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
             }
 
             var uimfFile = new FileInfo(uimfFilePath);
+
             if (!uimfFile.Exists)
             {
                 LogError("UIMF file not found: " + uimfFile.FullName);

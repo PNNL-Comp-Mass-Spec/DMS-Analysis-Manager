@@ -76,6 +76,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             if (mOutputType == MSXMLOutputTypeConstants.Invalid)
             {
                 mOutputType = MSXMLOutputTypeConstants.mzXML;
+
                 formatMode = 0;
             }
             else

@@ -49,6 +49,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 // Do the base class stuff
                 var result = base.RunTool();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -63,6 +64,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 var instrumentDataWarning = mJobParams.GetJobParameter(WARNING_INSTRUMENT_DATA_MISSING, string.Empty);
+
                 if (!string.IsNullOrEmpty(instrumentDataWarning))
                     mEvalMessage = instrumentDataWarning;
 
@@ -196,6 +198,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             mStatusTools.UpdateAndWrite(mProgress);
 
             var success = RetrieveInstrumentData(out var datasetsProcessed);
+
             if (!success)
                 return false;
 
@@ -321,6 +324,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         var destPath = string.Empty;
                         var retrieveSuccess = RetrieveStoragePathInfoTargetFile(filePath, analysisResults, ref destPath);
+
                         if (retrieveSuccess)
                         {
                             return destPath;
@@ -346,6 +350,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Copy it locally if necessary
 
                 var datasetFilePathRemote = datasetRawFilePaths[datasetName];
+
                 if (string.IsNullOrEmpty(datasetFilePathRemote))
                 {
                     mMessage = "Dataset " + datasetName + " has an empty instrument file path in datasetRawFilePaths";
@@ -387,6 +392,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!success && string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = msXmlCreator.ErrorMessage;
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Unknown error creating the mzXML file for dataset " + datasetName;
@@ -412,6 +418,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Gzip it first before copying
                 var gzippedMzXmlFile = new FileInfo(localMzXmlFile + AnalysisResources.DOT_GZ_EXTENSION);
                 success = mDotNetZipTools.GZipFile(localMzXmlFile.FullName, true);
+
                 if (!success)
                 {
                     mMessage = "Error compressing .mzXML file " + localMzXmlFile.Name + " with GZip: ";
@@ -419,6 +426,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 gzippedMzXmlFile.Refresh();
+
                 if (!gzippedMzXmlFile.Exists)
                 {
                     mMessage = "Compressed .mzXML file not found: " + gzippedMzXmlFile.FullName;
@@ -511,6 +519,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 {
                     // Copy the .raw file, either from the local working directory or from the remote dataset directory
                     var datasetFilePathSource = datasetRawFilePaths[datasetName];
+
                     if (!string.IsNullOrEmpty(datasetFilePathLocal))
                     {
                         // Dataset was already copied locally; copy it from the local computer to the staging directory
@@ -724,6 +733,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 const short retryCount = 3;
 
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
+
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
                     LogError("Error in UpdateOrgDBNameIfRequired: manager parameter FastaCnString is not defined");

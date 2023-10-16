@@ -94,6 +94,7 @@ namespace AnalysisManagerBase
 
             // Compare the first string with its only right neighbor
             var j = 0;
+
             while (j < Math.Min(sortedList[0].Length - 1, sortedList[1].Length - 1))
             {
                 if (sortedList[0][j] == sortedList[1][j])

@@ -72,6 +72,7 @@ namespace AnalysisManagerDtaImportPlugIn
 
                 // Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
                 targetFolderNamePath = Path.Combine(mJobParams.GetParam(AnalysisResources.JOB_PARAM_TRANSFER_DIRECTORY_PATH), mDatasetName);
+
                 if (!Directory.Exists(targetFolderNamePath))
                 {
                     // Make the DTA folder

@@ -221,6 +221,7 @@ namespace TestMultiAlignPlugIn
         public string GetParam(string Name)
         {
             var val = "";
+
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];
@@ -231,6 +232,7 @@ namespace TestMultiAlignPlugIn
         public string GetParam(string Section, string Name)
         {
             var val = "";
+
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];

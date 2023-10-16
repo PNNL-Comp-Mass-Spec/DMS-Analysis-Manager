@@ -265,6 +265,7 @@ namespace AnalysisManagerProMexPlugIn
                 using (var resultsReader = new StreamReader(new FileStream(resultsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     var lineCount = 0;
+
                     while (!resultsReader.EndOfStream)
                     {
                         var lineIn = resultsReader.ReadLine();

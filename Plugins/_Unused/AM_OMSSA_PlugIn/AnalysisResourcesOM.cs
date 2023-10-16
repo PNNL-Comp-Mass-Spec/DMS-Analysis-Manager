@@ -40,6 +40,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -47,6 +48,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -58,6 +60,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Convert the .fasta file to OMSSA format using formatdb.exe
             var success = ConvertOMSSAFastaFile();
+
             if (!success)
             {
                 LogError("AnalysisResourcesOM.GetResources(), failed converting FASTA file to OMSSA format");
@@ -82,6 +85,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             success = ConvertDtaToXml();
+
             if (!success)
             {
                 LogError("AnalysisResourcesOM.GetResources(), failed converting DTA file to xml format");
@@ -126,6 +130,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 // verify that program formatdb.exe file exists
                 var progLoc = mMgrParams.GetParam("formatdbprogloc");
+
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)
@@ -277,6 +282,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 foreach (XmlNode node in xmlDoc.DocumentElement.ChildNodes)
                 {
                     XmlNode importedNode;
+
                     if (node.NodeType == XmlNodeType.Comment)
                     {
                         // Save the most recent comment to possibly be included later
@@ -295,6 +301,7 @@ namespace AnalysisManagerOMSSAPlugIn
                         // The Do loop is required because we have to call .SelectNodes() again after removing any extra nodes
                         XmlNodeList selectedNodes;
                         int matchCount;
+
                         do
                         {
                             // This XPath statement says to:
@@ -325,6 +332,7 @@ namespace AnalysisManagerOMSSAPlugIn
                         } while (matchCount > 1);
 
                         XmlDocumentFragment fragment;
+
                         if (matchCount == 0)
                         {
                             // Match wasn't found; need to add a new node
@@ -385,6 +393,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                     }
 
                                     var copyThisComment = true;
+
                                     if (previousNode?.NodeType == XmlNodeType.Comment)
                                     {
                                         if (previousNode.InnerText == mostRecentComment.InnerText)

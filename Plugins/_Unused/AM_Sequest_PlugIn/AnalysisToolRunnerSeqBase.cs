@@ -111,6 +111,7 @@ namespace AnalysisManagerSequestPlugin
             mStopTime = DateTime.UtcNow;
 
             CloseOutType eReturnCode;
+
             if (processingError)
             {
                 // Something went wrong
@@ -144,6 +145,7 @@ namespace AnalysisManagerSequestPlugin
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
                 //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveDirectory();
+
                 if (eReturnCode == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -191,6 +193,7 @@ namespace AnalysisManagerSequestPlugin
                     var reMatch = mOutFileNameRegEx.Match(sourceOutFile.Name);
 
                     string cleanedFileName;
+
                     if (reMatch.Success)
                     {
                         cleanedFileName = reMatch.Groups["rootname"].Value + "." + Convert.ToInt32(reMatch.Groups["startscan"].Value) + "." +
@@ -214,6 +217,7 @@ namespace AnalysisManagerSequestPlugin
                             continue;
 
                         reMatch = mOutFileSearchTimeRegEx.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             if (float.TryParse(reMatch.Groups["time"].Value, out var outFileSearchTimeSeconds))
@@ -311,6 +315,7 @@ namespace AnalysisManagerSequestPlugin
                 var concatenatedTempFilePath = Path.Combine(mWorkDir, mDatasetName + CONCATENATED_OUT_TEMP_FILE);
 
                 SortedSet<string> dtaFilesToSkip;
+
                 if (File.Exists(concatenatedTempFilePath))
                 {
                     // Parse the _out.txt.tmp to determine the .out files that it contains
@@ -367,6 +372,7 @@ namespace AnalysisManagerSequestPlugin
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -427,6 +433,7 @@ namespace AnalysisManagerSequestPlugin
             // Get a list of .dta file names
             var dtaFiles = Directory.GetFiles(mWorkDir, "*.dta");
             var dtaFileCount = dtaFiles.GetLength(0);
+
             if (dtaFileCount == 0)
             {
                 LogError("No dta files found for SEQUEST processing");
@@ -462,10 +469,12 @@ namespace AnalysisManagerSequestPlugin
 
             // Break up file list into lists for each processor
             var dtaFileIndex = 0;
+
             foreach (var dtaFile in dtaFiles)
             {
                 dtaWriters[dtaFileIndex].WriteLine(dtaFile);
                 dtaFileIndex++;
+
                 if (dtaFileIndex > (processorsToUse - 1))
                     dtaFileIndex = 0;
             }
@@ -554,6 +563,7 @@ namespace AnalysisManagerSequestPlugin
             for (var processorIndex = 0; processorIndex <= progRunners.GetUpperBound(0); processorIndex++)
             {
                 progRunners[processorIndex] = null;
+
                 if (mDebugLevel >= 1)
                 {
                     LogDebug("Set progRunners(" + processorIndex + ") to Nothing");
@@ -643,6 +653,7 @@ namespace AnalysisManagerSequestPlugin
                     if (DateTime.UtcNow.Subtract(interlockWaitStartTime).TotalSeconds >= 30)
                     {
                         interlockWaitStartTime = DateTime.UtcNow;
+
                         if (mDebugLevel >= 1)
                         {
                             LogDebug("ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero");
@@ -753,10 +764,12 @@ namespace AnalysisManagerSequestPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
                         var dataLineTrimmed = dataLine.Trim();
+
                         if (!dataLineTrimmed.StartsWith("TurboSEQUEST", StringComparison.OrdinalIgnoreCase))
                             continue;
 
@@ -902,6 +915,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!File.Exists(logFilePath))
                 {
                     processingMsg = "Sequest.log file not found; cannot verify the SEQUEST node count";
+
                     if (logToConsole)
                         Console.WriteLine(processingMsg + ": " + logFilePath);
                     LogWarning(processingMsg);
@@ -953,11 +967,13 @@ namespace AnalysisManagerSequestPlugin
 
                         // See if the line matches one of the expected RegEx values
                         var reMatch = reStartingTask.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out hostCount))
                             {
                                 processingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the sequest.log file";
+
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -966,11 +982,13 @@ namespace AnalysisManagerSequestPlugin
                         }
 
                         reMatch = reWaitingForReadyMsg.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out nodeCountStarted))
                             {
                                 processingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the sequest.log file";
+
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -996,11 +1014,13 @@ namespace AnalysisManagerSequestPlugin
                         }
 
                         reMatch = reSpawnedSlaveProcesses.Match(dataLine);
+
                         if (reMatch.Success)
                         {
                             if (!int.TryParse(reMatch.Groups[1].Value, out nodeCountActive))
                             {
                                 processingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the sequest.log file";
+
                                 if (logToConsole)
                                     Console.WriteLine(processingMsg);
                                 LogWarning(processingMsg);
@@ -1009,6 +1029,7 @@ namespace AnalysisManagerSequestPlugin
                         }
 
                         reMatch = reSearchedDTAFile.Match(dataLine);
+
                         if (!reMatch.Success)
                             continue;
 
@@ -1035,6 +1056,7 @@ namespace AnalysisManagerSequestPlugin
                     // Validate the stats
 
                     processingMsg = "HostCount=" + hostCount + "; NodeCountActive=" + nodeCountActive;
+
                     if (mDebugLevel >= 1)
                     {
                         if (logToConsole)
@@ -1046,6 +1068,7 @@ namespace AnalysisManagerSequestPlugin
                     if (nodeCountActive < nodeCountExpected || nodeCountExpected == 0)
                     {
                         processingMsg = "Error: NodeCountActive less than expected value (" + nodeCountActive + " vs. " + nodeCountExpected + ")";
+
                         if (logToConsole)
                             Console.WriteLine(processingMsg);
                         LogError(processingMsg);
@@ -1065,6 +1088,7 @@ namespace AnalysisManagerSequestPlugin
                         if (nodeCountStarted != nodeCountActive)
                         {
                             processingMsg = "Warning: NodeCountStarted (" + nodeCountStarted + ") <> NodeCountActive";
+
                             if (logToConsole)
                                 Console.WriteLine(processingMsg);
                             LogWarning(processingMsg);
@@ -1084,6 +1108,7 @@ namespace AnalysisManagerSequestPlugin
                         if (dtaCount >= 2 * nodeCountActive)
                         {
                             processingMsg = "Error: only " + hostDtaCounts.Count + " host" + CheckForPlurality(hostDtaCounts.Count) + " processed DTAs";
+
                             if (logToConsole)
                                 Console.WriteLine(processingMsg);
                             LogError(processingMsg);
@@ -1105,6 +1130,7 @@ namespace AnalysisManagerSequestPlugin
                         var dtaCountThisHost = item.Value;
 
                         hostNodeCounts.TryGetValue(hostName, out var nodeCountThisHost);
+
                         if (nodeCountThisHost < 1)
                             nodeCountThisHost = 1;
 
@@ -1197,6 +1223,7 @@ namespace AnalysisManagerSequestPlugin
                             var dtaCountThisHost = item.Value;
 
                             hostNodeCounts.TryGetValue(hostName, out var nodeCountThisHost);
+
                             if (nodeCountThisHost < 1)
                                 nodeCountThisHost = 1;
 
@@ -1217,6 +1244,7 @@ namespace AnalysisManagerSequestPlugin
                     // Error occurred
 
                     processingMsg = "Error in validating the stats in ValidateSequestNodeCount" + ex.Message;
+
                     if (logToConsole)
                     {
                         Console.WriteLine("====================================================================");
@@ -1233,6 +1261,7 @@ namespace AnalysisManagerSequestPlugin
                 // Error occurred
 
                 processingMsg = "Error parsing sequest.log file in ValidateSequestNodeCount" + ex.Message;
+
                 if (logToConsole)
                 {
                     Console.WriteLine("====================================================================");

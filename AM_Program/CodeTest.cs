@@ -253,6 +253,7 @@ namespace AnalysisManagerProg
                     {
                         Console.Write("{0,-30} ", Path.GetFileName(result.Key));
                         var startIndex = 0;
+
                         while (startIndex < result.Value.Length)
                         {
                             if (startIndex > 0)
@@ -665,6 +666,7 @@ namespace AnalysisManagerProg
                         // See if the renamed file exists; if it does, we'll have to tweak the name
                         var revisionNumber = 1;
                         string newPath;
+
                         while (true)
                         {
                             newPath = Path.Combine(targetFolderPath, newName);

@@ -1431,6 +1431,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         {
                             mMessage += ex.Message;
                         }
+
                         LogError(mMessage, ex);
                         LogDebugMessage("Connection string: " + connectionStringToUse);
                         LogDebugMessage("Current user: " + Environment.UserName);

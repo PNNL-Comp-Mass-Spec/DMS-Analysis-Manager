@@ -53,6 +53,7 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 // Start with base class method to get settings information
                 var resultCode = base.RunTool();
+
                 if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return resultCode;
 
@@ -71,6 +72,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("parmFileName"));
 
                 currentTask = "Verify param file path: " + paramFilePath;
+
                 if (!File.Exists(paramFilePath))
                 {
                     // Param file wasn't specified, but is required for ICR-2LS analysis
@@ -160,6 +162,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (!string.IsNullOrEmpty(serFileOrFolderPath))
                 {
                     string serTypeName;
+
                     if (!isFolder)
                     {
                         eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK;
@@ -206,6 +209,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                     currentTask = "VerifyPEKFileExists";
+
                     if (VerifyPEKFileExists(mWorkDir, mDatasetName))
                     {
                         mMessage = "ICR-2LS returned false (see .PEK file in Failed results folder)";
@@ -258,6 +262,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // Allow extra time for ICR2LS to release file locks
                     Global.IdleLoop(5);
+
                     if (Directory.Exists(Path.Combine(mWorkDir, mDatasetName)))
                     {
                         Directory.Delete(Path.Combine(mWorkDir, mDatasetName), true);

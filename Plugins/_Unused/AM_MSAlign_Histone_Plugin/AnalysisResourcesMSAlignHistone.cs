@@ -41,6 +41,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -60,12 +61,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
             // Retrieve the MSAlign file
             LogMessage("Getting data files");
             var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return

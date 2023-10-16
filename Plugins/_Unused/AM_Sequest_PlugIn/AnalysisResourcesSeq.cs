@@ -73,6 +73,7 @@ namespace AnalysisManagerSequestPlugin
             var needToArchiveFile = false;
 
             var sourceFileName = Path.GetFileName(sourceFilePath);
+
             if (string.IsNullOrWhiteSpace(sourceFileName))
             {
                 LogWarning("Null or empty source file path sent to ArchiveSequestParamFile");
@@ -115,9 +116,11 @@ namespace AnalysisManagerSequestPlugin
                     // See if the renamed file exists; if it does, we'll have to tweak the name
                     var revisionNumber = 1;
                     string newFilePath;
+
                     while (true)
                     {
                         newFilePath = Path.Combine(targetFolderPath, newName);
+
                         if (!File.Exists(newFilePath))
                         {
                             break;
@@ -199,6 +202,7 @@ namespace AnalysisManagerSequestPlugin
                     DatasetName + AnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE);
 
                 var tempOutFile = new FileInfo(concatenatedTempFilePath);
+
                 if (!tempOutFile.Exists)
                 {
                     if (mDebugLevel >= 4)
@@ -222,6 +226,7 @@ namespace AnalysisManagerSequestPlugin
                 var localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 var filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Job Parameters");
+
                 if (!filesMatch)
                 {
                     // Files don't match; do not resume
@@ -234,6 +239,7 @@ namespace AnalysisManagerSequestPlugin
                 localFilePath = Path.Combine(mWorkDir, fileNameToCompare);
 
                 filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "SEQUEST Parameter");
+
                 if (!filesMatch)
                 {
                     // Files don't match; do not resume
@@ -344,6 +350,7 @@ namespace AnalysisManagerSequestPlugin
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -351,6 +358,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Retrieve FASTA file (we'll distribute it to the cluster nodes later in this method)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -391,6 +399,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Check the cluster nodes, updating local database copies as necessary
                 var fastaFileName = mJobParams.GetParam("PeptideSearch", "generatedFastaName");
+
                 if (string.IsNullOrEmpty(fastaFileName))
                 {
                     mMessage = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a FASTA file";
@@ -431,6 +440,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Get the list of nodes from the hosts file
             var nodes = GetHostList(hostFilePath);
+
             if (nodes == null || nodes.Count == 0)
             {
                 mMessage = "Unable to determine node names from host file";
@@ -440,6 +450,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Define the path to the database on the head node
             var fastaFilePath = Path.Combine(orgDbDirectoryPath, fastaFileName);
+
             if (!File.Exists(fastaFilePath))
             {
                 mMessage = "Database file can't be found on master";
@@ -469,6 +480,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 nodeCountProcessed++;
+
                 if (fileAlreadyExists)
                     nodeCountFileAlreadyExists++;
             }
@@ -486,6 +498,7 @@ namespace AnalysisManagerSequestPlugin
                 double nodeCountSuccessPct = (nodeCountProcessed - nodeCountFailed) / (float)nodeCountProcessed * 100;
 
                 logMessage = "Error, unable to verify database on " + nodeCountFailed + " node";
+
                 if (nodeCountFailed > 1)
                     logMessage += "s";
 
@@ -496,6 +509,7 @@ namespace AnalysisManagerSequestPlugin
                 if (nodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT)
                 {
                     mMessage = "Unable to copy the database file one or more nodes; ";
+
                     if (nodeCountNotEnoughFreeSpace > 0)
                     {
                         mMessage = "not enough space on the disk";
@@ -563,6 +577,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         // Parse the node name and add it to the collection
                         var dataCols = dataLine.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
                         if (dataCols.Length >= 1)
                         {
                             if (!nodes.Contains(dataCols[0]))
@@ -689,6 +704,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 bool copyNeeded;
+
                 if (File.Exists(destFilePath))
                 {
                     // File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
@@ -733,6 +749,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Something bad happened
                 LogError("Error copying database file to " + destFilePath + ": " + ex.Message, ex);
+
                 if (ex.Message.Contains("not enough space"))
                 {
                     notEnoughFreeSpace = true;

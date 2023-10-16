@@ -84,6 +84,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 // Index the FASTA file to create the .trie file
                 var result = indexedDBCreator.CreateIndexedDbFiles(ref mMgrParams, ref mJobParams, mDebugLevel, mJob, inspectDir, orgDbDir);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -129,6 +130,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 result = RunInSpecT(inspectDir);
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -139,6 +141,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     // Zip the output file
                     var zipSuccess = ZipFile(mInspectResultsFilePath, true);
+
                     if (!zipSuccess)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -224,6 +227,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     while (!reader.EndOfStream)
                     {
                         var paramLine = reader.ReadLine();
+
                         if (paramLine != null)
                         {
                             writer.WriteLine(paramLine);
@@ -315,6 +319,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 var errorFile = new FileInfo(errorFilename);
+
                 if (errorFile.Length == 0)
                 {
                     // Error file is 0 bytes, which means no errors occurred
@@ -368,6 +373,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             // Build the Inspect Input Parameters file
             mInspectCustomParamFileName = BuildInspectInputFile();
+
             if (mInspectCustomParamFileName.Length == 0)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -384,6 +390,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             // verify that program file exists
             var progLoc = Path.Combine(inspectDir, INSPECT_EXE_NAME);
+
             if (!File.Exists(progLoc))
             {
                 LogError("Cannot find Inspect program file: " + progLoc);
@@ -522,6 +529,7 @@ namespace AnalysisManagerInSpecTPlugIn
             try
             {
                 var file = new FileInfo(searchLogFilePath);
+
                 if (!file.Exists || file.Length == 0) return;
 
                 // Search log file has been updated

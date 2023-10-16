@@ -47,6 +47,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 // Import the files
                 var importSuccess = PerformDataImport();
+
                 if (!importSuccess)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -72,6 +73,7 @@ namespace AnalysisManagerDataImportPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 var moveFilesAfterImport = mJobParams.GetJobParameter("MoveFilesAfterImport", true);
+
                 if (moveFilesAfterImport)
                 {
                     MoveImportedFiles();
@@ -106,6 +108,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 targetDirectoryPath = Path.Combine(mSourceFiles[0].DirectoryName, mResultsDirectoryName);
                 var targetDirectory = new DirectoryInfo(targetDirectoryPath);
+
                 if (targetDirectory.Exists)
                 {
                     // Need to rename the target folder
@@ -170,6 +173,7 @@ namespace AnalysisManagerDataImportPlugIn
                 }
 
                 var sourceFileSpec = mJobParams.GetJobParameter("DataImportFileMask", "");
+
                 if (string.IsNullOrEmpty(sourceFileSpec))
                     sourceFileSpec = MATCH_ALL_FILES;
 
@@ -187,6 +191,7 @@ namespace AnalysisManagerDataImportPlugIn
                 }
 
                 var sourceShare = new DirectoryInfo(sourceSharePath);
+
                 if (!sourceShare.Exists)
                 {
                     LogError("Data Import Share not found: " + sourceShare.FullName);
@@ -195,6 +200,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 var sourceDirectoryPath = Path.Combine(sourceShare.FullName, dataImportFolder);
                 var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+
                 if (!sourceDirectory.Exists)
                 {
                     LogError("Data Import Folder not found: " + sourceDirectory.FullName);
@@ -203,6 +209,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 // Copy files from the source folder to the working directory
                 mSourceFiles.Clear();
+
                 foreach (var sourceFile in sourceDirectory.GetFiles(sourceFileSpec))
                 {
                     try
@@ -220,6 +227,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (mSourceFiles.Count == 0)
                 {
                     string msg;
+
                     if (sourceFileSpec == MATCH_ALL_FILES)
                     {
                         msg = "Source folder was empty; nothing to copy: " + sourceDirectory.FullName;
@@ -234,6 +242,7 @@ namespace AnalysisManagerDataImportPlugIn
                 }
 
                 var message = "Copied " + mSourceFiles.Count + " file";
+
                 if (mSourceFiles.Count > 1)
                     message += "s";
                 message += " from " + sourceDirectory.FullName;

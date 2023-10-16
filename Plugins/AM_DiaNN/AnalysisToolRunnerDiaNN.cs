@@ -595,6 +595,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var linesRead = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();

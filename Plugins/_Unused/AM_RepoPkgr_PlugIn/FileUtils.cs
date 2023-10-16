@@ -16,6 +16,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 Directory.CreateDirectory(destinationDirectory);
             }
             var dir = new DirectoryInfo(sourceDirectory);
+
             foreach (var sourceFile in dir.GetFiles(searchPattern))
             {
                 sourceFile.CopyTo(Path.Combine(destinationDirectory, sourceFile.Name), true);
@@ -73,6 +74,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
                 // find the unzipped mzid file
                 var mzFiles = workingDirectory.GetFiles("*.mzid");
+
                 if (mzFiles.Length != 1)
                 {
                     // oops??
@@ -83,6 +85,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
                 // get gzip file
                 var gzFiles = workingDirectory.GetFiles("*mzid.gz");
+
                 if (gzFiles.Length != 1)
                 {
                     // oops??
@@ -90,6 +93,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
                 // resolve gzip file name
                 var gzFileName = gzFiles[0].Name;
+
                 if (!string.IsNullOrEmpty(pfx))
                 {
                     gzFileName = pfx + gzFileName;
@@ -98,6 +102,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
 
                 // move the gzip file to target directory
                 var targetFilePath = Path.Combine(targetDir.FullName, gzFileName);
+
                 if (File.Exists(targetFilePath))
                     File.Delete(targetFilePath);
 

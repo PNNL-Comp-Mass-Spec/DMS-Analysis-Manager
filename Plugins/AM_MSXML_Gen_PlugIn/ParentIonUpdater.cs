@@ -365,6 +365,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                     {
                                         writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
                                         nodeAlreadyWritten = true;
+
                                         while (reader.MoveToNextAttribute())
                                         {
                                             if (reader.Name == "count")
@@ -387,6 +388,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                     {
                                         writer.WriteStartElement(reader.Prefix, reader.LocalName, reader.NamespaceURI);
                                         nodeAlreadyWritten = true;
+
                                         while (reader.MoveToNextAttribute())
                                         {
                                             if (reader.Name == "id")

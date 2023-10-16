@@ -84,6 +84,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     var createTime = lockFileInfo.CreationTimeUtc;
                     var currentTime = DateTime.UtcNow;
                     var durationTime = currentTime - createTime;
+
                     while (File.Exists(dbLockFilename) && durationTime.Hours < maxWaitTimeHours)
                     {
                         // Sleep for 2 seconds
@@ -100,6 +101,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                             "Waited over " + maxWaitTimeHours.ToString("0.0") + " hour(s) for lock file: " + dbLockFilename +
                             " to be deleted, but it is still present; deleting the file now and continuing");
+
                         if (File.Exists(dbLockFilename))
                         {
                             File.Delete(dbLockFilename);
@@ -124,6 +126,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     // Verify that the PrepDB python script exists
                     var prepDBScriptPath = Path.Combine(inspectDir, PREPDB_SCRIPT);
+
                     if (!File.Exists(prepDBScriptPath))
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
@@ -133,6 +136,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     // Verify that the ShuffleDB python script exists
                     var shuffleDBScriptPath = Path.Combine(inspectDir, SHUFFLEDB_SCRIPT);
+
                     if (useShuffledDB)
                     {
                         if (!File.Exists(shuffleDBScriptPath))
@@ -150,6 +154,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     // Create lock file
                     var success = CreateLockFile(dbLockFilename);
+
                     if (!success)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -163,6 +168,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     // Set up and execute a program runner to run PrepDB.py
                     var arguments = " " + prepDBScriptPath + " FASTA " + dbFileNameInput;
+
                     if (debugLevel >= 1)
                     {
                         LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, pythonProgLoc + " " + arguments);

@@ -20,6 +20,7 @@ namespace AnalysisManagerDtaImportPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -27,6 +28,7 @@ namespace AnalysisManagerDtaImportPlugIn
 
             // There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
             result = ValidateDTA();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -85,6 +87,7 @@ namespace AnalysisManagerDtaImportPlugIn
 
                 var txtFileName = DatasetName + "_dta.txt";
                 fileEntries = Directory.GetFiles(mWorkDir, txtFileName);
+
                 if (fileEntries.Length < 1)
                 {
                     LogError("DTA text file in the zip file was named incorrectly or not valid");

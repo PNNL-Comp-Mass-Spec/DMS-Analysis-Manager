@@ -32,6 +32,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
                 // Retrieve shared resources (likely none for this tool)
                 var result = GetSharedResources();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -46,6 +47,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 var paramFileStoragePath = mJobParams.GetParam("ParamFileStoragePath");
 
                 var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
+
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;

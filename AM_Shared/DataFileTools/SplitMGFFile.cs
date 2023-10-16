@@ -148,6 +148,7 @@ namespace AnalysisManagerBase.DataFileTools
                 var totalSpectraWritten = 0;
 
                 var previousLine = string.Empty;
+
                 while (true)
                 {
                     var spectrumData = GetNextMGFSpectrum(mgfFileReader, ref previousLine, ref bytesRead, out var scanNumber);

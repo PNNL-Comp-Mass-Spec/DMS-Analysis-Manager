@@ -62,6 +62,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // verify that program file exists
             var progLoc = mMgrParams.GetParam("OMSSAProgLoc");
+
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -102,6 +103,7 @@ namespace AnalysisManagerOMSSAPlugIn
             if (processingSuccess)
             {
                 var pepXmlSuccess = ConvertOMSSA2PepXmlFile();
+
                 if (!pepXmlSuccess)
                 {
                     processingSuccess = false;
@@ -118,6 +120,7 @@ namespace AnalysisManagerOMSSAPlugIn
             {
                 // Zip the output file
                 var zipSuccess = ZipMainOutputFile();
+
                 if (!zipSuccess)
                 {
                     processingSuccess = false;
@@ -179,6 +182,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 // verify that program formatdb.exe file exists
                 var progLoc = mMgrParams.GetParam("omssa2pepprogloc");
+
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)

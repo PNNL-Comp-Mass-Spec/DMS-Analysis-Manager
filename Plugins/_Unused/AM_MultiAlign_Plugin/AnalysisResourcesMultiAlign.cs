@@ -28,6 +28,7 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -42,6 +43,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             foreach (var row in splitString)
             {
                 var fileNameExt = row.Split(':');
+
                 if (fileNameExt.Length < 3)
                 {
                     throw new InvalidOperationException("Malformed target job specification; must have three columns separated by two colons: " + row);
@@ -55,6 +57,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Retrieve FeatureFinder _LCMSFeatures.txt or Decon2ls isos file for this dataset
             var fileToGet = DatasetName + inputFileExtension;
+
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 // Errors were reported in method call, so just return
@@ -63,6 +66,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Retrieve the MultiAlign Parameter .xml file specified for this job
             var multialignParamFileName = mJobParams.GetParam("ParamFileName");
+
             if (string.IsNullOrEmpty(multialignParamFileName))
             {
                 LogError("MultiAlign ParamFileName not defined in the settings for this job; unable to continue");
@@ -71,6 +75,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             const string paramFileStoragePathKeyName = Global.STEP_TOOL_PARAM_FILE_STORAGE_PATH_PREFIX + "MultiAlign";
             var multialignParameterFileStoragePath = mMgrParams.GetParam(paramFileStoragePathKeyName);
+
             if (string.IsNullOrEmpty(multialignParameterFileStoragePath))
             {
                 multialignParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";

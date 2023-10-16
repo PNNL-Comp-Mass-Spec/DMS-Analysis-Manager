@@ -584,6 +584,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                " completed tasks");
 
                     var waitStartTime = DateTime.UtcNow;
+
                     while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
                     {
                         Global.IdleLoop(5);
@@ -1240,6 +1241,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                                                     FileShare.ReadWrite)))
                 {
                     var dataLines = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();

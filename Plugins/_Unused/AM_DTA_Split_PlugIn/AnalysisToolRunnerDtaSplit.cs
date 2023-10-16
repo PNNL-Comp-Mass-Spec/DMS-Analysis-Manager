@@ -70,6 +70,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 try
                 {
                     segmentCountToCreate = mJobParams.GetJobParameter("NumberOfClonedSteps", 0);
+
                     if (segmentCountToCreate == 0)
                     {
                         LogWarning("Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
@@ -168,6 +169,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 var lineEndCharCount = LineEndCharacterCount(sourceFile);
 
                 var targetSpectraPerSegment = (int)Math.Ceiling(spectraCountExpected / (float)segmentCountToCreate);
+
                 if (targetSpectraPerSegment < 1)
                     targetSpectraPerSegment = 1;
 
@@ -186,6 +188,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 for (var splitFileNum = 1; splitFileNum <= segmentCountToCreate; splitFileNum++)
                 {
                     writer[splitFileNum] = CreateNewSplitDTAFile(splitFileNum);
+
                     if (writer[splitFileNum] == null)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -213,12 +216,14 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                         // Look for the spectrum separator line
                         var splitMatch = r_FileSeparator.Match(dataLine);
+
                         if (splitMatch.Success)
                         {
                             if (spectraCountRead > 0)
                             {
                                 // Increment splitFileNum, but only after the first spectrum has been read
                                 splitFileNum++;
+
                                 if (splitFileNum > segmentCountToCreate)
                                 {
                                     splitFileNum = 1;
@@ -284,10 +289,12 @@ namespace AnalysisManagerDtaSplitPlugIn
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
                     var splitMatch = r_FileSeparator.Match(dataLine);
+
                     if (splitMatch.Success)
                     {
                         spectraCount++;
@@ -366,12 +373,15 @@ namespace AnalysisManagerDtaSplitPlugIn
                 return endCount;
 
             TextReader tr = fi.OpenText();
+
             for (var counter = 1; counter <= fi.Length; counter++)
             {
                 var testCode = tr.Read();
+
                 if (testCode == 10 || testCode == 13)
                 {
                     var testCode2 = tr.Read();
+
                     if (testCode2 == 10 || testCode2 == 13)
                     {
                         endCount = 2;

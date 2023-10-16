@@ -3747,6 +3747,7 @@ namespace AnalysisManagerBase.AnalysisTool
                         var retriesRemaining = maxRetryCount;
 
                         var success = false;
+
                         while (!success)
                         {
                             var startTime = DateTime.UtcNow;

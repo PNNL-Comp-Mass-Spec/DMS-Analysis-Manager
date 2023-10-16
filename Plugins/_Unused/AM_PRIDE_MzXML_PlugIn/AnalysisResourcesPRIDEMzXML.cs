@@ -18,6 +18,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -28,6 +29,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
+
                 if (fileSpecTerms.Count <= 2 || !string.Equals(fileSpecTerms[2].ToLower(), "copy", StringComparison.OrdinalIgnoreCase))
                 {
                     mJobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);

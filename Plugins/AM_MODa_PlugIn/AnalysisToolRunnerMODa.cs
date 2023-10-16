@@ -343,6 +343,7 @@ namespace AnalysisManagerMODaPlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -510,6 +511,7 @@ namespace AnalysisManagerMODaPlugIn
                 using (var writer = new StreamWriter(new FileStream(trimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var scanNumberOutputThreshold = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();

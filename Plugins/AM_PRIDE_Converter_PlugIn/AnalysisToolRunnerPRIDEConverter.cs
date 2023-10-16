@@ -2068,6 +2068,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         {
                                             var valueOverride = string.Empty;
                                             xmlReader.MoveToFirstAttribute();
+
                                             do
                                             {
                                                 if (xmlReader.Name == "accession" && xmlReader.Value == "PRIDE:0000175")
@@ -2167,6 +2168,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 if (xmlReader.HasAttributes)
                                 {
                                     xmlReader.MoveToFirstAttribute();
+
                                     do
                                     {
                                         if (attributeOverride.Count > 0 && attributeOverride.TryGetValue(xmlReader.Name, out var overrideValue))
@@ -3974,6 +3976,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (xmlReader.HasAttributes)
             {
                 xmlReader.MoveToFirstAttribute();
+
                 do
                 {
                     writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
@@ -4932,11 +4935,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             if (mCreateMGFFiles)
                                             {
                                                 accession = "MS:1001062";
+
                                                 formatName = "Mascot MGF file";
                                             }
                                             else
                                             {
                                                 accession = "MS:1001369";
+
                                                 formatName = "text file";
                                             }
 
@@ -5011,6 +5016,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     if (xmlReader.HasAttributes)
                                     {
                                         xmlReader.MoveToFirstAttribute();
+
                                         do
                                         {
                                             if (attributeOverride.Count > 0 &&

@@ -55,6 +55,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             // verify that program file exists
             // progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
             var progLoc = mMgrParams.GetParam("MSDataFileTrimmerProgLoc");
+
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -100,6 +101,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             // Update list of files to be deleted after run
             var groupedFiles = Directory.GetFiles(mWorkDir, "*_grouped*");
+
             foreach (var fileToSave in groupedFiles)
             {
                 mJobParams.AddResultFileToKeep(Path.GetFileName(fileToSave));

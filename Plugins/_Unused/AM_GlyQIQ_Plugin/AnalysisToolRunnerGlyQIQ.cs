@@ -96,6 +96,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (!StoreToolVersionInfo(progLoc))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Error determining GlyQ-IQ version";
@@ -161,6 +162,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Combine the results files
                 var resultsFolder = new DirectoryInfo(Path.Combine(mWorkDir, "Results_" + mDatasetName));
+
                 if (!resultsFolder.Exists)
                 {
                     mMessage = "Results folder not found: " + resultsFolder.FullName;
@@ -191,6 +193,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         using var reader = new StreamReader(new FileStream(resultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                         var linesRead = 0;
+
                         while (!reader.EndOfStream)
                         {
                             var dataLine = reader.ReadLine();
@@ -319,6 +322,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
@@ -421,12 +425,14 @@ namespace AnalysisManagerGlyQIQPlugin
                 var sourceWorkingParametersDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "WorkingParametersCore1"));
 
                 var targetWorkingParametersDirectory = new DirectoryInfo(Path.Combine(tempZipDirectory.FullName, "WorkingParameters"));
+
                 if (!targetWorkingParametersDirectory.Exists)
                 {
                     targetWorkingParametersDirectory.Create();
                 }
 
                 var iqParamFileName = mJobParams.GetJobParameter("ParamFileName", "");
+
                 foreach (var file in sourceWorkingParametersDirectory.GetFiles())
                 {
                     var moveFile = false;
@@ -592,6 +598,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+
                         if (string.IsNullOrWhiteSpace(dataLine))
                         {
                             writer.WriteLine(dataLine);
@@ -637,6 +644,7 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 mCoreCount = mJobParams.GetJobParameter(AnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT, 0);
+
                 if (mCoreCount < 1)
                 {
                     mMessage = "Core count reported by " + AnalysisResourcesGlyQIQ.JOB_PARAM_ACTUAL_CORE_COUNT + " is 0; unable to continue";
@@ -704,6 +712,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     foreach (var glyQRunner in mGlyQRunners)
                     {
                         var eStatus = glyQRunner.Value.Status;
+
                         if (eStatus >= GlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
                         {
                             // Analysis completed (or failed)
@@ -721,6 +730,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     var subTaskProgress = (float)(progressSum / mGlyQRunners.Count);
                     var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
+
                     if (updatedProgress > mProgress)
                     {
                         // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
@@ -794,6 +804,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 mProgress = PROGRESS_PCT_COMPLETE;
 
                 mStatusTools.UpdateAndWrite(mProgress);
+
                 if (mDebugLevel >= 3)
                 {
                     LogDebug("GlyQ-IQ Analysis Complete");

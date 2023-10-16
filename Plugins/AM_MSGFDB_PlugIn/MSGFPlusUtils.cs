@@ -1020,6 +1020,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                 var linesRead = 0;
+
                 while (!reader.EndOfStream && linesRead < 10)
                 {
                     var dataLine = reader.ReadLine();
@@ -1354,6 +1355,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 using (var writer = new StreamWriter(new FileStream(decoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     bool inputProteinFound;
+
                     do
                     {
                         inputProteinFound = fastaFileReader.ReadNextProteinEntry();
@@ -2078,6 +2080,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 var linesRead = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();

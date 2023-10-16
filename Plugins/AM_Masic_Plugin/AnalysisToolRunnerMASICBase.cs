@@ -60,6 +60,7 @@ namespace AnalysisManagerMasicPlugin
                 using var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 errorCount = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();

@@ -223,6 +223,7 @@ namespace TestAScorePlugIn
         public string GetParam(string Name)
         {
             var val = "";
+
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];
@@ -233,6 +234,7 @@ namespace TestAScorePlugIn
         public string GetParam(string Section, string Name)
         {
             var val = "";
+
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];

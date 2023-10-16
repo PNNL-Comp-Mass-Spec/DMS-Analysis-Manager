@@ -90,6 +90,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (!GetLipidMapsDatabase())
                 {
                     LogError("Aborting since GetLipidMapsDatabase returned false");
+
                     if (string.IsNullOrEmpty(mMessage))
                     {
                         mMessage = "Error obtaining the LipidMaps database";
@@ -113,17 +114,20 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                                 " -rp " + PossiblyQuotePath(Path.Combine(mWorkDir, mDatasetName + AnalysisResources.DOT_RAW_EXTENSION));   // Positive-mode .Raw file
 
                 var filePath = Path.Combine(mWorkDir, mDatasetName + AnalysisResourcesLipidMapSearch.DECON_TOOLS_PEAKS_FILE_SUFFIX);
+
                 if (File.Exists(filePath))
                 {
                     arguments += " -pp " + PossiblyQuotePath(filePath);                  // Positive-mode peaks.txt file
                 }
 
                 var dataset2 = mJobParams.GetParam(AnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
+
                 if (!string.IsNullOrEmpty(dataset2))
                 {
                     arguments += " -rn " + PossiblyQuotePath(Path.Combine(mWorkDir, dataset2 + AnalysisResources.DOT_RAW_EXTENSION)); // Negative-mode .Raw file
 
                     filePath = Path.Combine(mWorkDir, dataset2 + AnalysisResourcesLipidMapSearch.DECON_TOOLS_PEAKS_FILE_SUFFIX);
+
                     if (File.Exists(filePath))
                     {
                         arguments += " -pn " + PossiblyQuotePath(filePath);                  // Negative-mode peaks.txt file
@@ -203,6 +207,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     mProgress = PROGRESS_PCT_LIPID_TOOLS_COMPLETE;
                     mStatusTools.UpdateAndWrite(mProgress);
+
                     if (mDebugLevel >= 3)
                     {
                         LogDebug("LipidTools Search Complete");
@@ -223,6 +228,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Zip up the text files that contain the data behind the plots
                 // In addition, rename file LipidMap_results.xlsx
                 var postProcessSuccess = PostProcessLipidToolsResults();
+
                 if (!postProcessSuccess)
                 {
                     processingSuccess = false;
@@ -382,6 +388,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     // Rename the newly downloaded file to newestLipidMapsDBFileName
                     Global.IdleLoop(0.25);
+
                     if (string.IsNullOrWhiteSpace(newestLipidMapsDBFileName))
                         throw new Exception("newestLipidMapsDBFileName is null in DownloadNewLipidMapsDB");
 
@@ -662,6 +669,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                             effectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
                         {
                             var match = reSubProgress.Match(dataLine);
+
                             if (match.Success)
                             {
                                 if (int.TryParse(match.Groups[1].Value, out var subProgressCount))
@@ -735,9 +743,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     if (!dataLineTrimmed.StartsWith("#") && dataLineTrimmed.Contains("="))
                     {
                         var charIndex = dataLineTrimmed.IndexOf('=');
+
                         if (charIndex > 0)
                         {
                             key = dataLineTrimmed.Substring(0, charIndex).Trim();
+
                             if (charIndex < dataLineTrimmed.Length - 1)
                             {
                                 value = dataLineTrimmed.Substring(charIndex + 1).Trim();

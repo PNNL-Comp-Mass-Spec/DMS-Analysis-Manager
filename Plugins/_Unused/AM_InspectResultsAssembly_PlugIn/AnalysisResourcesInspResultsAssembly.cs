@@ -29,6 +29,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -42,6 +43,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             // Retrieve FASTA file (used by the PeptideToProteinMapper)
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -59,6 +61,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             var numClonedSteps = mJobParams.GetParam("NumberOfClonedSteps");
+
             if (string.IsNullOrEmpty(numClonedSteps))
             {
                 // This is not a parallelized job

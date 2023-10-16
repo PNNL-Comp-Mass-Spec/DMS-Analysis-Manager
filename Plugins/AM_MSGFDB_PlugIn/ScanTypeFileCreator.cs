@@ -85,6 +85,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var scanFilterColIndex = 8;
 
                 var linesRead = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
@@ -220,6 +221,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var scanStatsExLoaded = false;
 
                 var linesRead = 0;
+
                 while (!scanStatsReader.EndOfStream)
                 {
                     var dataLine = scanStatsReader.ReadLine();

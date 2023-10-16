@@ -53,6 +53,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         public string GetCnStr(string queryTemplateName)
         {
             var queryDef = GetQueryTemplate(queryTemplateName);
+
             if (queryDef.DatabaseTagName == TagName.Undefined)
                 return string.Empty;
 
@@ -129,6 +130,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                     return string.Empty;
 
                 var sql = string.Format(BaseSQL, IdColName, id);
+
                 if (string.IsNullOrEmpty(filter) || string.IsNullOrEmpty(FilterSQL))
                     return sql;
 

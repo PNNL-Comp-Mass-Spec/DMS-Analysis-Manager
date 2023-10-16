@@ -21,6 +21,7 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -75,6 +76,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 var remoteDatasetFolderPath = Path.Combine(mJobParams.GetParam("DatasetArchivePath"), mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
 
                 string localDatasetFolderPath;
+
                 if (rawDataTypeName.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                 {
                     localDatasetFolderPath = Path.Combine(mWorkDir, DatasetName + ".d");
@@ -176,6 +178,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Fid file not found; look for a 0.ser folder in the working directory
             serFileOrFolderPath = Path.Combine(folderToCheck, BRUKER_ZERO_SER_FOLDER);
+
             if (Directory.Exists(serFileOrFolderPath))
             {
                 isFolder = true;
@@ -238,6 +241,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 var pekTempFilePath = Path.Combine(sourceFolder.FullName, DatasetName + AnalysisToolRunnerICRBase.PEK_TEMP_FILE);
 
                 var tempPekFile = new FileInfo(pekTempFilePath);
+
                 if (!tempPekFile.Exists)
                 {
                     if (mDebugLevel >= 4)

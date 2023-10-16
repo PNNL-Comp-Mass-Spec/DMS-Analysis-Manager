@@ -34,6 +34,7 @@ namespace AnalysisManagerInSpecTPlugIn
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
@@ -41,6 +42,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             // Retrieve FASTA file
             var orgDbDirectoryPath = mMgrParams.GetParam("OrgDbDir");
+
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
@@ -139,6 +141,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 // Unzip concatenated DTA file
                 LogMessage("Unzipping concatenated DTA file");
+
                 if (UnzipFileStart(Path.Combine(mWorkDir, dtaResultFileName), mWorkDir, "AnalysisResourcesIN.RetrieveDtaFiles"))
                 {
                     if (mDebugLevel >= 1)

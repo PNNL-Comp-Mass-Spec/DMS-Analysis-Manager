@@ -4938,6 +4938,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 using (var writer = new StreamWriter(new FileStream(temporaryFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     var headerParsed = false;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -5426,6 +5427,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 using (var writer = new StreamWriter(new FileStream(updatedPinFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();

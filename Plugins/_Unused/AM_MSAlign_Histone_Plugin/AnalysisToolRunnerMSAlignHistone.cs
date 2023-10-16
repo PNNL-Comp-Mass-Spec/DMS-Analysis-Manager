@@ -120,6 +120,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // javaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
                 // Note that we need to run MSAlign with a 64-bit version of Java since it prefers to use 2 or more GB of ram
                 var javaProgLoc = GetJavaProgLoc();
+
                 if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -164,6 +165,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam("ParamFileName"));
 
                 var cmdLineGenerated = CreateMSAlignCommandLine(paramFilePath, out var msalignCmdLineOptions);
+
                 if (!cmdLineGenerated)
                 {
                     if (string.IsNullOrEmpty(mMessage))
@@ -186,6 +188,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
                 var javaMemorySize = mJobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+
                 if (javaMemorySize < 512)
                     javaMemorySize = 512;
 
@@ -262,11 +265,13 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         // Need to call MsAlignPipeline.jar again, but this time with a different classpath
 
                         var reportGenerated = MakeReportFiles(javaProgLoc, msalignCmdLineOptions, javaMemorySize);
+
                         if (!reportGenerated)
                             processingSuccess = false;
 
                         // Move the result files
                         var filesMoved = MoveMSAlignResultFiles();
+
                         if (!filesMoved)
                         {
                             processingSuccess = false;
@@ -294,6 +299,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
 
                         mStatusTools.UpdateAndWrite(mProgress);
+
                         if (mDebugLevel >= 3)
                         {
                             LogDebug("MSAlign Search Complete");
@@ -344,6 +350,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var reInvalidResidues = new Regex("[BJOUXZ]", RegexOptions.Compiled);
 
                 var reader = new ProteinFileReader.FastaFileReader();
+
                 if (!reader.OpenFile(sourceFilePath))
                 {
                     mMessage = "Error opening FASTA file in CopyFastaCheckResidues";
@@ -365,6 +372,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                         var index = 0;
                         var residueCount = proteinResidues.Length;
+
                         while (index < proteinResidues.Length)
                         {
                             var length = Math.Min(RESIDUES_PER_LINE, residueCount - index);
@@ -580,6 +588,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     // Split the line on the equals sign
                     var keyName = dataLine.Substring(0, equalsIndex).TrimEnd();
                     string value;
+
                     if (equalsIndex < dataLine.Length - 1)
                     {
                         value = dataLine.Substring(equalsIndex + 1).Trim();
@@ -706,6 +715,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Move the _msdeconv.msalign file to the MSAlign work folder
                 var matchingFiles = sourceDirectory.GetFiles("*" + AnalysisResourcesMSAlignHistone.MSDECONV_MSALIGN_FILE_SUFFIX);
+
                 if (matchingFiles.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
@@ -820,6 +830,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 using (var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -860,6 +871,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 if (dataLine.IndexOf("Processing spectrum", StringComparison.Ordinal) >= 0)
                                 {
                                     var match = reExtractPercentFinished.Match(dataLine);
+
                                     if (match.Success)
                                     {
                                         if (short.TryParse(match.Groups[1].Value, out var progress))
@@ -1119,6 +1131,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Confirm that the directory has one or more files or subdirectories
                 var sourceDirectory = new DirectoryInfo(sourceFolderPath);
+
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
                     if (mDebugLevel >= 1)

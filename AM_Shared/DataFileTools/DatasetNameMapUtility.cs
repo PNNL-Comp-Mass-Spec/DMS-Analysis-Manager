@@ -237,6 +237,7 @@ namespace AnalysisManagerBase.DataFileTools
             for (var length = string1.Length; length > 0; length--)
             {
                 var startOfString = string1.Substring(0, length);
+
                 if (string2.StartsWith(startOfString, comparisonType))
                 {
                     return string1.Substring(0, length);
