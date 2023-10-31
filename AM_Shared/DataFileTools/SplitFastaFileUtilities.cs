@@ -315,7 +315,7 @@ namespace AnalysisManagerBase.DataFileTools
                     dbTools.AddTypedParameter(cmd, "@numProteins", SqlType.Int, value: currentSplitFasta.NumProteins);
                     dbTools.AddTypedParameter(cmd, "@numResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
                     dbTools.AddTypedParameter(cmd, "@fileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
-                    var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty);
+                    var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
                     var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
                     const int retryCount = 3;
