@@ -523,8 +523,7 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, mManagerName);
                 dbTools.AddParameter(cmd, "@state", SqlType.Int).Value = mgrCleanupActionCode;
                 dbTools.AddParameter(cmd, "@failureMsg", SqlType.VarChar, 512, failureMessage);
-
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 128, string.Empty, ParameterDirection.InputOutput);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
                 var resCode = dbTools.ExecuteSP(cmd);
