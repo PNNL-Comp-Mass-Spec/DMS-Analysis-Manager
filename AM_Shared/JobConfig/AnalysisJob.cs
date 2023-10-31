@@ -2005,8 +2005,7 @@ namespace AnalysisManagerBase.JobConfig
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
 
-            var messageParam = PipelineDBProcedureExecutor.AddParameter(
-                cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
+            var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
             // Call Stored Procedure set_step_task_complete (retry the call up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);

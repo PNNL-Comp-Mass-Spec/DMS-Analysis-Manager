@@ -140,7 +140,7 @@ namespace AnalysisManagerProg
                 var cmd = dbTools.CreateCommand(SP_NAME_ACK_MANAGER_UPDATE, CommandType.StoredProcedure);
 
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
-                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512,string.Empty, ParameterDirection.InputOutput);
+                dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
                 // Execute the SP
                 var resCode = dbTools.ExecuteSP(cmd);
