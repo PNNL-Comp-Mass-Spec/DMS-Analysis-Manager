@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
@@ -1605,6 +1606,76 @@ namespace AnalysisManagerProg
             statusTools.ConfigureMemoryLogging(true, 5, exeInfo.DirectoryName);
 
             statusTools.WriteStatusFile();
+        }
+
+        /// <summary>
+        /// Test converting messages to XML, including truncating the messages to a given length
+        /// </summary>
+        public void TestTruncateString()
+        {
+            var values = new List<string>
+            {
+                "This is a test string to validate.",
+                "This is a test string to validate and 32 < 50 while 40 > 20. In addition, 15 < 18 but 39 > 45 is false.",
+                "The fruit of the day is apples & pears. The large bowl is 15 >= 7. Other information could be added here.",
+                "The fruit of the day is apples & pears.\nThe fruit tomorrow is bananas & pineapples.\nSunday is watermelon.",
+                "The fruit of the day is apples & pears.\r\nThe fruit tomorrow is bananas & pineapples.\r\nSunday is watermelon."
+            };
+
+            // Create a new memory stream in which to write the XML
+            var memStream = new MemoryStream();
+
+            var settings = new XmlWriterSettings
+            {
+                Encoding = Encoding.UTF8,
+                Indent = true,
+                IndentChars = "  ",
+                NewLineHandling = NewLineHandling.None
+            };
+
+            string xmlText;
+
+            using (var writer = XmlWriter.Create(memStream, settings))
+            {
+                // Create the XML document in memory
+                writer.WriteStartDocument(true);
+                writer.WriteComment("Test document");
+
+                writer.WriteStartElement("Root");
+                writer.WriteStartElement("Messages");
+
+                const int MAX_LENGTH = 94;
+
+                foreach (var value in values)
+                {
+                    var validatedText = StatusFile.ValidateTextLength(value, MAX_LENGTH);
+
+                    writer.WriteElementString("Message", validatedText);
+                }
+
+                writer.WriteEndElement(); // Messages
+                writer.WriteEndElement(); // Root
+
+                // Close out the XML document (but do not close the writer yet)
+                writer.WriteEndDocument();
+                writer.Flush();
+
+                // Now use a StreamReader to copy the XML text to a string variable
+                memStream.Seek(0, SeekOrigin.Begin);
+                var memoryStreamReader = new StreamReader(memStream);
+                xmlText = memoryStreamReader.ReadToEnd();
+
+                Console.WriteLine();
+                Console.WriteLine(xmlText);
+                Console.WriteLine();
+            }
+
+            using var fileWriter = new StreamWriter(new FileStream("TestMessages.xml", FileMode.Create, FileAccess.Write, FileShare.None));
+
+            fileWriter.WriteLine(xmlText);
+
+            Console.WriteLine("See file TestMessages.xml");
+            Console.WriteLine();
         }
 
         /// <summary>
