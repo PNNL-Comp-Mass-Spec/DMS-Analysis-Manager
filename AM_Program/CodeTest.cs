@@ -42,9 +42,13 @@ namespace AnalysisManagerProg
         // ReSharper restore CommentTypo
 
         private OrganismDatabaseHandler.ProteinExport.GetFASTAFromDMS mFastaTools;
+
         private bool mGenerationComplete;
+
         private readonly string mFastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
+
         private string mFastaFileName = string.Empty;
+
         private System.Timers.Timer mFastaTimer;
 
         private bool mFastaGenTimeOut;

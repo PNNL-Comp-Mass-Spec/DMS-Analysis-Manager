@@ -308,98 +308,6 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Configure the memory logging settings
-        /// </summary>
-        /// <param name="logMemoryUsage"></param>
-        /// <param name="minimumMemoryUsageLogIntervalMinutes"></param>
-        /// <param name="memoryUsageLogFolderPath"></param>
-        public void ConfigureMemoryLogging(bool logMemoryUsage, float minimumMemoryUsageLogIntervalMinutes, string memoryUsageLogFolderPath)
-        {
-            if (logMemoryUsage)
-            {
-                if (mMemoryUsageLogger == null)
-                {
-                    mMemoryUsageLogger = new MemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
-                    RegisterEvents(mMemoryUsageLogger);
-                }
-                else
-                {
-                    mMemoryUsageLogger.MinimumLogIntervalMinutes = minimumMemoryUsageLogIntervalMinutes;
-                }
-            }
-            else
-            {
-                // Stop logging memory usage
-                mMemoryUsageLogger = null;
-            }
-        }
-
-        /// <summary>
-        /// Configure the Broker DB logging settings
-        /// </summary>
-        /// <remarks>
-        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure update_manager_and_task_status
-        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
-        /// </remarks>
-        /// <param name="logStatusToBrokerDB"></param>
-        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
-        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
-        public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
-        {
-            if (Global.OfflineMode)
-            {
-                LogToBrokerQueue = false;
-                return;
-            }
-
-            LogToBrokerQueue = logStatusToBrokerDB;
-
-            if (logStatusToBrokerDB)
-            {
-                if (mBrokerDBLogger == null)
-                {
-                    mBrokerDBLogger = new DBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
-                    RegisterEvents(mBrokerDBLogger);
-                }
-                else
-                {
-                    mBrokerDBLogger.DBStatusUpdateIntervalMinutes = brokerDBStatusUpdateIntervalMinutes;
-                }
-            }
-            else
-            {
-                // ReSharper disable once RedundantCheckBeforeAssignment
-                if (mBrokerDBLogger != null)
-                {
-                    // Stop logging to the broker
-                    mBrokerDBLogger = null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Configure the Message Queue logging settings
-        /// </summary>
-        /// <remarks>
-        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
-        /// </remarks>
-        /// <param name="logStatusToMessageQueue"></param>
-        /// <param name="msgQueueURI"></param>
-        /// <param name="messageQueueTopicMgrStatus"></param>
-        public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
-        {
-            if (Global.OfflineMode)
-            {
-                LogToMsgQueue = false;
-                return;
-            }
-
-            LogToMsgQueue = logStatusToMessageQueue;
-            MessageQueueURI = msgQueueURI;
-            MessageQueueTopic = messageQueueTopicMgrStatus;
-        }
-
-        /// <summary>
         /// Looks for file "AbortProcessingNow.txt"
         /// If found, sets property AbortProcessingNow to true
         /// </summary>
@@ -451,60 +359,95 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Converts the string representation of manager status to the enum
+        /// Configure the Broker DB logging settings
         /// </summary>
-        /// <param name="statusText">Text from ConvertMgrStatusToString or the string representation of the enum</param>
-        /// <returns>Task status enum</returns>
-        public MgrStatusCodes ConvertToMgrStatusFromText(string statusText)
+        /// <remarks>
+        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure update_manager_and_task_status
+        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
+        /// </remarks>
+        /// <param name="logStatusToBrokerDB"></param>
+        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
+        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
+        public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
-            foreach (var item in mMgrStatusMap)
+            if (Global.OfflineMode)
             {
-                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
-                    return item.Key;
+                LogToBrokerQueue = false;
+                return;
             }
 
-            if (Enum.TryParse(statusText, true, out MgrStatusCodes taskStatus))
-                return taskStatus;
+            LogToBrokerQueue = logStatusToBrokerDB;
 
-            return MgrStatusCodes.STOPPED;
+            if (logStatusToBrokerDB)
+            {
+                if (mBrokerDBLogger == null)
+                {
+                    mBrokerDBLogger = new DBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
+                    RegisterEvents(mBrokerDBLogger);
+                }
+                else
+                {
+                    mBrokerDBLogger.DBStatusUpdateIntervalMinutes = brokerDBStatusUpdateIntervalMinutes;
+                }
+            }
+            else
+            {
+                // ReSharper disable once RedundantCheckBeforeAssignment
+                if (mBrokerDBLogger != null)
+                {
+                    // Stop logging to the broker
+                    mBrokerDBLogger = null;
+                }
+            }
         }
 
         /// <summary>
-        /// Converts the string representation of task status to the enum
+        /// Configure the memory logging settings
         /// </summary>
-        /// <param name="statusText">Text from ConvertTaskStatusToString or the string representation of the enum</param>
-        /// <returns>Task status enum</returns>
-        public TaskStatusCodes ConvertToTaskStatusFromText(string statusText)
+        /// <param name="logMemoryUsage"></param>
+        /// <param name="minimumMemoryUsageLogIntervalMinutes"></param>
+        /// <param name="memoryUsageLogFolderPath"></param>
+        public void ConfigureMemoryLogging(bool logMemoryUsage, float minimumMemoryUsageLogIntervalMinutes, string memoryUsageLogFolderPath)
         {
-            foreach (var item in mTaskStatusMap)
+            if (logMemoryUsage)
             {
-                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
-                    return item.Key;
+                if (mMemoryUsageLogger == null)
+                {
+                    mMemoryUsageLogger = new MemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
+                    RegisterEvents(mMemoryUsageLogger);
+                }
+                else
+                {
+                    mMemoryUsageLogger.MinimumLogIntervalMinutes = minimumMemoryUsageLogIntervalMinutes;
+                }
             }
-
-            if (Enum.TryParse(statusText, true, out TaskStatusCodes taskStatus))
-                return taskStatus;
-
-            return TaskStatusCodes.NO_TASK;
+            else
+            {
+                // Stop logging memory usage
+                mMemoryUsageLogger = null;
+            }
         }
 
         /// <summary>
-        /// Converts the string representation of task status detail to the enum
+        /// Configure the Message Queue logging settings
         /// </summary>
-        /// <param name="statusText">Text from ConvertTaskStatusDetailToString or the string representation of the enum</param>
-        /// <returns>Task status enum</returns>
-        public TaskStatusDetailCodes ConvertToTaskDetailStatusFromText(string statusText)
+        /// <remarks>
+        /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
+        /// </remarks>
+        /// <param name="logStatusToMessageQueue"></param>
+        /// <param name="msgQueueURI"></param>
+        /// <param name="messageQueueTopicMgrStatus"></param>
+        public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
-            foreach (var item in mTaskStatusDetailMap)
+            if (Global.OfflineMode)
             {
-                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
-                    return item.Key;
+                LogToMsgQueue = false;
+                return;
             }
 
-            if (Enum.TryParse(statusText, true, out TaskStatusDetailCodes taskStatus))
-                return taskStatus;
-
-            return TaskStatusDetailCodes.NO_TASK;
+            LogToMsgQueue = logStatusToMessageQueue;
+            MessageQueueURI = msgQueueURI;
+            MessageQueueTopic = messageQueueTopicMgrStatus;
         }
 
         /// <summary>
@@ -583,6 +526,63 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Converts the string representation of manager status to the enum
+        /// </summary>
+        /// <param name="statusText">Text from ConvertMgrStatusToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
+        public MgrStatusCodes ConvertToMgrStatusFromText(string statusText)
+        {
+            foreach (var item in mMgrStatusMap)
+            {
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
+            }
+
+            if (Enum.TryParse(statusText, true, out MgrStatusCodes taskStatus))
+                return taskStatus;
+
+            return MgrStatusCodes.STOPPED;
+        }
+
+        /// <summary>
+        /// Converts the string representation of task status to the enum
+        /// </summary>
+        /// <param name="statusText">Text from ConvertTaskStatusToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
+        public TaskStatusCodes ConvertToTaskStatusFromText(string statusText)
+        {
+            foreach (var item in mTaskStatusMap)
+            {
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
+            }
+
+            if (Enum.TryParse(statusText, true, out TaskStatusCodes taskStatus))
+                return taskStatus;
+
+            return TaskStatusCodes.NO_TASK;
+        }
+
+        /// <summary>
+        /// Converts the string representation of task status detail to the enum
+        /// </summary>
+        /// <param name="statusText">Text from ConvertTaskStatusDetailToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
+        public TaskStatusDetailCodes ConvertToTaskDetailStatusFromText(string statusText)
+        {
+            foreach (var item in mTaskStatusDetailMap)
+            {
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
+            }
+
+            if (Enum.TryParse(statusText, true, out TaskStatusDetailCodes taskStatus))
+                return taskStatus;
+
+            return TaskStatusDetailCodes.NO_TASK;
+        }
+
+        /// <summary>
         /// Populate the status code to status description dictionaries
         /// </summary>
         /// <param name="mgrStatusMap"></param>
@@ -615,6 +615,15 @@ namespace AnalysisManagerBase.StatusReporting
             taskStatusDetailMap.Add(TaskStatusDetailCodes.RETRIEVING_RESOURCES, "Retrieving Resources");
             taskStatusDetailMap.Add(TaskStatusDetailCodes.RUNNING_TOOL, "Running Tool");
             taskStatusDetailMap.Add(TaskStatusDetailCodes.CLOSING, "Closing");
+        }
+
+        /// <summary>
+        /// Dispose the message queue objects now
+        /// </summary>
+        public void DisposeMessageQueue()
+        {
+            mQueueLogger?.Dispose();
+            mMessageSender?.Dispose();
         }
 
         /// <summary>
@@ -661,6 +670,151 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Generate the status XML
+        /// </summary>
+        /// <param name="status">Status info</param>
+        /// <param name="lastUpdate">Last update time (UTC)</param>
+        /// <param name="processId">Manager process ID</param>
+        /// <param name="cpuUtilization">CPU utilization</param>
+        /// <param name="freeMemoryMB">Free memory in MB</param>
+        /// <param name="runTimeHours">Runtime, in hours</param>
+        private static string GenerateStatusXML(
+            StatusFile status,
+            DateTime lastUpdate,
+            int processId,
+            int cpuUtilization,
+            float freeMemoryMB,
+            float runTimeHours)
+        {
+            // Note that we use this instead of using .ToString("o")
+            // because .NET includes 7 digits of precision for the milliseconds,
+            // and SQL Server only allows 3 digits of precision
+            const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
+
+            const string LOCAL_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
+
+            // Create a new memory stream in which to write the XML
+            var memStream = new MemoryStream();
+
+            var settings = new XmlWriterSettings
+            {
+                Encoding = Encoding.UTF8,
+                Indent = true,
+                IndentChars = "  ",
+                NewLineHandling = NewLineHandling.None
+            };
+
+            using var writer = XmlWriter.Create(memStream, settings);
+
+            // Create the XML document in memory
+            writer.WriteStartDocument(true);
+            writer.WriteComment("Analysis manager job status");
+
+            // General job information
+            // Root level element
+            writer.WriteStartElement("Root");
+            writer.WriteStartElement("Manager");
+            writer.WriteElementString("MgrName", ValidateTextLength(status.MgrName, 128));
+            writer.WriteElementString("RemoteMgrName", ValidateTextLength(status.RemoteMgrName, 128));
+            writer.WriteElementString("MgrStatus", ValidateTextLength(status.ConvertMgrStatusToString(status.MgrStatus), 50));
+
+            writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+
+            // Write out times in the format 2017-07-06T23:23:14.337Z
+            writer.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            writer.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            writer.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
+            writer.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
+            writer.WriteElementString("ProcessID", processId.ToString());
+            writer.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
+            writer.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
+            writer.WriteStartElement("RecentErrorMessages");
+
+            var recentErrorMessages = status.RecentErrorMessages;
+
+            if (recentErrorMessages.Count == 0)
+            {
+                writer.WriteElementString("ErrMsg", string.Empty);
+            }
+            else
+            {
+                foreach (var errMsg in recentErrorMessages)
+                {
+                    writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1950));
+                }
+            }
+            writer.WriteEndElement(); // RecentErrorMessages
+            writer.WriteEndElement(); // Manager
+
+            writer.WriteStartElement("Task");
+            writer.WriteElementString("Tool", ValidateTextLength(status.Tool, 128));
+            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusToString(status.TaskStatus), 50));
+
+            if (status.TaskStatus is TaskStatusCodes.STOPPED or TaskStatusCodes.FAILED or TaskStatusCodes.NO_TASK)
+            {
+                runTimeHours = 0;
+            }
+
+            writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
+            writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
+
+            writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
+            writer.WriteElementString("CurrentOperation", ValidateTextLength(status.CurrentOperation, 255));
+
+            writer.WriteStartElement("TaskDetails");
+            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusDetailToString(status.TaskStatusDetail), 50));
+            writer.WriteElementString("Job", status.JobNumber.ToString());
+            writer.WriteElementString("Step", status.JobStep.ToString());
+            writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
+            writer.WriteElementString("WorkDirPath", status.WorkDirPath);
+            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(status.MostRecentLogMessage, 1950));
+            writer.WriteElementString("MostRecentJobInfo", ValidateTextLength(status.MostRecentJobInfo, 255));
+            writer.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
+            writer.WriteEndElement(); // TaskDetails
+            writer.WriteEndElement(); // Task
+
+            var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
+
+            if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
+            {
+                writer.WriteStartElement("ProgRunnerCoreUsage");
+                writer.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
+
+                // Dumping the items from the queue to a list because another thread might
+                // update ProgRunnerCoreUsageHistory while we're iterating over the items
+                var coreUsageHistory = progRunnerCoreUsageHistory.ToList();
+
+                foreach (var coreUsageSample in coreUsageHistory)
+                {
+                    writer.WriteStartElement("CoreUsageSample");
+                    writer.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
+                    writer.WriteValue(coreUsageSample.Value.ToString("0.0"));
+                    writer.WriteEndElement(); // CoreUsageSample
+                }
+                writer.WriteEndElement(); // ProgRunnerCoreUsage
+            }
+
+            writer.WriteEndElement(); // Root
+
+            // Close out the XML document (but do not close the writer yet)
+            writer.WriteEndDocument();
+            writer.Flush();
+
+            // Now use a StreamReader to copy the XML text to a string variable
+            memStream.Seek(0, SeekOrigin.Begin);
+            var memoryStreamReader = new StreamReader(memStream);
+            var xmlText = memoryStreamReader.ReadToEnd();
+
+            memoryStreamReader.Close();
+            memStream.Close();
+
+            return xmlText;
+        }
+
+        /// <summary>
         /// Returns the number of cores
         /// </summary>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
@@ -689,9 +843,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <returns>Amount of free memory, in MB</returns>
         public float GetFreeMemoryMB()
         {
-            var freeMemoryMB = Global.GetFreeMemoryMB();
-
-            return freeMemoryMB;
+            return Global.GetFreeMemoryMB();
         }
 
         /// <summary>
@@ -700,6 +852,15 @@ namespace AnalysisManagerBase.StatusReporting
         public int GetProcessID()
         {
             return Process.GetCurrentProcess().Id;
+        }
+
+        /// <summary>
+        /// Total time the job has been running
+        /// </summary>
+        /// <returns>Number of hours manager has been processing job</returns>
+        private float GetRunTime()
+        {
+            return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
         }
 
         /// <summary>
@@ -939,475 +1100,6 @@ namespace AnalysisManagerBase.StatusReporting
                     StoreNewErrorMessage(string.Empty, true);
                 }
             }
-        }
-
-        /// <summary>
-        /// Examines the length of value; if longer than maxLength characters, the return value is truncated
-        /// </summary>
-        /// <param name="value">Text value to examine</param>
-        /// <param name="maxLength">Maximum allowed number of characters</param>
-        /// <param name="accountForXmlEscaping">When true, assume that the text will be converted to XML and less than and greater than signs will be converted to &lt; and &gt;</param>
-        /// <returns>Either the original value, or the value truncated to maxLength characters</returns>
-        public static string ValidateTextLength(string value, int maxLength, bool accountForXmlEscaping = true)
-        {
-            if (string.IsNullOrEmpty(value))
-                return string.Empty;
-
-            var textLength = value.Length;
-
-            int effectiveLength;
-
-            if (accountForXmlEscaping)
-            {
-                var textToCheck = textLength <= maxLength ? value : value.Substring(0, maxLength);
-
-                var matches1 = mFindAmpersand.Matches(textToCheck);
-                var matches2 = mFindLessThanOrGreaterThan.Matches(textToCheck);
-
-                // & will be replaced with &amp; so add 4 for each character found
-                // < and > will be replaced with &lt; and &gt; so add 3 for each character found
-                effectiveLength = textLength + matches1.Count * 4 + matches2.Count * 3;
-            }
-            else
-            {
-                effectiveLength = textLength;
-            }
-
-            return effectiveLength <= maxLength ? value : value.Substring(0, maxLength - (effectiveLength - textLength));
-        }
-
-        /// <summary>
-        /// Writes the status file
-        /// </summary>
-        public void WriteStatusFile()
-        {
-            WriteStatusFile(false);
-        }
-
-        /// <summary>
-        /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
-        /// </summary>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        /// <param name ="usePerformanceCounters">
-        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
-        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
-        /// thus this should be set to false if simply reporting that the manager is idle
-        /// </param>
-        public void WriteStatusFile(bool forceLogToBrokerDB, bool usePerformanceCounters = true)
-        {
-            var lastUpdate = DateTime.MinValue;
-            var processId = 0;
-            var cpuUtilization = 0;
-            float freeMemoryMB = 0;
-
-            try
-            {
-                lastUpdate = DateTime.UtcNow;
-
-                Global.CheckStopTrace("GetProcessID");
-                processId = GetProcessID();
-
-                if (usePerformanceCounters)
-                {
-                    Global.CheckStopTrace("GetCPUUtilization");
-                    cpuUtilization = (int)GetCPUUtilization();
-                }
-                else if (Global.TraceMode)
-                {
-                    ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
-                }
-
-                Global.CheckStopTrace("GetFreeMemoryMB");
-                freeMemoryMB = GetFreeMemoryMB();
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowDebug("Exception getting process ID, CPU utilization, or free memory: " + ex.Message);
-            }
-
-            if (Global.TraceMode)
-            {
-                ConsoleMsgUtils.ShowDebug(
-                    "Call WriteStatusFile with processId {0}, CPU {1}%, Free Memory {2:F0} MB",
-                    processId, cpuUtilization, freeMemoryMB);
-            }
-
-            Global.CheckStopTrace("WriteStatusFile");
-            WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB, usePerformanceCounters);
-        }
-
-        /// <summary>
-        /// Updates the status in various locations, including on disk and with the message queue and/or broker DB
-        /// </summary>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        /// <param name="lastUpdate"></param>
-        /// <param name="processId"></param>
-        /// <param name="cpuUtilization"></param>
-        /// <param name="freeMemoryMB"></param>
-        /// <param name="forceLogToBrokerDB">
-        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
-        /// Otherwise, mBrokerDBLogger only logs the status periodically
-        /// Typically false
-        /// </param>
-        /// <param name ="usePerformanceCounters">
-        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
-        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
-        /// thus this should be set to false if simply reporting that the manager is idle
-        /// </param>
-        public void WriteStatusFile(
-            DateTime lastUpdate,
-            int processId,
-            int cpuUtilization,
-            float freeMemoryMB,
-            bool forceLogToBrokerDB = false,
-            bool usePerformanceCounters = true)
-        {
-            var runTimeHours = GetRunTime();
-            WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
-
-            Global.CheckStopTrace("CheckForAbortProcessingFile");
-            CheckForAbortProcessingFile();
-
-            if (usePerformanceCounters)
-            {
-                Global.CheckStopTrace("WriteMemoryUsageLogEntry");
-
-                // Log the memory usage to a local file
-                mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
-            }
-            else if (Global.TraceMode)
-            {
-                ConsoleMsgUtils.ShowDebug("Skipping call to WriteMemoryUsageLogEntry in WriteStatusFile");
-            }
-        }
-
-        /// <summary>
-        /// Updates the status in various locations, including on disk and with the message queue (and optionally directly to the Broker DB)
-        /// </summary>
-        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        /// <param name="status">Status info</param>
-        /// <param name="lastUpdate">Last update time (UTC)</param>
-        /// <param name="processId">Manager process ID</param>
-        /// <param name="cpuUtilization">CPU utilization</param>
-        /// <param name="freeMemoryMB">Free memory in MB</param>
-        /// <param name="runTimeHours">Runtime, in hours</param>
-        /// <param name="writeToDisk">If true, write the status file to disk, otherwise, just push to the message queue and/or the Broker DB</param>
-        /// <param name="forceLogToBrokerDB">
-        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
-        /// Otherwise, mBrokerDBLogger only logs the status periodically
-        /// Typically false</param>
-        private void WriteStatusFile(
-            StatusFile status,
-            DateTime lastUpdate,
-            int processId,
-            int cpuUtilization,
-            float freeMemoryMB,
-            float runTimeHours,
-            bool writeToDisk,
-            bool forceLogToBrokerDB = false)
-        {
-            string xmlText;
-
-            try
-            {
-                Global.CheckStopTrace("GenerateStatusXML");
-                xmlText = GenerateStatusXML(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
-
-                if (writeToDisk)
-                {
-                    Global.CheckStopTrace("WriteStatusFileToDisk");
-                    WriteStatusFileToDisk(xmlText);
-                }
-            }
-            catch (Exception ex)
-            {
-                OnWarningEvent("Error generating status info: {0}", ex.Message);
-                xmlText = string.Empty;
-            }
-
-            if (LogToMsgQueue)
-            {
-                // Send the XML text to a message queue
-                LogStatusToMessageQueue(xmlText, status.MgrName);
-            }
-
-            if (mBrokerDBLogger != null)
-            {
-                // Send the status info to the Broker DB
-                // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB is true)
-                LogStatusToBrokerDatabase(forceLogToBrokerDB);
-            }
-        }
-
-        /// <summary>
-        /// Generate the status XML
-        /// </summary>
-        /// <param name="status">Status info</param>
-        /// <param name="lastUpdate">Last update time (UTC)</param>
-        /// <param name="processId">Manager process ID</param>
-        /// <param name="cpuUtilization">CPU utilization</param>
-        /// <param name="freeMemoryMB">Free memory in MB</param>
-        /// <param name="runTimeHours">Runtime, in hours</param>
-        private static string GenerateStatusXML(
-            StatusFile status,
-            DateTime lastUpdate,
-            int processId,
-            int cpuUtilization,
-            float freeMemoryMB,
-            float runTimeHours)
-        {
-            // Note that we use this instead of using .ToString("o")
-            // because .NET includes 7 digits of precision for the milliseconds,
-            // and SQL Server only allows 3 digits of precision
-            const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
-
-            const string LOCAL_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
-
-            // Create a new memory stream in which to write the XML
-            var memStream = new MemoryStream();
-
-            var settings = new XmlWriterSettings
-            {
-                Encoding = Encoding.UTF8,
-                Indent = true,
-                IndentChars = "  ",
-                NewLineHandling = NewLineHandling.None
-            };
-
-            using var writer = XmlWriter.Create(memStream, settings);
-
-            // Create the XML document in memory
-            writer.WriteStartDocument(true);
-            writer.WriteComment("Analysis manager job status");
-
-            // General job information
-            // Root level element
-            writer.WriteStartElement("Root");
-            writer.WriteStartElement("Manager");
-            writer.WriteElementString("MgrName", ValidateTextLength(status.MgrName, 128));
-            writer.WriteElementString("RemoteMgrName", ValidateTextLength(status.RemoteMgrName, 128));
-            writer.WriteElementString("MgrStatus", ValidateTextLength(status.ConvertMgrStatusToString(status.MgrStatus), 50));
-
-            writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-            writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-
-            // Write out times in the format 2017-07-06T23:23:14.337Z
-            writer.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
-
-            writer.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
-
-            writer.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
-            writer.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
-            writer.WriteElementString("ProcessID", processId.ToString());
-            writer.WriteElementString("ProgRunnerProcessID", status.ProgRunnerProcessID.ToString());
-            writer.WriteElementString("ProgRunnerCoreUsage", status.ProgRunnerCoreUsage.ToString("0.00"));
-            writer.WriteStartElement("RecentErrorMessages");
-
-            var recentErrorMessages = status.RecentErrorMessages;
-
-            if (recentErrorMessages.Count == 0)
-            {
-                writer.WriteElementString("ErrMsg", string.Empty);
-            }
-            else
-            {
-                foreach (var errMsg in recentErrorMessages)
-                {
-                    writer.WriteElementString("ErrMsg", ValidateTextLength(errMsg, 1950));
-                }
-            }
-            writer.WriteEndElement(); // RecentErrorMessages
-            writer.WriteEndElement(); // Manager
-
-            writer.WriteStartElement("Task");
-            writer.WriteElementString("Tool", ValidateTextLength(status.Tool, 128));
-            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusToString(status.TaskStatus), 50));
-
-            if (status.TaskStatus is TaskStatusCodes.STOPPED or TaskStatusCodes.FAILED or TaskStatusCodes.NO_TASK)
-            {
-                runTimeHours = 0;
-            }
-
-            writer.WriteElementString("Duration", runTimeHours.ToString("0.00"));
-            writer.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
-
-            writer.WriteElementString("Progress", status.Progress.ToString("##0.00"));
-            writer.WriteElementString("CurrentOperation", ValidateTextLength(status.CurrentOperation, 255));
-
-            writer.WriteStartElement("TaskDetails");
-            writer.WriteElementString("Status", ValidateTextLength(status.ConvertTaskStatusDetailToString(status.TaskStatusDetail), 50));
-            writer.WriteElementString("Job", status.JobNumber.ToString());
-            writer.WriteElementString("Step", status.JobStep.ToString());
-            writer.WriteElementString("Dataset", ValidateTextLength(status.Dataset, 255));
-            writer.WriteElementString("WorkDirPath", status.WorkDirPath);
-            writer.WriteElementString("MostRecentLogMessage", ValidateTextLength(status.MostRecentLogMessage, 1950));
-            writer.WriteElementString("MostRecentJobInfo", ValidateTextLength(status.MostRecentJobInfo, 255));
-            writer.WriteElementString("SpectrumCount", status.SpectrumCount.ToString());
-            writer.WriteEndElement(); // TaskDetails
-            writer.WriteEndElement(); // Task
-
-            var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
-
-            if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
-            {
-                writer.WriteStartElement("ProgRunnerCoreUsage");
-                writer.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
-
-                // Dumping the items from the queue to a list because another thread might
-                // update ProgRunnerCoreUsageHistory while we're iterating over the items
-                var coreUsageHistory = progRunnerCoreUsageHistory.ToList();
-
-                foreach (var coreUsageSample in coreUsageHistory)
-                {
-                    writer.WriteStartElement("CoreUsageSample");
-                    writer.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
-                    writer.WriteValue(coreUsageSample.Value.ToString("0.0"));
-                    writer.WriteEndElement(); // CoreUsageSample
-                }
-                writer.WriteEndElement(); // ProgRunnerCoreUsage
-            }
-
-            writer.WriteEndElement(); // Root
-
-            // Close out the XML document (but do not close the writer yet)
-            writer.WriteEndDocument();
-            writer.Flush();
-
-            // Now use a StreamReader to copy the XML text to a string variable
-            memStream.Seek(0, SeekOrigin.Begin);
-            var memoryStreamReader = new StreamReader(memStream);
-            var xmlText = memoryStreamReader.ReadToEnd();
-
-            memoryStreamReader.Close();
-            memStream.Close();
-
-            return xmlText;
-        }
-
-        private void WriteStatusFileToDisk(string xmlText)
-        {
-            const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
-
-            if (DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds < MIN_FILE_WRITE_INTERVAL_SECONDS)
-            {
-                return;
-            }
-
-            // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
-
-            if (FileNamePath == null)
-            {
-                return;
-            }
-
-            var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
-
-            mLastFileWriteTime = DateTime.UtcNow;
-
-            var logWarning = true;
-
-            // ReSharper disable once StringLiteralTypo
-            if (Tool.IndexOf("GlyQ", StringComparison.OrdinalIgnoreCase) >= 0 || Tool.IndexOf("ModPlus", StringComparison.OrdinalIgnoreCase) >= 0)
-            {
-                if (mDebugLevel < 3)
-                    logWarning = false;
-            }
-
-            var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
-
-            if (success)
-            {
-                try
-                {
-                    File.Copy(tempStatusFilePath, FileNamePath, true);
-                }
-                catch (Exception ex)
-                {
-                    // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
-                    if (logWarning)
-                    {
-                        // Log a warning that the file copy failed
-                        OnWarningEvent("Unable to copy temporary status file to the final status file ({0} to {1}): {2}",
-                            Path.GetFileName(tempStatusFilePath),
-                            Path.GetFileName(FileNamePath),
-                            ex.Message);
-                    }
-                }
-
-                try
-                {
-                    File.Delete(tempStatusFilePath);
-                }
-                catch (Exception ex)
-                {
-                    // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
-                    if (logWarning)
-                    {
-                        // Log a warning that the file delete failed
-                        OnWarningEvent("Unable to delete temporary status file ({0}): {1}", Path.GetFileName(tempStatusFilePath), ex.Message);
-                    }
-                }
-            }
-            else
-            {
-                // Error writing to the temporary status file; try the primary file
-                WriteStatusFileToDisk(FileNamePath, xmlText, logWarning);
-            }
-
-            if (string.IsNullOrWhiteSpace(OfflineJobStatusFilePath))
-                return;
-
-            try
-            {
-                // We're running an offline analysis job (Global.OfflineMode is true)
-                // Update the JobStatus file in the TaskQueue directory
-                File.Copy(FileNamePath, OfflineJobStatusFilePath, true);
-            }
-            catch (Exception ex)
-            {
-                OnDebugEvent("Error copying the status file to " + OfflineJobStatusFilePath + ": " + ex.Message);
-            }
-        }
-
-        private bool WriteStatusFileToDisk(string statusFilePath, string xmlText, bool logWarning)
-        {
-            const int WRITE_FAILURE_LOG_THRESHOLD = 5;
-
-            bool success;
-
-            try
-            {
-                // Write out the XML text to a file
-                // If the file is in use by another process, the writing will fail
-                using (var writer = new StreamWriter(new FileStream(statusFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    writer.WriteLine(xmlText);
-                }
-
-                // Reset the error counter
-                mWritingErrorCountSaved = 0;
-
-                success = true;
-            }
-            catch (Exception ex)
-            {
-                // Increment the error counter
-                mWritingErrorCountSaved++;
-
-                if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
-                {
-                    // 5 or more errors in a row have occurred
-                    // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
-                    if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
-                    {
-                        OnWarningEvent("Error writing status file {0}: {1}", Path.GetFileName(statusFilePath), ex.Message);
-                    }
-                }
-                success = false;
-            }
-
-            return success;
         }
 
         /// <summary>
@@ -1675,21 +1367,327 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Total time the job has been running
+        /// Examines the length of value; if longer than maxLength characters, the return value is truncated
         /// </summary>
-        /// <returns>Number of hours manager has been processing job</returns>
-        private float GetRunTime()
+        /// <param name="value">Text value to examine</param>
+        /// <param name="maxLength">Maximum allowed number of characters</param>
+        /// <param name="accountForXmlEscaping">When true, assume that the text will be converted to XML and less than and greater than signs will be converted to &lt; and &gt;</param>
+        /// <returns>Either the original value, or the value truncated to maxLength characters</returns>
+        public static string ValidateTextLength(string value, int maxLength, bool accountForXmlEscaping = true)
         {
-            return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
+            if (string.IsNullOrEmpty(value))
+                return string.Empty;
+
+            var textLength = value.Length;
+
+            int effectiveLength;
+
+            if (accountForXmlEscaping)
+            {
+                var textToCheck = textLength <= maxLength ? value : value.Substring(0, maxLength);
+
+                var matches1 = mFindAmpersand.Matches(textToCheck);
+                var matches2 = mFindLessThanOrGreaterThan.Matches(textToCheck);
+
+                // & will be replaced with &amp; so add 4 for each character found
+                // < and > will be replaced with &lt; and &gt; so add 3 for each character found
+                effectiveLength = textLength + matches1.Count * 4 + matches2.Count * 3;
+            }
+            else
+            {
+                effectiveLength = textLength;
+            }
+
+            return effectiveLength <= maxLength ? value : value.Substring(0, maxLength - (effectiveLength - textLength));
         }
 
         /// <summary>
-        /// Dispose the message queue objects now
+        /// Writes the status file
         /// </summary>
-        public void DisposeMessageQueue()
+        public void WriteStatusFile()
         {
-            mQueueLogger?.Dispose();
-            mMessageSender?.Dispose();
+            WriteStatusFile(false);
+        }
+
+        /// <summary>
+        /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
+        /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <param name ="usePerformanceCounters">
+        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
+        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
+        /// thus this should be set to false if simply reporting that the manager is idle
+        /// </param>
+        public void WriteStatusFile(bool forceLogToBrokerDB, bool usePerformanceCounters = true)
+        {
+            var lastUpdate = DateTime.MinValue;
+            var processId = 0;
+            var cpuUtilization = 0;
+            float freeMemoryMB = 0;
+
+            try
+            {
+                lastUpdate = DateTime.UtcNow;
+
+                Global.CheckStopTrace("GetProcessID");
+                processId = GetProcessID();
+
+                if (usePerformanceCounters)
+                {
+                    Global.CheckStopTrace("GetCPUUtilization");
+                    cpuUtilization = (int)GetCPUUtilization();
+                }
+                else if (Global.TraceMode)
+                {
+                    ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
+                }
+
+                Global.CheckStopTrace("GetFreeMemoryMB");
+                freeMemoryMB = GetFreeMemoryMB();
+            }
+            catch (Exception ex)
+            {
+                ConsoleMsgUtils.ShowDebug("Exception getting process ID, CPU utilization, or free memory: " + ex.Message);
+            }
+
+            if (Global.TraceMode)
+            {
+                ConsoleMsgUtils.ShowDebug(
+                    "Call WriteStatusFile with processId {0}, CPU {1}%, Free Memory {2:F0} MB",
+                    processId, cpuUtilization, freeMemoryMB);
+            }
+
+            Global.CheckStopTrace("WriteStatusFile");
+            WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB, usePerformanceCounters);
+        }
+
+        /// <summary>
+        /// Updates the status in various locations, including on disk and with the message queue and/or broker DB
+        /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
+        /// <param name="lastUpdate"></param>
+        /// <param name="processId"></param>
+        /// <param name="cpuUtilization"></param>
+        /// <param name="freeMemoryMB"></param>
+        /// <param name="forceLogToBrokerDB">
+        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
+        /// Otherwise, mBrokerDBLogger only logs the status periodically
+        /// Typically false
+        /// </param>
+        /// <param name ="usePerformanceCounters">
+        /// When true, include the total CPU utilization percent in the status file and call mMemoryUsageLogger.WriteMemoryUsageLogEntry()
+        /// This can lead to PerfLib warnings and errors in the Windows Event Log;
+        /// thus this should be set to false if simply reporting that the manager is idle
+        /// </param>
+        public void WriteStatusFile(
+            DateTime lastUpdate,
+            int processId,
+            int cpuUtilization,
+            float freeMemoryMB,
+            bool forceLogToBrokerDB = false,
+            bool usePerformanceCounters = true)
+        {
+            var runTimeHours = GetRunTime();
+            WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
+
+            Global.CheckStopTrace("CheckForAbortProcessingFile");
+            CheckForAbortProcessingFile();
+
+            if (usePerformanceCounters)
+            {
+                Global.CheckStopTrace("WriteMemoryUsageLogEntry");
+
+                // Log the memory usage to a local file
+                mMemoryUsageLogger?.WriteMemoryUsageLogEntry();
+            }
+            else if (Global.TraceMode)
+            {
+                ConsoleMsgUtils.ShowDebug("Skipping call to WriteMemoryUsageLogEntry in WriteStatusFile");
+            }
+        }
+
+        /// <summary>
+        /// Updates the status in various locations, including on disk and with the message queue (and optionally directly to the Broker DB)
+        /// </summary>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
+        /// <param name="status">Status info</param>
+        /// <param name="lastUpdate">Last update time (UTC)</param>
+        /// <param name="processId">Manager process ID</param>
+        /// <param name="cpuUtilization">CPU utilization</param>
+        /// <param name="freeMemoryMB">Free memory in MB</param>
+        /// <param name="runTimeHours">Runtime, in hours</param>
+        /// <param name="writeToDisk">If true, write the status file to disk, otherwise, just push to the message queue and/or the Broker DB</param>
+        /// <param name="forceLogToBrokerDB">
+        /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
+        /// Otherwise, mBrokerDBLogger only logs the status periodically
+        /// Typically false</param>
+        private void WriteStatusFile(
+            StatusFile status,
+            DateTime lastUpdate,
+            int processId,
+            int cpuUtilization,
+            float freeMemoryMB,
+            float runTimeHours,
+            bool writeToDisk,
+            bool forceLogToBrokerDB = false)
+        {
+            string xmlText;
+
+            try
+            {
+                Global.CheckStopTrace("GenerateStatusXML");
+                xmlText = GenerateStatusXML(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
+
+                if (writeToDisk)
+                {
+                    Global.CheckStopTrace("WriteStatusFileToDisk");
+                    WriteStatusFileToDisk(xmlText);
+                }
+            }
+            catch (Exception ex)
+            {
+                OnWarningEvent("Error generating status info: {0}", ex.Message);
+                xmlText = string.Empty;
+            }
+
+            if (LogToMsgQueue)
+            {
+                // Send the XML text to a message queue
+                LogStatusToMessageQueue(xmlText, status.MgrName);
+            }
+
+            if (mBrokerDBLogger != null)
+            {
+                // Send the status info to the Broker DB
+                // Note that mBrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB is true)
+                LogStatusToBrokerDatabase(forceLogToBrokerDB);
+            }
+        }
+
+        private void WriteStatusFileToDisk(string xmlText)
+        {
+            const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
+
+            if (DateTime.UtcNow.Subtract(mLastFileWriteTime).TotalSeconds < MIN_FILE_WRITE_INTERVAL_SECONDS)
+            {
+                return;
+            }
+
+            // We will write out the Status XML to a temporary file, then rename the temp file to the primary file
+
+            if (FileNamePath == null)
+            {
+                return;
+            }
+
+            var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
+
+            mLastFileWriteTime = DateTime.UtcNow;
+
+            var logWarning = true;
+
+            // ReSharper disable once StringLiteralTypo
+            if (Tool.IndexOf("GlyQ", StringComparison.OrdinalIgnoreCase) >= 0 || Tool.IndexOf("ModPlus", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                if (mDebugLevel < 3)
+                    logWarning = false;
+            }
+
+            var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
+
+            if (success)
+            {
+                try
+                {
+                    File.Copy(tempStatusFilePath, FileNamePath, true);
+                }
+                catch (Exception ex)
+                {
+                    // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
+                    if (logWarning)
+                    {
+                        // Log a warning that the file copy failed
+                        OnWarningEvent("Unable to copy temporary status file to the final status file ({0} to {1}): {2}",
+                            Path.GetFileName(tempStatusFilePath),
+                            Path.GetFileName(FileNamePath),
+                            ex.Message);
+                    }
+                }
+
+                try
+                {
+                    File.Delete(tempStatusFilePath);
+                }
+                catch (Exception ex)
+                {
+                    // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
+                    if (logWarning)
+                    {
+                        // Log a warning that the file delete failed
+                        OnWarningEvent("Unable to delete temporary status file ({0}): {1}", Path.GetFileName(tempStatusFilePath), ex.Message);
+                    }
+                }
+            }
+            else
+            {
+                // Error writing to the temporary status file; try the primary file
+                WriteStatusFileToDisk(FileNamePath, xmlText, logWarning);
+            }
+
+            if (string.IsNullOrWhiteSpace(OfflineJobStatusFilePath))
+                return;
+
+            try
+            {
+                // We're running an offline analysis job (Global.OfflineMode is true)
+                // Update the JobStatus file in the TaskQueue directory
+                File.Copy(FileNamePath, OfflineJobStatusFilePath, true);
+            }
+            catch (Exception ex)
+            {
+                OnDebugEvent("Error copying the status file to " + OfflineJobStatusFilePath + ": " + ex.Message);
+            }
+        }
+
+        private bool WriteStatusFileToDisk(string statusFilePath, string xmlText, bool logWarning)
+        {
+            const int WRITE_FAILURE_LOG_THRESHOLD = 5;
+
+            bool success;
+
+            try
+            {
+                // Write out the XML text to a file
+                // If the file is in use by another process, the writing will fail
+                using (var writer = new StreamWriter(new FileStream(statusFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    writer.WriteLine(xmlText);
+                }
+
+                // Reset the error counter
+                mWritingErrorCountSaved = 0;
+
+                success = true;
+            }
+            catch (Exception ex)
+            {
+                // Increment the error counter
+                mWritingErrorCountSaved++;
+
+                if (mWritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
+                {
+                    // 5 or more errors in a row have occurred
+                    // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
+                    if (mWritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || mWritingErrorCountSaved % 10 == 0)
+                    {
+                        OnWarningEvent("Error writing status file {0}: {1}", Path.GetFileName(statusFilePath), ex.Message);
+                    }
+                }
+                success = false;
+            }
+
+            return success;
         }
     }
 }
