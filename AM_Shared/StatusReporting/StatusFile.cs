@@ -701,7 +701,8 @@ namespace AnalysisManagerBase.StatusReporting
                 Encoding = Encoding.UTF8,
                 Indent = true,
                 IndentChars = "  ",
-                NewLineHandling = NewLineHandling.None
+                NewLineHandling = NewLineHandling.None,
+                OmitXmlDeclaration = true
             };
 
             using var writer = XmlWriter.Create(memStream, settings);
