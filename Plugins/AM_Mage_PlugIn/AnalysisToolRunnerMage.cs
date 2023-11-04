@@ -246,6 +246,7 @@ namespace AnalysisManager_Mage_PlugIn
                 {
                     if (!sampleToIonMapping.TryGetValue(sampleName, out var ionCount))
                     {
+                        // T_alias table does not have an entry for Sample
                         errorMessage = T_ALIAS_TABLE + " table does not have an entry for Sample '" + sampleName + "'; " +
                                        "this Sample name is a dataset factor and must be defined in the " + T_ALIAS_FILE + " file";
                         return false;
