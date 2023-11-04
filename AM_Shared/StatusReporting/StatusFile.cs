@@ -806,12 +806,8 @@ namespace AnalysisManagerBase.StatusReporting
             // Now use a StreamReader to copy the XML text to a string variable
             memStream.Seek(0, SeekOrigin.Begin);
             var memoryStreamReader = new StreamReader(memStream);
-            var xmlText = memoryStreamReader.ReadToEnd();
 
-            memoryStreamReader.Close();
-            memStream.Close();
-
-            return xmlText;
+            return memoryStreamReader.ReadToEnd();
         }
 
         /// <summary>
