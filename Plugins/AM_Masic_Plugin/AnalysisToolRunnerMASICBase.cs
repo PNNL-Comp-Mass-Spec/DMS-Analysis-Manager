@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
@@ -57,6 +58,8 @@ namespace AnalysisManagerMasicPlugin
                 if (!logFile.Exists)
                     return;
 
+                var errorMatcher = new Regex(@"\berror\b", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
                 using var reader = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                 errorCount = 0;
@@ -68,23 +71,24 @@ namespace AnalysisManagerMasicPlugin
                     if (string.IsNullOrEmpty(dataLine))
                         continue;
 
-                    if (dataLine.IndexOf("error", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (!errorMatcher.IsMatch(dataLine))
+                        continue;
+
+                    if (errorCount == 0)
                     {
-                        if (errorCount == 0)
+                        LogError("Errors found in the MASIC log file");
+
+                        if (string.IsNullOrWhiteSpace(mErrorMessage))
                         {
-                            LogError("Errors found in the MASIC Log File");
-
-                            if (string.IsNullOrWhiteSpace(mErrorMessage))
-                            {
-                                mErrorMessage = dataLine;
-                            }
+                            // Store the first error in mErrorMessage
+                            mErrorMessage = dataLine;
                         }
-
-                        if (errorCount <= 10)
-                            LogWarning(" ... " + dataLine);
-
-                        errorCount++;
                     }
+
+                    if (errorCount <= 10)
+                        LogWarning(" ... " + dataLine);
+
+                    errorCount++;
                 }
 
                 if (errorCount > 10)
@@ -96,10 +100,10 @@ namespace AnalysisManagerMasicPlugin
             {
                 if (string.IsNullOrWhiteSpace(mErrorMessage))
                 {
-                    mErrorMessage = string.Format("Error reading MASIC Log File ({0}): {1}", logFile.Name, ex.Message);
+                    mErrorMessage = string.Format("Error reading MASIC log file ({0}): {1}", logFile.Name, ex.Message);
                 }
 
-                LogError("Error reading MASIC Log File at '" + logFile.FullName + "'; " + ex.Message, ex);
+                LogError("Error reading MASIC log file at '" + logFile.FullName + "'; " + ex.Message, ex);
                 errorCount++;
             }
         }
