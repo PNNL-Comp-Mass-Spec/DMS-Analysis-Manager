@@ -281,7 +281,6 @@ namespace AnalysisManagerResultsXferPlugin
                 return Path.Combine(volServer, trimmedPath);
             }
 
-
             if (trimmedPath.StartsWith("MassIVE_Staging") ||
                 trimmedPath.StartsWith("MaxQuant_Staging") ||
                 trimmedPath.StartsWith("MSFragger_Staging") ||
@@ -407,7 +406,35 @@ namespace AnalysisManagerResultsXferPlugin
                             targetFile.Delete();
                         }
 
-                        sourceFile.MoveTo(targetFile.FullName);
+                        if (sourceFile.FullName.Length >= PRISM.NativeIOFileTools.FILE_PATH_LENGTH_THRESHOLD ||
+                            targetFile.FullName.Length >= PRISM.NativeIOFileTools.FILE_PATH_LENGTH_THRESHOLD)
+                        {
+                            // Source or target file's full path length is 260 characters or longer
+                            // If we're running Windows, CopyFileEx will use CopyFileW in kernel32.dll to copy the file
+
+                            try
+                            {
+                                mFileTools.CopyFile(sourceFile.FullName, targetFile.FullName);
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Error copying file " + sourceFile.FullName + " to " + targetDirectoryPath + "; CopyFileEx reported exception " + ex.Message, ex);
+                            }
+
+                            // Delete the source file
+                            try
+                            {
+                                sourceFile.Delete();
+                            }
+                            catch (Exception ex)
+                            {
+                                throw new Exception("Error deleting file " + sourceFile.FullName + " after copying it to the job directory in the dataset directory: " + ex.Message, ex);
+                            }
+                        }
+                        else
+                        {
+                            sourceFile.MoveTo(targetFile.FullName);
+                        }
                     }
                     catch (Exception ex)
                     {
