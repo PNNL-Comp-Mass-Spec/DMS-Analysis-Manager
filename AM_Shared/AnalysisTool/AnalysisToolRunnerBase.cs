@@ -3750,38 +3750,37 @@ namespace AnalysisManagerBase.AnalysisTool
                         copyFile = false;
                     }
 
+                    if (!copyFile)
+                        continue;
 
-                    if (copyFile)
+                    var retriesRemaining = maxRetryCount;
+
+                    var success = false;
+
+                    while (!success)
                     {
-                        var retriesRemaining = maxRetryCount;
+                        var startTime = DateTime.UtcNow;
 
-                        var success = false;
+                        success = mFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
 
-                        while (!success)
+                        if (success)
                         {
-                            var startTime = DateTime.UtcNow;
+                            LogCopyStats(startTime, targetFile.FullName);
+                        }
+                        else
+                        {
+                            retriesRemaining--;
 
-                            success = mFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, true);
-
-                            if (success)
+                            if (retriesRemaining < 0)
                             {
-                                LogCopyStats(startTime, targetFile.FullName);
+                                UpdateStatusMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName);
+                                return false;
                             }
-                            else
-                            {
-                                retriesRemaining--;
 
-                                if (retriesRemaining < 0)
-                                {
-                                    UpdateStatusMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName);
-                                    return false;
-                                }
+                            LogMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
 
-                                LogMessage("Error copying " + sourceFile.FullName + " to " + targetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
-
-                                // Wait 2 seconds then try again
-                                Global.IdleLoop(2);
-                            }
+                            // Wait 2 seconds then try again
+                            Global.IdleLoop(2);
                         }
                     }
                 }
