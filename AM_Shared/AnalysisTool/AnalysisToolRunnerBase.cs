@@ -3787,9 +3787,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (copySubdirectories)
                 {
-                    var subdirectories = sourceDirectory.GetDirectories();
-
-                    foreach (var subdirectory in subdirectories)
+                    foreach (var subdirectory in sourceDirectory.GetDirectories())
                     {
                         var subdirectoryTargetPath = Path.Combine(targetDirectoryPath, subdirectory.Name);
                         var success = SynchronizeFolders(subdirectory.FullName, subdirectoryTargetPath,
