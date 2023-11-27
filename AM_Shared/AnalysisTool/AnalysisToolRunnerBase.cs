@@ -3684,14 +3684,19 @@ namespace AnalysisManagerBase.AnalysisTool
                     targetDirectory.Create();
                 }
 
-                fileNameFilterSpecs ??= new List<string>();
+                var filterSpecs = new List<string>();
 
-                if (fileNameFilterSpecs.Count == 0)
-                    fileNameFilterSpecs.Add("*");
+                if (fileNameFilterSpecs != null)
+                {
+                    filterSpecs.AddRange(fileNameFilterSpecs);
+                }
+
+                if (filterSpecs.Count == 0)
+                    filterSpecs.Add("*");
 
                 var filesToCopy = new SortedSet<string>();
 
-                foreach (var filterSpec in fileNameFilterSpecs)
+                foreach (var filterSpec in filterSpecs)
                 {
                     var filterSpecToUse = string.IsNullOrWhiteSpace(filterSpec) ? "*" : filterSpec;
 
@@ -3725,7 +3730,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     var sourceFile = new FileInfo(Path.Combine(sourceDirectory.FullName, sourceFileName));
                     var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFileName));
-                    var copyFile = false;
+
+                    bool copyFile;
 
                     if (!targetFile.Exists)
                     {
@@ -3739,6 +3745,11 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         copyFile = true;
                     }
+                    else
+                    {
+                        copyFile = false;
+                    }
+
 
                     if (copyFile)
                     {
@@ -3783,7 +3794,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         var subdirectoryTargetPath = Path.Combine(targetDirectoryPath, subdirectory.Name);
                         var success = SynchronizeFolders(subdirectory.FullName, subdirectoryTargetPath,
-                            fileNameFilterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories: true);
+                            filterSpecs, fileNameExclusionSpecs, maxRetryCount, copySubdirectories: true);
 
                         if (!success)
                         {
