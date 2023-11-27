@@ -31,7 +31,7 @@ namespace AnalysisManagerBase.StatusReporting
     /// </remarks>
     public class StatusFile : EventNotifier, IStatusFile
     {
-        // Ignore Spelling: GlyQ, hyperthreading, ModPlus, PerfLib, tcp, yyyy-MM-dd, hh:mm:ss, tt
+        // Ignore Spelling: dta, GlyQ, hyperthreading, ModPlus, PerfLib, Prog, tcp, yyyy-MM-dd, hh:mm:ss, tt
 
         /// <summary>
         /// Filename that indicates that processing needs to be aborted
