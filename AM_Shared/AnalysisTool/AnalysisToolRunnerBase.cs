@@ -1004,8 +1004,8 @@ namespace AnalysisManagerBase.AnalysisTool
                             LogWarning(message);
                         }
 
-                        if (!filesToOverwrite.Contains(sourceFile.Name))
-                            filesToOverwrite.Add(sourceFile.Name);
+                        // .Add() calls .AddIfNotPresent(), so it's safe to call .Add() even if filesToOverwrite already has the filename
+                        filesToOverwrite.Add(sourceFile.Name);
                     }
                 }
                 else
@@ -3697,10 +3697,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
                     foreach (var sourceFile in sourceDirectory.GetFiles(filterSpecToUse))
                     {
-                        if (!filesToCopy.Contains(sourceFile.Name))
-                        {
-                            filesToCopy.Add(sourceFile.Name);
-                        }
+                        // .Add() calls .AddIfNotPresent(), so it's safe to call .Add() even if filesToOverwrite already has the filename
+                        filesToCopy.Add(sourceFile.Name);
                     }
                 }
 
