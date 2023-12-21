@@ -47,7 +47,7 @@ namespace AnalysisManagerTopPICPlugIn
         private bool mToolVersionWritten;
 
         /// <summary>
-        /// This will initially be 1.3 or 1.4, indicating the version of .exe that should be used
+        /// This will initially be 1.3 or 1.7, indicating the version of .exe that should be used
         /// </summary>
         /// <remarks>
         /// After TopPIC starts, we'll update this variable with the tool version reported to the console
@@ -104,8 +104,8 @@ namespace AnalysisManagerTopPICPlugIn
                 }
                 else
                 {
-                    // We're probably running TopPIC v1.4 (or newer)
-                    mTopPICVersion = new Version(1, 4);
+                    // We're probably running TopPIC v1.7 (or newer)
+                    mTopPICVersion = new Version(1, 7);
                 }
 
                 // Store the TopPIC version info in the database after the first line is written to file TopPIC_ConsoleOutput.txt
@@ -280,8 +280,108 @@ namespace AnalysisManagerTopPICPlugIn
         /// <param name="consoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
-            // Example Console output
+            // Example Console output for version 1.7 and later
             //
+            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
+            // --------------------------------------------------------------------------------
+            // Total thread number: 16
+            // Total memory: 31.69 GiB
+            // Available memory: 29.69 GiB
+            //
+            // TopPIC 1.7.0
+            // ********************** Parameters **********************
+            // Protein database file:                         C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta
+            // Spectrum file:                                 MRC5_229E_16h_5_28Nov23_Aragorn_BMEB2_21-12-03_ms2.msalign
+            // Number of combined spectra:                    1
+            // Fragmentation method:                          FILE
+            // Search type:                                   TARGET+DECOY
+            // Allowed N-terminal forms:                      NONE,NME,NME_ACETYLATION,M_ACETYLATION
+            // Maximum number of variable modifications:      3
+            // Use approximate spectra in protein filtering:  false
+            // Variable modifications file name:              C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt
+            // Variable modifications BEGIN
+            // Acetyl                                         42.010565 K
+            // CTrmAmid                                       -0.984016 ARNDCEQGHILKMFPSTWYV
+            // Carbamyl                                       43.005814 K
+            // Carbamyl_N                                     43.005814 ARNDCEQGHILKMFPSTWYV
+            // Deamide                                        0.984016 QN
+            // Dimethyl                                       28.031300 KR
+            // IronAdduct                                     52.911464 DE
+            // Methyl                                         14.015650 KR
+            // Phosph                                         79.966331 STY
+            // NH3_Loss                                       -17.026549 Q
+            // Plus1Oxy                                       15.994915 CMW
+            // Plus2Oxy                                       31.989829 CMW
+            // Trimethyl                                      42.046950 KR
+            // Nethylmaleimide                                125.047679 C
+            // Glutathione                                    305.068156 C
+            // Variable modifications END
+            // Maximum number of unexpected modifications:    1
+            // Maximum mass shift of modifications:           500 Da
+            // Minimum mass shift of modifications:           -500 Da
+            // Spectrum-level cutoff type:                    FDR
+            // Spectrum-level cutoff value:                   0.01
+            // Proteoform-level cutoff type:                  FDR
+            // Proteoform-level cutoff value:                 0.01
+            // Error tolerance for matching masses:           15 ppm
+            // Error tolerance for identifying PrSM clusters: 0.8 Da
+            // Use TopFD feature file:                        True
+            // E-value computation:                           Generating function
+            // Localization with MIScore:                     False
+            // Thread number:                                 3
+            // Executable file directory:                     C:\DMS_Programs\TopPIC
+            // Start time:                                    Thu Dec 21 13:53:12 2023
+            // Version:                                       1.7.0
+            // ********************** Parameters **********************
+            // Zero unexpected shift filtering - started.
+
+            // Example Console output for version 1.5.4 and earlier
+            //
+            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 14 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --mod-file-name E:\DMS_WorkDir5\TopPIC_Dynamic_Mods.txt E:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
+            // --------------------------------------------------------------------------------
+            // TopPIC 1.5.4
+            // ********************** Parameters **********************
+            // Protein database file:                      	E:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta
+            // Spectrum file:                              	MRC5_229E_16h_5_28Nov23_Aragorn_BMEB2_21-12-03_ms2.msalign
+            // Number of combined spectra:                 	1
+            // Fragmentation method:                       	FILE
+            // Search type:                                	TARGET+DECOY
+            // Use TopFD feature file:                     	True
+            // Maximum number of unexpected modifications: 	1
+            // Error tolerance for matching masses:        	15 ppm
+            // Error tolerance for identifying PrSM clusters: 	0.8 Da
+            // Spectrum-level cutoff type:                 	FDR
+            // Spectrum-level cutoff value:                	0.01
+            // Proteoform-level cutoff type:               	FDR
+            // Proteoform-level cutoff value:              	0.01
+            // Allowed N-terminal forms:                   	NONE,NME,NME_ACETYLATION,M_ACETYLATION
+            // Maximum mass shift of modifications:        	500 Da
+            // Minimum mass shift of modifications:        	-500 Da
+            // Thread number:                              	14
+            // E-value computation:                        	Generating function
+            // Common modification file name:              	E:\DMS_WorkDir5\TopPIC_Dynamic_Mods.txt
+            // PTMs for MIScore BEGIN
+            // Acetyl                                      	42.010565	K
+            // CTrmAmid                                    	-0.984016	ARNDCEQGHILKMFPSTWYV
+            // Carbamyl                                    	43.005814	K
+            // Carbamyl_N                                  	43.005814	ARNDCEQGHILKMFPSTWYV
+            // Deamide                                     	0.984016	QN
+            // Dimethyl                                    	28.031300	KR
+            // IronAdduct                                  	52.911464	DE
+            // Methyl                                      	14.015650	KR
+            // Phosph                                      	79.966331	STY
+            // NH3_Loss                                    	-17.026549	Q
+            // Plus1Oxy                                    	15.994915	CMW
+            // Plus2Oxy                                    	31.989829	CMW
+            // Trimethyl                                   	42.046950	KR
+            // Nethylmaleimide                             	125.047679	C
+            // Glutathione                                 	305.068156	C
+            // PTMs for MIScore END
+            // MIScore threshold:                          	0.15
+            // Executable file directory:                  	C:\DMS_Programs\TopPIC
+            // Start time:                                 	Thu Nov 30 10:20:53 2023
+            // Version:                                    	1.5.4
+            // ********************** Parameters **********************
             // Non PTM filtering - started.
             // Non PTM filtering - block 1 out of 3 started.
             // Non PTM filtering - processing 1504 of 1504 spectra.
@@ -438,7 +538,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     var dataLineLCase = dataLine.ToLower();
 
-                    if (linesRead <= 3)
+                    if (linesRead <= 3 || linesRead <= 8 && string.IsNullOrEmpty(mTopPICVersionText))
                     {
                         // The first line has the path to the TopPIC executable and the command line arguments
                         // The second line is dashes
@@ -495,8 +595,7 @@ namespace AnalysisManagerTopPICPlugIn
                             currentProgress = processingStep.Value;
                         }
 
-                        if (linesRead > 7 &&
-                            dataLineLCase.Contains("error") &&
+                        if (dataLineLCase.Contains("error") &&
                             !dataLineLCase.Contains("error tolerance:") &&
                             !dataLineLCase.Contains("error tolerance for ") &&
                             string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -755,7 +854,7 @@ namespace AnalysisManagerTopPICPlugIn
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
-                } // for
+                }
             }
             catch (Exception ex)
             {
@@ -764,13 +863,18 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
-            // Will also update cmdLineOptions to have --fixed-mod and/or --mod-file-name
+            // Will also update cmdLineOptions to have --fixed-mod and/or --variable-ptm-file-name  (prior to v1.7 the flag was "--mod-file-name")
             if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, "static", STATIC_MODS_FILE_NAME, "fixed-mod"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, "mod-file-name"))
+            var variableModsArgName =
+                mTopPICVersion.Major >= 1 && mTopPICVersion.Minor >= 7 ?
+                    "variable-ptm-file-name" :
+                    "mod-file-name";
+
+            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, variableModsArgName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
