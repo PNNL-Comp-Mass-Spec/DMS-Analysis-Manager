@@ -22,7 +22,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <DocumentationFile>bin\Debug\MSGFPlusIndexFileCopier.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>1591, IDE0028</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -32,7 +32,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <DocumentationFile>bin\Release\MSGFPlusIndexFileCopier.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>1591, IDE0028</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

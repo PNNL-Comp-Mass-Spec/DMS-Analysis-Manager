@@ -7,3 +7,4 @@ using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerTopPICPlugIn.AnalysisToolRunnerTopPIC")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerTopPICPlugIn.AnalysisResourcesTopPIC")]
+[assembly: SuppressMessage("Roslynator", "RCS1123:Add parentheses when necessary", Justification = "Parentheses not needed", Scope = "member", Target = "~M:AnalysisManagerTopPICPlugIn.AnalysisToolRunnerTopPIC.ParseConsoleOutputFile(System.String)")]

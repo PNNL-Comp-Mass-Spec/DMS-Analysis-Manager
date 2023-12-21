@@ -24,7 +24,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\AnalysisManagerNOMSIPlugin.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>1591, IDE0028</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <OutputPath>bin\Release\</OutputPath>
@@ -36,7 +36,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\Release\AnalysisManagerNOMSIPlugin.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>1591, IDE0028</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MyEMSLReader">

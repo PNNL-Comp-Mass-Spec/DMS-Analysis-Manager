@@ -26,6 +26,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\AnalysisManagerProg.xml</DocumentationFile>
+    <NoWarn>IDE0028</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -37,7 +38,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\Release\AnalysisManagerProg.xml</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <NoWarn>IDE0028</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>LITENING.ICO</ApplicationIcon>
