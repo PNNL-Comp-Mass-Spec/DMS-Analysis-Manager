@@ -916,6 +916,11 @@ namespace AnalysisManagerProg
             if (mStatusTools == null)
             {
                 InitStatusTools();
+
+                if (mStatusTools == null)
+                {
+                    throw new Exception("mStatusTools is still null after calling InitStatusTools");
+                }
             }
 
             // Update the cached most recent job info

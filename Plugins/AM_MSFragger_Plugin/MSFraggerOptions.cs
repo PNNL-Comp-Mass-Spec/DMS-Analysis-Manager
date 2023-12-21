@@ -146,9 +146,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         {
             if (modificationsByResidue.TryGetValue(residueOrPositionName, out var modMasses))
             {
-                if (!modMasses.Contains(modificationMass))
-                    modMasses.Add(modificationMass);
-
+                // Add the mass to the sorted set
+                modMasses.Add(modificationMass);
                 return;
             }
 

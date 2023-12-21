@@ -364,8 +364,8 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (modificationList.TryGetValue(residueOrPosition, out var modMasses))
                 {
-                    if (!modMasses.Contains(mod.ModificationMass))
-                        modMasses.Add(mod.ModificationMass);
+                    // Add the mass to the sorted set
+                    modMasses.Add(mod.ModificationMass);
                 }
                 else
                 {
