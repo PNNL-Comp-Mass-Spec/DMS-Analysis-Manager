@@ -26,7 +26,7 @@ namespace AnalysisManagerTopPICPlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerTopPIC : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cmd, Csv, html, json, msalign, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
+        // Ignore Spelling: cmd, Csv, fasta, html, json, msalign, num, proteoform, proteoforms, prsm, ptm, toppic, Unimod
 
         private const string TOPPIC_CONSOLE_OUTPUT = "TopPIC_ConsoleOutput.txt";
         private const string TOPPIC_EXE_NAME = "toppic.exe";

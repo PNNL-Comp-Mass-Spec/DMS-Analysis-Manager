@@ -19,7 +19,7 @@ namespace AnalysisManagerBase.JobConfig
     /// </summary>
     public class ToolVersionUtilities : EventNotifier
     {
-        // Ignore Spelling: msgfplus, yyyy-MM-dd hh:mm:ss tt
+        // Ignore Spelling: loc, MSConvert, msgfplus, prog, yyyy-MM-dd hh:mm:ss tt
 
         /// <summary>
         /// MSConvert executable name, capitalized

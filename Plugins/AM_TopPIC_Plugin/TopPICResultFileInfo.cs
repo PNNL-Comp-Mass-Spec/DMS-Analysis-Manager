@@ -2,6 +2,8 @@
 {
     internal class TopPICResultFileInfo
     {
+        // Ignore Spelling: proteoform, prsm
+
         public string BaseName { get; }
 
         public string PrsmFileSuffix { get; }

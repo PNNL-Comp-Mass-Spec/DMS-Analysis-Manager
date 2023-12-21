@@ -32,8 +32,8 @@ namespace MSGFResultsSummarizer
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acetyl, Cntm, gi, itrac, MODa,
-        // Ignore Spelling: peptides, phosph, phosphopeptide, phosphopeptides, plex, psm
+        // Ignore Spelling: Acetyl, Cntm, evalue, gi, itrac, MODa, msgf
+        // Ignore Spelling: peptides, phosph, phospho, phosphopeptide, phosphopeptides, plex, psm
         // Ignore Spelling: sp, structs, Tpro, Trypa, tryptic, udt, uni, xxx
 
         // ReSharper restore CommentTypo

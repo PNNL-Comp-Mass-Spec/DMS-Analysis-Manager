@@ -21,7 +21,7 @@ namespace AnalysisManagerTopFDPlugIn
     /// </summary>
     public class AnalysisResourcesTopFD : AnalysisResources
     {
-        // Ignore Spelling: desc
+        // Ignore Spelling: desc, TopFD
 
         public const string JOB_PARAM_EXISTING_TOPFD_RESULTS_DIRECTORY = "ExistingTopFDResultsDirectory";
         public const string JOB_PARAM_EXISTING_TOPFD_TOOL_VERSION = "ExistingTopFDResultsToolVersion";
