@@ -423,7 +423,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
         /// <remarks>
-        /// If the value associated with the parameter is found, yet is not true or false, an exception will be occur;
+        /// If the value associated with the parameter is found, yet is not true or false, an exception will occur;
         /// the calling procedure must handle this exception
         /// </remarks>
         /// <param name="name">Key name for parameter</param>
@@ -1895,7 +1895,7 @@ namespace AnalysisManagerBase.JobConfig
 
             var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the Stored Procedure (retry the call up to 3 times)
+            // Execute the Stored Procedure (retry the call, up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -2007,7 +2007,7 @@ namespace AnalysisManagerBase.JobConfig
 
             var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-            // Call Stored Procedure set_step_task_complete (retry the call up to 20 times)
+            // Call Stored Procedure set_step_task_complete (retry the call, up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

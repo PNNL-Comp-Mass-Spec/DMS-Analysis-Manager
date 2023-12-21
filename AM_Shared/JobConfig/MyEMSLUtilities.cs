@@ -110,6 +110,8 @@ namespace AnalysisManagerBase.JobConfig
             mMyEMSLAutoDisabled = false;
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Append a file to a directory path that ends with @MyEMSLID_12345
         /// </summary>
@@ -149,6 +151,8 @@ namespace AnalysisManagerBase.JobConfig
         {
             mMyEMSLDatasetListInfo.AddFileToDownloadQueue(fileInfo);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Queue a file to be downloaded

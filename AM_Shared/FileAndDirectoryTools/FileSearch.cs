@@ -2403,7 +2403,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             try
             {
-                // Delete the remote mzXML or mzML file only if we computed the hash and we had a hash mismatch
+                // Delete the remote mzXML or mzML file only if we computed the hash, but we had a hash mismatch
                 if (computeHash)
                 {
                     sourceFile.Delete();

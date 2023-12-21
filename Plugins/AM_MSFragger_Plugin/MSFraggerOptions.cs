@@ -9,8 +9,11 @@ using PRISM.AppSettings;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
-    // ReSharper disable once CommentTypo
+    // ReSharper disable CommentTypo
+
     // Ignore Spelling: acetylation, deisotope, deneutralloss, fragger, nc, plex, quant, quantitation
+
+    // ReSharper restore CommentTypo
 
     public enum MS1ValidationModes
     {
@@ -18,6 +21,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         PeptideProphet = 1,
         Percolator = 2
     }
+
+    // ReSharper disable IdentifierTypo
 
     public enum ReporterIonModes
     {
@@ -30,6 +35,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         Tmt16 = 6,
         Tmt18 = 7
     }
+
+    // ReSharper restore IdentifierTypo
 
     public class MSFraggerOptions : EventNotifier
     {
@@ -65,6 +72,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </remarks>
         public Dictionary<string, SortedSet<double>> StaticModifications { get; }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// Dictionary of variable (dynamic) modifications, by residue or position
         /// </summary>
@@ -90,7 +99,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         public ReporterIonModes ReporterIonMode { get; set; }
 
         /// <summary>
-        /// Whether or not to run FreeQuant
+        /// Whether to run FreeQuant
         /// </summary>
         /// <remarks>
         /// Defaults to false, but forced to true if reporter ions are used
@@ -168,6 +177,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             {
                 ReporterIonModes staticNTermMode;
                 ReporterIonModes staticLysineMode;
+
+                // ReSharper disable once StringLiteralTypo
 
                 if (staticModifications.TryGetValue("Nterm_peptide", out var staticNTermModMass) && staticNTermModMass.Count > 0)
                 {
@@ -624,6 +635,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (MS1ValidationModeAutoDefined && MS1ValidationMode != MS1ValidationModes.Disabled)
                     {
+                        // ReSharper disable CommentTypo
+
                         // Prior to FragPipe v20, we would set the MS1 validation mode to PeptideProphet when using iTRAQ
                         // FragPipe v19 and newer support iTRAQ with Percolator
 
@@ -633,6 +646,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                         //     // Switch from Percolator to PeptideProphet since using iTRAQ
                         //     MS1ValidationMode = MS1ValidationModes.PeptideProphet;
                         // }
+
+                        // ReSharper restore CommentTypo
 
                         if (MS1ValidationMode == MS1ValidationModes.PeptideProphet &&
                             ReporterIonMode is
@@ -714,6 +729,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <returns>True if success, false if an error</returns>
         private bool ParseModMass(KeyValuePair<string, string> parameter, out double modMass, out List<string> affectedResidues)
         {
+            // ReSharper disable CommentTypo
+
             // Example dynamic mods (format is Mass AffectedResidues MaxOccurrences):
             // variable_mod_01 = 15.994900 M 3        # Oxidized methionine
             // variable_mod_02 = 42.010600 [^ 1       # Acetylation protein N-term
@@ -721,6 +738,8 @@ namespace AnalysisManagerMSFraggerPlugIn
             // Example static mods:
             // add_Nterm_peptide = 304.207146    # 16-plex TMT
             // add_K_lysine = 304.207146         # 16-plex TMT
+
+            // ReSharper restore CommentTypo
 
             var spaceIndex = parameter.Value.IndexOf(' ');
             string parameterValue;

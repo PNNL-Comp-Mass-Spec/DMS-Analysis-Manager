@@ -596,7 +596,7 @@ namespace AnalysisManagerBase.JobConfig
             dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the stored procedure (retry the call up to 4 times)
+            // Execute the stored procedure (retry the call, up to 4 times)
             var resCode = dbTools.ExecuteSP(cmd, 4);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

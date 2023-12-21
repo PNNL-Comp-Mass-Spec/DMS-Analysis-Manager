@@ -356,7 +356,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // Setup a file watcher for the config file(s)
+            // Set up a file watcher for the config file(s)
             mConfigFileWatcher = CreateConfigFileWatcher(configFileName);
             mConfigFileWatcher.Changed += ConfigFileWatcher_Changed;
 
@@ -392,7 +392,7 @@ namespace AnalysisManagerProg
 
             CheckStopTrace("CreateAnalysisTask");
 
-            // Setup the tool for getting tasks
+            // Set up the tool for getting tasks
             ShowTrace("Instantiate mAnalysisTask as new AnalysisJob");
             mAnalysisTask = new AnalysisJob(mMgrParams, mDebugLevel)
             {
@@ -403,7 +403,7 @@ namespace AnalysisManagerProg
 
             LogTools.WorkDirPath = mWorkDirPath;
 
-            // Setup the manager cleanup class
+            // Set up the manager cleanup class
             ShowTrace("Setup the manager cleanup class");
 
             string mgrConfigDBConnectionString;
@@ -416,6 +416,8 @@ namespace AnalysisManagerProg
             {
                 // SQL Server:
                 // Data Source=proteinseqs;Initial Catalog=manager_control
+
+                // ReSharper disable once CommentTypo
 
                 // PostgreSQL:
                 // Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;
@@ -1287,7 +1289,7 @@ namespace AnalysisManagerProg
                 // If success was reported check to see if there was an error deleting non result files
                 if (mMgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
                 {
-                    // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
+                    // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next startup
                     // However, wait another 5 seconds before continuing
                     AppUtils.GarbageCollectNow();
                     Global.IdleLoop(5);
@@ -1569,7 +1571,7 @@ namespace AnalysisManagerProg
                         }
                         // else: Log file not found; that's OK, we'll decrement the name by one day and keep checking
 
-                        // Increment the log file counter, regardless of whether or not the log file was found
+                        // Increment the log file counter, regardless of whether the log file was found
                         logFileCountProcessed++;
 
                         if (msgQueue.Count >= errorMessageCountToReturn)
@@ -1709,7 +1711,7 @@ namespace AnalysisManagerProg
             }
             else
             {
-                // Too many queued messages, so remove oldest one
+                // Too many queued messages, so remove the oldest one
                 // However, only do this if the new error message has a timestamp newer than the oldest queued message
                 //  (this is a consideration when processing multiple log files)
 
@@ -2636,7 +2638,7 @@ namespace AnalysisManagerProg
                 }
                 catch (NotImplementedException ex)
                 {
-                    // Plugin XYZ must implement CopyResourcesToRemote to allow for remote processing"
+                    // Plugin XYZ must implement CopyResourcesToRemote to allow for remote processing
                     mMostRecentErrorMessage = ex.Message;
 
                     // Don't send ex to LogError; no need to log a stack trace
@@ -2755,7 +2757,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                // Setup the new tool runner
+                // Set up the new tool runner
                 toolRunner.Setup(stepToolName, mMgrParams, mAnalysisTask, mStatusTools, mSummaryFile, mMyEMSLUtilities);
             }
             catch (Exception ex)

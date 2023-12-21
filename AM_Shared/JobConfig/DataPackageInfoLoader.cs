@@ -139,7 +139,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="dataPackageDatasets">Output: datasets associated with the given data package; keys are DatasetID</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logErrors">Log errors if true (default)</param>
-        /// <returns>True if a data package is defined and it has datasets associated with it, false if an error (including if the data package has a placeholder dataset)</returns>
+        /// <returns>True if a data package is defined, and it has datasets associated with it; false if an error (including if the data package has a placeholder dataset)</returns>
         public static bool LoadDataPackageDatasetInfo(
             AnalysisMgrBase callingClass,
             IDBTools dbTools,

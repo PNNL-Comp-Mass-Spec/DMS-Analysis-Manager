@@ -1152,10 +1152,9 @@ namespace AnalysisManagerExtractionPlugin
                             newestMzIdOrTsvFile = mzidFileInfo.LastWriteTimeUtc;
                         }
 
-                        // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
-                        // This file is not critical, so pass false to logFileNotFound
-                        FileSearchTool.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
-                                                            searchArchivedDatasetDir: true, logFileNotFound: false);
+                        // Also retrieve the console output file; the command line used to call the MzidToTsvConverter.exe will be appended to the file
+                        // The console output file is not critical, so pass false to logFileNotFound
+                        FileSearchTool.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false, searchArchivedDatasetDir: true, logFileNotFound: false);
                     }
 
                     // Manually add several files to skip

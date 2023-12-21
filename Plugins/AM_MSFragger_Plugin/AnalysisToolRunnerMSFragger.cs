@@ -699,7 +699,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     // First compute the effective progress for this slice
                     var sliceProgress = ComputeIncrementalProgress(currentProgressOnSlice, nextProgressOnSlice, datasetProgress);
 
-                    // Next compute the progress processing all of the slices (which as a group can be considered a "slab")
+                    // Next compute the progress processing each of the slices (which as a group can be considered a "slab")
                     var currentProgressOnSlab = (currentSlice - 1) * (100f / totalSlices);
                     var nextProgressOnSlab = currentSlice * (100f / totalSlices);
 
@@ -1343,14 +1343,20 @@ namespace AnalysisManagerMSFraggerPlugIn
             // This is done because MSFragger indexes the file based on the dynamic and static mods,
             // and we want that index file to be in the working directory
 
+            // ReSharper disable once CommentTypo
+
             // Example index file name: ID_007564_FEA6EC69.fasta.1.pepindex
 
             mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
 
             fastaFile.CopyTo(mLocalFASTAFilePath, true);
 
+
             mJobParams.AddResultFileToSkip(fastaFile.Name);
+
+            // ReSharper disable once StringLiteralTypo
             mJobParams.AddResultFileExtensionToSkip("pepindex");
+
             mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;

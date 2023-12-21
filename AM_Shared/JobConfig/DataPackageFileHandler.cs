@@ -33,7 +33,7 @@ namespace AnalysisManagerBase.JobConfig
         private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "get_job_step_input_folder";
 
         /// <summary>
-        /// File that tracks Job number and whether or not the search used a .mzML file
+        /// File that tracks Job number and whether the search used a .mzML file
         /// </summary>
         public const string DATA_PKG_JOB_METADATA_FILE = "DataPkgJobMetadata.txt";
 
@@ -77,7 +77,7 @@ namespace AnalysisManagerBase.JobConfig
             public bool RetrievePHRPFiles;
 
             /// <summary>
-            /// When true, assume that the instrument file (e.g. .raw file) exists in the dataset storage directory
+            /// When true, assume that the instrument file (e.g., .raw file) exists in the dataset storage directory
             /// and do not search in MyEMSL or in the archive for the file
             /// </summary>
             /// <remarks>Even if the instrument file has been purged from the storage directory, still report "success" when searching for the instrument file</remarks>
@@ -652,7 +652,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 // foundFiles tracks files that have been found
                 // If retrievalOptions.CreateJobPathFiles is true, it has the remote file paths
-                // Otherwise, the file has been copied locally and it has local file paths
+                // Otherwise, the file has been copied locally, and it has local file paths
                 // Note that files might need to be renamed; that's tracked via pendingFileRenames
 
                 var processSuccess = ProcessPeptideHitJobFiles(
@@ -949,7 +949,7 @@ namespace AnalysisManagerBase.JobConfig
             string localDirectoryPath,
             ICollection<string> foundFiles)
         {
-            // Find the _dta.txt or .mzML.gz file that was used for a MS-GF+ search
+            // Find the _dta.txt or .mzML.gz file that was used for an MS-GF+ search
 
             var mzIDFileToInspect = string.Empty;
 
@@ -1664,7 +1664,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (retrievalOptions.RetrieveMzXMLFile)
                 {
-                    // All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
+                    // All PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
                     // If retrievalOptions.CreateJobPathFiles is true, create StoragePathInfo files
                     return RetrieveDataPackageMzXMLFiles(instrumentDataToRetrieve, retrievalOptions);
                 }

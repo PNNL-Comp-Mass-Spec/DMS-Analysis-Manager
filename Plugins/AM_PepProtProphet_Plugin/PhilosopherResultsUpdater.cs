@@ -133,6 +133,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (experimentGroupWorkingDirectories.Count > 1)
                     {
+                        // ReSharper disable once CommentTypo
+                        // ReSharper disable once StringLiteralTypo
+
                         // Rename file msstats.csv since there are multiple experiment groups
                         GetFilePaths(datasetOrExperimentGroupName, experimentGroup.Value, "msstats",
                             out var sourceMSStatsFile, out var updatedMSStatsFile, "csv");
@@ -517,6 +520,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (spectrumFileColumnIndex >= 0 && lineParts.Length >= spectrumFileColumnIndex)
                 {
+                    // ReSharper disable once CanSimplifySetAddingWithSingleCall
+
                     if (spectrumFiles.Contains(lineParts[spectrumFileColumnIndex]))
                     {
                         // Clear out this field to decrease file size
