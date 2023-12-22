@@ -124,9 +124,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var dynamicModCount = options.GetDynamicModResidueCount();
+
                 // Possibly require additional system memory, based on the size of the FASTA file
                 // However, when FASTA file splitting is enabled, use the memory size defined by the settings file
-                var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024, databaseSplitCount);
+                var javaMemoryCheckResultCode = ValidateJavaMemorySize(fastaFileSizeGB * 1024, dynamicModCount, databaseSplitCount);
 
                 if (javaMemoryCheckResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return javaMemoryCheckResultCode;
@@ -178,12 +180,33 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// </remarks>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
+        /// <param name="dynamicModCount">Number of dynamic mods</param>
         /// <param name="msFraggerJavaMemorySizeMB">JavaMemorySize job parameter value</param>
         /// <returns>Memory size (in MB) to use with Java argument -Xmx</returns>
-        public static int GetJavaMemorySizeToUse(IJobParams jobParams, double fastaFileSizeMB, out int msFraggerJavaMemorySizeMB)
+        public static int GetJavaMemorySizeToUse(IJobParams jobParams, double fastaFileSizeMB, int dynamicModCount, out int msFraggerJavaMemorySizeMB)
         {
-            // This formula is an estimate and may need to be updated in the future
-            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 10) * 1024;
+            // This formula is based on FASTA file size and the number of dynamic mods
+            // An additional 5000 MB of memory is reserved for each dynamic mod above 2 dynamic mods
+
+            // Example values:
+
+            // FASTA File Size (MB)   Dynamic Mods   Recommended Memory Size (GB)
+            // 25                     2              22
+            // 25                     3              27
+            // 25                     4              32
+            // 25                     5              37
+
+            // 50                     2              35
+            // 50                     3              40
+            // 50                     4              45
+            // 50                     5              50
+
+            // 100                    2              60
+            // 100                    3              65
+            // 100                    4              70
+            // 100                    5              75
+
+            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000;
 
             // Setting MSFraggerJavaMemorySize is stored in the settings file for this job
             msFraggerJavaMemorySizeMB = Math.Max(2000, jobParams.GetJobParameter("MSFraggerJavaMemorySize", 10000));
@@ -199,10 +222,11 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
         /// </remarks>
         /// <param name="fastaFileSizeMB"></param>
+        /// <param name="dynamicModCount"></param>
         /// <param name="databaseSplitCount"></param>
-        public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB, int databaseSplitCount)
+        public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB, int dynamicModCount, int databaseSplitCount)
         {
-            var recommendedMemorySizeMB = GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+            var recommendedMemorySizeMB = GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var msFraggerJavaMemorySizeMB);
 
             if (recommendedMemorySizeMB < msFraggerJavaMemorySizeMB || databaseSplitCount > 1)
             {

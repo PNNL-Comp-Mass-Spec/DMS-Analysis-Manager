@@ -331,6 +331,22 @@ namespace AnalysisManagerMSFraggerPlugIn
         }
 
         /// <summary>
+        /// Returns the number of dynamic mods in use, counting a mod multiple times if it can occur on multiple residues
+        /// </summary>
+        /// <returns>Number of dynamic mods that MSFragger must consider</returns>
+        public int GetDynamicModResidueCount()
+        {
+            var dynamicModCount = 0;
+
+            foreach (var mod in VariableModifications)
+            {
+                dynamicModCount += mod.Value.Count;
+            }
+
+            return dynamicModCount;
+        }
+
+        /// <summary>
         /// Examine the MSFragger parameters to determine the static and dynamic (variable) modifications
         /// </summary>
         /// <remarks>

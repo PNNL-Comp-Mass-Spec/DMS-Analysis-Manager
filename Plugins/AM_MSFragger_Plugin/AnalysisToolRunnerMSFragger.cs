@@ -780,6 +780,11 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var options = new MSFraggerOptions(mJobParams);
+                RegisterEvents(options);
+
+                options.LoadMSFraggerOptions(paramFilePath);
+
                 // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
@@ -842,11 +847,11 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (databaseSplitCount <= 1)
                 {
-                    processingSuccess = StartMSFragger(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath);
+                    processingSuccess = StartMSFragger(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath, options);
                 }
                 else
                 {
-                    processingSuccess = StartMSFraggerSplitFASTA(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath, databaseSplitCount, libraryFinder);
+                    processingSuccess = StartMSFraggerSplitFASTA(dataPackageInfo, javaProgLoc, fastaFileSizeMB, paramFilePath, options, databaseSplitCount, libraryFinder);
                 }
 
                 if (!mToolVersionWritten)
@@ -970,12 +975,17 @@ namespace AnalysisManagerMSFraggerPlugIn
             DataPackageInfo dataPackageInfo,
             string javaProgLoc,
             double fastaFileSizeMB,
-            string paramFilePath)
+            string paramFilePath,
+            MSFraggerOptions options)
         {
             // Larger FASTA files need more memory
+            // Additional memory is also required as the number of dynamic mods being considered increases
+
             // 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
 
-            var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+            var dynamicModCount = options.GetDynamicModResidueCount();
+
+            var javaMemorySizeMB = AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var msFraggerJavaMemorySizeMB);
 
             if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
             {
@@ -1067,6 +1077,7 @@ namespace AnalysisManagerMSFraggerPlugIn
             string javaProgLoc,
             double fastaFileSizeMB,
             string paramFilePath,
+            MSFraggerOptions options,
             int databaseSplitCount,
             FragPipeLibFinder libraryFinder)
         {
@@ -1086,7 +1097,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                 return false;
             }
 
-            AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, out var msFraggerJavaMemorySizeMB);
+            var dynamicModCount = options.GetDynamicModResidueCount();
+
+            AnalysisResourcesMSFragger.GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var msFraggerJavaMemorySizeMB);
 
             var msg = string.Format(
                 "Allocating {0:N0} MB to Java, splitting the {1:N0} MB FASTA file into {2} parts",
@@ -1152,7 +1165,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         /// <summary>
         /// Update the FASTA file name defined in the MSFragger parameter file
-        /// In addition, check whether any reporter ions are defined as static or dynamic mods
+        /// In addition, determine whether this is a DIA search
         /// </summary>
         /// <param name="paramFilePath">Output: parameter file path</param>
         /// <param name="diaSearchEnabled">Output: set to true if data_type is 1 or 2, meaning DIA data</param>
@@ -1350,7 +1363,6 @@ namespace AnalysisManagerMSFraggerPlugIn
             mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
 
             fastaFile.CopyTo(mLocalFASTAFilePath, true);
-
 
             mJobParams.AddResultFileToSkip(fastaFile.Name);
 
