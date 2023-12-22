@@ -2820,7 +2820,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (linesRead[fileIndex] == 1 && lookForHeaderLine && lineIn.Length > 0)
                         {
                             // check for a header line
-                            var splitLine = lineIn.Split(new[] { '\t' }, 2);
+                            var splitLine = lineIn.Split(['\t'], 2);
 
                             if (splitLine.Length > 0 && !double.TryParse(splitLine[0], out _))
                             {
@@ -2939,7 +2939,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (linesRead == 1 && lookForHeaderLine && lineIn.Length > 0)
                     {
                         // Check for a header line
-                        var splitLine = lineIn.Split(new[] { '\t' }, 2);
+                        var splitLine = lineIn.Split(['\t'], 2);
 
                         if (splitLine.Length > 0 && !double.TryParse(splitLine[0], out _))
                         {

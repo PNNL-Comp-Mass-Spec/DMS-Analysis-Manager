@@ -1765,7 +1765,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     // Parameter lines are of the form "Error tolerance:,15 ppm"
                     // Replace the comma with spaces
-                    var paramParts = parameter.Split(new[] { ',' }, 2);
+                    var paramParts = parameter.Split([','], 2);
 
                     if (paramParts.Length <= 1)
                     {

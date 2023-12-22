@@ -2175,7 +2175,7 @@ namespace AnalysisManagerProg
         {
             var cachedMessages = new Dictionary<string, DateTime>();
 
-            char[] sepChars = { '\t' };
+            char[] sepChars = ['\t'];
 
             using var reader = new StreamReader(new FileStream(messageCacheFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
