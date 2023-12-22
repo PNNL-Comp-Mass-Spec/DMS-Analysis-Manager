@@ -989,7 +989,9 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             if (javaMemorySizeMB > msFraggerJavaMemorySizeMB)
             {
-                var msg = string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file", javaMemorySizeMB, fastaFileSizeMB);
+                var dynamicModCountDescription = MSFraggerOptions.GetDynamicModCountDescription(dynamicModCount);
+
+                var msg = string.Format("Allocating {0:N0} MB to Java for a {1:N0} MB FASTA file and {2}", javaMemorySizeMB, fastaFileSizeMB, dynamicModCountDescription);
                 LogMessage(msg);
 
                 mEvalMessage = Global.AppendToComment(mEvalMessage, msg);

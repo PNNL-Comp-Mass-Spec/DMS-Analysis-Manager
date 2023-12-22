@@ -331,6 +331,18 @@ namespace AnalysisManagerMSFraggerPlugIn
         }
 
         /// <summary>
+        /// Returns a description of the number of dynamic mods, e.g. "2 dynamic mods"
+        /// </summary>
+        /// <param name="dynamicModCount"></param>
+        /// <returns></returns>
+        public static string GetDynamicModCountDescription(int dynamicModCount)
+        {
+            return dynamicModCount == 1 ?
+                "1 dynamic mod" :
+                string.Format("{0} dynamic mods", dynamicModCount);
+        }
+
+        /// <summary>
         /// Returns the number of dynamic mods in use, counting a mod multiple times if it can occur on multiple residues
         /// </summary>
         /// <returns>Number of dynamic mods that MSFragger must consider</returns>

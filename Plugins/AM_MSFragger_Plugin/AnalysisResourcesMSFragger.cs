@@ -124,6 +124,9 @@ namespace AnalysisManagerMSFraggerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Parse the MSFragger parameter file so that GetDynamicModResidueCount() will be able to consider the number of residues with a dynamic mod
+                options.LoadMSFraggerOptions(paramFile.FullName);
+
                 var dynamicModCount = options.GetDynamicModResidueCount();
 
                 // Possibly require additional system memory, based on the size of the FASTA file
@@ -245,11 +248,13 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             var validFreeMemory = ValidateFreeMemorySize(recommendedMemorySizeMB, StepToolName, true);
 
+            var dynamicModCountDescription = MSFraggerOptions.GetDynamicModCountDescription(dynamicModCount);
+
             if (!validFreeMemory)
             {
                 mMessage = string.Format(
-                    "Not enough free memory to run MSFragger; need {0:N0} MB due to a {1:N0} MB FASTA file",
-                    recommendedMemorySizeMB, fastaFileSizeMB);
+                    "Not enough free memory to run MSFragger; need {0:N0} MB due to a {1:N0} MB FASTA file and {2}",
+                    recommendedMemorySizeMB, fastaFileSizeMB, dynamicModCountDescription);
 
                 if (Global.RunningOnDeveloperComputer())
                 {
@@ -267,8 +272,8 @@ namespace AnalysisManagerMSFraggerPlugIn
 
             if (recommendedMemorySizeMB > msFraggerJavaMemorySizeMB)
             {
-                LogMessage("Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file",
-                    msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB);
+                LogMessage("Increasing the memory allocated to Java from {0:N0} MB to {1:N0} MB, due to a {2:N0} MB FASTA file and {3}",
+                    msFraggerJavaMemorySizeMB, recommendedMemorySizeMB, fastaFileSizeMB, dynamicModCountDescription);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
