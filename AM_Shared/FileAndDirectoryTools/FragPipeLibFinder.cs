@@ -49,7 +49,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the IonQuant jar file
         /// </summary>
-        private const string IONQUANT_JAR_NAME = "IonQuant-1.9.8.jar";
+        private const string IONQUANT_JAR_NAME = "IonQuant-1.10.12.jar";
 
         /// <summary>
         /// Name of the Java C++ presets platform directory
@@ -70,12 +70,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the directory with the MSFragger .jar file
         /// </summary>
-        public const string MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH = @"fragpipe\tools\MSFragger-3.8";
+        public const string MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH = @"fragpipe\tools\MSFragger-4.0";
 
         /// <summary>
         /// Name of the MSFragger .jar file
         /// </summary>
-        public const string MSFRAGGER_JAR_NAME = "MSFragger-3.8.jar";
+        public const string MSFRAGGER_JAR_NAME = "MSFragger-4.0.jar";
 
         /// <summary>
         /// Relative path to philosopher.exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
@@ -365,7 +365,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileIonQuant(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.9.8.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.12.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
@@ -600,9 +600,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <remarks>
         /// Typically at
-        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\bruker
         /// and
-        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo
+        /// C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\thermo
         /// </remarks>
         /// <param name="vendorName">Vendor name: either bruker or thermo</param>
         /// <param name="vendorLibDirectory">Output: directory info, if found</param>
@@ -619,7 +619,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             // Look for the MSFragger external library directory, e.g.
-            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\
+            // C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\
 
             var msfraggerDirectoryName = Path.GetFileName(MSFRAGGER_JAR_DIRECTORY_RELATIVE_PATH);
 
