@@ -958,14 +958,13 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (filesMatch && remoteFasta != null)
                 {
-                    LogDebug(string.Format("Using existing FASTA file {0} on {1}",
-                                           remoteFasta.FullName, transferUtility.RemoteHostName));
+                    LogDebug("Using existing FASTA file {0} on {1}", remoteFasta.FullName, transferUtility.RemoteHostName);
                     return true;
                 }
             }
             else
             {
-                LogDebug(string.Format("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
+                LogDebug("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName);
             }
 
             // Find the files to copy (skipping the .localhashcheck file)
@@ -984,8 +983,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (success)
                 return true;
 
-            LogError(string.Format("Error copying {0} to {1} on {2}", sourceFasta.Name, transferUtility.RemoteOrgDBPath,
-                                   transferUtility.RemoteHostName));
+            LogError("Error copying {0} to {1} on {2}", sourceFasta.Name, transferUtility.RemoteOrgDBPath, transferUtility.RemoteHostName);
             return false;
         }
 
@@ -1021,7 +1019,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (!targetDirectoryVerified)
                 {
-                    LogError(string.Format("Unable to create working directory {0} on host {1}", remoteDirectoryPath, remoteHost));
+                    LogError("Unable to create working directory {0} on host {1}", remoteDirectoryPath, remoteHost);
                     UpdateStatusMessage("Unable to create working directory on remote host " + remoteHost);
                     return false;
                 }
@@ -3317,7 +3315,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (string.IsNullOrWhiteSpace(errorMessage))
                 {
-                    LogError(string.Format("Did not find any datasets associated with this job's data package (ID {0})", dataPackageInfoLoader.DataPackageID));
+                    LogError("Did not find any datasets associated with this job's data package (ID {0})", dataPackageInfoLoader.DataPackageID);
                     dataPackageError = false;
                 }
                 else
@@ -4317,13 +4315,13 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (remoteFasta == null)
             {
-                LogDebug(string.Format("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                LogDebug("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName);
                 return false;
             }
 
             if (remoteHashcheck == null)
             {
-                LogDebug(string.Format("FASTA .hashcheck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                LogDebug("FASTA .hashcheck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName);
                 return false;
             }
 
@@ -4351,20 +4349,16 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 if (filesMatch)
                 {
-                    LogDebug(string.Format(
-                        "Using existing FASTA file {0} on {1}",
-                        remoteFasta.FullName, transferUtility.RemoteHostName));
+                    LogDebug("Using existing FASTA file {0} on {1}", remoteFasta.FullName, transferUtility.RemoteHostName);
                     return true;
                 }
 
-                LogDebug(string.Format("Copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
+                LogDebug("Copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName);
             }
             else
             {
-                LogDebug(string.Format(
-                    "FASTA file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
-                    "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
-                    transferUtility.RemoteHostName));
+                LogDebug("FASTA file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                         "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name, transferUtility.RemoteHostName);
             }
 
             return false;

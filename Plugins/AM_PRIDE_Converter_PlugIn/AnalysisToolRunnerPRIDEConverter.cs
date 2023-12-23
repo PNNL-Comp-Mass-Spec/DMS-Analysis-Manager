@@ -365,7 +365,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     else
                     {
-                        LogError(string.Format("{0}: {1}", msg, errorMessage));
+                        LogError("{0}: {1}", msg, errorMessage);
                         mMessage = errorMessage;
                     }
 
@@ -4072,8 +4072,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             if (allowSkip)
                             {
-                                LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz files already exist at {1}", job,
-                                                       remoteTransferDirectory));
+                                LogDebug("Skipping job {0} since the .mgf and .mzid.gz files already exist at {1}", job, remoteTransferDirectory);
 
                                 foreach (var sourceFilePath in filesToCopy)
                                 {
@@ -4116,7 +4115,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!sourceFile.Exists)
                     {
                         fileCountNotFound++;
-                        LogError(string.Format("File not found for job {0}: {1}", job, sourceFilePath));
+                        LogError("File not found for job {0}: {1}", job, sourceFilePath);
                         continue;
                     }
 
@@ -4138,7 +4137,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             if (fileInTransferDirectory.Length == sourceFile.Length)
                             {
                                 alreadyCopiedToTransferDirectory = true;
-                                LogDebug(string.Format("Skipping file {0} since already copied to {1}", sourceFile.Name, remoteTransferDirectory));
+                                LogDebug("Skipping file {0} since already copied to {1}", sourceFile.Name, remoteTransferDirectory);
                             }
                         }
                     }

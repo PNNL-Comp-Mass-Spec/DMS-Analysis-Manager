@@ -222,7 +222,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                     if (!int.TryParse(job, out var jobValue))
                     {
-                        LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Job_Steps_History_Export: {1}", datasetID, job));
+                        LogWarning("Dataset {0} has a non-numeric job in V_Job_Steps_History_Export: {1}", datasetID, job);
                         continue;
                     }
 
@@ -242,17 +242,13 @@ namespace AnalysisManagerTopFDPlugIn
 
                     if (!dateMatch.Success)
                     {
-                        LogWarning(string.Format(
-                            "The TopFD tool version for dataset {0}, job {1} does not contain a date: {2}",
-                            datasetID, job, topFDToolAndDate));
+                        LogWarning("The TopFD tool version for dataset {0}, job {1} does not contain a date: {2}", datasetID, job, topFDToolAndDate);
                         continue;
                     }
 
                     if (!DateTime.TryParse(dateMatch.Value, out var existingJobToolDate))
                     {
-                        LogWarning(string.Format(
-                            "The TopFD tool version for dataset {0}, job {1} is not a valid date: {2}",
-                            datasetID, job, topFDToolAndDate));
+                        LogWarning("The TopFD tool version for dataset {0}, job {1} is not a valid date: {2}", datasetID, job, topFDToolAndDate);
                         continue;
                     }
 
@@ -304,7 +300,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                     if (!int.TryParse(job, out var jobValue))
                     {
-                        LogWarning(string.Format("Dataset {0} has a non-numeric job in V_Analysis_Job_Export: {1}", datasetID, job));
+                        LogWarning("Dataset {0} has a non-numeric job in V_Analysis_Job_Export: {1}", datasetID, job);
                         continue;
                     }
 
@@ -324,7 +320,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                     if (!resultsDirectory.Exists)
                     {
-                        LogWarning(string.Format("Results directory not found for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath));
+                        LogWarning("Existing results directory not found for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath);
                         continue;
                     }
 
