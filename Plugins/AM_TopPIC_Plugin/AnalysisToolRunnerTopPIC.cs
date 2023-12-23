@@ -677,14 +677,14 @@ namespace AnalysisManagerTopPICPlugIn
         /// Validate the static or dynamic mods defined in modList
         /// If valid mods are defined, write them to a text file and update cmdLineOptions
         /// </summary>
-        /// <param name="cmdLineOptions">Command line arguments to pass to TopPIC</param>
+        /// <param name="cmdLineArguments">Command line arguments to pass to TopPIC</param>
         /// <param name="modList">List of static or dynamic mods</param>
         /// <param name="modDescription">Either "static" or "dynamic"</param>
         /// <param name="modsFileName">Filename that mods are written to</param>
         /// <param name="modArgumentSwitch">Argument name to append to cmdLineOptions along with the mod file name</param>
         /// <returns>True if success, false if an error</returns>
         private bool ParseTopPICModifications(
-            ref string cmdLineOptions,
+            StringBuilder cmdLineArguments,
             IReadOnlyCollection<string> modList,
             string modDescription,
             string modsFileName,
@@ -710,7 +710,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                     // Append --fixed-mod ModsFilePath
                     // or     --mod-file-name ModsFilePath
-                    cmdLineOptions += string.Format(" --{0} {1} ", modArgumentSwitch, modsFilePath);
+                    cmdLineArguments.AppendFormat(" --{0} {1} ", modArgumentSwitch, modsFilePath);
                 }
 
                 return true;
@@ -726,14 +726,14 @@ namespace AnalysisManagerTopPICPlugIn
         /// Read the TopPIC options file and convert the options to command line switches
         /// </summary>
         /// <param name="fastaFileIsDecoy">The plugin will set this to true if the FASTA file is a forward+reverse FASTA file</param>
-        /// <param name="cmdLineOptions">Output: TopPIC command line arguments</param>
+        /// <param name="cmdLineArguments">Output: TopPIC command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions)
+        public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out StringBuilder cmdLineArguments)
         {
             const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
             const string DYNAMIC_MODS_FILE_NAME = "TopPIC_Dynamic_Mods.txt";
 
-            cmdLineOptions = string.Empty;
+            cmdLineArguments = new StringBuilder();
 
             var parameterFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
@@ -764,9 +764,9 @@ namespace AnalysisManagerTopPICPlugIn
                 "KeepTempFiles"
             };
 
-            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+            cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
 
-            if (string.IsNullOrWhiteSpace(cmdLineOptions))
+            if (cmdLineArguments.Length == 0)
             {
                 mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -774,7 +774,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Instruct TopPIC to use the fragmentation method info tracked in the .mzML file
             // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
-            cmdLineOptions += " --activation=FILE";
+            cmdLineArguments.Append(" --activation=FILE");
 
             if (mTopPICVersion >= new Version(1, 4))
             {
@@ -794,7 +794,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 LogMessage("The system has {0} cores and {1:F1} GB of free memory; TopPIC will use {2} threads", coreCount, freeMemoryGB, threadsToUse);
 
-                cmdLineOptions += " --thread-number " + threadsToUse;
+                cmdLineArguments.AppendFormat(" --thread-number {0}", threadsToUse);
 
                 // Note that TopPIC will display a warning when it starts if it thinks the number of threads selected is too high,
                 // given the amount of free system memory, for example:
@@ -811,7 +811,7 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 if (paramFileReader.ParamIsEnabled(paramFileEntries, optionalArgument))
                 {
-                    cmdLineOptions += " --" + paramToArgMapping[optionalArgument];
+                    cmdLineArguments.AppendFormat(" --{0}", paramToArgMapping[optionalArgument]);
                 }
             }
 
@@ -846,7 +846,7 @@ namespace AnalysisManagerTopPICPlugIn
                         // Assure the N-terminal protein forms list has no spaces
                         if (paramToArgMapping.TryGetValue(kvSetting.Key, out var argumentName))
                         {
-                            cmdLineOptions += " --" + argumentName + " " + kvSetting.Value.Replace(" ", "");
+                            cmdLineArguments.AppendFormat(" --{0} {1}", argumentName, kvSetting.Value.Replace(" ", string.Empty));
                         }
                         else
                         {
@@ -864,7 +864,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
             // Will also update cmdLineOptions to have --fixed-mod and/or --variable-ptm-file-name  (prior to v1.7 the flag was "--mod-file-name")
-            if (!ParseTopPICModifications(ref cmdLineOptions, staticMods, "static", STATIC_MODS_FILE_NAME, "fixed-mod"))
+            if (!ParseTopPICModifications(cmdLineArguments, staticMods, "static", STATIC_MODS_FILE_NAME, "fixed-mod"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -874,7 +874,7 @@ namespace AnalysisManagerTopPICPlugIn
                     "variable-ptm-file-name" :
                     "mod-file-name";
 
-            if (!ParseTopPICModifications(ref cmdLineOptions, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, variableModsArgName))
+            if (!ParseTopPICModifications(cmdLineArguments, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, variableModsArgName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -898,7 +898,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Set up and execute a program runner to run TopPIC
             // By default uses just one core; limit the number of cores to 4 with "--thread-number 4"
 
-            var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineOptions);
+            var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineArguments);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -909,7 +909,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             var arguments = new StringBuilder();
 
-            arguments.AppendFormat("{0} {1}", cmdLineOptions.Trim(), mValidatedFASTAFilePath);
+            arguments.AppendFormat("{0} {1}", cmdLineArguments.ToString().Trim(), mValidatedFASTAFilePath);
 
             // Append the .msalign file(s)
 

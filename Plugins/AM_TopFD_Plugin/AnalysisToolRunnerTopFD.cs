@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
@@ -379,11 +380,11 @@ namespace AnalysisManagerTopFDPlugIn
         /// <summary>
         /// Read the TopFD options file and convert the options to command line switches
         /// </summary>
-        /// <param name="cmdLineOptions">Output: TopFD command line arguments</param>
+        /// <param name="cmdLineArguments">Output: TopFD command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseTopFDParameterFile(out string cmdLineOptions)
+        public CloseOutType ParseTopFDParameterFile(out StringBuilder cmdLineArguments)
         {
-            cmdLineOptions = string.Empty;
+            cmdLineArguments = new StringBuilder();
 
             var parameterFileName = mJobParams.GetParam("TopFD_ParamFile");
 
@@ -409,9 +410,9 @@ namespace AnalysisManagerTopFDPlugIn
                 "MS1Missing"
             };
 
-            cmdLineOptions = paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--");
+            cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
 
-            if (string.IsNullOrWhiteSpace(cmdLineOptions))
+            if (cmdLineArguments.Length == 0)
             {
                 mMessage = paramFileReader.ErrorMessage;
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -421,7 +422,7 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 if (paramToArgMapping.TryGetValue("MS1Missing", out var argumentName))
                 {
-                    cmdLineOptions += " --" + argumentName;
+                    cmdLineArguments.AppendFormat(" --{0}", argumentName);
                 }
                 else
                 {
@@ -438,7 +439,7 @@ namespace AnalysisManagerTopFDPlugIn
                 var threadsToUse = (int)Math.Floor(coreCount * 0.88);
 
                 LogMessage("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse);
-                cmdLineOptions += " --thread-number " + threadsToUse;
+                cmdLineArguments.AppendFormat(" --thread-number {0}", threadsToUse);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -538,14 +539,14 @@ namespace AnalysisManagerTopFDPlugIn
         {
             LogMessage("Running TopFD");
 
-            var result = ParseTopFDParameterFile(out var cmdLineOptions);
+            var result = ParseTopFDParameterFile(out var cmdLineArguments);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return result;
             }
 
-            var arguments = cmdLineOptions + " " + mzMLFileName;
+            var arguments = string.Format("{0} {1}", cmdLineArguments.ToString().Trim(), mzMLFileName);
 
             LogDebug(progLoc + " " + arguments);
 
