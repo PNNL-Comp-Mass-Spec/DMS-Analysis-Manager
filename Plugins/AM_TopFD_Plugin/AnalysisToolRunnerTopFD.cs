@@ -381,8 +381,9 @@ namespace AnalysisManagerTopFDPlugIn
         /// Read the TopFD options file and convert the options to command line switches
         /// </summary>
         /// <param name="cmdLineArguments">Output: TopFD command line arguments</param>
+        /// <param name="threadCount">Output: TopFD command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseTopFDParameterFile(out StringBuilder cmdLineArguments)
+        public CloseOutType ParseTopFDParameterFile(out StringBuilder cmdLineArguments, out int threadCount)
         {
             cmdLineArguments = new StringBuilder();
 
@@ -393,6 +394,7 @@ namespace AnalysisManagerTopFDPlugIn
             if (string.IsNullOrWhiteSpace(parameterFileName))
             {
                 LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
+                threadCount = 0;
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
@@ -400,6 +402,7 @@ namespace AnalysisManagerTopFDPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                threadCount = 0;
                 return result;
             }
 
@@ -415,6 +418,7 @@ namespace AnalysisManagerTopFDPlugIn
             if (cmdLineArguments.Length == 0)
             {
                 mMessage = paramFileReader.ErrorMessage;
+                threadCount = 0;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -427,6 +431,7 @@ namespace AnalysisManagerTopFDPlugIn
                 else
                 {
                     LogError("Parameter to argument mapping dictionary does not have MS1Missing");
+                    threadCount = 0;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -440,6 +445,12 @@ namespace AnalysisManagerTopFDPlugIn
 
                 LogMessage("The system has {0} cores; TopFD will use {1} threads ", coreCount, threadsToUse);
                 cmdLineArguments.AppendFormat(" --thread-number {0}", threadsToUse);
+
+                threadCount = threadsToUse;
+            }
+            else
+            {
+                threadCount = 1;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -539,7 +550,7 @@ namespace AnalysisManagerTopFDPlugIn
         {
             LogMessage("Running TopFD");
 
-            var result = ParseTopFDParameterFile(out var cmdLineArguments);
+            var result = ParseTopFDParameterFile(out var cmdLineArguments, out var threadCount);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -596,6 +607,14 @@ namespace AnalysisManagerTopFDPlugIn
                 }
 
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // TopFD 1.7 does not delete the .msalign file created by each thread; flag the files to be skipped, e.g.:
+            // .msalign_0, .msalign_1, .msalign_2, etc.
+
+            for (var i = 0; i < threadCount; i++)
+            {
+                mJobParams.AddResultFileExtensionToSkip(string.Format(".msalign_{0}", i));
             }
 
             // Make sure the output files were created and are not zero-bytes
