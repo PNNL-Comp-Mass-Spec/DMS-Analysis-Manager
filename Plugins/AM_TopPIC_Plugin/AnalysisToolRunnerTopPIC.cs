@@ -280,9 +280,11 @@ namespace AnalysisManagerTopPICPlugIn
         /// <param name="consoleOutputFilePath"></param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
+            // ReSharper disable CommentTypo
+
             // Example Console output for version 1.7 and later
             //
-            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
+            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-num 2 --variable-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
             // --------------------------------------------------------------------------------
             // Total thread number: 16
             // Total memory: 31.69 GiB
@@ -462,24 +464,30 @@ namespace AnalysisManagerTopPICPlugIn
             // Non PTM filtering - processing 9.02%.
             // Non PTM filtering - processing 25%.
 
+            // ReSharper restore CommentTypo
+
             var processingSteps = new SortedList<string, int>
             {
-                {"Non PTM filtering", 0},
+                {"Non PTM filtering", 0},                   // v1.5
+                {"Zero unexpected shift filtering", 0},     // v1.7
                 {"Non PTM search", 10},
-                {"One PTM filtering", 15},
-                {"One PTM search", 20},
+                {"One PTM filtering", 15},                  // v1.5
+                {"One unexpected shift filtering ", 15},    // v1.7
+                {"One PTM search", 20},                     // v1.5
+                {"One unexpected shift search", 20},        // v1.7
                 {"Diagonal filtering", 25},
-                {"Two PTM search", 45},
+                {"Two PTM search", 45},                     // v1.5
+                {"Two unexpected shift search", 45},        // v1.7
                 {"Combining PRSMs", 65},
                 {"Merging PRSMs", 65},
                 // The space after "computation" in "E-value computation " is important to avoid matching "E-value computation:" in the parameters block
                 {"E-value computation ", 70},
                 {"Finding PrSM clusters", 89},
-                {"Generating PrSM xml files", 90},
-                {"Converting PrSM xml files to html files", 93},
-                {"Converting PrSM xml files to json files", 93},
-                {"Generating proteoform xml files", 95},
-                {"Converting proteoform xml files to html files", 98},
+                {"Generating PrSM XML files", 90},
+                {"Converting PrSM XML files to HTML files", 93},
+                {"Converting PrSM XML files to JSON files", 93},
+                {"Generating proteoform XML files", 95},
+                {"Converting proteoform XML files to HTML files", 98},
                 {"Deleting temporary files", 99},
                 {"TopPIC finished", 100}
             };
