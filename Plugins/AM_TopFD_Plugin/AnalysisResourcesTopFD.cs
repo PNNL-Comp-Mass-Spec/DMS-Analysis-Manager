@@ -154,6 +154,8 @@ namespace AnalysisManagerTopFDPlugIn
                     return false;
                 }
 
+                var useExistingTopFDResults = mJobParams.GetJobParameter("TopFD", "UseExistingTopFDResults", true);
+
                 // Determine the path to the TopFD program
                 var topFDProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
                     mMgrParams, mJobParams, StepToolName,
@@ -182,6 +184,12 @@ namespace AnalysisManagerTopFDPlugIn
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
                 var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
+
+                if (!useExistingTopFDResults)
+                {
+                    LogMessage("The settings file for job {0} has 'UseExistingTopFDResults' set to false", mJob);
+                    return false;
+                }
 
                 // Part 1: Find other TopFD jobs for this dataset
                 var jobStepsQuery =
