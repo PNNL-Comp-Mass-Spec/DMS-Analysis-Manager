@@ -457,7 +457,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compare two strings (not case sensitive)
+        /// Compare two strings (not case-sensitive)
         /// </summary>
         /// <remarks>
         /// A null string is considered equivalent to an empty string.
@@ -472,7 +472,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compare two strings (not case sensitive)
+        /// Compare two strings (not case-sensitive)
         /// </summary>
         /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
         /// <param name="text1"></param>

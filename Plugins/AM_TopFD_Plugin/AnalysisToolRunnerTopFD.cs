@@ -623,7 +623,7 @@ namespace AnalysisManagerTopFDPlugIn
             // Require that the .feature and _ms2.msalign files were created
 
             // Starting with TopPIC 1.3, the program creates _ms1.feature and _ms2.feature instead of a single .feature file
-            // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC so we don't check for it
+            // TopFD likely also created a _ms1.msalign file, but it's not required for TopPIC, so we don't check for it
 
             var workDir = new DirectoryInfo(mWorkDir);
 

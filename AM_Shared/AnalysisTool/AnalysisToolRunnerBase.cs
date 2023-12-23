@@ -2689,7 +2689,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     currentFileName = sourceFile.Name;
 
                     // Check to see if the filename is defined in ResultFilesToSkip
-                    // Note that entries in ResultFilesToSkip are not case sensitive since the list was instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
+                    // Note that entries in ResultFilesToSkip are not case-sensitive since the list was instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
                     if (mJobParams.ResultFilesToSkip.Contains(sourceFile.Name))
                     {
                         // File found in the ResultFilesToSkip list; do not move it

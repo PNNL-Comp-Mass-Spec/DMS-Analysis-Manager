@@ -525,7 +525,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Writes specified value to an application config file
         /// </summary>
-        /// <param name="key">Name for parameter (case sensitive)</param>
+        /// <param name="key">Name for parameter (case-sensitive)</param>
         /// <param name="value">New value for parameter</param>
         /// <returns>True if success, false if an error (ErrMsg property contains reason)</returns>
         public bool WriteConfigSetting(string key, string value)

@@ -309,7 +309,7 @@ namespace AnalysisManagerTopFDPlugIn
                     if (!settingsFile.Equals(settingsFileToFind))
                         continue;
 
-                    // This job used the same settings file
+                    // This job used the same settings file (and was processed using the same version of TopFD as C:\DMS_Programs\TopPIC\topfd.exe; see above)
                     // Use its existing TopFD results
 
                     var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
