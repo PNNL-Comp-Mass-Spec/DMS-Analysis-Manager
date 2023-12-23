@@ -217,6 +217,8 @@ namespace AnalysisManagerTopFDPlugIn
                     // Parse out the TopFD.exe date from the tool version
                     // For example:
                     // TopFD 1.3.1; topfd.exe: 2020-01-13 10:55:30 AM
+                    // or
+                    // topfd.exe: 2023-12-18 07:37:36 AM
 
                     var job = result[0];
 
