@@ -743,7 +743,16 @@ namespace AnalysisManagerTopFDPlugIn
         /// <param name="consoleOutputFilePath"></param>
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
-            var reExtractScan = new Regex(@"Processing spectrum Scan[ _](?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            // This RegEx matches lines of the form:
+            //   Processing spectrum scan 100 ...    25% finished.
+            //   Processing spectrum scan_100 ...    25% finished.
+            //   Processing MS1 spectrum scan 100 ...    25% finished.
+            //   Processing MS/MS spectrum scan 200 ...  11% finished.
+            var reExtractScan = new Regex(@"Processing.+spectrum Scan[ _](?<Scan>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            // This RegEx matches lines of the form:
+            //   Processing feature 10000 ...       10% finished.
+            var reExtractFeature = new Regex(@"Processing feature (?<Feature>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             try
             {
@@ -771,6 +780,7 @@ namespace AnalysisManagerTopFDPlugIn
                 using (var writer = new StreamWriter(new FileStream(trimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var scanNumberOutputThreshold = 0;
+                    var featureNumberOutputThreshold = 0;
 
                     while (!reader.EndOfStream)
                     {
@@ -784,11 +794,11 @@ namespace AnalysisManagerTopFDPlugIn
 
                         var keepLine = true;
 
-                        var match = reExtractScan.Match(dataLine);
+                        var scanMatch = reExtractScan.Match(dataLine);
 
-                        if (match.Success)
+                        if (scanMatch.Success)
                         {
-                            var scanNumber = int.Parse(match.Groups["Scan"].Value);
+                            var scanNumber = int.Parse(scanMatch.Groups["Scan"].Value);
 
                             if (scanNumber < scanNumberOutputThreshold)
                             {
@@ -809,6 +819,28 @@ namespace AnalysisManagerTopFDPlugIn
                             if (!Global.IsMatch(mostRecentProgressLine, mostRecentProgressLineWritten))
                             {
                                 writer.WriteLine(mostRecentProgressLine);
+                            }
+                        }
+                        else
+                        {
+                            var featureMatch = reExtractFeature.Match(dataLine);
+
+                            if (featureMatch.Success)
+                            {
+                                var featureNumber = int.Parse(featureMatch.Groups["Feature"].Value);
+
+                                if (featureNumber < featureNumberOutputThreshold)
+                                {
+                                    keepLine = false;
+                                }
+                                else
+                                {
+                                    // Write out this line and bump up featureNumberOutputThreshold by 1000
+                                    featureNumberOutputThreshold += 1000;
+                                    mostRecentProgressLineWritten = dataLine;
+                                }
+
+                                mostRecentProgressLine = dataLine;
                             }
                         }
 
