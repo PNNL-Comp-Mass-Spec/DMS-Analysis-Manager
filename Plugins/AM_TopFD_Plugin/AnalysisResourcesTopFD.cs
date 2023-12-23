@@ -149,7 +149,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                 if (string.IsNullOrWhiteSpace(settingsFileToFind))
                 {
-                    LogError("Job parameters do not SettingsFileName (or it is an empty string); unable to look for existing TopFD results");
+                    LogError("Job parameters do not have SettingsFileName (or it is an empty string); unable to look for existing TopFD results");
                     criticalError = true;
                     return false;
                 }
@@ -313,7 +313,7 @@ namespace AnalysisManagerTopFDPlugIn
                     // Use its existing TopFD results
 
                     var datasetStoragePath = mJobParams.GetParam("DatasetStoragePath");
-                    var datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(AnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                    var datasetDirectoryPath = Path.Combine(datasetStoragePath, mJobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
                     var resultsDirectoryPath = Path.Combine(datasetDirectoryPath, jobCandidates[jobValue].ResultsDirectoryName);
 
                     var resultsDirectory = new DirectoryInfo(resultsDirectoryPath);
@@ -321,6 +321,12 @@ namespace AnalysisManagerTopFDPlugIn
                     if (!resultsDirectory.Exists)
                     {
                         LogWarning("Existing results directory not found for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath);
+                        continue;
+                    }
+
+                    if (resultsDirectory.GetFiles().Length == 0)
+                    {
+                        LogWarning("Existing results directory is empty for dataset {0}, job {1}: {2}", datasetID, job, resultsDirectoryPath);
                         continue;
                     }
 
