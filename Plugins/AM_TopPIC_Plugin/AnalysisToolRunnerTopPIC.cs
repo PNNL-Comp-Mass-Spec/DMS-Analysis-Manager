@@ -818,13 +818,23 @@ namespace AnalysisManagerTopPICPlugIn
             var staticMods = new List<string>();
             var dynamicMods = new List<string>();
 
+            // By default, allow up to 3 dynamic mods per peptide
+            var maxDynamicMods = 3;
+
             try
             {
                 foreach (var kvSetting in paramFileEntries)
                 {
                     var paramValue = kvSetting.Value;
 
-                    if (Global.IsMatch(kvSetting.Key, "StaticMod"))
+                    if (Global.IsMatch(kvSetting.Key, "NumMods"))
+                    {
+                        if (!string.IsNullOrWhiteSpace(paramValue) && int.TryParse(paramValue, out var numMods))
+                        {
+                            maxDynamicMods = numMods;
+                        }
+                    }
+                    else if (Global.IsMatch(kvSetting.Key, "StaticMod"))
                     {
                         if (!string.IsNullOrWhiteSpace(paramValue) && !Global.IsMatch(paramValue, "none"))
                         {
@@ -869,10 +879,17 @@ namespace AnalysisManagerTopPICPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var variableModsArgName =
-                mTopPICVersion.Major >= 1 && mTopPICVersion.Minor >= 7 ?
-                    "variable-ptm-file-name" :
-                    "mod-file-name";
+            string variableModsArgName;
+
+            if (mTopPICVersion >= new Version(1, 7))
+            {
+                cmdLineArguments.AppendFormat(" --variable-ptm-num {0}", maxDynamicMods);
+                variableModsArgName = "variable-ptm-file-name";
+            }
+            else
+            {
+                variableModsArgName = "mod-file-name";
+            }
 
             if (!ParseTopPICModifications(cmdLineArguments, dynamicMods, "dynamic", DYNAMIC_MODS_FILE_NAME, variableModsArgName))
             {
