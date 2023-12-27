@@ -470,9 +470,10 @@ namespace AnalysisManagerTopPICPlugIn
             {
                 {"Non PTM filtering", 0},                   // v1.5
                 {"Zero unexpected shift filtering", 0},     // v1.7
-                {"Non PTM search", 10},
+                {"Non PTM search", 10},                     // v1.5
+                {"Zero unexpected shift search", 10},       // v1.7
                 {"One PTM filtering", 15},                  // v1.5
-                {"One unexpected shift filtering ", 15},    // v1.7
+                {"Variable PTM filtering", 15},             // v1.7
                 {"One PTM search", 20},                     // v1.5
                 {"One unexpected shift search", 20},        // v1.7
                 {"Diagonal filtering", 25},
