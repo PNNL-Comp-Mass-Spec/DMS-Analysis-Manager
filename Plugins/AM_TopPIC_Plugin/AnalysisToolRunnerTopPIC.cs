@@ -1222,10 +1222,27 @@ namespace AnalysisManagerTopPICPlugIn
                 {
                     // TopPIC output file names used in 2021 (starting with version 1.4.4)
                     // Dataset_ms2_toppic_prsm.tsv and Dataset_ms2_toppic_proteoform.tsv
-                    resultFileNames.Add(new TopPICResultFileInfo(mDatasetName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
+
+                    // Starting with TopFD v1.7, if the .mzML file is detected to have FAIMS data, the.msalign file will include the voltage level, for example:
+                    // T1D_TD_BC228-4_KO_M_4_Aragorn_02Apr21_21-02-01_-35_ms2.msalign
+                    // When this is the case, the base file name needs to include the voltage value
+
+                    string baseName;
+
+                    if (msAlignFiles.Count == 0 ||
+                        string.Equals(msAlignFiles[0].Name, mDatasetName + AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                    {
+                        baseName = mDatasetName;
+                    }
+                    else
+                    {
+                        baseName = msAlignFiles[0].Name.Substring(0, msAlignFiles[0].Name.Length - AnalysisResourcesTopPIC.MSALIGN_FILE_SUFFIX.Length);
+                    }
+
+                    resultFileNames.Add(new TopPICResultFileInfo(baseName, PRSM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL, PROTEOFORM_TSV_RESULT_TABLE_NAME_SUFFIX_ORIGINAL));
 
                     expectedPrsmResults = 1;
-                    baseNames.Add(mDatasetName);
+                    baseNames.Add(baseName);
                 }
                 else
                 {
