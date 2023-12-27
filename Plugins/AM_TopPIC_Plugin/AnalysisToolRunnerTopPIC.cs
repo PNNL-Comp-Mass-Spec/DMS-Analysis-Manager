@@ -1416,7 +1416,7 @@ namespace AnalysisManagerTopPICPlugIn
                 // TopPIC 1.3 (January 2020) and newer create just one _html directory, named DatasetName_html
                 // If there are multiple msalign files, there will be multiple html directories
                 // Earlier versions do not have _ms2_toppic
-                var directoriesToCompress = new List<string> {
+                var directorySuffixesToCompress = new SortedSet<string>(StringComparer.OrdinalIgnoreCase) {
                     "_html",
                     "_ms2_toppic_prsm_cutoff_html",
                     "_ms2_toppic_proteoform_cutoff_html",
@@ -1430,13 +1430,15 @@ namespace AnalysisManagerTopPICPlugIn
                         // baseName should be of the form DatasetName_0
                         // Remove the dataset name from baseName then add to directoriesToCompress
 
-                        directoriesToCompress.Add(string.Format("{0}_html", baseName.Substring(mDatasetName.Length)));
+                        directorySuffixesToCompress.Add(string.Format("{0}_html", baseName.Substring(mDatasetName.Length)));
                     }
                 }
 
                 var directoriesZipped = 0;
 
-                foreach (var directorySuffix in directoriesToCompress)
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+
+                foreach (var directorySuffix in directorySuffixesToCompress)
                 {
                     var success = ZipTopPICResultsDirectory(directorySuffix);
 
@@ -1449,7 +1451,10 @@ namespace AnalysisManagerTopPICPlugIn
                     return validResults;
                 }
 
-                LogError("Expected TopPIC html directories were not found");
+                LogError(string.Format(
+                    "Expected TopPIC html directories were not found; checked for suffixes {0}",
+                    string.Join(", ", directorySuffixesToCompress)));
+
                 return false;
             }
             catch (Exception ex)
