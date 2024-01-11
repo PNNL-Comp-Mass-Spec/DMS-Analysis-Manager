@@ -183,7 +183,7 @@ namespace AnalysisManager_Mage_PlugIn
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
 
-                var query = "select * From " + tableName;
+                var query = "SELECT * FROM " + tableName;
                 using var cmd = new SQLiteCommand(query, conn);
 
                 var reader = cmd.ExecuteReader();
@@ -231,7 +231,7 @@ namespace AnalysisManager_Mage_PlugIn
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
 
-                var query = "select count(*) as Items From sqlite_master where type = 'table' and name = '" + tableName + "' COLLATE NOCASE";
+                var query = "SELECT COUNT(*) AS Items FROM sqlite_master WHERE type = 'table' AND name = '" + tableName + "' COLLATE NOCASE";
                 using var cmd = new SQLiteCommand(query, conn);
 
                 var result = cmd.ExecuteScalar();

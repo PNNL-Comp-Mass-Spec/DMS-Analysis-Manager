@@ -155,7 +155,7 @@ namespace AnalysisManager_Mage_PlugIn
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
 
-                var query = "SELECT Distinct DPJ.dataset_id " +
+                var query = "SELECT DISTINCT DPJ.dataset_id " +
                             "FROM t_results R " +
                             " INNER JOIN t_data_package_analysis_jobs DPJ " +
                             " ON R.job = DPJ.job";
@@ -217,7 +217,7 @@ namespace AnalysisManager_Mage_PlugIn
                 // At the same time, count the number of ions defined for each sample
                 var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
-                query = "SELECT Sample, Count(Ion) as Ions " +
+                query = "SELECT Sample, Count(Ion) AS Ions " +
                         "FROM " + T_ALIAS_TABLE + " " +
                         "GROUP BY Sample ";
 
