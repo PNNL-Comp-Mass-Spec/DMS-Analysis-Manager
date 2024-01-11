@@ -11,6 +11,8 @@ namespace AnalysisManager_Mage_PlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMage : AnalysisToolRunnerMAC
     {
+        // ReSharper disable once CommentTypo
+
         // Ignore Spelling: iTraq, mage, plex, plexes
 
         public const string T_ALIAS_FILE = "t_alias.txt";
@@ -255,7 +257,7 @@ namespace AnalysisManager_Mage_PlugIn
                     ionCounts.Add(ionCount);
                 }
 
-                // Make sure all of the ion counts are the same
+                // Make sure all the ion counts are the same
                 var ionCountFirst = ionCounts.Count == 0 ? 0 : ionCounts[0];
 
                 var lookupQ = (from item in ionCounts where item != ionCountFirst select item).ToList();

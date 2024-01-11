@@ -396,6 +396,9 @@ namespace AnalysisManager_Mage_PlugIn
                 using (var writer = new StreamWriter(new FileStream(updatedFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     // List of column indices to write to the output file (we skip columns with an empty column name)
+                    // The expected column names are:
+                    // Alias    Sample    Ion
+
                     var columnsIndicesToUse = new SortedSet<int>();
 
                     while (!reader.EndOfStream)
