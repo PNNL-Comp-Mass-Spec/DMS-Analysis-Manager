@@ -266,6 +266,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
 
             // Validate the t_alias.txt file to remove blank rows and remove extra columns
+            // In addition, round m/z values to three decimal places (since the MasterWorkflowSyn.xml file has them rounded to three decimal places)
             var success = ValidateAliasFile(matchingFiles[0], out var importDirectoryToUse);
 
             if (!success)
@@ -400,6 +401,7 @@ namespace AnalysisManager_Mage_PlugIn
                     // Alias    Sample    Ion
 
                     var columnsIndicesToUse = new SortedSet<int>();
+                    var ionColumnIndex = -1;
 
                     while (!reader.EndOfStream)
                     {
@@ -424,7 +426,13 @@ namespace AnalysisManager_Mage_PlugIn
                                     skipList.Add(i);
                                     continue;
                                 }
+
                                 columnsIndicesToUse.Add(i);
+
+                                if (lineParts[i].Equals("Ion", StringComparison.OrdinalIgnoreCase) && ionColumnIndex < 0)
+                                {
+                                    ionColumnIndex = i;
+                                }
                             }
 
                             if (skipList.Count > 0)
@@ -440,6 +448,7 @@ namespace AnalysisManager_Mage_PlugIn
                                     OnWarningEvent("Skipped {0} columns in {1} due to empty column names", skipList.Count, tAliasFile.Name);
                                 }
                             }
+
                         }
 
                         // Add data for columns that had a valid header
@@ -447,7 +456,31 @@ namespace AnalysisManager_Mage_PlugIn
 
                         foreach (var colIndex in columnsIndicesToUse)
                         {
-                            if (colIndex < lineParts.Length)
+                            if (colIndex >= lineParts.Length)
+                                break;
+
+                            if (colIndex == ionColumnIndex && lineParts[colIndex].IndexOf(".", StringComparison.OrdinalIgnoreCase) > 0)
+                            {
+                                // This is the reporter ion m/z column
+                                // Round to three decimal places (since the MasterWorkflowSyn.xml file has m/z values rounded to three decimal places)
+
+                                if (!double.TryParse(lineParts[colIndex], out var mz))
+                                {
+                                    OnErrorEvent("The t_alias.txt file has a non-numeric reporter ion m/z value: {0} in {1}", lineParts[colIndex], tAliasFile.FullName);
+                                    importDirectoryToUse = string.Empty;
+                                    return false;
+                                }
+
+                                var formattedMz = mz.ToString("0.000");
+
+                                if (!formattedMz.Equals(lineParts[colIndex]))
+                                {
+                                    replaceOriginal = true;
+                                }
+
+                                dataToWrite.Add(formattedMz);
+                            }
+                            else
                             {
                                 dataToWrite.Add(lineParts[colIndex]);
                             }
