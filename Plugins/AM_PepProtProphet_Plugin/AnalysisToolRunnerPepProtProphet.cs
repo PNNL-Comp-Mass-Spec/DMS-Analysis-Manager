@@ -722,7 +722,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.RunIonQuant && !ms1QuantDisabled)
                 {
-                    var ionQuantSuccess = RunIonQuant(dataPackageInfo, datasetIDsByExperimentGroup, options);
+                    var ionQuantSuccess = RunIonQuant(datasetIDsByExperimentGroup, options);
 
                     if (!ionQuantSuccess)
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -807,7 +807,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // Percolator: Convert to pepxml
                 // Example command line:
-                // java -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML DatasetName.pin DatasetName DatasetName_percolator_target_psms.tsv DatasetName_percolator_decoy_psms.tsv interact-DatasetName DDA 0.5
+                // java -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.tools.percolator.PercolatorOutputToPepXML DatasetName.pin DatasetName DatasetName_percolator_target_psms.tsv DatasetName_percolator_decoy_psms.tsv interact-DatasetName DDA 0.5 C:\DMS_WorkDir\DatasetName.mzML
 
                 // ReSharper restore CommentTypo
 
@@ -1057,12 +1057,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create the file listing the psm.tsv files for IonQuant to process
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <param name="datasetCount">Dataset count</param>
         /// <returns>File list file</returns>
         private FileInfo CreateIonQuantFileListFile(
-            DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             out int datasetCount
             )
@@ -1091,15 +1089,23 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // ReSharper disable once StringLiteralTypo
             writer.WriteLine("--specdir\t{0}", mWorkingDirectory.FullName);
 
-            // Add "--pepxml" lines with references to each experiment group's .pepXML file
-            // Note that FragPipe v20 does not include "--pepxml" lines in the IonQuant file list file, but it does not hurt to include them
+            // Prior to FragPipe v20, we also added --pepxml lines, as shown below
 
+            // The "--pepxml" lines referenced experiment group's .pepXML file
+            // FragPipe v20 included the "--pepxml" lines in the IonQuant file list file, but v21 does not, since IonQuant v1.10.12 reports an error if the --pepxml lines are included
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
             foreach (var item in datasetIDsByExperimentGroup)
             {
+                datasetCount += item.Value.Count;
+
+                // The following was deprecated with FragPipe v21 and is thus commented out
+
+                /*
+
                 var experimentGroupName = item.Key;
                 var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
-                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var datasetId in item.Value)
                 {
                     var datasetName = dataPackageInfo.Datasets[datasetId];
@@ -1112,9 +1118,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     {
                         writer.WriteLine("--pepxml\t{0}", Path.Combine(experimentWorkingDirectory.Name, datasetName + ".pepXML"));
                     }
-
-                    datasetCount++;
                 }
+
+                */
             }
 
             return fileListFile;
@@ -2552,7 +2558,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         private bool RunIonQuant(
-            DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             FragPipeOptions options)
         {
@@ -2582,6 +2587,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // v20
                 // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-3.8\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.9.8.jar"   ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10     --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt --modlist C:\FragPipe_Test3\Results\modmasses_ionquant.txt
                 // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.12.jar" ionquant.IonQuant --threads 4 --ionmobility 0 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10     --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\FragPipe_Test3\Results\filelist_ionquant.txt --modlist C:\FragPipe_Test3\Results\modmasses_ionquant.txt
+
+                // v21
+                // java -Xmx11G -Dlibs.bruker.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\bruker" -Dlibs.thermo.dir="C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\thermo" -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.30.0.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.12.jar"  ionquant.IonQuant --threads 4 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 1 --minexps 1 --mbr 1 --maxlfq 1 --requantify 1 --mztol 10 --imtol 0.05 --rttol 0.4 --mbrmincorr 0 --mbrrttol 1 --mbrimtol 0.05 --mbrtoprun 10 --ionfdr 0.01 --proteinfdr 1 --peptidefdr 1 --normalization 1 --minisotopes 2 --minscans 3 --writeindex 0 --tp 0 --minfreq 0 --minions 2 --locprob 0.75 --uniqueness 0 --filelist C:\DMS_WorkDir\filelist_ionquant.txt --modlist C:\DMS_WorkDir\modmasses_ionquant.txt
 
                 // Find the Bruker lib directory, typically C:\DMS_Programs\MSFragger\fragpipe\tools\MSFragger-4.0\ext\bruker
                 if (!options.LibraryFinder.FindVendorLibDirectory("bruker", out var brukerLibDirectory))
@@ -2660,7 +2668,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                    jarFileBatmassIO.FullName,
                    jarFileIonQuant.FullName);
 
-                arguments.AppendFormat(" --threads {0} --ionmobility 0 --minexps 1 --mbr {1}", ION_QUANT_THREAD_COUNT, matchBetweenRunsFlag);
+                arguments.AppendFormat(" --threads {0} --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10", ION_QUANT_THREAD_COUNT);
+                arguments.AppendFormat(" --ionmobility 0 --site-reports 1 --minexps 1 --mbr {0}", matchBetweenRunsFlag);
 
                 // Feature detection m/z tolerance, in ppm
                 var featureDetectionMZTolerance = mJobParams.GetJobParameter("FeatureDetectionMZTolerance", 10.0f);
@@ -2763,7 +2772,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Option 2:
                     // Create a text file listing the psm.tsv and .pepXML files (thus reducing the length of the command line)
 
-                    var fileListFile = CreateIonQuantFileListFile(dataPackageInfo, datasetIDsByExperimentGroup, out datasetCount);
+                    var fileListFile = CreateIonQuantFileListFile(datasetIDsByExperimentGroup, out datasetCount);
 
                     // In FragPipe v19 and earlier, if Match-between-runs was enabled, dry-run includes "--multidir ." in the argument list
                     // FragPipe v20 does not include "--multidir .", but testing reveals that it is required when "--mbr 1" is used
@@ -3224,6 +3233,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // v20
                 // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
 
+                // v21.1
+                // java -Xmx11G -cp "C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.28.jar;C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.30.0.jar" Features.MainClass --paramsList C:\FragPipe_Test3\Results\msbooster_params.txt
+
                 // Note that with FragPipe v19, MSBooster is calling DiaNN.exe with a TMT mod mass, even for parameter files that do not have TMT as a mod mass
                 // This is "by design", as confirmed at https://github.com/Nesvilab/FragPipe/issues/1031
                 // However, note that Dia-NN only supports TMT 6/10/11, not TMT 16 or TMT 18
@@ -3634,10 +3646,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command line:
-                // percolator-306\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName.pin
+                // percolator_3_6_4\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ DatasetName.pin
 
                 // If MSBooster was used, it will have created _edited.pin files
-                // percolator-306\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv DatasetName_edited.pin
+                // percolator_3_6_4\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 4 --results-psms DatasetName_percolator_target_psms.tsv --decoy-results-psms DatasetName_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ DatasetName_edited.pin
 
                 var targetPsmFileName = GetPercolatorFileName(datasetName, false);
                 var decoyPsmFileName = GetPercolatorFileName(datasetName, true);
@@ -4380,8 +4392,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // The first time we call philosopher.exe with the filter command, use argument --razor
                 // That will create file .meta\razor.bin in the first experiment group's working directory
-                // On subsequent calls, use --probin and reference the first working directory
-                // For example: --probin C:\FragPipe_Test5\Results\Leaf --razor
+                // On subsequent calls, use --dbbin and --probin and reference the first working directory
+                // For example: --dbbin C:\FragPipe_Test5\Results\Leaf --probin C:\FragPipe_Test5\Results\Leaf --razor--razor
+
+                // Note: versions prior to Philosopher v5.0 only used --probin
+                // The --dbbin argument is new for v5.0
 
                 // In FragPipe v19 and earlier, we would use --razorbin and reference file razor.bin in the first experiment group's .meta directory
                 // For example: --razorbin C:\DMS_WorkDir\Leaf\.meta\razor.bin
@@ -4403,8 +4418,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // Closed search, without match between runs:
                     // filter --sequential --picked --prot 0.01 --tag XXX_
 
-                    // Closed search, with match between runs enabled (prior to FragPipe v20, did not include "--picked" here):
-                    // filter --sequential --picked --prot 0.01 --tag XXX_
+                    // Closed search, with match between runs enabled (FragPipe v20 used "--picked --prot 0.01" when MBR is enabled, but v21 does not use --picked):
+                    // filter --sequential --prot 0.01 --tag XXX_
 
                     // Open search:
                     // filter --sequential --prot 0.01 --mapmods --tag XXX_
@@ -4418,13 +4433,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         arguments.Append(" --sequential");
                     }
 
-                    // Prior to FragPipe v20, we did not use "--picked" when match between runs was enabled
-                    // if (!options.MatchBetweenRuns && !options.OpenSearch)
-                    // {
-                    //     arguments.Append(" --picked");
-                    // }
+                    // FragPipe v20 included "--picked" when match between runs was enabled, but older versions and v21 do not include --picked
 
-                    if (!options.OpenSearch)
+                    if (!options.MatchBetweenRuns && !options.OpenSearch)
                     {
                         arguments.Append(" --picked");
                     }
@@ -4471,8 +4482,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
                         else
                         {
+                            // ReSharper disable CommentTypo
+
                             // Use the existing razor.bin file
-                            arguments.AppendFormat(" --probin {0} --razor", firstWorkingDirectoryPath);
+                            arguments.AppendFormat(" --dbbin {0} --probin {0} --razor", firstWorkingDirectoryPath);
+
+                            // ReSharper restore CommentTypo
                         }
 
                         // ReSharper restore StringLiteralTypo

@@ -23,7 +23,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the batmass-io .jar file
         /// </summary>
-        private const string BATMASS_JAR_NAME = "batmass-io-1.28.12.jar";
+        private const string BATMASS_JAR_NAME = "batmass-io-1.30.0.jar";
 
         /// <summary>
         /// Name of the Crystal-C .jar file
@@ -39,7 +39,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the FragPipe .jar file
         /// </summary>
-        private const string FRAGPIPE_JAR_NAME = "fragpipe-20.0.jar";
+        private const string FRAGPIPE_JAR_NAME = "fragpipe-21.1.jar";
 
         /// <summary>
         /// Name of the grppr .jar file
@@ -65,7 +65,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the MSBooster jar file
         /// </summary>
-        private const string MSBOOSTER_JAR_NAME = "msbooster-1.1.11.jar";
+        private const string MSBOOSTER_JAR_NAME = "msbooster-1.1.28.jar";
 
         /// <summary>
         /// Relative path to the directory with the MSFragger .jar file
@@ -85,7 +85,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the percolator .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
         /// </summary>
-        public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator-306\percolator.exe";
+        public const string PERCOLATOR_RELATIVE_PATH = @"fragpipe\tools\percolator_3_6_4\windows\percolator.exe";
 
         /// <summary>
         /// Relative path to the PTM Prophet .exe (below the fragpipe directory, which should be at C:\DMS_Programs\MSFragger\fragpipe)
@@ -95,7 +95,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the PTM Shepherd jar file
         /// </summary>
-        private const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-2.0.5.jar";
+        private const string PTMSHEPHERD_JAR_NAME = "ptmshepherd-2.0.6.jar";
 
         /// <summary>
         /// Name of the smile-core library
@@ -112,7 +112,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Relative path to the TMT integrator jar file
         /// </summary>
-        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-4.0.5.jar";
+        public const string TMT_INTEGRATOR_JAR_RELATIVE_PATH = @"fragpipe\tools\tmt-integrator-5.0.7.jar";
 
         private DirectoryInfo mFragPipeLibDirectory;
 
@@ -234,7 +234,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the Batmass IO .jar file
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.28.12.jar
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.30.0.jar
         /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -310,7 +310,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find the fragpipe .jar file
         /// </summary>
         /// <remarks>
-        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-20.0.jar
+        /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-21.1.jar
         /// </remarks>
         /// <param name="jarFile"></param>
         /// <returns>True if found, otherwise false</returns>
@@ -413,7 +413,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileMSBooster(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.11.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\msbooster-1.1.28.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {
