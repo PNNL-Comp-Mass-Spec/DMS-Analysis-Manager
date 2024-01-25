@@ -32,7 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\AnalysisManagerMSPathFinderPlugin.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

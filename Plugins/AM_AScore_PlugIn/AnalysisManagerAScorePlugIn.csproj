@@ -24,7 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Debug\AnalysisManager_AScore_PlugIn.xml</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\AnalysisManager_AScore_PlugIn.xml</DocumentationFile>
     <Prefer32Bit>false</Prefer32Bit>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AScore_DLL">

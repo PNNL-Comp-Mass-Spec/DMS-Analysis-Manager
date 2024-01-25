@@ -23,7 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\AnalysisManagerMSAlignPlugIn.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -33,7 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\AnalysisManagerMSAlignPlugIn.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MyEMSLReader">

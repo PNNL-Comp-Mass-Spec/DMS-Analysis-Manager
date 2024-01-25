@@ -22,7 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
     <DocumentationFile>bin\Debug\AnalysisManagerMzRefineryPlugIn.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -33,7 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\AnalysisManagerMzRefineryPlugIn.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="MsMsDataFileReader">

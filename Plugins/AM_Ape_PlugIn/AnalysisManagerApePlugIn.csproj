@@ -24,7 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\Debug\AnalysisManager_Ape_PlugIn.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,7 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <DocumentationFile>bin\Release\AnalysisManager_Ape_PlugIn.xml</DocumentationFile>
-    <NoWarn>1591, IDE0028</NoWarn>
+    <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ape">
