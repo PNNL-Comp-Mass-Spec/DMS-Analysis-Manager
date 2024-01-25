@@ -56,9 +56,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Replace the input file with the updated file, renaming the updated file to include the dataset or experiment group name
         /// </summary>
-        /// <param name="datasetOrExperimentGroupName"></param>
-        /// <param name="inputFile"></param>
-        /// <param name="updatedFile"></param>
+        /// <param name="datasetOrExperimentGroupName">Dataset or experiment group name</param>
+        /// <param name="inputFile">Input file</param>
+        /// <param name="updatedFile">Updated file</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ReplaceFile(string datasetOrExperimentGroupName, FileInfo inputFile, FileInfo updatedFile)
         {
@@ -185,8 +185,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         ///   Remove duplicate values from the Spectrum File column
         ///   Clear the data in column Protein ID since that column has protein descriptions, which are also listed in protein.tsv
         /// </remarks>
-        /// <param name="datasetOrExperimentGroupName"></param>
-        /// <param name="workingDirectory"></param>
+        /// <param name="datasetOrExperimentGroupName">Dataset or experiment group name</param>
+        /// <param name="workingDirectory">Working directory</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherPSMFile(
             string datasetOrExperimentGroupName,
@@ -263,8 +263,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Rename ion.tsv to DatasetName_ion.tsv or ExperimentGroupName_ion.tsv
         /// In addition, clear the data in column Protein ID since that column has protein descriptions, which are also listed in protein.tsv
         /// </summary>
-        /// <param name="datasetOrExperimentGroupName"></param>
-        /// <param name="workingDirectory"></param>
+        /// <param name="datasetOrExperimentGroupName">Dataset or experiment group name</param>
+        /// <param name="workingDirectory">Working directory</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherIonFile(
             string datasetOrExperimentGroupName,
@@ -323,8 +323,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Rename peptide.tsv to DatasetName_peptide.tsv or ExperimentGroupName_peptide.tsv
         /// In addition, clear the data in column Protein ID since that column has protein descriptions, which are also listed in protein.tsv
         /// </summary>
-        /// <param name="datasetOrExperimentGroupName"></param>
-        /// <param name="workingDirectory"></param>
+        /// <param name="datasetOrExperimentGroupName">Dataset or experiment group name</param>
+        /// <param name="workingDirectory">Working directory</param>
         /// <param name="peptideCount">Output: number of result lines in the peptide.tsv file</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherPeptideFile(
@@ -382,8 +382,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Rename protein.tsv to DatasetName_protein.tsv or ExperimentGroupName_protein.tsv, moving the file to the working directory if necessary
         /// </summary>
-        /// <param name="datasetOrExperimentGroupName"></param>
-        /// <param name="workingDirectory"></param>
+        /// <param name="datasetOrExperimentGroupName">Dataset or experiment group name</param>
+        /// <param name="workingDirectory">Working directory</param>
         /// <param name="usedProteinProphet">True if Protein Prophet was used</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePhilosopherProteinFile(
@@ -440,9 +440,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Columns "Spectrum" and "Spectrum File" are only present in the psm.tsv file
         /// </para>
         /// </remarks>
-        /// <param name="headerNames"></param>
-        /// <param name="inputFile"></param>
-        /// <param name="outputFile"></param>
+        /// <param name="headerNames">Header names</param>
+        /// <param name="inputFile">Input file</param>
+        /// <param name="outputFile">Output file</param>
         /// <param name="resultLineCount">Number of result lines (not counting the header line)</param>
         /// <returns>True if successful, false if an error</returns>
         private bool WriteUpdatedFile(

@@ -11,6 +11,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class AnalysisResourcesMage : AnalysisResourcesMAC
     {
+        // Ignore Spelling: mage
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

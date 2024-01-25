@@ -787,11 +787,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Convert the output from Percolator to .pep.xml
         /// </summary>
-        /// <param name="fragPipeLibDirectory"></param>
-        /// <param name="experimentGroupDirectory"></param>
-        /// <param name="datasetName"></param>
-        /// <param name="options"></param>
-        /// <param name="pepXmlFiles"></param>
+        /// <param name="fragPipeLibDirectory">Frag pipe library directory</param>
+        /// <param name="experimentGroupDirectory">Experiment group directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="options">Processing options</param>
+        /// <param name="pepXmlFiles">.pepXML files</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ConvertPercolatorOutputToPepXML(
             FileSystemInfo fragPipeLibDirectory,
@@ -1007,8 +1007,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create the file listing each dataset's .mzML file and the associated experiment group name
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         private void CreateExperimentAnnotationFile(
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup
@@ -1058,8 +1058,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Create the file listing the psm.tsv files for IonQuant to process
         /// </summary>
         /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="datasetCount"></param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        /// <param name="datasetCount">Dataset count</param>
         /// <returns>File list file</returns>
         private FileInfo CreateIonQuantFileListFile(
             DataPackageInfo dataPackageInfo,
@@ -1123,7 +1123,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create a text file listing modification masses (both static and dynamic modifications)
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         /// <returns>Mod masses file</returns>
         private FileInfo CreateIonQuantModMassesFile(FragPipeOptions options)
         {
@@ -1161,10 +1161,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create the MSBooster parameter file
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="datasetIDsByExperimentGroup"></param>
-        /// <param name="paramFilePath"></param>
-        /// <param name="msBoosterParamFile"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        /// <param name="paramFilePath">Parameter file path</param>
+        /// <param name="msBoosterParamFile">MSBooster parameter file</param>
         /// <returns>True if successful, false if error</returns>
         private bool CreateMSBoosterParamFile(
             DataPackageInfo dataPackageInfo,
@@ -1283,7 +1283,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Delete temporary directories, ignoring errors
         /// </summary>
-        /// <param name="directoriesToDelete"></param>
+        /// <param name="directoriesToDelete">Directories to delete</param>
         private void DeleteTempDirectories(IEnumerable<DirectoryInfo> directoriesToDelete)
         {
             // Delete the workspace directories
@@ -1304,7 +1304,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Obtain a dictionary mapping the experiment group names to abbreviated versions, assuring that each abbreviation is unique
         /// </summary>
         /// <remarks>If there is only one experiment group, the dictionary will have an empty string for the abbreviated name</remarks>
-        /// <param name="experimentGroupNames"></param>
+        /// <param name="experimentGroupNames">Experiment group name</param>
         /// <returns>Dictionary mapping experiment group name to abbreviated name</returns>
         private Dictionary<string, string> GetAbbreviatedExperimentGroupNames(IReadOnlyList<string> experimentGroupNames)
         {
@@ -1351,11 +1351,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Get appropriate path of the working directory for the given experiment
         /// </summary>
         /// <remarks>
-        /// <para>If all of the datasets belong to the same experiment, return the job's working directory</para>
+        /// <para>If all the datasets belong to the same experiment, return the job's working directory</para>
         /// <para>Otherwise, return a subdirectory below the working directory, based on the experiment's name</para>
         /// </remarks>
-        /// <param name="experimentGroupName"></param>
-        /// <param name="experimentGroupCount"></param>
+        /// <param name="experimentGroupName">Experiment group name</param>
+        /// <param name="experimentGroupCount">Experiment group count</param>
         private DirectoryInfo GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
         {
             if (experimentGroupCount <= 1)
@@ -1397,7 +1397,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Monitor every 500 msec if determining the version, managing the workspace, or generating the report
         /// Otherwise, monitor every 2000 msec
         /// </remarks>
-        /// <param name="toolType"></param>
+        /// <param name="toolType">Tool type</param>
         private int GetMonitoringInterval(PhilosopherToolType toolType)
         {
             return toolType is PhilosopherToolType.ShowVersion or PhilosopherToolType.WorkspaceManager or PhilosopherToolType.GenerateReport
@@ -1408,8 +1408,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Get a file named DatasetName_percolator_target_psms.tsv or DatasetName_percolator_decoy_psms.tsv
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="isDecoy"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="isDecoy">True if the file should be named decoy_psms.tsv</param>
         private string GetPercolatorFileName(string datasetName, bool isDecoy)
         {
             // ReSharper disable once StringLiteralTypo
@@ -1544,7 +1544,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create the temporary directories used by PeptideProphet
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <returns>Dictionary where keys are dataset names and values are DirectoryInfo instances</returns>
         private Dictionary<int, DirectoryInfo> InitializePeptideProphetWorkspaceDirectories(
@@ -1586,7 +1586,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Initialize the Philosopher workspace (creates a hidden directory named .meta)
         /// </summary>
         /// <remarks>Also creates a subdirectory for each experiment group if experimentGroupNames has more than one item</remarks>
-        /// <param name="experimentGroupNames"></param>
+        /// <param name="experimentGroupNames">Experiment group names</param>
         /// <param name="workingDirectoryPadWidth">Longest directory path in mExperimentGroupWorkingDirectories</param>
         /// <returns>Success code</returns>
         private CloseOutType InitializePhilosopherWorkspace(
@@ -1688,9 +1688,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="philosopherExe"></param>
-        /// <param name="datasetCount"></param>
-        /// <param name="paramFilePath"></param>
+        /// <param name="philosopherExe">Path to philosopher</param>
+        /// <param name="datasetCount">Dataset count</param>
+        /// <param name="paramFilePath">Parameter file path</param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
         /// <returns>True if successful, false if error</returns>
         private bool LoadMSFraggerOptions(FileInfo philosopherExe, int datasetCount, string paramFilePath, out FragPipeOptions options)
@@ -1747,7 +1747,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Move results into subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         private bool MoveResultsIntoSubdirectories(
             DataPackageInfo dataPackageInfo,
@@ -1759,7 +1759,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Move results out of subdirectories, but only if datasetIDsByExperimentGroup has more than one experiment group
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         private bool MoveResultsOutOfSubdirectories(
             DataPackageInfo dataPackageInfo,
@@ -1774,7 +1774,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <remarks>
         /// If datasetIDsByExperimentGroup only has one item, no files are moved
         /// </remarks>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
         /// <param name="sourceIsWorkDirectory">
         /// When true, the source directory is the working directory
@@ -1901,7 +1901,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Organize .pepXML and .pin files and populate several dictionaries
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">
         /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
@@ -2326,7 +2326,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// In FragPipe v19 and earlier, the .meta subdirectory was updated at both C:\DMS_WorkDir\.meta and in each experiment group's subdirectory
         /// With FragPipe v20 we only update the first experiment group's working directory (or only C:\DMS_WorkDir\.meta if there is only one experiment group)
         /// </remarks>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         private bool RunDatabaseAnnotation(FragPipeOptions options)
         {
             try
@@ -2468,8 +2468,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Create a db.bin file in the .meta subdirectory of the given directory
         /// </summary>
-        /// <param name="workingDirectory"></param>
-        /// <param name="workingDirectoryPadWidth"></param>
+        /// <param name="workingDirectory">Working directory</param>
+        /// <param name="workingDirectoryPadWidth">Working directory pad width</param>
         private bool RunDatabaseAnnotation(DirectoryInfo workingDirectory, int workingDirectoryPadWidth)
         {
             // Note: If the FASTA file does not have Decoy proteins, use this command:
@@ -3048,7 +3048,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Results will appear in the.tsv files created by the Report step (ion.tsv, peptide.tsv, protein.tsv, and psm.tsv),
         /// in columns corresponding to labels in the AliasNames.txt file (or experiment group specific alias name file)
         /// </remarks>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         private bool RunLabelQuant(FragPipeOptions options)
         {
             try
@@ -3352,7 +3352,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         out peptideProphetPepXmlFiles);
                 }
 
-                // Keys in this dictionary are dataset names, values are DirectoryInfo instances
+                // Keys in this dictionary are dataset IDs, values are DirectoryInfo instances
                 var workspaceDirectoryByDatasetId = InitializePeptideProphetWorkspaceDirectories(
                     dataPackageInfo,
                     datasetIDsByExperimentGroup);
@@ -3742,11 +3742,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Run philosopher using the specified arguments
         /// </summary>
-        /// <param name="toolType"></param>
-        /// <param name="arguments"></param>
-        /// <param name="currentTask"></param>
+        /// <param name="toolType">Tool type</param>
+        /// <param name="arguments">Command line arguments</param>
+        /// <param name="currentTask">Current task</param>
         /// <param name="workingDirectory">Optional, custom working directory; if null, will use mWorkingDirectory</param>
-        /// <param name="workingDirectoryPadWidth"></param>
+        /// <param name="workingDirectoryPadWidth">Working directory pad width</param>
         /// <returns>True if successful, false if error</returns>
         private bool RunPhilosopher(
             PhilosopherToolType toolType,
@@ -3832,7 +3832,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Run ProteinProphet
         /// </summary>
         /// <param name="peptideProphetPepXmlFiles">List of .pep.xml files created by PeptideProphet</param>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         private bool RunProteinProphet(ICollection<FileInfo> peptideProphetPepXmlFiles, FragPipeOptions options)
         {
             try
@@ -3959,8 +3959,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Run PTM prophet on each .pep.xml file tracked by peptideProphetPepXmlFiles
         /// </summary>
-        /// <param name="peptideProphetPepXmlFiles"></param>
-        /// <param name="options"></param>
+        /// <param name="peptideProphetPepXmlFiles">Peptide prophet .pepXML files</param>
+        /// <param name="options">Processing options</param>
         /// <returns>True if successful, false if error</returns>
         private bool RunPTMProphet(
             List<FileInfo> peptideProphetPepXmlFiles,
@@ -4003,7 +4003,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Run PTM prophet on the given .pep.xml file
         /// </summary>
         /// <param name="pepXmlFile">Peptide Prophet or Percolator results file, e.g. interact-DatasetName.pep.xml</param>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         /// <returns>True if successful, false if an error</returns>
         private bool RunPTMProphetOnDataset(FileInfo pepXmlFile, FragPipeOptions options)
         {
@@ -4363,8 +4363,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// .meta\ion.bin
         /// .meta\pep.bin
         /// </remarks>
-        /// <param name="options"></param>
-        /// <param name="usedProteinProphet"></param>
+        /// <param name="options">Processing options</param>
+        /// <param name="usedProteinProphet">True if protein prophet was used</param>
         private bool RunResultsFilter(FragPipeOptions options, bool usedProteinProphet)
         {
             try
@@ -4899,7 +4899,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Edit the header line of the combined .tsv files to replace the working directory name with either the dataset name or "Aggregation"
         /// </summary>
-        /// <param name="datasetCount"></param>
+        /// <param name="datasetCount">Dataset count</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdateCombinedTsvFiles(int datasetCount)
         {
@@ -4992,9 +4992,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Replace the FASTA file path in the data line with mFastaFilePath
         /// </summary>
-        /// <param name="dataLine"></param>
-        /// <param name="match"></param>
-        /// <param name="matchPattern"></param>
+        /// <param name="dataLine">Data line</param>
+        /// <param name="match">Regex match</param>
+        /// <param name="matchPattern">Match pattern</param>
         /// <returns>Updated line if a successful RegEx match, otherwise logs a warning and returns the original line</returns>
         private string UpdateFASTAFilePath(string dataLine, Match match, string matchPattern)
         {
@@ -5103,9 +5103,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// This method is called when PeptideProphet was run against a group of datasets, creating an interact.pep.xml file for each experiment group
         /// (<seealso cref="UpdateMsMsRunSummaryInPepXmlFiles"/>)
         /// </remarks>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        /// <param name="options"></param>
+        /// <param name="options">Processing options</param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pepXML files created by PeptideProphet</param>
         /// <returns>True if successful, false if error</returns>
         private bool UpdateMsMsRunSummaryInCombinedPepXmlFiles(
@@ -5230,10 +5230,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// This corresponds to FragPipe step "Rewrite pepxml"
         /// </para>
         /// </remarks>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="workspaceDirectoryByDatasetId"></param>
-        /// <param name="interactFilesByDatasetID"></param>
-        /// <param name="options"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="workspaceDirectoryByDatasetId">Keys are dataset IDs, values are DirectoryInfo instances</param>
+        /// <param name="interactFilesByDatasetID">Keys are dataset IDs, values are interact files</param>
+        /// <param name="options">Processing options</param>
         /// <param name="peptideProphetPepXmlFiles">Output: list of the .pep.xml files created by PeptideProphet</param>
         /// <returns>True if successful, false if error</returns>
         private bool UpdateMsMsRunSummaryInPepXmlFiles(
@@ -5406,7 +5406,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// SampleName_06May21_20-11-16.501.501.2_1
         /// </para>
         /// </remarks>
-        /// <param name="sourcePinFile"></param>
+        /// <param name="sourcePinFile">Source .pin file</param>
         /// <returns>True if successful, false if an error</returns>
         private bool UpdatePinFileStripDataset(FileInfo sourcePinFile)
         {
@@ -5573,9 +5573,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Verify that each output file exists
         /// </summary>
-        /// <param name="toolName"></param>
-        /// <param name="outputFiles"></param>
-        /// <returns>True if all of the files are found, false if any are missing</returns>
+        /// <param name="toolName">Tool name</param>
+        /// <param name="outputFiles">Output files</param>
+        /// <returns>True if all the files are found, false if any are missing</returns>
         private bool ValidateOutputFilesExist(string toolName, IEnumerable<FileInfo> outputFiles)
         {
             var missingFiles = (from outputFile in outputFiles where !outputFile.Exists select outputFile.Name).ToList();
@@ -5604,9 +5604,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Store the list of files in a zip file (overwriting any existing zip file),
         /// then call AddResultFileToSkip() for each file
         /// </summary>
-        /// <param name="fileListDescription"></param>
-        /// <param name="filesToZip"></param>
-        /// <param name="zipFileName"></param>
+        /// <param name="fileListDescription">File list description</param>
+        /// <param name="filesToZip">Files to zip</param>
+        /// <param name="zipFileName">Zip file name</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ZipFiles(string fileListDescription, IReadOnlyList<FileInfo> filesToZip, string zipFileName)
         {
@@ -5633,8 +5633,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Zip each .pepXML file
         /// Also store the .pin files in the zip files
         /// </summary>
-        /// <param name="dataPackageInfo"></param>
-        /// <param name="options"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="options">Processing options</param>
         /// <returns>True if successful, false if error</returns>
         private bool ZipPepXmlAndPinFiles(DataPackageInfo dataPackageInfo, FragPipeOptions options)
         {

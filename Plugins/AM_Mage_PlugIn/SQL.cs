@@ -7,6 +7,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     internal static class SQL
     {
+        // Ignore Spelling: mage, sql
+
         // holds a single query definition template
         public class QueryTemplate
         {
@@ -71,11 +73,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// Build SQL statement from query template and parameter values
         /// </summary>
         /// <param name="qt">Query template object</param>
-        /// <param name="paramVals">array of parameter values to be substituted into the query template</param>
+        /// <param name="paramValues">array of parameter values to be substituted into the query template</param>
         /// <returns>SQL</returns>
-        public static string GetSQL(QueryTemplate qt, string[] paramVals)
+        public static string GetSQL(QueryTemplate qt, string[] paramValues)
         {
-            return string.Format(qt.TemplateSQL, paramVals);
+            return string.Format(qt.TemplateSQL, paramValues);
         }
     }
 }

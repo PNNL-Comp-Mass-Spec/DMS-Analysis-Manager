@@ -14,6 +14,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public abstract class AnalysisToolRunnerMAC : AnalysisToolRunnerBase
     {
+        // Ignore Spelling: mage, sql
+
         protected const string MAGE_LOG_FILE_NAME = "Mage_Log.txt";
 
         private const int ProgressPctMacDone = 95;

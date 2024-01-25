@@ -13,7 +13,7 @@ namespace AnalysisManager_Mage_PlugIn
     public class MageAMFileProcessingPipelines : MageAMPipelineBase
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: crosstab, mage, Proc
+        // Ignore Spelling: crosstab, Improv, mage, Proc, sql
 
         /// <summary>
         /// Constructor

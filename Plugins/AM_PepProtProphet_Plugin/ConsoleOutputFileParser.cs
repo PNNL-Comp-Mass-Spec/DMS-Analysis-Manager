@@ -62,7 +62,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug level</param>
         public ConsoleOutputFileParser(short debugLevel)
         {
             ConsoleOutputErrorMsg = string.Empty;
@@ -73,8 +73,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the Java console output file
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
-        /// <param name="cmdRunnerMode"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
+        /// <param name="cmdRunnerMode">Command runner mode</param>
         public void ParseJavaConsoleOutputFile(
             string consoleOutputFilePath,
             AnalysisToolRunnerPepProtProphet.CmdRunnerModes cmdRunnerMode)
@@ -209,7 +209,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Looks for errors of the form
         /// remove C:\Users\D3L243\AppData\Local\Temp\a7785d27-366e-4048-a23f-c1867454f9f0\batchcoverage.exe: The process cannot access the file because it is being used by another process
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         /// <returns>True if the console output file has a file removal access in use error, otherwise false</returns>
         public bool FileHasRemoveFileError(string consoleOutputFilePath)
         {
@@ -268,7 +268,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Return true if the data line has an error of the form
         /// remove C:\Users\D3L243\AppData\Local\Temp\a7785d27-366e-4048-a23f-c1867454f9f0\DatabaseParser.exe: The process cannot access the file because it is being used by another process
         /// </summary>
-        /// <param name="dataLine"></param>
+        /// <param name="dataLine">Data line</param>
         private static bool LineHasRemoveFileError(string dataLine)
         {
             var removeMatcher = new Regex(@"remove .+\.exe", RegexOptions.IgnoreCase);
@@ -279,7 +279,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the Percolator console output file
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         public void ParsePercolatorConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -390,8 +390,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the Philosopher console output file to determine the Philosopher version and to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
-        /// <param name="toolType"></param>
+        /// <param name="consoleOutputFilePath">Conso0le output file path</param>
+        /// <param name="toolType">Tool type</param>
         public void ParsePhilosopherConsoleOutputFile(
             string consoleOutputFilePath,
             AnalysisToolRunnerPepProtProphet.PhilosopherToolType toolType)
@@ -579,7 +579,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Parse the PTM Prophet console output file
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         public void ParsePTMProphetConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo

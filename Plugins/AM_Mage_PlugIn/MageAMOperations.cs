@@ -448,7 +448,6 @@ namespace AnalysisManager_Mage_PlugIn
                                     OnWarningEvent("Skipped {0} columns in {1} due to empty column names", skipList.Count, tAliasFile.Name);
                                 }
                             }
-
                         }
 
                         // Add data for columns that had a valid header
@@ -462,7 +461,8 @@ namespace AnalysisManager_Mage_PlugIn
                             if (colIndex == ionColumnIndex && lineParts[colIndex].IndexOf(".", StringComparison.OrdinalIgnoreCase) > 0)
                             {
                                 // This is the reporter ion m/z column
-                                // Round to three decimal places (since the MasterWorkflowSyn.xml file has m/z values rounded to three decimal places)
+                                // Round to three decimal places, since the MasterWorkflowSyn.xml file has m/z values rounded to three decimal places
+                                // Workflow file location: \\gigasax\DMS_Workflows\Ape\iTRAQ\MasterWorkflowSyn.xml
 
                                 if (!double.TryParse(lineParts[colIndex], out var mz))
                                 {

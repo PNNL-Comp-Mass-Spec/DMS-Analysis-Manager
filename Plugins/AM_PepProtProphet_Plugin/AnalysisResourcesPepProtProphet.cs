@@ -226,7 +226,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <remarks>
         /// Each _pepXML.zip file will also have a .pin file
         /// </remarks>
-        /// <param name="dataPackageInfo"></param>
+        /// <param name="dataPackageInfo">Data package info</param>
         private CloseOutType GetPepXMLFiles(DataPackageInfo dataPackageInfo)
         {
             // The ToolName job parameter holds the name of the job script we are executing
@@ -443,8 +443,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="paramFilePath"></param>
-        /// <param name="datasetCount"></param>
+        /// <param name="paramFilePath">Parameter file path</param>
+        /// <param name="datasetCount">Dataset count</param>
         /// <param name="options">Output: instance of the MSFragger options class</param>
         /// <returns>True if success, false if an error</returns>
         private bool LoadMSFraggerOptions(string paramFilePath, int datasetCount, out FragPipeOptions options)
@@ -476,7 +476,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Or it can have a separate alias name file for each experiment group. For example, AliasNames_CohortA.txt
         /// </para>
         /// </remarks>
-        /// <param name="dataPackageId"></param>
+        /// <param name="dataPackageId">Data package ID</param>
         private CloseOutType RetrieveAliasNameFiles(int dataPackageId)
         {
             try

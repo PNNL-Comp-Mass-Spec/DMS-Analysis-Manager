@@ -8,6 +8,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class AnalysisResourcesMAC : AnalysisResources
     {
+        // Ignore Spelling: mage
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

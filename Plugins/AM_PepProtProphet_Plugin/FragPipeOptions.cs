@@ -149,9 +149,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <remarks>
         /// philosopherExe can be null if the LibraryFinder property will not be accessed by the calling method
         /// </remarks>
-        /// <param name="jobParams"></param>
+        /// <param name="jobParams">Job parameters</param>
         /// <param name="philosopherExe">Path to philosopher.exe</param>
-        /// <param name="datasetCount"></param>
+        /// <param name="datasetCount">Dataset count</param>
         public FragPipeOptions(IJobParams jobParams, FileInfo philosopherExe, int datasetCount)
         {
             FraggerOptions = new MSFraggerOptions(jobParams);
@@ -291,7 +291,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="paramFilePath"></param>
+        /// <param name="paramFilePath">Parameter file path</param>
         /// <returns>True if success, false if an error</returns>
         public bool LoadMSFraggerOptions(string paramFilePath)
         {
