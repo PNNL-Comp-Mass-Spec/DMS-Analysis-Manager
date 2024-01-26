@@ -1350,8 +1350,10 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 // The FASTA file does not have decoy sequences
                 // MSFragger will be unable to optimize parameters and Peptide Prophet will likely fail
-                // Log a warning, which will be stored in the Evaluation_Message column in the database
-                LogWarning(warningMessage, true);
+                LogError(warningMessage, true);
+
+                // Abort processing
+                return false;
             }
 
             // Copy the FASTA file to the working directory
