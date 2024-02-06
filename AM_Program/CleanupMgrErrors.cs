@@ -230,7 +230,7 @@ namespace AnalysisManagerProg
             PRISM.AppUtils.GarbageCollectNow();
             Global.IdleLoop(actualHoldoffSeconds);
 
-            // Delete all of the files and directories in the work directory
+            // Delete all the files and directories in the work directory
             var workDir = new DirectoryInfo(workDirPath);
             return DeleteFilesWithRetry(workDir);
         }

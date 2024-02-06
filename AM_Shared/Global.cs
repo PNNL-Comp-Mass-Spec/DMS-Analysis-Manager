@@ -30,7 +30,7 @@ namespace AnalysisManagerBase
     /// </summary>
     public static class Global
     {
-        // Ignore Spelling: cmd, hashcheck, hyperthreading, prepending, Sql, Utc
+        // Ignore Spelling: addnl, App, cmd, hashcheck, hyperthreading, prepending, Pwd, Sng, Sql, Utc
 
         /// <summary>
         /// Job parameters file prefix
