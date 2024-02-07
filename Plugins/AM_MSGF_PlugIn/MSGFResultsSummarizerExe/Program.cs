@@ -219,7 +219,10 @@ namespace MSGFResultsSummarizerExe
                     }
                 }
 
-                var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName, false)
+                const int DEBUG_LEVEL = 1;
+                const string CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+
+                var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName, CONNECTION_STRING, DEBUG_LEVEL, false)
                 {
                     MSGFSpecEValueOrPEPThreshold = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD,
                     EValueThreshold = ResultsSummarizer.DEFAULT_EVALUE_THRESHOLD,
