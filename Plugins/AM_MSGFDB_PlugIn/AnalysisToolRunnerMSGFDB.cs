@@ -980,11 +980,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
 
-            // Setting MSGFPlusJavaMemorySize is stored in the settings file for this job
-            var javaMemorySizeMB = jobParams.GetJobParameter("MSGFPlusJavaMemorySize", 4000);
+            // In 2024 the default memory value was changed from 4000 MB to 8192 MB due to datasets having large scan counts over 100,000 scans
 
-            if (javaMemorySizeMB < 512)
-                javaMemorySizeMB = 512;
+            // Setting MSGFPlusJavaMemorySize is stored in the settings file for this job
+            var defaultJavaMemorySizeMB = jobParams.GetJobParameter("MSGFPlusJavaMemorySize", 8192);
+
+            if (defaultJavaMemorySizeMB < 4000)
+                defaultJavaMemorySizeMB = 4000;
 
             var fastaFileSizeKB = fastaFile.Length / 1024.0;
 

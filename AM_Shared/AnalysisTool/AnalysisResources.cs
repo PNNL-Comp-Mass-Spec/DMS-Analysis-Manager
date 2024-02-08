@@ -5543,7 +5543,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (logFreeMemoryOnSuccess)
             {
                 // Example messages:
-                //   MS-GF+ will use 4000 MB; system has 7296 MB available
+                //   MS-GF+ will use 8192 MB; system has 7296 MB available
                 //   MSFragger will use 23,552 MB; system has 90,696 MB available
 
                 var message = string.Format(
