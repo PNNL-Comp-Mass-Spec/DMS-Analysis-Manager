@@ -5392,23 +5392,26 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="filePath">Path to the file</param>
         /// <param name="fileDescription">File description, e.g. Synopsis</param>
-        /// <param name="errorMessage"></param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="skipHeaderRow">When true, assume the first row has column names</param>
         /// <returns>True if the file has data; otherwise false</returns>
-        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage)
+        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage, bool skipHeaderRow = false)
         {
             const int numericDataColIndex = 0;
-            return ValidateFileHasData(filePath, fileDescription, out errorMessage, numericDataColIndex);
+            return ValidateFileHasData(filePath, fileDescription, out errorMessage, numericDataColIndex, skipHeaderRow);
         }
 
         /// <summary>
-        /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value
+        /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the column given by numericDataColIndex
         /// </summary>
+        /// <remarks>Set numericDataColIndex to -1 to look for any data, optionally skipping the header row</remarks>
         /// <param name="filePath">Path to the file</param>
         /// <param name="fileDescription">File description, e.g. Synopsis</param>
-        /// <param name="errorMessage"></param>
+        /// <param name="errorMessage">Output: error message</param>
         /// <param name="numericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
+        /// <param name="skipHeaderRow">When true, assume the first row has column names</param>
         /// <returns>True if the file has data; otherwise false</returns>
-        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage, int numericDataColIndex)
+        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage, int numericDataColIndex, bool skipHeaderRow = false)
         {
             var dataFound = false;
 
@@ -5433,9 +5436,17 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Open the file and confirm it has data rows
                 using (var reader = new StreamReader(new FileStream(dataFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
+                    var headerSkipped = false;
+
                     while (!reader.EndOfStream && !dataFound)
                     {
                         var dataLine = reader.ReadLine();
+
+                        if (skipHeaderRow && !headerSkipped)
+                        {
+                            headerSkipped = true;
+                            continue;
+                        }
 
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
