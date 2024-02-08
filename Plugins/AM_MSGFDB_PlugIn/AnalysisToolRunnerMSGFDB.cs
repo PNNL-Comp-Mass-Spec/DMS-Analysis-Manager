@@ -444,11 +444,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
 
             // Possibly increase the Java memory size based on the size of the FASTA file size or the input file size
-            var javaMemorySizeMB = GetMemoryRequiredForFASTA(mJobParams, fastaFile, inputFile, inputFileDescription, out var warningMsg);
+            var javaMemorySizeMB = GetMemoryRequiredForFASTA(mJobParams, fastaFile, inputFile, inputFileDescription, out var warningMessage);
 
-            if (!string.IsNullOrEmpty(warningMsg))
+            if (!string.IsNullOrEmpty(warningMessage))
             {
-                LogWarning(warningMsg);
+                LogWarning(warningMessage);
             }
 
             // Set up and execute a program runner to run MS-GF+
@@ -975,7 +975,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // we ran the risk of one thread crashing and the results files missing the search results for the spectra assigned to that thread
             // For large _dta.txt files, 2000 MB of memory could easily be small enough to result in crashing threads
             // Consequently, the default was changed to 4000 MB
-            //
+
             // Furthermore, the 2016-Jan-21 release uses 128 search tasks (or 10 tasks per thread if over 12 threads),
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
@@ -988,6 +988,26 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (defaultJavaMemorySizeMB < 4000)
                 defaultJavaMemorySizeMB = 4000;
 
+            return GetMemoryRequiredForFASTA(defaultJavaMemorySizeMB, fastaFile, inputFile, inputFileDescription, out warningMessage);
+        }
+
+        /// <summary>
+        /// Determine the amount of memory to reserve for Java
+        /// </summary>
+        /// <remarks>Based on job parameter MSGFPlusJavaMemorySize, the FASTA file size, and optionally the input file size</remarks>
+        /// <param name="defaultJavaMemorySizeMB">Default memory size to reserve for Java, in MB</param>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="inputFile">Spectrum file; allowed to be null</param>
+        /// <param name="inputFileDescription">Description of the input file (or an empty string)</param>
+        /// <param name="warningMessage">Output: warning message</param>
+        /// <returns>Memory to reserve, in MB</returns>
+        public static int GetMemoryRequiredForFASTA(
+            int defaultJavaMemorySizeMB,
+            FileInfo fastaFile,
+            FileInfo inputFile,
+            string inputFileDescription,
+            out string warningMessage)
+        {
             var fastaFileSizeKB = fastaFile.Length / 1024.0;
 
             // Possibly increase the Java memory size based on the size of the FASTA file
@@ -1006,27 +1026,27 @@ namespace AnalysisManagerMSGFDBPlugIn
                 spectraBasedMinimumJavaMemoryMB = 3 * Global.BytesToMB(inputFile.Length) + 2250;
             }
 
-            int minimumJavaMemoryMB;
+            int javaMemoryMB;
 
-            if (fastaBasedMinimumJavaMemoryMB > javaMemorySizeMB && fastaBasedMinimumJavaMemoryMB > spectraBasedMinimumJavaMemoryMB)
+            if (fastaBasedMinimumJavaMemoryMB > defaultJavaMemorySizeMB && fastaBasedMinimumJavaMemoryMB > spectraBasedMinimumJavaMemoryMB)
             {
-                minimumJavaMemoryMB = (int)Math.Ceiling(fastaBasedMinimumJavaMemoryMB / 500.0) * 500;
+                javaMemoryMB = (int)Math.Ceiling(fastaBasedMinimumJavaMemoryMB / 500.0) * 500;
                 warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
-                    javaMemorySizeMB, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0);
+                    defaultJavaMemorySizeMB, javaMemoryMB, fastaFileSizeKB / 1024.0);
             }
-            else if (inputFile != null && spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
+            else if (inputFile != null && spectraBasedMinimumJavaMemoryMB > defaultJavaMemorySizeMB)
             {
-                minimumJavaMemoryMB = (int)Math.Ceiling(spectraBasedMinimumJavaMemoryMB / 500.0) * 500;
+                javaMemoryMB = (int)Math.Ceiling(spectraBasedMinimumJavaMemoryMB / 500.0) * 500;
                 warningMessage = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large {2} ({3:N0} MB)",
-                    javaMemorySizeMB, minimumJavaMemoryMB, inputFileDescription, Global.BytesToMB(inputFile.Length));
+                    defaultJavaMemorySizeMB, javaMemoryMB, inputFileDescription, Global.BytesToMB(inputFile.Length));
             }
             else
             {
-                minimumJavaMemoryMB = javaMemorySizeMB;
+                javaMemoryMB = defaultJavaMemorySizeMB;
                 warningMessage = string.Empty;
             }
 
-            return minimumJavaMemoryMB;
+            return javaMemoryMB;
         }
 
         private DateTime mLastConsoleOutputParse = DateTime.MinValue;
@@ -1088,7 +1108,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return;
 
             // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs or for jobs with large FASTA files)
-            // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
+            // If there is a large number results, we need to give MS-GF+ time to sort them prior to writing to disk
             // However, it is also possible that Java is frozen and thus the process should be aborted
 
             var warningMessage = string.Format(
