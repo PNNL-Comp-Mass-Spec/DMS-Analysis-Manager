@@ -23,7 +23,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class CreateMSGFDBSuffixArrayFiles : EventNotifier
     {
-        // Ignore Spelling: canno, cp, programmatically, tda, Utc, Xmx
+        // Ignore Spelling: canno, cp, fasta, Loc, msgf, Prog, programmatically, tda, Utc, Xmx
 
         private const string MSGF_PLUS_INDEX_FILE_INFO_SUFFIX = ".MSGFPlusIndexFileInfo";
 
@@ -384,9 +384,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Convert the FASTA file to indexed DB files compatible with MSGFPlus
         /// Will copy the files from msgfPlusIndexFilesDirPathBase if they exist
         /// </summary>
-        /// <param name="logFileDir"></param>
+        /// <param name="logFileDir">Log file directory</param>
         /// <param name="debugLevel">1 for normal, 2 for more verbose, 5 for the most verbose</param>
-        /// <param name="javaProgLoc"></param>
+        /// <param name="javaProgLoc">Path to Java executable</param>
         /// <param name="msgfPlusProgLoc">Path to the MS-GF+ .jar file</param>
         /// <param name="fastaFilePath">FASTA file path (on the local computer)</param>
         /// <param name="fastaFileIsDecoy">
@@ -399,9 +399,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// (.fasta files not created from the protein sequences database)
         /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        public CloseOutType CreateSuffixArrayFiles(string logFileDir, short debugLevel, string javaProgLoc, string msgfPlusProgLoc,
-                                                   string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesDirPathBase,
-                                                   string msgfPlusIndexFilesDirPathLegacyDB)
+        public CloseOutType CreateSuffixArrayFiles(
+            string logFileDir, short debugLevel, string javaProgLoc, string msgfPlusProgLoc,
+            string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesDirPathBase,
+            string msgfPlusIndexFilesDirPathLegacyDB)
         {
             const float MAX_WAIT_TIME_HOURS = 1.0f;
 
