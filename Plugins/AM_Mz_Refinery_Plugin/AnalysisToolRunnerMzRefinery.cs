@@ -416,7 +416,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Get the FASTA file and index it if necessary
             // Note: if the FASTA file is over 50 MB in size, only use the first 50 MB
 
-            // Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
+            // Passing in the path to the parameter file so that we can look for TDA=0 when using large FASTA files
             var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetJobParameter("MzRefParamFile", string.Empty));
             var javaExePath = javaProgLoc;
             var msgfplusJarFilePath = mMSGFPlusProgLoc;
@@ -502,12 +502,23 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (defaultJavaMemorySizeMB < 4000)
                 defaultJavaMemorySizeMB = 4000;
 
+            var fastaFile = new FileInfo(fastaFilePath);
+            var inputFileName = mDatasetName + msXmlFileExtension;
+            var inputFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
+            var inputFileDescription = string.Format("{0} file", msXmlFileExtension);
+
+            var javaMemorySizeMB = AnalysisToolRunnerMSGFDB.GetMemoryRequiredForFASTA(defaultJavaMemorySizeMB, fastaFile, inputFile, inputFileDescription, out var warningMessage);
+
+            if (!string.IsNullOrEmpty(warningMessage))
+            {
+                LogWarning(warningMessage);
+            }
 
             // Set up and execute a program runner to run MS-GF+
             var arguments =
-                " -Xmx" + javaMemorySize + "M" +
+                " -Xmx" + javaMemorySizeMB + "M" +
                 " -jar " + msgfplusJarFilePath +
-                " -s " + mDatasetName + msXmlFileExtension +
+                " -s " + inputFileName +
                 " -o " + msgfPlusResults.Name +
                 " -d " + PossiblyQuotePath(fastaFilePath) +
                 " -conf " + finalParamFile.Name;
@@ -515,7 +526,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Make sure the machine has enough free memory to run MS-GF+
             var logFreeMemoryOnSuccess = mDebugLevel >= 1;
 
-            if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MS-GF+", logFreeMemoryOnSuccess))
+            if (!AnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MS-GF+", logFreeMemoryOnSuccess))
             {
                 mInsufficientFreeMemory = true;
 
