@@ -55,7 +55,8 @@ namespace AnalysisManagerDiaNNPlugIn
             FileCopyError = 4,
             FileRenameError = 5,
             LibraryNotCreated = 6,
-            MultipleLibrariesCreated = 7
+            MultipleLibrariesCreated = 7,
+            NoFilterPassingResults = 8
         }
 
         private enum ProgressPercentValues
@@ -1206,19 +1207,33 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Verify that the expected output file(s) were created
 
                 bool validResults;
+                bool emptyResultsFile;
 
                 if (mBuildingSpectralLibrary)
                 {
                     validResults = ValidateSpectralLibraryOutputFile(spectralLibraryFile, out completionCode);
+                    emptyResultsFile = !validResults;
                 }
                 else
                 {
-                    validResults = ValidateSearchResultFiles();
-                    completionCode = LibraryCreationCompletionCode.Success;
+                    validResults = ValidateSearchResultFiles(out emptyResultsFile);
+
+                    if (emptyResultsFile)
+                    {
+                        completionCode = LibraryCreationCompletionCode.NoFilterPassingResults;
+                        LogError("No filter-passing results");
+                    }
+                    else
+                    {
+                        completionCode = LibraryCreationCompletionCode.Success;
+                    }
                 }
 
                 mStatusTools.UpdateAndWrite(mProgress);
                 LogDebug("DIA-NN Search Complete", mDebugLevel);
+
+                if (emptyResultsFile)
+                    return CloseOutType.CLOSEOUT_NO_DATA;
 
                 return validResults ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1453,36 +1468,42 @@ namespace AnalysisManagerDiaNNPlugIn
             return true;
         }
 
-        private bool ValidateSearchResultFiles()
+        private bool ValidateSearchResultFiles(out bool emptyResultsFile)
         {
             var reportFile = GetDiannResultsFilePath("report.tsv");
             var reportStatsFile = GetDiannResultsFilePath("report.stats.tsv");
             var reportPdfFile = GetDiannResultsFilePath("report.pdf");
 
-            bool validResults;
-
             if (!reportFile.Exists)
             {
                 // report.tsv file not created by DIA-NN
                 LogError(string.Format("{0} file not created by DIA-NN", reportFile.Name));
-                validResults = false;
+                emptyResultsFile = false;
+                return false;
             }
-            else
+
+            if (!AnalysisResources.ValidateFileHasData(reportFile.FullName, "DIA-NN report.tsv", out var errorMessage, -1, true))
             {
-                // Use the DIA-NN plotter to create the PDF report
-                validResults = GeneratePdfReport(reportFile, reportStatsFile, reportPdfFile);
+                LogWarning(errorMessage);
+                emptyResultsFile = true;
+                return true;
+            }
+
+            emptyResultsFile = false;
+
+            // Use the DIA-NN plotter to create the PDF report
+            var validResults = GeneratePdfReport(reportFile, reportStatsFile, reportPdfFile);
+
+            if (!reportPdfFile.Exists)
+            {
+                // report.pdf file not created by DIA-NN-plotter
+                LogWarning("{0} file not created by DIA-NN-plotter", reportPdfFile.Name);
             }
 
             if (!reportStatsFile.Exists)
             {
                 // report.stats.tsv file not created by DIA-NN
                 LogWarning("{0} file not created by DIA-NN", reportStatsFile.Name);
-            }
-
-            if (!reportPdfFile.Exists)
-            {
-                // report.pdf file not created by DIA-NN
-                LogWarning("{0} file not created by DIA-NN", reportPdfFile.Name);
             }
 
             return validResults;
