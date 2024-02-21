@@ -1613,26 +1613,33 @@ namespace MSGFResultsSummarizer
                     string datasetIdOrName;
                     string scanKey;
 
+                    // Create a scan key using scan number and charge state, plus optionally dataset ID (or name)
+
+                    // Prior to 2024-02-21, we ignored charge state
+
+                    // However, since DIA-NN and other tools can confidently identify multiple peptides in a single scan,
+                    // especially for DIA data, we now include charge state when tracking distinct spectra
+
                     switch (ResultType)
                     {
                         case PeptideHitResultTypes.DiaNN:
                             datasetIdOrName = GetDiaNNDatasetIdOrName(currentPSM);
-                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            scanKey = string.Format("{0}_{1}_{2}", datasetIdOrName, currentPSM.ScanNumber, currentPSM.Charge);
                             break;
 
                         case PeptideHitResultTypes.MaxQuant:
                             datasetIdOrName = GetMaxQuantDatasetIdOrName(currentPSM);
-                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            scanKey = string.Format("{0}_{1}_{2}", datasetIdOrName, currentPSM.ScanNumber, currentPSM.Charge);
                             break;
 
                         case PeptideHitResultTypes.MSFragger:
                             datasetIdOrName = GetMSFraggerDatasetIdOrName(currentPSM);
-                            scanKey = string.Format("{0}_{1}", datasetIdOrName, currentPSM.ScanNumber);
+                            scanKey = string.Format("{0}_{1}_{2}", datasetIdOrName, currentPSM.ScanNumber, currentPSM.Charge);
                             break;
 
                         default:
                             datasetIdOrName = string.Empty;
-                            scanKey = currentPSM.ScanNumber.ToString();
+                            scanKey = string.Format("{0}_{1}", currentPSM.ScanNumber, currentPSM.Charge);
                             break;
                     }
 
