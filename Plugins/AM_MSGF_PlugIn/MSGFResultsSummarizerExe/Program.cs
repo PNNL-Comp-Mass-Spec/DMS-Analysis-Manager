@@ -23,7 +23,7 @@ namespace MSGFResultsSummarizerExe
     {
         // Ignore Spelling: msgfdb, mspath, Phosphopeptides, Tryptic, xt
 
-        private const string PROGRAM_DATE = "September 27, 2023";
+        private const string PROGRAM_DATE = "February 21, 2024";
 
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputDirectoryPath = string.Empty;
@@ -447,7 +447,7 @@ namespace MSGFResultsSummarizerExe
                 Console.WriteLine("Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics");
                 Console.WriteLine();
 
-                // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                // Delay for 750 msec in case the user double-clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(750);
             }
             catch (Exception ex)

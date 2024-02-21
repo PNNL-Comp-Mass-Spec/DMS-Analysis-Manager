@@ -1479,7 +1479,7 @@ namespace MSGFResultsSummarizer
         /// Loads the PSMs (peptide identification for each scan)
         /// Normalizes the peptide sequence (mods are tracked, but no longer associated with specific residues) and populates normalizedPSMs
         /// </summary>
-        /// <param name="synopsisFilePath"></param>
+        /// <param name="synopsisFilePath">Synopsis file path</param>
         /// <param name="normalizedPSMs">Dictionary where keys are Sequence ID and values are PSMInfo objects</param>
         /// <param name="seqToProteinMap">Dictionary where keys are sequence ID and values are a list of protein info</param>
         /// <param name="sequenceInfo">Dictionary where keys are sequence ID and values are information about the sequence</param>

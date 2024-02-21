@@ -79,7 +79,7 @@ namespace AnalysisManagerProg
                         return 0;
                     }
 
-                    // Delay for 1500 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                    // Delay for 1500 msec in case the user double-clicked this file from within Windows Explorer (or started the program via a shortcut)
                     Thread.Sleep(1500);
                     return -1;
                 }
