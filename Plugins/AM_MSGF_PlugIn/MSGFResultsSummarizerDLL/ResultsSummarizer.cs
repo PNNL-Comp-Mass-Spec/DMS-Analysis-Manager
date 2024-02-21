@@ -4,11 +4,9 @@
 //
 // Created 02/14/2012
 //
-// This class reads an MS-GF+ results file and accompanying peptide/protein map file
-// to count the number of peptides passing a given MSGF threshold
-//
-// Reports PSM count, unique peptide count, and unique protein count
-//
+// This class reads a synopsis file (and other related files) created by the Peptide Hit Results Processor for MS-GF+, MaxQuant, MSFragger, etc. results.
+// It counts the number of peptides and proteins passing either a given MSGF threshold or a given QValue (FDR) threshold.
+// It reports PSM count, unique peptide count, and unique protein count, while also tracking phosphopeptides, Keratin peptides, etc.
 //*********************************************************************************************************
 
 using PHRPReader;
@@ -32,8 +30,8 @@ namespace MSGFResultsSummarizer
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Acetyl, Cntm, evalue, gi, itrac, MODa, msgf
-        // Ignore Spelling: peptides, phosph, phospho, phosphopeptide, phosphopeptides, plex, psm
+        // Ignore Spelling: Acetyl, acetylated, Cntm, evalue, gi, itrac, MODa, msgf
+        // Ignore Spelling: peptides, phosph, phospho, phosphopeptide, phosphopeptides, plex, Postgres, psm
         // Ignore Spelling: sp, structs, Tpro, Trypa, tryptic, udt, uni, xxx
 
         // ReSharper restore CommentTypo
@@ -145,7 +143,7 @@ namespace MSGFResultsSummarizer
         public string DatasetName { get; set; }
 
         /// <summary>
-        /// Set this to false to disable contacting DMS to look up scan stats for the dataset
+        /// If this is false, DMS will not be contacted to look up scan stats for the dataset
         /// </summary>
         /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
         public bool ContactDatabase { get; set; }
@@ -614,7 +612,7 @@ namespace MSGFResultsSummarizer
             var success = false;
             bool filterPSMs;
 
-            // Make sure .PassesFilter is false for all of the observations
+            // Make sure .PassesFilter is false for all the observations
             foreach (var kvEntry in normalizedPSMs)
             {
                 foreach (var observation in kvEntry.Value.Observations.Where(observation => observation.PassesFilter))
@@ -1191,7 +1189,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Float, value: psmResults.PercentPSMsMissingReporterIon);
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
 
-                // Execute the SP (retry the call up to 3 times)
+                // Execute the SP (retry the call if it fails, up to 3 times)
                 var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);

@@ -90,7 +90,7 @@
         public float MissedCleavageRatioPhospho { get; set; }
 
         /// <summary>
-        /// Unique number of filter-passing peptides that are fully or partially tryptic (filtered using the FDR threshold))
+        /// Unique number of filter-passing peptides that are fully or partially tryptic (filtered using the FDR threshold)
         /// </summary>
         public int TrypticPeptides { get; set; }
 

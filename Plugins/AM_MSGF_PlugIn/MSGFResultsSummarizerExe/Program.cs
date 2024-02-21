@@ -3,7 +3,7 @@
 //
 // -------------------------------------------------------------------------------
 // Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-// Program started in February, 2012
+// Program started in February 2012
 //
 // E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
 // Website: https://github.com/PNNL-Comp-Mass-Spec/ or https://panomics.pnnl.gov/ or https://www.pnnl.gov/integrative-omics
@@ -220,6 +220,8 @@ namespace MSGFResultsSummarizerExe
                 }
 
                 const int DEBUG_LEVEL = 1;
+
+                // ReSharper disable once StringLiteralTypo
                 const string CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
 
                 var summarizer = new ResultsSummarizer(resultType, mDatasetName, mJob, sourceFile.Directory.FullName, CONNECTION_STRING, DEBUG_LEVEL, false)
