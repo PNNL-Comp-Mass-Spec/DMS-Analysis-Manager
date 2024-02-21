@@ -144,7 +144,7 @@
             var scanCountAdded = psmResults.SpectraSearched;
 
             var originalTotalPSMs = TotalPSMs;
-            var psmsAdded = psmResults.TotalPSMs;
+            var psmCountAdded = psmResults.TotalPSMs;
 
             SpectraSearched += psmResults.SpectraSearched;
             TotalPSMs += psmResults.TotalPSMs;
@@ -163,16 +163,16 @@
             UniquePhosphopeptidesCTermK += psmResults.UniquePhosphopeptidesCTermK;
             UniquePhosphopeptidesCTermR += psmResults.UniquePhosphopeptidesCTermR;
 
-            MissedCleavageRatio = UpdatePercent(MissedCleavageRatio, originalTotalPSMs, psmsAdded, psmResults.MissedCleavageRatio);
+            MissedCleavageRatio = UpdatePercent(MissedCleavageRatio, originalTotalPSMs, psmCountAdded, psmResults.MissedCleavageRatio);
 
-            MissedCleavageRatioPhospho = UpdatePercent(MissedCleavageRatioPhospho, originalTotalPSMs, psmsAdded, psmResults.MissedCleavageRatioPhospho);
+            MissedCleavageRatioPhospho = UpdatePercent(MissedCleavageRatioPhospho, originalTotalPSMs, psmCountAdded, psmResults.MissedCleavageRatioPhospho);
 
             TrypticPeptides += psmResults.TrypticPeptides;
             KeratinPeptides += psmResults.KeratinPeptides;
             TrypsinPeptides += psmResults.TrypsinPeptides;
 
-            PercentPSMsMissingNTermReporterIon = UpdatePercent(PercentPSMsMissingNTermReporterIon, originalTotalPSMs, psmsAdded, psmResults.PercentPSMsMissingNTermReporterIon);
-            PercentPSMsMissingReporterIon = UpdatePercent(PercentPSMsMissingReporterIon, originalTotalPSMs, psmsAdded, psmResults.PercentPSMsMissingReporterIon);
+            PercentPSMsMissingNTermReporterIon = UpdatePercent(PercentPSMsMissingNTermReporterIon, originalTotalPSMs, psmCountAdded, psmResults.PercentPSMsMissingNTermReporterIon);
+            PercentPSMsMissingReporterIon = UpdatePercent(PercentPSMsMissingReporterIon, originalTotalPSMs, psmCountAdded, psmResults.PercentPSMsMissingReporterIon);
 
             UniqueAcetylPeptidesFDR += psmResults.UniqueAcetylPeptidesFDR;
         }
