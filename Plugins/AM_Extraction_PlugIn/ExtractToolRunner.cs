@@ -2992,6 +2992,12 @@ namespace AnalysisManagerExtractionPlugin
                 LogDebug("Determining tool version info");
             }
 
+            // Lookup the version of AnalysisManager Extraction Plugin
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerExtractionPlugin"))
+            {
+                return false;
+            }
+
             // Lookup the version of the PeptideHitResultsProcessor
 
             try
