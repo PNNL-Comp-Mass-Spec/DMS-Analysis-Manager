@@ -483,8 +483,14 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
+                // If the tool name is MSGFPlus_MzML, use MSGFPlus when querying V_Job_Steps_Export
+
+                var toolNameToUse = toolName.EndsWith("_MzML", StringComparison.OrdinalIgnoreCase)
+                    ? toolName.Substring(0, toolName.Length - "_MzML".Length)
+                    : toolName;
+
                 var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-                var sqlWhere = string.Format("job = {0} AND tool LIKE '%{1}%' AND (Coalesce(input_folder, '') <> '')", jobNumber, toolName);
+                var sqlWhere = string.Format("job = {0} AND tool LIKE '%{1}%' AND (Coalesce(input_folder, '') <> '')", jobNumber, toolNameToUse);
 
                 var serverType = DbToolsFactory.GetServerTypeFromConnectionString(connectionString);
 
@@ -504,13 +510,12 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (!success || firstSharedResultsDirectory.Count == 0)
                 {
-                    LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps_Export or V_Job_Steps_History_Export");
+                    LogTools.LogError("Cannot determine shared results directory; match not found for job " + jobNumber + " and tool " + toolNameToUse + " in V_Job_Steps_Export or V_Job_Steps_History_Export");
                     return string.Empty;
                 }
 
                 // Return the first column (the Input_Folder name)
-                var sharedResultsDirectory = firstSharedResultsDirectory.First();
-                return sharedResultsDirectory;
+                return firstSharedResultsDirectory.First();
             }
             catch (Exception ex)
             {
