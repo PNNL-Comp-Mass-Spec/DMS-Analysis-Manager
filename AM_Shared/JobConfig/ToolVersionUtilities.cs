@@ -740,7 +740,17 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    name = fileVersionInfo.InternalName;
+                    if (binaryFile.Name.Equals("MaxQuantCmd.exe", StringComparison.OrdinalIgnoreCase) &&
+                        fileVersionInfo.InternalName.Equals("MaxQuantCmd.dll", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Starting with MaxQuant 2.5.0, the FileDescription for MaxQuantCmd.exe is simply a space, and the internal name is "MaxQuantCmd.dll"
+                        // For older versions, the FileDescription was "MaxQuantCmd", so use that instead of "MaxQuantCmd.dll"
+                        name = "MaxQuantCmd";
+                    }
+                    else
+                    {
+                        name = fileVersionInfo.InternalName;
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(name))
