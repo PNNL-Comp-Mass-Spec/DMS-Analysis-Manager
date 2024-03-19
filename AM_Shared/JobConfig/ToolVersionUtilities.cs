@@ -738,34 +738,35 @@ namespace AnalysisManagerBase.JobConfig
 
                 var name = fileVersionInfo.FileDescription;
 
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrWhiteSpace(name))
                 {
                     name = fileVersionInfo.InternalName;
                 }
 
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrWhiteSpace(name))
                 {
                     name = fileVersionInfo.FileName;
                 }
 
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrWhiteSpace(name))
                 {
                     name = binaryFile.Name;
                 }
 
                 var version = fileVersionInfo.FileVersion;
 
-                if (string.IsNullOrEmpty(version))
+                if (string.IsNullOrWhiteSpace(version))
                 {
                     version = fileVersionInfo.ProductVersion;
                 }
 
-                if (string.IsNullOrEmpty(version))
+                if (string.IsNullOrWhiteSpace(version))
                 {
                     version = "??";
                 }
 
-                var nameAndVersion = name + ", Version=" + version;
+                var nameAndVersion = string.Format("{0}, Version={1}", name, version);
+
                 toolVersionInfo = Global.AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
