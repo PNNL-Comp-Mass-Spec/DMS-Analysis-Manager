@@ -285,7 +285,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             // Example Console output for version 1.7 and later
             //
-            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-num 2 --variable-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
+            // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-num 2 --local-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
             // --------------------------------------------------------------------------------
             // Total thread number: 16
             // Total memory: 31.69 GiB
@@ -720,8 +720,9 @@ namespace AnalysisManagerTopPICPlugIn
                     if (!success)
                         return false;
 
-                    // Append --fixed-mod ModsFilePath
-                    // or     --mod-file-name ModsFilePath
+                    // Append --local-ptm-file-name ModsFilePath
+                    // Prior to TopPIC v1.7 the argument name was "--mod-file-name", and even older versions used "--fixed-mod"
+
                     cmdLineArguments.AppendFormat(" --{0} {1} ", modArgumentSwitch, modsFilePath);
                 }
 
@@ -902,7 +903,11 @@ namespace AnalysisManagerTopPICPlugIn
             }
 
             // Create the static and dynamic modification file(s) if any static or dynamic mods are defined
-            // Will also update cmdLineOptions to have --fixed-mod and/or --variable-ptm-file-name  (prior to v1.7 the flag was "--mod-file-name")
+            // Will also update cmdLineOptions to have --fixed-mod and/or --local-ptm-file-name
+
+            // Prior to v1.7.x we used "--mod-file-name" instead of "--local-ptm-file-name"
+            // When this method was first updated to v1.7, it used "--variable-ptm-file-name" for the mod file name, but the correct argument name to use is "--local-ptm-file-name"
+
             if (!ParseTopPICModifications(cmdLineArguments, staticMods, "static", STATIC_MODS_FILE_NAME, "fixed-mod"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -913,7 +918,7 @@ namespace AnalysisManagerTopPICPlugIn
             if (mTopPICVersion >= new Version(1, 7))
             {
                 cmdLineArguments.AppendFormat(" --variable-ptm-num {0}", maxDynamicMods);
-                variableModsArgName = "variable-ptm-file-name";
+                variableModsArgName = "local-ptm-file-name";
             }
             else
             {
