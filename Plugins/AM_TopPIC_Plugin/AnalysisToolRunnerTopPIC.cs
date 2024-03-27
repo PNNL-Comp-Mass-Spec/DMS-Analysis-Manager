@@ -256,7 +256,8 @@ namespace AnalysisManagerTopPICPlugIn
                 {"ProteoformCutoffValue", "proteoform-cutoff-value"},
                 {"Decoy", "decoy"},
                 {"NTerminalProteinForms", "n-terminal-form"},
-                {"KeepTempFiles", "keep-temp-files"}
+                {"KeepTempFiles", "keep-temp-files"},
+                {"DisableHtmlOutput", "skip-html-folder"}
             };
 
             if (useSeparateErrorTolerances)
@@ -738,8 +739,9 @@ namespace AnalysisManagerTopPICPlugIn
         /// </summary>
         /// <param name="fastaFileIsDecoy">The plugin will set this to true if the FASTA file is a forward+reverse FASTA file</param>
         /// <param name="cmdLineArguments">Output: TopPIC command line arguments</param>
+        /// <param name="htmlOutputDisabled">Output: True if the parameter file has DisableHtmlOutput=True</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out StringBuilder cmdLineArguments)
+        public CloseOutType ParseTopPICParameterFile(bool fastaFileIsDecoy, out StringBuilder cmdLineArguments, out bool htmlOutputDisabled)
         {
             const string STATIC_MODS_FILE_NAME = "TopPIC_Static_Mods.txt";
             const string DYNAMIC_MODS_FILE_NAME = "TopPIC_Dynamic_Mods.txt";
@@ -752,6 +754,7 @@ namespace AnalysisManagerTopPICPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                htmlOutputDisabled = false;
                 return result;
             }
 
@@ -772,10 +775,13 @@ namespace AnalysisManagerTopPICPlugIn
                 "DynamicMod",
                 "NTerminalProteinForms",
                 "Decoy",
-                "KeepTempFiles"
+                "KeepTempFiles",
+                "DisableHtmlOutput"
             };
 
             cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
+
+            htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
 
             if (cmdLineArguments.Length == 0)
             {
@@ -814,15 +820,27 @@ namespace AnalysisManagerTopPICPlugIn
                 // Please set the thread number to 6 or the program may crash.
             }
 
-            // Arguments in this list are appended as --decoy or --keep-temp-files and not as "--decoy true" or "--keep-temp-files true"
+            // Arguments referenced in the following for loop are appended as --decoy or --keep-temp-files and not as "--decoy true" or "--keep-temp-files true"
             // Append these if set to true in the parameter file
-            var extraArguments = new List<string> { "Decoy", "KeepTempFiles" };
 
-            foreach (var optionalArgument in extraArguments)
+            foreach (var paramName in new List<string> { "Decoy", "KeepTempFiles", "DisableHtmlOutput" })
             {
-                if (paramFileReader.ParamIsEnabled(paramFileEntries, optionalArgument))
+                if (!paramFileReader.ParamIsEnabled(paramFileEntries, paramName))
+                    continue;
+
+                if (paramToArgMapping.TryGetValue(paramName, out var argumentName))
                 {
-                    cmdLineArguments.AppendFormat(" --{0}", paramToArgMapping[optionalArgument]);
+                    cmdLineArguments.AppendFormat(" --{0}", argumentName);
+                }
+                else
+                {
+                    // Example error messages:
+                    //   Parameter to argument mapping dictionary does not have Decoy
+                    //   Parameter to argument mapping dictionary does not have KeepTempFiles
+                    //   Parameter to argument mapping dictionary does not have DisableHtmlOutput
+
+                    LogError(string.Format("Parameter to argument mapping dictionary does not have {0}", paramName));
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
@@ -926,7 +944,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Set up and execute a program runner to run TopPIC
             // By default uses just one core; limit the number of cores to 4 with "--thread-number 4"
 
-            var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineArguments);
+            var result = ParseTopPICParameterFile(fastaFileIsDecoy, out var cmdLineArguments, out var htmlOutputDisabled);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -1002,8 +1020,9 @@ namespace AnalysisManagerTopPICPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Validate the results files and zip the html subdirectories
-            var processingError = !ValidateAndZipResults(msAlignFiles, out var noValidResults);
+            // Validate the results files and zip the HTML subdirectories
+            // The HTML directories will not exist if the parameter file has "DisableHtmlOutput=True"
+            var processingError = !ValidateAndZipResults(msAlignFiles, htmlOutputDisabled, out var noValidResults);
 
             if (processingError)
             {
@@ -1199,9 +1218,10 @@ namespace AnalysisManagerTopPICPlugIn
         /// TopPIC 1.2 creates .csv files ending with "_ms2_toppic_prsm.csv" and "_ms2_toppic_proteoform.csv"
         /// </remarks>
         /// <param name="msAlignFiles">List of .msalign files</param>
+        /// <param name="htmlOutputDisabled">True if the parameter file has DisableHtmlOutput=True</param>
         /// <param name="noValidResults">Output: true if no valid results were found</param>
         /// <returns>True if success, false if an error</returns>
-        private bool ValidateAndZipResults(List<FileInfo> msAlignFiles, out bool noValidResults)
+        private bool ValidateAndZipResults(List<FileInfo> msAlignFiles, bool htmlOutputDisabled, out bool noValidResults)
         {
             noValidResults = false;
 
@@ -1448,7 +1468,7 @@ namespace AnalysisManagerTopPICPlugIn
                         directoriesZipped++;
                 }
 
-                if (directoriesZipped >= 1)
+                if (directoriesZipped >= 1 || htmlOutputDisabled)
                 {
                     return validResults;
                 }

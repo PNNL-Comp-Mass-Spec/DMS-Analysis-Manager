@@ -119,25 +119,27 @@ namespace AnalysisManagerTopFDPlugIn
 
                 CloseOutType processingResult;
                 bool zipSubdirectories;
+                bool htmlOutputDisabled;
 
                 if (!string.IsNullOrWhiteSpace(existingTopFDResultsDirectory))
                 {
                     processingResult = RetrieveExistingTopFDResults(existingTopFDResultsDirectory);
                     zipSubdirectories = false;
+                    htmlOutputDisabled = false;
                 }
                 else
                 {
                     mMzMLInstrumentIdAdjustmentRequired = false;
                     var mzMLFileName = Dataset + AnalysisResources.DOT_MZML_EXTENSION;
 
-                    processingResult = StartTopFD(mTopFDProgLoc, mzMLFileName);
+                    processingResult = StartTopFD(mTopFDProgLoc, mzMLFileName, out htmlOutputDisabled);
 
                     if (mMzMLInstrumentIdAdjustmentRequired)
                     {
                         var updatedMzMLFileName = UpdateInstrumentInMzMLFile(mzMLFileName);
                         mConsoleOutputErrorMsg = string.Empty;
 
-                        processingResult = StartTopFD(mTopFDProgLoc, updatedMzMLFileName);
+                        processingResult = StartTopFD(mTopFDProgLoc, updatedMzMLFileName, out _);
                     }
                     zipSubdirectories = true;
                 }
@@ -167,7 +169,7 @@ namespace AnalysisManagerTopFDPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = CopyResultsToTransferDirectory(zipSubdirectories);
+                var success = CopyResultsToTransferDirectory(zipSubdirectories, htmlOutputDisabled);
 
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -186,12 +188,13 @@ namespace AnalysisManagerTopFDPlugIn
         /// Next, Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
         /// <param name="zipSubdirectories"></param>
+        /// <param name="htmlOutputDisabled"></param>
         /// <returns>True if success, otherwise false</returns>
-        private bool CopyResultsToTransferDirectory(bool zipSubdirectories)
+        private bool CopyResultsToTransferDirectory(bool zipSubdirectories, bool htmlOutputDisabled)
         {
             if (zipSubdirectories)
             {
-                var zipSuccess = ZipTopFDDirectories();
+                var zipSuccess = ZipTopFDDirectories(htmlOutputDisabled);
 
                 if (!zipSuccess)
                     return false;
@@ -205,7 +208,7 @@ namespace AnalysisManagerTopFDPlugIn
         /// </summary>
         private Dictionary<string, string> GetTopFDParameterNames()
         {
-            var paramToArgMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"MaxCharge", "max-charge"},
                 {"MaxMass", "max-mass"},
@@ -215,9 +218,8 @@ namespace AnalysisManagerTopFDPlugIn
                 {"SNRatioMS2", "ms-two-sn-ratio"},
                 {"PrecursorWindow", "precursor-window"},
                 {"MS1Missing", "missing-level-one"},
+                {"DisableHtmlOutput", "skip-html-folder"}
             };
-
-            return paramToArgMapping;
         }
 
         /// <summary>
@@ -381,9 +383,10 @@ namespace AnalysisManagerTopFDPlugIn
         /// Read the TopFD options file and convert the options to command line switches
         /// </summary>
         /// <param name="cmdLineArguments">Output: TopFD command line arguments</param>
-        /// <param name="threadCount">Output: TopFD command line arguments</param>
+        /// <param name="htmlOutputDisabled">Output: True if the parameter file has DisableHtmlOutput=True</param>
+        /// <param name="threadCount">Output: thread count to use</param>
         /// <returns>Options string if success; empty string if an error</returns>
-        public CloseOutType ParseTopFDParameterFile(out StringBuilder cmdLineArguments, out int threadCount)
+        public CloseOutType ParseTopFDParameterFile(out StringBuilder cmdLineArguments, out bool htmlOutputDisabled, out int threadCount)
         {
             cmdLineArguments = new StringBuilder();
 
@@ -394,6 +397,7 @@ namespace AnalysisManagerTopFDPlugIn
             if (string.IsNullOrWhiteSpace(parameterFileName))
             {
                 LogError("TopFD parameter file not defined in the job settings (param name TopFD_ParamFile)");
+                htmlOutputDisabled = false;
                 threadCount = 0;
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -402,18 +406,23 @@ namespace AnalysisManagerTopFDPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                htmlOutputDisabled = false;
                 threadCount = 0;
                 return result;
             }
 
             // Obtain the dictionary that maps parameter names to argument names
             var paramToArgMapping = GetTopFDParameterNames();
+
             var paramNamesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase)
             {
-                "MS1Missing"
+                "MS1Missing",
+                "DisableHtmlOutput"
             };
 
             cmdLineArguments.Append(paramFileReader.ConvertParamsToArgs(paramFileEntries, paramToArgMapping, paramNamesToSkip, "--"));
+
+            htmlOutputDisabled = paramFileReader.ParamIsEnabled(paramFileEntries, "DisableHtmlOutput");
 
             if (cmdLineArguments.Length == 0)
             {
@@ -422,15 +431,23 @@ namespace AnalysisManagerTopFDPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (paramFileReader.ParamIsEnabled(paramFileEntries, "MS1Missing"))
+            // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var paramName in paramNamesToSkip)
             {
-                if (paramToArgMapping.TryGetValue("MS1Missing", out var argumentName))
+                if (!paramFileReader.ParamIsEnabled(paramFileEntries, paramName))
+                    continue;
+
+                if (paramToArgMapping.TryGetValue(paramName, out var argumentName))
                 {
                     cmdLineArguments.AppendFormat(" --{0}", argumentName);
                 }
                 else
                 {
-                    LogError("Parameter to argument mapping dictionary does not have MS1Missing");
+                    // Example error messages:
+                    //   Parameter to argument mapping dictionary does not have MS1Missing
+                    //   Parameter to argument mapping dictionary does not have DisableHtmlOutput
+
+                    LogError(string.Format("Parameter to argument mapping dictionary does not have {0}", paramName));
                     threadCount = 0;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -546,11 +563,11 @@ namespace AnalysisManagerTopFDPlugIn
             }
         }
 
-        private CloseOutType StartTopFD(string progLoc, string mzMLFileName)
+        private CloseOutType StartTopFD(string progLoc, string mzMLFileName, out bool htmlOutputDisabled)
         {
             LogMessage("Running TopFD");
 
-            var result = ParseTopFDParameterFile(out var cmdLineArguments, out var threadCount);
+            var result = ParseTopFDParameterFile(out var cmdLineArguments, out htmlOutputDisabled, out var threadCount);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -965,16 +982,20 @@ namespace AnalysisManagerTopFDPlugIn
             }
         }
 
-        private bool ZipTopFDDirectories()
+        private bool ZipTopFDDirectories(bool htmlOutputDisabled)
         {
             var currentDirectory = "?undefined?";
 
             try
             {
                 var subdirectoriesToZip = new List<string> {
-                    Dataset + "_file",
-                    Dataset + "_html"
+                    Dataset + "_file"
                 };
+
+                if (!htmlOutputDisabled)
+                {
+                    subdirectoriesToZip.Add(Dataset + "_html");
+                }
 
                 foreach (var subdirectoryName in subdirectoriesToZip)
                 {
