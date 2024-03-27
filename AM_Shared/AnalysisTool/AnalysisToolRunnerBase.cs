@@ -3233,7 +3233,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
                 catch (Exception ex)
                 {
-                    LogMessage("Error in PurgeOldServerCacheFiles: " + Global.GetExceptionStackTrace(ex), 0, true);
+                    LogMessage("Error in PurgeOldServerCacheFiles: " + Global.GetExceptionStackTrace(ex), isError: true);
                 }
             }
         }
