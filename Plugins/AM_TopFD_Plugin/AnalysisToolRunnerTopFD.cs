@@ -179,6 +179,7 @@ namespace AnalysisManagerTopFDPlugIn
             catch (Exception ex)
             {
                 mMessage = "Error in TopFDPlugin->RunTool: " + ex.Message;
+                LogError(mMessage + "; " + Global.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
