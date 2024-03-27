@@ -1032,10 +1032,9 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
 
-            // Note: Entries in ResultFiles will have full file paths, not just file names
-            var resultFiles = sourceDirectory.GetFiles("*");
+            // Note: Entries returned by GetFiles() have full file paths, not just file names
 
-            foreach (var fileToCopy in resultFiles)
+            foreach (var fileToCopy in sourceDirectory.GetFiles("*"))
             {
                 var sourceFileName = fileToCopy.Name;
 
