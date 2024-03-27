@@ -650,7 +650,13 @@ namespace AnalysisManagerTopFDPlugIn
             var resultsFiles = new Dictionary<string, string>();
 
             // For FAIMS datasets with multiple CV values, TopPIC 1.5 creates one _ms2.msalign file for each CV
-            // Example file names are Dataset_0_ms2.msalign, Dataset_1_ms2.msalign, etc.
+            // Example filenames are Dataset_0_ms2.msalign, Dataset_1_ms2.msalign, etc.
+
+            // TopPIC v1.7 uses the actual CV value, e.g. Dataset_-35_ms2.msalign, Dataset_-45_ms2.msalign, etc.
+
+            // This RegEx matches both the single digit format, and the CV value format
+            // It is used to match both _ms2.msalign and _ms2.feature files
+            var cvSuffixMatcher = new Regex(@"[-+]?\d+_ms2.(msalign|feature)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var msAlignFiles = workDir.GetFiles(string.Format("{0}_*{1}", mDatasetName, MSALIGN_FILE_SUFFIX));
 
@@ -658,7 +664,12 @@ namespace AnalysisManagerTopFDPlugIn
             {
                 foreach (var item in msAlignFiles)
                 {
-                    resultsFiles.Add(item.Name.Substring(item.Name.Length - MSALIGN_FILE_SUFFIX.Length - 1), item.Name);
+                    var match = cvSuffixMatcher.Match(item.Name);
+
+                    resultsFiles.Add(
+                        match.Success
+                            ? match.Value
+                            : item.Name.Substring(item.Name.Length - MSALIGN_FILE_SUFFIX.Length - 1), item.Name);
                 }
             }
             else
@@ -683,7 +694,12 @@ namespace AnalysisManagerTopFDPlugIn
                 {
                     foreach (var item in featureFiles)
                     {
-                        resultsFiles.Add(item.Name.Substring(item.Name.Length - TOPFD_FEATURE_FILE_SUFFIX.Length - 5), item.Name);
+                        var match = cvSuffixMatcher.Match(item.Name);
+
+                        resultsFiles.Add(
+                            match.Success
+                                ? match.Value
+                                : item.Name.Substring(item.Name.Length - TOPFD_FEATURE_FILE_SUFFIX.Length - 5), item.Name);
                     }
                 }
                 else
