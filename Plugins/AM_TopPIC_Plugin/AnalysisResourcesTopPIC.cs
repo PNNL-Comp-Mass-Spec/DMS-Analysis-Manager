@@ -20,7 +20,7 @@ namespace AnalysisManagerTopPICPlugIn
     /// </summary>
     public class AnalysisResourcesTopPIC : AnalysisResources
     {
-        // Ignore Spelling: parm, html
+        // Ignore Spelling: html, parm, TopFD, MSAlign
 
         /// <summary>
         /// .feature file created by TopFD
