@@ -87,7 +87,7 @@ namespace AnalysisManagerBase.AnalysisTool
         void CopyFailedResultsToArchiveDirectory();
 
         /// <summary>
-        /// Perform any required post processing after retrieving remote results
+        /// Perform any required post-processing after retrieving remote results
         /// </summary>
         /// <remarks>
         /// Actual post-processing of remote results should only be required if the remote host running the job

@@ -2203,7 +2203,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     return true;
                 }
 
-                // Check whether or not this is an aggregation job by looking for job parameter DataPackageID
+                // Check whether this is an aggregation job by looking for job parameter DataPackageID
                 //   When 0, we are processing a single dataset, and we thus need to include the dataset name, generating a path like \\proto-4\DMS3_Xfer\QC_Dataset\MXQ202103151122_Auto1880613
                 //   When positive, we are processing datasets in a data package, and we thus want a path without the dataset name, generating a path like \\proto-9\MaxQuant_Staging\MXQ202103161252_Auto1880833
 

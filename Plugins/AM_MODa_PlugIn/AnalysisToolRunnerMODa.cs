@@ -82,7 +82,7 @@ namespace AnalysisManagerMODaPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Run MODa, then post process the results
+                // Run MODa, then post-process the results
                 var processingSuccess = StartMODa(javaProgLoc);
 
                 if (processingSuccess)

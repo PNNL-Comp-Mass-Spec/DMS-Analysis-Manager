@@ -69,7 +69,7 @@ namespace AnalysisManagerIDPickerPlugIn
         // This list tracks the error messages reported by CmdRunner
         private ConcurrentBag<string> mCmdRunnerErrors;
 
-        // This list tracks error message text that we look for when considering whether or not to ignore an error message
+        // This list tracks error message text that we look for when considering if an error message should be ignored
         private ConcurrentBag<string> mCmdRunnerErrorsToIgnore;
 
         // This list tracks files that we want to include in the zipped up IDPicker report directory

@@ -26,7 +26,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public FragPipeLibFinder LibraryFinder { get; set; }
 
         /// <summary>
-        /// Whether to use match-between runs when running IonQuant
+        /// When true, use match-between runs when running IonQuant
         /// </summary>
         /// <remarks>Defaults to false; use a settings file to set to true</remarks>
         public bool MatchBetweenRuns { get; set; }
@@ -59,7 +59,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Whether or not to run Abacus
+        /// When true, run Abacus
         /// </summary>
         /// <remarks>
         /// <para>Is set to true if job parameters GeneratePeptideLevelSummary or GenerateProteinLevelSummary are true</para>
@@ -69,7 +69,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunAbacus { get; set; }
 
         /// <summary>
-        /// Whether or not to run FreeQuant
+        /// When true, run FreeQuant
         /// </summary>
         /// <remarks>
         /// Defaults to false, but forced to true if reporter ions are used
@@ -77,7 +77,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunFreeQuant => FraggerOptions.RunFreeQuant;
 
         /// <summary>
-        /// Whether to run IonQuant for MS1-based quantitation
+        /// When true, run IonQuant for MS1-based quantitation
         /// </summary>
         /// <remarks>
         /// Auto-set to true if this job has multiple datasets (as defined in a data package)
@@ -87,7 +87,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIonQuant => FraggerOptions.RunIonQuant;
 
         /// <summary>
-        /// Whether to run LabelQuant to quantify reporter ions; ignored if <see cref="ReporterIonMode"/> is ReporterIonModes.Disabled
+        /// When true, run LabelQuant to quantify reporter ions; ignored if <see cref="ReporterIonMode"/> is ReporterIonModes.Disabled
         /// </summary>
         /// <remarks>
         /// If this is false, will also not run TMT-Integrator
@@ -95,7 +95,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunLabelQuant { get; set; }
 
         /// <summary>
-        /// Whether or not to run iProphet
+        /// When true, run iProphet
         /// </summary>
         /// <remarks>
         /// <para>Is set to true if job parameter GeneratePeptideLevelSummary true</para>
@@ -106,13 +106,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunIProphet { get; set; }
 
         /// <summary>
-        /// Whether or not to run MSBooster
+        /// When true, run MSBooster
         /// </summary>
         /// <remarks>When MSBooster is used, Percolator must be used (and Peptide Prophet should not be used)</remarks>
         public bool RunMSBooster { get; set; }
 
         /// <summary>
-        /// Whether to run Protein Prophet (if Peptide Prophet was used)
+        /// When true, run Protein Prophet (if Peptide Prophet was used)
         /// </summary>
         /// <remarks>
         /// Defaults to true
@@ -120,7 +120,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunProteinProphet { get; set; }
 
         /// <summary>
-        /// Whether to run PTM Prophet
+        /// When true, run PTM Prophet
         /// </summary>
         /// <remarks>
         /// Defaults to false, but auto-set to true if a TMT search that also looks for phospho STY
@@ -130,7 +130,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         public bool RunPTMProphet { get; set; }
 
         /// <summary>
-        /// Whether to run PTM-Shepherd
+        /// When true, run PTM-Shepherd
         /// </summary>
         /// <remarks>Defaults to true, but is ignored if OpenSearch is false</remarks>
         public bool RunPTMShepherd { get; set; }

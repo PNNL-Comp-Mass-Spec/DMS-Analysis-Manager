@@ -227,8 +227,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Add new dataset name and ID to DatasetInfoList
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="datasetID"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetID">Dataset ID</param>
         public void AddDatasetInfo(string datasetName, int datasetID)
         {
             if (string.IsNullOrWhiteSpace(datasetName))
@@ -244,7 +244,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Add a fileName extension to not move to the results directory
         /// </summary>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-        /// <param name="fileExtension"></param>
+        /// <param name="fileExtension">File extension</param>
         public void AddResultFileExtensionToSkip(string fileExtension)
         {
             if (string.IsNullOrWhiteSpace(fileExtension))
@@ -255,9 +255,9 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Add a fileName to definitely move to the results directory
+        /// Add a filename to definitely move to the results directory
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File name</param>
         public void AddResultFileToKeep(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -270,9 +270,9 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Add a fileName to not move to the results directory
+        /// Add a filename to not move to the results directory
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File name</param>
         public void AddResultFileToSkip(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -301,7 +301,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Look for files matching fileSpec that are over thresholdHours old
         /// Delete any that are found
         /// </summary>
-        /// <param name="taskQueueDirectory"></param>
+        /// <param name="taskQueueDirectory">Task queue directory</param>
         /// <param name="fileSpec">Files to find, for example *.oldlock</param>
         /// <param name="thresholdHours">Threshold, in hours, for example 24</param>
         /// <param name="ignoreIfRecentJobStatusFile">When true, do not delete the file if a recent .jobstatus file exists</param>
@@ -383,7 +383,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Delete old files in the task queue directory
         /// </summary>
-        /// <param name="taskQueueDirectory"></param>
+        /// <param name="taskQueueDirectory">Task queue directory</param>
         private void DeleteOldTaskQueueFiles(DirectoryInfo taskQueueDirectory)
         {
             // Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
@@ -633,7 +633,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Job parameters file
         /// </summary>
-        /// <param name="jobNum"></param>
+        /// <param name="jobNum">Job number</param>
         public static string JobParametersFilename(int jobNum)
         {
             return Global.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
@@ -690,7 +690,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Return true if toolRunnerResult is CLOSEOUT_SUCCESS or CLOSEOUT_NO_DATA or if a step tool was skipped
         /// </summary>
-        /// <param name="toolRunnerResult"></param>
+        /// <param name="toolRunnerResult">Result code</param>
         public static bool SuccessOrNoData(CloseOutType toolRunnerResult)
         {
             return toolRunnerResult is
@@ -775,7 +775,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Remove a fileName that was previously added to ResultFilesToSkip
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File name</param>
         public void RemoveResultFileToSkip(string fileName)
         {
             if (mResultFilesToSkip.Contains(fileName))
@@ -917,7 +917,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Rename or delete old directories in the working directories specified by any .info files below the base task queue directory
         /// Ignores files in the /Completed/ directory
         /// </summary>
-        /// <param name="taskQueuePathBase"></param>
+        /// <param name="taskQueuePathBase">Task queue base path</param>
         private void PurgeOldOfflineWorkDirs(string taskQueuePathBase)
         {
             const int ORPHANED_THRESHOLD_DAYS = 5;
@@ -1684,9 +1684,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Finalize a failed offline job
         /// </summary>
-        /// <param name="infoFile"></param>
-        /// <param name="startTime"></param>
-        /// <param name="errorMessage"></param>
+        /// <param name="infoFile">Info file</param>
+        /// <param name="startTime">Start time</param>
+        /// <param name="errorMessage">Error message</param>
         private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, DateTime startTime, string errorMessage)
         {
             LogError(errorMessage);
@@ -1836,8 +1836,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <remarks>
         /// If the directory has no files, the returned file info will be for a
         /// non-existent file named Placeholder.txt, with the date of the directory's last write time</remarks>
-        /// <param name="directory"></param>
-        /// <param name="recurse"></param>
+        /// <param name="directory">Directory info</param>
+        /// <param name="recurse">When true, recurse</param>
         /// <returns>UTC time of last change to files in the directory or the directory itself</returns>
         private DateTime GetDirectoryLastWriteTime(DirectoryInfo directory, bool recurse = false)
         {
@@ -1863,7 +1863,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Rename an old .info file to .oldinfo
         /// Also check for a .lock file that corresponds to the .info file
         /// </summary>
-        /// <param name="oldInfoFile"></param>
+        /// <param name="oldInfoFile">Old info file</param>
         private static void RenameOldInfoFile(FileInfo oldInfoFile)
         {
             // Old .info file with existingTimestamp; rename to .oldinfo

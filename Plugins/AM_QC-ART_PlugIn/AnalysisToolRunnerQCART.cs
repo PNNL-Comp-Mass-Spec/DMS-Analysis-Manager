@@ -169,6 +169,8 @@ namespace AnalysisManagerQCARTPlugin
             writer.WriteEndElement();
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Converts the QCDM to xml to be used by database
         /// </summary>
@@ -470,7 +472,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                // Determine whether or not we used existing an baseline results file
+                // Determine whether we used an existing baseline results file
                 var existingBaselineResultsFileName = mJobParams.GetJobParameter(AnalysisResourcesQCART.JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME, string.Empty);
 
                 if (!string.IsNullOrWhiteSpace(existingBaselineResultsFileName))
@@ -496,7 +498,7 @@ namespace AnalysisManagerQCARTPlugin
             }
             catch (Exception ex)
             {
-                mMessage = "Exception post processing results";
+                mMessage = "Exception post-processing results";
                 LogError(mMessage + ": " + ex.Message);
                 return false;
             }

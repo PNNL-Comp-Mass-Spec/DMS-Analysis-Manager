@@ -388,7 +388,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
         /// <summary>
         /// Examine the protein header lines in this job's FASTA file
-        /// Define the protein description parse rule that MaxQuant should use, depending on whether or not every header line has a protein name and protein description
+        /// Define the protein description parse rule that MaxQuant should use, depending on whether every header line has a protein name and protein description
         /// </summary>
         /// <returns>Result Code</returns>
         private CloseOutType DetermineProteinDescriptionParseRule(out string proteinDescriptionParseRule)

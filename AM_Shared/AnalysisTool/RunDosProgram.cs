@@ -328,7 +328,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="executablePath">The path to the program to run</param>
         /// <param name="arguments">The arguments to pass to the program, for example: /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
-        /// <param name="useResCode">Whether or not to use the result code to determine success or failure of program execution</param>
+        /// <param name="useResCode">When true, use the result code to determine success or failure of program execution</param>
         /// <returns>True if success, false if an error</returns>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode)
         {

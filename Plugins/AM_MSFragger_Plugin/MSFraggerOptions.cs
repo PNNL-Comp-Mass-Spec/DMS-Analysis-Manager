@@ -99,7 +99,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         public ReporterIonModes ReporterIonMode { get; set; }
 
         /// <summary>
-        /// Whether to run FreeQuant
+        /// When true, run FreeQuant
         /// </summary>
         /// <remarks>
         /// Defaults to false, but forced to true if reporter ions are used
@@ -107,7 +107,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         public bool RunFreeQuant { get; set; }
 
         /// <summary>
-        /// Whether to run IonQuant for MS1-based quantitation
+        /// When true, run IonQuant for MS1-based quantitation
         /// </summary>
         /// <remarks>
         /// Auto-set to true if this job has multiple datasets (as defined in a data package)

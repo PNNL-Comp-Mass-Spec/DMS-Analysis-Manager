@@ -541,7 +541,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         }
 
         /// <summary>
-        /// Post process MaxQuant results
+        /// Post-process MaxQuant results
         /// </summary>
         /// <param name="subdirectoriesToSkipTransfer">Full paths to subdirectories that should not be copied to the remote server</param>
         /// <returns>CloseOutType enum indicating success or failure</returns>

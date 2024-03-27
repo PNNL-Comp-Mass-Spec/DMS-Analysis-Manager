@@ -811,7 +811,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "Run BuildSA using " + arguments;
 
                 // Run BuildSA and wait for it to exit
-                // This process generally doesn't take that long so we do not track CPU usage
+                // This process generally doesn't take that long, so we do not track CPU usage
                 success = buildSA.RunProgram(javaProgLoc, arguments, "BuildSA", true);
 
                 if (!success)

@@ -686,7 +686,7 @@ namespace AnalysisManagerFormularityPlugin
             }
             catch (Exception ex)
             {
-                mMessage = "Error post processing results";
+                mMessage = "Error post-processing results";
                 LogError(mMessage, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
