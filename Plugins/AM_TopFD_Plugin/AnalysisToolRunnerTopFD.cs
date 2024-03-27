@@ -720,8 +720,7 @@ namespace AnalysisManagerTopFDPlugIn
                 }
                 else if (resultsFile.Length == 0)
                 {
-                    LogError(string.Format("{0} file created by TopFD is empty; " +
-                                           "assure that the input .mzML file has MS/MS spectra", resultFile.Key));
+                    LogError(string.Format("{0} file created by TopFD is empty; assure that the input .mzML file has MS/MS spectra", resultFile.Key));
                 }
                 else
                 {
@@ -1024,7 +1023,7 @@ namespace AnalysisManagerTopFDPlugIn
 
                     if (!directoryToFind.Exists)
                     {
-                        LogWarning("Subdirectory not found; nothing to zip: " + directoryToFind.FullName);
+                        LogMessage("Subdirectory not found; nothing to zip: " + directoryToFind.FullName);
                         continue;
                     }
 
