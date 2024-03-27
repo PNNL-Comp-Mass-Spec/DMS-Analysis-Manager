@@ -790,9 +790,24 @@ namespace AnalysisManagerTopPICPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
+            if (htmlOutputDisabled)
+            {
+                var htmlDirectory = new DirectoryInfo(Path.Combine(mWorkDir, mDatasetName + "_html"));
+
+                if (htmlDirectory.Exists && htmlDirectory.GetFileSystemInfos().Length == 0)
+                {
+                    // Remove the empty directory
+                    htmlDirectory.Delete();
+                }
+            }
+
+            // ReSharper disable CommentTypo
+
             // Instruct TopPIC to use the fragmentation method info tracked in the .mzML file
             // Other options for activation are CID, HCDCID, ETDCID, or UVPDCID
             cmdLineArguments.Append(" --activation=FILE");
+
+            // ReSharper restore CommentTypo
 
             if (mTopPICVersion >= new Version(1, 4))
             {
@@ -1866,7 +1881,9 @@ namespace AnalysisManagerTopPICPlugIn
                 var sourceDirectory = new DirectoryInfo(Path.Combine(mWorkDir, mDatasetName + directorySuffix));
 
                 if (!sourceDirectory.Exists)
-                    return false;
+                {
+                    return htmlOutputDisabled && directorySuffix.Equals("_html");
+                }
 
                 // Confirm that the directory has one or more files or subdirectories
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
