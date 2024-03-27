@@ -58,7 +58,7 @@ namespace AnalysisManagerTopFDPlugIn
 
         private string mConsoleOutputErrorMsg;
 
-        private readonly Regex reExtractPercentFinished = new("(?<PercentComplete>[0-9]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex mExtractPercentFinished = new("(?<PercentComplete>[0-9]+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private DateTime mLastConsoleOutputParse;
 
@@ -314,10 +314,11 @@ namespace AnalysisManagerTopFDPlugIn
                         continue;
                     }
 
-                    // Update progress if the line starts with Processing spectrum
-                    if (dataLine.StartsWith("Processing spectrum", StringComparison.OrdinalIgnoreCase))
+                    // Update progress if the line starts with Processing MS/MS spectrum
+                    // If a .mzML file has multiple CV values, the % complete will cycle from 0% to 100% for each CV value
+                    if (dataLine.StartsWith("Processing MS/MS spectrum", StringComparison.OrdinalIgnoreCase))
                     {
-                        var match = reExtractPercentFinished.Match(dataLine);
+                        var match = mExtractPercentFinished.Match(dataLine);
 
                         if (match.Success)
                         {
