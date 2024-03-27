@@ -51,7 +51,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         public const string MYEMSL_PATH_FLAG = MyEMSLUtilities.MYEMSL_PATH_FLAG;
 
-        // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
+        // Note: Each RAW_DATA_TYPE constant needs to be all lowercase
 
         /// <summary>
         /// Agilent ion trap data, Agilent TOF data
@@ -4052,7 +4052,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
             }
 
-            // We have deleted all of the files that can be deleted
+            // We have deleted every file that can be deleted
 
             double finalFreeSpaceGB;
 

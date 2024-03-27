@@ -238,7 +238,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (!processingError)
                     {
                         // Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
-                        // Will also make sure that all of the peptides have numeric SpecProb values
+                        // Will also make sure that every peptide has a numeric SpecProb value
                         // For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
                         // If the Instrument Data was a .MGF file, we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 

@@ -890,7 +890,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 if (string.IsNullOrWhiteSpace(datasetScansFilePath))
                 {
-                    // Processing all of the .xml scans files in the working directory
+                    // Processing the .xml scans files in the working directory
 
                     var workingDirectory = new DirectoryInfo(mWorkDir);
                     var spectraFiles = GetXmlSpectraFiles(workingDirectory, out var wildcardMatchSpec);

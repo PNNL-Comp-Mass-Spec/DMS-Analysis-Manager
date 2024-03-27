@@ -215,7 +215,7 @@ namespace DTASpectraFileGen
                     {
                         // The default scan range for processing all scans was traditionally from scan 1 to scan 999999.
                         // This scan range may be defined in the job's settings file.
-                        // This dataset has over 1 million spectra; assume that the user actually wants to analyze all of the spectra
+                        // This dataset has over 1 million spectra; assume that the user actually wants to analyze every spectrum
                         scanStop = mMaxScanInFile;
                     }
 

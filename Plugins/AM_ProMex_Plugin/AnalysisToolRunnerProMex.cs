@@ -124,7 +124,7 @@ namespace AnalysisManagerProMexPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
+                // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays every parameter used
                 mJobParams.AddResultFileToSkip(mProMexParamFileName);
 
                 var success = CopyResultsToTransferDirectory();

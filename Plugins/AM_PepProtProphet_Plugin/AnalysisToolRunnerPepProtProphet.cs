@@ -5052,7 +5052,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     LogDebug("Updating FASTA file paths in file " + pepXmlFile.Name);
 
-                    // Once this reaches 2, simply write out all of the remaining data lines
+                    // Once this reaches 2, simply write out the remaining data lines
                     var matchesFound = 0;
 
                     using (var reader = new StreamReader(new FileStream(pepXmlFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))

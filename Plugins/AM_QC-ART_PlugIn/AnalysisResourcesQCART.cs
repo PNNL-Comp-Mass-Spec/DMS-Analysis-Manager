@@ -954,7 +954,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (datasetParseErrors.Count == 0)
                 {
-                    // No errors; confirm that all of the datasets were found
+                    // No errors; confirm that each dataset was found
                     if (datasetsMatched.Count == datasetNamesToRetrieveMetrics.Count)
                     {
                         return true;

@@ -451,7 +451,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 currentTask = "Looking for lock file " + lockFile.FullName;
                 WaitForExistingLockfile(lockFile, debugLevel, MAX_WAIT_TIME_HOURS);
 
-                // Validate that all of the expected files exist
+                // Validate that the expected files exist
                 // If any are missing, need to repeat the call to "BuildSA"
                 bool reindexingRequired;
 
@@ -515,7 +515,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else if (usingLegacyFasta)
                     {
-                        // Make sure all of the index files have a file modification date newer than the FASTA file
+                        // Make sure the index files have a file modification date newer than the FASTA file
                         // We only do this for legacy FASTA files, since their file modification date will be the same on all pubs
 
                         // We can't do this for programmatically generated FASTA files (that use protein collections)
@@ -560,7 +560,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (Global.OfflineMode)
                 {
-                    // The manager that pushed the FASTA files to the remote host should have also indexed them and pushed all of the index files to this host
+                    // The manager that pushed the FASTA files to the remote host should have also indexed them and pushed the index files to this host
                     // We can still re-index the files using the local FASTA file
                     OnWarningEvent("Index files are missing or out of date for " + fastaFilePath + "; will re-generate them");
                     remoteLockFileCreated = false;

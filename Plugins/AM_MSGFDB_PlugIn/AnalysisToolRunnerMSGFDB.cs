@@ -576,7 +576,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     var savedCountCompleted = mMSGFPlusUtils.TaskCountCompleted;
 
-                    // MS-GF+ finished, but the log file doesn't report that all of the threads finished
+                    // MS-GF+ finished, but the log file doesn't report that every thread finished
                     // Wait 5 more seconds, then parse the log file again
                     // Keep checking and waiting for up to 45 seconds
 

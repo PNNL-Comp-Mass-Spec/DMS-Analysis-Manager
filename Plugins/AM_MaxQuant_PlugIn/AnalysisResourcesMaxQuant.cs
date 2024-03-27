@@ -291,7 +291,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 if (dmsStepNodes.Count == 0)
                 {
-                    // Step tool MaxqPeak will run all of the MaxQuant steps
+                    // Step tool MaxqPeak will run each of the MaxQuant steps
                     // Skip processing for step tools MaxqS1, MaxqS2, and MaxqS3
 
                     if (!StepToolName.Equals(MAXQUANT_PEAK_STEP_TOOL, StringComparison.OrdinalIgnoreCase))
@@ -335,7 +335,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return false;
                 }
 
-                // All of the steps have a step ID defined
+                // Each of the steps has a step ID defined
                 // Examine the StartStepID for the step that matches this step tool
                 foreach (var dmsStep in dmsSteps.Where(dmsStep => dmsStep.Value.Tool.Equals(StepToolName)))
                 {
@@ -443,7 +443,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 }
                 else
                 {
-                    // All of the proteins has a description
+                    // Every protein has a description
                     proteinDescriptionParseRule = AnalysisToolRunnerMaxQuant.PROTEIN_DESCRIPTION_REGEX;
                 }
 
@@ -709,6 +709,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                         continue;
                     }
 
+                    // ReSharper disable once CanSimplifySetAddingWithSingleCall
                     if (maxQuantModificationNames.Contains(modTitle))
                     {
                         LogError(string.Format("Modification {0} is defined twice in the MaxQuant modifications.xml file", modTitle));

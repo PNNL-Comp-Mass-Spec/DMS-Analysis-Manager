@@ -543,7 +543,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (consoleOutputFile.Exists && deconWorkflowsLogFile.Exists && consoleOutputFile.Length > deconWorkflowsLogFile.Length)
                 {
-                    // Don't keep the _log.txt file since the Console_Output file has all of the same information
+                    // Don't keep the _log.txt file since the Console_Output file has the same information
                     mJobParams.AddResultFileToSkip(deconWorkflowsLogFile.Name);
                 }
 

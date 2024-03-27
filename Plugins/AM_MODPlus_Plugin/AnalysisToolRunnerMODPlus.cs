@@ -928,6 +928,8 @@ namespace AnalysisManagerMODPlusPlugin
                     newThread.Start();
                 }
 
+                // ReSharper disable once GrammarMistakeInComment
+
                 // Wait for all of the threads to exit
                 // Run for a maximum of 14 days
 

@@ -489,7 +489,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (mDebugLevel < 2)
                 mDebugLevel = 2;
 
-            // Create a tab-delimited text file listing all of the files in the working directory and all subdirectories
+            // Create a tab-delimited text file listing the files in the working directory and all subdirectories
             var workingDirectory = new DirectoryInfo(mWorkDir);
             var workingDirectoryPathLength = workingDirectory.FullName.Length;
 
@@ -911,7 +911,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             try
             {
-                // Copy all of the files and subdirectories in the local results directory to the target directory
+                // Copy the files and subdirectories in the local results directory to the target directory
 
                 // Copy the files and subdirectories
                 var success = CopyResultsFolderRecursive(
@@ -3079,7 +3079,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     var lastProgress = DateTime.UtcNow;
                     LogMessage("Examining hashcheck files in directory " + cacheDirectory.FullName, 1);
 
-                    // Make a list of all of the hashcheck files in cacheDirectory
+                    // Make a list of the hashcheck files in cacheDirectory
 
                     foreach (var hashcheckFile in cacheDirectory.GetFiles("*" + Global.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
                     {

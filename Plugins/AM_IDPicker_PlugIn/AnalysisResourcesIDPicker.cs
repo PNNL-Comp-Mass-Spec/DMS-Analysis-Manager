@@ -389,7 +389,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (transferDirectoryFileCountFound == 0)
                 {
-                    // The job may have finished and we're re-running a job step
+                    // The job may have finished, and we're re-running a job step
                     // Look for the synopsis file in the data package directory
 
                     sourceDirectoryDescription = "data package directory";

@@ -2864,7 +2864,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Reads sourceFilePath line-by-line and splits into multiple files such that none of the output
         /// files has length greater than maxSizeBytes. Can also check for a header line on the first line;
-        /// if a header line is found, all of the split files will be assigned the same header line
+        /// if a header line is found, each of the split files will be assigned the same header line
         /// </summary>
         /// <param name="sourceFilePath">FilePath to parse</param>
         /// <param name="maxSizeBytes">Maximum size of each file</param>

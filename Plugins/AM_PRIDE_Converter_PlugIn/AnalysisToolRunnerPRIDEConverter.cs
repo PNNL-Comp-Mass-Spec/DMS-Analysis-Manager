@@ -4032,7 +4032,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!File.Exists(jobInfoFilePath))
                 {
-                    // Assume all of the files already exist
+                    // Assume the files already exist
                     return true;
                 }
 

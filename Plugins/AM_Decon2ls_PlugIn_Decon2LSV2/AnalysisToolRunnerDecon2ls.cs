@@ -430,7 +430,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Examines isosFilePath to look for data lines (does not read the entire file, just the first two lines)
         /// </summary>
-        /// <param name="isosFilePath"></param>
+        /// <param name="isosFilePath">Isos file path</param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns false</returns>
         private bool IsosFileHasData(string isosFilePath, double maxFitValue = 0.15)
@@ -438,10 +438,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return IsosFileHasData(isosFilePath, out _, false, maxFitValue);
         }
 
+        // ReSharper disable once GrammarMistakeInComment
+        
         /// <summary>
         /// Examines isosFilePath to look for data lines
         /// </summary>
-        /// <param name="isosFilePath"></param>
+        /// <param name="isosFilePath">Isos file path</param>
         /// <param name="dataLineCount">Output parameter: total data line count</param>
         /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>

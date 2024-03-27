@@ -1188,7 +1188,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     if (error.Contains("no spectra in workspace"))
                     {
-                        // All of the proteins were filtered out; we'll treat this as a successful completion of IDPicker
+                        // Every protein was filtered out; we'll treat this as a successful completion of IDPicker
                         mMessage = string.Empty;
                         mEvalMessage = "IDPicker Report filtered out all of the proteins";
                         LogWarning(mEvalMessage + "; this indicates there are not enough filter-passing peptides.");

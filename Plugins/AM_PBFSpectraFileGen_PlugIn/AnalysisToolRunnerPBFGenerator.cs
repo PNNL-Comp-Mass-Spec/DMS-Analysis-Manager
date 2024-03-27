@@ -249,11 +249,13 @@ namespace AnalysisManagerPBFGenerator
             base.CopyFailedResultsToArchiveDirectory();
         }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// Computes a crude estimate of % complete based on the input dataset file size and the file size of the result file
         /// This will always vastly underestimate the progress since the PBF file is always smaller than the .raw file
         /// Furthermore, it looks like all of the data in the .raw file is cached in memory and the .PBF file is not created until the very end
-        ///  and thus this progress estimation is useless
+        /// and thus this progress estimation is useless
         /// </summary>
         private float EstimatePBFProgress()
         {

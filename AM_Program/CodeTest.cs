@@ -1038,7 +1038,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Display metadata regarding all of the processes running on this system
+        /// Display metadata regarding every process running on this system
         /// </summary>
         public void TestGetProcesses()
         {
