@@ -1467,7 +1467,7 @@ namespace AnalysisManagerTopPICPlugIn
 
                 foreach (var directorySuffix in directorySuffixesToCompress)
                 {
-                    var success = ZipTopPICResultsDirectory(directorySuffix);
+                    var success = ZipTopPICResultsDirectory(directorySuffix, htmlOutputDisabled);
 
                     if (success)
                         directoriesZipped++;
@@ -1857,7 +1857,7 @@ namespace AnalysisManagerTopPICPlugIn
             }
         }
 
-        private bool ZipTopPICResultsDirectory(string directorySuffix)
+        private bool ZipTopPICResultsDirectory(string directorySuffix, bool htmlOutputDisabled)
         {
             try
             {
@@ -1871,10 +1871,14 @@ namespace AnalysisManagerTopPICPlugIn
                 // Confirm that the directory has one or more files or subdirectories
                 if (sourceDirectory.GetFileSystemInfos().Length == 0)
                 {
+                    if (htmlOutputDisabled && directorySuffix.Equals("_html"))
+                        return true;
+
                     if (mDebugLevel >= 1)
                     {
                         LogWarning("TopPIC results directory is empty; nothing to zip: " + sourceDirectory.Name);
                     }
+
                     return false;
                 }
 
