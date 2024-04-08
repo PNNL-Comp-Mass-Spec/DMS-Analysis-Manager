@@ -90,6 +90,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var toolName = mJobParams.GetJobParameter("JobParameters", "ToolName", string.Empty);
+                var runningTopPIC = toolName.StartsWith("TopPIC", StringComparison.OrdinalIgnoreCase);
+
                 var successOverall = true;
 
                 foreach (var item in targetedQuantParamFilePaths)
@@ -100,7 +103,16 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     var processingSuccess = RunTargetedWorkflow(baseName, targetedQuantParamFilePath);
 
                     if (!processingSuccess)
-                        successOverall = false;
+                    {
+                        if (runningTopPIC)
+                        {
+                            LogWarning("Ignoring Targeted Workflows error since this is a {0} job", toolName);
+                        }
+                        else
+                        {
+                            successOverall = false;
+                        }
+                    }
                 }
 
                 mProgress = PROGRESS_PCT_COMPLETE;
