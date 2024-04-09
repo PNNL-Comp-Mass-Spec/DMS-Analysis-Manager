@@ -33,13 +33,14 @@ namespace AnalysisManager_Mage_PlugIn
 
         // handle a data row - make sure alias field has an appropriate value
         protected override bool CheckFilter(ref string[] vals)
+        protected override bool CheckFilter(ref string[] values)
         {
             if (OutputColumnDefs != null)
             {
-                var outRow = MapDataRow(vals);
+                var outRow = MapDataRow(values);
                 var dataset = outRow[_datasetIdx];
                 outRow[_aliasColIdx] = LookupAlias(dataset);
-                vals = outRow;
+                values = outRow;
             }
             return true;
         }
