@@ -1558,7 +1558,7 @@ namespace MSGFResultsSummarizer
 
                 // Load the result to sequence mapping, sequence IDs, and protein information
                 // This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
-                var seqMapReader = new PHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
+                var seqMapReader = new PHRPSeqMapReader(mDatasetName, mWorkDir, ResultType, Path.GetFileName(synopsisFilePath));
 
                 var sequenceInfoAvailable = false;
 
