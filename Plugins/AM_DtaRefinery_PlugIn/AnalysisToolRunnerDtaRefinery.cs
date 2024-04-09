@@ -20,7 +20,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// </summary>
     public class AnalysisToolRunnerDtaRefinery : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Orbitrap
+        // Ignore Spelling: DTA, Orbitrap
 
         private const int PROGRESS_PCT_DTA_REFINERY_RUNNING = 5;
 

@@ -23,7 +23,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
     /// </summary>
     public class AnalysisToolRunnerPhosphoFdrAggregator : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: cid, Da, etd, fht, hcd, Mage, msgfplus, sequest, xt, xtandem
+        // Ignore Spelling: Aggregator, cid, Da, etd, fht, hcd, Mage, msgfplus, Phospho, sequest, xt, xtandem
 
         private const string ASCORE_CONSOLE_OUTPUT_PREFIX = "AScore_ConsoleOutput";
 

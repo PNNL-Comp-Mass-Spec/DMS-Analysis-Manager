@@ -28,7 +28,9 @@ namespace AnalysisManagerMSGFPlugin
     public class MSGFRunner : AnalysisToolRunnerBase
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, Glu, Lys, MODa, modp, msgfdb, Parm, Pre, Xmx
+
+        // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, FHT, Glu, Lys
+        // Ignore Spelling: MODa, modp, MSGF< msgfdb, Parm, PHRP, Pre, Xmx
 
         private const int PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
         private const int PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;

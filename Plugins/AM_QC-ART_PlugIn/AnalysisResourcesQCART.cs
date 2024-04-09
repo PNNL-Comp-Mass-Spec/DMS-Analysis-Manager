@@ -25,7 +25,7 @@ namespace AnalysisManagerQCARTPlugin
     /// </summary>
     public class AnalysisResourcesQCART : AnalysisResources
     {
-        // Ignore Spelling: tryptic
+        // Ignore Spelling: LockFile, QCART, SMAQC, tryptic
 
         /// <summary>
         /// Job parameter tracking the dataset names and jobs to process

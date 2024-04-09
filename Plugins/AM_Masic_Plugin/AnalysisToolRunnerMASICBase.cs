@@ -26,7 +26,7 @@ namespace AnalysisManagerMasicPlugin
     public abstract class AnalysisToolRunnerMASICBase : AnalysisToolRunnerBase
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: Traq, labelling, Glc, Az
+        // Ignore Spelling: Az, Glc, labelling, loc, MASIC, Perf, prog, Traq
 
         private const string MASIC_STATUS_FILE_PREFIX = "MasicStatus_";
 

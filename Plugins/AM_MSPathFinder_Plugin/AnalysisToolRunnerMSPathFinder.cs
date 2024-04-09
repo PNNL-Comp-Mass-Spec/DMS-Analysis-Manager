@@ -23,7 +23,11 @@ namespace AnalysisManagerMSPathFinderPlugin
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSPathFinder : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: Acetyl, Dehydro, Frag, Ic, Parm, Samwise, tda
+        // ReSharper disable CommentTypo
+
+        // Ignore Spelling: Acetyl, Dehydro, FASTA, Frag, Ic, Parm, Samwise, tda
+
+        // ReSharper restore CommentTypo
 
         private const string MSPATHFINDER_CONSOLE_OUTPUT = "MSPathFinder_ConsoleOutput.txt";
         private const int PROGRESS_PCT_STARTING = 1;

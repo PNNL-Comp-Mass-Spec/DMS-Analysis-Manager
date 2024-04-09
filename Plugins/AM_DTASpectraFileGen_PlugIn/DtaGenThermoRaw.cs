@@ -25,7 +25,7 @@ namespace DTASpectraFileGen
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: dta, lcqdtaloc, centroiding, MassTol, msn, XcalDLL
+        // Ignore Spelling: dta, lcqdtaloc, centroiding, Decon, DeconMSn, MassTol, msconvert, msn, RawConverter, XcalDLL
 
         // ReSharper restore CommentTypo
 

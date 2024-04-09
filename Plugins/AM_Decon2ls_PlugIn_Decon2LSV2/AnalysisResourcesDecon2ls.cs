@@ -14,7 +14,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
     /// </summary>
     public class AnalysisResourcesDecon2ls : AnalysisResources
     {
-        // Ignore Spelling: Formularity, mzml, mzxml
+        // Ignore Spelling: Decon, Formularity, msms, mzml, mzxml
 
         /// <summary>
         /// Job parameter to track that MS/MS processing has been auto-enabled

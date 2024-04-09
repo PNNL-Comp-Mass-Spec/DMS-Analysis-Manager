@@ -2,7 +2,7 @@
 {
     public class UniqueSeqInfo
     {
-        // Ignore Spelling: acetylated, tryptic
+        // Ignore Spelling: Acetyl, acetylated, tryptic, Ubiquitin
 
         private int mObsCount;
 

@@ -9,6 +9,8 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class ModuleAddAlias : ContentFilter
     {
+        // Ignore Spelling: defs, Mage
+
         // Column indexes
         private int _aliasColIdx;
         private int _datasetIdx;

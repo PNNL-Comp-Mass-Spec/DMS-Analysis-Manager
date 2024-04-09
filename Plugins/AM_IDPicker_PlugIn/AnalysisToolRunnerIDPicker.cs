@@ -17,7 +17,7 @@ namespace AnalysisManagerIDPickerPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: app, cmd, idp, MODa, msgfspecprob, parm, prepend, Qonvert, xxx
+        // Ignore Spelling: app, cmd, idp, IDPicker, MODa, msgfspecprob, parm, prepend, Qonvert, xxx
 
         // ReSharper restore CommentTypo
 

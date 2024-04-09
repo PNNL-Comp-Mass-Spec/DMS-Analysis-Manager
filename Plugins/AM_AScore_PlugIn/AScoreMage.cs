@@ -16,7 +16,7 @@ namespace AnalysisManager_AScore_PlugIn
 {
     public class AScoreMagePipeline : EventNotifier
     {
-        // Ignore Spelling: const, Mage, msgfdb, msgfplus
+        // Ignore Spelling: const, Mage, msgfdb, msgfplus, SQL
 
         private string mResultsDBFileName = string.Empty;
         private string mWorkingDir;

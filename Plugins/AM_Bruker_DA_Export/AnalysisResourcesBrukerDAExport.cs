@@ -19,6 +19,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
     /// </summary>
     public class AnalysisResourcesBrukerDAExport : AnalysisResources
     {
+        // Ignore Spelling: Bruker
+
         /// <summary>
         /// Retrieve required files
         /// </summary>

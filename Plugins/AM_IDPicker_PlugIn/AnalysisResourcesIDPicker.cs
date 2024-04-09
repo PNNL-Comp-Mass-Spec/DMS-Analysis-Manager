@@ -17,7 +17,7 @@ namespace AnalysisManagerIDPickerPlugIn
     /// </summary>
     public class AnalysisResourcesIDPicker : AnalysisResources
     {
-        // Ignore Spelling: msgfdb
+        // Ignore Spelling: IDPicker, msgfdb, PHRP
 
         /// <summary>
         /// ID Picker parameter file name

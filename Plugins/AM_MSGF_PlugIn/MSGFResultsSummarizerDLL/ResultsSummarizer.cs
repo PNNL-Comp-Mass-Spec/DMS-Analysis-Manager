@@ -32,7 +32,7 @@ namespace MSGFResultsSummarizer
 
         // Ignore Spelling: Acetyl, acetylated, Cntm, evalue, gi, itrac, MODa, msgf
         // Ignore Spelling: peptides, phosph, phospho, phosphopeptide, phosphopeptides, plex, Postgres, psm
-        // Ignore Spelling: sp, structs, Tpro, Trypa, tryptic, udt, uni, xxx
+        // Ignore Spelling: sp, structs, Tpro, Trypa, tryptic, Ubiquitin, udt, uni, xxx
 
         // ReSharper restore CommentTypo
 
@@ -1978,6 +1978,8 @@ namespace MSGFResultsSummarizer
                                 psmInfo.AcetylPeptide = true;
                                 break;
                             }
+
+                            // ReSharper disable once StringLiteralTypo
 
                             if (string.Equals(modification.Key, "Ubiq_02", StringComparison.OrdinalIgnoreCase) ||
                                 string.Equals(modification.Key, "UbNoTMT", StringComparison.OrdinalIgnoreCase) ||
