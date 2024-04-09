@@ -1688,13 +1688,13 @@ namespace AnalysisManagerProg
         public void TestZipAndUnzip()
         {
             // Zip Benchmark stats
-            //
+
             // January 2011 tests with a 611 MB file
             //   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
             //   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
             //   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
             //   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
-            //
+
             // September 2017 tests
             //   IonicZip compressed a 2.6 GB UIMF file in 86 seconds (reading/writing to the same drive)
             //   IonicZip compressed a 556 MB text file in 3.7 seconds (creating a 107 MB file)

@@ -77,7 +77,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
             //   Job2:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
             //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
-            //
+
             // Gives these parameters:
 
             // SourceJob                     = 852150
@@ -141,7 +141,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml"},
             //   Job2:Auto{Tool = "Decon2LS_V2" AND [Param File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND
             //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
-            //
+
             // Gives these parameters:
 
             // SourceJob                     = 852150

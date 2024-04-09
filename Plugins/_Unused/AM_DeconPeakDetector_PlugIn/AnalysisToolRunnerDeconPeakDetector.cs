@@ -128,7 +128,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         }
 
         // Example Console output
-        //
+
         // Started Peak Detector
         // There are 6695 MS1 scans
         // Using Decon Peak Detector
@@ -139,6 +139,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         // Peak creation progress: 2%
         // Peak creation progress: 3%
         // Peak creation progress: 4%
+
         private readonly Regex reProgress = new(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
 
         /// <summary>

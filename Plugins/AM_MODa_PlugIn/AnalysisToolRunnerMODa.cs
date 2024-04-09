@@ -273,7 +273,7 @@ namespace AnalysisManagerMODaPlugIn
         // MODa console output shows datasest instead of dataset
 
         // Example Console output
-        //
+
         // *********************************************************
         // MODa v1.20: Multi-Blind Modification Search
         // Release Date: February 01, 2013

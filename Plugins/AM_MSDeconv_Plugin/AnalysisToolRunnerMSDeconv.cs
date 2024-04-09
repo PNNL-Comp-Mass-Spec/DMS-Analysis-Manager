@@ -205,7 +205,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         }
 
         // Example Console output (yes, there are some typos in here):
-        //
+
         // MS-Deconv 0.8.0.7199 2012-01-16
         // ********* parameters begin **********
         // output file format:    msalign
@@ -223,6 +223,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         // Processing spectrum Scan_4...           0% finished.
         // Deconvolution finished.
         // Result is in Syne_LI_CID_09092011_msdeconv.msalign
+
         private readonly Regex reExtractPercentFinished = new(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>

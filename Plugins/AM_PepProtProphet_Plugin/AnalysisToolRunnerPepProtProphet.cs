@@ -2748,7 +2748,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     // ReSharper disable CommentTypo
 
                     // Option 1: append each psm.tsv file and each .pepXML file
-                    //
+
                     // for each (var experimentGroupWorkingDirectory in mExperimentGroupWorkingDirectories.Values)
                     // {
                     //    arguments.AppendFormat(@" --psm {0}\psm.tsv ", experimentGroupWorkingDirectory.Name);

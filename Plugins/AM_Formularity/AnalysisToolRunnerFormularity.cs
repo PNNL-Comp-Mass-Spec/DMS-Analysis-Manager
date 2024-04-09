@@ -465,7 +465,7 @@ namespace AnalysisManagerFormularityPlugin
         private void ParseConsoleOutputFile(string consoleOutputFilePath, out int fileCountNoPeaks, out bool nothingToAlign, out bool calibrationFailed)
         {
             // Example Console output
-            //
+
             // Started.
             // Loaded parameters.
             // Reading database C:\DMS_Temp_Org\WHOI_CIA_DB_2016_11_21.bin

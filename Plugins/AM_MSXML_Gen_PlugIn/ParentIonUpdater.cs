@@ -188,10 +188,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                             // Construct the parent ion line, which for CDTA files is in the format:
                             // MH Charge   scan=Scan cs=Charge
-                            //
+
                             // Example:
                             // 445.119822167 1   scan=2 cs=1
-                            //
 
                             var scanNumber = dtaFileReader.CurrentSpectrum.ScanNumber;
                             var outLine = chargeInfo.ParentIonMH.ToString("0.0######") + " " + chargeStateNew + "   scan=" + scanNumber + " cs=" +

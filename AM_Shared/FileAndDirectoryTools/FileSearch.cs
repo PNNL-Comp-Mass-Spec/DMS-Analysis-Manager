@@ -3074,7 +3074,6 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return success;
         }
 
-        ///
         /// <summary>
         /// Retrieves an Agilent or Bruker .D directory for the analysis job in progress
         /// </summary>

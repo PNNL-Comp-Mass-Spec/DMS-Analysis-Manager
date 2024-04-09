@@ -873,11 +873,12 @@ namespace AnalysisManagerMSAlignPlugIn
         }
 
         // Example Console output (v0.5 does not have console output)
-        //
+
         // Initializing indexes...
         // Processing spectrum scan 660...         0% finished (0 minutes used).
         // Processing spectrum scan 1329...        1% finished (0 minutes used).
         // Processing spectrum scan 1649...        1% finished (0 minutes used).
+
         private readonly Regex reExtractPercentFinished = new(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>

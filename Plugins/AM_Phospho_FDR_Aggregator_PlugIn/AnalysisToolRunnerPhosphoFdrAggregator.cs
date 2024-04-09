@@ -689,7 +689,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         }
 
         // Example Console output
-        //
+
         // Fragment Type:  HCD
         // Mass Tolerance: 0.05 Da
         // Caching data in E:\DMS_WorkDir\Job1153717\HarrisMS_batch2_Ppp_A4-2_22Dec14_Frodo_14-12-07_msgfplus_syn.txt
@@ -704,7 +704,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         // Percent Completion 1%
         // Percent Completion 2%
         // Percent Completion 2%
+
         private const string REGEX_AScore_PROGRESS = @"Percent Completion (\d+)\%";
+
         private readonly Regex reCheckProgress = new(REGEX_AScore_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>

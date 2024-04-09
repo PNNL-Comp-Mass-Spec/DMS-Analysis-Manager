@@ -141,7 +141,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Possibly also obtain the .mzML file or .Raw file for each dataset
             // Starting in 2013, we switched to submitting .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzML file.
             // However, if the MS-GF+ search used a .mzML file and not a _dta.txt file, we _do_ need the .mzML file
-            //
+
             // Prior to May 2013 the .mzML file was required when creating Pride XML files for a "complete" submission
             // However, that mode is no longer required
 

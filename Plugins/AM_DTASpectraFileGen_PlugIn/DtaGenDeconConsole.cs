@@ -321,7 +321,6 @@ namespace DTASpectraFileGen
                         break;
                 }
 
-                //
                 if (!File.Exists(logFilePath))
                 {
                     return;

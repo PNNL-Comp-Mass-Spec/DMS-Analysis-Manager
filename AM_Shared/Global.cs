@@ -354,8 +354,8 @@ namespace AnalysisManagerBase
         {
             // assembly.FullName typically returns something like this:
             // AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
-            //
-            // the goal is to extract out the text after Version= but before the next comma
+
+            // The goal is to extract out the text after Version= but before the next comma
 
             var reGetVersion = new Regex("version=([0-9.]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var version = assembly.FullName;

@@ -86,7 +86,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         public bool ParsePPMErrorCharterOutput(string datasetName, int datasetID, int psmJob, string ppmErrorCharterConsoleOutputFilePath)
         {
             // Example console output:
-            //
+
             // Using fixed data file "E:\DMS_WorkDir\DatasetName_FIXED.mzML"
             // Statistic                   Original    Refined
             // MeanMassErrorPPM:              2.430      1.361

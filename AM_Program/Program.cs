@@ -206,10 +206,10 @@ namespace AnalysisManagerProg
         {
             try
             {
-                // For this to work properly on Windows 10, you must add a app.manifest file
+                // For this to work properly on Windows 10, you must add an app.manifest file
                 // and uncomment the versions of Windows listed below
                 // <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
-                //
+
                 // See https://stackoverflow.com/a/36158739/1179467
 
                 var osVersionInfo = new OSVersionInfo();

@@ -738,10 +738,10 @@ namespace MSGFResultsSummarizer
 
             // Sort the data by ascending SpecEValue, then step through the list and compute FDR
             // Use FDR = #Reverse / #Forward
-            //
+
             // Alternative FDR formula is: FDR = 2 * #Reverse / (#Forward + #Reverse)
             // But, since MS-GF+ uses "#Reverse / #Forward" we'll use that here too
-            //
+
             // If no reverse hits are present or if none of the data has MSGF values, we'll clear psmResults and update mErrorMessage
 
             // Populate a list with the MSGF values and ResultIDs so that we can step through the data and compute the FDR for each entry
@@ -1414,7 +1414,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 // Determine the number of MS/MS spectra searched
-                //
+
                 if (firstHitsOrSynopsisFile.Exists)
                 {
                     ExamineFirstHitsFile(firstHitsOrSynopsisFile.FullName, isFirstHitsFile);
@@ -2588,7 +2588,6 @@ namespace MSGFResultsSummarizer
         /// <param name="uniquePhosphopeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         /// <param name="uniqueAcetylPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         /// <param name="uniqueUbiquitinPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
-        ///
         private PSMStats TabulatePSMStats(
             IDictionary<int, UniqueSeqInfo> uniqueSequences,
             IDictionary<string, int> uniqueProteins,

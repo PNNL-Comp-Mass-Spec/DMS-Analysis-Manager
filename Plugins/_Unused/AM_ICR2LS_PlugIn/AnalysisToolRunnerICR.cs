@@ -15,7 +15,7 @@ namespace AnalysisManagerICR2LSPlugIn
         // Ignore Spelling: Bruker, deisotoping, fid, pek, ser
 
         // Example folder layout when processing S-folders
-        //
+
         // C:\DMS_WorkDir1\   contains the .Par file
         // C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\   is empty
         // C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s001   contains 100 files (see below)
@@ -24,7 +24,7 @@ namespace AnalysisManagerICR2LSPlugIn
         // C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s004
         // C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s005
         // etc.
-        //
+
         // Files in C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s001\
         // 110409_His.00001
         // 110409_His.00002
@@ -32,14 +32,12 @@ namespace AnalysisManagerICR2LSPlugIn
         // ...
         // 110409_His.00099
         // 110409_His.00100
-        //
+
         // Files in C:\DMS_WorkDir1\110409_His_Ctrl_052209_5ul_A40ACN\s002\
         // 110409_His.00101
         // 110409_His.00102
         // 110409_His.00103
         // etc.
-        //
-        //
 
         /// <summary>
         /// Primary entry point for running this tool

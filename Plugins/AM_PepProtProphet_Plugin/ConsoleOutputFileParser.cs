@@ -83,7 +83,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ----------------------------------------------------
             // Example MSBooster Console output (excerpt)
-            //
+
             // MSBooster v1.1.11
             // Using 4 threads
             // Generating input file for DIA-NN
@@ -116,7 +116,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ----------------------------------------------------
             // Example IonQuant Console output (excerpt)
-            //
+
             // IonQuant version IonQuant-1.9.8
             // Batmass-IO version 1.28.12
             // timsdata library version timsdata-2-21-0-4
@@ -444,19 +444,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ----------------------------------------------------
             // Example Console output when running FreeQuant
-            //
+
             // INFO[19:00:24] Executing Label-free quantification  v5.0.0
             // INFO[19:00:24] Indexing PSM information
             // INFO[19:00:24] Reading spectra and tracing peaks
             // INFO[19:00:24] Processing Emory_Rush_TMT_b02_04
             // INFO[19:00:53] Assigning intensities to data layers
             // INFO[19:00:53] Done
-            //
-            // ----------------------------------------------------
 
             // ----------------------------------------------------
             // Example Console output when running LabelQuant
-            //
+
             // INFO[19:01:58] Executing Isobaric-label quantification  v5.0.0
             // INFO[19:01:58] Calculating intensities and ion interference
             // INFO[19:01:58] Processing Emory_Rush_TMT_b02_04
@@ -464,16 +462,13 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // INFO[19:02:25] Removing 313 PSMs from isobaric quantification
             // INFO[19:02:25] Saving
             // INFO[19:02:26] Done
-            //
-            // ----------------------------------------------------
 
             // ----------------------------------------------------
             // Example Console output when running iProphet
-            //
+
             // INFO[19:29:20] Executing InterProphet  v5.0.0
             // Running FPKM NSS NRS NSE NSI NSM Model EM:
             // Computing NSS values ...
-            // ----------------------------------------------------
 
             // ReSharper restore CommentTypo
 
@@ -586,7 +581,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             // ----------------------------------------------------
             // Example Console output
-            //
+
             // [INFO:] Using statically set 15 PPM tolerance ...
             // [INFO:] Writing file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pep.xml.tmp.a52124 ...
             // [INFO:] Creating 1 threads
@@ -619,7 +614,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // [INFO:] done ...
             // [INFO:] Writing file interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml ...
             // [INFO:] done ...
-            // ----------------------------------------------------
 
             // ReSharper restore CommentTypo
 
@@ -695,7 +689,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 return;
 
             // Example Console output
-            //
+
             // INFO[18:17:06] Current Philosopher build and version         build=201904051529 version=20190405
             // WARN[18:17:08] There is a new version of Philosopher available for download: https://github.com/prvst/philosopher/releases
 

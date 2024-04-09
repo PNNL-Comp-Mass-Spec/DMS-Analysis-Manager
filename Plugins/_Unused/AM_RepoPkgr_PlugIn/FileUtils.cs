@@ -35,7 +35,6 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             directory.GetFiles(filter).ToList().ForEach(f => f.Delete());
         }
 
-        //
         /// <summary>
         /// Look for zipped files in given directory and convert them to gzip.
         /// (conversions are performed in the working directory)

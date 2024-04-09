@@ -159,7 +159,7 @@ namespace AnalysisManagerProMexPlugIn
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
-            //
+
             // ****** ProMex   ver. 1.0 (Jan 29, 2014) ************
             // -i      CPTAC_Intact_100k_01_Run1_9Dec14_Bane_C2-14-08-02RZ.pbf
             // -minCharge      2

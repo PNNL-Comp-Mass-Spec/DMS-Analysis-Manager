@@ -668,7 +668,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     //   "None of the spectra are centroided; unable to process"
                     //   "skipped xx% of the spectra because they did not appear centroided"
                     //   "skip xx% of the spectra because they did not appear centroided"
-                    //
+
                     // Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
 
                     LogError(AnalysisResources.SPECTRA_ARE_NOT_CENTROIDED + " with MS-GF+");
@@ -678,7 +678,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Compute the fraction of all potential spectra that were skipped
                     // If over 20% of the spectra were skipped, and if the source spectra were not centroided,
-                    //   then tooManySkippedSpectra will be set to true and the job step will be marked as failed
+                    // tooManySkippedSpectra will be set to true and the job step will be marked as failed
 
                     var spectraAreCentroided =
                         mJobParams.GetJobParameter("CentroidMSXML", false) ||

@@ -514,7 +514,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         private bool CreateMSAlignCommandLine(string paramFilePath, out string commandLine)
         {
             // MSAlign_Histone syntax
-            //
+
             // -a, --activation <CID|HCD|ETD|FILE>
             //        MS/MS activation type: use FILE for data set with several activation types.
             // -c  --cutoff <float>
@@ -791,13 +791,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         }
 
         // Example Console output
-        //
+
         // Start at Thu Apr 04 15:10:48 PDT 2013
         // MS-Align+ 0.9.0.16 2013-02-02
         // Fast filteration started.
         // Fast filteration finished.
         // Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
         // Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
+
         private readonly Regex reExtractPercentFinished = new("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>

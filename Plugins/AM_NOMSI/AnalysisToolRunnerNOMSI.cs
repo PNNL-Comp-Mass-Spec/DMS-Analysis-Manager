@@ -222,7 +222,7 @@ namespace AnalysisManagerNOMSIPlugin
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
-            //
+
             // start=5/4/2015 2:16:45 PM
             // dataset_path=E:\DMS_WorkDir\2015_04_05_ESIL_Pos_ESIL_HighMass_TOF1p4_000001_scan1.xml
             // param_file_path=E:\DMS_WorkDir\NOMSI_DI_Diagnostics_Targets_Pairs_2015-04-30.param
@@ -230,7 +230,6 @@ namespace AnalysisManagerNOMSIPlugin
             // diagnostics=failure
             // summary=success
             // end=5/4/2015 2:16:45 PM
-            //
 
             try
             {

@@ -28,10 +28,10 @@ namespace AnalysisManager_AScore_PlugIn
             //          If the files have been purged, they may not be accessible
             //          (Mage supports retrieving files from Aurora or MyEmsl,
             //           but this has not be tested as of July 16, 2014)
-            //
+
             // var success = true;
             // success = RunAScoreGetResources();
-            //
+
             // if (!success) return CloseOutType.CLOSEOUT_FAILED;
 
             if (mDebugLevel > 2)

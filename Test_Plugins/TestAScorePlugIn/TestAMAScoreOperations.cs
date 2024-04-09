@@ -11,9 +11,7 @@ namespace TestAScorePlugIn
         //-------------------------------- PHOSPHO
         string mWorkDir;
         string mLogFilename;
-        /// <summary>
-        ///
-        /// </summary>
+
         public void Test_RunPhospho()
         {
             Dictionary<string, string> mJobParms = new Dictionary<string, string>() {

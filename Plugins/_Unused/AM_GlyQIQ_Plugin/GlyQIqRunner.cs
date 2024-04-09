@@ -229,9 +229,10 @@ namespace AnalysisManagerGlyQIQPlugin
 
         // In the Console output, we look for lines like this:
         // Start Workflows... (FragmentedTargetedIQWorkflow) on 3-6-1-0-0
-        //
+
         // The Target Code is listed at the end of those lines, there 3-6-1-0-0
         // That code corresponds to the third column in the Targets file
+
         private readonly Regex reStartWorkflows = new("^Start Workflows... .+ on (.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>

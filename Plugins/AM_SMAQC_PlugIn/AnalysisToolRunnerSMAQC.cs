@@ -178,8 +178,8 @@ namespace AnalysisManagerSMAQCPlugIn
                     }
                 }
 
-                // In use from June 2013 through November 12, 2015
-                //
+                // In use from June 2013 through November 12, 2015:
+
                 // if (processingSuccess)
                 // {
                 //    var successLLRC = ComputeLLRC();
@@ -490,7 +490,7 @@ namespace AnalysisManagerSMAQCPlugIn
         }
 
         // Example Console output:
-        //
+
         // 2/13/2012 07:15:41 PM - [Version Info]
         // 2/13/2012 07:15:41 PM - Loading Assemblies
         // 2/13/2012 07:15:41 PM - mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089

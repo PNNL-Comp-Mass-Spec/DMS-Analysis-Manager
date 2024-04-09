@@ -1717,7 +1717,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Look for the suffix array files that should exist for the FASTA file
             // Either copy them from Gigasax (or Proto-7) or re-create them
-            //
+
             var indexIteration = 0;
             var msgfPlusIndexFilesFolderPath = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
             var msgfPlusIndexFilesFolderPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
@@ -1923,7 +1923,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         // Example Console output (verbose mode used by an old version of MS-GF+):
-        //
+
         // MS-GF+ Release (v2016.01.20) (1/20/2016)
         // Loading database files...
         // Loading database finished (elapsed time: 4.93 sec)
@@ -2861,7 +2861,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Prior to MS-GF+ version v9284 we used " -protocol 1" at the command line when performing an HCD-based phosphorylation search
             // However, v9284 now auto-selects the correct protocol based on the spectrum type and the dynamic modifications
             // Options for -protocol are 0=NoProtocol (Default), 1=Phosphorylation, 2=iTRAQ, 3=iTRAQPhospho
-            //
+
             // As of March 23, 2015, if the user is searching for Phospho mods with TMT labeling enabled,
             // MS-GF+ will use a model trained for TMT peptides (without phospho)
             // In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to Options having "-protocol 1")

@@ -1282,7 +1282,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // If it includes multiple matches, PRIDE Converter crashes when reading the .mzXML file
                 // Furthermore, the .msgf-report.xml file cannot have extra entries that are not in the .msgf file
                 // Thus, only keep the best-scoring match for each spectrum
-                //
+
                 // The keys in each of bestMatchByScan and bestMatchByScanScoreValues are scan numbers
                 // The value for bestMatchByScan is a KeyValue pair where the key is the score for this match
                 var bestMatchByScan = new Dictionary<int, KeyValuePair<double, string>>();
@@ -2320,7 +2320,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         // Could write out details of dynamic mods
                         //    Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
                         //    However, since we're now submitting .mzid.gz files to PRIDE and not .msgf-report.xml files, this update is not necessary
-                        //
+
                         // XML format:
                         // <ModificationItem>
                         //     <ModLocation>10</ModLocation>
@@ -2425,7 +2425,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // In the future, we might write out customized PTMs here
                 // For now, just copy over whatever is in the template msgf-report.xml file
-                //
+
                 // writer.WriteStartElement("PTMs")
                 // writer.WriteFullEndElement()
             }
@@ -3580,7 +3580,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // ReSharper disable CommentTypo
 
             // Example Console output:
-            //
+
             // 2012-11-20 16:58:47,333 INFO ReportUnmarshallerFactory - Unmarshaller Initialized
             // 2012-11-20 16:58:47,333 INFO ReportReader - Creating index:
             // 2012-11-20 16:58:49,860 INFO ReportMarshallerFactory - Marshaller Initialized

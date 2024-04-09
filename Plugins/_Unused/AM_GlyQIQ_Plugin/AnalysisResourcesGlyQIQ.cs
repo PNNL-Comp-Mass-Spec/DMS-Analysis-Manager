@@ -217,7 +217,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     // Note that GlyQIqRunner expects this batch file to be in a specific format:
                     // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
                     //                   "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
-                    //
+
                     // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
                     // Thus, if you change this code, also update GlyQIqRunner
 

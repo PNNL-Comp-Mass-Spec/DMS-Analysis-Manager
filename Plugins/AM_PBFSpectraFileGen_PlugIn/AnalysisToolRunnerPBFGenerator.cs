@@ -284,7 +284,7 @@ namespace AnalysisManagerPBFGenerator
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output
-            //
+
             // Creating E:\DMS_WorkDir\Synocho_L2_1.pbf from E:\DMS_WorkDir\Synocho_L2_1.raw
             // PbfFormatVersion: 150601
 

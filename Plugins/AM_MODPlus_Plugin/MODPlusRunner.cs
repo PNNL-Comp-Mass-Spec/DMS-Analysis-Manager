@@ -176,7 +176,7 @@ namespace AnalysisManagerMODPlusPlugin
         // ReSharper disable CommentTypo
 
         // Example Console output
-        //
+
         // ************************************************************************************
         // Modplus (version pnnl) - Identification of post-translational modifications
         // Release Date: Apr 28, 2015

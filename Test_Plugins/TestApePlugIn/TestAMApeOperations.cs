@@ -11,9 +11,7 @@ namespace TestApePlugIn
         //-------------------------------- IMPROV
         string mWorkDir;
         string mLogFilename;
-        /// <summary>
-        ///
-        /// </summary>
+
         public bool Test_GetImprovResults()
         {
             var mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
@@ -56,9 +54,6 @@ namespace TestApePlugIn
 
         //-------------------------------- Spectral Counting
 
-        /// <summary>
-        ///
-        /// </summary>
         public bool Test_RunWorkflow()
         {
             var mJobParms = new Dictionary<string, string>() {

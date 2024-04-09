@@ -423,7 +423,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             // ReSharper disable CommentTypo
 
             // Example Console output
-            //
+
             // Microsoft (R) Windows Script Host Version 5.8
             // Copyright (C) Microsoft Corporation. All rights reserved.
             //

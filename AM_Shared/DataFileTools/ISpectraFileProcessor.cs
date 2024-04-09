@@ -92,7 +92,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Machine-specific parameters, such as file locations
         /// </summary>
-        //
         IMgrParams MgrParams { set; }
 
         /// <summary>

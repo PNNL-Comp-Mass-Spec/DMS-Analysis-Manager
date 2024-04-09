@@ -628,7 +628,6 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Make sure that we don't keep the original, non-pruned file
                 // The pruned file was created in targetFolder and will get included in GlyQIq_Automation_Files.zip
-                //
                 mJobParams.AddResultFileToSkip(consoleOutputFile.Name);
             }
             catch (Exception ex)

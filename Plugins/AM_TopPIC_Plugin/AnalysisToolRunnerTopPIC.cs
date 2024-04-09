@@ -284,7 +284,7 @@ namespace AnalysisManagerTopPICPlugIn
             // ReSharper disable CommentTypo
 
             // Example Console output for version 1.7 and later
-            //
+
             // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 3 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --variable-ptm-num 2 --local-ptm-file-name C:\DMS_WorkDir\TopPIC_Dynamic_Mods.txt C:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
             // --------------------------------------------------------------------------------
             // Total thread number: 16
@@ -339,7 +339,7 @@ namespace AnalysisManagerTopPICPlugIn
             // Zero unexpected shift filtering - started.
 
             // Example Console output for version 1.5.4 and earlier
-            //
+
             // toppic.exe --mass-error-tolerance 15 --proteoform-error-tolerance 0.8 --max-shift 500 --min-shift -500 --num-shift 1 --spectrum-cutoff-type FDR --spectrum-cutoff-value 0.01 --proteoform-cutoff-type FDR --proteoform-cutoff-value 0.01 --activation=FILE --thread-number 14 --decoy --n-terminal-form NONE,NME,NME_ACETYLATION,M_ACETYLATION --mod-file-name E:\DMS_WorkDir5\TopPIC_Dynamic_Mods.txt E:\DMS_Temp_Org\ID_008379_7A4C32B7.fasta DatasetName_ms2.msalign
             // --------------------------------------------------------------------------------
             // TopPIC 1.5.4
@@ -1094,7 +1094,7 @@ namespace AnalysisManagerTopPICPlugIn
         private void TrimConsoleOutputFile(string consoleOutputFilePath)
         {
             // This RegEx matches lines of the form:
-            //
+
             // Zero PTM filtering - processing 100 of 4404 spectra.
             // One PTM search - processing 100 of 4404 spectra.
             // E-value computation - processing 100 of 4404 spectra.
@@ -1106,7 +1106,7 @@ namespace AnalysisManagerTopPICPlugIn
             var extractItemWithCount = new Regex(@"processing +(?<Item>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             // This RegEx matches lines of the form:
-            //
+
             // Non PTM filtering - processing 0.122%.
             // Non PTM filtering - processing 5.6%.
 

@@ -101,7 +101,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <para>Is set to true if job parameter GeneratePeptideLevelSummary true</para>
         /// <para>Ignored if we only have a single experiment group (or no experiment groups)</para>
         /// <para>FragPipe v19 and v20 do not run iProphet when "Generate peptide-level summary" is checked; this may or may not be correct behavior</para>
-        ///
         /// </remarks>
         public bool RunIProphet { get; set; }
 

@@ -574,16 +574,15 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Syntax for calling ICR-2LS via the command line:
             // ICR-2LS.exe /I:InputFilePath /P:ParameterFilePath /O:OutputFilePath /M:[PEK|TIC] /T:[1|2] /F:FirstScan /L:LastScan /NoMS2
-            //
+
             // /M:PEK means to make a PEK file while /M:TIC means to generate the .TIC file
             // /T:0 is likely auto-determine based on input file name
             // /T:1 means the input file is a Thermo .Raw file, and /I specifies a file path
             // /T:2 means the input files are s-files in s-folders (ICR-2LS file format), and thus /I specifies a folder path
-            //
+
             // /F and /L are optional.  They can be used to limit the range of scan numbers to process
-            //
             // /NoMS2 is optional.  When provided, /MS2 spectra will be skipped
-            //
+
             // See AnalysisToolRunnerICR for a description of the expected folder layout when processing S-folders
 
             string arguments;

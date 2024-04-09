@@ -1972,7 +1972,6 @@ namespace AnalysisManagerBase.JobConfig
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
 
             // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
-            //
             object remoteProgress = null;
 
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))

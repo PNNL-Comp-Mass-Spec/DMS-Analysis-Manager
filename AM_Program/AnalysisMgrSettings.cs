@@ -183,7 +183,7 @@ namespace AnalysisManagerProg
         private bool LoadBrokerDBSettings(short retryCount = 6)
         {
             // Retrieves global settings from the Broker DB. Performs retries if necessary.
-            //
+
             // At present, the only settings being retrieved are the param file storage paths for each step tool
             // The storage path for each step tool will be stored in the manager settings dictionary
             // For example: the LCMSFeatureFinder step tool will have an entry with

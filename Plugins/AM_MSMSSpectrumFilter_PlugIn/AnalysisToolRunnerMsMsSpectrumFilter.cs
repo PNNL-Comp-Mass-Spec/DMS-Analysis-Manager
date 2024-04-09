@@ -273,13 +273,14 @@ namespace MSMSSpectrumFilterAM
 
             // This RegEx matches text of the form:
             // =================================== "File.ScanStart.ScanEnd.Charge.dta" ==================================
-            //
+
             // For example:
             // =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1.dta" ==================================
-            //
+
             // It also can match lines where there is extra information associated with the charge state, for example:
             // =================================== "QC_Shew_07_02-pt5-a_27Sep07_EARTH_07-08-15.351.351.1_1_2.dta" ==================================
             // =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
+
             const string DTA_FILENAME_REGEX = @"^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta";
 
             var dtaCount = 0;

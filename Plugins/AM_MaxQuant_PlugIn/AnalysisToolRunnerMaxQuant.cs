@@ -645,7 +645,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         private void ParseConsoleOutputFile()
         {
             // Example Console output
-            //
+
             // id      number of threads       job name
             // Configuring
             // Assemble run info

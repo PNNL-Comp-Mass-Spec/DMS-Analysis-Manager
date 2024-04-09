@@ -488,7 +488,7 @@ namespace AnalysisManagerMSGFPlugin
                     // This is the ion_series line
                     // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
                     // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
-                    //
+
                     // The key to parsing this data is:
                     // ion_series = - - -  a   b   c  --- --- ---  x   y   z
                     // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
@@ -1178,10 +1178,8 @@ namespace AnalysisManagerMSGFPlugin
             var precursorMassErrorCount = 0;
             var mgfLookupErrorCount = 0;
 
-            ///////////////////////////////////////////////////////
             // Note: Do not put a Try/Catch block in this method
             // Allow the calling method to catch any errors
-            ///////////////////////////////////////////////////////
 
             // Initialize the column mapping
             // Using a case-insensitive comparer

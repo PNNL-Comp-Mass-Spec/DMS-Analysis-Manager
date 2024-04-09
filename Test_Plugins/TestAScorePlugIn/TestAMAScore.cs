@@ -9,9 +9,7 @@ namespace TestAScorePlugIn
     class TestAMAScore
     {
         //-------------------------------- PHOSPHO
-        /// <summary>
-        ///
-        /// </summary>
+
         public void Test_RunAScore()
         {
             var jobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {

@@ -888,7 +888,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // [7:55] Saving unique genes levels matrix
             // [7:55] Unique genes levels matrix (1% precursor FDR and protein group FDR) saved to C:\DMS_WorkDir2\report.unique_genes_matrix.tsv.
             // [7:55] Stats report saved to C:\DMS_WorkDir2\report.stats.tsv
-            //
+
             // Finished
 
             // ReSharper restore CommentTypo

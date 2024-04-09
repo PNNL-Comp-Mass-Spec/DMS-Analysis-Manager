@@ -1075,7 +1075,7 @@ namespace AnalysisManagerSequestPlugin
 
                         // Update the evaluation message and evaluation code
                         // These will be used by method CloseTask in AnalysisJob
-                        //
+
                         // An evaluation code with bit ERROR_CODE_A set will result in DMS_Pipeline DB views
                         //  V_Job_Steps_Stale_and_Failed and V_Sequest_Cluster_Warnings showing this message:
                         //  "SEQUEST node count is less than the expected value"
