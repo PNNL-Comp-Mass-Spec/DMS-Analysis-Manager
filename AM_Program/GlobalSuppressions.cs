@@ -17,6 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0059:Unnecessary assignment of a value", Justification = "Used for debugging", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestMALDIDataUnzip(System.String)~System.Boolean")]
 [assembly: SuppressMessage("Style", "IDE0059:Unnecessary assignment of a value", Justification = "Used for debugging", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestProteinDBExport(System.String)~System.Boolean")]
 [assembly: SuppressMessage("Style", "IDE0059:Unnecessary assignment of a value", Justification = "Used for debugging", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.TestRunSP")]
+[assembly: SuppressMessage("Style", "IDE0305:Simplify collection initialization", Justification = "Uses the preferred syntax", Scope = "member", Target = "~M:AnalysisManagerProg.CodeTest.DisplayDllVersions(System.String,System.String)")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerProg.AnalysisMgrSettings")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerProg.CleanupMgrErrors")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Allowed", Scope = "type", Target = "~T:AnalysisManagerProg.CleanupMgrErrors.CleanupActionCodes")]

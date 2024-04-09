@@ -15,13 +15,13 @@ namespace AnalysisManager_Mage_PlugIn
         private int _aliasColIdx;
         private int _datasetIdx;
 
-        // lookup table for dataset aliases
+        // Lookup table for dataset aliases
         private Dictionary<string, string> _datasetAliases = new();
 
         public override void Prepare()
         {
             base.Prepare();
-            // make sure alias column is in output (in case it isn't in input)
+            // Make sure alias column is in output (in case it isn't in input)
             OutputColumnList = "Dataset, Dataset_ID, Alias|+|text, *";
         }
 
@@ -31,8 +31,11 @@ namespace AnalysisManager_Mage_PlugIn
             _datasetIdx = OutputColumnPos["Dataset"];
         }
 
-        // handle a data row - make sure alias field has an appropriate value
-        protected override bool CheckFilter(ref string[] vals)
+        /// <summary>
+        /// Handle a data row: make sure alias field has an appropriate value
+        /// </summary>
+        /// <param name="values">Values</param>
+        /// <returns></returns>
         protected override bool CheckFilter(ref string[] values)
         {
             if (OutputColumnDefs != null)
@@ -54,6 +57,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns>Alias for dataset name</returns>
         private string LookupAlias(string dataset)
         {
+            // ReSharper disable once CanSimplifyDictionaryLookupWithTryGetValue
             return _datasetAliases.ContainsKey(dataset) ? _datasetAliases[dataset] : MakeAlias(dataset);
         }
 
@@ -88,11 +92,11 @@ namespace AnalysisManager_Mage_PlugIn
         /// a lookup table of dataset names to short label equivalents
         /// </summary>
         /// <param name="factorsObj">Mage simple sink object holding </param>
-        /// <param name="padAliases"> </param>
-        /// <param name="stripPrefix"> </param>
+        /// <param name="padAliases">When true, pad aliases</param>
+        /// <param name="stripPrefix">When true, strip prefixes</param>
         public void SetupAliasLookup(SimpleSink factorsObj, bool padAliases = true, bool stripPrefix = false)
         {
-            // get non-duplicate set of dataset names
+            // Get non-duplicate set of dataset names
             var uniqueNameSet = new HashSet<string>();
             var dIdx = factorsObj.ColumnIndex["Dataset"];
 
@@ -101,10 +105,10 @@ namespace AnalysisManager_Mage_PlugIn
                 uniqueNameSet.Add(row[dIdx]);
             }
 
-            // build alias lookup table for names
+            // Build alias lookup table for names
             var nameLookup = BuildAliasLookupTable(uniqueNameSet, padAliases);
 
-            // set up to use the lookup table
+            // Set up to use the lookup table
             if (nameLookup.Count > 0)
             {
                 if (stripPrefix)
@@ -121,47 +125,47 @@ namespace AnalysisManager_Mage_PlugIn
         /// <returns>Lookup table of aliases for names, indexed by name</returns>
         public static Dictionary<string, string> BuildAliasLookupTable(HashSet<string> uniqueNameSet, bool padAliasWidth = true)
         {
-            // get sorted list of unique dataset names
+            // Get sorted list of unique dataset names
             var nameList = new List<string>(uniqueNameSet);
             nameList.Sort();
 
-            // create lookup tables for alias widths and alaises
+            // Create lookup tables for alias widths and aliases
             var nameLookup = new Dictionary<string, string>();
             var aliasWidths = new Dictionary<string, int>();
 
             foreach (var name in nameList)
             {
-                nameLookup.Add(name, "");
+                nameLookup.Add(name, string.Empty);
                 aliasWidths.Add(name, 0);
             }
 
-            // first, build lookup of aiias widths
+            // First, build lookup of alias widths
             var maxWidth = 0;
 
             for (var currentNameIdx = 0; currentNameIdx < uniqueNameSet.Count - 1; currentNameIdx++)
             {
-                // we examine current name and adjacent name in sorted list
+                // We examine current name and adjacent name in sorted list
                 var adjacentNameIdx = currentNameIdx + 1;
                 var currentName = nameList[currentNameIdx];
                 var adjacentName = nameList[adjacentNameIdx];
 
-                // check overlap of current name with adjacent name in list
+                // Check overlap of current name with adjacent name in list
                 var width = GetUniqueWidth(currentName, adjacentName);
                 maxWidth = (width > maxWidth) ? width : maxWidth;
 
-                // set width for alias for current name
+                // Set width for alias for current name
                 if (aliasWidths[currentName] < width + 1)
                 {
                     aliasWidths[currentName] = width + 1;
                 }
-                // set width for alias for adjacent name
+                // Set width for alias for adjacent name
                 if (aliasWidths[adjacentName] < width + 1)
                 {
                     aliasWidths[adjacentName] = width + 1;
                 }
             }
 
-            // next set aliases using previously calculated widths
+            // Next set aliases using previously calculated widths
             foreach (var name in nameList)
             {
                 if (padAliasWidth)
@@ -176,7 +180,12 @@ namespace AnalysisManager_Mage_PlugIn
             return nameLookup;
         }
 
-        // get the minimum number of initial characters necessary to distinguish s1 from s2
+        /// <summary>
+        /// Get the minimum number of initial characters necessary to distinguish the two strings
+        /// </summary>
+        /// <param name="s1">String 1</param>
+        /// <param name="s2">String 2</param>
+        /// <returns>Minimum number of characters</returns>
         private static int GetUniqueWidth(string s1, string s2)
         {
             var width = 0;
@@ -199,12 +208,12 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         public static void StripOffCommonPrefix(Dictionary<string, string> nameLookup)
         {
-            // find width of common prefix for all alias values
+            // Find width of common prefix for all alias values
             var width = 1;
 
             while (true)
             {
-                var candidatePrefix = "";
+                var candidatePrefix = string.Empty;
                 var matched = true;
 
                 foreach (var alias in nameLookup.Values)
@@ -231,7 +240,8 @@ namespace AnalysisManager_Mage_PlugIn
                     break;
                 }
             }
-            // strip off common prefix (if there was one)
+
+            // Strip off common prefix (if there was one)
             if (width > 1)
             {
                 var start = width - 1;
@@ -239,8 +249,7 @@ namespace AnalysisManager_Mage_PlugIn
                 foreach (var dataset in nameLookup.Keys)
                 {
                     var alias = nameLookup[dataset];
-                    var strippedAlias = alias.Substring(start);
-                    nameLookup[dataset] = strippedAlias;
+                    nameLookup[dataset] = alias.Substring(start);
                 }
             }
         }

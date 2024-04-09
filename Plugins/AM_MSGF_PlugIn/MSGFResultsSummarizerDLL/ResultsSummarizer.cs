@@ -137,7 +137,7 @@ namespace MSGFResultsSummarizer
         /// Dataset name
         /// </summary>
         /// <remarks>
-        /// Used to contact DMS to lookup the total number of scans and total number of MSn scans
+        /// Used to contact DMS to look up the total number of scans and total number of MSn scans
         /// This information is used by
         /// </remarks>
         public string DatasetName { get; set; }

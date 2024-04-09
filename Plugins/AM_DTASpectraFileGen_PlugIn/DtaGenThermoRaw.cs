@@ -44,6 +44,8 @@ namespace DTASpectraFileGen
         private FileSystemWatcher mDTAWatcher;
         private FileSystemWatcher mDeconMSnProgressWatcher;
 
+        // ReSharper disable UnusedMember.Local
+
         // API constants
         private const short OF_READ = 0x0;
 
@@ -53,18 +55,24 @@ namespace DTASpectraFileGen
         private const short OF_SHARE_DENY_NONE = 0x40;
         private const short OF_SHARE_DENY_READ = 0x30;
         private const short OF_SHARE_DENY_WRITE = 0x20;
-
         private const short OF_SHARE_EXCLUSIVE = 0x10;
+
+        // ReSharper restore UnusedMember.Local
+
         public const string DECONMSN_FILENAME = "DeconMSn.exe";
         public const string EXTRACT_MSN_FILENAME = "extract_msn.exe";
         public const string MSCONVERT_FILENAME = "msconvert.exe";
         public const string DECON_CONSOLE_FILENAME = "DeconConsole.exe";
+
+        // ReSharper disable once IdentifierTypo
         public const string RAWCONVERTER_FILENAME = "RawConverter.exe";
 
         public const string DECONMSN_FILENAME_LOWER = "deconmsn.exe";
         public const string EXTRACT_MSN_FILENAME_LOWER = "extract_msn.exe";
         public const string MSCONVERT_FILENAME_LOWER = "msconvert.exe";
         public const string DECON_CONSOLE_FILENAME_LOWER = "deconconsole.exe";
+
+        // ReSharper disable once IdentifierTypo
         public const string RAWCONVERTER_FILENAME_LOWER = "rawconverter.exe";
 
         public override void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner)
@@ -229,7 +237,7 @@ namespace DTASpectraFileGen
                 OnStatusEvent("DtaGenThermoRaw.InitSetup: Initializing DTA generator setup");
             }
 
-            // Do tests specified in base class
+            // Do the tests specified in the base class
             if (!base.InitSetup())
                 return false;
 
@@ -436,7 +444,7 @@ namespace DTASpectraFileGen
             // Determine max number of scans to be performed
             mNumScans = scanStop - scanStart + 1;
 
-            // Setup a program runner tool to make the spectra files
+            // Set up a program runner tool to make the spectra files
             mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel);
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -457,7 +465,7 @@ namespace DTASpectraFileGen
 
             if (mRunningExtractMSn)
             {
-                // Setup a FileSystemWatcher to watch for new .Dta files being created
+                // Set up a FileSystemWatcher to watch for new .Dta files being created
                 // We can compare the scan number of new .Dta files to the mMaxScanInFile value to determine % complete
                 mDTAWatcher = new FileSystemWatcher(mWorkDir, "*.dta");
                 mDTAWatcher.Created += DTAWatcher_Created;
@@ -469,8 +477,8 @@ namespace DTASpectraFileGen
             }
             else
             {
-                // Running DeconMSn; it directly creates a _dta.txt file and we need to instead monitor the _DeconMSn_progress.txt file
-                // Setup a FileSystemWatcher to watch for changes to this file
+                // Running DeconMSn; it directly creates a _dta.txt file, and we need to instead monitor the _DeconMSn_progress.txt file
+                // Set up a FileSystemWatcher to watch for changes to this file
                 mDeconMSnProgressWatcher = new FileSystemWatcher(mWorkDir, mDatasetName + "_DeconMSn_progress.txt");
                 mDeconMSnProgressWatcher.Changed += DeconMSnProgressWatcher_Changed;
 

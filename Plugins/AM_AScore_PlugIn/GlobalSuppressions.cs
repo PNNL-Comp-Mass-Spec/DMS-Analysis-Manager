@@ -6,6 +6,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Design", "RCS1075:Avoid empty catch clause that catches System.Exception.", Justification = "Ignore errors here", Scope = "member", Target = "~M:AnalysisManager_AScore_PlugIn.AnalysisToolRunnerAScore.RunAScore~System.Boolean")]
+[assembly: SuppressMessage("Style", "IDE0300:Simplify collection initialization", Justification = "Uses the preferred syntax", Scope = "member", Target = "~M:AnalysisManager_AScore_PlugIn.AScoreMagePipeline.GetListOfDataPackageJobsToProcess(System.String,System.String)~Mage.SimpleSink")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManager_AScore_PlugIn.AnalysisResourcesAScore")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManager_AScore_PlugIn.AnalysisToolRunnerAScore")]
 [assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "Acceptable legacy name", Scope = "type", Target = "~T:AnalysisManager_AScore_PlugIn.AScoreMagePipeline")]

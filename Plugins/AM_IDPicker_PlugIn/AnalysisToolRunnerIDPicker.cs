@@ -83,7 +83,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            // As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
+            // As of 2015-01-21, we are now always skipping IDPicker (and thus simply creating the .pepXML file)
             var skipIDPicker = ALWAYS_SKIP_IDPICKER;
 
             var processingSuccess = true;

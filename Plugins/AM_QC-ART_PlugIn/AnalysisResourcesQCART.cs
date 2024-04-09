@@ -128,7 +128,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Retrieve the QC_ART R script
                 // This can be defined in a settings file using parameter QCARTRScriptName
-                // However, as of November 2015 QC-ART jobs do not use settings files and we thus simply use the default
+                // However, as of November 2015, QC-ART jobs do not use settings files, and we thus simply use the default
                 currentTask = "Retrieve the R script";
                 var rScriptName = mJobParams.GetJobParameter("QCARTRScriptName", "QC_ART_2015-11-11.R");
                 var rScriptStoragePath = Path.Combine(paramFileStoragePath, "Template_Scripts");
@@ -231,7 +231,7 @@ namespace AnalysisManagerQCARTPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Store the baseline dataset names and MASIC Jobs so they can be used by AnalysisToolRunnerQCART
+                // Store the baseline dataset names and MASIC Jobs so that they can be used by AnalysisToolRunnerQCART
                 StorePackedJobParameterDictionary(baselineDatasets, JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS);
 
                 currentTask = "Retrieve QC Metrics from DMS";

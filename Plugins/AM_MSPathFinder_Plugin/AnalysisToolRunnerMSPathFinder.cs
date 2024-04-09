@@ -18,7 +18,7 @@ using AnalysisManagerBase.JobConfig;
 namespace AnalysisManagerMSPathFinderPlugin
 {
     /// <summary>
-    /// Class for running MSPathFinder analysis of top down data
+    /// Class for running MSPathFinder analysis of top-down data
     /// </summary>
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerMSPathFinder : AnalysisToolRunnerBase
@@ -233,6 +233,8 @@ namespace AnalysisManagerMSPathFinderPlugin
         {
             // Example Console output
 
+            // ReSharper disable CommentTypo
+
             // MSPathFinderT 0.93 (June 29, 2015)
             // SpectrumFilePath: E:\DMS_WorkDir\NCR_2A_G_27Jun15_Samwise_15-05-04.pbf
             // DatabaseFilePath: c:\DMS_Temp_Org\ID_004973_9BA6912F_Excerpt.fasta
@@ -323,6 +325,8 @@ namespace AnalysisManagerMSPathFinderPlugin
             // Decoy-spectrum match E-value calculation elapsed Time: 1849.9 sec
             // Done.
             // Total elapsed time for search: 37962.4 sec (632.71 min)
+
+            // ReSharper restore CommentTypo
 
             const string EXCEPTION_FLAG = "Exception while processing:";
             const string ERROR_PROCESSING_FLAG = "Error processing";

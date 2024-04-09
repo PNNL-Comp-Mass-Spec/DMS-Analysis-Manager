@@ -9,6 +9,8 @@
         /// </summary>
         public int TotalPSMs { get; set; }
 
+        // ReSharper disable CommentTypo
+
         /// <summary>
         /// Number of distinct peptides
         /// </summary>
@@ -19,6 +21,8 @@
         /// (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
         /// </remarks>
         public int UniquePeptideCount { get; set; }
+
+        // ReSharper restore CommentTypo
 
         /// <summary>
         /// Number of distinct proteins
