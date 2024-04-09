@@ -1012,6 +1012,27 @@ namespace MSGFResultsSummarizer
             return currentPSM.GetScore(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.Dataset));
         }
 
+        /// <summary>
+        /// Return a file info instance for the file, auto-switching from _msgfplus_ to _msgfdb_ if required
+        /// </summary>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="fileName">File name</param>
+        /// <returns>File info instance</returns>
+        private FileInfo GetFileInfo(string directoryPath, string fileName)
+        {
+            var fileInfo = new FileInfo(Path.Combine(directoryPath, fileName));
+
+            if (fileInfo.Exists || !fileName.Contains("_msgfplus_"))
+                return fileInfo;
+
+            // The file does not exist, but it contains "msgfplus"
+            // Check for a file with "msgfdb"
+
+            var altFileInfo = new FileInfo(Path.Combine(directoryPath, fileName.Replace("_msgfplus_", "_msgfdb_")));
+
+            return altFileInfo.Exists ? altFileInfo : fileInfo;
+        }
+
         private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
         {
             var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
@@ -1373,30 +1394,30 @@ namespace MSGFResultsSummarizer
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(synopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
-                var firstHitsOrSynopsisFilePath = Path.Combine(mWorkDir, firstHitsOrSynopsisFileName);
-                var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileName);
-                var modSummaryFilePath = Path.Combine(mWorkDir, modSummaryFileName);
+                var firstHitsOrSynopsisFile = GetFileInfo(mWorkDir, firstHitsOrSynopsisFileName);
+                var synopsisFile = GetFileInfo(mWorkDir, synopsisFileName);
+                var modSummaryFile = GetFileInfo(mWorkDir, modSummaryFileName);
 
-                if (!File.Exists(synopsisFilePath))
+                if (!synopsisFile.Exists)
                 {
-                    SetErrorMessage("File not found, cannot summarize results: " + synopsisFilePath);
+                    SetErrorMessage("File not found, cannot summarize results: " + synopsisFile.FullName);
                     return false;
                 }
 
-                if (!File.Exists(modSummaryFilePath))
+                if (!modSummaryFile.Exists)
                 {
                     OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods while summarizing results");
                 }
                 else
                 {
-                    ParseModSummaryFile(modSummaryFilePath);
+                    ParseModSummaryFile(modSummaryFile.FullName);
                 }
 
                 // Determine the number of MS/MS spectra searched
                 //
-                if (File.Exists(firstHitsOrSynopsisFilePath))
+                if (firstHitsOrSynopsisFile.Exists)
                 {
-                    ExamineFirstHitsFile(firstHitsOrSynopsisFilePath, isFirstHitsFile);
+                    ExamineFirstHitsFile(firstHitsOrSynopsisFile.FullName, isFirstHitsFile);
                 }
 
                 // Load the PSMs and sequence info
@@ -1416,7 +1437,7 @@ namespace MSGFResultsSummarizer
 
                 // ReSharper restore CommentTypo
 
-                var successLoading = LoadPSMs(synopsisFilePath, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
+                var successLoading = LoadPSMs(synopsisFile.FullName, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
 
                 if (!successLoading)
                 {
