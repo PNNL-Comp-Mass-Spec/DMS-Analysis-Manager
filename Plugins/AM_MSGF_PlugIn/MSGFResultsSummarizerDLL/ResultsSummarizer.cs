@@ -1966,6 +1966,7 @@ namespace MSGFResultsSummarizer
 
                             if (string.Equals(modification.Key, "Acetyl", StringComparison.OrdinalIgnoreCase) ||
                                 string.Equals(modification.Key, "AcNoTMT", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "AcNoTMT0", StringComparison.OrdinalIgnoreCase) ||
                                 string.Equals(modification.Key, "AcNoTMT16", StringComparison.OrdinalIgnoreCase))
                             {
                                 psmInfo.AcetylPeptide = true;
