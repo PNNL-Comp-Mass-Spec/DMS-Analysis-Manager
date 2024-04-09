@@ -289,6 +289,10 @@ namespace MSGFResultsSummarizer
 
         public int AcetylPeptidesFDR => mFDRBasedCounts?.AcetylPeptides ?? 0;
 
+        public int UbiquitinPeptidesMSGF => mMSGFBasedCounts?.UbiquitinPeptides ?? 0;
+
+        public int UbiquitinPeptidesFDR => mFDRBasedCounts?.UbiquitinPeptides ?? 0;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -1138,7 +1142,8 @@ namespace MSGFResultsSummarizer
                 DynamicReporterIon = mDynamicReporterIonPTM,
                 PercentPSMsMissingNTermReporterIon = percentPSMsMissingNTermReporterIon,
                 PercentPSMsMissingReporterIon = percentPSMsMissingReporterIon,
-                UniqueAcetylPeptidesFDR = mFDRBasedCounts?.AcetylPeptides ?? 0
+                UniqueAcetylPeptidesFDR = mFDRBasedCounts?.AcetylPeptides ?? 0,
+                UniqueUbiquitinPeptidesFDR = mFDRBasedCounts?.UbiquitinPeptides ?? 0
             };
         }
 
@@ -1188,6 +1193,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Float, value: psmResults.PercentPSMsMissingNTermReporterIon);
                 dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Float, value: psmResults.PercentPSMsMissingReporterIon);
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
+                dbTools.AddTypedParameter(cmd, "@uniqueUbiquitinPeptidesFDR", SqlType.Int, value: psmResults.UniqueUbiquitinPeptidesFDR);
 
                 // Execute the SP (retry the call if it fails, up to 3 times)
                 var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
@@ -1972,6 +1978,15 @@ namespace MSGFResultsSummarizer
                                 psmInfo.AcetylPeptide = true;
                                 break;
                             }
+
+                            if (string.Equals(modification.Key, "Ubiq_02", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "UbNoTMT", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "UbNoTMT0", StringComparison.OrdinalIgnoreCase) ||
+                                string.Equals(modification.Key, "UbNoTMT16", StringComparison.OrdinalIgnoreCase))
+                            {
+                                psmInfo.UbiquitinPeptide = true;
+                                break;
+                            }
                         }
 
                         var observation = new PSMInfo.PSMObservation
@@ -2441,6 +2456,9 @@ namespace MSGFResultsSummarizer
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
                 var uniqueAcetylPeptides = new Dictionary<int, UniqueSeqInfo>();
 
+                // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
+                var uniqueUbiquitinPeptides = new Dictionary<int, UniqueSeqInfo>();
+
                 // The Keys in this dictionary are protein names; the values are observation count
                 var uniqueProteins = new Dictionary<string, int>();
 
@@ -2471,6 +2489,11 @@ namespace MSGFResultsSummarizer
                     if (result.Value.AcetylPeptide)
                     {
                         AddUpdateUniqueSequence(uniqueAcetylPeptides, seqId, seqInfoToStore);
+                    }
+
+                    if (result.Value.UbiquitinPeptide)
+                    {
+                        AddUpdateUniqueSequence(uniqueUbiquitinPeptides, seqId, seqInfoToStore);
                     }
 
                     var addResultProtein = true;
@@ -2514,7 +2537,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 // Obtain the stats to store
-                var psmStats = TabulatePSMStats(uniqueSequences, uniqueProteins, uniquePhosphopeptides, uniqueAcetylPeptides);
+                var psmStats = TabulatePSMStats(uniqueSequences, uniqueProteins, uniquePhosphopeptides, uniqueAcetylPeptides, uniqueUbiquitinPeptides);
 
                 if (usingMSGFOrEValueFilter)
                 {
@@ -2541,11 +2564,14 @@ namespace MSGFResultsSummarizer
         /// <param name="uniqueProteins">Keys in this dictionary are protein names; the values are observation count</param>
         /// <param name="uniquePhosphopeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
         /// <param name="uniqueAcetylPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
+        /// <param name="uniqueUbiquitinPeptides">Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.</param>
+        ///
         private PSMStats TabulatePSMStats(
             IDictionary<int, UniqueSeqInfo> uniqueSequences,
             IDictionary<string, int> uniqueProteins,
             IDictionary<int, UniqueSeqInfo> uniquePhosphopeptides,
-            IDictionary<int, UniqueSeqInfo> uniqueAcetylPeptides)
+            IDictionary<int, UniqueSeqInfo> uniqueAcetylPeptides,
+            IDictionary<int, UniqueSeqInfo> uniqueUbiquitinPeptides)
         {
             return new PSMStats
             {
@@ -2557,6 +2583,7 @@ namespace MSGFResultsSummarizer
                 TrypsinPeptides = (from item in uniqueSequences where item.Value.TrypsinPeptide select item.Key).Count(),
                 TrypticPeptides = (from item in uniqueSequences where item.Value.Tryptic select item.Key).Count(),
                 AcetylPeptides = uniqueAcetylPeptides.Count,
+                UbiquitinPeptides = uniqueUbiquitinPeptides.Count,
                 UniquePhosphopeptideCount = uniquePhosphopeptides.Count,
                 UniquePhosphopeptidesCTermK = (from item in uniquePhosphopeptides where item.Value.CTermK select item.Key).Count(),
                 UniquePhosphopeptidesCTermR = (from item in uniquePhosphopeptides where item.Value.CTermR select item.Key).Count(),

@@ -131,6 +131,11 @@
         public int UniqueAcetylPeptidesFDR { get; set; }
 
         /// <summary>
+        /// Unique ubiquitinated peptides passing the FDR threshold (any K with ubiquitin)
+        /// </summary>
+        public int UniqueUbiquitinPeptidesFDR { get; set; }
+
+        /// <summary>
         /// Update the cached PSM result stats using additional PSM result stats
         /// </summary>
         /// <remarks>
@@ -175,6 +180,7 @@
             PercentPSMsMissingReporterIon = UpdatePercent(PercentPSMsMissingReporterIon, originalTotalPSMs, psmCountAdded, psmResults.PercentPSMsMissingReporterIon);
 
             UniqueAcetylPeptidesFDR += psmResults.UniqueAcetylPeptidesFDR;
+            UniqueUbiquitinPeptidesFDR += psmResults.UniqueUbiquitinPeptidesFDR;
         }
 
         private float UpdatePercent(float originalPercent, int originalTotal, int countAdded, float percentForAddedValues)

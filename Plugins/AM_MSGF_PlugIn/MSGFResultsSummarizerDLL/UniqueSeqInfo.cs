@@ -48,6 +48,11 @@
         public bool AcetylPeptide { get; set; }
 
         /// <summary>
+        /// True if the peptide has any ubiquitinated K residues
+        /// </summary>
+        public bool UbiquitinPeptide { get; set; }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public UniqueSeqInfo()

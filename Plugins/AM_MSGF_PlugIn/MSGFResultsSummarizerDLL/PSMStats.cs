@@ -62,6 +62,11 @@
         public int AcetylPeptides { get; set; }
 
         /// <summary>
+        /// Number of unique peptides that have at list one ubiquitinated K
+        /// </summary>
+        public int UbiquitinPeptides { get; set; }
+
+        /// <summary>
         /// Fraction of peptides that have a missed cleavage (internal K or R)
         /// </summary>
         public float MissedCleavageRatio { get; set; }
@@ -107,6 +112,7 @@
             TrypsinPeptides = 0;
             TrypticPeptides = 0;
             AcetylPeptides = 0;
+            UbiquitinPeptides = 0;
         }
     }
 }

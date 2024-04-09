@@ -1683,6 +1683,7 @@ namespace AnalysisManagerExtractionPlugin
                 psmResultsOverall.KeratinPeptides = combinedTsvPsmResults.KeratinPeptides;
                 psmResultsOverall.TrypsinPeptides = combinedTsvPsmResults.TrypsinPeptides;
                 psmResultsOverall.UniqueAcetylPeptidesFDR = combinedTsvPsmResults.UniqueAcetylPeptidesFDR;
+                psmResultsOverall.UniqueUbiquitinPeptidesFDR = combinedTsvPsmResults.UniqueUbiquitinPeptidesFDR;
                 psmResultsOverall.UniquePeptides = combinedTsvPsmResults.UniquePeptides;
 
                 // Method AppendResults used UpdatePercent() to estimate the following percentages
