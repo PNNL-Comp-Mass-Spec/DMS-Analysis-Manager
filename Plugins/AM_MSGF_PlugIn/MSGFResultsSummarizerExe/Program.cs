@@ -98,6 +98,7 @@ namespace MSGFResultsSummarizerExe
                 {
                     {"_xt_MSGF.txt", PeptideHitResultTypes.XTandem},
                     {"_msgfdb_syn_MSGF.txt", PeptideHitResultTypes.MSGFPlus},
+                    {"_msgfplus_syn_MSGF.txt", PeptideHitResultTypes.MSGFPlus},
                     {"_inspect_syn_MSGF.txt", PeptideHitResultTypes.Inspect},
                     {"_syn_MSGF.txt", PeptideHitResultTypes.Sequest},
                     {"_msalign_syn.txt", PeptideHitResultTypes.MSAlign},
