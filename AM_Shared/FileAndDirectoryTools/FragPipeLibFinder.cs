@@ -49,7 +49,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Name of the IonQuant jar file
         /// </summary>
-        private const string IONQUANT_JAR_NAME = "IonQuant-1.10.12.jar";
+        private const string IONQUANT_JAR_NAME = "IonQuant-1.10.27.jar";
 
         /// <summary>
         /// Name of the Java C++ presets platform directory
@@ -365,7 +365,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileIonQuant(out FileInfo jarFile)
         {
-            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.12.jar
+            // Typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.27.jar
 
             if (!FindFragPipeToolsDirectory(out var toolsDirectory))
             {

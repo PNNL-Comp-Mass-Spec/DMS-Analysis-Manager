@@ -2604,7 +2604,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!options.LibraryFinder.FindJarFileJFreeChart(out var jarFileJFreeChart))
                     return false;
 
-                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.12.jar
+                // Find the IonQuant jar file, typically C:\DMS_Programs\MSFragger\fragpipe\tools\IonQuant-1.10.27.jar
                 if (!options.LibraryFinder.FindJarFileIonQuant(out var jarFileIonQuant))
                     return false;
 
