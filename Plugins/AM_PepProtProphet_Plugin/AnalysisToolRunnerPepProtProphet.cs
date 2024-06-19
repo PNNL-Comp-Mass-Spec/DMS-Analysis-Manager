@@ -2658,7 +2658,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                // v18, v19, and v20
+                // v18, v19, v20, and v21
                 arguments.AppendFormat(
                    "-Xmx{0}G -Dlibs.bruker.dir=\"{1}\" -Dlibs.thermo.dir=\"{2}\" -cp \"{3};{4};{5}\" ionquant.IonQuant",
                    ION_QUANT_MEMORY_SIZE_GB,
