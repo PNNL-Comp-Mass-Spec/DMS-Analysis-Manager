@@ -158,10 +158,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
-      <Version>1.8.0</Version>
+      <Version>2.1.0</Version>
     </PackageReference>
     <PackageReference Include="CsvHelper">
-      <Version>30.0.1</Version>
+      <Version>33.0.1</Version>
     </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.16.0</Version>
@@ -170,7 +170,7 @@
       <Version>5.0.0</Version>
     </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.133</Version>
+      <Version>3.6.139</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -178,10 +178,10 @@
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.7</Version>
+      <Version>1.4.10</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.8.26</Version>
+      <Version>2.8.27</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.1.15</Version>
@@ -193,7 +193,7 @@
       <Version>1.4.2</Version>
     </PackageReference>
     <PackageReference Include="SSH.NET">
-      <Version>2020.0.2</Version>
+      <Version>2024.1.0</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.111</Version>

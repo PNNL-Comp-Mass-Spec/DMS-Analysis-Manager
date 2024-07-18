@@ -76,15 +76,15 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.133</Version>
+      <Version>3.6.139</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.7</Version>
+      <Version>1.4.10</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.8.26</Version>
+      <Version>2.8.27</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>3.0.4</Version>
