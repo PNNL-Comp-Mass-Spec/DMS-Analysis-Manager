@@ -10,6 +10,8 @@ namespace AnalysisManagerFormularityPlugin
 {
     public class PngToPdfConverter : PRISM.EventNotifier
     {
+        // Ignore Spelling: formularity, Pdf, Png
+
         /// <summary>
         /// Page margin, in points
         /// </summary>
@@ -21,7 +23,7 @@ namespace AnalysisManagerFormularityPlugin
         /// <summary>
         /// Double the page margin
         /// </summary>
-        private const double DoublePageMargin = PageMargin * 2;
+        private readonly XUnit DoublePageMargin = XUnit.FromPoint(PageMargin * 2);
 
         private readonly XFont mFontHeader;
 
@@ -41,8 +43,8 @@ namespace AnalysisManagerFormularityPlugin
             DatasetName = datasetName;
 
             const string FONT_FAMILY = "Arial";
-            mFontHeader = new XFont(FONT_FAMILY, 20, XFontStyle.Regular);
-            mFontDefault = new XFont(FONT_FAMILY, 10, XFontStyle.Regular);
+            mFontHeader = new XFont(FONT_FAMILY, 20, XFontStyleEx.Regular);
+            mFontDefault = new XFont(FONT_FAMILY, 10, XFontStyleEx.Regular);
         }
 
         /// <summary>
@@ -106,7 +108,7 @@ namespace AnalysisManagerFormularityPlugin
 
             double x;
 
-            if (xOffset < PageMargin || xOffset > currentPage.Page.Width - PageMargin)
+            if (xOffset < PageMargin || XUnit.FromPoint(xOffset) > currentPage.Page.Width - XUnit.FromPoint(PageMargin))
             {
                 x = PageMargin;
             }
@@ -115,9 +117,9 @@ namespace AnalysisManagerFormularityPlugin
                 x = xOffset;
             }
 
-            if (width < x || width > currentPage.Page.Width - DoublePageMargin)
+            if (width < x || XUnit.FromPoint(width) > currentPage.Page.Width - DoublePageMargin)
             {
-                width = currentPage.Page.Width - DoublePageMargin;
+                width = (currentPage.Page.Width - DoublePageMargin).Point;
             }
 
             position ??= XStringFormats.Default;
@@ -206,7 +208,7 @@ namespace AnalysisManagerFormularityPlugin
                     }
 
                     // Scaled plot width, in points
-                    var plotWidth = (currentPage.Page.Width - DoublePageMargin - 10) / 2;
+                    var plotWidth = (currentPage.Page.Width - DoublePageMargin - XUnit.FromPoint(10)) / 2;
                     var xOffset = PageMargin;
                     double yOffsetIncrementForRow = 0;
 
@@ -221,11 +223,11 @@ namespace AnalysisManagerFormularityPlugin
                                 var plotImage = XImage.FromFile(Path.Combine(workDir, pngFileName));
 
                                 // Scaled plot height, in points
-                                var plotHeight = plotImage.PointHeight / plotImage.PointWidth * plotWidth;
+                                var plotHeight = plotImage.PointHeight / plotImage.PointWidth * plotWidth.Point;
 
                                 // Note that AddPlot will call plotImage.Dispose
-                                AddPlot(currentPage, plotImage, xOffset, plotWidth, plotHeight, "");
-                                xOffset += plotWidth + 5;
+                                AddPlot(currentPage, plotImage, xOffset, plotWidth.Point, plotHeight, "");
+                                xOffset += plotWidth.Point + 5;
 
                                 yOffsetIncrementForRow = Math.Max(yOffsetIncrementForRow, plotHeight);
                             }
