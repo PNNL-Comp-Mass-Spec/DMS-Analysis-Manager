@@ -148,7 +148,7 @@
       <Version>6.1.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.15</Version>
+      <Version>1.4.18</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.8.31</Version>
