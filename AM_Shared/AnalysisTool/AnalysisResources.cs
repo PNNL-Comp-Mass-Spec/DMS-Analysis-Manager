@@ -1572,10 +1572,14 @@ namespace AnalysisManagerBase.AnalysisTool
 
             if (mDebugLevel >= 2)
             {
+                var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
+                var hostName = DbToolsFactory.GetHostNameFromConnectionString(proteinSeqsDBConnectionString);
+
                 LogMessage(
                     "ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
                     "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " +
-                    "LegacyFasta=" + legacyFastaToUse);
+                    "LegacyFasta=" + legacyFastaToUse + "; " +
+                    "ProteinSeqs_DB_Host=" + hostName);
             }
 
             try
