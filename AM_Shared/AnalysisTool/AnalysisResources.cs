@@ -1396,6 +1396,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     };
                     RegisterEvents(mFastaTools);
 
+                    mFastaTools.FileGenerationStarted += FastaTools_FileGenerationStarted;
                     mFastaTools.FileGenerationProgress += FastaTools_FileGenerationProgress;
                     mFastaTools.FileGenerationCompleted += FastaTools_FileGenerationCompleted;
 
@@ -5652,6 +5653,11 @@ namespace AnalysisManagerBase.AnalysisTool
 
         private void FastaTools_FileGenerationCompleted(string fullOutputPath)
         {
+            if (mDebugLevel >= 1)
+            {
+                LogDebugMessage(string.Format("FASTA generation: created FASTA file {0}", fullOutputPath));
+            }
+
             // Get the name of the FASTA file that was generated
             mFastaFileName = Path.GetFileName(fullOutputPath);
         }
@@ -5672,6 +5678,14 @@ namespace AnalysisManagerBase.AnalysisTool
                     mFastaToolFractionDoneSaved = fractionDone;
                     LogDebugMessage("Generating FASTA file, " + (fractionDone * 100).ToString("0.0") + "% complete, " + statusMsg);
                 }
+            }
+        }
+
+        private void FastaTools_FileGenerationStarted(string taskMsg)
+        {
+            if (mDebugLevel >= 1)
+            {
+                LogDebugMessage(string.Format("FASTA generation: {0}", taskMsg));
             }
         }
 
