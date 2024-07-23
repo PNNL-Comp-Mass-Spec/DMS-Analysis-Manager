@@ -525,7 +525,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (Global.IsMatch(instrumentGroup, "Bruker_timsTOF"))
+            if (Global.IsMatch(instrumentGroup, "timsTOF") ||
+                Global.IsMatch(instrumentGroup, "timsTOF_SCP") ||
+                Global.IsMatch(instrumentGroup, "timsTOF_Flex"))
             {
                 // Bruker TOF with high res MS/MS
                 // Use instrument type 2 (TOF)
