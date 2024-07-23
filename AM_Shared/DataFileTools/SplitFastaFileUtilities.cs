@@ -251,9 +251,9 @@ namespace AnalysisManagerBase.DataFileTools
             // This queries table T_DMS_Organism_DB_Info in MT_Main
             // That table is updated using data in DMS5
             // This query should only return one row.
-            sqlQuery.Append(" SELECT full_path, organism_name ");
-            sqlQuery.Append(" FROM V_Legacy_Static_File_Locations");
-            sqlQuery.Append(" WHERE file_name = '" + legacyFASTAFileName + "'");
+            sqlQuery.Append("SELECT full_path, organism_name ");
+            sqlQuery.Append("FROM V_Legacy_Static_File_Locations ");
+            sqlQuery.Append("WHERE file_name = '" + legacyFASTAFileName + "'");
 
             var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, timeoutSeconds, debugMode: mTraceMode);
             RegisterEvents(dbTools);

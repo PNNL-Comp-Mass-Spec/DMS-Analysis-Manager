@@ -200,9 +200,9 @@ namespace AnalysisManagerProg
             // Lookup the storage path for each step tool
 
             const string sqlQuery =
-                " SELECT step_tool, param_file_storage_path" +
-                " FROM V_Pipeline_Step_Tool_Storage_Paths" +
-                " WHERE param_file_storage_path <> ''";
+                "SELECT step_tool, param_file_storage_path " +
+                "FROM V_Pipeline_Step_Tool_Storage_Paths " +
+                "WHERE param_file_storage_path <> ''";
 
             ShowTrace("Query V_Pipeline_Step_Tool_Storage_Paths in broker");
 

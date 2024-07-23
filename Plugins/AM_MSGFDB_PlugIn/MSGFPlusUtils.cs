@@ -3148,9 +3148,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // WHERE dataset = 'QC_Mam_19_01_b_17Jan22_Rage_Rep-21-12-20'
 
                 // Query v_dataset_scan_types instead
-                sqlStr.Append(" SELECT scan_type, scan_count");
-                sqlStr.Append(" FROM v_dataset_scan_types");
-                sqlStr.AppendFormat(" WHERE dataset = '{0}'", datasetName);
+                sqlStr.Append("SELECT scan_type, scan_count ");
+                sqlStr.Append("FROM v_dataset_scan_types ");
+                sqlStr.AppendFormat("WHERE dataset = '{0}'", datasetName);
 
                 const int retryCount = 2;
 

@@ -497,10 +497,10 @@ namespace AnalysisManager_AScore_PlugIn
                 var schemaName = serverType == DbServerTypes.PostgreSQL ? "sw" : "DMS_Pipeline.dbo";
 
                 var sqlQuery = string.Format(
-                    " SELECT input_folder, 1 AS preference, '{0}' AS saved FROM {1}.V_Job_Steps_Export WHERE {2}" +
-                    " UNION " +
-                    " SELECT input_folder, 2 AS preference, saved FROM {1}.V_Job_Steps_History_Export WHERE {2}" +
-                    " ORDER BY preference, saved",
+                    "SELECT input_folder, 1 AS preference, '{0}' AS saved FROM {1}.V_Job_Steps_Export WHERE {2} " +
+                    "UNION " +
+                    "SELECT input_folder, 2 AS preference, saved FROM {1}.V_Job_Steps_History_Export WHERE {2} " +
+                    "ORDER BY preference, saved",
                     timestamp, schemaName, sqlWhere);
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: TraceMode);

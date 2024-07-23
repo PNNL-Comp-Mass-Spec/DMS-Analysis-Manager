@@ -190,10 +190,10 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                     var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
 
-                    var sql = " SELECT input_folder " +
-                              " FROM V_Job_Steps_Export" +
-                              " WHERE job = " + mJob + " AND step < " + stepNum + " AND input_folder LIKE '" + PBF_GEN_FOLDER_PREFIX + "%'" + // TODO: step_number is 'step' in postgres; use view?
-                              " ORDER by step DESC";
+                    var sql = "SELECT input_folder " +
+                              "FROM V_Job_Steps_Export " +
+                              "WHERE job = " + mJob + " AND step < " + stepNum + " AND input_folder LIKE '" + PBF_GEN_FOLDER_PREFIX + "%' " +
+                              "ORDER by step DESC";
 
                     var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                     RegisterEvents(dbTools);
