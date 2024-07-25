@@ -1276,10 +1276,11 @@
             <param name="storageDescriptions">The storage descriptions.</param>
             <returns>true if successful</returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.DeviceStorage.OpenStorage">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.DeviceStorage.OpenStorage(ThermoFisher.CommonCore.RawFileReader.StgMode)">
             <summary>
             Open a storage file
             </summary>
+            <param name="accessMode">The access mode.</param>
             <returns>
             The error message, or empty string if OK
             </returns>
@@ -2768,6 +2769,11 @@
                 Any analyzer.
             </summary>
         </member>
+        <member name="F:ThermoFisher.CommonCore.RawFileReader.Facade.Constants.ScanFilterEnums.MassAnalyzerTypes.MRTOF">
+            <summary>
+            MultiReflection Time of Flight
+            </summary>
+        </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Facade.Constants.ScanFilterEnums.MetaFilterType">
             <summary>
                 Meta Filter
@@ -2796,6 +2802,11 @@
         <member name="F:ThermoFisher.CommonCore.RawFileReader.Facade.Constants.ScanFilterEnums.MetaFilterType.Uvpd">
             <summary>
             UVPD meta filter.
+            </summary>
+        </member>
+        <member name="F:ThermoFisher.CommonCore.RawFileReader.Facade.Constants.ScanFilterEnums.MetaFilterType.Msn">
+            <summary>
+            Msn meta filter.
             </summary>
         </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Facade.Constants.ScanFilterEnums.OffOnTypes">
@@ -3871,6 +3882,25 @@
                 Special device that has no scan data, but status log only (HN)
             </summary>
         </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Facade.DeviceContainer">
+            <summary>
+            The device container allow a mimmally initalized version of the device to exists
+            which can support version checks or other needs.
+            All "large data" is perfomed on first access of the FullDevice.
+            "PartialDevice" can be used in a dispose call, as unititze items from
+            "FullDevice" will not need to be disposed.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Facade.DeviceContainer.PartialDevice">
+            <summary>
+            Gets or sets an instance of the device that has been minimally initialized
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Facade.DeviceContainer.FullDevice">
+            <summary>
+            Gets or sets an instance of the device, which contains all data.
+            </summary>
+        </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Facade.FileHeaderLoader">
             <summary>
             The file header loader. Reads an Xcalibur file header.
@@ -3955,6 +3985,11 @@
             Profile data may be needed
             </summary>
         </member>
+        <member name="F:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.PacketFeatures.Debug">
+            <summary>
+            Debug data may be needed
+            </summary>
+        </member>
         <member name="F:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.PacketFeatures.All">
             <summary>
             Return all data
@@ -3999,6 +4034,14 @@
             <summary>
             Gets or sets a value indicating whether this was initialized when the file was in acquisition.
             </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IDevice.Initialize">
+            <summary>
+            Support for lazy init of device.
+            Device construction does "some work" to validate a device.
+            Any "heavy data decoding" is delayed until the device is first used.
+            </summary>
+            <returns>The device</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IDevice.GetScanIndex(System.Int32)">
             <summary>
@@ -5794,10 +5837,10 @@
             The method gets all the log entries' value pair at the specified index.
             </summary>
             <param name="index">
-            The index.
+            The index into the "status log header" for this field.
             </param>
             <returns>
-            The all the log entries' value pair at the specified index.
+            All the log entries' value pair at the specified index.
             </returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IStatusLog.GetStatusRecordByIndex(System.Int32)">
@@ -5813,7 +5856,7 @@
             Gets the (raw) status log data at a given index in the log.
             Designed for efficiency, this method does not convert logs to display string format.
             </summary>
-            <param name="index">Index (from 0 to "GetStatusLogEntriesCount() -1")</param>
+            <param name="index">Index (from 0 to "RunHeader.StatusLogCount -1")</param>
             <returns>Log data at the given index</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IStatusLog.GetStatusLogEntryByRetentionTime(System.Double)">
@@ -5830,6 +5873,14 @@
             That is, the numeric items.
             </summary>
             <returns>Labels names are returned by "Key" and the index into the log is "Value".</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IStatusLog.GetSortedStatusLogEntryByIndex(System.Int32)">
+            <summary>
+            Get a status log record from the sorted log
+            which fixes out of order or duplictae instrument data
+            </summary>
+            <param name="index"></param>
+            <returns>The log entry</returns>
         </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IUserIdStamp">
             <summary>
@@ -6324,13 +6375,14 @@
             The force overwrite.
             </param>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoader.LoadRawFile(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoader.LoadRawFile(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Boolean)">
             <summary>
             Load the raw file.
             </summary>
             <param name="viewer">
             The viewer.
             </param>
+            <param name="isCreateMutexFailed">Indicate whether the named mutex is successfully acquired or not</param>
             <exception cref="T:System.Exception">
             Thrown if the file is not a recognized format. The file is either not a THERMO Fisher
             Raw file or the version is less than the initial version of XCALIBUR files.
@@ -6446,7 +6498,7 @@
             <param name="virtualControllerInfos">The list of virtual controller information.</param>
             <returns>The index into the table of controllers</returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoaderHelper.GetVirtualControllerInfo(ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoader,ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.Collections.Generic.IReadOnlyList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualControllerInfo},System.Lazy{ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IDevice}[],ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IDevice@)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoaderHelper.GetVirtualControllerInfo(ThermoFisher.CommonCore.RawFileReader.Facade.RawFileLoader,ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.Collections.Generic.IReadOnlyList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualControllerInfo},ThermoFisher.CommonCore.RawFileReader.Facade.DeviceContainer[],ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IDevice@)">
             <summary>
             get virtual controller info.
             </summary>
@@ -8931,7 +8983,7 @@
             Create chromatogram construction tool for one trace
             </summary>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CalculateMassRange(ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Business.Range[],System.Int32,System.Boolean)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CalculateMassRange(ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IRangeAccess[],System.Int32,System.Boolean)">
             <summary>
             calculate (final) mass range for chromatogram, by adding tolerance for single ion mode.
             Single ion mode is detected as "high mass == 0.0" or "low and high are same".
@@ -8993,7 +9045,7 @@
             An object to create the desired chromatogram.
             </returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateBasePeakMassOverMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Business.Range[],System.Int32)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateBasePeakMassOverMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Interfaces.IRangeAccess[],System.Int32)">
             <summary>
             Create delivery, which will generate a chromatogram with the base peak mass over a Mass Range
             </summary>
@@ -9015,7 +9067,7 @@
             An object to create the desired chromatogram.
             </returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateBasePeakOverMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Business.Range[],System.Int32)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateBasePeakOverMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Interfaces.IRangeAccess[],System.Int32)">
             <summary>
             Create delivery, which will generate a chromatogram with base peak intensity over a Mass Range
             </summary>
@@ -9089,7 +9141,7 @@
             Tic chromatogram generator
             </returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Business.Range[],System.Int32)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.MsChromatogramSettingsConverter.CreateMassRangeChromatogram(System.Double,System.Double,ThermoFisher.CommonCore.Data.Business.MassOptions,ThermoFisher.CommonCore.Data.Interfaces.IChromatogramSettings,ThermoFisher.CommonCore.Data.Interfaces.IRangeAccess[],System.Int32)">
             <summary>
             Create delivery, which will generate a Mass Range Chromatogram (XIC)
             </summary>
@@ -10757,9 +10809,9 @@
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetStatusLogEntriesCount">
             <summary>
-            returns the number of entries n the current instrument's status log
+            returns the number of entries in the current instrument's status log
             </summary>
-            <returns>the number of entries n the current instrument's status log</returns>
+            <returns>the number of entries in the current instrument's status log</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetStatusLogForRetentionTime(System.Double)">
             <summary>
@@ -10862,6 +10914,15 @@
         <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetStatusLogEntry(System.Int32)">
             <summary>
             Gets the (raw) status log data at a given index in the log.
+            Designed for efficiency, this method does not convert logs to display string format.
+            </summary>
+            <param name="index">Index (from 0 to "RunHeaderEx.StatusLogCount"-1)</param>
+            <returns>Log data at the given index</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetSortedStatusLogEntry(System.Int32)">
+            <summary>
+            Gets the (raw) status log data at a given index in the sorted log.
+            The form of the log removes duplicate and out of order times
             Designed for efficiency, this method does not convert logs to display string format.
             </summary>
             <param name="index">Index (from 0 to "GetStatusLogEntriesCount() -1")</param>
@@ -11089,6 +11150,22 @@
             <param name="scanNumber">The scan who's mass intensity data are needed</param>
             <returns>Mass and intensity values from the scan.</returns>
         </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetAdditionalScanData(System.Int32)">
+            <summary>
+            Gets additional (binary) data from a scan.
+            The format of this data is custom (per instrument) and can be decoded into
+            objects by a specific decoder for the detector type.
+            </summary>
+            <param name="scan">Scan whose data is needed</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.GetExtendedScanData(System.Int32)">
+            <summary>
+            Gets additional (binary) data from a scan.
+            The format of this data is custom (per instrument) and can be decoded into
+            objects by a specific decoder for the detector type.
+            </summary>
+            <param name="scan">Scan whose data is needed</param>
+        </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileAccessBase.Dispose">
             <summary>
             Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
@@ -11107,7 +11184,7 @@
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.RawFileReaderAdapter.FileFactory(System.String)">
             <summary>
-            Create an IRawDataPlus interface to read data from a raw file
+            Create an IRawDataExtended interface to read data from a raw file
             </summary>
             <param name="fileName">File to open</param>
             <returns>Interface to read data from file</returns>
@@ -13233,9 +13310,15 @@
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.FileHeader.IsValidRevision">
             <summary>
-            Determines whether [is valid revision].
+            Determines whether this is a valid revision.
             </summary>
             <returns>True it's a valid file revision; false otherwise.</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.FileHeader.IsNewerRevision">
+            <summary>
+            Test if this may be a valid file but with a newer format.
+            </summary>
+            <returns>true: if the file version > the version complied into of the software that's running.</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.FileHeader.ResetChecksum">
             <summary>
@@ -13486,6 +13569,27 @@
             The method sets the size and and the precision/length of the data.
             </summary>
         </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.IGenericDataPack">
+            <summary>
+            Defines a method of packing log records into a byte array
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.IGenericDataPack.ConvertDataEntryToByteArray(System.Object[],System.Byte[]@)">
+            <summary>
+            convert data entry to byte array.
+            </summary>
+            <param name="data">The log entries. </param>
+            <param name="buffer">The buffer for storing the log entries in byte array.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The number of log entries do not match the header definitions</exception>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.IGenericDataPack.ConvertDataEntryToByteArray(System.Object[])">
+            <summary>
+            convert data entry to byte array.
+            </summary>
+            <param name="data">The log entries. </param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The number of log entries do not match the header definitions</exception>
+            <returns>the log entries as a byte array</returns>
+        </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.DataDescriptors">
             <summary>
             The collection of data descriptors.
@@ -13550,6 +13654,13 @@
             </summary>
             <param name="data">The log entries. </param>
             <param name="buffer">The buffer for storing the log entries in byte array.</param>
+            <exception cref="T:System.ArgumentOutOfRangeException">The number of log entries do not match the header definitions</exception>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.DataDescriptors.ConvertDataEntryToByteArray(System.Object[])">
+            <summary>
+            convert data entry to byte array.
+            </summary>
+            <param name="data">The log entries. </param>
             <exception cref="T:System.ArgumentOutOfRangeException">The number of log entries do not match the header definitions</exception>
         </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.DataSizes">
@@ -16878,6 +16989,16 @@
             Gets the noise and baselines.
             </summary>
         </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.IMsPacket.DebugData">
+            <summary>
+            Gets the debug data for a scan.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.IMsPacket.ExtendedData">
+            <summary>
+            Gets the debug data for a scan.
+            </summary>
+        </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.IPacket">
             <summary>
             The Packet interface.
@@ -17076,6 +17197,16 @@
             Gets the profile blob.
             </summary>
         </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.DebugBlob">
+            <summary>
+            Gets the Debug blob.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedDataBlob">
+            <summary>
+            Gets the extended scan data
+            </summary>
+        </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ReferencePeakArray">
             <summary>
             Gets the reference peak array.
@@ -17111,6 +17242,17 @@
             Gets the packet scan data features.
             </summary>
         </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.DebugData">
+            <summary>
+            Gets the debug data for this scan.
+            If there is no data, returns an empty array.
+            </summary>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.EmptyExtendedScanData">
+            <summary>
+            class to define a safe data structure for "no data"
+            </summary>
+        </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.Load(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Int64,System.Int32)">
             <summary>
             Load (from file).
@@ -17128,10 +17270,100 @@
             The number of bytes read
             </returns>
         </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass">
+            <summary>
+            Class to decode additional data saved with a scan
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transients">
+            <summary>
+            Gets the transients
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegments">
+            <summary>
+            Gets the data segments
+            </summary>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegment">
+            <summary>
+            Debug segment contains sub segments.
+            Each has a header, followed by a block of data
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegment.Header">
+            <summary>
+            Gets the header, which can be ued in an instrument specific way to decode this data
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegment.Bytes">
+            <summary>
+            Gets the data in this segment
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegment.FileBytes">
+            <summary>
+            Gets the data from the raw file.
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.DataSegment.Init(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Int64,System.Int32)">
+            <summary>
+            Initialize this object, to lazy read the data
+            </summary>
+            <param name="viewer"></param>
+            <param name="offset"></param>
+            <param name="length"></param>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transient">
+            <summary>
+            Gets a transient from the raw file
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transient.Header">
+            <summary>
+            Gets an instrument specific transient header
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transient.Data">
+            <summary>
+            Gets the data for this transient
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transient.FileData">
+            <summary>
+            Gets transient data from the raw file.
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.Transient.Init(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Int64,System.Int32)">
+            <summary>
+            Create a lazy loader for this data
+            </summary>
+            <param name="viewer">access to the raw file</param>
+            <param name="offset">offset into the view</param>
+            <param name="blockWords">Size of the data in 32 bit words.</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.#ctor(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Int64,System.UInt32)">
+            <summary>
+            constructs a class to get extended scan data
+            </summary>
+            <param name="viewer">view itto the raw file</param>
+            <param name="offset">offset into the view</param>
+            <param name="words">length of the data in 32 bit words</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExtendedScanDataClass.InitializeDebugBlocks(ThermoFisher.CommonCore.RawFileReader.Facade.Interfaces.IMemMapReader,System.Int64,System.UInt32)">
+            <summary>
+            Prepare to return charge envelopes and centroid annotations. Call this once and in advance of accessing properties.
+            </summary>
+            <param name="viewer">The byte buffer being marked as debug section in the orbitrap scan</param>
+            <param name="offset">offset into view for this data</param>
+            <param name="words">number of 32 bit words in this data</param>
+            <returns>Returns true on success, false if the data structure doesn't match the demands. Keep in mind that missing APD info is fine.</returns>
+        </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.CompressCentroids(ThermoFisher.CommonCore.Data.Interfaces.IMsInstrumentData)">
             <summary>
             Compresses the centroid data into packet buffer.
-            The assumption of this routine is that the CRawScan that is passed in does contain
+            For LT certroid format, there may not be a "full" cetroid data. For any other format:
+            The assumption of this routine is that the IMsInstrumentData that is passed in does contain
             centroid data. The profile information (if any) will be dropped from the writing
             in this routine.
             </summary>
@@ -17235,6 +17467,7 @@
             <param name="hasWidths">if set to <c>true</c> [has widths].</param>
             <param name="features">The features.</param>
             <param name="widths">The widths.</param>
+            <returns>true if this is detected as MRTOF data (has saturated flags)</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.GetCoeffValues(ThermoFisher.CommonCore.Data.Interfaces.IScanEvent,System.Double@,System.Double@,System.Double@,System.Double@)">
             <summary>
@@ -17356,6 +17589,12 @@
             <returns>
             The <see cref="T:System.Int32" />.
             </returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.CountLabels">
+            <summary>
+            Count the total number of peaks in all segments
+            </summary>
+            <returns>total number of peaks</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.LTFT.AdvancedPacketBase.ExpandLabelData">
             <summary>
@@ -18070,6 +18309,18 @@
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.SimplePacketBase.LabelPeaks">
             <summary>
             Gets the label peaks.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.SimplePacketBase.DebugData">
+            <summary>
+            Gets the debug data for a scan.
+            Always empty for simple packets
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.SimplePacketBase.ExtendedData">
+            <summary>
+            Gets the debug data for a scan.
+            Always empty for simple packets
             </summary>
         </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.SimplePacketBase.NoiseAndBaselines">
@@ -21165,6 +21416,20 @@
             Gets the total source values, which is all CID and CV.
             </summary>
         </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent.CompareExact(ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent)">
+            <summary>
+            Compares the current object with another object of the same type.
+            Exact compare for specialized qsort. Standard CompareTo considers items within an "instrument tolerance" as the same.
+            This version uses 1.0E-6 for the tolerance.
+            </summary>
+            <param name="other">An object to compare with this object.</param>
+            <returns>
+            A value that indicates the relative order of the objects being compared. The return value has the following
+            meanings: Value Meaning Less than zero This object is less than the <paramref name="other" /> parameter.Zero This
+            object is equal to <paramref name="other" />. Greater than zero This object is greater than
+            <paramref name="other" />.
+            </returns>
+        </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent.CompareTo(ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent)">
             <summary>
             Compares the current object with another object of the same type.
@@ -21211,6 +21476,13 @@
             <returns>the number of values</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent.SameParentMass(ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.ScanEventDecorator)">
+            <summary>
+            Check if this object has the parent mass as another.
+            </summary>
+            <param name="other">The other.</param>
+            <returns>true if the same</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent.SameFirstParentMass(ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.ScanEventDecorator)">
             <summary>
             Check if this object has the parent mass as another.
             </summary>
@@ -22356,6 +22628,43 @@
             <summary>
             Initializes static members of the <see cref="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterStringTokens"/> class.
             </summary>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.LegacyFilterSorter">
+            <summary>
+            Filter sorting, designed to match same ordering as previous Xcalibur code.
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.LegacyFilterSorter.Qsort(System.Collections.Generic.IList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent})">
+            <summary>
+            Sort a list of events, using the <c>qsort</c> algorithm.
+            This code is needed to precisely match results from legacy <c>fileio</c>.
+            </summary>
+            <param name="values">scan events to sort</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.LegacyFilterSorter.QsortSlice(System.Collections.Generic.IList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent},System.Int32,System.Int32)">
+            <summary>
+            Sort a slice of a list of events, using the <c>qsort</c> algorithm.
+            This code is needed to precisely match results from legacy <c>fileio</c>.
+            </summary>
+            <param name="values">scan events to sort</param>
+            <param name="firstIndex">first element to sort</param>
+            <param name="lastIndex">last element to sort</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.LegacyFilterSorter.ShortSort(System.Int32,System.Int32,System.Collections.Generic.IList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent})">
+            <summary>
+            Sort a small list of filters in a simple manner (about 8 items)
+            </summary>
+            <param name="low">Low index to sort from</param>
+            <param name="high">High index to sort to</param>
+            <param name="values">Data array to sort</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.LegacyFilterSorter.Swap(System.Int32,System.Int32,System.Collections.Generic.IList{ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.FilterScanEvent})">
+            <summary>
+            Exchange two array elements
+            </summary>
+            <param name="a">First to exchange</param>
+            <param name="b">Second to exchange</param>
+            <param name="values">Array of data</param>
         </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.StructWrappers.Scan.Reaction">
             <summary>
@@ -25021,7 +25330,9 @@
         </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.SortedStatusLogCollection.Count">
             <summary>
-                Gets the count.
+            Gets the count (of sorted items).
+            This may be lower than the number of records in the file
+            as duplicate time values are eliminated.
             </summary>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.SortedStatusLogCollection.AddStatusBlob(System.Single,ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.LabelValueBlob,System.Boolean)">
@@ -25059,6 +25370,17 @@
             </returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.SortedStatusLogCollection.GetBlobEntry(System.Int32)">
+            <summary>
+            get a blob entry, with time stamp.
+            </summary>
+            <param name="index">
+            The index.
+            </param>
+            <returns>
+            A tuple, containing time (float) and LabelValueBlob.
+            </returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.SortedStatusLogCollection.GetSortedBlobEntry(System.Int32)">
             <summary>
             get a blob entry, with time stamp.
             </summary>
@@ -25293,6 +25615,17 @@
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.StatusLog.GetStatusLogEntryByIndex(System.Int32)">
             <summary>
             get (raw) status log entry by index.
+            </summary>
+            <param name="index">
+            The index.
+            </param>
+            <returns>
+            The <see cref="T:ThermoFisher.CommonCore.Data.Interfaces.IStatusLogEntry"/>.
+            </returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.StatusLog.GetSortedStatusLogEntryByIndex(System.Int32)">
+            <summary>
+            get (raw) status log entry by index into the sorted (data validated) collection
             </summary>
             <param name="index">
             The index.
@@ -25603,6 +25936,12 @@
             <param name="isInAcquisition">Flag indicates that it's in acquisition or not</param>
             <param name="oldRev">Flag indicates that the reading data is old LCQ data or not</param>
         </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.DeviceBase.BaseDataInitialization">
+            <summary>
+            This must be called at the start of any derived class initlaize sequence.
+            Minimial construction work is done before this initializrion, incase the device never used by this app instance.
+            </summary>
+        </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.DeviceBase.OffsetOfEndOfDevice">
             <summary>
             Gets or sets the absolute position of the end of this device data.
@@ -25688,6 +26027,13 @@
             <exception cref="T:System.Exception">
             If the scan number is not in range.
             </exception>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.DeviceBase.Initialize">
+            <summary>
+            Initalize device after construction, for use by Lazy pattern.
+            Must be implemented in derived devices.
+            </summary>
+            <returns>The initialized device</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.DeviceBase.GetSegmentPeaks(System.Int32,System.Int32@,System.Int32@,ThermoFisher.CommonCore.RawFileReader.StructWrappers.Packets.IPacket@,System.Boolean)">
             <summary>
@@ -25969,6 +26315,14 @@
             </param>
             <param name="isInAcquisition">Set if this file is being created</param>
             <param name="oldRev">Set if this file version is from a legacy data system</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.MassSpecDevice.Initialize">
+            <summary>
+            Initializer, desigened for use by Lazy load pattern.
+            Base object can be created to perform version checks.
+            When device needs to be used for the first time, Initialize is called.
+            </summary>
+            <returns>The initialized device</returns>
         </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.MassSpecDevice.NumScanEvents">
             <summary>
@@ -26265,6 +26619,13 @@
             <returns>
             The simplified (mass/intensity) data.
             </returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.MassSpecDevice.GetExtendedScanData(System.Int32)">
+            <summary>
+            Gets the extended scan data for a scan
+            </summary>
+            <param name="scanNumber">scan number who's data is needed</param>
+            <returns>The extended data</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.MassSpecDevice.GetTrailerExtra(System.Int32)">
             <summary>
@@ -27088,10 +27449,11 @@
             </summary>
             <param name="runHeaderStruct">The run header structure.</param>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.RunHeader.Initialize">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.RunHeader.Initialize(System.Int16)">
             <summary>
             Initializes this instance.
             </summary>
+            <param name="revision">sets the revision of the device data format</param>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualDevices.RunHeader.IncrementNumStatusLog">
             <summary>
@@ -27800,7 +28162,7 @@
             There are 3 types of generic header - Status log, Trailer extra and Tune
             </summary>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.#ctor(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.String,System.Int32,System.Boolean)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.#ctor(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.String,System.Int32,System.Boolean,System.Int16)">
             <summary>
             Initializes a new instance of the <see cref="T:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter"/> class.
             </summary>
@@ -27809,6 +28171,7 @@
             <param name="rawFileName">Name of the raw file.</param>
             <param name="fileRevision">The file revision.</param>
             <param name="inAcquisition">if set to <c>true</c> [in acquisition].</param>
+            <param name="runHeaderRevision">Revision code for the device (set in run header). Default 1</param>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.WriteInstrumentInfo(ThermoFisher.CommonCore.Data.IInstrumentDataAccess)">
             <summary>
@@ -27907,12 +28270,14 @@
             <param name="inAcquisition">if set to <c>true</c> [in acquisition].</param>
             <returns>True obtained a validate control index; otherwise False.</returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.InitializeRunHeader(ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualControllerInfo,System.Int32)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.InitializeRunHeader(ThermoFisher.CommonCore.RawFileReader.StructWrappers.VirtualControllerInfo,System.Int32,System.Int16)">
             <summary>
             Initializes the run header.
             </summary>
             <param name="deviceInfo">The device information.</param>
             <param name="registeredDeviceIndex">Index of the registered device.</param>
+            <returns>true if OK</returns>
+            <param name="revision">Revision code</param>
             <returns>true if OK</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.BaseDeviceWriter.WriteStatusLog(System.IO.BinaryWriter,System.Single,System.Byte[])">
@@ -28675,11 +29040,15 @@
             <param name="fileName">Connect to a "in-acquisition" raw file</param>
             <returns>A device writer to write PDA data to the disk file</returns>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.DeviceWriterAdapter.CreateMassSpecDeviceWriter(System.String)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.DeviceWriterAdapter.CreateMassSpecDeviceWriter(System.String,ThermoFisher.CommonCore.Data.Business.SpectrumPacketType)">
             <summary>
             Creates the mass spec device writer.
             </summary>
             <param name="fileName">Name of the file.</param>
+            <param name="highestTypeUsed">If > 1: Defines the highest packet type that this device may use.
+            By default this is 1, as that was the value used in original "version 66" raw files.
+            All apps linked to any version of this dll can decode such files.
+            New devices may have new data types, which can only be decoded by (matching) newer versions of this code.</param>
             <returns>A device writer to write mass spec data to the disk file</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.DeviceWriterAdapter.CreateOtherDeviceWriter(System.String)">
@@ -29014,7 +29383,7 @@
             Generic type headers.
             </summary>
         </member>
-        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MassSpecDeviceWriter.#ctor(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.String,System.Boolean,System.Int32)">
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MassSpecDeviceWriter.#ctor(ThermoFisher.CommonCore.Data.Business.Device,System.Int32,System.String,System.Boolean,System.Int32,ThermoFisher.CommonCore.Data.Business.SpectrumPacketType)">
             <summary>
             Initializes a new instance of the <see cref="T:ThermoFisher.CommonCore.RawFileReader.Writers.MassSpecDeviceWriter"/> class.
             </summary>
@@ -29023,6 +29392,13 @@
             <param name="rawFileName">Name of the raw file.</param>
             <param name="inAcquisition">if set to <c>true</c> [in acquisition].</param>
             <param name="fileRevision">The file revision.</param>
+            <param name="finalPacketType">The final known packet type (at the time of writing). 
+            For example: If the MS is compiled against a newer raw file DLL, needed for it's new format,
+            then the value saved in a file could be a higher value than that compiled into some data processing application
+            built 2 years earlier. On opening the MS data, the raw file reader returns an Error to that application.
+            The application should then issue a message telling the customer to upgrade.
+            An instrument may set this to a lower value (the highest format required for the current acquisition method),
+            to signal that older format data is in the file, even if the device was compiled against a newer DLL.</param>
         </member>
         <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MassSpecDeviceWriter.IsPreparedForRun">
             <summary>
@@ -29262,6 +29638,263 @@
             <param name="binaryWriter">Writer to use to save</param>
             <param name="errors">Any error information that occurred</param>
             <returns>True is successful</returns>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker">
+            <summary>
+            This class includes static methods which turn C# objects from the MS writer interface
+            into byte arrays, such that they a be transported with any protocols that can transport binary data.
+            The data packing is intended to match the binary format of a raw file.
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.IInstrumentDataAccess)">
+            <summary>
+            Packs IInstrumentDataAccess into a byte array
+            </summary>
+            <param name="instrumentData">Data to be packed</param>
+            <returns>the packed data, or an empty array if there is an issue packing the data</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.UnpackInstrumentData(System.Byte[])">
+            <summary>
+            Unpacks a byte array into IInstrumentDataAccess 
+            </summary>
+            <param name="bytes">Data to be unpacked</param>
+            <returns>the unpacked data</returns>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData">
+            <summary>
+            Binary (byte array) data from the generic headers of a mass spectrometer.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.TrailerExtraHeader">
+            <summary>
+            Packed trailer extra headers
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.StatusLogHeader">
+            <summary>
+             Packed status log headers
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.TuneHeader">
+            <summary>
+             Packed tune headers
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.TrailerExtraDescriptors">
+            <summary>
+            Gets or sets a tool which can format "trailer" log entries as bytes.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.StatusLogDescriptors">
+            <summary>
+            Gets or sets a tool which can format "status" log entries as bytes.
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.MassSpecGenericHeadersData.TuneDescriptors">
+            <summary>
+            Gets or sets a tool which can format "tune" log entries as bytes.
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IMassSpecGenericHeaders)">
+            <summary>
+            Convert all mass spec generic headers into byte arrays
+            </summary>
+            <param name="massSpecGenericHeaders">Headers to pack</param>
+            <returns>The headers packed into byte arrays</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IPackedMassSpecHeaders)">
+            <summary>
+            pack headers into a single byte array
+            </summary>
+            <param name="headers"></param>
+            <returns>byte array with all headers</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.InsertArray(System.Byte[],System.Byte[],System.Int32@)">
+            <summary>
+            Insery an array within another, prceeded by the array length
+            </summary>
+            <param name="data">data to inseret</param>
+            <param name="target">array to copy into</param>
+            <param name="offset">offset of tqrget array, updated by inserted data</param>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.SplitHeaders">
+            <summary>
+            Headers for all logs as byte arrays
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.HeadersFromBytes(System.Byte[])">
+            <summary>
+            Separates out Trailer, Status and Tune headers from a byte array.
+            </summary>
+            <param name="packedHeaders"></param>
+            <returns>Inteface to retrieve separate log headers</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Unpack(ThermoFisher.CommonCore.Data.Interfaces.IPackedMassSpecHeaders)">
+            <summary>
+            Unpack all mass spec generic headers from byte arrays
+            </summary>
+            <param name="packedMassSpecGenericHeaders">Headers to unpack</param>
+            <returns>The headers packed into byte arrays</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.UnpackHeaderItem(System.Byte[])">
+            <summary>
+            Unpack bytes into a Generic header
+            </summary>
+            <param name="headers">Bytes for the header</param>
+            <returns>The table of headers for this generic format</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackHeaderItem(ThermoFisher.CommonCore.Data.Interfaces.IHeaderItem[])">
+            <summary>
+            Pack a set of header items into a byte array
+            </summary>
+            <param name="headers">The items to be packed</param>
+            <returns>A byte array for the headers</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackHeaderItems(ThermoFisher.CommonCore.Data.Interfaces.IHeaderItem[])">
+            <summary>
+            Pack a set of header items into a byte array
+            </summary>
+            <param name="headers">The items to be packed</param>
+            <returns>A byte array for the headers</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.SaveGenericHeaderToMemoryStream(ThermoFisher.CommonCore.RawFileReader.StructWrappers.GenericMaps.DataDescriptors,System.IO.MemoryStream,System.Int32)">
+            <summary>
+            Write generic header item to the memory stream for data packer.
+            The implementation of the header packing is based on the header unpacking item code (UnpackHeaderItem)
+            </summary>
+            <param name="headerItems">Generic header definitions</param>
+            <param name="writer">The memory stream writer.</param>
+            <param name="numHeaderItems">Number of the header items.</param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IMassSpecRunHeaderInfo)">
+            <summary>
+            Convert a mass spec run header to a byte array
+            </summary>
+            <param name="massSpecRunHeader"></param>
+            <returns>An array representing the header</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.UnpackRunHeader(System.Byte[])">
+            <summary>
+            Convert a byte array to a mass spec run header
+            </summary>
+            <param name="data"></param>
+            <returns>An array representing the header</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.UnpackString(System.Byte[],System.Int32@)">
+            <summary>
+            Unpacks a string, which is preceded by it's length
+            </summary>
+            <param name="data">message</param>
+            <param name="index">the start index</param>
+            <returns></returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IScanEvents)">
+            <summary>
+            Convert the scans events to a byte array
+            </summary>
+            <param name="scanEvents">the events</param>
+            <returns>data packed as a byte array</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.SaveScanEvents(ThermoFisher.CommonCore.Data.Interfaces.IScanEvents,System.IO.BinaryWriter,ThermoFisher.CommonCore.RawFileReader.Writers.DeviceErrors)">
+            <summary>
+            Write scan events to a stream
+            </summary>
+            <param name="massSpecScanEvents">events to encode</param>
+            <param name="writer">stream to save bytes</param>
+            <param name="devErrors">error messages</param>
+            <returns></returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IScanStatisticsAccess)">
+            <summary>
+            Convert the scans statistics to a byte array
+            </summary>
+            <param name="scanStatistics">the stats</param>
+            <returns>data packed as a byte array</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.UnpackScanStatistics(System.Byte[])">
+            <summary>
+            Convert the scans statistics to a byte array
+            </summary>
+            <param name="packedScanStatistics">the stats</param>
+            <returns>data packed as a byte array</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IScanEvent)">
+            <summary>
+            Convert a scan event into a byte array
+            </summary>
+            <param name="scanEvent">the event to convert</param>
+            <returns>the data as a byte array</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.GetBytesWithLength(System.String)">
+            <summary>
+            Converts a string tp a byte array, with the string length also encoded
+            </summary>
+            <param name="str">String to encode</param>
+            <returns>Byte array of the length prefixed string</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.GetString(System.Byte[])">
+            <summary>
+            Convert a byte array to a string
+            </summary>
+            <param name="bytes">bytes of string</param>
+            <returns>the converted string</returns>
+        </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData">
+            <summary>
+            Data for a scan, converted into byte arrays
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.PackedScanEvent">
+            <summary>
+            Gets or sets the converted scan event
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.PackedScanStats">
+            <summary>
+            Gets or sets the converted scan stats
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.ScanData">
+            <summary>
+            Gets or sets the converted scan data
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.ProfilePaketCount">
+            <inheritdoc/>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.ProfileArray">
+            <inheritdoc/>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.ToByteArray">
+            <summary>
+            Convert this object to a byte array
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.#ctor(System.Byte[])">
+            <summary>
+            Create Packed Data from a byte array
+            </summary>
+            <param name="data"></param>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.PackedMsInstrumentData.#ctor">
+            <summary>
+            default constructor
+            </summary>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Pack(ThermoFisher.CommonCore.Data.Interfaces.IMsInstrumentData)">
+            <summary>
+            Pack data from an MS scan to byte arrays.
+            </summary>
+            <param name="instData">Data to be packed</param>
+            <returns>Packed data</returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.MsDataPacker.Unpack(ThermoFisher.CommonCore.Data.Interfaces.IPackedMsInstrumentData)">
+            <summary>
+            Unpack data from an MS scan from byte arrays.
+            </summary>
+            <param name="instData">Data to be packed</param>
+            <returns>Packed data</returns>
         </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.NamespaceDoc">
             <summary>
@@ -30276,6 +30909,16 @@
             true on success
             </returns>
         </member>
+        <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.RawFileWriter.FinalizeRawFileSecurity(System.String,ThermoFisher.CommonCore.RawFileReader.Writers.DeviceErrors)">
+            <summary>
+            Finalizes the raw file security.
+            Begin create a temporary file to get its FileSecurity object instead of the one from the raw file.
+            Add an access rule to remove the WellKnownSidType.WorldSid into this FileSecurity object.
+            Apply the modified ACL to the raw file.
+            </summary>
+            <param name="rawFileName">Name of the raw file.</param>
+            <param name="errors">The errors.</param>
+        </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.RawFileWriter.MarkAcquisitionComplete">
             <summary>
             mark acquisition complete.
@@ -30980,6 +31623,26 @@
             <param name="fileName">Name of the file.</param>
             <param name="fileExtension">Specified the file extension</param>
         </member>
+        <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData">
+            <summary>
+            This class partially unpacks MS instruments data after being transmitted (usually by binary message protocol)
+            </summary>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData.PackedScanEvent">
+            <inheritdoc/>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData.StatisticsData">
+            <inheritdoc/>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData.ScanData">
+            <inheritdoc/>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData.ProfileIndexCount">
+            <inheritdoc/>
+        </member>
+        <member name="P:ThermoFisher.CommonCore.RawFileReader.Writers.UnpackedMsInstrumentData.ProfileData">
+            <inheritdoc/>
+        </member>
         <member name="T:ThermoFisher.CommonCore.RawFileReader.Writers.UvDeviceWriter">
             <summary>
             Provides methods to write UV Device data.<para/>
@@ -31093,11 +31756,11 @@
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.UvScanIndexExtension.Save(ThermoFisher.CommonCore.RawFileReader.FileIoStructs.ScanIndex.ScanIndexStruct,System.IO.BinaryWriter,ThermoFisher.CommonCore.RawFileReader.Writers.DeviceErrors)">
             <summary>
-            Saves the mass spec scan index structure information to disk.
+            Saves the mass spec scan index structure to disk.
             </summary>
-            <param name="scanIndexStructInfo">The mass spec scan index structure information.</param>
+            <param name="scanIndex">The mass spec scan index structure.</param>
             <param name="writer">The stream writer.</param>
-            <param name="errors">The errors.</param>
+            <param name="errors">Stack trace on errors.</param>
             <returns>True if mass spec scan index saved to disk, false otherwise.</returns>
         </member>
         <member name="M:ThermoFisher.CommonCore.RawFileReader.Writers.UvScanIndexExtension.ConvertToUvScanIndex(ThermoFisher.CommonCore.Data.Interfaces.IUvScanIndex)">

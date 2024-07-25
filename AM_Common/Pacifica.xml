@@ -86,7 +86,7 @@
         </member>
         <member name="P:Pacifica.Core.Configuration.IngestServerUri">
             <summary>
-            Ingest server, default https://ingest.my.emsl.pnl.gov
+            Ingest server, default https://ingestdms.my.emsl.pnl.gov
             </summary>
         </member>
         <member name="P:Pacifica.Core.Configuration.PolicyServerHostName">
@@ -96,7 +96,7 @@
         </member>
         <member name="P:Pacifica.Core.Configuration.PolicyServerUri">
             <summary>
-            Policy server, default https://policy.my.emsl.pnl.gov
+            Policy server, default https://policydms.my.emsl.pnl.gov
             </summary>
         </member>
         <member name="P:Pacifica.Core.Configuration.MetadataServerHostName">
@@ -447,6 +447,12 @@
             <summary>
             Server response
             </summary>
+        </member>
+        <member name="M:Pacifica.Core.UploadCompletedEventArgs.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="serverResponse"></param>
         </member>
         <member name="M:Pacifica.Core.ExtensionMethods.GetDescription``1(System.Object)">
             <summary>
@@ -1641,11 +1647,12 @@
             </summary>
             <param name="jsonString"></param>
         </member>
-        <member name="M:Pacifica.Json.JsonTools.UploadMetadataToJson(System.Collections.Generic.IReadOnlyList{Pacifica.Json.IUploadMetadata})">
+        <member name="M:Pacifica.Json.JsonTools.UploadMetadataToJson(System.Collections.Generic.IReadOnlyList{Pacifica.Json.IUploadMetadata},System.Int32)">
             <summary>
             Convert a list of <see cref="T:Pacifica.Json.IUploadMetadata"/>-implementing objects into JSON text
             </summary>
             <param name="metadataList"></param>
+            <param name="fileLimit">If greater than zero, only include this many files in the JSON returned by this method</param>
         </member>
         <member name="M:Pacifica.Json.JsonTools.JsonToDictionaryList(System.String,System.String,System.String,System.String@)">
             <summary>
@@ -1808,8 +1815,11 @@
             <summary>
             Constructor for use during JSON deserialization
             </summary>
+            <remarks>
+            MyEMSL file ID must be "_id" to match JsonProperty value "_id", which corresponds to a key name in the JSON returned by https://metadata.my.emsl.pnl.gov/
+            </remarks>
             <param name="name"></param>
-            <param name="_id"></param>
+            <param name="_id">MyEMSL file ID</param>
             <param name="hashsum"></param>
             <param name="created"></param>
         </member>

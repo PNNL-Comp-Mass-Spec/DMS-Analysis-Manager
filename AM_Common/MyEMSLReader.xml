@@ -260,7 +260,18 @@
             <param name="dataPackageID">Data Package ID filter</param>
             <returns>List of matching files</returns>
         </member>
-        <member name="M:MyEMSLReader.DataPackageListInfo.FindFiles(System.String,System.String,System.Int32,System.Boolean,System.Boolean)">
+        <member name="M:MyEMSLReader.DataPackageListInfo.FindFiles(System.String,System.String,System.Int32,System.String)">
+            <summary>
+            Looks for the given file, returning any matches as a list (searches this directory and subdirectories)
+            </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+            <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
+            <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
+            <param name="dataPackageID">Data Package ID filter</param>
+            <param name="fileIDList">Comma separated list of MyEMSL File IDs to filter on (blank to ignore); must be one of the files associated with the given data package</param>
+            <returns>List of matching files</returns>
+        </member>
+        <member name="M:MyEMSLReader.DataPackageListInfo.FindFiles(System.String,System.String,System.Int32,System.String,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
@@ -268,6 +279,7 @@
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="dataPackageID">Data Package ID filter</param>
+            <param name="fileIDList">Comma separated list of MyEMSL File IDs to filter on (blank to ignore); must be one of the files associated with the given data package</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
@@ -546,6 +558,11 @@
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
+            <remarks>
+            <para>
+            Prior to calling this method, use AddDataset() to define one or more dataset names
+            </para>
+            </remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <returns>List of matching files</returns>
         </member>
@@ -553,7 +570,14 @@
             <summary>
             Looks for the given file in all datasets added using AddDataset(), returning any matches as a list
             </summary>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+            <remarks>
+            <para>
+            Prior to calling this method, use AddDataset() to define one or more dataset names
+            </para>
+            <para>
+            subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m
+            </para>
+            </remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <returns>List of matching files</returns>
@@ -562,7 +586,14 @@
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
-            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+            <remarks>
+            <para>
+            Prior to calling this method, use AddDataset() to define one or more dataset names
+            </para>
+            <para>
+            subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m
+            </para>
+            </remarks>
             <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
@@ -580,7 +611,19 @@
             <param name="datasetName">Dataset name filter</param>
             <returns>List of matching files</returns>
         </member>
-        <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.Boolean,System.Boolean)">
+        <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.String)">
+            <summary>
+            Looks for the given file, returning any matches as a list
+            </summary>
+            <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+            ReSharper disable once UnusedMember.Global
+            <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
+            <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
+            <param name="datasetName">Dataset name filter</param>
+            <param name="fileIDList">Comma separated list of MyEMSL File IDs to filter on (blank to ignore); must be one of the files associated with the given dataset</param>
+            <returns>List of matching files</returns>
+        </member>
+        <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.String,System.Boolean,System.Boolean)">
             <summary>
             Looks for the given file, returning any matches as a list
             </summary>
@@ -591,13 +634,14 @@
             </param>
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="datasetName">Dataset name filter</param>
+            <param name="fileIDList">Comma separated list of MyEMSL File IDs to filter on (blank to ignore); must be one of the files associated with the given dataset</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
         </member>
-        <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.Int32,System.Boolean,System.Boolean)">
+        <member name="M:MyEMSLReader.DatasetInfoBase.FindFiles(System.String,System.String,System.String,System.Int32,System.String,System.Boolean,System.Boolean)">
             <summary>
-            Looks for the given file, returning any matches as a list
+            Looks for the given file (supporting wildcards) or list of File IDs
             </summary>
             <remarks>subdirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
             <param name="fileName">
@@ -607,6 +651,7 @@
             <param name="subdirectoryName">Subdirectory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
             <param name="datasetName">Dataset name filter (blank to ignore)</param>
             <param name="dataPackageID">Data package ID filter (0 to ignore)</param>
+            <param name="fileIDList">Comma separated list of MyEMSL File IDs to filter on (blank to ignore); must be one of the files associated with the given dataset or data package</param>
             <param name="recurse">True to search all subdirectories; false to only search the root directory (or only subdirectoryName)</param>
             <param name="fileSplit">Set to True if fileName contains a list of file names (or file specs) separated by a semicolon</param>
             <returns>List of matching files</returns>
@@ -884,7 +929,7 @@
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.FilesToDownload">
             <summary>
-            Keys are MyEMSL File IDs, values are struct FileDownloadInfo
+            Keys are MyEMSL File IDs, values are instances of FileDownloadInfo
             </summary>
         </member>
         <member name="P:MyEMSLReader.DownloadQueue.DownloadedFiles">
@@ -1238,9 +1283,9 @@
         </member>
         <member name="T:MyEMSLReader.Reader">
             <summary>
-            This class contacts MyEMSL to find all of the files associated with the given dataset (by name or ID)
-              Optionally filter on Instrument name to guarantee you are finding the desired files
-              Optionally filter on Subdirectory name below the dataset directory to limit the search space
+            This class contacts MyEMSL to find the files associated with the given dataset (by name or ID)
+            Optionally filter on Instrument name to guarantee you are finding the desired files
+            Optionally filter on Subdirectory name below the dataset directory to limit the search space
             Also supports searching by Data Package ID
             </summary>
             <remarks>Written by Matthew Monroe for PNNL in 2013.</remarks>

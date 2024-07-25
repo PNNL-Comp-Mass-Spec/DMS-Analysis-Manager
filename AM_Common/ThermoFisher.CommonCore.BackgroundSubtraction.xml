@@ -1610,6 +1610,23 @@
             foregroundScan - backgroundScan
             </returns>
         </member>
+        <member name="M:ThermoFisher.CommonCore.BackgroundSubtraction.SpectrumAverager.Add(ThermoFisher.CommonCore.Data.Business.Scan,ThermoFisher.CommonCore.Data.Business.Scan)">
+            <summary>
+            Creates a sum of two scans.
+            The returned scans count of "scans combined" is
+            the total number of scans combined in each of the
+            first and second scans.
+            </summary>
+            <param name="firstScan">
+            The first scan.
+            </param>
+            <param name="secondScan">
+            The second scan
+            </param>
+            <returns>
+            first scan + second scan
+            </returns>
+        </member>
         <member name="T:ThermoFisher.CommonCore.BackgroundSubtraction.SpectrumAverager.PartProfileMasses">
             <summary>
             The part profile masses.
@@ -1795,6 +1812,19 @@
             </summary>
             <param name="scanList">
             The foreground and background scans
+            </param>
+            <param name="segmentList">The re-sampled mass and intensity arrays.
+            </param>
+            <returns>
+            The subtracted profile
+            </returns>
+        </member>
+        <member name="M:ThermoFisher.CommonCore.BackgroundSubtraction.SpectrumAverager.SumSpectraResampled(System.Collections.Generic.List{ThermoFisher.CommonCore.Data.Business.Scan},ThermoFisher.CommonCore.BackgroundSubtraction.SpectrumAverager.ProfileData)">
+            <summary>
+            Create the Summed profile spectrum, for the "Add" method
+            </summary>
+            <param name="scanList">
+            The scans to add
             </param>
             <param name="segmentList">The re-sampled mass and intensity arrays.
             </param>
