@@ -5518,10 +5518,10 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var sqlStr = new StringBuilder();
 
-                sqlStr.Append(" SELECT labelling, count(*) as experiments");
-                sqlStr.Append(" FROM V_Experiment_Export");
-                sqlStr.AppendFormat(" WHERE experiment in ({0})", string.Join(",", quotedExperimentNames.Values));
-                sqlStr.Append(" GROUP BY labelling");
+                sqlStr.Append("SELECT labelling, COUNT(*) AS experiments ");
+                sqlStr.Append("FROM V_Experiment_Export ");
+                sqlStr.AppendFormat("WHERE experiment IN ({0}) ", string.Join(",", quotedExperimentNames.Values));
+                sqlStr.Append("GROUP BY labelling");
 
                 var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
 

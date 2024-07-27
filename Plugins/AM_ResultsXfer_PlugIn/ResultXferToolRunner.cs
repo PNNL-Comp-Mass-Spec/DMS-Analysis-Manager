@@ -251,12 +251,12 @@ namespace AnalysisManagerResultsXferPlugin
 
             // Query V_Storage_Path_Export for the local drive letter (aka volume name) of the given path
 
-            sql.Append(" SELECT vol_server, storage_path");
-            sql.Append(" FROM V_Storage_Path_Export");
-            sql.AppendFormat(" WHERE (machine_name = '{0}') AND", serverName);
-            sql.AppendFormat("       (storage_path = '{0}' OR", trimmedPath);
-            sql.AppendFormat("        storage_path = '{0}\\')", trimmedPath);
-            sql.AppendFormat(" ORDER BY CASE WHEN storage_path_function = '{0}' THEN 1 ELSE 2 END, id DESC", directoryFunction);
+            sql.Append("SELECT vol_server, storage_path ");
+            sql.Append("FROM V_Storage_Path_Export ");
+            sql.AppendFormat("WHERE (machine_name = '{0}') AND", serverName);
+            sql.AppendFormat("      (storage_path = '{0}' OR", trimmedPath);
+            sql.AppendFormat("       storage_path = '{0}\\') ", trimmedPath);
+            sql.AppendFormat("ORDER BY CASE WHEN storage_path_function = '{0}' THEN 1 ELSE 2 END, id DESC", directoryFunction);
 
             var dbTools = DbToolsFactory.GetDBTools(connectionString, debugMode: mMgrParams.TraceMode);
             RegisterEvents(dbTools);
@@ -310,10 +310,10 @@ namespace AnalysisManagerResultsXferPlugin
             // Re-query V_Storage_Path_Export using only "DataPkgs\"
 
             sql.Clear();
-            sql.Append(" SELECT vol_server, storage_path");
-            sql.Append(" FROM V_Storage_Path_Export");
-            sql.AppendFormat(" WHERE machine_name = '{0}' AND", serverName);
-            sql.Append(" storage_path IN ('DataPkgs', 'DataPkgs\\')");
+            sql.Append("SELECT vol_server, storage_path ");
+            sql.Append("FROM V_Storage_Path_Export ");
+            sql.AppendFormat("WHERE machine_name = '{0}' AND ", serverName);
+            sql.Append("storage_path IN ('DataPkgs', 'DataPkgs\\')");
 
             // ReSharper restore StringLiteralTypo
             // ReSharper restore CommentTypo
