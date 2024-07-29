@@ -301,14 +301,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     var zipFilePath = Path.Combine(plotsDirectory.FullName, "PlotFiles.zip");
 
-                    var success = mDotNetZipTools.ZipDirectory(plotsDirectory.FullName, zipFilePath, false, "*.png");
+                    var success = mZipTools.ZipDirectory(plotsDirectory.FullName, zipFilePath, false, "*.png");
 
                     if (!success)
                     {
                         const string msg = "Error zipping the plot files";
 
-                        if (!string.IsNullOrEmpty(mDotNetZipTools.Message))
-                            LogError(msg + ": " + mDotNetZipTools.Message);
+                        if (!string.IsNullOrEmpty(mZipTools.Message))
+                            LogError(msg + ": " + mZipTools.Message);
                         else
                             LogError(msg);
 

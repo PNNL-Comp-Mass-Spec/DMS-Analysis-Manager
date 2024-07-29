@@ -1917,9 +1917,7 @@ namespace AnalysisManagerTopPICPlugIn
                     LogMessage(logMessage);
                 }
 
-                var zipper = new Ionic.Zip.ZipFile(zipFilePath);
-                zipper.AddDirectory(sourceDirectory.FullName);
-                zipper.Save();
+                mZipTools.ZipDirectory(sourceDirectory.FullName, zipFilePath);
 
                 return true;
             }

@@ -1030,7 +1030,7 @@ namespace AnalysisManagerTopFDPlugIn
                     var zipFilePath = Path.Combine(mWorkDir, subdirectoryName + ".zip");
                     LogMessage("Zipping {0} to create {1}", directoryToFind.FullName, Path.GetFileName(zipFilePath));
 
-                    mDotNetZipTools.ZipDirectory(directoryToFind.FullName, zipFilePath, true);
+                    mZipTools.ZipDirectory(directoryToFind.FullName, zipFilePath, true);
                 }
 
                 return true;

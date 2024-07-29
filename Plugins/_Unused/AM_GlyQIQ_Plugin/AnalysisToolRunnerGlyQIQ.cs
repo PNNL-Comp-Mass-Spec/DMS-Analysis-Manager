@@ -462,7 +462,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 var zipFilePath = Path.Combine(mWorkDir, "GlyQIq_Automation_Files.zip");
 
-                mDotNetZipTools.ZipDirectory(tempZipDirectory.FullName, zipFilePath);
+                mZipTools.ZipDirectory(tempZipDirectory.FullName, zipFilePath);
             }
             catch (Exception ex)
             {

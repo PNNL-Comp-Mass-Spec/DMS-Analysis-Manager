@@ -417,7 +417,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Copy the .mzXML file to the cache
                 // Gzip it first before copying
                 var gzippedMzXmlFile = new FileInfo(localMzXmlFile + AnalysisResources.DOT_GZ_EXTENSION);
-                success = mDotNetZipTools.GZipFile(localMzXmlFile.FullName, true);
+                success = mZipTools.GZipFile(localMzXmlFile.FullName, true);
 
                 if (!success)
                 {

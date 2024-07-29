@@ -889,7 +889,7 @@ namespace AnalysisManagerExtractionPlugin
                         mJobParams.AddResultFileToSkip(fileName);
 
                         // Extract the TSV files from the zip file
-                        var zipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
+                        var zipTools = new ZipFileTools(mDebugLevel, mWorkDir);
                         RegisterEvents(zipTools);
 
                         var zipFilePath = Path.Combine(mWorkDir, fileName);

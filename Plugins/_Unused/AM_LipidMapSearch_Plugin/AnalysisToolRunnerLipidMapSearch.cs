@@ -825,9 +825,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Zip up the files in the PlotData folder
-                var dotNetZipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
+                var zipTools = new ZipFileTools(mDebugLevel, mWorkDir);
 
-                dotNetZipTools.ZipDirectory(folderToZip, Path.Combine(mWorkDir, "LipidMap_PlotData.zip"));
+                zipTools.ZipDirectory(folderToZip, Path.Combine(mWorkDir, "LipidMap_PlotData.zip"));
             }
             catch (Exception ex)
             {

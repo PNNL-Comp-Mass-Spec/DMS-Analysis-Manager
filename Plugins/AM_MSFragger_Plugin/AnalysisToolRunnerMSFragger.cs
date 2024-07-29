@@ -71,7 +71,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private RunDosProgram mCmdRunner;
 
-        private static DotNetZipTools mZipTool;
+        private static ZipFileTools mZipTool;
 
         /// <summary>
         /// Runs MSFragger tool
@@ -1538,7 +1538,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <returns>True if success, false if an error</returns>
         private static bool ZipPepXmlAndPinFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile, bool addPinFile, string zipFileNameOverride = "")
         {
-            mZipTool ??= new DotNetZipTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
+            mZipTool ??= new ZipFileTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
 
             var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
 

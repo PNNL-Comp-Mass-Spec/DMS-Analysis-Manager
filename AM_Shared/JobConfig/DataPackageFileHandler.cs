@@ -393,12 +393,12 @@ namespace AnalysisManagerBase.JobConfig
         /// Return the full path to the most recently unzipped file (.zip or .gz)
         /// Returns an empty string if no recent unzipped files
         /// </summary>
-        /// <param name="dotNetTools"></param>
-        private string MostRecentUnzippedFile(DotNetZipTools dotNetTools)
+        /// <param name="zipTools"></param>
+        private string MostRecentUnzippedFile(ZipFileTools zipTools)
         {
-            if (dotNetTools.MostRecentUnzippedFiles.Count > 0)
+            if (zipTools.MostRecentUnzippedFiles.Count > 0)
             {
-                return dotNetTools.MostRecentUnzippedFiles.First().Value;
+                return zipTools.MostRecentUnzippedFiles.First().Value;
             }
 
             return string.Empty;
@@ -433,8 +433,8 @@ namespace AnalysisManagerBase.JobConfig
         /// Otherwise, return false
         /// </summary>
         /// <param name="mzIdFileToInspect"></param>
-        /// <param name="dotNetTools"></param>
-        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, DotNetZipTools dotNetTools)
+        /// <param name="zipTools"></param>
+        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, ZipFileTools zipTools)
         {
             try
             {
@@ -452,13 +452,13 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!dotNetTools.UnzipFile(mzidFile.FullName))
+                    if (!zipTools.UnzipFile(mzidFile.FullName))
                     {
                         OnErrorEvent("Error unzipping " + mzidFile.FullName);
                         return false;
                     }
 
-                    mzidFilePathLocal = MostRecentUnzippedFile(dotNetTools);
+                    mzidFilePathLocal = MostRecentUnzippedFile(zipTools);
                     deleteLocalFile = true;
                 }
                 else
@@ -543,13 +543,13 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
         /// <param name="cachedJobMetadata"></param>
-        /// <param name="dotNetTools"></param>
+        /// <param name="zipTools"></param>
         /// <param name="workDirInfo"></param>
         /// <param name="dataPkgJob">Data package job</param>
         private bool ProcessOnePeptideHitJob(
             DataPackageRetrievalOptionsType retrievalOptions,
             IDictionary<int, DataPackageJobMetadata> cachedJobMetadata,
-            DotNetZipTools dotNetTools,
+            ZipFileTools zipTools,
             FileSystemInfo workDirInfo,
             DataPackageJobInfo dataPkgJob)
         {
@@ -699,7 +699,7 @@ namespace AnalysisManagerBase.JobConfig
                         retrievalOptions,
                         candidateMzIdFiles,
                         cachedJobMetadata,
-                        dotNetTools,
+                        zipTools,
                         dataPkgJob,
                         workDirInfo,
                         localDirectoryPath,
@@ -724,11 +724,11 @@ namespace AnalysisManagerBase.JobConfig
                             // Convert the _msgfplus.zip file to a .mzid.gz file
                             if (currentFileInfo.Exists)
                             {
-                                dotNetTools.UnzipFile(currentFileInfo.FullName, workDirInfo.FullName);
-                                var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+                                zipTools.UnzipFile(currentFileInfo.FullName, workDirInfo.FullName);
+                                var unzippedFilePath = MostRecentUnzippedFile(zipTools);
 
-                                dotNetTools.GZipFile(unzippedFilePath, true);
-                                var gzipFilePath = dotNetTools.MostRecentZipFilePath;
+                                zipTools.GZipFile(unzippedFilePath, true);
+                                var gzipFilePath = zipTools.MostRecentZipFilePath;
                                 var gzipFileSource = new FileInfo(gzipFilePath);
 
                                 // Move the file into a subdirectory below the working directory
@@ -762,7 +762,7 @@ namespace AnalysisManagerBase.JobConfig
                 else
                 {
                     var unzipSuccess = UnzipFiles(
-                        dotNetTools, workDirInfo, prefixRequired, dataPkgJob,
+                        zipTools, workDirInfo, prefixRequired, dataPkgJob,
                         foundFiles, zipFileCandidates, gzipFileCandidates,
                         zippedPepXmlFile);
 
@@ -943,7 +943,7 @@ namespace AnalysisManagerBase.JobConfig
             DataPackageRetrievalOptionsType retrievalOptions,
             ICollection<string> candidateMzIdFiles,
             IDictionary<int, DataPackageJobMetadata> cachedJobMetadata,
-            DotNetZipTools dotNetTools,
+            ZipFileTools zipTools,
             DataPackageJobInfo dataPkgJob,
             FileSystemInfo workDirInfo,
             string localDirectoryPath,
@@ -974,7 +974,7 @@ namespace AnalysisManagerBase.JobConfig
                 else
                 {
                     // Examine the .mzid file to determine whether a .mzML file was used
-                    searchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
+                    searchUsedMzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, zipTools);
 
                     var newMetadata = new DataPackageJobMetadata
                     {
@@ -1508,8 +1508,8 @@ namespace AnalysisManagerBase.JobConfig
             {
                 var workDirInfo = new DirectoryInfo(workingDir);
 
-                var dotNetTools = new DotNetZipTools(debugLevel, workDirInfo.FullName);
-                RegisterEvents(dotNetTools);
+                var zipTools = new ZipFileTools(debugLevel, workDirInfo.FullName);
+                RegisterEvents(zipTools);
 
                 // Make sure the MyEMSL download queue is empty
                 mAnalysisResources.ProcessMyEMSLDownloadQueue();
@@ -1556,7 +1556,7 @@ namespace AnalysisManagerBase.JobConfig
                     }
                     else
                     {
-                        var success = ProcessOnePeptideHitJob(retrievalOptions, cachedJobMetadata, dotNetTools, workDirInfo, dataPkgJob);
+                        var success = ProcessOnePeptideHitJob(retrievalOptions, cachedJobMetadata, zipTools, workDirInfo, dataPkgJob);
 
                         if (!success)
                         {
@@ -2038,7 +2038,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Unzip the PepXML file (_pepXML.zip) if it was retrieved
         /// If the .mzid file is named Dataset_msgfplus.zip, unzip it, then compress it so that it's named Dataset.mzid.gz
         /// </summary>
-        /// <param name="dotNetTools"></param>
+        /// <param name="zipTools"></param>
         /// <param name="workDirInfo"></param>
         /// <param name="prefixRequired"></param>
         /// <param name="dataPkgJob"></param>
@@ -2047,7 +2047,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
         private bool UnzipFiles(
-            DotNetZipTools dotNetTools,
+            ZipFileTools zipTools,
             FileSystemInfo workDirInfo,
             bool prefixRequired,
             DataPackageJobInfo dataPkgJob,
@@ -2079,11 +2079,11 @@ namespace AnalysisManagerBase.JobConfig
 
                         if (fileToUnzip.Exists)
                         {
-                            dotNetTools.UnzipFile(fileToUnzip.FullName);
-                            var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+                            zipTools.UnzipFile(fileToUnzip.FullName);
+                            var unzippedFilePath = MostRecentUnzippedFile(zipTools);
 
-                            dotNetTools.GZipFile(unzippedFilePath, true);
-                            matchedFilePath = dotNetTools.MostRecentZipFilePath;
+                            zipTools.GZipFile(unzippedFilePath, true);
+                            matchedFilePath = zipTools.MostRecentZipFilePath;
                             break;
                         }
                     }
@@ -2124,8 +2124,8 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (fileToUnzip.Exists)
                 {
-                    dotNetTools.UnzipFile(fileToUnzip.FullName);
-                    foundFiles.Add(MostRecentUnzippedFile(dotNetTools));
+                    zipTools.UnzipFile(fileToUnzip.FullName);
+                    foundFiles.Add(MostRecentUnzippedFile(zipTools));
                 }
             }
 

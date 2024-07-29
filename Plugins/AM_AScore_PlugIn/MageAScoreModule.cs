@@ -43,7 +43,7 @@ namespace AnalysisManager_AScore_PlugIn
         private int datasetTypeIdx;
         private int settingsFileIdx;
 
-        private DotNetZipTools mDotNetZipTools;
+        private ZipFileTools mZipTools;
 
         public ExtractionType ExtractionParams { get; set; }
         public string ExtractedResultsFileName { get; set; }
@@ -65,9 +65,9 @@ namespace AnalysisManager_AScore_PlugIn
             ExtractedResultsFileName = "extracted_results.txt";
         }
 
-        public void Initialize(DotNetZipTools dotNetZipTools)
+        public void Initialize(ZipFileTools zipTools)
         {
-            mDotNetZipTools = dotNetZipTools;
+            mZipTools = zipTools;
         }
 
         /// <summary>
@@ -352,7 +352,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Unzip the file
-                mDotNetZipTools.UnzipFile(dtaZipPathLocal);
+                mZipTools.UnzipFile(dtaZipPathLocal);
             }
             catch (Exception ex)
             {

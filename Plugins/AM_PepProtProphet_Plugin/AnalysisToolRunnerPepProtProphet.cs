@@ -3949,7 +3949,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var zipFilePath = Path.Combine(mWorkingDirectory.FullName, "ProteinProphet_Protein_Groups.zip");
 
-                var fileZipped = mDotNetZipTools.ZipFile(proteinGroupsFile.FullName, false, zipFilePath);
+                var fileZipped = mZipTools.ZipFile(proteinGroupsFile.FullName, false, zipFilePath);
 
                 if (!fileZipped)
                 {
@@ -5627,7 +5627,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             var zipFilePath = Path.Combine(mWorkingDirectory.FullName, zipFileName);
 
-            var success = mDotNetZipTools.ZipFiles(filesToZip, zipFilePath);
+            var success = mZipTools.ZipFiles(filesToZip, zipFilePath);
 
             if (success)
             {

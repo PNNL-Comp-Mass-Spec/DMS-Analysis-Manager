@@ -327,7 +327,7 @@ namespace AnalysisManagerNOMSIPlugin
                 filesMatched += MoveWorkDirFiles(zipWork, "distribution*.txt");
 
                 if (filesMatched > 0)
-                    mDotNetZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, "Distributions.zip"));
+                    mZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, "Distributions.zip"));
             }
             else
             {
@@ -340,7 +340,7 @@ namespace AnalysisManagerNOMSIPlugin
                 filesMatched += MoveWorkDirFiles(zipWork, "NOMSI_ConsoleOutput_scan*.txt");
 
                 if (filesMatched > 0)
-                    mDotNetZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
+                    mZipTools.ZipDirectory(zipWork.FullName, Path.Combine(mWorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
             }
         }
 

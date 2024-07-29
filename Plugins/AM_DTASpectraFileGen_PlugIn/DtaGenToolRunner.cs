@@ -1242,7 +1242,7 @@ namespace DTASpectraFileGen
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Zip the file using IonicZip
+            // Zip the file using System.IO.Compression.ZipFile
             try
             {
                 if (ZipFile(inputFilePath, false))
@@ -1276,7 +1276,7 @@ namespace DTASpectraFileGen
                 if (ZipFileSharpZipLib(inputFilePath))
 #pragma warning restore CS0618
                 {
-                    var warningMsg = string.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", inputFileName);
+                    var warningMsg = string.Format("Zip file created using ZipFileTools was corrupted; successfully compressed it using SharpZipLib instead: {0}", inputFileName);
                     LogWarning(warningMsg);
 
                     if (RenameZipFileIfRequired(mWorkDir, mDatasetName + ".zip", finalZipFileName))

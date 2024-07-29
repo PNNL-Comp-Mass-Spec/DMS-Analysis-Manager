@@ -197,7 +197,7 @@ namespace AnalysisManager_AScore_PlugIn
         private bool RunAScore()
         {
             // Run the appropriate Mage pipeline(s) according to operations list parameter
-            var ascoreMage = new AScoreMagePipeline(mJobParams, mMgrParams, mDotNetZipTools);
+            var ascoreMage = new AScoreMagePipeline(mJobParams, mMgrParams, mZipTools);
             RegisterEvents(ascoreMage);
 
             var success = ascoreMage.Run();

@@ -29,7 +29,7 @@ namespace AnalysisManager_AScore_PlugIn
         private string mFastaFilePath = string.Empty;
         private string mErrorMessage = string.Empty;
 
-        private DotNetZipTools mDotNetZipTools;
+        private ZipFileTools mZipTools;
 
         public static DatasetListInfo mMyEMSLDatasetInfo;
 
@@ -40,10 +40,10 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        /// <param name="dotNetZipTools"></param>
-        public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
+        /// <param name="zipTools"></param>
+        public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, ZipFileTools zipTools)
         {
-            Initialize(jobParams, mgrParams, dotNetZipTools);
+            Initialize(jobParams, mgrParams, zipTools);
 
             if (mMyEMSLDatasetInfo == null)
             {
@@ -63,8 +63,8 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="mgrParams"></param>
-        /// <param name="dotNetZipTools"></param>
-        private void Initialize(IJobParams jobParams, IMgrParams mgrParams, DotNetZipTools dotNetZipTools)
+        /// <param name="zipTools"></param>
+        private void Initialize(IJobParams jobParams, IMgrParams mgrParams, ZipFileTools zipTools)
         {
             mJobParams = new JobParameters(jobParams);
             mMgrParams = new ManagerParameters(mgrParams);
@@ -97,7 +97,7 @@ namespace AnalysisManager_AScore_PlugIn
             // Remove the file extension from mParamFilename
             mParamFilename = Path.GetFileNameWithoutExtension(mParamFilename);
 
-            mDotNetZipTools = dotNetZipTools;
+            mZipTools = zipTools;
         }
 
         /// <summary>
@@ -216,7 +216,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             ascoreModule.FastaFilePath = mFastaFilePath;
 
-            ascoreModule.Initialize(mDotNetZipTools);
+            ascoreModule.Initialize(mZipTools);
 
             var pipeline = ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule);
             pipeline.RunRoot(null);
@@ -229,11 +229,11 @@ namespace AnalysisManager_AScore_PlugIn
         // <param name="tableName"></param>
         // private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
         // {
-        //    // get selected list of reporter ion files from list of jobs
+        //    // Get selected list of reporter ion files from list of jobs
         //    const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
         //    SimpleSink fileList = GetListOfFilesFromDirectoryList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
 
-        //    // make module to import contents of each file in list
+        //    // Module to import contents of each file in list
         //    var importer = new MageFileImport
         //    {
         //        DBTableName = tableName,
@@ -359,7 +359,7 @@ namespace AnalysisManager_AScore_PlugIn
         }
 
         /// <summary>
-        /// make a set of parameters for the extraction pipeline modules using the job parameters
+        /// Make a set of parameters for the extraction pipeline modules using the job parameters
         /// </summary>
         private ExtractionType GetExtractionParametersFromJobParameters()
         {

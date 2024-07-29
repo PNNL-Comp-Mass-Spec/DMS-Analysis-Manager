@@ -52,14 +52,14 @@ namespace TestAScorePlugIn
             var workDir = mgrParams.GetParam("workdir");
             var logFilenameSaved = mgrParams.GetParam("logfilename");
 
-            var dotNetZipTools = new DotNetZipTools(1, workDir);
+            var zipTools = new ZipFileTools(1, workDir);
 
             //Change the name of the log file for the local log file to the plugin log filename
             var logFileName = Path.Combine(workDir, "AScore_Log");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             LogTools.ChangeLogFileName(logFileName);
 
-            var ascoreMage = new AScoreMagePipeline(jobParams, mgrParams, dotNetZipTools);
+            var ascoreMage = new AScoreMagePipeline(jobParams, mgrParams, zipTools);
             ascoreMage.Run();
 
             // Change the name of the log file back to the analysis manager log file

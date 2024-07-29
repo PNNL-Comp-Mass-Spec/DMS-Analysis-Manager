@@ -756,7 +756,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var zipTools = new DotNetZipTools(mDebugLevel, workingDirectory.FullName);
+                var zipTools = new ZipFileTools(mDebugLevel, workingDirectory.FullName);
                 RegisterEvents(zipTools);
 
                 // Populate a list with relative file paths of files to not retrieve from the transfer directory

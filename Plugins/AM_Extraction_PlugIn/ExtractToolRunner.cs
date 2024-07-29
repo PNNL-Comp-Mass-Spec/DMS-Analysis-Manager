@@ -2431,7 +2431,7 @@ namespace AnalysisManagerExtractionPlugin
 
             var zippedConsoleOutputFilePath = Path.Combine(workingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip");
 
-            if (!mDotNetZipTools.ZipDirectory(consoleOutputFilesDir.FullName, zippedConsoleOutputFilePath))
+            if (!mZipTools.ZipDirectory(consoleOutputFilesDir.FullName, zippedConsoleOutputFilePath))
             {
                 LogError("Problem zipping the console output file; will not delete the separate copies from the transfer directory");
                 return;
@@ -2470,7 +2470,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             var zipFilePath = Path.Combine(mWorkDir, zipFileName);
 
-            var success = mDotNetZipTools.ZipFiles(filesToZip, zipFilePath);
+            var success = mZipTools.ZipFiles(filesToZip, zipFilePath);
 
             if (success)
             {

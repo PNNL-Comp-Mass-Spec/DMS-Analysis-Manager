@@ -679,11 +679,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Compress the MS-GF+ .mzID file
-                var success = mDotNetZipTools.GZipFile(msgfPlusResults.FullName, true);
+                var success = mZipTools.GZipFile(msgfPlusResults.FullName, true);
 
                 if (!success)
                 {
-                    LogError(mDotNetZipTools.Message);
+                    LogError(mZipTools.Message);
                     return false;
                 }
 
@@ -1206,11 +1206,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Compress the .mzXML or .mzML file
-                var success = mDotNetZipTools.GZipFile(fixedMSXmlFile.FullName, true);
+                var success = mZipTools.GZipFile(fixedMSXmlFile.FullName, true);
 
                 if (!success)
                 {
-                    LogError(mDotNetZipTools.Message);
+                    LogError(mZipTools.Message);
                     return false;
                 }
             }

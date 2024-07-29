@@ -1172,10 +1172,10 @@ namespace AnalysisManagerIDPickerPlugIn
 
                     // Zip the Report Directory
                     var zippedResultsFilePath = Path.Combine(mWorkDir, "IDPicker_HTML_Results.zip");
-                    mDotNetZipTools.DebugLevel = mDebugLevel;
-                    success = mDotNetZipTools.ZipDirectory(reportDirectory.FullName, zippedResultsFilePath, true);
+                    mZipTools.DebugLevel = mDebugLevel;
+                    success = mZipTools.ZipDirectory(reportDirectory.FullName, zippedResultsFilePath, true);
 
-                    if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (!success && mZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         mNeedToAbortProcessing = true;
                     }

@@ -421,7 +421,7 @@ namespace AnalysisManagerFormularityPlugin
 
                 var zipFilePath = Path.Combine(workDir.FullName, mDatasetName + "_Plots.zip");
 
-                var zipSuccess = mDotNetZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
+                var zipSuccess = mZipTools.ZipDirectory(plotDirectory.FullName, zipFilePath);
 
                 if (!zipSuccess)
                 {

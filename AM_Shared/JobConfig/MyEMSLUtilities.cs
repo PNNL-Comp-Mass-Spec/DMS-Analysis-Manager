@@ -22,7 +22,7 @@ namespace AnalysisManagerBase.JobConfig
 
         private const string DATETIME_FORMAT_NO_SECONDS = "yyyy-MM-dd hh:mm tt";
 
-        private readonly DotNetZipTools mDotNetZipTools;
+        private readonly ZipFileTools mZipTools;
 
         private readonly DatasetListInfo mMyEMSLDatasetListInfo;
 
@@ -100,8 +100,8 @@ namespace AnalysisManagerBase.JobConfig
             AllFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
             mRecentlyFoundMyEMSLFiles = new List<DatasetDirectoryOrFileInfo>();
 
-            mDotNetZipTools = new DotNetZipTools(debugLevel, workingDir);
-            RegisterEvents(mDotNetZipTools);
+            mZipTools = new ZipFileTools(debugLevel, workingDir);
+            RegisterEvents(mZipTools);
 
             mFileIDComparer = new MyEMSLFileIDComparer();
 
@@ -358,15 +358,15 @@ namespace AnalysisManagerBase.JobConfig
                 {
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
-                    mDotNetZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
-                    MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
+                    mZipTools.UnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
+                    MostRecentUnzippedFiles.AddRange(mZipTools.MostRecentUnzippedFiles);
                 }
                 else if (string.Equals(fileToUnzip.Extension, ".gz", StringComparison.OrdinalIgnoreCase))
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fileToUnzip.Name);
-                    mDotNetZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
-                    MostRecentUnzippedFiles.AddRange(mDotNetZipTools.MostRecentUnzippedFiles);
+                    mZipTools.GUnzipFile(fileToUnzip.FullName, e.DownloadDirectoryPath);
+                    MostRecentUnzippedFiles.AddRange(mZipTools.MostRecentUnzippedFiles);
                 }
             }
 

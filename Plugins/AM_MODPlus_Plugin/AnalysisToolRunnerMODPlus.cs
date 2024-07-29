@@ -705,7 +705,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 var zippedResultsFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(combinedResults.Name) + ".zip");
-                var success = mDotNetZipTools.ZipDirectory(zipFolder.FullName, zippedResultsFilePath);
+                var success = mZipTools.ZipDirectory(zipFolder.FullName, zippedResultsFilePath);
 
                 if (success)
                 {

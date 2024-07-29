@@ -146,9 +146,9 @@ namespace AnalysisManagerBase.AnalysisTool
         protected string mFileDate;
 
         /// <summary>
-        /// DotNetZip tools
+        /// System.IO.Compression.ZipFile tools
         /// </summary>
-        protected DotNetZipTools mDotNetZipTools;
+        protected ZipFileTools mZipTools;
 
         /// <summary>
         /// Analysis job summary file
@@ -304,8 +304,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
             LogDebug("AnalysisToolRunnerBase.Setup()", 3);
 
-            mDotNetZipTools = new DotNetZipTools(mDebugLevel, mWorkDir);
-            RegisterEvents(mDotNetZipTools);
+            mZipTools = new ZipFileTools(mDebugLevel, mWorkDir);
+            RegisterEvents(mZipTools);
 
             InitFileTools(mMgrName, mDebugLevel);
 
@@ -2087,7 +2087,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFilePath"></param>
         public string GetZipFilePathForFile(string sourceFilePath)
         {
-            return DotNetZipTools.GetZipFilePathForFile(sourceFilePath);
+            return ZipFileTools.GetZipFilePathForFile(sourceFilePath);
         }
 
         /// <summary>
@@ -2107,10 +2107,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="targetDirectory">Target directory for the extracted files</param>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            return mDotNetZipTools.GUnzipFile(gzipFilePath, targetDirectory);
+            // Note that mZipTools logs error messages using LogTools
+            return mZipTools.GUnzipFile(gzipFilePath, targetDirectory);
         }
 
         /// <summary>
@@ -2121,12 +2121,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            var success = mDotNetZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
+            // Note that mZipTools logs error messages using LogTools
+            var success = mZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (!success && mZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
@@ -2143,12 +2143,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            var success = mDotNetZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
+            // Note that mZipTools logs error messages using LogTools
+            var success = mZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (!success && mZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
@@ -3897,10 +3897,10 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            return mDotNetZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
+            // Note that mZipTools logs error messages using LogTools
+            return mZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
         }
 
         /// <summary>
@@ -4186,12 +4186,27 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="zipFilePath">Zip file to check</param>
         /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
         /// <returns>True if a valid zip file, otherwise false</returns>
-        protected bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB = 4)
+        [Obsolete("Argument crcCheckThresholdGB is obsolete; use the overloaded method that only has one argument")]
+        protected bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            return mDotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
+            // Note that mZipTools logs error messages using LogTools
+            return mZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
+        }
+
+        /// <summary>
+        /// Verifies that the zip file exists.
+        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
+        /// </summary>
+        /// <param name="zipFilePath">Zip file to check</param>
+        /// <returns>True if a valid zip file, otherwise false</returns>
+        protected bool VerifyZipFile(string zipFilePath)
+        {
+            mZipTools.DebugLevel = mDebugLevel;
+
+            // Note that mZipTools logs error messages using LogTools
+            return mZipTools.VerifyZipFile(zipFilePath);
         }
 
         /// <summary>
@@ -4202,12 +4217,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            var success = mDotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
+            // Note that mZipTools logs error messages using LogTools
+            var success = mZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (!success && mZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }
@@ -4218,9 +4233,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Compress a file using SharpZipLib
         /// </summary>
-        /// <remarks>IonicZip is faster, so we typically use method ZipFile</remarks>
+        /// <remarks>IonicZip is faster, but the NuGet package was deprecated in July 2024</remarks>
         /// <returns>True if success, false if an error</returns>
-        [Obsolete("Use ZipFile, which uses DotNetZip")]
+        [Obsolete("Use ZipFile, which uses System.IO.Compression.ZipFile")]
         public bool ZipFileSharpZipLib(string sourceFilePath)
         {
             try
@@ -4268,12 +4283,12 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>True if success, false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
-            mDotNetZipTools.DebugLevel = mDebugLevel;
+            mZipTools.DebugLevel = mDebugLevel;
 
-            // Note that mDotNetZipTools logs error messages using LogTools
-            var success = mDotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
+            // Note that mZipTools logs error messages using LogTools
+            var success = mZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
 
-            if (!success && mDotNetZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (!success && mZipTools.Message.IndexOf("OutOfMemoryException", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 mNeedToAbortProcessing = true;
             }

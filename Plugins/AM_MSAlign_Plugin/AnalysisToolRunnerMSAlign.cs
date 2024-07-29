@@ -1250,7 +1250,7 @@ namespace AnalysisManagerMSAlignPlugIn
         {
             try
             {
-                var targetFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + folderName.ToUpper() + ".zip");
+                var zipFilePath = Path.Combine(mWorkDir, mDatasetName + "_MSAlign_Results_" + folderName.ToUpper() + ".zip");
                 var sourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, folderName);
 
                 // Confirm that the directory has one or more files or subdirectories
@@ -1271,14 +1271,12 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (mDebugLevel >= 2)
                     {
-                        logMessage += ": " + targetFilePath;
+                        logMessage += ": " + zipFilePath;
                     }
                     LogMessage(logMessage);
                 }
 
-                var zipper = new Ionic.Zip.ZipFile(targetFilePath);
-                zipper.AddDirectory(sourceFolderPath);
-                zipper.Save();
+                mZipTools.ZipDirectory(sourceFolderPath, zipFilePath);
             }
             catch (Exception ex)
             {

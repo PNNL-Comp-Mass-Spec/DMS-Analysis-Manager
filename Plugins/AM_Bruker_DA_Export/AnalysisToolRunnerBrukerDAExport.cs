@@ -564,7 +564,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     fileToMove.MoveTo(Path.Combine(subDir.FullName, fileToMove.Name));
                 }
 
-                var success = mDotNetZipTools.ZipDirectory(subDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
+                var success = mZipTools.ZipDirectory(subDir.FullName, Path.Combine(mWorkDir, mDatasetName + "_scans.zip"));
 
                 if (!success)
                 {

@@ -47,7 +47,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             const int debugLevel = 1;
 
             // make zipper to work on workDir
-            var dotNetZipTools = new DotNetZipTools(debugLevel, workDir);
+            var zipTools = new ZipFileTools(debugLevel, workDir);
 
             var targetDir = new DirectoryInfo(targetDirectoryPath);
 
@@ -69,7 +69,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 fileToZip.CopyTo(Path.Combine(workDir, fileToZip.Name));
 
                 // unzip it and delete zip
-                dotNetZipTools.UnzipFile(Path.Combine(workDir, fileToZip.Name));
+                zipTools.UnzipFile(Path.Combine(workDir, fileToZip.Name));
 
                 // find the unzipped mzid file
                 var mzFiles = workingDirectory.GetFiles("*.mzid");
@@ -80,7 +80,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 }
 
                 // gzip the mzid file
-                dotNetZipTools.GZipFile(mzFiles[0].FullName, true);
+                zipTools.GZipFile(mzFiles[0].FullName, true);
 
                 // get gzip file
                 var gzFiles = workingDirectory.GetFiles("*mzid.gz");

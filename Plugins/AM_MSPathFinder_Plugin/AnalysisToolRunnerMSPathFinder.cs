@@ -706,16 +706,16 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                mDotNetZipTools.DebugLevel = mDebugLevel;
+                mZipTools.DebugLevel = mDebugLevel;
 
                 var resultsZipFilePath = Path.Combine(mWorkDir, mDatasetName + "_IcTsv.zip");
-                var success = mDotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
+                var success = mZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
 
                 if (!success)
                 {
                     if (string.IsNullOrEmpty(mMessage))
                     {
-                        mMessage = mDotNetZipTools.Message;
+                        mMessage = mZipTools.Message;
 
                         if (string.IsNullOrEmpty(mMessage))
                         {

@@ -1443,16 +1443,16 @@ namespace AnalysisManagerProg
             const int debugLevel = 2;
             const string workDirPath = @"C:\DMS_WorkDir";
 
-            var dotNetZipTools = new DotNetZipTools(debugLevel, workDirPath);
-            RegisterEvents(dotNetZipTools);
+            var zipTools = new ZipFileTools(debugLevel, workDirPath);
+            RegisterEvents(zipTools);
 
-            dotNetZipTools.UnzipFile(zipFilePath);
+            zipTools.UnzipFile(zipFilePath);
 
             var workDir = new DirectoryInfo(workDirPath);
 
             foreach (var mzidFile in workDir.GetFiles("*.mzid"))
             {
-                dotNetZipTools.GZipFile(mzidFile.FullName, true);
+                zipTools.GZipFile(mzidFile.FullName, true);
             }
         }
 
@@ -1501,7 +1501,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test unzipping a file
         /// </summary>
-        /// <remarks>This uses DotNetZip</remarks>
+        /// <remarks>This uses System.IO.Compression.ZipFile</remarks>
         public bool TestUnzip(string zipFilePath, string outFolderPath)
         {
             const int debugLevel = 2;
@@ -1516,7 +1516,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test zipping a file
         /// </summary>
-        /// <remarks>This uses DotNetZip</remarks>
+        /// <remarks>This uses System.IO.Compression.ZipFile</remarks>
         public void TestZip()
         {
             var toolRunner = GetCodeTestToolRunner();
@@ -1531,23 +1531,23 @@ namespace AnalysisManagerProg
 
             toolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
-            var dotNetZipTools = new DotNetZipTools(1, GetWorkDirPath());
-            RegisterEvents(dotNetZipTools);
+            var zipTools = new ZipFileTools(1, GetWorkDirPath());
+            RegisterEvents(zipTools);
 
-            dotNetZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
+            zipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
         }
 
         /// <summary>
-        /// Test DotNetZip (aka Ionic zip)
+        /// Test System.IO.Compression.ZipFile
         /// </summary>
-        public void TestDotNetZipTools()
+        public void TestZipTools()
         {
-            var dotNetZipTools = new DotNetZipTools(1, @"C:\DMS_WorkDir");
-            RegisterEvents(dotNetZipTools);
+            var zipTools = new ZipFileTools(1, @"C:\DMS_WorkDir");
+            RegisterEvents(zipTools);
 
-            dotNetZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
+            zipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
 
-            foreach (var item in dotNetZipTools.MostRecentUnzippedFiles)
+            foreach (var item in zipTools.MostRecentUnzippedFiles)
             {
                 Console.WriteLine(item.Key + " - " + item.Value);
             }
@@ -1683,7 +1683,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test zipping and unzipping with DotNetZip
+        /// Test zipping and unzipping with System.IO.Compression.ZipFile
         /// </summary>
         public void TestZipAndUnzip()
         {
@@ -1700,27 +1700,78 @@ namespace AnalysisManagerProg
             //   IonicZip compressed a 556 MB text file in 3.7 seconds (creating a 107 MB file)
             //   IonicZip compressed a folder with 996 MB of data (FASTA files, text files, one .gz file) in 12 seconds (creating a 348 MB zip file)
 
-            var dotNetZipTools = new DotNetZipTools(3, @"F:\Temp");
-            RegisterEvents(dotNetZipTools);
+            var zipTools = new ZipFileTools(3, @"F:\Temp");
+            RegisterEvents(zipTools);
 
             var stopWatch = new Stopwatch();
 
             stopWatch.Start();
-            dotNetZipTools.ZipFile(@"F:\Temp\OHSU_mortality_lipids_137_Pos_12Sep17_Brandi-WCSH7908.uimf", false);
+            zipTools.ZipFile(@"F:\Temp\TestDataFile.txt", false);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+
+            // 200 MB file: QC_Blank_C_RP_Neg_13May24_Bilbo_Hypergold-24-05-05.raw
+            // 2 GB file: OHSU_mortality_lipids_137_Pos_12Sep17_Brandi-WCSH7908.uimf
+
+            const string SOURCE_FILE = @"F:\Temp\QC_Blank_C_RP_Neg_13May24_Bilbo_Hypergold-24-05-05.raw";
+
+            stopWatch.Reset();
+            stopWatch.Start();
+            var zipFilePath = ZipFileTools.GetZipFilePathForFile(SOURCE_FILE);
+
+            // Uncomment to zip the .raw file
+            // zipTools.ZipFile(SOURCE_FILE, false, zipFilePath, true);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+
+            const string ZIPPED_FOLDER_FILE = @"F:\Temp\ZippedFolderTest.zip";
+
+            stopWatch.Reset();
+            stopWatch.Start();
+            zipTools.ZipDirectory(@"F:\Temp\FolderTest", ZIPPED_FOLDER_FILE);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+
+            const string ZIPPED_FOLDER_FILE_FILTERED = @"F:\Temp\ZippedFolderTest_Filtered.zip";
+
+            stopWatch.Reset();
+            stopWatch.Start();
+            zipTools.ZipDirectory(@"F:\Temp\FolderTest", ZIPPED_FOLDER_FILE_FILTERED, true, "Scratch1*");
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+            stopWatch.Reset();
+
+            var fileList = new List<FileInfo>
+            {
+                new(@"F:\Temp\Scratch1.sql"),
+                new(@"F:\Temp\Scratch2.sql"),
+                new(@"F:\Temp\Scratch3.sql")
+            };
+
+            var zippedFileGroup1 = @"F:\Temp\TestZippedFiles_OneDirectory.zip";
+
+            stopWatch.Start();
+            zipTools.ZipFiles(fileList, zippedFileGroup1);
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
             stopWatch.Reset();
+            fileList.Add(new FileInfo(@"F:\Temp\FASTA\Tryp_Pig_Bov.fasta"));
+
+            var zippedFileGroup2 = @"F:\Temp\TestZippedFiles_TwoDirectories.zip";
+
             stopWatch.Start();
-            dotNetZipTools.ZipFile(@"F:\Temp\TestData.txt", false, @"F:\Temp\TestCustom.zip");
+            zipTools.ZipFiles(fileList, zippedFileGroup2, true);
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
-            stopWatch.Reset();
-            stopWatch.Start();
-            dotNetZipTools.ZipDirectory(@"F:\Temp\FolderTest", @"F:\Temp\ZippedFolderTest.zip");
-            stopWatch.Stop();
-            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+            zipTools.UnzipFile(ZIPPED_FOLDER_FILE, @"F:\Temp\FolderTest_RoundTrip", string.Empty, ZipFileTools.ExtractExistingFileBehavior.DoNotOverwrite);
+
+            zipTools.UnzipFile(ZIPPED_FOLDER_FILE, @"F:\Temp\FolderTest_RoundTrip", string.Empty, ZipFileTools.ExtractExistingFileBehavior.OverwriteSilently);
+
+            zipTools.UnzipFile(ZIPPED_FOLDER_FILE, @"F:\Temp\FolderTest_RoundTrip_Filtered", "Scratch1*", ZipFileTools.ExtractExistingFileBehavior.DoNotOverwrite);
+
+            zipTools.UnzipFile(zippedFileGroup2, @"F:\Temp\FolderTest_TwoDirectories_Filtered_RoundTrip", "Scratch1*");
         }
 
         /// <summary>

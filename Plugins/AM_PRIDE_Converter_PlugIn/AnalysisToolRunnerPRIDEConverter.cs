@@ -3022,7 +3022,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             mods += GetCVString(modEntry.Value);
                         }
 
-                        // modification
+                        // Modification
                         fileInfoCols.Add(mods);
 
                         GetInstrumentAccession(sampleMetadata.InstrumentGroup, sampleMetadata.InstrumentName, out var instrumentAccession, out var instrumentDescription);
@@ -4174,13 +4174,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.Equals(localFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .zip file
-                            mDotNetZipTools.UnzipFile(localFile.FullName, mWorkDir);
+                            mZipTools.UnzipFile(localFile.FullName, mWorkDir);
                             unzipped = true;
                         }
 
                         if (unzipped)
                         {
-                            foreach (var unzippedFile in mDotNetZipTools.MostRecentUnzippedFiles)
+                            foreach (var unzippedFile in mZipTools.MostRecentUnzippedFiles)
                             {
                                 filesCopied.Add(unzippedFile.Key);
                                 AddToListIfNew(mPreviousDatasetFilesToDelete, unzippedFile.Value);

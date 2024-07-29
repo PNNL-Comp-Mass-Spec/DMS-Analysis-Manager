@@ -284,7 +284,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         {
             try
             {
-                var zipTools = new DotNetZipTools(DebugLevel, WorkingDirectory.FullName);
+                var zipTools = new ZipFileTools(DebugLevel, WorkingDirectory.FullName);
                 RegisterEvents(zipTools);
 
                 foreach (var subdirectory in WorkingDirectory.GetDirectories())
@@ -332,7 +332,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
         /// <returns>True if success, false if an error</returns>
         private bool ZipDirectory(
-            DotNetZipTools zipTools,
+            ZipFileTools zipTools,
             DirectoryInfo directoryToZip,
             bool recurse = true,
             bool deleteFilesAfterZip = true)
@@ -380,7 +380,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetDirectory"></param>
         /// <param name="zipDirectoryFiles"></param>
         /// <returns>True if success, false if an error</returns>
-        private bool ZipSubdirectories(DotNetZipTools zipTools, bool deleteFilesAfterZip, DirectoryInfo targetDirectory, bool zipDirectoryFiles)
+        private bool ZipSubdirectories(ZipFileTools zipTools, bool deleteFilesAfterZip, DirectoryInfo targetDirectory, bool zipDirectoryFiles)
         {
             foreach (var item in targetDirectory.GetDirectories())
             {
@@ -408,7 +408,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="errorOccurred">Output: true if an error occurs</param>
         /// <returns>True if success, false if an error</returns>
         private bool ZipSubdirectoriesIfMatch(
-            DotNetZipTools zipTools,
+            ZipFileTools zipTools,
             Dictionary<DirectoryInfo, bool> directoriesToZipSubsSeparately,
             FileSystemInfo currentDirectory,
             bool deleteFilesAfterZip, out bool errorOccurred)

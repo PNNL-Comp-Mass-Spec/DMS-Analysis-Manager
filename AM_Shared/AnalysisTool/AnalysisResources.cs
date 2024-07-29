@@ -5221,8 +5221,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
         /// <summary>
         /// Unzips all files in the specified Zip file
-        /// If the file is less than 1.25 GB in size then uses Ionic.Zip
-        /// Otherwise, uses PKZipC (provided PKZipC.exe exists)
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outputDirectoryPath">Target directory for the extracted files</param>

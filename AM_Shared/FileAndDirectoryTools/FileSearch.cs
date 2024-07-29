@@ -41,7 +41,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
         private readonly MyEMSLUtilities mMyEMSLUtilities;
 
-        private readonly DotNetZipTools mDotNetZipTools;
+        private readonly ZipFileTools mZipTools;
 
         /// <summary>
         /// Dataset name
@@ -86,8 +86,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             mWorkDir = workingDir;
             mAuroraAvailable = auroraAvailable;
 
-            mDotNetZipTools = new DotNetZipTools(debugLevel, workingDir);
-            RegisterEvents(mDotNetZipTools);
+            mZipTools = new ZipFileTools(debugLevel, workingDir);
+            RegisterEvents(mZipTools);
         }
 
         /// <summary>
@@ -1815,7 +1815,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath)
         {
-            return mDotNetZipTools.GUnzipFile(gzipFilePath);
+            return mZipTools.GUnzipFile(gzipFilePath);
         }
 
         private void NotifyInvalidParentDirectory(FileSystemInfo sourceFile)
@@ -1966,7 +1966,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 if (GUnzipFile(sourceFile.FullName))
                     return true;
 
-                errorMessage = mDotNetZipTools.Message;
+                errorMessage = mZipTools.Message;
                 return false;
             }
 
@@ -1995,7 +1995,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             if (GUnzipFile(localZippedFile))
                 return true;
 
-            errorMessage = mDotNetZipTools.Message;
+            errorMessage = mZipTools.Message;
             return false;
         }
 
@@ -3386,19 +3386,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     if (!unzipFile)
                         continue;
 
-                    // Open up the zip file over the network and get a listing of all of the files
+                    // Open up the zip file over the network and get a listing of the files
                     // If they already exist in the cached data directory, there is no need to continue
 
                     // Set this to false for now
                     unzipFile = false;
 
-                    var remoteZipFile = new Ionic.Zip.ZipFile(zipFilePathRemote);
-
-                    foreach (var entry in remoteZipFile.Entries)
+                    using (var remoteZipFile = System.IO.Compression.ZipFile.OpenRead(zipFilePathRemote))
                     {
-                        if (!entry.IsDirectory)
+                        foreach (var entry in remoteZipFile.Entries)
                         {
-                            var pathToCheck = Path.Combine(unzipDirPathBase, entry.FileName.Replace('/', '\\'));
+                            var pathToCheck = Path.Combine(unzipDirPathBase, entry.FullName.Replace('/', '\\'));
 
                             if (!File.Exists(pathToCheck))
                             {
@@ -3454,19 +3452,21 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         }
                     }
 
-                    // Now use DotNetZip (aka Ionic.Zip) to unzip zipFilePathLocal to the data cache directory
+                    // Now use System.IO.Compression.ZipFile to unzip zipFilePathLocal to the data cache directory
                     // Do not overwrite existing files (assume they're already valid)
 
                     try
                     {
-                        using var zipFile = new Ionic.Zip.ZipFile(zipFilePathToExtract);
-
                         if (mDebugLevel >= 2)
                         {
                             OnDebugEvent("Unzipping " + zipFilePathToExtract);
                         }
 
-                        zipFile.ExtractAll(unzipDirPathBase, Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
+                        // Set up the unzip tool
+                        var zipTools = new ZipFileTools(mDebugLevel, unzipDirPathBase);
+                        RegisterEvents(zipTools);
+
+                        zipTools.UnzipFile(zipFilePathToExtract, unzipDirPathBase, string.Empty, ZipFileTools.ExtractExistingFileBehavior.DoNotOverwrite);
                     }
                     catch (Exception ex)
                     {
@@ -3477,7 +3477,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     if (!unzipOverNetwork)
                     {
                         // Need to delete the zip file that we copied locally
-                        // However, DotNet may have a file handle open so we use a queue to keep track of files that need to be deleted
+                        // However, DotNet may have a file handle open, so we use a queue to keep track of files that need to be deleted
 
                         DeleteQueuedFiles(filesToDelete, zipFilePathToExtract);
                     }
@@ -3595,8 +3595,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 Directory.CreateDirectory(datasetWorkDir);
 
                 // Set up the unzip tool
-                var dotNetZipTools = new DotNetZipTools(mDebugLevel, datasetWorkDir);
-                RegisterEvents(dotNetZipTools);
+                var zipTools = new ZipFileTools(mDebugLevel, datasetWorkDir);
+                RegisterEvents(zipTools);
 
                 // Unzip each of the zip files to the working directory
                 foreach (var zipFilePath in zipFiles)
@@ -3622,7 +3622,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                         var sourceFilePath = Path.Combine(mWorkDir, sourceFileName);
 
-                        if (!dotNetZipTools.UnzipFile(sourceFilePath, targetDirPath))
+                        if (!zipTools.UnzipFile(sourceFilePath, targetDirPath))
                         {
                             OnErrorEvent("Error unzipping file " + zipFilePath);
                             return false;
@@ -3727,18 +3727,18 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (zipFilePath.EndsWith(AnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
-                    // This is a gzipped file
-                    // Use DotNetZip
-                    unzipToolName = DotNetZipTools.DOTNET_ZIP_NAME;
-                    mDotNetZipTools.DebugLevel = mDebugLevel;
-                    return mDotNetZipTools.GUnzipFile(zipFilePath, outputDirectoryPath);
+                    // This is a gzipped file; use GUnzipFile()
+                    unzipToolName = ZipFileTools.SYSTEM_IO_COMPRESSION_ZIP_NAME;
+                    mZipTools.DebugLevel = mDebugLevel;
+
+                    return mZipTools.GUnzipFile(zipFilePath, outputDirectoryPath);
                 }
 
-                // Use DotNetZip
-                unzipToolName = DotNetZipTools.DOTNET_ZIP_NAME;
-                mDotNetZipTools.DebugLevel = mDebugLevel;
+                // Use UnzipFile()
+                unzipToolName = ZipFileTools.SYSTEM_IO_COMPRESSION_ZIP_NAME;
+                mZipTools.DebugLevel = mDebugLevel;
 
-                return mDotNetZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
+                return mZipTools.UnzipFile(zipFilePath, outputDirectoryPath);
             }
             catch (Exception ex)
             {
