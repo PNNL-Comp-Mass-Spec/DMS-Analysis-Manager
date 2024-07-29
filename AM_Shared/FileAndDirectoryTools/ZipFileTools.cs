@@ -1,24 +1,47 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using Ionic.Zip;
+using Microsoft.Extensions.FileSystemGlobbing;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManagerBase.FileAndDirectoryTools
 {
     /// <summary>
-    /// DotNet Zip Tools (aka Ionic Zip Tools)
+    /// System.IO.Compression.ZipFile Tools
     /// </summary>
-    public class DotNetZipTools : EventNotifier
+    public class ZipFileTools : EventNotifier
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: gzipping, crc
+        // Ignore Spelling: crc, gzip, gzipping
 
         /// <summary>
-        /// DotNetZip name (used for logging)
+        /// System.IO.Compression.ZipFile (used for logging)
         /// </summary>
-        public const string DOTNET_ZIP_NAME = "DotNetZip";
+        public const string SYSTEM_IO_COMPRESSION_ZIP_NAME = "System.IO.Compression.ZipFile";
+
+        /// <summary>
+        /// Action to take when extracting files and an existing file is found
+        /// </summary>
+        public enum ExtractExistingFileBehavior
+        {
+            /// <summary>
+            /// Replace the existing file
+            /// </summary>
+            OverwriteSilently,
+
+            /// <summary>
+            /// Do not replace the existing file
+            /// </summary>
+            DoNotOverwrite,
+
+            /// <summary>
+            /// Throw an exception
+            /// </summary>
+            Throw
+        }
 
         private readonly string mWorkDir;
 
@@ -53,7 +76,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="debugLevel"></param>
         /// <param name="workDir"></param>
-        public DotNetZipTools(int debugLevel, string workDir)
+        public ZipFileTools(int debugLevel, string workDir)
         {
             DebugLevel = debugLevel;
             mWorkDir = workDir;
@@ -74,14 +97,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Adding {0} to .zip file {1}", fileToAdd.Name, zipFilePath);
                 }
 
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath)
-                {
-                    UseZip64WhenSaving = Zip64Option.AsNecessary
-                };
+                using var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
 
-                zipper.AddFile(fileToAdd.FullName, string.Empty);
-                zipper.Save();
+                zipFile.CreateEntryFromFile(fileToAdd.FullName, fileToAdd.Name);
 
                 return true;
             }
@@ -113,6 +131,42 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 // Log this as an error, but don't treat this as fatal
                 LogError("Error deleting " + targetFile.FullName, ex);
             }
+        }
+
+        /// <summary>
+        /// Compare two strings and return the characters that are in common from the start of each string
+        /// </summary>
+        /// <param name="item1">First string</param>
+        /// <param name="item2">Second string</param>
+        /// <returns>Common characters</returns>
+        private string GetCommonStartString(string item1, string item2)
+        {
+            var commonCharCount = 0;
+
+            for (var i = 0; i < Math.Min(item1.Length, item2.Length); i++)
+            {
+                if (item1[i] != item2[i])
+                    break;
+
+                commonCharCount++;
+            }
+
+            return item1.Substring(0, commonCharCount);
+        }
+
+        private string GetRelativeFilePath(FileInfo file, FileSystemInfo parentDirectory)
+        {
+            if (parentDirectory == null || file.DirectoryName == null || file.DirectoryName.Length == 0)
+            {
+                return file.Name;
+            }
+
+            if (parentDirectory.FullName.Equals(file.DirectoryName))
+            {
+                return file.Name;
+            }
+
+            return file.FullName.Substring(parentDirectory.FullName.Length + 1);
         }
 
         /// <summary>
@@ -149,7 +203,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success, false if an error</returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
-            return GUnzipFile(gzipFilePath, targetDirectory, ExtractExistingFileAction.OverwriteSilently);
+            return GUnzipFile(gzipFilePath, targetDirectory, ExtractExistingFileBehavior.OverwriteSilently);
         }
 
         /// <summary>
@@ -159,7 +213,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="targetDirectory">Directory to place the unzipped files</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success, false if an error</returns>
-        public bool GUnzipFile(string gzipFilePath, string targetDirectory, ExtractExistingFileAction overwriteBehavior)
+        public bool GUnzipFile(string gzipFilePath, string targetDirectory, ExtractExistingFileBehavior overwriteBehavior)
         {
             MostRecentZipFilePath = gzipFilePath;
             MostRecentUnzippedFiles.Clear();
@@ -195,14 +249,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (decompressedFile.Exists)
                 {
-                    if (overwriteBehavior == ExtractExistingFileAction.DoNotOverwrite)
+                    if (overwriteBehavior == ExtractExistingFileBehavior.DoNotOverwrite)
                     {
                         Message = "Decompressed file already exists; will not overwrite: " + decompressedFile.FullName;
                         OnStatusEvent(Message);
                         return true;
                     }
 
-                    if (overwriteBehavior == ExtractExistingFileAction.Throw)
+                    if (overwriteBehavior == ExtractExistingFileBehavior.Throw)
                     {
                         throw new Exception("Decompressed file already exists: " + decompressedFile.FullName);
                     }
@@ -371,17 +425,25 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Update Message with stats on the most recent zip file created
         /// </summary>
         /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
-        /// <param name="zippedFiles">List of paths to the files that were added to the zip file</param>
+        /// <param name="zippedFiles">List of files that were added to the zip file</param>
         /// <param name="startTime">Start time</param>
         /// <param name="endTime">End time</param>
-        /// <param name="zipProgramName"></param>
+        /// <param name="zipProgramName">Zip program name</param>
         private void ReportZipStats(
-            IReadOnlyList<string> zippedFiles,
+            IReadOnlyList<FileInfo> zippedFiles,
             DateTime startTime,
             DateTime endTime,
             string zipProgramName)
         {
-            var totalSizeBytes = zippedFiles.Select(item => new FileInfo(item)).Where(sourceFile => sourceFile.Exists).Sum(sourceFile => sourceFile.Length);
+            long totalSizeBytes = 0;
+
+            foreach (var item in zippedFiles)
+            {
+                if (!item.Exists)
+                    continue;
+
+                totalSizeBytes += item.Length;
+            }
 
             var descriptionOfZippedItems = zippedFiles.Count == 1
                 ? "file " + zippedFiles[0]
@@ -441,8 +503,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Update Message with stats on the most recent zip file created
         /// </summary>
         /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
-        /// <param name="descriptionOfZippedItems"></param>
-        /// <param name="totalSizeBytes"></param>
+        /// <param name="descriptionOfZippedItems">Description of the zipped items</param>
+        /// <param name="totalSizeBytes">Total size, in bytes</param>
         /// <param name="startTime">Start time</param>
         /// <param name="endTime">End time</param>
         /// <param name="fileWasZipped">True if creating a zip file, false if extracting files from an existing zip file</param>
@@ -502,7 +564,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory)
         {
-            return UnzipFile(zipFilePath, targetDirectory, string.Empty, ExtractExistingFileAction.OverwriteSilently);
+            return UnzipFile(zipFilePath, targetDirectory, string.Empty, ExtractExistingFileBehavior.OverwriteSilently);
         }
 
         /// <summary>
@@ -515,7 +577,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <returns>True if success, false if an error</returns>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter)
         {
-            return UnzipFile(zipFilePath, targetDirectory, fileFilter, ExtractExistingFileAction.OverwriteSilently);
+            return UnzipFile(zipFilePath, targetDirectory, fileFilter, ExtractExistingFileBehavior.OverwriteSilently);
         }
 
         /// <summary>
@@ -526,7 +588,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="fileFilter">Filter to apply when unzipping</param>
         /// <param name="overwriteBehavior">Defines what to do when existing files could be overwritten</param>
         /// <returns>True if success, false if an error</returns>
-        public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, ExtractExistingFileAction overwriteBehavior)
+        public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter, ExtractExistingFileBehavior overwriteBehavior)
         {
             Message = string.Empty;
             MostRecentZipFilePath = zipFilePath;
@@ -547,39 +609,91 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Unzipping file: " + fileToUnzip.FullName);
                 }
 
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath);
-
                 var startTime = DateTime.UtcNow;
 
-                if (string.IsNullOrEmpty(fileFilter))
+                using (var archive = System.IO.Compression.ZipFile.OpenRead(zipFilePath))
                 {
-                    zipper.ExtractAll(targetDirectory, overwriteBehavior);
+                    var targetDirectoryInstance = new DirectoryInfo(targetDirectory);
 
-                    foreach (var item in zipper.Entries)
+                    if (!targetDirectoryInstance.Exists)
                     {
-                        if (item.IsDirectory)
-                            continue;
-
-                        // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                        var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
-                        MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+                        targetDirectoryInstance.Create();
                     }
-                }
-                else
-                {
-                    var zipEntries = zipper.SelectEntries(fileFilter);
 
-                    foreach (var item in zipEntries)
+                    if (string.IsNullOrWhiteSpace(fileFilter))
                     {
-                        item.Extract(targetDirectory, overwriteBehavior);
+                        if (targetDirectoryInstance.Exists &&
+                            overwriteBehavior == ExtractExistingFileBehavior.OverwriteSilently)
+                        {
+                            if (targetDirectoryInstance.GetFiles().Length > 0)
+                            {
+                                foreach (var file in targetDirectoryInstance.GetFiles())
+                                {
+                                    file.Delete();
+                                }
+                            }
 
-                        if (item.IsDirectory)
-                            continue;
+                            if (targetDirectoryInstance.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 0)
+                            {
+                                foreach (var directory in targetDirectoryInstance.GetDirectories("*", SearchOption.TopDirectoryOnly))
+                                {
+                                    directory.Delete(true);
+                                }
+                            }
+                        }
 
-                        // Note that item.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                        var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
-                        MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+                        archive.ExtractToDirectory(targetDirectory);
+
+                        foreach (var item in archive.Entries)
+                        {
+                            // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                            var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
+                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+                        }
+                    }
+                    else
+                    {
+                        var overwrite = (overwriteBehavior == ExtractExistingFileBehavior.OverwriteSilently);
+
+                        // Microsoft.Extensions.FileSystemGlobbing.Matcher
+                        Matcher matcher = new();
+                        matcher.AddInclude(fileFilter);
+
+                        foreach (var item in archive.Entries)
+                        {
+                            var result = matcher.Match(item.Name);
+
+                            if (!result.HasMatches)
+                                continue;
+
+                            var targetFile = new FileInfo(Path.Combine(targetDirectory, item.FullName));
+
+                            // ReSharper disable once ConvertIfStatementToSwitchStatement
+                            if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.Throw)
+                            {
+                                throw new Exception(string.Format(
+                                    "Cannot unzip {0} since a file already exists at {1}", item.Name, targetFile.FullName));
+                            }
+
+                            if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.DoNotOverwrite)
+                            {
+                                OnWarningEvent("Skipping overwrite of existing file: {0}", targetFile.FullName);
+                                continue;
+                            }
+
+                            // ReSharper disable once MergeIntoPattern
+                            if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                            {
+                                targetFile.Directory.Create();
+                            }
+
+                            item.ExtractToFile(targetFile.FullName, overwrite);
+
+                            // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                            var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
+
+                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+                        }
                     }
                 }
 
@@ -587,7 +701,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fileToUnzip, startTime, endTime, false, DOTNET_ZIP_NAME);
+                    ReportZipStats(fileToUnzip, startTime, endTime, false, SYSTEM_IO_COMPRESSION_ZIP_NAME);
                 }
             }
             catch (Exception ex)
@@ -600,24 +714,25 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Verifies that the zip file exists and is not corrupt
-        /// If the file size is less than 4 GB, also performs a full CRC check of the data
-        /// </summary>
-        /// <param name="zipFilePath">Zip file to check</param>
-        /// <returns>True if a valid zip file, otherwise false</returns>
-        public bool VerifyZipFile(string zipFilePath)
-        {
-            return VerifyZipFile(zipFilePath, crcCheckThresholdGB: 4);
-        }
-
-        /// <summary>
         /// Verifies that the zip file exists.
         /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
         /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
         /// <returns>True if a valid zip file, otherwise false</returns>
+        [Obsolete("Argument crcCheckThresholdGB is obsolete; use the overloaded method that only has one argument")]
         public bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
+        {
+            return VerifyZipFile(zipFilePath);
+        }
+
+        /// <summary>
+        /// Verifies that the zip file exists and is not corrupt
+        /// If the file size is less than 4 GB, also performs a full CRC check of the data
+        /// </summary>
+        /// <param name="zipFilePath">Zip file to check</param>
+        /// <returns>True if a valid zip file, otherwise false</returns>
+        public bool VerifyZipFile(string zipFilePath)
         {
             try
             {
@@ -630,38 +745,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     return false;
                 }
 
-                // Perform a quick check of the zip file (simply iterates over the directory entries)
-                var validZip = Ionic.Zip.ZipFile.CheckZip(zipFilePath);
-
-                if (!validZip)
-                {
-                    if (string.IsNullOrEmpty(Message))
-                    {
-                        LogError("Zip quick check failed for " + zipFilePath);
-                    }
-                    return false;
-                }
-
-                // For zip files less than 4 GB in size, perform a full unzip test to confirm that the file is not corrupted
-                var crcCheckThresholdBytes = (long)(crcCheckThresholdGB * 1024 * 1024 * 1024);
-
-                if (zipFile.Length > crcCheckThresholdBytes)
-                {
-                    // File is too big; do not verify it
-                    return true;
-                }
-
                 // Unzip each zipped file to a byte buffer (no need to actually write to disk)
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath);
+                using var zipper = System.IO.Compression.ZipFile.OpenRead(zipFilePath);
 
-                var entries = zipper.SelectEntries("*");
-
-                foreach (var entry in entries)
+                foreach (var entry in zipper.Entries)
                 {
-                    if (entry.IsDirectory)
-                        continue;
-
                     var success = VerifyZipFileEntry(zipFilePath, entry);
 
                     if (!success)
@@ -677,12 +765,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             return true;
         }
 
-        private bool VerifyZipFileEntry(string zipFilePath, ZipEntry entry)
+        private bool VerifyZipFileEntry(string zipFilePath, ZipArchiveEntry entry)
         {
             var buffer = new byte[8096];
             long totalBytesRead = 0;
 
-            using var reader = entry.OpenReader();
+            using var reader = entry.Open();
 
             int n;
 
@@ -692,19 +780,20 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 totalBytesRead += n;
             } while (n > 0);
 
-            if (reader.Crc != entry.Crc)
-            {
-                Message = string.Format("Zip entry " + entry.FileName + " failed the CRC Check in " + zipFilePath +
-                                        " (0x{0:X8} != 0x{1:X8})", reader.Crc, entry.Crc);
-                OnErrorEvent(Message);
-                return false;
-            }
+            // Deprecated code that was used when verifying a zip file with System.IO.Compression.ZipFile
+            // if (reader.Crc != entry.Crc)
+            // {
+            //     Message = string.Format("Zip entry " + entry.FileName + " failed the CRC Check in " + zipFilePath +
+            //                             " (0x{0:X8} != 0x{1:X8})", reader.Crc, entry.Crc);
+            //     OnErrorEvent(Message);
+            //     return false;
+            // }
 
-            if (totalBytesRead == entry.UncompressedSize)
+            if (totalBytesRead == entry.Length)
                 return true;
 
-            Message = string.Format("Unexpected number of bytes for entry " + entry.FileName + " in " + zipFilePath +
-                                    " ({0} != {1})", totalBytesRead, entry.UncompressedSize);
+            Message = string.Format("Unexpected number of bytes for entry " + entry.FullName + " in " + zipFilePath +
+                                    " ({0} != {1})", totalBytesRead, entry.Length);
             OnWarningEvent(Message);
             return false;
         }
@@ -728,8 +817,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If true, will delete the source file after zipping it</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
+        /// <param name="verifyZipFile">When true, verify the newly created .zip file</param>
         /// <returns>True if success, false if an error</returns>
-        public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
+        public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath, bool verifyZipFile = false)
         {
             var fileToZip = new FileInfo(sourceFilePath);
 
@@ -750,7 +840,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                LogError("Error deleting target .zip file prior to zipping file " + sourceFilePath + " using " + DOTNET_ZIP_NAME, ex);
+                LogError("Error deleting target .zip file prior to zipping file " + sourceFilePath + " using " + SYSTEM_IO_COMPRESSION_ZIP_NAME, ex);
                 return false;
             }
 
@@ -761,20 +851,17 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Creating .zip file: " + zipFilePath);
                 }
 
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath)
-                {
-                    UseZip64WhenSaving = Zip64Option.AsNecessary
-                };
+                using var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
 
                 var startTime = DateTime.UtcNow;
-                zipper.AddItem(fileToZip.FullName, string.Empty);
-                zipper.Save();
+
+                zipFile.CreateEntryFromFile(fileToZip.FullName, fileToZip.Name);
+
                 var endTime = DateTime.UtcNow;
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fileToZip, startTime, endTime, true, DOTNET_ZIP_NAME);
+                    ReportZipStats(fileToZip, startTime, endTime, true, SYSTEM_IO_COMPRESSION_ZIP_NAME);
                 }
             }
             catch (Exception ex)
@@ -784,9 +871,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
 
             // Verify that the zip file is not corrupt
-            // Files less than 4 GB get a full CRC check
-            // Large files get a quick check
-            if (!VerifyZipFile(zipFilePath))
+
+            if (verifyZipFile && !VerifyZipFile(zipFilePath))
             {
                 return false;
             }
@@ -821,8 +907,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>If the files have a mix of parent directories, the original directory layout will be retained in the .zip file</remarks>
         /// <param name="filesToZip">List of file paths to store in the zip file</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
+        /// <param name="verifyZipFile">When true, verify the newly created .zip file</param>
         /// <returns>True if success, false if an error</returns>
-        public bool ZipFiles(IReadOnlyList<FileInfo> filesToZip, string zipFilePath)
+        public bool ZipFiles(IReadOnlyList<FileInfo> filesToZip, string zipFilePath, bool verifyZipFile = false)
         {
             Message = string.Empty;
             MostRecentZipFilePath = zipFilePath;
@@ -841,7 +928,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                LogError("Error deleting target .zip file prior to zipping a list of files using " + DOTNET_ZIP_NAME, ex);
+                LogError("Error deleting target .zip file prior to zipping a list of files using " + SYSTEM_IO_COMPRESSION_ZIP_NAME, ex);
                 return false;
             }
 
@@ -852,46 +939,84 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Creating .zip file: " + zipFilePath);
                 }
 
-                var filePaths = new List<string>();
                 var parentDirectories = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var item in filesToZip)
                 {
-                    filePaths.Add(item.FullName);
-
                     if (item.Directory == null)
                         continue;
 
-                    if (parentDirectories.Contains(item.Directory.FullName))
-                        continue;
-
+                    // Add the directory (if not already present)
                     parentDirectories.Add(item.Directory.FullName);
                 }
 
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath)
-                {
-                    UseZip64WhenSaving = Zip64Option.AsNecessary
-                };
+                var relativePathByFile = new List<KeyValuePair<FileInfo, string>>();
 
-                var startTime = DateTime.UtcNow;
-
-                if (parentDirectories.Count > 1)
+                if (parentDirectories.Count <= 1)
                 {
-                    zipper.AddFiles(filePaths);
+                    foreach (var item in filesToZip)
+                    {
+                        relativePathByFile.Add(new KeyValuePair<FileInfo, string>(item, item.Name));
+                    }
                 }
                 else
                 {
-                    zipper.AddFiles(filePaths, string.Empty);
+                    var commonParentDirectoryPath = string.Empty;
+
+                    foreach (var item in parentDirectories)
+                    {
+                        if (string.IsNullOrEmpty(commonParentDirectoryPath))
+                        {
+                            commonParentDirectoryPath = item;
+                            continue;
+                        }
+
+                        var commonStartString = GetCommonStartString(commonParentDirectoryPath, item);
+
+                        if (commonStartString.Equals(commonParentDirectoryPath))
+                            continue;
+
+                        commonParentDirectoryPath = commonStartString;
+
+                        if (string.IsNullOrWhiteSpace(commonStartString))
+                            break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(commonParentDirectoryPath))
+                    {
+                        foreach (var item in filesToZip)
+                        {
+                            relativePathByFile.Add(new KeyValuePair<FileInfo, string>(item, item.Name));
+                        }
+                    }
+                    else
+                    {
+                        var commonParentDirectory = new DirectoryInfo(commonParentDirectoryPath);
+
+                        foreach (var sourceFile in filesToZip)
+                        {
+                            var relativePath = GetRelativeFilePath(sourceFile, commonParentDirectory);
+
+                            relativePathByFile.Add(new KeyValuePair<FileInfo, string>(sourceFile, relativePath));
+                        }
+                    }
                 }
 
-                zipper.Save();
+                var startTime = DateTime.UtcNow;
+
+                using (var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Create))
+                {
+                    foreach (var sourceFile in relativePathByFile)
+                    {
+                        zipFile.CreateEntryFromFile(sourceFile.Key.FullName, sourceFile.Value);
+                    }
+                }
 
                 var endTime = DateTime.UtcNow;
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(filePaths, startTime, endTime, DOTNET_ZIP_NAME);
+                    ReportZipStats(filesToZip, startTime, endTime, SYSTEM_IO_COMPRESSION_ZIP_NAME);
                 }
             }
             catch (Exception ex)
@@ -900,9 +1025,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!verifyZipFile)
+                return true;
+
             // Verify that the zip file is not corrupt
-            // Files less than 4 GB get a full CRC check
-            // Large files get a quick check
             return VerifyZipFile(zipFilePath);
         }
 
@@ -934,8 +1061,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
         /// <param name="recurse">If true, recurse through all subdirectories</param>
         /// <param name="fileFilter">Filter to apply when zipping</param>
+        /// <param name="verifyZipFile">When true, verify the newly created .zip file</param>
         /// <returns>True if success, false if an error</returns>
-        public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter)
+        public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter, bool verifyZipFile = false)
         {
             var directoryToZip = new DirectoryInfo(sourceDirectoryPath);
 
@@ -956,7 +1084,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             }
             catch (Exception ex)
             {
-                LogError("Error deleting target .zip file prior to zipping directory " + sourceDirectoryPath + " using " + DOTNET_ZIP_NAME, ex);
+                LogError("Error deleting target .zip file prior to zipping directory " + sourceDirectoryPath + " using " + SYSTEM_IO_COMPRESSION_ZIP_NAME, ex);
                 return false;
             }
 
@@ -967,35 +1095,36 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Creating .zip file: " + zipFilePath);
                 }
 
-                // Ionic.Zip.ZipFile
-                using var zipper = new ZipFile(zipFilePath)
-                {
-                    UseZip64WhenSaving = Zip64Option.AsNecessary
-                };
-
                 var startTime = DateTime.UtcNow;
 
-                if (string.IsNullOrEmpty(fileFilter) && recurse)
+                if (string.IsNullOrWhiteSpace(fileFilter) && recurse)
                 {
-                    zipper.AddDirectory(directoryToZip.FullName);
+                    System.IO.Compression.ZipFile.CreateFromDirectory(directoryToZip.FullName, zipFilePath);
                 }
                 else
                 {
-                    if (string.IsNullOrEmpty(fileFilter))
+                    using var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
+
+                    if (string.IsNullOrWhiteSpace(fileFilter))
                     {
                         fileFilter = "*";
                     }
 
-                    zipper.AddSelectedFiles(fileFilter, directoryToZip.FullName, string.Empty, recurse);
+                    var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+                    foreach (var sourceFile in directoryToZip.GetFiles(fileFilter, searchOption))
+                    {
+                        var relativeFilePath = GetRelativeFilePath(sourceFile, directoryToZip);
+
+                        zipFile.CreateEntryFromFile(sourceFile.FullName, relativeFilePath);
+
+                    }
                 }
-
-                zipper.Save();
-
                 var endTime = DateTime.UtcNow;
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(directoryToZip, startTime, endTime, true, DOTNET_ZIP_NAME, recurse);
+                    ReportZipStats(directoryToZip, startTime, endTime, true, SYSTEM_IO_COMPRESSION_ZIP_NAME, recurse);
                 }
             }
             catch (Exception ex)
@@ -1004,9 +1133,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return false;
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (!verifyZipFile)
+                return true;
+
             // Verify that the zip file is not corrupt
-            // Files less than 4 GB get a full CRC check
-            // Large files get a quick check
             return VerifyZipFile(zipFilePath);
         }
     }
