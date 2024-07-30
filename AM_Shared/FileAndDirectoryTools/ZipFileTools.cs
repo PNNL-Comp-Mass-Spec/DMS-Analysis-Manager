@@ -166,7 +166,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 return file.Name;
             }
 
-            return file.FullName.Substring(parentDirectory.FullName.Length + 1);
+            // Use Linux style directory separators (forward slashes)
+            return file.FullName.Substring(parentDirectory.FullName.Length + 1).Replace('\\', '/');
         }
 
         /// <summary>
