@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Linq;
 using Microsoft.Extensions.FileSystemGlobbing;
 using PRISM;
-using PRISM.Logging;
 
 namespace AnalysisManagerBase.FileAndDirectoryTools
 {
