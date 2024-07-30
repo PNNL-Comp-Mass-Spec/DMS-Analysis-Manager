@@ -623,33 +623,23 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (string.IsNullOrWhiteSpace(fileFilter))
                     {
-                        if (targetDirectoryInstance.Exists &&
-                            overwriteBehavior == ExtractExistingFileBehavior.OverwriteSilently)
-                        {
-                            if (targetDirectoryInstance.GetFiles().Length > 0)
-                            {
-                                foreach (var file in targetDirectoryInstance.GetFiles())
-                                {
-                                    file.Delete();
-                                }
-                            }
+                        // When the overwrite behavior is "Throw", use method ExtractToDirectory() since it raises an exception if an existing file is found
 
-                            if (targetDirectoryInstance.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 0)
+                        if (overwriteBehavior == ExtractExistingFileBehavior.Throw)
+                        {
+                            archive.ExtractToDirectory(targetDirectory);
+
+                            foreach (var item in archive.Entries)
                             {
-                                foreach (var directory in targetDirectoryInstance.GetDirectories("*", SearchOption.TopDirectoryOnly))
-                                {
-                                    directory.Delete(true);
-                                }
+                                // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                                var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
+
+                                MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
                             }
                         }
-
-                        archive.ExtractToDirectory(targetDirectory);
-
-                        foreach (var item in archive.Entries)
+                        else
                         {
-                            // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                            var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
-                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+                            UnzipFiles(archive, targetDirectory, "*", overwriteBehavior);
                         }
                     }
                     else
@@ -805,7 +795,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // }
 
             if (totalBytesRead == entry.Length)
+            {
                 return true;
+            }
 
             Message = string.Format("Unexpected number of bytes for entry " + entry.FullName + " in " + zipFilePath +
                                     " ({0} != {1})", totalBytesRead, entry.Length);
