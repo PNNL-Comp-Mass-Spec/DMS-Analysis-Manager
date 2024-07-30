@@ -1706,25 +1706,27 @@ namespace AnalysisManagerProg
             var stopWatch = new Stopwatch();
 
             stopWatch.Start();
-            zipTools.ZipFile(@"F:\Temp\TestDataFile.txt", false);
+            zipTools.ZipFile(@"F:\Temp\TestDataFile.txt", false, verifyZipFile: true);
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
             // 200 MB file: QC_Blank_C_RP_Neg_13May24_Bilbo_Hypergold-24-05-05.raw
             // 2 GB file: OHSU_mortality_lipids_137_Pos_12Sep17_Brandi-WCSH7908.uimf
-
-            const string SOURCE_FILE = @"F:\Temp\QC_Blank_C_RP_Neg_13May24_Bilbo_Hypergold-24-05-05.raw";
+            // const string SOURCE_FILE = @"F:\Temp\QC_Blank_C_RP_Neg_13May24_Bilbo_Hypergold-24-05-05.raw";
 
             stopWatch.Reset();
             stopWatch.Start();
-            var zipFilePath = ZipFileTools.GetZipFilePathForFile(SOURCE_FILE);
 
             // Uncomment to zip the .raw file
+            // var zipFilePath = ZipFileTools.GetZipFilePathForFile(SOURCE_FILE);
             // zipTools.ZipFile(SOURCE_FILE, false, zipFilePath, true);
+
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
             const string ZIPPED_FOLDER_FILE = @"F:\Temp\ZippedFolderTest.zip";
+            const string ZIPPED_FOLDER_FILE_NO_RECURSE = @"F:\Temp\ZippedFolderTest_NoRecurse.zip";
+            const string ZIPPED_FOLDER_FILE_FILTERED = @"F:\Temp\ZippedFolderTest_Filtered.zip";
 
             stopWatch.Reset();
             stopWatch.Start();
@@ -1732,7 +1734,11 @@ namespace AnalysisManagerProg
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
-            const string ZIPPED_FOLDER_FILE_FILTERED = @"F:\Temp\ZippedFolderTest_Filtered.zip";
+            stopWatch.Reset();
+            stopWatch.Start();
+            zipTools.ZipDirectory(@"F:\Temp\FolderTest", ZIPPED_FOLDER_FILE_NO_RECURSE, false);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
             stopWatch.Reset();
             stopWatch.Start();
@@ -1748,20 +1754,39 @@ namespace AnalysisManagerProg
                 new(@"F:\Temp\Scratch3.sql")
             };
 
-            var zippedFileGroup1 = @"F:\Temp\TestZippedFiles_OneDirectory.zip";
+            const string ZIPPED_FILE_GROUP1 = @"F:\Temp\TestZippedFiles_OneDirectory.zip";
 
             stopWatch.Start();
-            zipTools.ZipFiles(fileList, zippedFileGroup1);
+            zipTools.ZipFiles(fileList, ZIPPED_FILE_GROUP1);
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
             stopWatch.Reset();
             fileList.Add(new FileInfo(@"F:\Temp\FASTA\Tryp_Pig_Bov.fasta"));
+            fileList.Add(new FileInfo(@"F:\Temp\FolderTest\SubDir\Scratch.txt"));
+            fileList.Add(new FileInfo(@"F:\Temp\FolderTest\SubDir\Scratch1.txt"));
+            fileList.Add(new FileInfo(@"F:\Temp\FolderTest\SubDir\Scratch2.txt"));
+            fileList.Add(new FileInfo(@"F:\Temp\FolderTest\SubDir\Scratch2.txt"));      // Adding the same file twice will duplicate the file in the zip file
 
-            var zippedFileGroup2 = @"F:\Temp\TestZippedFiles_TwoDirectories.zip";
+            const string ZIPPED_FILE_GROUP2 = @"F:\Temp\TestZippedFiles_TwoDirectories.zip";
 
             stopWatch.Start();
-            zipTools.ZipFiles(fileList, zippedFileGroup2, true);
+            zipTools.ZipFiles(fileList, ZIPPED_FILE_GROUP2, true);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+
+            stopWatch.Start();
+            zipTools.AddToZipFile(ZIPPED_FILE_GROUP2, new FileInfo(@"F:\Temp\Scratch2.txt"));
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
+
+            var zippedFileCreateNew = new FileInfo(@"F:\Temp\TestZippedFiles_NewFile.zip");
+
+            if (zippedFileCreateNew.Exists)
+                zippedFileCreateNew.Delete();
+
+            stopWatch.Start();
+            zipTools.AddToZipFile(zippedFileCreateNew.FullName, new FileInfo(@"F:\Temp\Scratch2.txt"));
             stopWatch.Stop();
             Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
@@ -1771,7 +1796,9 @@ namespace AnalysisManagerProg
 
             zipTools.UnzipFile(ZIPPED_FOLDER_FILE, @"F:\Temp\FolderTest_RoundTrip_Filtered", "Scratch1*", ZipFileTools.ExtractExistingFileBehavior.DoNotOverwrite);
 
-            zipTools.UnzipFile(zippedFileGroup2, @"F:\Temp\FolderTest_TwoDirectories_Filtered_RoundTrip", "Scratch1*");
+            zipTools.UnzipFile(ZIPPED_FILE_GROUP2, @"F:\Temp\FolderTest_TwoDirectories_RoundTrip");
+
+            zipTools.UnzipFile(ZIPPED_FILE_GROUP2, @"F:\Temp\FolderTest_TwoDirectories_Filtered_RoundTrip", "Scratch1*");
         }
 
         /// <summary>
