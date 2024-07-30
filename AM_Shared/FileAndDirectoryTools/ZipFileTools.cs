@@ -714,25 +714,24 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Verifies that the zip file exists.
-        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
-        /// </summary>
-        /// <param name="zipFilePath">Zip file to check</param>
-        /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
-        /// <returns>True if a valid zip file, otherwise false</returns>
-        [Obsolete("Argument crcCheckThresholdGB is obsolete; use the overloaded method that only has one argument")]
-        public bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
-        {
-            return VerifyZipFile(zipFilePath);
-        }
-
-        /// <summary>
-        /// Verifies that the zip file exists and is not corrupt
-        /// If the file size is less than 4 GB, also performs a full CRC check of the data
+        /// Verifies that the zip file exists
+        /// If the file size is less than 4 GB, also extracts each file to a memory stream (thus verifying the zip file is not corrupt)
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
         /// <returns>True if a valid zip file, otherwise false</returns>
         public bool VerifyZipFile(string zipFilePath)
+        {
+            return VerifyZipFile(zipFilePath, crcCheckThresholdGB: 4);
+        }
+
+        /// <summary>
+        /// Verifies that the zip file exists
+        /// If the file size is less than crcCheckThresholdGB, also extracts each file to a memory stream (thus verifying the zip file is not corrupt)
+        /// </summary>
+        /// <param name="zipFilePath">Zip file to check</param>
+        /// <param name="crcCheckThresholdGB">Threshold (in GB) below which the zip file integrity should be checked</param>
+        /// <returns>True if a valid zip file, otherwise false</returns>
+        public bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
         {
             try
             {
@@ -745,9 +744,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     return false;
                 }
 
-                // Unzip each zipped file to a byte buffer (no need to actually write to disk)
+                // Open the zip file
                 using var zipper = System.IO.Compression.ZipFile.OpenRead(zipFilePath);
 
+                // For zip files less than 4 GB in size, perform a full unzip test to confirm that the file is not corrupted
+                var crcCheckThresholdBytes = (long)(crcCheckThresholdGB * 1024 * 1024 * 1024);
+
+                if (zipFile.Length > crcCheckThresholdBytes)
+                {
+                    // File is too big; do not verify it
+                    return true;
+                }
+
+                // Unzip each zipped file to a byte buffer (no need to actually write to disk)
                 foreach (var entry in zipper.Entries)
                 {
                     var success = VerifyZipFileEntry(zipFilePath, entry);
@@ -755,14 +764,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     if (!success)
                         return false;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Error verifying zip file " + zipFilePath, ex);
                 return false;
             }
-
-            return true;
         }
 
         private bool VerifyZipFileEntry(string zipFilePath, ZipArchiveEntry entry)

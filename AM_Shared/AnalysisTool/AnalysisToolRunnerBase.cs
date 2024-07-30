@@ -4180,33 +4180,18 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Verifies that the zip file exists.
-        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
+        /// Verifies that the zip file exists
+        /// If the file size is less than crcCheckThresholdGB, also extracts each file to a memory stream (thus verifying the zip file is not corrupt)
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
-        /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
+        /// <param name="crcCheckThresholdGB">Threshold (in GB) below which the zip file integrity should be checked</param>
         /// <returns>True if a valid zip file, otherwise false</returns>
-        [Obsolete("Argument crcCheckThresholdGB is obsolete; use the overloaded method that only has one argument")]
-        protected bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB)
+        protected bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB = 4)
         {
             mZipTools.DebugLevel = mDebugLevel;
 
             // Note that mZipTools logs error messages using LogTools
             return mZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
-        }
-
-        /// <summary>
-        /// Verifies that the zip file exists.
-        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
-        /// </summary>
-        /// <param name="zipFilePath">Zip file to check</param>
-        /// <returns>True if a valid zip file, otherwise false</returns>
-        protected bool VerifyZipFile(string zipFilePath)
-        {
-            mZipTools.DebugLevel = mDebugLevel;
-
-            // Note that mZipTools logs error messages using LogTools
-            return mZipTools.VerifyZipFile(zipFilePath);
         }
 
         /// <summary>
