@@ -654,47 +654,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     }
                     else
                     {
-                        var overwrite = (overwriteBehavior == ExtractExistingFileBehavior.OverwriteSilently);
-
-                        // Microsoft.Extensions.FileSystemGlobbing.Matcher
-                        Matcher matcher = new();
-                        matcher.AddInclude(fileFilter);
-
-                        foreach (var item in archive.Entries)
-                        {
-                            var result = matcher.Match(item.Name);
-
-                            if (!result.HasMatches)
-                                continue;
-
-                            var targetFile = new FileInfo(Path.Combine(targetDirectory, item.FullName));
-
-                            // ReSharper disable once ConvertIfStatementToSwitchStatement
-                            if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.Throw)
-                            {
-                                throw new Exception(string.Format(
-                                    "Cannot unzip {0} since a file already exists at {1}", item.Name, targetFile.FullName));
-                            }
-
-                            if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.DoNotOverwrite)
-                            {
-                                OnWarningEvent("Skipping overwrite of existing file: {0}", targetFile.FullName);
-                                continue;
-                            }
-
-                            // ReSharper disable once MergeIntoPattern
-                            if (targetFile.Directory != null && !targetFile.Directory.Exists)
-                            {
-                                targetFile.Directory.Create();
-                            }
-
-                            item.ExtractToFile(targetFile.FullName, overwrite);
-
-                            // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
-                            var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
-
-                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
-                        }
+                        UnzipFiles(archive, targetDirectory, fileFilter, overwriteBehavior);
                     }
                 }
 
@@ -704,14 +664,59 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     ReportZipStats(fileToUnzip, startTime, endTime, false, SYSTEM_IO_COMPRESSION_ZIP_NAME);
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Error unzipping file " + zipFilePath, ex);
                 return false;
             }
+        }
 
-            return true;
+        private void UnzipFiles(ZipArchive archive, string targetDirectory, string fileFilter, ExtractExistingFileBehavior overwriteBehavior)
+        {
+            var overwrite = (overwriteBehavior == ExtractExistingFileBehavior.OverwriteSilently);
+
+            // Microsoft.Extensions.FileSystemGlobbing.Matcher
+            Matcher matcher = new();
+            matcher.AddInclude(fileFilter);
+
+            foreach (var item in archive.Entries)
+            {
+                var result = matcher.Match(item.Name);
+
+                if (!result.HasMatches)
+                    continue;
+
+                var targetFile = new FileInfo(Path.Combine(targetDirectory, item.FullName));
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.Throw)
+                {
+                    throw new Exception(string.Format(
+                        "Cannot unzip {0} since a file already exists at {1}", item.Name, targetFile.FullName));
+                }
+
+                if (targetFile.Exists && overwriteBehavior == ExtractExistingFileBehavior.DoNotOverwrite)
+                {
+                    OnWarningEvent("Skipping overwrite of existing file: {0}", targetFile.FullName);
+                    continue;
+                }
+
+                // ReSharper disable once MergeIntoPattern
+                if (targetFile.Directory != null && !targetFile.Directory.Exists)
+                {
+                    targetFile.Directory.Create();
+                }
+
+                item.ExtractToFile(targetFile.FullName, overwrite);
+
+                // Note that item.FullName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
+                var unzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FullName.Replace('/', Path.DirectorySeparatorChar)));
+
+                MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(unzippedItem.Name, unzippedItem.FullName));
+            }
         }
 
         /// <summary>
