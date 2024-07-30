@@ -159,6 +159,7 @@
     <PackageReference Include="R.NET">
       <Version>1.9.0</Version>
     </PackageReference>
+	<!-- MyEMSLReader uses SharpZipLib for .tar files -->
     <PackageReference Include="SharpZipLib">
       <Version>1.4.2</Version>
     </PackageReference>
@@ -223,7 +224,7 @@ xcopy "$(TargetDir)x64\SQLite.Interop.dll" "$(ProjectDir)..\AM_Common\x64" /D /Y
 
 xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-echo Skip: xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Npgsql.dll" "$(ProjectDir)..\AM_Common\" /D /Y
