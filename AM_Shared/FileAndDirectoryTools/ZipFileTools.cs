@@ -818,12 +818,13 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If true, will delete the source file after zipping it</param>
+        /// <param name="verifyZipFile">When true, verify the newly created .zip file</param>
         /// <returns>True if success, false if an error</returns>
-        public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
+        public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, bool verifyZipFile = false)
         {
             var zipFilePath = GetZipFilePathForFile(sourceFilePath);
 
-            return ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
+            return ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath, verifyZipFile);
         }
 
         /// <summary>
