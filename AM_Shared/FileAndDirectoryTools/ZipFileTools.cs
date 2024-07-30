@@ -291,14 +291,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 {
                     actualDecompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Error unzipping .gz file " + gzipFilePath, ex);
                 return false;
             }
-
-            return true;
         }
 
         /// <summary>
@@ -400,14 +400,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                 }
 
                 gzippedFile.LastWriteTimeUtc = fileToGZip.LastWriteTimeUtc;
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("Error gzipping file " + fileToGZip.FullName, ex);
                 return false;
             }
-
-            return true;
         }
 
         private void LogError(string errorMessage)
