@@ -96,7 +96,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                     OnStatusEvent("Adding {0} to .zip file {1}", fileToAdd.Name, zipFilePath);
                 }
 
-                using var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Create);
+                using var zipFile = System.IO.Compression.ZipFile.Open(zipFilePath, ZipArchiveMode.Update);
 
                 zipFile.CreateEntryFromFile(fileToAdd.FullName, fileToAdd.Name);
 
