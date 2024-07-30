@@ -73,8 +73,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel"></param>
-        /// <param name="workDir"></param>
+        /// <param name="debugLevel">Debug level</param>
+        /// <param name="workDir">Working directory</param>
         public ZipFileTools(int debugLevel, string workDir)
         {
             DebugLevel = debugLevel;
@@ -84,8 +84,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Add a file to an existing .zip file
         /// </summary>
-        /// <param name="zipFilePath"></param>
-        /// <param name="fileToAdd"></param>
+        /// <param name="zipFilePath">Zip file path to update (or create)</param>
+        /// <param name="fileToAdd">File path for the file to add</param>
         /// <returns>True if successful, false if an error</returns>
         public bool AddToZipFile(string zipFilePath, FileInfo fileToAdd)
         {
@@ -170,9 +170,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Gets the .zip file path to create when zipping a single file
+        /// Constructs the .zip file path to create when zipping a single file
         /// </summary>
-        /// <param name="sourceFilePath"></param>
+        /// <remarks>Replaces the file extension with ".zip"</remarks>
+        /// <param name="sourceFilePath">Source file path</param>
         public static string GetZipFilePathForFile(string sourceFilePath)
         {
             var sourceFile = new FileInfo(sourceFilePath);
@@ -303,6 +304,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Stores sourceFilePath in a GZip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
+        /// <remarks>Compresses the file using GZipStream (as implemented in PRISM.dll)</remarks>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If true, will delete the source file after zipping it</param>
         /// <returns>True if success, false if an error</returns>
@@ -315,6 +317,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Stores sourceFilePath in a GZip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
+        /// <remarks>Compresses the file using GZipStream (as implemented in PRISM.dll)</remarks>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetDirectoryPath">Target directory to create the .gz file</param>
         /// <param name="deleteSourceAfterZip">If true, will delete the source file after zipping it</param>
@@ -366,7 +369,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <remarks>The .gz file created by PRISM.dll will include header information (filename and timestamp of the original file)</remarks>
         /// <param name="fileToGZip">File to compress</param>
-        /// <param name="gzipFilePath"></param>
+        /// <param name="gzipFilePath">Gzip file to create</param>
         private bool GZipUsingGZipStream(FileInfo fileToGZip, string gzipFilePath)
         {
             try
@@ -1041,21 +1044,21 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         }
 
         /// <summary>
-        /// Zip all files in a directory
+        /// Zip all files in a directory, including all subdirectories
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="zipFilePath"></param>
+        /// <param name="sourceDirectoryPath">Full path to the directory to be zipped</param>
+        /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath)
         {
             return ZipDirectory(sourceDirectoryPath, zipFilePath, true, string.Empty);
         }
 
         /// <summary>
-        /// Zip all files in a directory
+        /// Zip all files in a directory, optionally including subdirectories
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="zipFilePath"></param>
-        /// <param name="recurse"></param>
+        /// <param name="sourceDirectoryPath">Full path to the directory to be zipped</param>
+        /// <param name="zipFilePath">Full path to the .zip file to be created; existing files will be overwritten</param>
+        /// <param name="recurse">If true, recurse through all subdirectories</param>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse)
         {
             return ZipDirectory(sourceDirectoryPath, zipFilePath, recurse, string.Empty);
@@ -1124,9 +1127,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
                         var relativeFilePath = GetRelativeFilePath(sourceFile, directoryToZip);
 
                         zipFile.CreateEntryFromFile(sourceFile.FullName, relativeFilePath);
-
                     }
                 }
+
                 var endTime = DateTime.UtcNow;
 
                 if (DebugLevel >= 2)
