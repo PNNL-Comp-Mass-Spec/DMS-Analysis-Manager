@@ -1972,7 +1972,15 @@ namespace AnalysisManagerBase.JobConfig
             {
                 remoteTimestamp = null;
             }
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
+
+            if (remoteTimestamp == null)
+            {
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, DBNull.Value);
+            }
+            else
+            {
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
+            }
 
             // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
             object remoteProgress = null;
@@ -1992,10 +2000,11 @@ namespace AnalysisManagerBase.JobConfig
                 if (DateTime.TryParse(remoteStartText, out var remoteStartDt))
                     remoteStart = remoteStartDt;
             }
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteStart", SqlType.DateTime).Value = remoteStart;
+
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteStart", SqlType.DateTime).Value = remoteStart ?? DBNull.Value;
 
             // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
-            object remoteFinish = null;
+            object remoteFinish = DBNull.Value;
 
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
             {
