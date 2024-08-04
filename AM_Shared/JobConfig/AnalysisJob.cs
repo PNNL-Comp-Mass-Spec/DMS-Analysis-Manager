@@ -1275,10 +1275,10 @@ namespace AnalysisManagerBase.JobConfig
                 var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
                 var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);
 
-                PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
                 jobNumberParam.Value = 0;
                 jobParamsParam.Value = string.Empty;
 
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@infoLevel", SqlType.TinyInt).Value = 0;
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@analysisManagerVersion", SqlType.VarChar, 128, managerVersion);
 
                 var remoteInfo = runJobsRemotely ? RemoteTransferUtility.GetRemoteInfoXml(mMgrParams) : string.Empty;
