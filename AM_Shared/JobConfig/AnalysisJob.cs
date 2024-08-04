@@ -1270,7 +1270,7 @@ namespace AnalysisManagerBase.JobConfig
                 var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REQUEST_TASK, CommandType.StoredProcedure);
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
-                var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@jobNumber", SqlType.Int, 0, ParameterDirection.InputOutput);
+                var jobNumberParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@job", SqlType.Int, 0, ParameterDirection.InputOutput);
                 var jobParamsParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@parameters", SqlType.VarChar, 8000, string.Empty, ParameterDirection.InputOutput);
                 var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
                 var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, string.Empty, ParameterDirection.InputOutput);

@@ -1422,8 +1422,8 @@ namespace AnalysisManagerProg
 
             var cmd = dbTools.CreateCommand("get_job_step_params_as_table", CommandType.StoredProcedure);
 
-            dbTools.AddParameter(cmd, "@jobNumber", SqlType.Int).Value = jobNumber;
-            dbTools.AddParameter(cmd, "@stepNumber", SqlType.Int).Value = stepNumber;
+            dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = jobNumber;
+            dbTools.AddParameter(cmd, "@step", SqlType.Int).Value = stepNumber;
             dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
             var resCode = dbTools.ExecuteSPDataTable(cmd, out var results, retryCount);
