@@ -1966,7 +1966,7 @@ namespace AnalysisManagerBase.JobConfig
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteInfo", SqlType.VarChar, 900, remoteInfo);
 
-            // Note: leave remoteTimestampParam.Value as null if job parameter RemoteTimestamp is empty
+            // Note: set remoteTimestampParam.Value to DBNull.Value if job parameter RemoteTimestamp is empty
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false) &&
                 string.IsNullOrWhiteSpace(remoteTimestamp))
             {
@@ -1982,8 +1982,8 @@ namespace AnalysisManagerBase.JobConfig
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteTimestamp", SqlType.VarChar, 24, remoteTimestamp);
             }
 
-            // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
-            object remoteProgress = null;
+            // Note: leave remoteProgressParam.Value as DBNull.Value if job parameter RemoteProgress is empty
+            object remoteProgress = DBNull.Value;
 
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
             {
@@ -1991,8 +1991,8 @@ namespace AnalysisManagerBase.JobConfig
             }
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteProgress", SqlType.Real).Value = remoteProgress;
 
-            // Note: leave remoteStartParam.Value as null if job parameter RemoteStart is empty
-            object remoteStart = null;
+            // Note: leave remoteStartParam.Value as DBNull.Value if job parameter RemoteStart is empty
+            object remoteStart = DBNull.Value;
 
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
             {
@@ -2001,9 +2001,9 @@ namespace AnalysisManagerBase.JobConfig
                     remoteStart = remoteStartDt;
             }
 
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteStart", SqlType.DateTime).Value = remoteStart ?? DBNull.Value;
+            PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteStart", SqlType.DateTime).Value = remoteStart;
 
-            // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
+            // Note: leave remoteFinishParam.Value as DBNull.Value if job parameter RemoteFinish is empty
             object remoteFinish = DBNull.Value;
 
             if (TryGetParam(STEP_PARAMETERS_SECTION, RemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
