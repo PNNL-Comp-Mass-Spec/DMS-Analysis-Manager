@@ -55,6 +55,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerPRIDEMzXMLPl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProSightQuantPlugIn", "Plugins\_Unused\AM_ProSightPC_Quant_Plugin\AnalysisManagerProSightQuantPlugIn.csproj", "{813F112C-4E00-4107-AE8F-FABD559CA982}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSMSSpectrumFilterAM", "Plugins\AM_MSMSSpectrumFilter_PlugIn\MSMSSpectrumFilterAM.csproj", "{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerRepoPkgrPlugIn", "Plugins\_Unused\AM_RepoPkgr_PlugIn\AnalysisManagerRepoPkgrPlugIn.csproj", "{02AB78CA-A428-4EF8-918F-D8864172AE7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLGenPlugIn", "Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
@@ -279,6 +281,14 @@ Global
 		{813F112C-4E00-4107-AE8F-FABD559CA982}.Release|Any CPU.Build.0 = Release|Any CPU
 		{813F112C-4E00-4107-AE8F-FABD559CA982}.Release|x86.ActiveCfg = Release|Any CPU
 		{813F112C-4E00-4107-AE8F-FABD559CA982}.Release|x86.Build.0 = Release|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|x86.Build.0 = Debug|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|x86.ActiveCfg = Release|Any CPU
+		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|x86.Build.0 = Release|Any CPU
 		{02AB78CA-A428-4EF8-918F-D8864172AE7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{02AB78CA-A428-4EF8-918F-D8864172AE7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02AB78CA-A428-4EF8-918F-D8864172AE7E}.Debug|x86.ActiveCfg = Debug|Any CPU

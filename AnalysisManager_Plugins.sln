@@ -31,8 +31,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSDeconvPlug
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFPlugin", "Plugins\AM_MSGF_PlugIn\AnalysisManagerMSGFPlugin.csproj", "{7A6DE396-7309-43E1-8F8A-B387709508DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSMSSpectrumFilterAM", "Plugins\AM_MSMSSpectrumFilter_PlugIn\MSMSSpectrumFilterAM.csproj", "{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLBrukerPlugIn", "Plugins\AM_MSXML_Bruker_PlugIn\AnalysisManagerMSXMLBrukerPlugIn.csproj", "{2A46F87F-966D-45AE-BFF2-CDB24AD06143}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSXMLGenPlugIn", "Plugins\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj", "{02D682E5-F70F-4C46-BAC8-1C18920FFF22}"
@@ -159,10 +157,6 @@ Global
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A6DE396-7309-43E1-8F8A-B387709508DD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0DA76DD9-3216-4841-BE43-D378D3C7D7A2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A46F87F-966D-45AE-BFF2-CDB24AD06143}.Release|Any CPU.ActiveCfg = Release|Any CPU
