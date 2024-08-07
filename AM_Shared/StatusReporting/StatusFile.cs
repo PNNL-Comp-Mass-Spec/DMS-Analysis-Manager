@@ -719,13 +719,19 @@ namespace AnalysisManagerBase.StatusReporting
             writer.WriteElementString("RemoteMgrName", ValidateTextLength(status.RemoteMgrName, 128));
             writer.WriteElementString("MgrStatus", ValidateTextLength(status.ConvertMgrStatusToString(status.MgrStatus), 50));
 
-            writer.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
-            writer.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+            var lastUpdateLocal = lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT);
+            var lastStartTimeLocal = lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT);
+
+            writer.WriteComment("Local status log time: " + lastUpdateLocal);
+            writer.WriteComment("Local last start time: " + lastStartTimeLocal);
 
             // Write out times in the format 2017-07-06T23:23:14.337Z
             writer.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
-
             writer.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
+            // Write out times in the format 2017-07-06 04:23:14 pm
+            writer.WriteElementString("LastUpdateLocal", lastUpdateLocal);
+            writer.WriteElementString("LastStartTimeLocal", lastStartTimeLocal);
 
             writer.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
             writer.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
