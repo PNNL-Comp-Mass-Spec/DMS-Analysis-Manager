@@ -65,14 +65,14 @@ namespace AnalysisManagerSMAQCPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        [Obsolete("No longer used")]
+        [Obsolete("No longer used", true)]
         private bool RetrieveLLRCFiles()
         {
             if (!AnalysisToolRunnerSMAQC.LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this method");
 
 #pragma warning disable CS0162
-
+#if false
             var llrcRunnerProgLoc = mMgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
             var filesToCopy = new List<string> {
                 LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
@@ -96,7 +96,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             return true;
-
+#endif
 #pragma warning restore CS0162
 
         }

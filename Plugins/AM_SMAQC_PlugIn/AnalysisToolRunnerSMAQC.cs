@@ -239,7 +239,7 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <remarks>
         /// QCDM_2013.09.27.zip requires R 2.x
         /// We updated to R 3.x in November 2015 and have thus deprecated this method</remarks>
-        [Obsolete("No longer used")]
+        [Obsolete("No longer used", true)]
         private bool ComputeLLRC()
         {
             bool success;
@@ -250,6 +250,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 throw new Exception("LLRC is disabled -- do not call this method");
 
 #pragma warning disable CS0162
+#if false
             var datasetID = mJobParams.GetJobParameter("DatasetID", -1);
 
             if (datasetID < 0)
@@ -289,7 +290,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             return success;
-
+#endif
 #pragma warning restore CS0162
 
         }
