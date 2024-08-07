@@ -22,7 +22,7 @@ namespace AnalysisManagerMSAlignPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Bruker, Bruker's, Carbamidomethylation, Carboxymethylation, classpath, html, msinput, msoutput, Prsm, Parm, xsl, Xmx
+        // Ignore Spelling: Bruker, Bruker's, Carbamidomethylation, Carboxymethylation, classpath, Fasta, html, msinput, msoutput, Prsm, Parm, xsl, Xmx
         // Ignore Spelling: databasefilename, spectrumfilename, tableoutputfilename, detailoutputfilename,searchtype, cutofftype
 
         // ReSharper restore CommentTypo
