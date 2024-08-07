@@ -45,7 +45,9 @@ namespace AnalysisManagerProg
 
         private bool mGenerationComplete;
 
-        private readonly string mFastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
+        // SQL Server Fasta Tools connection string: "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
+
+        private readonly string mFastaToolsCnStr = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
 
         private string mFastaFileName = string.Empty;
 
@@ -460,7 +462,7 @@ namespace AnalysisManagerProg
                 "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.dataset_id = DFP.dataset_id" +
                 " WHERE (JS.job Between " + jobStart + " and " + jobEnd + ") AND (JS.tool = 'DTA_Refinery') AND (JS.state = 5)";
 
-            const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+            const string connectionString = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
             const short retryCount = 2;
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_ProcessDtaRefineryLogFiles");
@@ -1182,7 +1184,7 @@ namespace AnalysisManagerProg
         /// SQL Server connection string: "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI"
         /// </para>
         /// <para>
-        /// PostgreSQL connection string: "Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;"
+        /// PostgreSQL connection string: "Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;"
         /// </para>
         /// </remarks>
         /// <param name="connectionString">Database connection string</param>
@@ -1234,7 +1236,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDatabaseLoggingPostgres()
         {
-            TestDatabaseLogging("Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;");
+            TestDatabaseLogging("Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;");
         }
 
         /// <summary>
@@ -1347,7 +1349,7 @@ namespace AnalysisManagerProg
 
             var sqlStr = string.Format("Select * From t_log_entries where posting_time >= '{0:yyyy-MM-dd}'", dateThreshold);
 
-            const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
+            const string connectionString = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
@@ -1377,7 +1379,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestQueryFunction()
         {
-            const string connectionString = "Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;";
+            const string connectionString = "Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
@@ -1408,7 +1410,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestRunSP()
         {
-            const string connectionString = "Data Source=gigasax;Initial Catalog=dms_pipeline;Integrated Security=SSPI;";
+            const string connectionString = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
 
@@ -1834,7 +1836,7 @@ namespace AnalysisManagerProg
 
                 // ReSharper restore StringLiteralTypo
 
-                const string connectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+                const string connectionString = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
                 const short retryCount = 2;
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "CodeTest_ExamineInstrumentID");

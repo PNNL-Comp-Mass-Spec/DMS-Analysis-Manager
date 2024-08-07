@@ -1833,7 +1833,9 @@ namespace AnalysisManagerBase.AnalysisTool
                     LogTools.LogDebug("Updating manager settings from the Manager Control DB");
                 }
 
-                // Data Source=proteinseqs;Initial Catalog=manager_control
+                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+
                 var connectionString = mgrParams.GetParam("MgrCnfgDbConnectStr");
                 var managerName = mgrParams.ManagerName;
 

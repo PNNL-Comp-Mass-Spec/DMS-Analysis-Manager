@@ -9,13 +9,13 @@
       <Value Profile="(Default)">Monroe_Analysis</Value>
     </Setting>
     <Setting Name="MgrCnfgDbConnectStr" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Data Source=proteinseqs;Initial Catalog=Manager_Control;Integrated Security=SSPI</Value>
+      <Value Profile="(Default)">Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms</Value>
     </Setting>
     <Setting Name="UsingDefaults" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="DefaultDMSConnString" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI</Value>
+      <Value Profile="(Default)">Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms</Value>
     </Setting>
   </Settings>
 </SettingsFile>

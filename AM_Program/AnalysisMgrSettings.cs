@@ -116,7 +116,9 @@ namespace AnalysisManagerProg
         {
             try
             {
-                // Data Source=proteinseqs;Initial Catalog=manager_control
+                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
                 if (string.IsNullOrWhiteSpace(connectionString))
@@ -366,7 +368,9 @@ namespace AnalysisManagerProg
         {
             try
             {
-                // Data Source=proteinseqs;Initial Catalog=manager_control
+                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
                 if (string.IsNullOrWhiteSpace(connectionString))

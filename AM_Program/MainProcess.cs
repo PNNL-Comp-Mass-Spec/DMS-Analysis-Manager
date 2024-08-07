@@ -420,7 +420,7 @@ namespace AnalysisManagerProg
                 // ReSharper disable once CommentTypo
 
                 // PostgreSQL:
-                // Host=prismdb1;Port=5432;Database=dms;UserId=d3l243;
+                // Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;
 
                 mgrConfigDBConnectionString = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }

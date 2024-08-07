@@ -180,7 +180,9 @@ namespace AnalysisManagerTopFDPlugIn
                     return false;
                 }
 
-                // Data Source=gigasax;Initial Catalog=DMS_Pipeline
+                // SQL Server: Data Source=gigasax;Initial Catalog=DMS_Pipeline
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
                 var brokerDbConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
@@ -277,7 +279,9 @@ namespace AnalysisManagerTopFDPlugIn
 
                 var jobList = string.Join(",", jobCandidates.Keys);
 
-                // Data Source=gigasax;Initial Catalog=DMS5
+                // SQL Server: Data Source=gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);

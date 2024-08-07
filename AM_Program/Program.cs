@@ -124,7 +124,7 @@ namespace AnalysisManagerProg
                         // testHarness.TestLogging();
                         // testHarness.TestStatusLogging();
 
-                        // var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
+                        // var connString = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
                         // testHarness.TestDatabaseLogging(connString);
 
                         // testHarness.TestDatabaseLoggingPostgres();
