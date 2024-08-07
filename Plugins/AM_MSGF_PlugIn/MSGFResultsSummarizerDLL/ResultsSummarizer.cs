@@ -1201,7 +1201,10 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@totalPSMsFDRFilter", SqlType.Int, value: psmResults.TotalPSMsFDRFilter);
                 dbTools.AddTypedParameter(cmd, "@uniquePeptidesFDRFilter", SqlType.Int, value: psmResults.UniquePeptidesFDRFilter);
                 dbTools.AddTypedParameter(cmd, "@uniqueProteinsFDRFilter", SqlType.Int, value: psmResults.UniqueProteinsFDRFilter);
-                dbTools.AddTypedParameter(cmd, "@msgfThresholdIsEValue", SqlType.TinyInt, value: psmResults.MsgfThresholdIsEValue ? 1 : 0);
+
+                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
+                dbTools.AddTypedParameter(cmd, "@msgfThresholdIsEValue", SqlType.TinyInt, value: psmResults.MsgfThresholdIsEValue);
+
                 dbTools.AddTypedParameter(cmd, "@percentMSnScansNoPSM", SqlType.Real, value: psmResults.PercentMSnScansNoPSM);
                 dbTools.AddTypedParameter(cmd, "@maximumScanGapAdjacentMSn", SqlType.Int, value: psmResults.MaximumScanGapAdjacentMSn);
                 dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptideCountFDR", SqlType.Int, value: psmResults.UniquePhosphopeptideCountFDR);
@@ -1212,9 +1215,12 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@trypticPeptides", SqlType.Int, value: psmResults.TrypticPeptides);
                 dbTools.AddTypedParameter(cmd, "@keratinPeptides", SqlType.Int, value: psmResults.KeratinPeptides);
                 dbTools.AddTypedParameter(cmd, "@trypsinPeptides", SqlType.Int, value: psmResults.TrypsinPeptides);
+
+                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
                 dbTools.AddTypedParameter(cmd, "@dynamicReporterIon", SqlType.TinyInt, value: psmResults.DynamicReporterIon);
-                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Float, value: psmResults.PercentPSMsMissingNTermReporterIon);
-                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Float, value: psmResults.PercentPSMsMissingReporterIon);
+
+                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingNTermReporterIon);
+                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingReporterIon);
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
                 dbTools.AddTypedParameter(cmd, "@uniqueUbiquitinPeptidesFDR", SqlType.Int, value: psmResults.UniqueUbiquitinPeptidesFDR);
 
