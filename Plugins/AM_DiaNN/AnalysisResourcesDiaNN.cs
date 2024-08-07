@@ -417,8 +417,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@dmsSourceJob", SqlType.Int).Value = mJob;
                 dbTools.AddParameter(cmd, "@proteinCollectionList", SqlType.VarChar, 2000).Value = proteinCollectionInfo.ProteinCollectionList;
                 dbTools.AddParameter(cmd, "@organismDbFile", SqlType.VarChar, 128).Value = proteinCollectionInfo.LegacyFastaName;
-                dbTools.AddParameter(cmd, "@fragmentIonMzMin", SqlType.Real).Value = options.FragmentIonMzMin;
-                dbTools.AddParameter(cmd, "@fragmentIonMzMax", SqlType.Real).Value = options.FragmentIonMzMax;
+                dbTools.AddParameter(cmd, "@fragmentIonMzMin", SqlType.Real).Value = (float)options.FragmentIonMzMin;
+                dbTools.AddParameter(cmd, "@fragmentIonMzMax", SqlType.Real).Value = (float)options.FragmentIonMzMax;
 
                 if (dbServerType == DbServerTypes.PostgreSQL)
                     dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Boolean).Value = options.TrimNTerminalMethionine;
@@ -429,8 +429,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@missedCleavages", SqlType.Int).Value = options.MissedCleavages;
                 dbTools.AddParameter(cmd, "@peptideLengthMin", SqlType.Int).Value = options.PeptideLengthMin;
                 dbTools.AddParameter(cmd, "@peptideLengthMax", SqlType.Int).Value = options.PeptideLengthMax;
-                dbTools.AddParameter(cmd, "@precursorMzMin", SqlType.Real).Value = options.PrecursorMzMin;
-                dbTools.AddParameter(cmd, "@precursorMzMax", SqlType.Real).Value = options.PrecursorMzMax;
+                dbTools.AddParameter(cmd, "@precursorMzMin", SqlType.Real).Value = (float)options.PrecursorMzMin;
+                dbTools.AddParameter(cmd, "@precursorMzMax", SqlType.Real).Value = (float)options.PrecursorMzMax;
                 dbTools.AddParameter(cmd, "@precursorChargeMin", SqlType.Int).Value = options.PrecursorChargeMin;
                 dbTools.AddParameter(cmd, "@precursorChargeMax", SqlType.Int).Value = options.PrecursorChargeMax;
 
