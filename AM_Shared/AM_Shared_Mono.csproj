@@ -180,7 +180,7 @@
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.24</Version>
+      <Version>1.4.29</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.8.31</Version>
