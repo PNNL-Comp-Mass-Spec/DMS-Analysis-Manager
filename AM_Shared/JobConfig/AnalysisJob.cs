@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -1893,9 +1894,17 @@ namespace AnalysisManagerBase.JobConfig
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
-            PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
-            var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
+            if (PipelineDBProcedureExecutor.DbServerType == DbServerTypes.PostgreSQL)
+            {
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.Boolean).Value = false;
+            }
+            else
+            {
+                PipelineDBProcedureExecutor.AddParameter(cmd, "@infoOnly", SqlType.TinyInt).Value = 0;
+            }
+
+            var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
             var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
             // Execute the Stored Procedure (retry the call, up to 3 times)

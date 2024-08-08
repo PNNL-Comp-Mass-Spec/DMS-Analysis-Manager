@@ -789,7 +789,6 @@ namespace AnalysisManagerProg
                             break;
 
                         case DBTask.RequestTaskResult.Deadlock:
-
                             ShowTrace("Deadlock");
 
                             // A deadlock error occurred

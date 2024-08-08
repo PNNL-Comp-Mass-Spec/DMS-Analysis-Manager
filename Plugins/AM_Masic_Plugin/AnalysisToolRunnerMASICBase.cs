@@ -688,7 +688,15 @@ namespace AnalysisManagerMasicPlugin
                 dbTools.AddParameter(sqlCmd, "@observationStatsTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsTopNPct);
                 dbTools.AddParameter(sqlCmd, "@medianIntensitiesTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", medianIntensitiesTopNPct);
                 var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
-                dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
+
+                if (dbTools.DbServerType == DbServerTypes.PostgreSQL)
+                {
+                    dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.Boolean, value: false);
+                }
+                else
+                {
+                    dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
+                }
 
                 // Execute the SP (retry the call, up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd);
