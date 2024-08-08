@@ -636,8 +636,6 @@ namespace AnalysisManagerSMAQCPlugIn
 
         private bool PostSMAQCResultsToDB(int datasetID, string xmlResults)
         {
-            const int MAX_RETRY_COUNT = 3;
-
             try
             {
                 if (mDebugLevel >= 2)
@@ -674,8 +672,8 @@ namespace AnalysisManagerSMAQCPlugIn
                 dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResultsClean;
 
-                // Execute the SP (retry the call up to 4 times)
-                var resCode = dbTools.ExecuteSP(cmd, MAX_RETRY_COUNT);
+                // Execute the SP (retry the call, up to 3 times)
+                var resCode = dbTools.ExecuteSP(cmd);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);
 

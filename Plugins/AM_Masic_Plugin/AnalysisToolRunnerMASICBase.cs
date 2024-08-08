@@ -641,8 +641,6 @@ namespace AnalysisManagerMasicPlugin
 
         private bool StoreReporterIonObservationRateStats()
         {
-            const int MAX_RETRY_COUNT = 3;
-
             try
             {
                 var observationRateFile = new FileInfo(Path.Combine(mWorkDir, Dataset + "_RepIonObsRate.txt"));
@@ -692,8 +690,8 @@ namespace AnalysisManagerMasicPlugin
                 var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
-                // Execute the SP (retry the call up to 3 times)
-                var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
+                // Execute the SP (retry the call, up to 3 times)
+                var resCode = dbTools.ExecuteSP(sqlCmd);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);
 
