@@ -594,7 +594,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                 dbTools.AddParameter(sqlCmd, "@topNPct", SqlType.Int).Value = reporterIonObservationRateTopNPct;
                 dbTools.AddParameter(sqlCmd, "@observationStatsTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", observationStatsTopNPct);
                 dbTools.AddParameter(sqlCmd, "@medianIntensitiesTopNPct", SqlType.VarChar, 4000).Value = string.Join(",", medianIntensitiesTopNPct);
-                var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, ParameterDirection.InputOutput);
+                var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, string.Empty, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
                 // Execute the SP (retry the call up to 3 times)
