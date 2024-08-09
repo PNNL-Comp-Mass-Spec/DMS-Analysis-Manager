@@ -131,9 +131,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                     return i;
             }
 
-            OnWarningEvent(string.Format(
-                "Header line does not contain column '{0}'; will presume the data is in column {1}",
-                columnName, indexIfMissing + 1));
+            OnWarningEvent("Header line does not contain column '{0}'; will presume the data is in column {1}", columnName, indexIfMissing + 1);
 
             return indexIfMissing;
         }
@@ -397,17 +395,13 @@ namespace MASIC_ReporterIonObsStatsUploader
 
                         if (lineParts.Length < medianColumnIndex + 1)
                         {
-                            OnErrorEvent(string.Format(
-                                "Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}",
-                                channel, intensityStatsFile.FullName));
+                            OnErrorEvent("Channel {0} in the reporter ion intensity stats file has fewer than three columns; corrupt file: {1}", channel, intensityStatsFile.FullName);
                             return false;
                         }
 
                         if (!int.TryParse(lineParts[medianColumnIndex], out var medianTopNPct))
                         {
-                            OnErrorEvent(string.Format(
-                                "Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}",
-                                channel, lineParts[medianColumnIndex]));
+                            OnErrorEvent("Channel {0} in the reporter ion intensity stats file has a non-integer Median_Top80Pct value: {1}", channel, lineParts[medianColumnIndex]);
                             return false;
                         }
 
@@ -464,17 +458,13 @@ namespace MASIC_ReporterIonObsStatsUploader
 
                         if (lineParts.Length < obsRateColumnIndex + 1)
                         {
-                            OnErrorEvent(string.Format(
-                                "Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}",
-                                channel, observationRateFile.FullName));
+                            OnErrorEvent("Channel {0} in the reporter ion observation rate file has fewer than three columns; corrupt file: {1}", channel, observationRateFile.FullName);
                             return false;
                         }
 
                         if (!double.TryParse(lineParts[obsRateColumnIndex], out var observationRateTopNPct))
                         {
-                            OnErrorEvent(string.Format(
-                                "Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}",
-                                channel, lineParts[obsRateColumnIndex]));
+                            OnErrorEvent("Channel {0} in the reporter ion observation rate file has a non-numeric Observation_Rate_Top80Pct value: {1}", channel, lineParts[obsRateColumnIndex]);
                             return false;
                         }
 
@@ -546,21 +536,17 @@ namespace MASIC_ReporterIonObsStatsUploader
                     return false;
 
                 Console.WriteLine();
-                OnStatusEvent(string.Format(
-                    "Loaded stats for {0} reporter ions from file {1}",
-                    observationStatsTopNPct.Count, observationRateFile.Name));
+                OnStatusEvent("Loaded stats for {0} reporter ions from file {1}", observationStatsTopNPct.Count, observationRateFile.Name);
 
                 if (Options.PreviewMode)
                 {
-                    OnStatusEvent(string.Format(
-                        "Preview call to {0} in DMS5 for Job {1}, Dataset {2}",
-                        STORE_REPORTER_ION_OBS_STATS_SP_NAME, jobNumber, datasetName));
+                    OnStatusEvent("Preview call to {0} in DMS5 for Job {1}, Dataset {2}", STORE_REPORTER_ION_OBS_STATS_SP_NAME, jobNumber, datasetName);
 
                     return true;
                 }
 
                 Console.WriteLine();
-                OnStatusEvent(string.Format("Pushing stats into DMS for Job {0}, Dataset {1}", jobNumber, datasetName));
+                OnStatusEvent("Pushing stats into DMS for Job {0}, Dataset {1}", jobNumber, datasetName);
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(Options.ConnectionString, "ReporterIonStatsUploader");
 
@@ -578,10 +564,8 @@ namespace MASIC_ReporterIonObsStatsUploader
                 // Note that reporterIonName must match a Label in T_Sample_Labelling_Reporter_Ions
                 if (string.IsNullOrWhiteSpace(reporterIonName))
                 {
-                    OnErrorEvent(string.Format(
-                        "Reporter ion name is empty for job {0}; " +
-                        "cannot store reporter ion observation stats in the database",
-                        jobNumber));
+                    OnErrorEvent("Reporter ion name is empty for job {0}; " +
+                                 "cannot store reporter ion observation stats in the database", jobNumber);
 
                     return false;
                 }
@@ -608,9 +592,7 @@ namespace MASIC_ReporterIonObsStatsUploader
                                        ? "No error message"
                                        : messageParam.Value.CastDBVal<string>();
 
-                OnErrorEvent(string.Format(
-                    "Error storing reporter ion observation stats and median intensities in the database, {0} returned {1}: {2}",
-                    STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage));
+                OnErrorEvent("Error storing reporter ion observation stats and median intensities in the database, {0} returned {1}: {2}", STORE_REPORTER_ION_OBS_STATS_SP_NAME, resCode, errorMessage);
 
                 return false;
             }

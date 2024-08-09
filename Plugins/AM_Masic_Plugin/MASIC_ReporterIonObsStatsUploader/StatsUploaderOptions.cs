@@ -9,7 +9,7 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <summary>
         /// Program date
         /// </summary>
-        public const string PROGRAM_DATE = "2021-11-12";
+        public const string PROGRAM_DATE = "2024-08-08";
 
         /// <summary>
         /// Database connections string
