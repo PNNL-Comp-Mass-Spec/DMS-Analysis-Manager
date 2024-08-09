@@ -502,8 +502,6 @@ namespace MASIC_ReporterIonObsStatsUploader
 
         private bool StoreReporterIonObservationRateStats(FileInfo inputFile, string masicParameterFilePath)
         {
-            const int MAX_RETRY_COUNT = 3;
-
             try
             {
                 var inputDirectoryPath = inputFile.DirectoryName;
@@ -597,8 +595,8 @@ namespace MASIC_ReporterIonObsStatsUploader
                 var messageParam = dbTools.AddTypedParameter(sqlCmd, "@message", SqlType.VarChar, 255, string.Empty, ParameterDirection.InputOutput);
                 dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
 
-                // Execute the SP (retry the call up to 3 times)
-                var resCode = dbTools.ExecuteSP(sqlCmd, MAX_RETRY_COUNT);
+                // Execute the SP (retry the call, up to 3 times)
+                var resCode = dbTools.ExecuteSP(sqlCmd);
 
                 if (resCode == 0)
                 {
