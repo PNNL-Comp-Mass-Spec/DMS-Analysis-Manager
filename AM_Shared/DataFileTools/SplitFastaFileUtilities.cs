@@ -15,7 +15,7 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class SplitFastaFileUtilities : EventNotifier
     {
-        // Ignore Spelling: Lockfile, Seqs, admins
+        // Ignore Spelling: admins, dms, FASTA, Lockfile, Seqs, Utils
 
         /// <summary>
         /// LockFile name
