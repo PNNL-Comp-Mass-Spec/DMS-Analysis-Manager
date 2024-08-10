@@ -35,7 +35,7 @@ namespace AnalysisManagerBase.StatusReporting
         private readonly object mLocker = new();
 
         /// <summary>
-        /// local queue that contains messages to be sent
+        /// Local queue that contains messages to be sent
         /// </summary>
         private readonly Queue<MessageContainer> mStatusMessages = new();
 
