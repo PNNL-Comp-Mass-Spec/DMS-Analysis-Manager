@@ -310,7 +310,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Import contents of SEQUEST first hits results files for jobs in a data package
+        /// Import contents of first hits results files for jobs in a data package
         /// into a table in the SQLite step results database.  Add dataset ID to imported data rows.
         /// </summary>
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>

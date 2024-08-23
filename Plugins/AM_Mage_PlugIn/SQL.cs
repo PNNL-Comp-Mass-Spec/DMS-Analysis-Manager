@@ -28,6 +28,7 @@ namespace AnalysisManager_Mage_PlugIn
                     "DataPackageID")
             },
             {
+                // This query template is unused in 2024
                 "JobsFromDataPackageIDForTool",
                 new QueryTemplate(
                     "SELECT * FROM V_Mage_Data_Package_Analysis_Jobs " +
@@ -36,6 +37,7 @@ namespace AnalysisManager_Mage_PlugIn
                     "DataPackageID, Tool")
             },
             {
+                // This query template is unused in 2024
                 "FactorsFromDataPackageID",
                 new QueryTemplate(
                     "SELECT Dataset, Dataset_ID, Factor, Value " +
