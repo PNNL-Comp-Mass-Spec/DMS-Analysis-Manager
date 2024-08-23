@@ -67,7 +67,7 @@ namespace AnalysisManager_Mage_PlugIn
             var jobList = GetListOfDMSItems(jobListQuery, jobCountLimit);
 
             // get selected list of files from list of datasets
-            const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
+            const string columnsToIncludeInOutput = "dataset_id, dataset, experiment, campaign, state, instrument, created, dataset_type";
             var fileList = GetListOfFilesFromDirectoryList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
             // Importing result file metadata into SQLite, storing in table t_msms_raw_files
