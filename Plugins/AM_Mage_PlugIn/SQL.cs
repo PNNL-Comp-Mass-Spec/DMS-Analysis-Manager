@@ -40,7 +40,7 @@ namespace AnalysisManager_Mage_PlugIn
                 new QueryTemplate(
                     "SELECT Dataset, Dataset_ID, Factor, Value " +
                     "FROM V_Custom_Factors_List_Report " +
-                    "WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Pkg_ID = {0}) " +
+                    "WHERE Dataset_ID IN (SELECT DISTINCT Dataset_ID FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Pkg_ID = {0}) " +
                     "ORDER BY Dataset",
                     "DataPackageID")
             },
