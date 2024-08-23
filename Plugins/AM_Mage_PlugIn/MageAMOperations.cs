@@ -628,7 +628,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// Returns an array of parameter values for the given list of parameter names
         /// </summary>
         /// <param name="mageObject">Object holding a copy of job parameters</param>
-        /// <param name="paramNameList">Comma delimited list of parameter names to retrieve values for</param>
+        /// <param name="paramNameList">Comma-delimited list of parameter names to retrieve values for</param>
         /// <returns>Array of values (order will match param name list)</returns>
         public static string[] GetParamValues(MageAMPipelineBase mageObject, string paramNameList)
         {

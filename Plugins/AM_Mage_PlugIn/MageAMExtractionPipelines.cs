@@ -19,7 +19,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// </summary>
     public class MageAMExtractionPipelines : MageAMPipelineBase
     {
-        // Ignore Spelling: Mage, Sequest
+        // Ignore Spelling: Mage, Sequest, SQL
 
         /// <summary>
         /// The parameters for the slated extraction

@@ -13,6 +13,8 @@ namespace AnalysisManager_Mage_PlugIn
 {
     public class MageAMPipelineBase : EventNotifier
     {
+        // Ignore Spelling: Mage, SQL
+
         private readonly Regex mProcessingResults = new(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
         private int mLastProgressJob;
