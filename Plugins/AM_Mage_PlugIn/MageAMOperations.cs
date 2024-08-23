@@ -335,11 +335,10 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobCountLimit">Optionally set this to a positive value to limit the number of jobs to process (useful when debugging)</param>
         private bool ImportRawFileList(int jobCountLimit)
         {
-            mJobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
             var mageObj = new MageAMFileProcessingPipelines(mJobParams, mMgrParams);
             RegisterMageEvents(mageObj);
 
-            var sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
+            var sql = GetSQLForTemplate("JobDatasetsFromDataPackageID", mageObj);
             OnDebugEvent("Adding dataset metadata to SQLite using: " + sql);
 
             GetPriorStepResults();

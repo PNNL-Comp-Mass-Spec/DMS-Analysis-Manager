@@ -45,12 +45,12 @@ namespace AnalysisManager_Mage_PlugIn
                     "DataPackageID")
             },
             {
-                "JobDatasetsFromDataPackageIDForTool",
+                "JobDatasetsFromDataPackageID",
                 new QueryTemplate(
                     "SELECT * FROM V_Mage_Dataset_List " +
-                    "WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Data_Package_Analysis_Jobs_Export WHERE Data_Pkg_ID = {0}) " +
+                    "WHERE Dataset_ID IN (SELECT DISTINCT Dataset_ID FROM V_Data_Package_Analysis_Jobs_Export WHERE Data_Pkg_ID = {0}) " +
                     "ORDER BY Dataset",
-                    "DataPackageID, Tool")
+                    "DataPackageID")
             },
         };
 
