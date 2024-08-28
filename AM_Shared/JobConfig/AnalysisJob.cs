@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlTypes;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -852,10 +851,8 @@ namespace AnalysisManagerBase.JobConfig
                         if (paramName == null)
                             continue;
 
-                        if (paramNamesToIgnore.ContainsKey(paramName.Value))
+                        if (paramNamesToIgnore.TryGetValue(paramName.Value, out var requiredParameter))
                         {
-                            var requiredParameter = paramNamesToIgnore[paramName.Value];
-
                             if (string.IsNullOrWhiteSpace(requiredParameter) || paramNames.Contains(requiredParameter))
                             {
                                 // Remove this parameter from this section
@@ -863,13 +860,11 @@ namespace AnalysisManagerBase.JobConfig
                             }
                         }
 
-                        if (!paramsToAddAsAttribute.ContainsKey(paramName.Value))
+                        if (!paramsToAddAsAttribute.TryGetValue(paramName.Value, out var attribName))
                             continue;
 
                         // Add an attribute to the section with the value for this parameter
                         // This is most commonly used to add attribute step="1"
-
-                        var attribName = paramsToAddAsAttribute[paramName.Value];
 
                         if (string.IsNullOrWhiteSpace(attribName))
                             attribName = paramName.Value;
@@ -2021,6 +2016,7 @@ namespace AnalysisManagerBase.JobConfig
                 if (DateTime.TryParse(remoteFinishText, out var remoteFinishDt))
                     remoteFinish = remoteFinishDt;
             }
+
             PipelineDBProcedureExecutor.AddParameter(cmd, "@remoteFinish", SqlType.DateTime).Value = remoteFinish;
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@processorName", SqlType.VarChar, 128, ManagerName);
