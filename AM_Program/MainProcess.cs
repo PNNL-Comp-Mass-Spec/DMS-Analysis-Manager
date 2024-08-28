@@ -420,7 +420,7 @@ namespace AnalysisManagerProg
                 // ReSharper disable once CommentTypo
 
                 // PostgreSQL:
-                // Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;
+                // Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=d3l243;
 
                 mgrConfigDBConnectionString = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
@@ -2117,7 +2117,7 @@ namespace AnalysisManagerProg
 
             // Manager name
             // The manager name may contain $ComputerName$
-            // If it does, InitializeMgrSettings in MgrSettings will replace "$ComputerName$ with the local host name
+            // If it does, InitializeMgrSettings in MgrSettings will replace "$ComputerName$" with the local host name
             if (!mgrSettings.ContainsKey(MgrSettings.MGR_PARAM_MGR_NAME))
             {
                 mgrSettings.Add(MgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");

@@ -2014,6 +2014,8 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// This method looks for phosphorylated S, T, or Y in the dynamic (variable) modifications
         /// </summary>
