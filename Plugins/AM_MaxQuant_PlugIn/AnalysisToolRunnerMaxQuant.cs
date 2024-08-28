@@ -1256,10 +1256,8 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                     metadataFileContents.Add(updatedLine);
 
-                    if (!andromedaParameterFiles.Contains(updatedParameterFilePath))
-                    {
-                        andromedaParameterFiles.Add(updatedParameterFilePath);
-                    }
+                    // Add the updated parameter file, if not yet in the sorted set
+                    andromedaParameterFiles.Add(updatedParameterFilePath);
                 }
             }
 

@@ -705,7 +705,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 {
                     if (!Global.TryGetAttribute(item, "title", out var modTitle))
                     {
-                        LogWarning("Modification in the MaxQuant modifications.xml file is missing the title attribute: {0}", item.ToString());
+                        LogWarning("Modification in the MaxQuant modifications.xml file is missing the title attribute: {0}", item);
                         continue;
                     }
 
