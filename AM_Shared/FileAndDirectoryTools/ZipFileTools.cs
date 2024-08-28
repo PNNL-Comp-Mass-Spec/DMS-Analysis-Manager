@@ -676,6 +676,24 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             foreach (var item in archive.Entries)
             {
+                if (string.IsNullOrEmpty(item.Name))
+                {
+                    var emptyDirectoryRelativePath = item.FullName.TrimEnd('/');
+
+                    // This is a directory entry that does not have any files
+                    if (string.IsNullOrWhiteSpace(emptyDirectoryRelativePath))
+                        continue;
+
+                    var targetEmptyDirectory = new DirectoryInfo(Path.Combine(targetDirectory, emptyDirectoryRelativePath));
+
+                    if (!targetEmptyDirectory.Exists)
+                    {
+                        targetEmptyDirectory.Create();
+                    }
+
+                    continue;
+                }
+
                 var result = matcher.Match(item.Name);
 
                 if (!result.HasMatches)
