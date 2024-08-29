@@ -1033,7 +1033,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                 if (processedParameterFilePaths.Contains(parameterFile.FullName))
                     continue;
 
-                LogWarning("The aplfiles parameter file mentioned a file in an unexpected location, {0}: processing now", parameterFile.FullName);
+                if (!parameterFile.Exists)
+                {
+                    LogWarning("The aplfiles parameter file mentioned a file in an unexpected location, but the file does not exist: {0}", parameterFile.FullName);
+                    continue;
+                }
+
+                LogWarning("The aplfiles parameter file mentioned a file in an unexpected location, processing now: {0}", parameterFile.FullName);
 
                 processedParameterFilePaths.Add(parameterFile.FullName);
 
