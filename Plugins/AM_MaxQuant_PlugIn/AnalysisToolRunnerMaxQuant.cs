@@ -1930,6 +1930,13 @@ namespace AnalysisManagerMaxQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (RuntimeOptions.StartStepNumber == 1 && RuntimeOptions.EndStepNumber == MaxQuantRuntimeOptions.MAX_STEP_NUMBER)
+                {
+                    // All steps are being run
+                    // Change the start step number to 0 to prevent the command line from using options --partial-processing and --partial-processing-end
+                    RuntimeOptions.StartStepNumber = 0;
+                }
+
                 if (!usedDryRun)
                 {
                     return CloseOutType.CLOSEOUT_SUCCESS;
