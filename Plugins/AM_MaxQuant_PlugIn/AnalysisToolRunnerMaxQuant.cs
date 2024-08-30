@@ -824,7 +824,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             }
 
             // Set up and execute a program runner to run MaxQuant
-            var cmdLineArguments = new List<string>();
+            var cmdLineArguments = new List<string> { RuntimeOptions.ParameterFilePath };
 
             if (RuntimeOptions.DryRun)
             {
@@ -837,8 +837,6 @@ namespace AnalysisManagerMaxQuantPlugIn
                 cmdLineArguments.Add("--partial-processing=" + RuntimeOptions.StartStepNumber);
                 cmdLineArguments.Add("--partial-processing-end=" + RuntimeOptions.EndStepNumber);
             }
-
-            cmdLineArguments.Add(RuntimeOptions.ParameterFilePath);
 
             var arguments = string.Join(" ", cmdLineArguments);
 
