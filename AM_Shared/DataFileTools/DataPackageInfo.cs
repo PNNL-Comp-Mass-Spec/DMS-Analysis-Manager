@@ -10,7 +10,7 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class DataPackageInfo : EventNotifier
     {
-        // Ignore Spelling: quantitation
+        // Ignore Spelling: Quant, quantitation
 
         /// <summary>
         /// Value to store in dictionary DatasetFileTypes when the primary instrument data is a single file
@@ -189,14 +189,14 @@ namespace AnalysisManagerBase.DataFileTools
 
         /// <summary>
         /// Keys are dataset IDs
-        /// Values are the MSFragger Experiment Group from the Package Comment field for the dataset
+        /// Values are the MaxQuant or MSFragger Experiment Group from the Package Comment field for the dataset
         /// </summary>
         /// <remarks>
         /// <para>
         /// Value is an empty string if the Package Comment field does not have an Experiment Group defined
         /// </para>
         /// <para>
-        /// Experiment group is defined with "FragPipe Group QC_Shew_20_01" or "MSFragger Group QC_Shew_20_01" in the Package Comment field
+        /// Experiment group is defined with "FragPipe Group QC_Shew_20_01", "MSFragger Group QC_Shew_20_01", or "MaxQuant Experiment QC_Shew_16_01a" in the Package Comment field
         /// </para>
         /// <para>
         /// Experiment group names can have letters, numbers, or underscores
