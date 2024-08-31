@@ -152,8 +152,8 @@ namespace AnalysisManagerBase.JobConfig
         /// Constructor
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager parameters</param>
-        /// <param name="debugLvl">Debug level</param>
-        public AnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
+        /// <param name="debugLevel">Debug level</param>
+        public AnalysisJob(IMgrParams mgrParams, short debugLevel) : base(mgrParams, debugLevel)
         {
             mJobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             Reset();

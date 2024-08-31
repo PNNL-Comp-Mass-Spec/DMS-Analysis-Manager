@@ -126,8 +126,8 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="mgrParams">An IMgrParams object containing manager parameters</param>
-        /// <param name="debugLvl">Debug level</param>
-        protected DBTask(IMgrParams mgrParams, short debugLvl)
+        /// <param name="debugLevel">Debug level</param>
+        protected DBTask(IMgrParams mgrParams, short debugLevel)
         {
             mMgrParams = mgrParams;
 
@@ -141,7 +141,7 @@ namespace AnalysisManagerBase
             // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             mBrokerConnStr = DbToolsFactory.AddApplicationNameToConnectionString(mMgrParams.GetParam("BrokerConnectionString"), ManagerName);
 
-            mDebugLevel = debugLvl;
+            mDebugLevel = debugLevel;
 
             DMSProcedureExecutor = DbToolsFactory.GetDBTools(mConnStr, debugMode: mMgrParams.TraceMode);
             PipelineDBProcedureExecutor = DbToolsFactory.GetDBTools(mBrokerConnStr, debugMode: mMgrParams.TraceMode);
