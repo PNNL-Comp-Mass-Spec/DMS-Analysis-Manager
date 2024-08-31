@@ -361,6 +361,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// using data from V_DMS_Organism_DB_File_Import
         /// (which pulls from V_Organism_DB_File_Export in DMS5)
         /// </summary>
+        /// <remarks>This procedure exits if the ProteinSeqs DB connection string does not point to ProteinSeqs or CBDMS</remarks>
         private void UpdateCachedOrganismDBInfo()
         {
             if (string.IsNullOrWhiteSpace(mProteinSeqsDBConnectionString))
@@ -379,6 +380,15 @@ namespace AnalysisManagerBase.DataFileTools
 
             try
             {
+                // Only call procedure refresh_cached_organism_db_info if the connection string points to ProteinSeqs or CBDMS
+                if (mProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 ||
+                    mProteinSeqsDBConnectionString.IndexOf("Data Source=cbdms", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    // Most likely the connection string is "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms",
+                    // which is PostgreSQL-based and does not have procedure refresh_cached_organism_db_info
+                    return;
+                }
+
                 var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
@@ -604,7 +614,7 @@ namespace AnalysisManagerBase.DataFileTools
                     return false;
                 }
 
-                // Call the procedure that syncs up this information with ProteinSeqs
+                // Call the procedure that syncs up this information with ProteinSeqs (only applicable if using SQL Server on ProteinSeqs or CBDMS)
                 currentTask = "UpdateCachedOrganismDBInfo";
                 UpdateCachedOrganismDBInfo();
 
