@@ -288,7 +288,7 @@ namespace AnalysisManagerBase.StatusReporting
 
                 PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 PipelineDBProcedureExecutor.ExecuteSP(cmd);
             }
             catch (Exception ex)

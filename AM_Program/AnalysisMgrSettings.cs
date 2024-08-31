@@ -143,7 +143,7 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = dbTools.ExecuteSP(cmd);
 
                 if (resCode != 0)
@@ -396,7 +396,7 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@holdoffIntervalMinutes", SqlType.Int).Value = holdoffIntervalMinutes;
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = dbTools.ExecuteSP(cmd);
 
                 if (resCode != 0)

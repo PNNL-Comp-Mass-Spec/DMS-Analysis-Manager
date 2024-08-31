@@ -1082,7 +1082,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 messageParam.Value = string.Empty;
                 returnCodeParam.Value = string.Empty;
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = dbTools.ExecuteSP(cmd, out var errorMessage);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

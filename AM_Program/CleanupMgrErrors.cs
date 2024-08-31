@@ -525,7 +525,7 @@ namespace AnalysisManagerProg
                 dbTools.AddParameter(cmd, "@failureMsg", SqlType.VarChar, 512, failureMessage);
                 dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = dbTools.ExecuteSP(cmd);
 
                 if (resCode == 0)

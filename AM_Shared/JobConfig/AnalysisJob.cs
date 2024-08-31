@@ -1287,7 +1287,7 @@ namespace AnalysisManagerBase.JobConfig
                     PrintCommandParams(cmd);
                 }
 
-                // Execute the SP
+                // Call the procedure
                 var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);

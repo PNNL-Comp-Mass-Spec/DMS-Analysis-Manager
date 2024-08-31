@@ -217,7 +217,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 dbTools.AddTypedParameter(cmd, "@datasetID", SqlType.Int, value: datasetID);
                 dbTools.AddParameter(cmd, "@resultsXML", SqlType.XML).Value = xmlResults;
 
-                // Execute the SP (retry the call, up to 3 times)
+                // Call the procedure (retry the call, up to 3 times)
                 var resCode = dbTools.ExecuteSP(cmd);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);

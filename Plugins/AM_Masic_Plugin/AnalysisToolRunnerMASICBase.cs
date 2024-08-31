@@ -698,7 +698,7 @@ namespace AnalysisManagerMasicPlugin
                     dbTools.AddTypedParameter(sqlCmd, "@infoOnly", SqlType.TinyInt, value: 0);
                 }
 
-                // Execute the SP (retry the call, up to 3 times)
+                // Call the procedure (retry the call, up to 3 times)
                 var resCode = dbTools.ExecuteSP(sqlCmd);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);

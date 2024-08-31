@@ -170,7 +170,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 while (!matchFound)
                 {
-                    // Execute the SP
+                    // Call the procedure
                     var resCode = mDbTools.ExecuteSP(cmd, 1);
 
                     if (resCode != 0)

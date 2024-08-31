@@ -1224,7 +1224,7 @@ namespace MSGFResultsSummarizer
                 dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
                 dbTools.AddTypedParameter(cmd, "@uniqueUbiquitinPeptidesFDR", SqlType.Int, value: psmResults.UniqueUbiquitinPeptidesFDR);
 
-                // Execute the SP (retry the call if it fails, up to 3 times)
+                // Call the procedure (retry the call if it fails, up to 3 times)
                 var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
 
                 var returnCode = DBToolsBase.GetReturnCode(returnParam);

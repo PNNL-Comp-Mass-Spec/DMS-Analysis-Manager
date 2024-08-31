@@ -465,7 +465,7 @@ namespace AnalysisManagerBase.JobConfig
                     dbTools.AddParameter(cmd, "@job", SqlType.Int).Value = jobNumber;
                     dbTools.AddParameter(cmd, "@step", SqlType.Int).Value = stepNumber;
 
-                    // Execute the SP
+                    // Call the procedure
                     var resCode = dbTools.ExecuteSPDataTable(cmd, out resultSet);
 
                     if (resCode != 0)
