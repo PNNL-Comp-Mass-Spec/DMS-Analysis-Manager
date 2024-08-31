@@ -24,6 +24,8 @@ namespace AnalysisManagerBase
     /// </summary>
     public abstract class DBTask : LoggerBase
     {
+        // Ignore Spelling: RET, SQL
+
         /// <summary>
         /// Tracks the outcome of requesting a new task
         /// </summary>
@@ -54,6 +56,8 @@ namespace AnalysisManagerBase
             /// </summary>
             Deadlock = 4
         }
+
+        // ReSharper disable once UnusedMember.Global
 
         /// <summary>
         /// Return value for success
