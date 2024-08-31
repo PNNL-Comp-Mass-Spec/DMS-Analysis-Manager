@@ -1500,7 +1500,9 @@ namespace AnalysisManagerBase.AnalysisTool
                 orgDBDescription = "Legacy DB: " + legacyFastaToUse;
 
                 // Lookup connection strings
-                // Proteinseqs.Protein_Sequences
+
+                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
 
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
@@ -1509,7 +1511,8 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
-                // Gigasax.DMS5
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
@@ -3188,13 +3191,14 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="dataPackageDatasets">Output: datasets associated with the given data package; keys are DatasetID</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logErrors">Log errors if true (default)</param>
-        /// <returns>True if a data package is defined and it has datasets associated with it, otherwise false</returns>
+        /// <returns>True if a data package is defined and has datasets associated with it, otherwise false</returns>
         protected bool LoadDataPackageDatasetInfo(
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
             out string errorMessage,
             bool logErrors)
         {
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -3222,10 +3226,11 @@ namespace AnalysisManagerBase.AnalysisTool
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
         /// <param name="dataPackageJobs"></param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it, otherwise false</returns>
+        /// <returns>True if a data package is defined and has analysis jobs associated with it, otherwise false</returns>
         private bool LoadDataPackageJobInfo(out Dictionary<int, DataPackageJobInfo> dataPackageJobs)
         {
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var connectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -3287,7 +3292,8 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             try
             {
-                // Gigasax.DMS_Pipeline
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
@@ -3369,7 +3375,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var genericJobInfo = new DataPackageJobInfo(0, string.Empty);
 
-            // Gigasax.DMS5
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
@@ -4771,7 +4778,8 @@ namespace AnalysisManagerBase.AnalysisTool
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", -1);
@@ -5019,7 +5027,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var fastaFilePath = Path.Combine(mMgrParams.GetParam(MGR_PARAM_ORG_DB_DIR), mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, JOB_PARAM_GENERATED_FASTA_NAME));
 
-                // Gigasax.DMS5
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var connectionString = mMgrParams.GetParam("ConnectionString");
                 var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 

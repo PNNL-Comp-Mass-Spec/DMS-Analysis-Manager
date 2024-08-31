@@ -29,8 +29,8 @@ namespace AnalysisManagerMSGFPlugin
     {
         // ReSharper disable once CommentTypo
 
-        // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, FHT, Glu, Lys
-        // Ignore Spelling: MODa, modp, MSGF< msgfdb, Parm, PHRP, Pre, Xmx
+        // Ignore Spelling: Arg, bioml, Chymotrypsin, cp, cysteine, Da, dms, FHT, Glu, Lys
+        // Ignore Spelling: MODa, modp, MSGF< msgfdb, Parm, PHRP, Pre, svc-dms, Xmx
 
         private const int PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD = 2;
         private const int PROGRESS_PCT_MSGF_INPUT_FILE_GENERATED = 3;
@@ -2407,7 +2407,8 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                // Gigasax.DMS5
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var connectionString = mMgrParams.GetParam("ConnectionString");
 
                 var summarizer = new ResultsSummarizer(

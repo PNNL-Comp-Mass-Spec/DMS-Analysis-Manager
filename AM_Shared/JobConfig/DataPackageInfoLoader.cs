@@ -34,7 +34,6 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Instance of IDBTools
         /// </summary>
-        /// <remarks>Typically Gigasax.DMS_Pipeline</remarks>
         public IDBTools DBTools { get; }
 
         /// <summary>

@@ -1826,6 +1826,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 {
                     return true;
                 }
+
                 mLastManagerSettingsUpdateTime = DateTime.UtcNow;
 
                 if (debugLevel >= 5)
@@ -1835,7 +1836,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
                 // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-
                 var connectionString = mgrParams.GetParam("MgrCnfgDbConnectStr");
                 var managerName = mgrParams.ManagerName;
 
@@ -2288,7 +2288,8 @@ namespace AnalysisManagerBase.AnalysisTool
             bool logErrors
             )
         {
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -2331,7 +2332,8 @@ namespace AnalysisManagerBase.AnalysisTool
             out List<DataPackageJobInfo> additionalJobs,
             out string errorMsg)
         {
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);

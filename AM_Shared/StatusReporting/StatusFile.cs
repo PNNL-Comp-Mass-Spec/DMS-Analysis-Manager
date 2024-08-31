@@ -655,7 +655,8 @@ namespace AnalysisManagerBase.StatusReporting
                     statusIntervalMinutes = 5;
                 }
 
-                // Gigasax.DMS_Pipeline
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrParams.ManagerName);
 

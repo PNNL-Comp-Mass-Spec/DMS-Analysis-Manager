@@ -227,7 +227,7 @@ namespace AnalysisManagerProg
 
                 if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
                 {
-                    // Use the hard-coded default that points to Gigasax
+                    // Use the hard-coded default that points to PrismDB2
                     defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
                 }
                 else
@@ -414,14 +414,8 @@ namespace AnalysisManagerProg
             }
             else
             {
-                // SQL Server:
-                // Data Source=proteinseqs;Initial Catalog=manager_control
-
-                // ReSharper disable once CommentTypo
-
-                // PostgreSQL:
-                // Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=d3l243;
-
+                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=d3l243;
                 mgrConfigDBConnectionString = mMgrParams.GetParam(MgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
@@ -2952,7 +2946,8 @@ namespace AnalysisManagerProg
             // Analysis managers typically have logStatusToBrokerDb = false and logStatusToMessageQueue = true
             var logStatusToBrokerDb = mMgrParams.GetParam("LogStatusToBrokerDB", false);
 
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var brokerDbConnectionString = mMgrParams.GetParam("BrokerConnectionString");
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mMgrName);
 

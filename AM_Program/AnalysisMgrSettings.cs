@@ -118,7 +118,6 @@ namespace AnalysisManagerProg
             {
                 // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
                 // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
                 if (string.IsNullOrWhiteSpace(connectionString))
@@ -192,7 +191,8 @@ namespace AnalysisManagerProg
             //   Name="StepTool_ParamFileStoragePath_LCMSFeatureFinder"
             //   Value="\\gigasax\dms_parameter_Files\LCMSFeatureFinder"
 
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var connectionString = GetParam("BrokerConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, ManagerName);
@@ -370,7 +370,6 @@ namespace AnalysisManagerProg
             {
                 // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
                 // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
                 if (string.IsNullOrWhiteSpace(connectionString))

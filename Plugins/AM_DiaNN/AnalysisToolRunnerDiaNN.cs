@@ -1062,7 +1062,8 @@ namespace AnalysisManagerDiaNNPlugIn
 
             try
             {
-                // Gigasax.DMS5
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
 
                 var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);

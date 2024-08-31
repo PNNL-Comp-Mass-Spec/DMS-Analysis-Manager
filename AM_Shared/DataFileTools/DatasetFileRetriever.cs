@@ -279,7 +279,8 @@ namespace AnalysisManagerBase.DataFileTools
         {
             ErrorMessage = string.Empty;
 
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var brokerDbConnectionString = mResourceClass.MgrParams.GetParam("BrokerConnectionString");
 
             var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(brokerDbConnectionString, mResourceClass.MgrParams.ManagerName);

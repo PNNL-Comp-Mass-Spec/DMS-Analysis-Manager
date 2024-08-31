@@ -185,7 +185,8 @@ namespace AnalysisManagerMSPathFinderPlugin
                     // Update the input folder to be the PBF_Gen input folder for this job (should be the input_folder of the previous job step)
                     var stepNum = mJobParams.GetJobParameter("Step", 100);
 
-                    // Gigasax.DMS_Pipeline
+                    // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+                    // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                     var dmsConnectionString = mMgrParams.GetParam("BrokerConnectionString");
 
                     var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);

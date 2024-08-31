@@ -3115,7 +3115,8 @@ namespace AnalysisManagerExtractionPlugin
 
         private ResultsSummarizer GetPsmResultsSummarizer(PeptideHitResultTypes resultType)
         {
-            // Gigasax.DMS5
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             var connectionString = mMgrParams.GetParam("ConnectionString");
 
             var summarizer = new ResultsSummarizer(

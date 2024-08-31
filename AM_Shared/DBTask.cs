@@ -133,10 +133,12 @@ namespace AnalysisManagerBase
 
             ManagerName = mMgrParams.ManagerName;
 
-            // Gigasax.DMS5
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             mConnStr = DbToolsFactory.AddApplicationNameToConnectionString(mMgrParams.GetParam("ConnectionString"), ManagerName);
 
-            // Gigasax.DMS_Pipeline
+            // SQL Server: Data Source=Gigasax;Initial Catalog=DMS_Pipeline
+            // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
             mBrokerConnStr = DbToolsFactory.AddApplicationNameToConnectionString(mMgrParams.GetParam("BrokerConnectionString"), ManagerName);
 
             mDebugLevel = debugLvl;

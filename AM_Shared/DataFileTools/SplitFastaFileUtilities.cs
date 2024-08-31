@@ -29,7 +29,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// DMS5 database connection string
         /// </summary>
-        /// <remarks>Gigasax.DMS5</remarks>
+        // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+        // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
         private readonly string mDMSConnectionString;
 
         /// <summary>
@@ -40,7 +41,10 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Protein Sequences DB connection string
         /// </summary>
-        /// <remarks>Proteinseqs.Protein_Sequences</remarks>
+        /// <remarks>
+        /// SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
+        /// PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+        /// </remarks>
         private readonly string mProteinSeqsDBConnectionString;
 
         private readonly int mNumSplitParts;
