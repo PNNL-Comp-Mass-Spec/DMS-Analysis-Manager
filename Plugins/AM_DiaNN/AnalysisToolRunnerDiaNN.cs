@@ -666,71 +666,82 @@ namespace AnalysisManagerDiaNNPlugIn
             // Example Console output when searching DIA spectra using a spectral library
             // ----------------------------------------------------
 
-            // DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
-            // Compiled on Apr 14 2022 15:31:19
-            // Current date and time: Wed Feb 22 13:17:48 2023
+            // DIA-NN 1.9.1 (Data-Independent Acquisition by Neural Networks)
+            // Compiled on Jul 15 2024 15:40:36
+            // Current date and time: Sat Aug 31 16:59:30 2024
             // CPU: GenuineIntel Intel(R) Xeon(R) W-2245 CPU @ 3.90GHz
             // SIMD instructions: AVX AVX2 AVX512CD AVX512F FMA SSE4.1 SSE4.2
             // Logical CPU cores: 16
             // C:\DMS_Programs\DIA-NN\DiaNN.exe --f C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML  --lib lib.predicted.speclib --threads 8 --verbose 2 --out C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report.tsv --qvalue 0.01 --matrices --temp C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2" --out-lib C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\report-lib.tsv --gen-spec-lib --fasta C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta --met-excision --cut K*,R* --var-mods 3 --var-mod UniMod:35,15.994915,M --reanalyse --relaxed-prot-inf --smart-profiling
-
-            // Thread number set to 8
+            //
+            // Thread number set to 7
             // Output will be filtered at 0.01 FDR
             // Precursor/protein x samples expression level matrices will be saved along with the main report
             // A spectral library will be generated
             // N-terminal methionine excision enabled
             // In silico digest will involve cuts at K*,R*
             // Maximum number of variable modifications set to 3
+            // Cysteine carbamidomethylation enabled as a fixed modification
+            // Maximum number of variable modifications set to 3
             // Modification UniMod:35 with mass delta 15.9949 at M will be considered as variable
-            // A spectral library will be created from the DIA runs and used to reanalyse them; .quant files will only be saved to disk during the first step
-            // Highly heuristic protein grouping will be used, to reduce the number of protein groups obtained; this mode is recommended for benchmarking protein ID numbers; use with caution for anything else
+            // Heuristic protein grouping will be used, to reduce the number of protein groups obtained; this mode is recommended for benchmarking protein ID numbers, GO/pathway and system-scale analyses
             // When generating a spectral library, in silico predicted spectra will be retained if deemed more reliable than experimental ones
+            // Implicit protein grouping: genes; this determines which peptides are considered 'proteotypic' and thus affects protein FDR calculation
             // DIA-NN will optimise the mass accuracy automatically using the first run in the experiment. This is useful primarily for quick initial analyses, when it is not yet known which mass accuracy setting works best for a particular acquisition scheme.
-            // WARNING: MBR turned off, two or more raw files are required
-
+            // WARNING: peptidoform scoring enabled because variable modifications have been declared; to disable, use --no-peptidoforms
+            // The following variable modifications will be scored: UniMod:35
             // 1 files will be processed
-            // [0:00] Loading spectral library lib.predicted.speclib
-            // [0:00] Library annotated with sequence database(s): C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
-            // [0:01] Spectral library loaded: 1494 protein isoforms, 1613 protein groups and 801607 precursors in 312599 elution groups.
-            // [0:01] Loading protein annotations from FASTA C:\DMS_WorkDir2\H_sapiens_UniProt_SPROT_2021-06-20_excerpt2\H_sapiens_UniProt_SPROT_2021-06-20_Filtered.fasta
-            // [0:01] Annotating library proteins with information from the FASTA database
-            // [0:01] Gene names missing for some isoforms
-            // [0:01] Library contains 1494 proteins, and 1493 genes
-            // [0:01] Initialising library
-
-            // [0:01] File #1/1
-            // [0:01] Loading run C:\DMS_WorkDir2\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
-            // [0:15] Run loaded
-            // [0:15] 789178 library precursors are potentially detectable
-            // [0:15] Processing batch #1 out of 394
-            // [0:15] Precursor search
-            // [0:18] Optimising weights
-            // [0:18] Calculating q-values
-            // [0:18] Number of IDs at 0.01 FDR: 0
-            // [0:18] Calibrating retention times
-            // [0:18] 50 precursors used for iRT estimation.
-            // [0:18] Processing batch #2 out of 394
-            // [0:18] Precursor search
-            // ...
-            // [0:45] Processing batches #10-11 out of 394
-            // [0:45] Precursor search
-            // [0:50] Optimising weights
-            // ...
-            // [1:10] Top 70% mass accuracy: 1.75855 ppm
-            // [1:10] Top 70% mass accuracy without correction: 4.66868ppm
-            // [1:10] Top 70% MS1 mass accuracy: 3.11822 ppm
-            // [1:10] Top 70% MS1 mass accuracy without correction: 3.99532ppm
-            // [1:10] Recommended MS1 mass accuracy setting: 15.5911 ppm
-            // [1:10] Processing batch #1 out of 394
-            // [1:10] Precursor search
-            // [1:11] Optimising weights
-            // [1:11] Calculating q-values
-            // ...
-            // [1:14] Processing batches #12-14 out of 394
+            // [0:00] Loading spectral library C:\DMS_WorkDir\H_sapiens_UniProt_SPROT_2023-03-01_Tryp_Pig_Bov_7918CB1B.predicted.speclib
+            // [0:10] Library annotated with sequence database(s): E:\DMS_Temp_Org\ID_008368_98FC29DE.fasta
+            // [0:12] Spectral library loaded: 20403 protein isoforms, 30350 protein groups and 7717737 precursors in 2997333 elution groups.
+            // [0:12] Loading protein annotations from FASTA C:\DMS_Temp_Org\ID_008368_98FC29DE.fasta
+            // [0:13] Annotating library proteins with information from the FASTA database
+            // [0:13] Gene names missing for some isoforms
+            // [0:13] Library contains 20399 proteins, and 20195 genes
+            // [0:24] Initialising library
+            // [0:45] File #1/1
+            // [0:45] Loading run C:\DMS_WorkDir\MM_Strap_IMAC_FT_10xDilution_FAIMS_ID_01_FAIMS_Merry_03Feb23_REP-22-11-13.mzML
+            // [1:02] Run loaded: 3702 MS1 scans and 88848 MS2 scans
+            // [1:03] 7590809 library precursors are potentially detectable
+            // [1:11] Processing batch #1 out of 3795
+            // [1:11] Precursor search
+            // [1:13] Optimising weights
+            // [1:14] Calculating q-values
+            // [1:14] Number of IDs at 0.01 FDR: 0
+            // [1:14] Calculating q-values
+            // [1:14] Number of IDs at 0.01 FDR: 0
+            // [1:14] Calibrating retention times
+            // [1:14] 150 precursors used for iRT estimation.
+            // [1:14] Processing batch #2 out of 3795
             // [1:14] Precursor search
-            // [1:15] Optimising weights
-            // [1:15] Calculating q-values
-            // [1:15] Number of IDs at 0.01 FDR: 520
+            // ...
+            // [1:21] Processing batches #6-7 out of 3795
+            // [1:21] Precursor search
+            // [1:24] Optimising weights
+            // [1:25] Calculating q-values
+            // [1:25] Number of IDs at 0.01 FDR: 0
+            // [1:25] Calibrating retention times
+            // [1:25] 150 precursors used for iRT estimation.
+            // [1:25] Processing batches #8-9 out of 3795
+            // [1:25] Precursor search
+            // [1:28] Optimising weights
+            // [1:28] Calculating q-values
+            // ...
+            // [1:41] 150 precursors used for iRT estimation.
+            // [1:41] Top 70% mass accuracy: 2.07368 ppm
+            // [1:41] Top 70% mass accuracy without correction: 5.38199ppm
+            // [1:41] Cannot perform MS1 mass calibration, too few confidently identified precursors
+            // [1:41] Recalibrating with mass accuracy 1.03684e-05, 2e-05 (MS2, MS1)
+            // [1:41] Processing batch #1 out of 3795
+            // [1:41] Precursor search
+            // [1:43] Optimising weights
+            // [1:44] Calculating q-values
+            // ...
+            // [2:14] Processing batches #12-14 out of 394
+            // [2:14] Precursor search
+            // [2:15] Optimising weights
+            // [2:15] Calculating q-values
+            // [2:15] Number of IDs at 0.01 FDR: 520
             // ...
             // [4:30] Calculating q-values
             // [4:30] Number of IDs at 0.01 FDR: 28852
@@ -1402,8 +1413,9 @@ namespace AnalysisManagerDiaNNPlugIn
         /// Store the DIA-NN version
         /// </summary>
         /// <remarks>
-        /// Example value for dataLine:
+        /// Example values for dataLine:
         /// DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
+        /// DIA-NN 1.9.1 (Data-Independent Acquisition by Neural Networks)
         /// </remarks>
         /// <param name="dataLine"></param>
         private void StoreDiaNNVersion(string dataLine)
