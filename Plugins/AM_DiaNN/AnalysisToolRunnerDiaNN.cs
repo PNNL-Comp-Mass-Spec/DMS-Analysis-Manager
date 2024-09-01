@@ -1526,11 +1526,20 @@ namespace AnalysisManagerDiaNNPlugIn
             FileSystemInfo spectralLibraryFile,
             out LibraryCreationCompletionCode completionCode)
         {
-            var specLib = new FileInfo(Path.Combine(mWorkDir, "lib.predicted.speclib"));
+            // DIA-NN v1.8 creates a spectral library named lib.predicted.speclib
+            // DIA-NN v1.9 creates a spectral library named report-lib.predicted.speclib
+
+            var specLib2023 = new FileInfo(Path.Combine(mWorkDir, "lib.predicted.speclib"));
+            var specLib = new FileInfo(Path.Combine(mWorkDir, "report-lib.predicted.speclib"));
 
             if (specLib.Exists)
             {
                 return RenameSpectralLibraryFile(specLib, spectralLibraryFile, out completionCode);
+            }
+
+            if (specLib2023.Exists)
+            {
+                return RenameSpectralLibraryFile(specLib2023, spectralLibraryFile, out completionCode);
             }
 
             // ReSharper disable CommentTypo
@@ -1544,7 +1553,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // ReSharper disable once ConvertIfStatementToSwitchStatement
             if (specLibFiles.Length < 1)
             {
-                // lib.predicted.speclib file not created by DIA-NN
+                // report-lib.predicted.speclib file not created by DIA-NN
                 LogError(string.Format("{0} file not created by DIA-NN", specLib.Name));
                 completionCode = LibraryCreationCompletionCode.LibraryNotCreated;
                 return false;
@@ -1560,6 +1569,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 return false;
             }
 
+            // report-lib.predicted.speclib file not created by DIA-NN, but found file lib.predicted.speclib instead
             LogWarning("{0} file not created by DIA-NN, but found file {1} instead", specLib.Name, specLibFiles[0]);
 
             return RenameSpectralLibraryFile(specLibFiles[0], spectralLibraryFile, out completionCode);
