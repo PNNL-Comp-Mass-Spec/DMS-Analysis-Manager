@@ -62,9 +62,14 @@ namespace AnalysisManagerDiaNNPlugIn
             UsingExistingLibrary = 4,
 
             /// <summary>
+            /// Found a spectral library with a failed state; a DB admin either needs to delete the row from t_spectral_library or change its state to 5
+            /// </summary>
+            FoundFailedLibrary = 5,
+
+            /// <summary>
             /// Error determining the spectral library status
             /// </summary>
-            Error = 5
+            Error = 6
         }
 
         private bool mBuildingSpectralLibrary;
@@ -187,6 +192,15 @@ namespace AnalysisManagerDiaNNPlugIn
                         {
                             LogError("Spectral library status code returned by GetRemoteSpectralLibraryFile is {0}", libraryStatusCode);
                         }
+
+                        return CloseOutType.CLOSEOUT_FAILED;
+
+                    case SpectralLibraryStatusCodes.FoundFailedLibrary:
+                        const string msg = "Found a spectral library with a failed state; " +
+                                           "a database admin either needs to delete the row from t_spectral_library or change its state to 5";
+
+                        LogError(msg);
+                        UpdateStatusMessage(msg);
 
                         return CloseOutType.CLOSEOUT_FAILED;
 
@@ -358,7 +372,7 @@ namespace AnalysisManagerDiaNNPlugIn
             // Determine the name to use for the in-silico based spectral library created using the
             // protein collections or legacy FASTA file associated with this job
 
-            // The spectral library file depends several settings tracked by options, including
+            // The spectral library file depends on several settings tracked by options, including
             // the cleavage specificity, peptide lengths, m/z range, charge range, dynamic mods, and static mods
 
             if (mBuildingSpectralLibrary)
@@ -550,7 +564,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                     case 4:
                         // Failed
-                        libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                        libraryStatusCode = SpectralLibraryStatusCodes.FoundFailedLibrary;
                         break;
 
                     case 5:
