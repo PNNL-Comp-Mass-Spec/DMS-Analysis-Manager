@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
@@ -336,6 +337,101 @@ namespace AnalysisManagerDiaNNPlugIn
                 : modificationList.ToString();
         }
 
+        private bool GetDiannVersion(out Version diannVersion)
+        {
+            try
+            {
+                var diaNNProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
+                    mMgrParams, mJobParams, StepToolName,
+                    "DiaNNProgLoc", AnalysisToolRunnerDiaNN.DIA_NN_EXE_NAME,
+                    out var errorMessage, out _);
+
+                if (string.IsNullOrWhiteSpace(diaNNProgLoc))
+                {
+                    LogError("Error finding the DIA-NN executable ({0}): {1}", AnalysisToolRunnerDiaNN.DIA_NN_EXE_NAME, errorMessage);
+                    diannVersion = null;
+                    return false;
+                }
+
+                var diaNNVersionConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, "DiaNN_VersionInfo_ConsoleOutput.txt"));
+                mJobParams.AddResultFileToSkip(diaNNVersionConsoleOutputFile.Name);
+
+                var cmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = diaNNVersionConsoleOutputFile.FullName
+                };
+                RegisterEvents(cmdRunner);
+
+                LogMessage("Determining DIA-NN version");
+
+                LogDebug(diaNNProgLoc);
+
+                // Start the program and wait for it to finish
+                var processingSuccess = cmdRunner.RunProgram(diaNNProgLoc, string.Empty, "DIA-NN", true);
+
+                if (!processingSuccess)
+                {
+                    if (string.IsNullOrWhiteSpace(mMessage))
+                    {
+                        LogError("Error determining DIA-NN version");
+                    }
+
+                    diannVersion = null;
+                    return false;
+                }
+
+                diaNNVersionConsoleOutputFile.Refresh();
+                if (!diaNNVersionConsoleOutputFile.Exists)
+                {
+                    LogError("Error determining DIA-NN version; console output file not found: {0}", diaNNVersionConsoleOutputFile.FullName);
+
+                    diannVersion = null;
+                    return false;
+                }
+
+                var reader = new StreamReader(new FileStream(diaNNVersionConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (true)
+                {
+                    var dataLine = reader.ReadLine();
+                    if (dataLine == null)
+                        break;
+
+                    if (!dataLine.StartsWith("DIA-NN", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var versionMatcher = new Regex("DIA-NN (?<Version>[0-9.]+)", RegexOptions.IgnoreCase);
+
+                    var versionMatch = versionMatcher.Match(dataLine);
+
+                    if (!versionMatch.Success)
+                    {
+                        LogError(string.Format("Unable to extract the DIA-NN version from \"{0}\" using the Regex", dataLine));
+                        diannVersion = null;
+                        return false;
+                    }
+
+                    diannVersion = new Version(versionMatch.Groups["Version"].ToString());
+                    return true;
+                }
+
+                LogError(string.Format("Did not find a line that starts with DIA-NN in the console output from {0}", diaNNProgLoc));
+
+                diannVersion = null;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error determining the version of DIA-NN on this computer", ex);
+                diannVersion = null;
+                return false;
+            }
+        }
+
         /// <summary>
         /// Determine the filename to use for the spectral library
         /// </summary>
@@ -343,10 +439,10 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <para>If options.ExistingSpectralLibrary has a filename defined, use it</para>
         /// <para>Otherwise, contact the database to determine the name to use (possibly creating a new spectral library)</para>
         /// </remarks>
-        /// <param name="options"></param>
+        /// <param name="options">Options</param>
         /// <param name="libraryStatusCode">Output: spectral library status code</param>
         /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
-        /// <param name="createNewLibrary">Output: true if this job should create the spectral library)</param>
+        /// <param name="createNewLibrary">Output: true if this job should create the spectral library</param>
         /// <returns>FileInfo object, or null if an error</returns>
         private FileInfo GetRemoteSpectralLibraryFile(
             DiaNNOptions options,
@@ -392,7 +488,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Contact the database to determine if an existing spectral library exists, or if a new one needs to be created
         /// </summary>
-        /// <param name="options"></param>
+        /// <param name="options">Options</param>
         /// <param name="allowCreateNewLibrary">True if this step tool can create a new spectral library, false if this step tool requires that a spectral library already exists</param>
         /// <param name="libraryStatusCode">Output: spectral library status code</param>
         /// <param name="spectralLibraryID">Output: spectral library ID (from the database)</param>
@@ -409,6 +505,17 @@ namespace AnalysisManagerDiaNNPlugIn
 
             try
             {
+                // Determine the version of DIA-NN
+                if (!GetDiannVersion(out var diannVersion))
+                {
+                    libraryStatusCode = SpectralLibraryStatusCodes.Error;
+                    spectralLibraryID = 0;
+                    createNewLibrary = false;
+                    return null;
+                }
+
+                var diannNameAndVersion = string.Format("DIA-NN_{0}.{1}", diannVersion.Major, diannVersion.Minor);
+
                 var proteinCollectionInfo = new ProteinCollectionInfo(mJobParams);
 
                 // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
@@ -461,6 +568,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@staticMods", SqlType.VarChar, 512).Value = staticMods;
                 dbTools.AddParameter(cmd, "@dynamicMods", SqlType.VarChar, 512).Value = dynamicMods;
                 dbTools.AddParameter(cmd, "@maxDynamicMods", SqlType.Int).Value = options.MaxDynamicModsPerPeptide;
+                dbTools.AddParameter(cmd, "@programVersion", SqlType.VarChar, 64).Value = diannNameAndVersion;
 
                 // Output parameters
                 var libraryIdParam = dbTools.AddParameter(cmd, "@libraryId", SqlType.Int, ParameterDirection.InputOutput);
@@ -519,7 +627,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                     libraryStatusCode = SpectralLibraryStatusCodes.Error;
                     spectralLibraryID = 0;
-                    createNewLibrary= false;
+                    createNewLibrary = false;
                     return null;
                 }
 

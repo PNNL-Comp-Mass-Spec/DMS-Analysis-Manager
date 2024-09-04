@@ -33,7 +33,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
         // ReSharper restore CommentTypo
 
-        private const string DIA_NN_EXE_NAME = "diann.exe";
+#pragma warning disable VSSpell001
+
+        /// <summary>
+        /// DIA-NN executable name
+        /// </summary>
+        public const string DIA_NN_EXE_NAME = "diann.exe";
+#pragma warning restore VSSpell001
 
         private bool mBuildingSpectralLibrary;
 
