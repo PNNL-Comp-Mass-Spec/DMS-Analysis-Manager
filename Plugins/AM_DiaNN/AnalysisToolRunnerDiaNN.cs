@@ -374,7 +374,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogDebug(diannPlotterProgram + " " + arguments);
 
-                var diaNNPlotterConsoleOutputFile = Path.Combine(mWorkDir, "DiaNN-Plotter_ConsoleOutput.txt");
+                var diaNNPlotterConsoleOutputFile = new FileInfo(Path.Combine(mWorkDir, "DiaNN-Plotter_ConsoleOutput.txt"));
 
                 // Start the program and wait for it to finish
 
@@ -384,7 +384,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, diaNNPlotterConsoleOutputFile)
+                    ConsoleOutputFilePath = diaNNPlotterConsoleOutputFile.FullName
                 };
                 RegisterEvents(cmdRunner);
 
