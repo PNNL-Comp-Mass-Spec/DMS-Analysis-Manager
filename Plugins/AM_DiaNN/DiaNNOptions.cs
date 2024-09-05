@@ -229,6 +229,14 @@ namespace AnalysisManagerDiaNNPlugIn
         public float PrecursorQValue { get; set; } = 0.01f;
 
         /// <summary>
+        /// When true, disable scoring and localization of the dynamic mods
+        /// </summary>
+        /// <remarks>
+        /// <para>Introduced in DIA-NN 1.9</para>
+        /// </remarks>
+        public bool DisableScoring { get; set; }
+
+        /// <summary>
         /// Generate a spectral library using DIA search results
         /// </summary>
         public bool CreateSpectralLibrary { get; set; } = true;
@@ -422,7 +430,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <para>Keys in the modification mass dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
         /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="N_TERM_PEPTIDE"/></para> and similar constants)
         /// </remarks>
-        /// <param name="paramFileEntries"></param>
+        /// <param name="paramFileEntries">List of parameter file entries</param>
         /// <param name="staticModDefinitions">Output: list of static modifications</param>
         /// <param name="dynamicModDefinitions">Output: list of dynamic modifications</param>
         /// <param name="staticModsByResidue">Output: dictionary of static modifications, by residue or position</param>
@@ -645,6 +653,8 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 PrecursorQValue = GetParameterValueOrDefault(paramFileSettings, "PrecursorQValue", PrecursorQValue);
 
+                DisableScoring = GetParameterValueOrDefault(paramFileSettings, "DisableScoring", DisableScoring);
+
                 CreateSpectralLibrary = GetParameterValueOrDefault(paramFileSettings, "CreateSpectralLibrary", CreateSpectralLibrary);
 
                 CreateQuantitiesMatrices = GetParameterValueOrDefault(paramFileSettings, "CreateQuantitiesMatrices", CreateQuantitiesMatrices);
@@ -760,6 +770,11 @@ namespace AnalysisManagerDiaNNPlugIn
             }
 
             modInfo = new ModificationInfo(modificationType, modDefinitionClean.ToString(), modificationName, modificationMass, affectedResidues, isFixedLabelMod);
+
+            if (DisableScoring)
+            {
+                modInfo.DisableScoring = true;
+            }
 
             return true;
         }

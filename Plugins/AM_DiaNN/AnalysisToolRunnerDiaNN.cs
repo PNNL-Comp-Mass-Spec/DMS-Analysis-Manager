@@ -279,9 +279,19 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 arguments.AppendFormat(" --var-mod {0}", dynamicMod.ModificationDefinition);
 
-                if (dynamicMod.MonitorMod)
+                /*
+                 * Removed in DIA-NN 1.9
+                 *
+
+                    if (dynamicMod.MonitorMod)
+                    {
+                        arguments.AppendFormat(" --monitor-mod {0}", dynamicMod.ModificationName);
+                    }
+                */
+
+                if (dynamicMod.DisableScoring)
                 {
-                    arguments.AppendFormat(" --monitor-mod {0}", dynamicMod.ModificationName);
+                    arguments.AppendFormat(" --mod-no-scoring {0}", dynamicMod.ModificationName);
                 }
 
                 if (dynamicMod.NoCutAfterMod)

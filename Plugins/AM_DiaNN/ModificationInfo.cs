@@ -19,7 +19,7 @@ namespace AnalysisManagerDiaNNPlugIn
         public string AffectedResidues { get; }
 
         /// <summary>
-        /// True if
+        /// True if a fixed mod with "label" at the end of the modification definition, e.g. SILAC,0.0,KR,label
         /// </summary>
         public bool IsFixedLabelMod { get; }
 
@@ -63,9 +63,22 @@ namespace AnalysisManagerDiaNNPlugIn
         public ModificationTypes ModificationType { get; }
 
         /// <summary>
-        /// When true, append an argument of the form "--monitor-mod UniMod:121" to the argument list sent to DiaNN.exe
+        /// When true, disable scoring and localization for this modification
         /// </summary>
-        /// <remarks>Only valid for dynamic modifications</remarks>
+        /// <remarks>
+        /// <para>Introduced in DIA-NN 1.9</para>
+        /// </remarks>
+        public bool DisableScoring { get; set; }
+
+        /// <summary>
+        /// When true, append an argument of the form "--monitor-mod UniMod:121" to the argument list sent to DiaNN.exe
+        /// Enables PTM scoring & site localisation for the given mode
+        /// </summary>
+        /// <remarks>
+        /// <para>Present in DIA-NN 1.8 but removed in DIA-NN 1.9</para>
+        /// <para>Only valid for dynamic modifications</para>
+        /// </remarks>
+        [Obsolete("Removed in DIA-NN 1.9")]
         public bool MonitorMod { get; set; }
 
         /// <summary>
@@ -105,14 +118,18 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             if (ModificationType == ModificationTypes.Dynamic)
             {
-                if (MatchesModNameOrMass("UniMod:35", 15.994915))
-                {
-                    // Do not enable MonitorMod for Oxidized methionine
-                }
-                else
-                {
-                    MonitorMod = true;
-                }
+                /*
+                 * Removed in DIA-NN 1.9
+                 *
+                    if (MatchesModNameOrMass("UniMod:35", 15.994915))
+                    {
+                        // Do not enable MonitorMod for Oxidized methionine
+                    }
+                    else
+                    {
+                        MonitorMod = true;
+                    }
+                */
 
                 if (MatchesModNameOrMass("UniMod:121", 114.042927))
                 {
