@@ -70,6 +70,8 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </remarks>
         public bool DisableScoring { get; set; }
 
+        // ReSharper disable once UnusedMember.Global
+
         /// <summary>
         /// When true, append an argument of the form "--monitor-mod UniMod:121" to the argument list sent to DiaNN.exe
         /// Enables PTM scoring & site localisation for the given mode

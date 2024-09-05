@@ -11,7 +11,7 @@ namespace AnalysisManagerDiaNNPlugIn
     // ReSharper disable CommentTypo
 
     // Ignore Spelling: alkylation, carbamidomethyl, Chymotrypsin, cys, DIA, iodoacetamide, isoform, isotopologues, Glu, Lys
-    // Ignore Spelling: proline, prot, proteomes, proteotypicity, silico
+    // Ignore Spelling: peptidoforms, proline, prot, proteomes, proteotypicity, silico
 
     // ReSharper enable CommentTypo
 
@@ -162,6 +162,8 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </remarks>
         public Dictionary<string, SortedSet<double>> StaticModifications { get; }
 
+        // ReSharper disable once GrammarMistakeInComment
+
         /// <summary>
         /// Dictionary of variable (dynamic) modifications, by residue or position
         /// </summary>
@@ -235,6 +237,12 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <para>Introduced in DIA-NN 1.9</para>
         /// </remarks>
         public bool DisableScoring { get; set; }
+
+        /// <summary>
+        /// When true, disable peptidoform scoring
+        /// </summary>
+        /// <remarks>Only valid for dynamic modifications</remarks>
+        public bool NoPeptidoforms { get; set; }
 
         /// <summary>
         /// Generate a spectral library using DIA search results
@@ -654,6 +662,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 PrecursorQValue = GetParameterValueOrDefault(paramFileSettings, "PrecursorQValue", PrecursorQValue);
 
                 DisableScoring = GetParameterValueOrDefault(paramFileSettings, "DisableScoring", DisableScoring);
+
+                NoPeptidoforms = GetParameterValueOrDefault(paramFileSettings, "NoPeptidoforms", NoPeptidoforms);
 
                 CreateSpectralLibrary = GetParameterValueOrDefault(paramFileSettings, "CreateSpectralLibrary", CreateSpectralLibrary);
 

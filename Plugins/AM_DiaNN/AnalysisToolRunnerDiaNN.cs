@@ -1413,6 +1413,9 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (options.MS1MassAccuracy > 0)
                     arguments.AppendFormat(" --mass-acc-ms1 {0}", options.MS1MassAccuracy);
 
+                if (options.NoPeptidoforms)
+                    arguments.AppendFormat(" --no-peptidoforms");
+
                 AppendAdditionalArguments(options, arguments);
 
                 arguments.AppendFormat(" --pg-level {0}", (int)options.ProteinInferenceMode);
