@@ -66,7 +66,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 // Verify that program files exist
 
-                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre11\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrEmpty(javaProgLoc))

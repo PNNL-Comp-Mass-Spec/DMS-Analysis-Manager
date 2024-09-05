@@ -61,7 +61,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 // Verify that program files exist
 
-                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre11\bin\Java.exe"
                 // Note that we need to run MSDeconv with a 64-bit version of Java since it prefers to use 2 or more GB of ram
                 var javaProgLoc = GetJavaProgLoc();
 

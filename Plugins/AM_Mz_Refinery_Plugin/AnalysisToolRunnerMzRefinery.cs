@@ -136,7 +136,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+                // javaProgLoc will typically be "C:\Program Files\Java\jre11\bin\Java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrEmpty(javaProgLoc))

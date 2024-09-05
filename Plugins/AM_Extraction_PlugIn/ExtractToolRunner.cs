@@ -537,7 +537,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 const int javaMemorySize = 1000;
 
-                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre11\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrWhiteSpace(javaProgLoc))
@@ -576,10 +576,10 @@ namespace AnalysisManagerExtractionPlugin
                 // ReSharper disable once CommentTypo
 
                 // Example command line:
-                // "C:\DMS_Programs\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar
+                // "C:\DMS_Programs\Java\jre11\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar
                 //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt"
                 //   -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
-                // "C:\DMS_Programs\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar
+                // "C:\DMS_Programs\Java\jre11\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar
                 //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt"
                 //   -fdr 0.05 -d Reversed_
 

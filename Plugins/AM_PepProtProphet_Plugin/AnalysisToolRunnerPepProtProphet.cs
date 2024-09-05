@@ -1706,7 +1706,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
             try
             {
-                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre11\bin\java.exe"
                 options.JavaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrWhiteSpace(options.JavaProgLoc))
@@ -5140,7 +5140,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // ReSharper disable CommentTypo
 
                 // Example command:
-                // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\CHI_IXN\interact.pep.xml C:\DMS_WorkDir\Dataset1.mzML C:\DMS_WorkDir\Dataset2.mzML
+                // C:\DMS_Programs\Java\jre11\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\CHI_IXN\interact.pep.xml C:\DMS_WorkDir\Dataset1.mzML C:\DMS_WorkDir\Dataset2.mzML
 
                 // ReSharper enable CommentTypo
 
@@ -5275,7 +5275,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 LogDebug("Rewriting .pepXML files", 2);
 
                 // Example command line:
-                // C:\DMS_Programs\Java\jre8\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML
+                // C:\DMS_Programs\Java\jre11\bin\java.exe -cp C:\DMS_Programs\MSFragger\fragpipe\lib/* com.dmtavt.fragpipe.util.RewritePepxml C:\DMS_WorkDir\interact-QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.pep.xml C:\DMS_WorkDir\QC_Shew_20_01_R01_Bane_10Feb21_20-11-16.mzML
 
                 if (!options.LibraryFinder.FindFragPipeLibDirectory(out var libDirectory))
                     return false;

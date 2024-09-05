@@ -105,7 +105,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Verify that program files exist
 
-                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre11\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrEmpty(javaProgLoc))

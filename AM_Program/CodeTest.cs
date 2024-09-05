@@ -904,7 +904,7 @@ namespace AnalysisManagerProg
                 //var jobNum = "12345";
                 //var debugLevel = (short)(mMgrSettings.GetParam("DebugLevel", 1));
 
-                //var javaProgLoc = @"C:\DMS_Programs\Java\jre8\bin\java.exe";
+                //var javaProgLoc = @"C:\DMS_Programs\Java\jre11\bin\java.exe";
                 //var msgfDbProgLoc = @"C:\DMS_Programs\MSGFPlus\MSGFPlus.jar";
                 //bool fastaFileIsDecoy;
                 //string fastaFilePath;

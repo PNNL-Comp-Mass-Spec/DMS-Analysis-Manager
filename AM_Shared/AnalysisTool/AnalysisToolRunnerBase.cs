@@ -1915,7 +1915,7 @@ namespace AnalysisManagerBase.AnalysisTool
             }
             else
             {
-                // JavaLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                // JavaLoc will typically be "C:\DMS_Programs\Java\jre11\bin\java.exe"
                 paramName = "JavaLoc";
             }
 

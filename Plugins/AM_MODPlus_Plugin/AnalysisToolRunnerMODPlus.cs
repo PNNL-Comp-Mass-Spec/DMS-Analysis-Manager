@@ -64,7 +64,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Verify that program files exist
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
+                // JavaProgLoc will typically be "C:\Program Files\Java\jre11\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
 
                 if (string.IsNullOrEmpty(javaProgLoc))
@@ -977,10 +977,9 @@ namespace AnalysisManagerMODPlusPlugin
                             {
                                 modPlusRunner.Value.CommandLineArgsLogged = true;
 
-                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar
+                                // "C:\Program Files\Java\jre11\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar
                                 //   -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt > MODPlus_ConsoleOutput_Part1.txt
-                                LogDebug(
-                                    javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
+                                LogDebug(javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
                             }
                         }
 

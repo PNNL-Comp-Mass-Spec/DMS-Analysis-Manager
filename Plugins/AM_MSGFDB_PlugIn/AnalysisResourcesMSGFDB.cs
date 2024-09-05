@@ -297,7 +297,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Passing in the path to the parameter file so we can look for TDA=0 when using large FASTA files
                 var parameterFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
-                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre8\bin\java.exe"
+                // javaProgLoc will typically be "C:\DMS_Programs\Java\jre11\bin\java.exe"
                 var javaProgLoc = AnalysisToolRunnerBase.GetJavaProgLoc(mMgrParams, out var javaLocErrorMessage);
 
                 if (string.IsNullOrEmpty(javaProgLoc))
