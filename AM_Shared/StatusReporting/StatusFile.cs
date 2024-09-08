@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -157,7 +158,9 @@ namespace AnalysisManagerBase.StatusReporting
         public bool LogToMsgQueue { get; private set; }
 
         /// <summary>
+        /// Keeps track of the 25 most recent free memory MB values
         /// </summary>
+        public Queue MemoryUsageQueue { get; }
 
         /// <summary>
         /// Topic name for the manager status message queue
@@ -306,6 +309,8 @@ namespace AnalysisManagerBase.StatusReporting
             mDebugLevel = debugLevel;
 
             mLastFileWriteTime = DateTime.MinValue;
+
+            MemoryUsageQueue = new Queue();
 
             ClearCachedInfo();
         }
@@ -1557,6 +1562,14 @@ namespace AnalysisManagerBase.StatusReporting
             bool forceLogToBrokerDB = false)
         {
             string xmlText;
+
+            // Keep track of the 25 most recent free memory values
+            MemoryUsageQueue.Enqueue(freeMemoryMB);
+
+            while (MemoryUsageQueue.Count > 25)
+            {
+                MemoryUsageQueue.Dequeue();
+            }
 
             try
             {
