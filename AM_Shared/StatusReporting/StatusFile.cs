@@ -827,6 +827,37 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Compute the average value of recent free memory MB
+        /// </summary>
+        /// <remarks>Will return -1 if no free memory values have been stored</remarks>
+        /// <param name="countToAverage">Number of values to average</param>
+        /// <returns>Free memory, in MB</returns>
+        public float GetAverageRecentFreeMemoryMB(int countToAverage)
+        {
+            if (MemoryUsageQueue.Count == 0)
+                return -1;
+
+            var freeMemoryValues = MemoryUsageQueue.ToArray().Reverse().ToList();
+
+            if (countToAverage <= 1)
+                return (float)freeMemoryValues[0];
+
+            float sum = 0;
+            var count = 0;
+
+            for (var i = 0; i < countToAverage; i++)
+            {
+                if (i >= freeMemoryValues.Count)
+                    break;
+
+                count++;
+                sum += (float)freeMemoryValues[i];
+            }
+
+            return sum / count;
+        }
+
+        /// <summary>
         /// Returns the number of cores
         /// </summary>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>

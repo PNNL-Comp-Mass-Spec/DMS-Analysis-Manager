@@ -1210,14 +1210,25 @@ namespace AnalysisManagerDiaNNPlugIn
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
 
+                var averageFreeMemoryInfo = string.Format("Average recent free memory: {0:0.0} MB", mStatusTools.GetAverageRecentFreeMemoryMB(3));
+                var freeMemoryLogged = false;
+
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    LogError(mConsoleOutputErrorMsg);
+                    LogError("{0}; {1}", mConsoleOutputErrorMsg, averageFreeMemoryInfo);
+                    freeMemoryLogged = true;
                 }
 
                 if (!processingSuccess)
                 {
-                    LogError("Error running DIA-NN");
+                    if (freeMemoryLogged)
+                    {
+                        LogError("Error running DIA-NN");
+                    }
+                    else
+                    {
+                        LogError("{0}; {1}", "Error running DIA-NN", averageFreeMemoryInfo);
+                    }
 
                     if (mCmdRunner.ExitCode != 0)
                     {

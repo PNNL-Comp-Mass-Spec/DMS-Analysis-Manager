@@ -252,6 +252,13 @@ namespace AnalysisManagerBase.StatusReporting
         string Tool { get; set; }
 
         /// <summary>
+        /// Compute the average value of recent free memory MB
+        /// </summary>
+        /// <param name="countToAverage">Number of values to average</param>
+        /// <returns>Free memory, in MB</returns>
+        float GetAverageRecentFreeMemoryMB(int countToAverage);
+
+        /// <summary>
         /// Returns the number of cores
         /// </summary>
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
