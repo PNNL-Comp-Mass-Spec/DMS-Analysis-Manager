@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 //*********************************************************************************************************
@@ -8,6 +9,8 @@ using System.Collections.Generic;
 // Created 06/07/2006
 //
 //*********************************************************************************************************
+
+// ReSharper disable UnusedMemberInSuper.Global
 
 namespace AnalysisManagerBase.StatusReporting
 {
@@ -122,11 +125,6 @@ namespace AnalysisManagerBase.StatusReporting
         // Ignore Spelling: hyperthreading, tcp
 
         /// <summary>
-        /// When true, status messages are being sent directly to the broker database
-        /// </summary>
-        bool LogToBrokerQueue { get; }
-
-        /// <summary>
         /// Broker database connection string
         /// </summary>
         string BrokerDBConnectionString { get; }
@@ -137,50 +135,9 @@ namespace AnalysisManagerBase.StatusReporting
         float BrokerDBUpdateIntervalMinutes { get; }
 
         /// <summary>
-        /// Status file path
-        /// </summary>
-        string FileNamePath { get; set; }
-
-        /// <summary>
-        /// Manager name
-        /// </summary>
-        string MgrName { get; set; }
-
-        /// <summary>
-        /// Manager status
-        /// </summary>
-        MgrStatusCodes MgrStatus { get; set; }
-
-        /// <summary>
-        /// Name of the manager remotely running the job
-        /// </summary>
-        /// <remarks>When this is defined, it is implied that stats like CpuUtilization  and CoreUsage apply to the remote manager</remarks>
-        string RemoteMgrName { get; set; }
-
-        /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
         int CpuUtilization { get; set; }
-
-        /// <summary>
-        /// Step tool name
-        /// </summary>
-        string Tool { get; set; }
-
-        /// <summary>
-        /// Task status
-        /// </summary>
-        TaskStatusCodes TaskStatus { get; set; }
-
-        /// <summary>
-        /// Task start time (UTC-based)
-        /// </summary>
-        DateTime TaskStartTime { get; set; }
-
-        /// <summary>
-        /// Progress (value between 0 and 100)
-        /// </summary>
-        float Progress { get; set; }
 
         /// <summary>
         /// Current task
@@ -188,9 +145,14 @@ namespace AnalysisManagerBase.StatusReporting
         string CurrentOperation { get; set; }
 
         /// <summary>
-        /// Task status detail
+        /// Dataset name
         /// </summary>
-        TaskStatusDetailCodes TaskStatusDetail { get; set; }
+        string Dataset { get; set; }
+
+        /// <summary>
+        /// Status file path
+        /// </summary>
+        string FileNamePath { get; set; }
 
         /// <summary>
         /// Job number
@@ -203,14 +165,54 @@ namespace AnalysisManagerBase.StatusReporting
         int JobStep { get; set; }
 
         /// <summary>
-        /// Dataset name
+        /// When true, status messages are being sent directly to the broker database
         /// </summary>
-        string Dataset { get; set; }
+        bool LogToBrokerQueue { get; }
+
+        /// <summary>
+        /// When true, the status XML is being sent to the manager status message queue
+        /// </summary>
+        bool LogToMsgQueue { get; }
+
+        /// <summary>
+        /// Keeps track of the 25 most recent free memory MB values
+        /// </summary>
+        public Queue MemoryUsageQueue { get; }
+
+        /// <summary>
+        /// Topic name for the manager status message queue
+        /// </summary>
+        string MessageQueueTopic { get; }
+
+        /// <summary>
+        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
+        /// </summary>
+        string MessageQueueURI { get; }
+
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        string MgrName { get; set; }
+
+        /// <summary>
+        /// Manager status
+        /// </summary>
+        MgrStatusCodes MgrStatus { get; set; }
 
         /// <summary>
         /// Most recent job info
         /// </summary>
         string MostRecentJobInfo { get; set; }
+
+        /// <summary>
+        /// Progress (value between 0 and 100)
+        /// </summary>
+        float Progress { get; set; }
+
+        /// <summary>
+        /// Number of cores in use by an externally spawned process
+        /// </summary>
+        float ProgRunnerCoreUsage { get; set; }
 
         /// <summary>
         /// ProcessID of an externally spawned process
@@ -219,9 +221,10 @@ namespace AnalysisManagerBase.StatusReporting
         int ProgRunnerProcessID { get; set; }
 
         /// <summary>
-        /// Number of cores in use by an externally spawned process
+        /// Name of the manager remotely running the job
         /// </summary>
-        float ProgRunnerCoreUsage { get; set; }
+        /// <remarks>When this is defined, it is implied that stats like CpuUtilization  and CoreUsage apply to the remote manager</remarks>
+        string RemoteMgrName { get; set; }
 
         /// <summary>
         /// Number of spectrum files created or number of scans being searched
@@ -229,24 +232,29 @@ namespace AnalysisManagerBase.StatusReporting
         int SpectrumCount { get; set; }
 
         /// <summary>
-        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
+        /// Task start time (UTC-based)
         /// </summary>
-        string MessageQueueURI { get; }
+        DateTime TaskStartTime { get; set; }
 
         /// <summary>
-        /// Topic name for the manager status message queue
+        /// Task status
         /// </summary>
-        string MessageQueueTopic { get; }
+        TaskStatusCodes TaskStatus { get; set; }
 
         /// <summary>
-        /// When true, the status XML is being sent to the manager status message queue
+        /// Task status detail
         /// </summary>
-        bool LogToMsgQueue { get; }
+        TaskStatusDetailCodes TaskStatusDetail { get; set; }
+
+        /// <summary>
+        /// Step tool name
+        /// </summary>
+        string Tool { get; set; }
 
         /// <summary>
         /// Returns the number of cores
         /// </summary>
-        /// <remarks>Not affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         int GetCoreCount();
 
         /// <summary>
@@ -265,15 +273,6 @@ namespace AnalysisManagerBase.StatusReporting
         /// </summary>
         /// <param name="coreUsageHistory"></param>
         void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory);
-
-        /// <summary>
-        /// Updates status file
-        /// </summary>
-        /// <param name="managerIdleMessage"></param>
-        /// <param name="recentErrorMessages"></param>
-        /// <param name="jobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
         /// Updates status file
@@ -322,34 +321,13 @@ namespace AnalysisManagerBase.StatusReporting
             bool forceLogToBrokerDB);
 
         /// <summary>
-        /// Sets status file to show manager idle
+        /// Updates status file
         /// </summary>
-        void UpdateIdle();
-
-        /// <summary>
-        /// Logs to the status file that the manager is idle
-        /// </summary>
-        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="managerIdleMessage">Manager idle message</param>
+        /// <param name="recentErrorMessages">Recent error messages</param>
+        /// <param name="jobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB);
-
-        /// <summary>
-        /// Logs to the status file that the manager is idle
-        /// </summary>
-        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
-        /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB);
-
-        /// <summary>
-        /// Logs to the status file that the manager is idle
-        /// </summary>
-        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-        /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB);
+        void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
         /// Logs to the status file that the manager is disabled
@@ -386,6 +364,36 @@ namespace AnalysisManagerBase.StatusReporting
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string recentJobInfo);
+
+        /// <summary>
+        /// Sets status file to show manager idle
+        /// </summary>
+        void UpdateIdle();
+
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB);
+
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
+        /// <param name="recentJobInfo">Information on the job that started most recently</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB);
+
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentJobInfo">Information on the job that started most recently</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB);
 
         /// <summary>
         /// Writes out a new status file, indicating that the manager is still alive

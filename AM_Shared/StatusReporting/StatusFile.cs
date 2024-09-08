@@ -40,52 +40,52 @@ namespace AnalysisManagerBase.StatusReporting
 
         private const int MAX_ERROR_MESSAGE_COUNT_TO_CACHE = 10;
 
+        /// <summary>
+        /// Used to log messages to the broker DB
+        /// </summary>
+        private DBStatusLogger mBrokerDBLogger;
+
+        private readonly int mDebugLevel;
+
         private static readonly Regex mFindAmpersand = new("[&]", RegexOptions.Compiled);
 
         private static readonly Regex mFindLessThanOrGreaterThan = new("[<>]", RegexOptions.Compiled);
 
-        private int mRecentErrorMessageCount;
+        private DateTime mLastFileWriteTime;
 
-        private readonly string[] mRecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
+        private DateTime mLastMessageQueueErrorTime;
 
-        private readonly int mDebugLevel;
-
-        // Instance of class AnalysisMgrSettings
-        private readonly IMgrParams mMgrParams;
+        private DateTime mLastMessageQueueWarningTime;
 
         /// <summary>
         /// Used to log the memory usage to a status file
         /// </summary>
         private MemoryUsageLogger mMemoryUsageLogger;
 
-        /// <summary>
-        /// Used to log messages to the broker DB
-        /// </summary>
-        private DBStatusLogger mBrokerDBLogger;
-
         private MessageSender mMessageSender;
+
+        // Instance of class AnalysisMgrSettings
+        private readonly IMgrParams mMgrParams;
+
+        private readonly Dictionary<MgrStatusCodes, string> mMgrStatusMap;
 
         private MessageQueueLogger mQueueLogger;
 
-        private DateTime mLastFileWriteTime;
+        private int mRecentErrorMessageCount;
 
-        private int mWritingErrorCountSaved;
-
-        private DateTime mLastMessageQueueErrorTime;
-
-        private DateTime mLastMessageQueueWarningTime;
-
-        private readonly Dictionary<MgrStatusCodes, string> mMgrStatusMap;
+        private readonly string[] mRecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
         private readonly Dictionary<TaskStatusCodes, string> mTaskStatusMap;
 
         private readonly Dictionary<TaskStatusDetailCodes, string> mTaskStatusDetailMap;
 
+        private int mWritingErrorCountSaved;
+
         /// <summary>
-        /// When true, status messages are being sent directly to the broker database
-        /// using stored procedure update_manager_and_task_status
+        /// Set to true to abort processing due to a critical error
         /// </summary>
-        public bool LogToBrokerQueue { get; private set; }
+        /// <remarks>Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected</remarks>
+        public bool AbortProcessingNow { get; private set; }
 
         /// <summary>
         /// Broker database connection string
@@ -116,70 +116,9 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Status file path
-        /// </summary>
-        public string FileNamePath { get; set; }
-
-        /// <summary>
-        /// Manager name
-        /// </summary>
-        public string MgrName { get; set; }
-
-        /// <summary>
-        /// Manager status
-        /// </summary>
-        public MgrStatusCodes MgrStatus { get; set; }
-
-        /// <summary>
-        /// Path to the .jobstatus file for jobs running offline
-        /// </summary>
-        public string OfflineJobStatusFilePath { get; set; }
-
-        /// <summary>
-        /// Name of the manager remotely running the job, or of the remote host that this manager pushes jobs to
-        /// </summary>
-        public string RemoteMgrName { get; set; }
-
-        /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
         public int CpuUtilization { get; set; }
-
-        /// <summary>
-        /// Step tool name
-        /// </summary>
-        public string Tool { get; set; }
-
-        /// <summary>
-        /// Task status
-        /// </summary>
-        public TaskStatusCodes TaskStatus { get; set; }
-
-        /// <summary>
-        /// Task start time (UTC-based)
-        /// </summary>
-        public DateTime TaskStartTime { get; set; }
-
-        /// <summary>
-        /// Progress (value between 0 and 100)
-        /// </summary>
-        public float Progress { get; set; }
-
-        /// <summary>
-        /// Core usage history for a process being run by the ProgRunner
-        /// </summary>
-        public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory { get; private set; }
-
-        /// <summary>
-        /// ProcessID of an externally spawned process
-        /// </summary>
-        /// <remarks>0 if no external process running</remarks>
-        public int ProgRunnerProcessID { get; set; }
-
-        /// <summary>
-        /// Number of cores in use by an externally spawned process
-        /// </summary>
-        public float ProgRunnerCoreUsage { get; set; }
 
         /// <summary>
         /// Current task
@@ -187,9 +126,14 @@ namespace AnalysisManagerBase.StatusReporting
         public string CurrentOperation { get; set; }
 
         /// <summary>
-        /// Task status detail
+        /// Dataset name
         /// </summary>
-        public TaskStatusDetailCodes TaskStatusDetail { get; set; }
+        public string Dataset { get; set; }
+
+        /// <summary>
+        /// Status file path
+        /// </summary>
+        public string FileNamePath { get; set; }
 
         /// <summary>
         /// Job number
@@ -202,14 +146,38 @@ namespace AnalysisManagerBase.StatusReporting
         public int JobStep { get; set; }
 
         /// <summary>
-        /// Working directory path
+        /// When true, status messages are being sent directly to the broker database
+        /// using stored procedure update_manager_and_task_status
         /// </summary>
-        public string WorkDirPath { get; set; }
+        public bool LogToBrokerQueue { get; private set; }
 
         /// <summary>
-        /// Dataset name
+        /// When true, the status XML is being sent to the manager status message queue
         /// </summary>
-        public string Dataset { get; set; }
+        public bool LogToMsgQueue { get; private set; }
+
+        /// <summary>
+        /// </summary>
+
+        /// <summary>
+        /// Topic name for the manager status message queue
+        /// </summary>
+        public string MessageQueueTopic { get; private set; }
+
+        /// <summary>
+        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
+        /// </summary>
+        public string MessageQueueURI { get; private set; }
+
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string MgrName { get; set; }
+
+        /// <summary>
+        /// Manager status
+        /// </summary>
+        public MgrStatusCodes MgrStatus { get; set; }
 
         /// <summary>
         /// Most recent log message
@@ -220,6 +188,32 @@ namespace AnalysisManagerBase.StatusReporting
         /// Most recent job info
         /// </summary>
         public string MostRecentJobInfo { get; set; }
+
+        /// <summary>
+        /// Path to the .jobstatus file for jobs running offline
+        /// </summary>
+        public string OfflineJobStatusFilePath { get; set; }
+
+        /// <summary>
+        /// Progress (value between 0 and 100)
+        /// </summary>
+        public float Progress { get; set; }
+
+        /// <summary>
+        /// Number of cores in use by an externally spawned process
+        /// </summary>
+        public float ProgRunnerCoreUsage { get; set; }
+
+        /// <summary>
+        /// Core usage history for a process being run by the ProgRunner
+        /// </summary>
+        public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory { get; private set; }
+
+        /// <summary>
+        /// ProcessID of an externally spawned process
+        /// </summary>
+        /// <remarks>0 if no external process running</remarks>
+        public int ProgRunnerProcessID { get; set; }
 
         /// <summary>
         /// Recent error messages
@@ -242,30 +236,39 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Name of the manager remotely running the job, or of the remote host that this manager pushes jobs to
+        /// </summary>
+        public string RemoteMgrName { get; set; }
+
+        /// <summary>
         /// Number of spectrum files created or number of scans being searched
         /// </summary>
         public int SpectrumCount { get; set; }
 
         /// <summary>
-        /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
+        /// Task start time (UTC-based)
         /// </summary>
-        public string MessageQueueURI { get; private set; }
+        public DateTime TaskStartTime { get; set; }
 
         /// <summary>
-        /// Topic name for the manager status message queue
+        /// Task status
         /// </summary>
-        public string MessageQueueTopic { get; private set; }
+        public TaskStatusCodes TaskStatus { get; set; }
 
         /// <summary>
-        /// When true, the status XML is being sent to the manager status message queue
+        /// Task status detail
         /// </summary>
-        public bool LogToMsgQueue { get; private set; }
+        public TaskStatusDetailCodes TaskStatusDetail { get; set; }
 
         /// <summary>
-        /// Set to true to abort processing due to a critical error
+        /// Step tool name
         /// </summary>
-        /// <remarks>Flag to indicate that the ABORT_PROCESSING_NOW_FILENAME file was detected</remarks>
-        public bool AbortProcessingNow { get; private set; }
+        public string Tool { get; set; }
+
+        /// <summary>
+        /// Working directory path
+        /// </summary>
+        public string WorkDirPath { get; set; }
 
         /// <summary>
         /// Constructor
@@ -877,71 +880,6 @@ namespace AnalysisManagerBase.StatusReporting
             return statusFileDirectory ?? ".";
         }
 
-        private void LogStatusToMessageQueue(string xmlText, string managerName)
-        {
-            const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;
-
-            try
-            {
-                Global.CheckStopTrace("LogStatusToMessageQueue");
-
-                if (mMessageSender == null)
-                {
-                    if (mDebugLevel >= 5)
-                    {
-                        OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
-                    }
-
-                    Global.CheckStopTrace("CreateMessageSender");
-
-                    mMessageSender = new MessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
-
-                    RegisterEvents(mMessageSender);
-
-                    // message queue logger sets up local message buffering (so calls to log don't block)
-                    // and uses message sender (as a delegate) to actually send off the messages
-                    mQueueLogger = new MessageQueueLogger(mMessageSender, this);
-                    RegisterEvents(mQueueLogger);
-
-                    var timeOfDay = DateTime.Now;
-
-                    // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
-                    var midnightOrNoon = timeOfDay.Hour is 0 or 12 && timeOfDay.Minute is >= 0 and < 5;
-
-                    if (mDebugLevel >= 3 || mDebugLevel >= 1 && midnightOrNoon)
-                    {
-                        OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
-                    }
-
-                    var logTimeInit = DateTime.UtcNow.AddMinutes(-MINIMUM_LOG_FAILURE_INTERVAL_MINUTES * 2);
-                    mLastMessageQueueErrorTime = logTimeInit;
-                    mLastMessageQueueWarningTime = logTimeInit;
-                }
-
-                Global.CheckStopTrace("LogToQueueLogger");
-
-                if (mQueueLogger != null)
-                {
-                    mQueueLogger?.LogStatusMessage(xmlText, managerName);
-                    return;
-                }
-
-                if (DateTime.UtcNow.Subtract(mLastMessageQueueWarningTime).TotalMinutes < MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
-                    return;
-
-                mLastMessageQueueWarningTime = DateTime.UtcNow;
-                OnWarningEvent("Cannot send message to the queue because mQueueLogger is null");
-            }
-            catch (Exception ex)
-            {
-                if (DateTime.UtcNow.Subtract(mLastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
-                {
-                    mLastMessageQueueErrorTime = DateTime.UtcNow;
-                    OnErrorEvent("Error in LogStatusToMessageQueue", ex);
-                }
-            }
-        }
-
         /// <summary>
         /// Send status information to the database
         /// </summary>
@@ -1019,6 +957,71 @@ namespace AnalysisManagerBase.StatusReporting
             mBrokerDBLogger.LogStatus(statusInfo, forceLogToBrokerDB);
         }
 
+        private void LogStatusToMessageQueue(string xmlText, string managerName)
+        {
+            const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;
+
+            try
+            {
+                Global.CheckStopTrace("LogStatusToMessageQueue");
+
+                if (mMessageSender == null)
+                {
+                    if (mDebugLevel >= 5)
+                    {
+                        OnStatusEvent("Initializing message queue with URI '" + MessageQueueURI + "' and Topic '" + MessageQueueTopic + "'");
+                    }
+
+                    Global.CheckStopTrace("CreateMessageSender");
+
+                    mMessageSender = new MessageSender(MessageQueueURI, MessageQueueTopic, MgrName);
+
+                    RegisterEvents(mMessageSender);
+
+                    // message queue logger sets up local message buffering (so calls to log don't block)
+                    // and uses message sender (as a delegate) to actually send off the messages
+                    mQueueLogger = new MessageQueueLogger(mMessageSender, this);
+                    RegisterEvents(mQueueLogger);
+
+                    var timeOfDay = DateTime.Now;
+
+                    // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
+                    var midnightOrNoon = timeOfDay.Hour is 0 or 12 && timeOfDay.Minute is >= 0 and < 5;
+
+                    if (mDebugLevel >= 3 || mDebugLevel >= 1 && midnightOrNoon)
+                    {
+                        OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
+                    }
+
+                    var logTimeInit = DateTime.UtcNow.AddMinutes(-MINIMUM_LOG_FAILURE_INTERVAL_MINUTES * 2);
+                    mLastMessageQueueErrorTime = logTimeInit;
+                    mLastMessageQueueWarningTime = logTimeInit;
+                }
+
+                Global.CheckStopTrace("LogToQueueLogger");
+
+                if (mQueueLogger != null)
+                {
+                    mQueueLogger?.LogStatusMessage(xmlText, managerName);
+                    return;
+                }
+
+                if (DateTime.UtcNow.Subtract(mLastMessageQueueWarningTime).TotalMinutes < MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
+                    return;
+
+                mLastMessageQueueWarningTime = DateTime.UtcNow;
+                OnWarningEvent("Cannot send message to the queue because mQueueLogger is null");
+            }
+            catch (Exception ex)
+            {
+                if (DateTime.UtcNow.Subtract(mLastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
+                {
+                    mLastMessageQueueErrorTime = DateTime.UtcNow;
+                    OnErrorEvent("Error in LogStatusToMessageQueue", ex);
+                }
+            }
+        }
+
         /// <summary>
         /// Store core usage history
         /// </summary>
@@ -1026,14 +1029,6 @@ namespace AnalysisManagerBase.StatusReporting
         public void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory)
         {
             ProgRunnerCoreUsageHistory = coreUsageHistory;
-        }
-
-        private void StoreRecentJobInfo(string jobInfo)
-        {
-            if (!string.IsNullOrEmpty(jobInfo))
-            {
-                MostRecentJobInfo = jobInfo;
-            }
         }
 
         private void StoreNewErrorMessage(string errorMessage, bool clearExistingMessages)
@@ -1050,24 +1045,21 @@ namespace AnalysisManagerBase.StatusReporting
                     mRecentErrorMessages[0] = errorMessage;
                 }
             }
-            else
+            else if (!string.IsNullOrEmpty(errorMessage))
             {
-                if (!string.IsNullOrEmpty(errorMessage))
+                if (mRecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
                 {
-                    if (mRecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
-                    {
-                        mRecentErrorMessageCount++;
-                    }
-
-                    // Shift each of the entries by one
-                    for (var index = mRecentErrorMessageCount; index >= 1; index += -1)
-                    {
-                        mRecentErrorMessages[index] = mRecentErrorMessages[index - 1];
-                    }
-
-                    // Store the new message
-                    mRecentErrorMessages[0] = errorMessage;
+                    mRecentErrorMessageCount++;
                 }
+
+                // Shift each of the entries by one
+                for (var index = mRecentErrorMessageCount; index >= 1; index += -1)
+                {
+                    mRecentErrorMessages[index] = mRecentErrorMessages[index - 1];
+                }
+
+                // Store the new message
+                mRecentErrorMessages[0] = errorMessage;
             }
         }
 
@@ -1106,26 +1098,12 @@ namespace AnalysisManagerBase.StatusReporting
             }
         }
 
-        /// <summary>
-        /// Updates status file to indicate that the manager is closing
-        /// </summary>
-        /// <param name="managerIdleMessage"></param>
-        /// <param name="recentErrorMessages"></param>
-        /// <param name="jobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
-        public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
+        private void StoreRecentJobInfo(string jobInfo)
         {
-            ClearCachedInfo();
-
-            MgrStatus = MgrStatusCodes.STOPPED;
-            TaskStatus = TaskStatusCodes.NO_TASK;
-            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
-            MostRecentLogMessage = managerIdleMessage;
-
-            StoreRecentErrorMessages(recentErrorMessages);
-            StoreRecentJobInfo(jobInfo);
-
-            WriteStatusFile(forceLogToBrokerDB, false);
+            if (!string.IsNullOrEmpty(jobInfo))
+            {
+                MostRecentJobInfo = jobInfo;
+            }
         }
 
         /// <summary>
@@ -1211,6 +1189,101 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
+        /// Updates status file to indicate that the manager is closing
+        /// </summary>
+        /// <param name="managerIdleMessage"></param>
+        /// <param name="recentErrorMessages"></param>
+        /// <param name="jobInfo">Information on the job that started most recently</param>
+        /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
+        {
+            ClearCachedInfo();
+
+            MgrStatus = MgrStatusCodes.STOPPED;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
+            MostRecentLogMessage = managerIdleMessage;
+
+            StoreRecentErrorMessages(recentErrorMessages);
+            StoreRecentJobInfo(jobInfo);
+
+            WriteStatusFile(forceLogToBrokerDB, false);
+        }
+
+        /// <summary>
+        /// Updates status file to show manager disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        public void UpdateDisabled(MgrStatusCodes managerStatus)
+        {
+            UpdateDisabled(managerStatus, "Manager Disabled");
+        }
+
+        /// <summary>
+        /// Logs to the status file that the manager is disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        /// <param name="managerStatus"></param>
+        /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage)
+        {
+            UpdateDisabled(managerStatus, managerDisableMessage, new List<string>(), MostRecentJobInfo);
+        }
+
+        /// <summary>
+        /// Logs to the status file that the manager is disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// </summary>
+        /// <param name="managerStatus"></param>
+        /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentJobInfo">Information on the job that started most recently</param>
+        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo)
+        {
+            ClearCachedInfo();
+
+            if (managerStatus is not (MgrStatusCodes.DISABLED_LOCAL or MgrStatusCodes.DISABLED_MC))
+            {
+                managerStatus = MgrStatusCodes.DISABLED_LOCAL;
+            }
+
+            MgrStatus = managerStatus;
+            TaskStatus = TaskStatusCodes.NO_TASK;
+            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
+            MostRecentLogMessage = managerDisableMessage;
+
+            StoreRecentJobInfo(recentJobInfo);
+            StoreRecentErrorMessages(recentErrorMessages);
+
+            WriteStatusFile(true, false);
+        }
+
+        /// <summary>
+        /// Updates status file to show manager stopped due to a flag file
+        /// </summary>
+        public void UpdateFlagFileExists()
+        {
+            UpdateFlagFileExists(new List<string>(), MostRecentJobInfo);
+        }
+
+        /// <summary>
+        /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
+        /// </summary>
+        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
+        /// <param name="recentJobInfo">Information on the job that started most recently</param>
+        public void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string recentJobInfo)
+        {
+            ClearCachedInfo();
+
+            MgrStatus = MgrStatusCodes.STOPPED_ERROR;
+            MostRecentLogMessage = "Flag file";
+            StoreRecentErrorMessages(recentErrorMessages);
+            StoreRecentJobInfo(recentJobInfo);
+
+            WriteStatusFile(true, false);
+        }
+
+        /// <summary>
         /// Sets status file to show manager idle
         /// </summary>
         public void UpdateIdle()
@@ -1278,80 +1351,6 @@ namespace AnalysisManagerBase.StatusReporting
             OfflineJobStatusFilePath = string.Empty;
 
             WriteStatusFile(forceLogToBrokerDB, false);
-        }
-
-        /// <summary>
-        /// Updates status file to show manager disabled
-        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-        /// </summary>
-        public void UpdateDisabled(MgrStatusCodes managerStatus)
-        {
-            UpdateDisabled(managerStatus, "Manager Disabled");
-        }
-
-        /// <summary>
-        /// Logs to the status file that the manager is disabled
-        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-        /// </summary>
-        /// <param name="managerStatus"></param>
-        /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage)
-        {
-            UpdateDisabled(managerStatus, managerDisableMessage, new List<string>(), MostRecentJobInfo);
-        }
-
-        /// <summary>
-        /// Logs to the status file that the manager is disabled
-        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
-        /// </summary>
-        /// <param name="managerStatus"></param>
-        /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-        /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages,
-                                   string recentJobInfo)
-        {
-            ClearCachedInfo();
-
-            if (managerStatus is not (MgrStatusCodes.DISABLED_LOCAL or MgrStatusCodes.DISABLED_MC))
-            {
-                managerStatus = MgrStatusCodes.DISABLED_LOCAL;
-            }
-
-            MgrStatus = managerStatus;
-            TaskStatus = TaskStatusCodes.NO_TASK;
-            TaskStatusDetail = TaskStatusDetailCodes.NO_TASK;
-            MostRecentLogMessage = managerDisableMessage;
-
-            StoreRecentJobInfo(recentJobInfo);
-            StoreRecentErrorMessages(recentErrorMessages);
-
-            WriteStatusFile(true, false);
-        }
-
-        /// <summary>
-        /// Updates status file to show manager stopped due to a flag file
-        /// </summary>
-        public void UpdateFlagFileExists()
-        {
-            UpdateFlagFileExists(new List<string>(), MostRecentJobInfo);
-        }
-
-        /// <summary>
-        /// Logs to the status file that a flag file exists, indicating that the manager did not exit cleanly on a previous run
-        /// </summary>
-        /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
-        /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        public void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string recentJobInfo)
-        {
-            ClearCachedInfo();
-
-            MgrStatus = MgrStatusCodes.STOPPED_ERROR;
-            MostRecentLogMessage = "Flag file";
-            StoreRecentErrorMessages(recentErrorMessages);
-            StoreRecentJobInfo(recentJobInfo);
-
-            WriteStatusFile(true, false);
         }
 
         /// <summary>
@@ -1425,35 +1424,56 @@ namespace AnalysisManagerBase.StatusReporting
         /// </param>
         public void WriteStatusFile(bool forceLogToBrokerDB, bool usePerformanceCounters = true)
         {
-            var lastUpdate = DateTime.MinValue;
-            var processId = 0;
-            var cpuUtilization = 0;
-            float freeMemoryMB = 0;
+            int processId;
+            int cpuUtilization;
+            float freeMemoryMB;
 
             try
             {
-                lastUpdate = DateTime.UtcNow;
-
                 Global.CheckStopTrace("GetProcessID");
                 processId = GetProcessID();
+            }
+            catch (Exception ex)
+            {
+                ConsoleMsgUtils.ShowDebug("Exception getting process ID: " + ex.Message);
+                processId = 0;
+            }
 
+            try
+            {
                 if (usePerformanceCounters)
                 {
                     Global.CheckStopTrace("GetCPUUtilization");
                     cpuUtilization = (int)GetCPUUtilization();
                 }
-                else if (Global.TraceMode)
+                else
                 {
-                    ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
-                }
+                    if (Global.TraceMode)
+                    {
+                        ConsoleMsgUtils.ShowDebug("Skipping call to GetCPUUtilization in WriteStatusFile");
+                    }
 
+                    cpuUtilization = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                ConsoleMsgUtils.ShowDebug("Exception getting CPU utilization: " + ex.Message);
+                cpuUtilization = 0;
+            }
+
+            try
+            {
                 Global.CheckStopTrace("GetFreeMemoryMB");
                 freeMemoryMB = GetFreeMemoryMB();
             }
             catch (Exception ex)
             {
-                ConsoleMsgUtils.ShowDebug("Exception getting process ID, CPU utilization, or free memory: " + ex.Message);
+                ConsoleMsgUtils.ShowDebug("Exception getting free memory: " + ex.Message);
+                freeMemoryMB = 0;
             }
+
+            var lastUpdate = DateTime.UtcNow;
 
             if (Global.TraceMode)
             {
@@ -1470,10 +1490,10 @@ namespace AnalysisManagerBase.StatusReporting
         /// Updates the status in various locations, including on disk and with the message queue and/or broker DB
         /// </summary>
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
-        /// <param name="lastUpdate"></param>
-        /// <param name="processId"></param>
-        /// <param name="cpuUtilization"></param>
-        /// <param name="freeMemoryMB"></param>
+        /// <param name="lastUpdate">Last update date/time</param>
+        /// <param name="processId">Process ID</param>
+        /// <param name="cpuUtilization">CPU Utilization (value between 0 and 100)</param>
+        /// <param name="freeMemoryMB">Free memory, in MB</param>
         /// <param name="forceLogToBrokerDB">
         /// If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)
         /// Otherwise, mBrokerDBLogger only logs the status periodically
