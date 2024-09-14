@@ -212,6 +212,8 @@ xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)MyEMSLReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Pacifica.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Npgsql.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PdfSharp.Charting.dll" "$(ProjectDir)..\AM_Common\" /D /Y

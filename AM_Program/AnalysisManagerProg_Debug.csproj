@@ -168,7 +168,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\Ape.dll" "$(TargetDir)" /D /Y
+    <PostBuildEvent>
+xcopy "$(ProjectDir)..\AM_Common\Ape.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\AScore_DLL.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\Cyclops.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
@@ -216,6 +217,8 @@ xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)ICSharpCode.SharpZipLib.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)DynamicInterop.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)MyEMSLReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Pacifica.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Newtonsoft.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Npgsql.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)PdfSharp.Charting.dll" "$(ProjectDir)..\AM_Common\" /D /Y
@@ -226,7 +229,6 @@ xcopy "$(TargetDir)ProteinFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Renci.SshNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
