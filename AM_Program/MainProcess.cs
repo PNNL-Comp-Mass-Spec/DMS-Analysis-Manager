@@ -23,6 +23,7 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
 using PRISMDatabaseUtils;
+using PRISMDatabaseUtils.Logging;
 
 namespace AnalysisManagerProg
 {
@@ -197,6 +198,34 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Initializes the database logger in static class PRISM.Logging.LogTools
+        /// </summary>
+        /// <remarks>Supports both SQL Server and Postgres connection strings</remarks>
+        /// <param name="connectionString">Database connection string</param>
+        /// <param name="moduleName">Module name used by logger</param>
+        /// <param name="traceMode">When true, show additional debug messages at the console</param>
+        /// <param name="logLevel">Log threshold level</param>
+        internal static void CreateDbLogger(
+            string connectionString,
+            string moduleName,
+            bool traceMode = false,
+            BaseLogger.LogLevels logLevel = BaseLogger.LogLevels.INFO)
+        {
+            var databaseType = DbToolsFactory.GetServerTypeFromConnectionString(connectionString);
+
+            DatabaseLogger dbLogger = databaseType switch
+            {
+                DbServerTypes.MSSQLServer => new SQLServerDatabaseLogger(),
+                DbServerTypes.PostgreSQL => new PostgresDatabaseLogger(),
+                _ => throw new Exception("Unsupported database connection string: should be SQL Server or Postgres")
+            };
+
+            dbLogger.ChangeConnectionInfo(moduleName, connectionString);
+
+            LogTools.SetDbLogger(dbLogger, logLevel, traceMode);
+        }
+
+        /// <summary>
         /// Initializes the manager settings
         /// </summary>
         /// <returns>True if success, false if an error</returns>
@@ -217,7 +246,8 @@ namespace AnalysisManagerProg
 
             if (!Global.OfflineMode)
             {
-                // Create a database logger connected to DMS5
+                // Create a database logger connected to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
+
                 // Once the initial parameters have been successfully read,
                 // we update the dbLogger to use the connection string read from the Manager Control DB
                 string defaultDmsConnectionString;
@@ -227,7 +257,7 @@ namespace AnalysisManagerProg
 
                 if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
                 {
-                    // Use the hard-coded default that points to PrismDB2
+                    // Use the hard-coded default that points to PrismDB2 (previously Gigasax)
                     defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
                 }
                 else
@@ -242,8 +272,7 @@ namespace AnalysisManagerProg
 
                 ShowTrace("Instantiate a DbLogger using " + defaultDbLoggerConnectionString);
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                LogTools.CreateDbLogger(defaultDbLoggerConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                CreateDbLogger(defaultDbLoggerConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Get the manager settings from the database or from ManagerSettingsLocal.xml if Global.OfflineMode is true
@@ -326,6 +355,7 @@ namespace AnalysisManagerProg
 
             if (!Global.OfflineMode)
             {
+                // This connection string points to the DMS database on prismdb2 (previously, DMS5 on Gigasax)
                 var logCnStr = mMgrParams.GetParam("ConnectionString");
 
                 var dbLoggerConnectionString = DbToolsFactory.AddApplicationNameToConnectionString(logCnStr, applicationName);
@@ -333,7 +363,7 @@ namespace AnalysisManagerProg
                 CheckStopTrace("CreateDbLogger");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                LogTools.CreateDbLogger(dbLoggerConnectionString, "Analysis Tool Manager: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                CreateDbLogger(dbLoggerConnectionString, "Analysis Tool Manager: " + mMgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Make the initial log entry

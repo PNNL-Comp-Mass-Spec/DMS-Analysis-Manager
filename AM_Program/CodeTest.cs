@@ -1190,9 +1190,10 @@ namespace AnalysisManagerProg
         /// <param name="connectionString">Database connection string</param>
         public void TestDatabaseLogging(string connectionString)
         {
-            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "AnalysisManager_CodeTest");
+            var hostName = System.Net.Dns.GetHostName();
+            var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(connectionString, "AnalysisManager_CodeTest: " + hostName);
 
-            LogTools.CreateDbLogger(connectionStringToUse, "CodeTest");
+            MainProcess.CreateDbLogger(connectionStringToUse, "CodeTest: " + hostName, true);
 
             LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
 
