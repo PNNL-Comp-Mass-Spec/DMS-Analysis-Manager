@@ -36,9 +36,6 @@
     <NoWarn>1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="ParamFileGenerator">
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>

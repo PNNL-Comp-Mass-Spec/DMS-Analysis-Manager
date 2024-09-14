@@ -42,9 +42,6 @@
     <Reference Include="Mage">
       <HintPath>..\..\AM_Common\Mage.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />

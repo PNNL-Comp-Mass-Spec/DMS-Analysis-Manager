@@ -62,9 +62,6 @@
     <Reference Include="OrganismDatabaseHandler">
       <HintPath>..\AM_Common\OrganismDatabaseHandler.dll</HintPath>
     </Reference>
-    <Reference Include="Pacifica">
-      <HintPath>..\AM_Common\Pacifica.dll</HintPath>
-    </Reference>
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>

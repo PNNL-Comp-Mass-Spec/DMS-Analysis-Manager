@@ -42,9 +42,6 @@
     <Reference Include="DMSUpdateManager">
       <HintPath>..\..\AM_Common\DMSUpdateManager.dll</HintPath>
     </Reference>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="PeptideToProteinMapEngine">
       <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>

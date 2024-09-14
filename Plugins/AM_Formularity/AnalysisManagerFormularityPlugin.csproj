@@ -34,10 +34,6 @@
     <NoWarn>IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyEMSLReader, Version=1.0.5576.19327, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

@@ -35,9 +35,6 @@
     <NoWarn>1591, IDE0028, IDE0290</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MyEMSLReader">
-      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
