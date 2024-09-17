@@ -1404,7 +1404,13 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --verbose {0}", 2);
                 arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
                 arguments.AppendFormat(" --qvalue {0}", options.PrecursorQValue);
-                arguments.Append(" --matrices");
+
+                if (options.CreateQuantitiesMatrices)
+                    arguments.Append(" --matrices");
+
+                if (options.CreateExtractedChromatograms)
+                    arguments.Append(" --xic");
+
                 arguments.AppendFormat(" --temp {0}", mWorkDir);
                 arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
                 arguments.Append(" --gen-spec-lib");
@@ -1429,7 +1435,58 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 AppendAdditionalArguments(options, arguments);
 
-                arguments.AppendFormat(" --pg-level {0}", (int)options.ProteinInferenceMode);
+                switch (options.ProteinInferenceMode)
+                {
+                    case ProteinInferenceModes.IsoformIDs:
+                        arguments.AppendFormat(" --pg-level 0");
+                        break;
+
+                    case ProteinInferenceModes.ProteinNames:
+                        arguments.AppendFormat(" --pg-level 1");
+                        break;
+
+                    case ProteinInferenceModes.Genes:
+                        arguments.AppendFormat(" --pg-level 2");
+                        break;
+
+                    default:
+                    case ProteinInferenceModes.Off:
+                        arguments.AppendFormat(" --no-prot-inf");
+                        break;
+                }
+
+                if (options.SpeciesGenes)
+                    arguments.AppendFormat(" --species-genes");
+
+                switch (options.QuantificationStrategy)
+                {
+                    case QuantificationAlgorithms.Legacy:
+                        arguments.AppendFormat(" --direct-quant");
+                        break;
+
+                    case QuantificationAlgorithms.HighAccuracy:
+                        arguments.AppendFormat(" --high-acc");
+                        break;
+
+                    default:
+                    case QuantificationAlgorithms.HighPrecision:
+                        break;
+                }
+
+                switch (options.CrossRunNormalization)
+                {
+                    case CrossRunNormalizationModes.Global:
+                        arguments.AppendFormat(" --global-norm");
+                        break;
+
+                    case CrossRunNormalizationModes.Off:
+                        arguments.AppendFormat(" --no-norm");
+                        break;
+
+                    default:
+                    case CrossRunNormalizationModes.RTDependent:
+                        break;
+                }
             }
 
             LogDebug(mDiaNNProgLoc + " " + arguments);

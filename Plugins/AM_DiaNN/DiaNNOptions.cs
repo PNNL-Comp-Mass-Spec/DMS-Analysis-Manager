@@ -16,6 +16,27 @@ namespace AnalysisManagerDiaNNPlugIn
     // ReSharper enable CommentTypo
 
     /// <summary>
+    /// Cross-run normalization modes
+    /// </summary>
+    public enum CrossRunNormalizationModes
+    {
+        /// <summary>
+        /// Global
+        /// </summary>
+        Global = 0,
+
+        /// <summary>
+        /// RT-Dependent (default)
+        /// </summary>
+        RTDependent = 1,
+
+        /// <summary>
+        /// Off
+        /// </summary>
+        Off = 2
+    }
+
+    /// <summary>
     /// Post translational modification types
     /// </summary>
     public enum ModificationTypes
@@ -32,7 +53,7 @@ namespace AnalysisManagerDiaNNPlugIn
     }
 
     /// <summary>
-    /// Protein inference modes
+    /// Protein inference modes (aka protein grouping)
     /// </summary>
     public enum ProteinInferenceModes
     {
@@ -47,9 +68,36 @@ namespace AnalysisManagerDiaNNPlugIn
         ProteinNames = 1,
 
         /// <summary>
-        /// Gene names
+        /// Gene names (default)
         /// </summary>
-        Genes = 2
+        /// <remarks>For species-specific gene names, use ProteinInferenceModes.Genes and set SpeciesGenes to true</remarks>
+        Genes = 2,
+
+        /// <summary>
+        /// Disable protein inference
+        /// </summary>
+        Off = 3
+    }
+
+    /// <summary>
+    /// Quantification strategy algorithms
+    /// </summary>
+    public enum QuantificationAlgorithms
+    {
+        /// <summary>
+        /// Legacy quantification
+        /// </summary>
+        Legacy = 0,
+
+        /// <summary>
+        /// Quant UMS, high accuracy
+        /// </summary>
+        HighAccuracy = 1,
+
+        /// <summary>
+        /// Quant UMS, high precision (default)
+        /// </summary>
+        HighPrecision = 2
     }
 
     /// <summary>
@@ -306,6 +354,16 @@ namespace AnalysisManagerDiaNNPlugIn
         public bool SpeciesGenes { get; set; }
 
         // ReSharper restore CommentTypo
+
+        /// <summary>
+        /// Quantification Strategy
+        /// </summary>
+        public QuantificationAlgorithms QuantificationStrategy { get; set; } = QuantificationAlgorithms.HighPrecision;
+
+        /// <summary>
+        /// Cross-run normalization
+        /// </summary>
+        public CrossRunNormalizationModes CrossRunNormalization { get; set; } = CrossRunNormalizationModes.RTDependent;
 
         /// <summary>
         /// Create a PDF report
@@ -686,6 +744,26 @@ namespace AnalysisManagerDiaNNPlugIn
                 ProteinInferenceMode = (ProteinInferenceModes)proteinInferenceMode;
 
                 SpeciesGenes = GetParameterValueOrDefault(paramFileSettings, "SpeciesGenes", SpeciesGenes);
+
+                var quantificationStrategyMode = GetParameterValueOrDefault(paramFileSettings, "QuantificationStrategy", (int)QuantificationStrategy);
+
+                if (!Enum.IsDefined(typeof(QuantificationAlgorithms), quantificationStrategyMode))
+                {
+                    OnErrorEvent("Parameter file {0} has an invalid value for QuantificationStrategy: {1}", paramFile.Name, quantificationStrategyMode);
+                    return false;
+                }
+
+                QuantificationStrategy = (QuantificationAlgorithms)quantificationStrategyMode;
+
+                var crossRunNormalizationMode = GetParameterValueOrDefault(paramFileSettings, "CrossRunNormalization", (int)CrossRunNormalization);
+
+                if (!Enum.IsDefined(typeof(CrossRunNormalizationModes), crossRunNormalizationMode))
+                {
+                    OnErrorEvent("Parameter file {0} has an invalid value for CrossRunNormalization: {1}", paramFile.Name, crossRunNormalizationMode);
+                    return false;
+                }
+
+                CrossRunNormalization = (CrossRunNormalizationModes)crossRunNormalizationMode;
 
                 GeneratePDFReport = GetParameterValueOrDefault(paramFileSettings, "GeneratePDFReport", GeneratePDFReport);
 
