@@ -27,7 +27,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         public const string JOB_PARAM_DECON_TOOLS_PARAMETER_FILE_NAME = "DeconTools_ParameterFileName";
 
         /// <summary>
-        /// Retrieves files necessary for performance of Decon2ls analysis
+        /// Retrieves files necessary for performance of Decon2LS analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         public override CloseOutType GetResources()
