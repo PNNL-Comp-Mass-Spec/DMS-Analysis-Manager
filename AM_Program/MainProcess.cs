@@ -1007,10 +1007,11 @@ namespace AnalysisManagerProg
             // Create an object to run the analysis tool
             if (!SetToolRunnerObject(out var toolRunner))
             {
-                LogError(mMgrName + ": Unable to set the toolRunner object, job " + jobNum + ", Dataset " + datasetName, true);
-                mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object");
+                const string errMsg = "Unable to set the tool runner object";
+                LogError(string.Format("{0}: {1}, job {2}, Dataset {3}", mMgrName, errMsg, jobNum, datasetName), true);
+                mAnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, errMsg);
                 mMgrErrorCleanup.CleanWorkDir();
-                UpdateStatusIdle("Error encountered: Unable to set tool runner object");
+                UpdateStatusIdle(string.Format("Error encountered: {0}", errMsg));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
