@@ -1433,8 +1433,6 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (options.NoPeptidoforms)
                     arguments.AppendFormat(" --no-peptidoforms");
 
-                AppendAdditionalArguments(options, arguments);
-
                 switch (options.ProteinInferenceMode)
                 {
                     case ProteinInferenceModes.IsoformIDs:
@@ -1487,6 +1485,8 @@ namespace AnalysisManagerDiaNNPlugIn
                     case CrossRunNormalizationModes.RTDependent:
                         break;
                 }
+
+                AppendAdditionalArguments(options, arguments);
             }
 
             LogDebug(mDiaNNProgLoc + " " + arguments);
