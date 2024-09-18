@@ -1447,8 +1447,8 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --pg-level 2");
                         break;
 
-                    default:
                     case ProteinInferenceModes.Off:
+                    default:
                         arguments.AppendFormat(" --no-prot-inf");
                         break;
                 }
@@ -1466,8 +1466,8 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --high-acc");
                         break;
 
-                    default:
                     case QuantificationAlgorithms.HighPrecision:
+                    default:
                         break;
                 }
 
@@ -1481,8 +1481,8 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --no-norm");
                         break;
 
-                    default:
                     case CrossRunNormalizationModes.RTDependent:
+                    default:
                         break;
                 }
 
