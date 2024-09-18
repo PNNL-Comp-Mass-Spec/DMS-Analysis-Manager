@@ -52,7 +52,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         public const float PROGRESS_PCT_INITIALIZING = 1;
 
-        private enum LibraryCreationCompletionCode
+        private enum DiaNNCompletionCodes
         {
             Success = 0,
             UnknownError = 1,
@@ -200,9 +200,9 @@ namespace AnalysisManagerDiaNNPlugIn
                     // ReSharper disable once InvertIf
                     if (mBuildingSpectralLibrary)
                     {
-                        if (completionCode == LibraryCreationCompletionCode.Success)
+                        if (completionCode == DiaNNCompletionCodes.Success)
                         {
-                            completionCode = LibraryCreationCompletionCode.UnknownError;
+                            completionCode = DiaNNCompletionCodes.UnknownError;
                         }
 
                         // Update the library state
@@ -324,7 +324,7 @@ namespace AnalysisManagerDiaNNPlugIn
         private bool CopyResultsToTransferDirectory(
             FileSystemInfo spectralLibraryFile,
             FileSystemInfo remoteSpectralLibraryFile,
-            ref LibraryCreationCompletionCode completionCode)
+            ref DiaNNCompletionCodes completionCode)
         {
             var currentTask = "preparing to copy results to the transfer directory";
 
@@ -352,7 +352,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 LogError(string.Format("Error {0}", currentTask), ex);
 
-                completionCode = LibraryCreationCompletionCode.FileCopyError;
+                completionCode = DiaNNCompletionCodes.FileCopyError;
                 return false;
             }
         }
@@ -1092,7 +1092,7 @@ namespace AnalysisManagerDiaNNPlugIn
         private bool RenameSpectralLibraryFile(
             FileInfo specLibFile,
             FileSystemInfo spectralLibraryFile,
-            out LibraryCreationCompletionCode completionCode)
+            out DiaNNCompletionCodes completionCode)
         {
             try
             {
@@ -1101,13 +1101,13 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 specLibFile.MoveTo(newFilePath);
 
-                completionCode = LibraryCreationCompletionCode.Success;
+                completionCode = DiaNNCompletionCodes.Success;
                 return true;
             }
             catch (Exception ex)
             {
                 LogError("Error renaming the newly created spectral library file", ex);
-                completionCode = LibraryCreationCompletionCode.FileRenameError;
+                completionCode = DiaNNCompletionCodes.FileRenameError;
                 return false;
             }
         }
@@ -1118,7 +1118,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <param name="spectralLibraryID">Spectral library ID</param>
         /// <param name="completionCode">CompletionCode</param>
         /// <returns>FileInfo instance for the remote spectral library file (the file will not exist if a new library); null if an error</returns>
-        private bool SetSpectralLibraryCreateTaskComplete(int spectralLibraryID, LibraryCreationCompletionCode completionCode)
+        private bool SetSpectralLibraryCreateTaskComplete(int spectralLibraryID, DiaNNCompletionCodes completionCode)
         {
             const string SP_NAME_SET_CREATE_TASK_COMPLETE = "set_spectral_library_create_task_complete";
 
@@ -1181,7 +1181,7 @@ namespace AnalysisManagerDiaNNPlugIn
         private CloseOutType StartDiaNN(
             FileSystemInfo fastaFile,
             FileSystemInfo spectralLibraryFile,
-            out LibraryCreationCompletionCode completionCode)
+            out DiaNNCompletionCodes completionCode)
         {
             try
             {
@@ -1198,7 +1198,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (dataPackageInfo.DatasetFiles.Count == 0 && !mBuildingSpectralLibrary)
                 {
                     LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
-                    completionCode = LibraryCreationCompletionCode.UnknownError;
+                    completionCode = DiaNNCompletionCodes.UnknownError;
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -1214,7 +1214,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (!options.LoadDiaNNOptions(paramFile.FullName))
                 {
-                    completionCode = LibraryCreationCompletionCode.ParameterFileError;
+                    completionCode = DiaNNCompletionCodes.ParameterFileError;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1274,7 +1274,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         LogWarning("Call to DIA-NN failed (but exit code is 0)");
                     }
 
-                    completionCode = LibraryCreationCompletionCode.DiaNNError;
+                    completionCode = DiaNNCompletionCodes.DiaNNError;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1294,12 +1294,14 @@ namespace AnalysisManagerDiaNNPlugIn
 
                     if (emptyResultsFile)
                     {
-                        completionCode = LibraryCreationCompletionCode.NoFilterPassingResults;
+                        completionCode = DiaNNCompletionCodes.NoFilterPassingResults;
                         LogError("No filter-passing results");
                     }
                     else
                     {
-                        completionCode = LibraryCreationCompletionCode.Success;
+                        completionCode = DiaNNCompletionCodes.Success;
+                    }
+
                     if (options.CreateExtractedChromatograms)
                     {
                         var xicFilesMoved = MoveExtractedIonChromatogramFiles();
@@ -1323,7 +1325,7 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 LogError("Error in StartDiaNN", ex);
 
-                completionCode = LibraryCreationCompletionCode.UnknownError;
+                completionCode = DiaNNCompletionCodes.UnknownError;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1654,7 +1656,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private bool ValidateSpectralLibraryOutputFile(
             FileSystemInfo spectralLibraryFile,
-            out LibraryCreationCompletionCode completionCode)
+            out DiaNNCompletionCodes completionCode)
         {
             // DIA-NN v1.8 creates a spectral library named lib.predicted.speclib
             // DIA-NN v1.9 creates a spectral library named report-lib.predicted.speclib
@@ -1685,7 +1687,7 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 // report-lib.predicted.speclib file not created by DIA-NN
                 LogError(string.Format("{0} file not created by DIA-NN", specLib.Name));
-                completionCode = LibraryCreationCompletionCode.LibraryNotCreated;
+                completionCode = DiaNNCompletionCodes.LibraryNotCreated;
                 return false;
             }
 
@@ -1695,7 +1697,7 @@ namespace AnalysisManagerDiaNNPlugIn
             {
                 // ReSharper disable once StringLiteralTypo
                 LogError(string.Format("{0} file not created by DIA-NN; instead, multiple .speclib files were created", specLib.Name));
-                completionCode = LibraryCreationCompletionCode.MultipleLibrariesCreated;
+                completionCode = DiaNNCompletionCodes.MultipleLibrariesCreated;
                 return false;
             }
 
