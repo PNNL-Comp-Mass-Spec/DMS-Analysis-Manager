@@ -198,47 +198,22 @@ namespace MASIC_ReporterIonObsStatsUploader
         /// <param name="reporterIonMassMode">MASIC reporter ion mass mode</param>
         public static string GetReporterIonNameFromMassMode(int reporterIonMassMode)
         {
-            switch (reporterIonMassMode)
+            return reporterIonMassMode switch
             {
-                case 1:
-                    // ITraqFourMZ
-                    return "iTRAQ";
-
-                case 3:
-                    // TMTTwoMZ
-                    return "TMT2";
-
-                case 4:
-                    // TMTSixMZ
-                    return "TMT6";
-
-                case 5:
-                    // ITraqEightMZHighRes
-                    return "iTRAQ8";
-
-                case 6:
-                    // ITraqEightMZLowRes
-                    return "iTRAQ8";
-
-                case 10:
-                    // TMTTenMZ
-                    return "TMT10";
-
-                case 11:
-                    // OGlcNAc
-                    return "PCGalNAz";
-
-                case 16:
-                    // TMTElevenMZ
-                    return "TMT11";
-
-                case 18:
-                    // TMTSixteenMZ
-                    return "TMT16";
-
-                default:
-                    return "ReporterIonMassMode_" + reporterIonMassMode;
-            }
+                1 => "iTRAQ",     // ITraqFourMZ
+                3 => "TMT2",      // TMTTwoMZ
+                4 => "TMT6",      // TMTSixMZ
+                5 => "iTRAQ8",    // ITraqEightMZHighRes
+                6 => "iTRAQ8",    // ITraqEightMZLowRes
+                10 => "TMT10",    // TMTTenMZ
+                11 => "PCGalNAz", // OGlcNAc
+                16 => "TMT11",    // TMTElevenMZ
+                18 => "TMT16",    // TMTSixteenMZ
+                20 => "TMT18",    // TMTEighteenMZ
+                21 => "TMT32",    // TMT32MZ
+                22 => "TMT35",    // TMT35MZ
+                _ => "ReporterIonMassMode_" + reporterIonMassMode + "__NeedToUpdate_ReporterIonObsStatsUploader"
+            };
         }
 
         /// <summary>
