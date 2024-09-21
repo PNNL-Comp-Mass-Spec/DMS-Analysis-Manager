@@ -10,7 +10,7 @@ namespace MASIC_ReporterIonObsStatsUploader
 {
     public class ReporterIonStatsUploader : PRISM.FileProcessor.ProcessFilesBase
     {
-        // Ignore Spelling: Traq, Glc, Az, labelling
+        // Ignore Spelling: Az, Glc, labelling, MASIC, Traq
 
         private const string STORE_REPORTER_ION_OBS_STATS_SP_NAME = "store_reporter_ion_obs_stats";
 
@@ -601,6 +601,5 @@ namespace MASIC_ReporterIonObsStatsUploader
 
             OnErrorEvent(message);
         }
-
     }
 }

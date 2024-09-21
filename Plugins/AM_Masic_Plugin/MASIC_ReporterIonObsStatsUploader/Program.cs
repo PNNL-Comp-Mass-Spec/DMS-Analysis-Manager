@@ -9,6 +9,8 @@ namespace MASIC_ReporterIonObsStatsUploader
 {
     internal class Program
     {
+        // Ignore Spelling: MASIC
+
         private static int Main(string[] args)
         {
             var asmName = typeof(Program).GetTypeInfo().Assembly.GetName();
