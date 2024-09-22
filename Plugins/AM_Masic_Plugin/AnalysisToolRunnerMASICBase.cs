@@ -415,6 +415,8 @@ namespace AnalysisManagerMasicPlugin
                 16 => "TMT11",    // TMTElevenMZ
                 18 => "TMT16",    // TMTSixteenMZ
                 20 => "TMT18",    // TMTEighteenMZ
+                21 => "TMT32",    // TMT32MZ
+                22 => "TMT35",    // TMT35MZ
                 _ => "ReporterIonMassMode_" + reporterIonMassMode + "__NeedToUpdateAnalysisManagerPlugin"
             };
         }
@@ -664,8 +666,8 @@ namespace AnalysisManagerMasicPlugin
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure store_reporter_ion_obs_stats in DMS5
-                // Data is stored in table T_Reporter_Ion_Observation_Rates
+                // Call stored procedure store_reporter_ion_obs_stats in the DMS database
+                // Data is stored in tables T_Reporter_Ion_Observation_Rates and T_Reporter_Ion_Observation_Rates_Addnl
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 // ReSharper disable once CommentTypo

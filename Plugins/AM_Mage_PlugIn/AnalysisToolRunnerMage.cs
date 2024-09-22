@@ -67,8 +67,64 @@ namespace AnalysisManager_Mage_PlugIn
             return success;
         }
 
+        private void AddTMT32And35ReporterIons(ICollection<string> ionColumns, int plex)
+        {
+            // 32-plex and 35-plex TMT ions
+            ionColumns.Add("Ion_126.1277");
+            ionColumns.Add("Ion_127.1248");
+            ionColumns.Add("Ion_127.1311");
+            ionColumns.Add("Ion_128.1281");
+            ionColumns.Add("Ion_128.1344");
+            ionColumns.Add("Ion_129.1315");
+            ionColumns.Add("Ion_129.1378");
+            ionColumns.Add("Ion_130.1348");
+            ionColumns.Add("Ion_130.1411");
+            ionColumns.Add("Ion_131.1382");
+            ionColumns.Add("Ion_131.1445");
+            ionColumns.Add("Ion_132.1415");
+            ionColumns.Add("Ion_132.1479");
+            ionColumns.Add("Ion_133.1449");
+            ionColumns.Add("Ion_133.1512");
+            ionColumns.Add("Ion_134.1482");
+
+            if (plex == 35)
+            {
+                ionColumns.Add("Ion_134.1546");
+                ionColumns.Add("Ion_135.1516");
+            }
+
+            // 32-plex and 35-plex deuterated TMT ions
+            ionColumns.Add("Ion_127.1340");
+            ionColumns.Add("Ion_128.1310");
+            ionColumns.Add("Ion_128.1374");
+            ionColumns.Add("Ion_129.1344");
+            ionColumns.Add("Ion_129.1407");
+            ionColumns.Add("Ion_130.1377");
+            ionColumns.Add("Ion_130.1441");
+            ionColumns.Add("Ion_131.1411");
+            ionColumns.Add("Ion_131.1474");
+            ionColumns.Add("Ion_132.1445");
+            ionColumns.Add("Ion_132.1508");
+            ionColumns.Add("Ion_133.1478");
+            ionColumns.Add("Ion_133.1541");
+            ionColumns.Add("Ion_134.1512");
+            ionColumns.Add("Ion_134.1575");
+            ionColumns.Add("Ion_135.1545");
+
+            if (plex == 35)
+            {
+                ionColumns.Add("Ion_135.1608");
+            }
+        }
+
         private void AddTMTReporterIons(ICollection<string> ionColumns, int plex)
         {
+            if (plex > 18)
+            {
+                AddTMT32And35ReporterIons(ionColumns, plex);
+                return;
+            }
+
             // 10-plex TMT ions
             ionColumns.Add("Ion_126.128");
             ionColumns.Add("Ion_127.125");
@@ -353,6 +409,20 @@ namespace AnalysisManager_Mage_PlugIn
                     AddTMTReporterIons(ionColumns, 18);
                 }
 
+                if (workFlowSteps.Contains("TMT32Plex"))
+                {
+                    // 32-plex TMT
+                    labelingScheme = "TMT32Plex";
+                    AddTMTReporterIons(ionColumns, 32);
+                }
+
+                if (workFlowSteps.Contains("TMT35Plex"))
+                {
+                    // 35-plex TMT
+                    labelingScheme = "TMT35Plex";
+                    AddTMTReporterIons(ionColumns, 35);
+                }
+
                 if (ionColumns.Count > 0)
                 {
                     if (!TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
@@ -381,7 +451,7 @@ namespace AnalysisManager_Mage_PlugIn
         private bool ValidateSqliteDB(string mageOperations, FileInfo resultsDB)
         {
             // If the Mage Operations list contains "ExtractFromJobs", make sure that table "t_results" was created
-            // If it wasn't, no matching jobs were found and we should fail out this job step
+            // If it wasn't, no matching jobs were found, and we should fail out this job step
             if (mageOperations.Contains("ExtractFromJobs"))
             {
                 if (!TableExists(resultsDB, "t_results"))

@@ -95,7 +95,7 @@ namespace MSGFResultsSummarizer
             TMT6plex = 3,
 
             /// <summary>
-            /// Modification mass used by 16-plex and 18-plex TMT
+            /// Modification mass used by 16-plex, 18-plex, 32-plex, and 35-plex TMT
             /// </summary>
             TMT16plex = 4
         }
@@ -2304,7 +2304,7 @@ namespace MSGFResultsSummarizer
                 DataTableUtils.AddColumnIdentifier(columnNamesByIdentifier, PHRPModSummaryReader.MOD_SUMMARY_COLUMN_Occurrence_Count);
 
                 // Note that 6-plex, 10-plex, and 11-plex TMT all have the same modification mass, and thus parameter files should have TMT6Tag or TMT6plex for the mod name
-                // Also, 16-plex and 18-plex TMT both have the same modification mass, and thus parameter files should have TMT16Tag or TMT16plex for the mod name
+                // Also, 16-plex, 18-plex, 32-plex, and 35-plex TMT all have the same modification mass, and thus parameter files should have TMT16Tag or TMT16plex for the mod name
 
                 var reporterIonNames = new Dictionary<string, ReporterIonTypes>(StringComparer.OrdinalIgnoreCase)
                 {

@@ -529,8 +529,8 @@ namespace MASIC_ReporterIonObsStatsUploader
                 dbTools.WarningEvent += ProcedureExecutor_WarningEvent;
                 dbTools.ErrorEvent += ProcedureExecutor_DBErrorEvent;
 
-                // Call stored procedure store_reporter_ion_obs_stats in DMS5
-                // Data is stored in table T_Reporter_Ion_Observation_Rates
+                // Call stored procedure store_reporter_ion_obs_stats in the DMS database
+                // Data is stored in tables T_Reporter_Ion_Observation_Rates and T_Reporter_Ion_Observation_Rates_Addnl
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 // ReSharper disable once CommentTypo
