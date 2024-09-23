@@ -2728,7 +2728,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="splitFileList">Full paths to files to delete</param>
         private void DeleteTemporaryFiles(IEnumerable<string> splitFileList)
         {
-            PRISM.AppUtils.GarbageCollectNow();
+            AppUtils.GarbageCollectNow();
 
             // Delete each file in fileList
             foreach (var splitFile in splitFileList)
@@ -3269,7 +3269,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogWarning("Unable to delete the old DIA-NN report.tsv file", ex);
+                    LogWarning("Unable to delete the old DIA-NN report.tsv file: {0}", ex.Message);
                 }
 
                 return true;
