@@ -134,16 +134,13 @@ namespace AnalysisManagerMasicPlugin
 
             LogMessage("Calling MASIC to create the SIC files, job " + mJob);
 
+            CloseOutType processingResult;
+
             try
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
                 //  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
-                var processingResult = RunMASIC();
-
-                if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return processingResult;
-                }
+                processingResult = RunMASIC();
             }
             catch (Exception ex)
             {
@@ -157,7 +154,7 @@ namespace AnalysisManagerMasicPlugin
             // Run the cleanup routine from the base class
             var postProcessingResult = PerfPostAnalysisTasks();
 
-            if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (processingResult != CloseOutType.CLOSEOUT_SUCCESS || postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
                 // In order to help diagnose things, move the output files into the results directory,
