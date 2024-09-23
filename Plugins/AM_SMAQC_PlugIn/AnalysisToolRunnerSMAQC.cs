@@ -357,7 +357,7 @@ namespace AnalysisManagerSMAQCPlugIn
             return success;
         }
 
-        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> results, out string xmlresults)
+        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> results, out string xmlResults)
         {
             // XML will look like:
 
@@ -378,7 +378,7 @@ namespace AnalysisManagerSMAQCPlugIn
             // </SMAQC_Results>
 
             var builder = new StringBuilder();
-            xmlresults = string.Empty;
+            xmlResults = string.Empty;
 
             var psmSourceJob = mJobParams.GetParam("SourceJob");
 
@@ -401,7 +401,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 builder.Append("</Measurements>");
                 builder.Append("</SMAQC_Results>");
 
-                xmlresults = builder.ToString();
+                xmlResults = builder.ToString();
             }
             catch (Exception ex)
             {
