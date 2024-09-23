@@ -379,11 +379,8 @@ namespace AnalysisManagerExtractionPlugin
                         continue;
                     }
 
-                    // ReSharper disable once RedundantSetContainsBeforeAdding
-                    if (!datasetNames.Contains(lineParts[1]))
-                    {
-                        datasetNames.Add(lineParts[1]);
-                    }
+                    // Add the dataset name, if not yet present
+                    datasetNames.Add(lineParts[1]);
                 }
 
                 // Assure that the reader is closed (so that method UpdateDiannReportFile can delete the old version of the report.tsv file)
@@ -777,8 +774,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType ParallelMSGFPlusMergeTSVFiles(int numberOfClonedSteps, int numberOfHitsPerScanToKeep,
-            out SortedSet<string> filterPassingPeptides)
+        private CloseOutType ParallelMSGFPlusMergeTSVFiles(int numberOfClonedSteps, int numberOfHitsPerScanToKeep, out SortedSet<string> filterPassingPeptides)
         {
             filterPassingPeptides = new SortedSet<string>();
 
@@ -931,10 +927,8 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         mergedFileWriter.WriteLine(psm.DataLine);
 
-                        if (!filterPassingPeptides.Contains(psm.Peptide))
-                        {
-                            filterPassingPeptides.Add(psm.Peptide);
-                        }
+                        // Add the PSM, if not yet present
+                        filterPassingPeptides.Add(psm.Peptide);
 
                         if (!string.Equals(psm.Peptide, lastPeptide))
                         {
@@ -1032,8 +1026,9 @@ namespace AnalysisManagerExtractionPlugin
                                     // Done processing the last peptide; we can now update pepProtMappingWritten to true for this peptide
                                     // to prevent it from getting added to the merged file again in the future
 
-                                    if (!string.IsNullOrWhiteSpace(lastPeptideFull) && !pepProtMappingWritten.Contains(lastPeptideFull))
+                                    if (!string.IsNullOrWhiteSpace(lastPeptideFull))
                                     {
+                                        // Add the peptide, if not yet present
                                         pepProtMappingWritten.Add(lastPeptideFull);
                                     }
 

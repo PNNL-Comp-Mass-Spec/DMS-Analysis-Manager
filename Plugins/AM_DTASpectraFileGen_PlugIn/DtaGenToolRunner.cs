@@ -721,10 +721,8 @@ namespace DTASpectraFileGen
 
                     if (fragIonDataScanStatus.TryGetValue(scanStart, out var endScanList))
                     {
-                        if (!endScanList.Contains(scanEnd))
-                        {
-                            endScanList.Add(scanEnd);
-                        }
+                        // Add the scan if not yet present
+                        endScanList.Add(scanEnd);
                     }
                     else
                     {
