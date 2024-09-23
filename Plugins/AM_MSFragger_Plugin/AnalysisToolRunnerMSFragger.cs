@@ -143,8 +143,8 @@ namespace AnalysisManagerMSFraggerPlugIn
                 if (!AnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    // In order to help diagnose things, move the output files into the results directory,
+                    // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }

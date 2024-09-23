@@ -95,8 +95,8 @@ namespace AnalysisManager_Mage_PlugIn
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result directory,
-                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    // In order to help diagnose things, move the output files into the results directory,
+                    // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -233,6 +233,7 @@ namespace AnalysisManager_Mage_PlugIn
                 using var conn = new SQLiteConnection(connectionString);
                 conn.Open();
 
+                // ReSharper disable once StringLiteralTypo
                 var query = "SELECT COUNT(*) AS Items FROM sqlite_master WHERE type = 'table' AND name = '" + tableName + "' COLLATE NOCASE";
                 using var cmd = new SQLiteCommand(query, conn);
 

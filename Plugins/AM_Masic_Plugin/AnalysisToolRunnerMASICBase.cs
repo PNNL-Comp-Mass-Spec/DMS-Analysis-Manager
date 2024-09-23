@@ -160,8 +160,8 @@ namespace AnalysisManagerMasicPlugin
             if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
-                // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                // In order to help diagnose things, move the output files into the results directory,
+                // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -887,7 +887,7 @@ namespace AnalysisManagerMasicPlugin
             if (masicProgRunner.ExitCode != 32)
                 return false;
 
-            // FindSICPeaksError
+            // Error code 32 is "FindSICPeaksError"
             // As long as the _SICs.xml file was created, we can safely ignore this error
             if (sicsXMLFileExists)
             {

@@ -252,8 +252,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result directory,
-                    //  archive it using CopyFailedResultsToArchiveDirectory, return CloseOutType.CLOSEOUT_FAILED
+                    // In order to help diagnose things, move the output files into the results directory,
+                    // archive it using CopyFailedResultsToArchiveDirectory, return CloseOutType.CLOSEOUT_FAILED
 
                     mJobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME);
                     mJobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME);
@@ -1019,6 +1019,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
+                    // ReSharper disable once GrammarMistakeInComment
                     // Do not keep the assemble input or output files
                     mJobParams.AddResultFileToSkip(ASSEMBLE_GROUPING_FILENAME);
                     mJobParams.AddResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME);

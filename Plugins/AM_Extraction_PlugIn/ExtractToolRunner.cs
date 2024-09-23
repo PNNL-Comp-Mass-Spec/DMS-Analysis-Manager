@@ -314,8 +314,8 @@ namespace AnalysisManagerExtractionPlugin
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the results directory,
-                    //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                    // In order to help diagnose things, move the output files into the results directory,
+                    // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -2082,7 +2082,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // This plugin does not summarize the number of PSMs for MS-GF+ jobs
-                // That task is performed by method method PostProcessMSGFResults in the MSGF plugin (project AnalysisManagerMSGFPlugin), calling method SummarizeMSGFResults
+                // That task is performed by method PostProcessMSGFResults in the MSGF plugin (project AnalysisManagerMSGFPlugin), calling method SummarizeMSGFResults
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

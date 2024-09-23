@@ -23,7 +23,7 @@ namespace DTASpectraFileGen
     /// </summary>
     public class DtaGenToolRunner : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: backend, Bruker, centroided, dta, pre
+        // Ignore Spelling: backend, Bruker, CDTA, centroided, dta, pre
 
         public const string CDTA_FILE_SUFFIX = AnalysisResources.CDTA_EXTENSION;
 
@@ -62,8 +62,8 @@ namespace DTASpectraFileGen
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
-                // In order to help diagnose things, we will move key files into the result folder,
-                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                // In order to help diagnose things, move the output files into the results directory,
+                // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -701,7 +701,7 @@ namespace DTASpectraFileGen
                 }
 
                 // This dictionary is used to track the spectrum scan numbers in cdtaWithFragIonData
-                // This is used to reduce the number of times that cdtareaderFragIonData is closed and re-opened
+                // This is used to reduce the number of times that the DtaTextFileReader is closed and re-opened
                 var fragIonDataScanStatus = new Dictionary<int, SortedSet<int>>();
 
                 // Cache the Start/End scan combos in cdtaWithFragIonData
@@ -934,6 +934,7 @@ namespace DTASpectraFileGen
                     return true;
                 }
 
+                // ReSharper disable once CommentTypo
                 // MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
                 // 3160.0001.13.dta
                 // 3211.0001.11.dta

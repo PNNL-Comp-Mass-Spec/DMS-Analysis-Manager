@@ -573,8 +573,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Something went wrong
-                // In order to help diagnose things, we will move whatever files were created into the eResult folder,
-                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                // In order to help diagnose things, move the output files into the results directory,
+                // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 if (string.IsNullOrEmpty(mMessage))
                 {
                     mMessage = "Error running Decon2LS";
@@ -642,8 +642,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             if (result == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Something went wrong
-                // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
+                // In order to help diagnose things, move the output files into the results directory,
+                // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveDirectory();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1198,7 +1198,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             var dataLineCount = 0;
 
             // Open the DeconTools results file
-            // The first line is the header lines
+            // The first line is the header line
             // Lines after that are data lines
 
             LogDebug("Opening the DeconTools results file: " + filePath);
