@@ -249,11 +249,9 @@ namespace DTASpectraFileGen
                         concatenateDTAs = false;
                         return DTAGeneratorConstants.MSConvert;
                     }
-                    else
-                    {
-                        errorMessage = "Invalid DTAGenerator for mzML files: " + dtaGenerator;
-                        return DTAGeneratorConstants.Unknown;
-                    }
+
+                    errorMessage = "Invalid DTAGenerator for mzML files: " + dtaGenerator;
+                    return DTAGeneratorConstants.Unknown;
 
                 case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
                     concatenateDTAs = true;
@@ -814,7 +812,7 @@ namespace DTASpectraFileGen
 
                             if (string.IsNullOrWhiteSpace(dataLinesToAppend))
                             {
-                                LogError("cdtareaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " +
+                                LogError("DtaTextFileReader.GetMostRecentSpectrumFileText returned empty text for " +
                                          "StartScan=" + parentIonDataHeader.ScanNumberStart + " and " +
                                          "EndScan=" + parentIonDataHeader.ScanNumberEnd +
                                          " in MergeCDTAs for " + Path.GetFileName(cdtaWithParentIonData));
