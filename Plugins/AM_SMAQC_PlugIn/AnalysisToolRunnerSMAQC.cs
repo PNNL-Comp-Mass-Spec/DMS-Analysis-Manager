@@ -193,7 +193,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // }
 
                 // Rename the SMAQC log file to remove the date stamp
-                var logFilePath = RenameSMAQCLogFile();
+                RenameSMAQCLogFile();
 
                 // Don't move the AnalysisSummary.txt file to the results folder; it doesn't have any useful information
                 mJobParams.AddResultFileToSkip("SMAQC_AnalysisSummary.txt");
@@ -242,10 +242,6 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used", true)]
         private bool ComputeLLRC()
         {
-            bool success;
-
-            List<int> datasetIDs;
-
             if (!LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this method");
 
@@ -301,8 +297,6 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <param name="instrumentID">Output parameter</param>
         private bool LookupInstrumentIDFromDB(ref int instrumentID)
         {
-            const short retryCount = 3;
-
             var datasetID = mJobParams.GetParam("DatasetID");
             mDatasetID = 0;
 
@@ -333,7 +327,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
 
-            if (dbTools.GetQueryScalar(sqlStr, out var result, retryCount, 5))
+            if (dbTools.GetQueryScalar(sqlStr, out var result))
             {
                 if (result != null)
                 {
@@ -751,7 +745,7 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Renames the SMAQC log file
         /// </summary>
         /// <returns>The full path to the renamed log file, or an empty string if the log file was not found</returns>
-        private string RenameSMAQCLogFile()
+        private void RenameSMAQCLogFile()
         {
             try
             {
@@ -770,16 +764,12 @@ namespace AnalysisManagerSMAQCPlugIn
                     }
 
                     matchingFiles[0].MoveTo(logFilePathNew);
-
-                    return logFilePathNew;
                 }
             }
             catch (Exception ex)
             {
                 LogError("Exception renaming SMAQC log file", ex);
             }
-
-            return string.Empty;
         }
 
         /// <summary>
