@@ -12,6 +12,8 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisResourcesMASIC : AnalysisResources
     {
+        // Ignore Spelling: MASIC
+
         /// <summary>
         /// Retrieves files necessary for MASIC
         /// </summary>

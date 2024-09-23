@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     /// </summary>
     public class AnalysisToolRunnerMASICFinnigan : AnalysisToolRunnerMASICBase
     {
-        // Ignore Spelling: na, parm
+        // Ignore Spelling: Finnigan, MASIC, na, parm
 
         private AnalysisManagerMsXmlGenPlugIn.MSXMLCreator mMSXmlCreator;
 
