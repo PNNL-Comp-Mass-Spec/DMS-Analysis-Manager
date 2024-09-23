@@ -323,10 +323,9 @@ namespace AnalysisManagerMasicPlugin
                     mRemovedOldMasicStatusFiles = true;
                 }
 
-                using var reader = new XmlTextReader(new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    WhitespaceHandling = WhitespaceHandling.None
-                };
+                using var reader = new XmlTextReader(new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                reader.WhitespaceHandling = WhitespaceHandling.None;
 
                 while (reader.Read())
                 {
