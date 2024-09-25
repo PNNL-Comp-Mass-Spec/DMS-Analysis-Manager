@@ -242,6 +242,8 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used", true)]
         private bool ComputeLLRC()
         {
+            mProgress = PROGRESS_PCT_RUNNING_LLRC;
+
             if (!LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this method");
 
