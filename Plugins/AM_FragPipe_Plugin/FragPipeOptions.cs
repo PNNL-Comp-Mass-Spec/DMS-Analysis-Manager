@@ -41,6 +41,12 @@ namespace AnalysisManagerFragPipePlugIn
         private readonly IJobParams mJobParams;
 
         /// <summary>
+        /// Number of datasets in the data package for this job
+        /// </summary>
+        /// <remarks>If no data package, this will be 1</remarks>
+        public int DatasetCount { get; }
+
+        /// <summary>
         /// Dictionary of static modifications, by residue or position
         /// </summary>
         /// <remarks>
@@ -68,10 +74,13 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParams"></param>
-        public FragPipeOptions(IJobParams jobParams)
+        /// <param name="jobParams">Job Parameters</param>
+        /// <param name="datasetCount">Dataset count</param>
+        public FragPipeOptions(IJobParams jobParams, int datasetCount)
         {
             mJobParams = jobParams;
+
+            DatasetCount = Math.Max(datasetCount, 1);
 
             StaticModifications = new Dictionary<string, SortedSet<double>>();
             VariableModifications = new Dictionary<string, SortedSet<double>>();

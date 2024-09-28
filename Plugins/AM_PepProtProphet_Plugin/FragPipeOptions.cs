@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSFraggerPlugIn;
@@ -156,7 +157,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             FraggerOptions = new MSFraggerOptions(jobParams);
             RegisterEvents(FraggerOptions);
 
-            DatasetCount = datasetCount;
+            DatasetCount = Math.Max(datasetCount, 1);
 
             JavaProgLoc = string.Empty;
 
