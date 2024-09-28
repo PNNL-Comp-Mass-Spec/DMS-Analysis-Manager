@@ -69,9 +69,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!FileSearchTool.RetrieveFile(paramFileName, mJobParams.GetParam("ParamFileStoragePath")))
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
-                currentTask = "Get DataPackageID";
-
                 var paramFilePath = Path.Combine(mWorkDir, paramFileName);
+
+                currentTask = "Get DataPackageID";
 
                 // Check whether this job is associated with a data package; if it is, count the number of datasets
                 // Cache the experiment names in a packed job parameter
