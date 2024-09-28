@@ -192,16 +192,25 @@ namespace AnalysisManagerBase.JobConfig
                 return false;
             }
 
-            var autoDefineExperimentGroupWithDatasetName = callingClass.JobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithDatasetName", false);
-            var autoDefineExperimentGroupWithExperimentName = callingClass.JobParams.GetJobParameter("Philosopher", "AutoDefineExperimentGroupWithExperimentName", false);
+            // For MSFragger, these parameters are in section "Philosopher"
+            // For FragPipe, these parameters are in section "FragPipe"
+            var autoDefineExperimentGroupWithDatasetName = callingClass.JobParams.GetJobParameter("AutoDefineExperimentGroupWithDatasetName", false);
+            var autoDefineExperimentGroupWithExperimentName = callingClass.JobParams.GetJobParameter("AutoDefineExperimentGroupWithExperimentName", false);
+
+            // The ToolName job parameter holds the name of the job script we are executing
+            var scriptName = callingClass.JobParams.GetJobParameter("ToolName", "MSFragger or FragPipe");
 
             if (autoDefineExperimentGroupWithDatasetName)
             {
-                callingClass.LogMessage("Auto defining MSFragger experiment group names using dataset names");
+                // Auto defining FragPipe experiment group names using dataset names
+                // Auto defining MSFragger experiment group names using dataset names
+                callingClass.LogMessage("Auto defining {0} experiment group names using dataset names", scriptName);
             }
             else if (autoDefineExperimentGroupWithExperimentName)
             {
-                callingClass.LogMessage("Auto defining MSFragger experiment group names using experiment names");
+                // Auto defining FragPipe experiment group names using experiment names
+                // Auto defining MSFragger experiment group names using experiment names
+                callingClass.LogMessage("Auto defining {0} experiment group names using experiment names", scriptName);
             }
 
             // ReSharper disable once NotAccessedVariable
