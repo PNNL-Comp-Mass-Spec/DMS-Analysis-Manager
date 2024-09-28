@@ -3086,7 +3086,7 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = mMgrParams.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
-                // The CacheFolderRootPath parameter is normally in section JobParameters, but could be in section MSFragger
+                // The CacheFolderRootPath parameter is normally in section JobParameters, but could be in section MSFragger or FragPipe
                 // Thus, search for the parameter in any section
                 var cacheFolderRootPath = mAnalysisTask.GetParam(AnalysisResources.JOB_PARAM_CACHE_FOLDER_ROOT_PATH);
 
