@@ -5,398 +5,319 @@
 	<ToolRunner
 		Tool="DTA_Gen"
 		Class="DTASpectraFileGen.DtaGenToolRunner"
-		AssemblyFile="DTASpectraFileGen.dll"
-	/>
+		AssemblyFile="DTASpectraFileGen.dll" />
 	<ToolRunner
 		Tool="XTandem"
 		Class="AnalysisManagerXTandemPlugIn.AnalysisToolRunnerXT"
-		AssemblyFile="AnalysisManagerXTandemPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerXTandemPlugIn.dll" />
 	<ToolRunner
 		Tool="SEQUEST"
 		Class="AnalysisManagerSequestPlugin.AnalysisToolRunnerSeqCluster"
-		AssemblyFile="AnalysisManagerSequestPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerSequestPlugin.dll" />
 	<ToolRunner
 		Tool="TurboSEQUEST"
 		Class="AnalysisManagerSequestPlugin.AnalysisToolRunnerSeq"
-		AssemblyFile="AnalysisManagerSequestPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerSequestPlugin.dll" />
 	<ToolRunner
 		Tool="ICR2LS"
 		Class="AnalysisManagerICR2LSPlugIn.AnalysisToolRunnerICR"
-		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" />
 	<ToolRunner
 		Tool="TIC_ICR"
 		Class="AnalysisManagerBase.AnalysisToolRunnerTIC_ICR"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="TIC_LCQ"
 		Class="AnalysisManagerBase.AnalysisToolRunnerTIC_LCQ"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="QTOFSequest"
 		Class="AnalysisManagerBase.AnalysisToolRunnerICR"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="QTOFPEK"
 		Class="AnalysisManagerBase.AnalysisToolRunnerQTOFPek"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="DeNovoID"
 		Class="AnalysisManagerBase.AnalysisToolRunnerDeNovoID"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="AgilentSEQUEST"
 		Class="AnalysisManagerSequestPlugin.AnalysisToolRunnerAgilentSeq"
-		AssemblyFile="AnalysisManagerSequestPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerSequestPlugin.dll" />
 	<ToolRunner
 		Tool="MLynxPEK"
 		Class="AnalysisManagerBase.AnalysisToolRunnerMMTOFPek"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="AgilentTOFPEK"
 		Class="AnalysisManagerBase.AnalysisToolRunnerAgilentTOFPek"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<ToolRunner
 		Tool="LTQ_FTPEK"
 		Class="AnalysisManagerICR2LSPlugIn.AnalysisToolRunnerLTQ_FTPek"
-		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" />
 	<ToolRunner
 		Tool="MASIC_Finnigan"
 		Class="AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICFinnigan"
-		AssemblyFile="AnalysisManagerMasicPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" />
 	<ToolRunner
 		Tool="MASIC_Agilent"
 		Class="AnalysisManagerMasicPlugin.AnalysisToolRunnerMASICAgilent"
-		AssemblyFile="AnalysisManagerMasicPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" />
 	<ToolRunner
 		Tool="Decon2ls"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisToolRunnerDecon2lsDeIsotope"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<ToolRunner
 		Tool="Decon2ls_Agilent"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisToolRunnerDecon2lsDeIsotope"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<ToolRunner
 		Tool="Decon2ls_V2"
 		Class="AnalysisManagerDecon2lsV2PlugIn.AnalysisToolRunnerDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsV2PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsV2PlugIn.dll" />
 	<ToolRunner
 		Tool="TIC_D2L"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisToolRunnerDecon2lsTIC"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<ToolRunner
 		Tool="TIC_D2L_Agilent"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisToolRunnerDecon2lsTIC"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<ToolRunner
 		Tool="DataExtractor"
 		Class="AnalysisManagerExtractionPlugin.ExtractToolRunner"
-		AssemblyFile="AnalysisManagerExtractionPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" />
 	<ToolRunner
 		Tool="DataExtractorSplitFASTA"
 		Class="AnalysisManagerExtractionPlugin.ExtractToolRunner"
-		AssemblyFile="AnalysisManagerExtractionPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" />
 	<ToolRunner
 		Tool="Results_Transfer"
 		Class="AnalysisManagerResultsXferPlugin.ResultXferToolRunner"
-		AssemblyFile="AnalysisManagerResultsXferPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerResultsXferPlugin.dll" />
 	<ToolRunner
 		Tool="Inspect"
 		Class="AnalysisManagerInSpecTPlugIn.AnalysisToolRunnerIN"
-		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" />
 	<ToolRunner
 		Tool="MSMSSpectraPreprocessor"
 		Class="MSMSSpectrumFilterAM.AnalysisToolRunnerMsMsSpectrumFilter"
-		AssemblyFile="MsMsSpectrumFilterAM.dll"
-	/>
+		AssemblyFile="MsMsSpectrumFilterAM.dll" />
 	<ToolRunner
 		Tool="DTA_Split"
 		Class="AnalysisManagerDtaSplitPlugIn.AnalysisToolRunnerDtaSplit"
-		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll" />
 	<ToolRunner
 		Tool="InspectResultsAssembly"
 		Class="AnalysisManagerInspResultsAssemblyPlugIn.AnalysisToolRunnerInspResultsAssembly"
-		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll" />
 	<ToolRunner
 		Tool="MSXML_Gen"
 		Class="AnalysisManagerMsXmlGenPlugIn.AnalysisToolRunnerMSXMLGen"
-		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" />
 	<ToolRunner
 		Tool="MSXML_Bruker"
 		Class="AnalysisManagerMsXmlBrukerPlugIn.AnalysisToolRunnerMSXMLBruker"
-		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll" />
 	<ToolRunner
 		Tool="DTA_Import"
 		Class="AnalysisManagerDtaImportPlugIn.AnalysisToolRunnerDtaImport"
-		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll" />
 	<ToolRunner
 		Tool="MSClusterDTAtoDAT"
 		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.AnalysisToolRunnerDTAtoDAT"
-		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" />
 	<ToolRunner
 		Tool="LCMSFeatureFinder"
 		Class="AnalysisManagerLCMSFeatureFinderPlugIn.AnalysisToolRunnerLCMSFF"
-		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll" />
 	<ToolRunner
 		Tool="OMSSA"
 		Class="AnalysisManagerOMSSAPlugIn.AnalysisToolRunnerOM"
-		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" />
 	<ToolRunner
 		Tool="DtaRefinery"
 		Class="AnalysisManagerDtaRefineryPlugIn.AnalysisToolRunnerDtaRefinery"
-		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" />
 	<ToolRunner
 		Tool="XTandem_HPC"
 		Class="AnalysisManagerXTandemHPCPlugIn.AnalysisToolRunnerXTHPC"
-		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" />
 	<ToolRunner
 		Tool="MzXML_Aggregator"
 		Class="AnalysisManagerPRIDEMzXMLPlugIn.AnalysisToolRunnerPRIDEMzXML"
-		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll" />
 	<ToolRunner
 		Tool="Phospho_FDR_Aggregator"
 		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.AnalysisToolRunnerPhosphoFdrAggregator"
-		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" />
 	<ToolRunner
 		Tool="msgf"
 		Class="AnalysisManagerMSGFPlugin.MSGFRunner"
-		AssemblyFile="AnalysisManagerMSGFPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFPlugin.dll" />
 	<ToolRunner
 		Tool="MSGFPlus"
 		Class="AnalysisManagerMSGFDBPlugin.AnalysisToolRunnerMSGFDB"
-		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" />
 	<ToolRunner
 		Tool="MSGFPlus_HPC"
 		Class="AnalysisManagerMSGFDBPlugin.AnalysisToolRunnerMSGFDB"
-		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll"
-	/>	
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" />	
 	<ToolRunner
 		Tool="MultiAlign"
 		Class="AnalysisManagerMultiAlignPlugIn.AnalysisToolRunnerMultiAlign"
-		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll" />
 	<ToolRunner
 		Tool="MultiAlign_Aggregator"
 		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.AnalysisToolRunnerMultiAlignAggregator"
-		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" />
 	<ToolRunner
 		Tool="MSDeconv"
 		Class="AnalysisManagerMSDeconvPlugin.AnalysisToolRunnerMSDeconv"
-		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll" />
 	<ToolRunner
 		Tool="MSAlign"
 		Class="AnalysisManagerMSAlignPlugin.AnalysisToolRunnerMSAlign"
-		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" />
 	<ToolRunner
 		Tool="MSAlign_Histone"
 		Class="AnalysisManagerMSAlignHistonePlugin.AnalysisToolRunnerMSAlignHistone"
-		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" />
 	<ToolRunner
 		Tool="APE"
 		Class="AnalysisManager_Ape_PlugIn.AnalysisToolRunnerApe"
-		AssemblyFile="AnalysisManager_Ape_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" />
 	<ToolRunner
 		Tool="Mage"
 		Class="AnalysisManager_Mage_PlugIn.AnalysisToolRunnerMage"
-		AssemblyFile="AnalysisManager_Mage_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Mage_PlugIn.dll" />
 	<ToolRunner
 		Tool="Cyclops"
 		Class="AnalysisManager_Cyclops_PlugIn.AnalysisToolRunnerCyclops"
-		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" />
 	<ToolRunner
 		Tool="SMAQC"
 		Class="AnalysisManagerSMAQCPlugIn.AnalysisToolRunnerSMAQC"
-		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" />
 	<ToolRunner
 		Tool="IDPicker"
 		Class="AnalysisManagerIDPickerPlugIn.AnalysisToolRunnerIDPicker"
-		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" />
 	<ToolRunner
 		Tool="AScore"
 		Class="AnalysisManager_AScore_PlugIn.AnalysisToolRunnerAScore"
-		AssemblyFile="AnalysisManager_AScore_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_AScore_PlugIn.dll" />
 	<ToolRunner
 		Tool="IDM"
 		Class="AnalysisManager_IDM_Plugin.AnalysisToolRunnerIDM"
-		AssemblyFile="AnalysisManager_IDM_Plugin.dll"
-	/>
+		AssemblyFile="AnalysisManager_IDM_Plugin.dll" />
 	<ToolRunner
 		Tool="LipidMapSearch"
 		Class="AnalysisManagerLipidMapSearchPlugIn.AnalysisToolRunnerLipidMapSearch"
-		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" />
 	<ToolRunner
 		Tool="MSAlign_Quant"
 		Class="AnalysisManagerMSAlignQuantPlugIn.AnalysisToolRunnerMSAlignQuant"
-		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" />
 	<ToolRunner
 		Tool="IDP_Mac"
 		Class="AnalysisManagerIDPickerPlugIn.AnalysisToolRunnerIDP"
-		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" />
 	<ToolRunner
 		Tool="DataImport"
 		Class="AnalysisManagerDataImportPlugIn.AnalysisToolRunnerDataImport"
-		AssemblyFile="AnalysisManagerDataImportPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" />
 	<ToolRunner
 		Tool="MSGFPlus_IMS"
 		Class="AnalysisManagerMSGFDB_IMSPlugIn.AnalysisToolRunnerMSGFDB_IMS"
-		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" />
 	<ToolRunner
 		Tool="ProSight_Quant"
 		Class="AnalysisManagerProSightQuantPlugIn.AnalysisToolRunnerProSightQuant"
-		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" />
 	<ToolRunner
 		Tool="PRIDE_Converter"
 		Class="AnalysisManagerPRIDEConverterPlugIn.AnalysisToolRunnerPRIDEConverter"
-		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" />
 	<ToolRunner
 		Tool="Results_Cleanup"
 		Class="AnalysisManagerResultsCleanupPlugin.AnalysisToolRunnerResultsCleanup"
-		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" />
 	<ToolRunner
 		Tool="RepoPkgr"
 		Class="AnalysisManager_RepoPkgr_PlugIn.AnalysisToolRunnerRepoPkgr"
-		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll" />
 	<ToolRunner
 		Tool="MODa"
 		Class="AnalysisManagerMODaPlugin.AnalysisToolRunnerMODa"
-		AssemblyFile="AnalysisManagerMODaPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMODaPlugin.dll" />
 	<ToolRunner
 		Tool="DeconPeakDetector"
 		Class="AnalysisManagerDeconPeakDetectorPlugin.AnalysisToolRunnerDeconPeakDetector"
-		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugIn.dll" />
 	<ToolRunner
 		Tool="GlyQ_IQ"
 		Class="AnalysisManagerGlyQIQPlugin.AnalysisToolRunnerGlyQIQ"
-		AssemblyFile="AnalysisManagerGlyQIQPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerGlyQIQPlugIn.dll" />
 	<ToolRunner
 		Tool="PBF_Gen"
 		Class="AnalysisManagerPBFGenerator.AnalysisToolRunnerPBFGenerator"
-		AssemblyFile="AnalysisManagerPBFGenerator.dll"
-	/>
+		AssemblyFile="AnalysisManagerPBFGenerator.dll" />
 	<ToolRunner
 		Tool="MSPathFinder"
 		Class="AnalysisManagerMSPathFinderPlugIn.AnalysisToolRunnerMSPathFinder"
-		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" />
 	<ToolRunner
 		Tool="MZ_Refinery"
 		Class="AnalysisManagerMzRefineryPlugIn.AnalysisToolRunnerMzRefinery"
-		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" />
 	<ToolRunner
 		Tool="ProMex"
 		Class="AnalysisManagerProMexPlugIn.AnalysisToolRunnerProMex"
-		AssemblyFile="AnalysisManagerProMexPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerProMexPlugIn.dll" />
 	<ToolRunner
 		Tool="Bruker_DA_Export"
 		Class="AnalysisManagerBrukerDAExportPlugin.AnalysisToolRunnerBrukerDAExport"
-		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll" />
 	<ToolRunner
 		Tool="NOMSI"
 		Class="AnalysisManagerNOMSIPlugin.AnalysisToolRunnerNOMSI"
-		AssemblyFile="AnalysisManagerNOMSIPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" />
 	<ToolRunner
 		Tool="MODPlus"
 		Class="AnalysisManagerMODPlusPlugin.AnalysisToolRunnerMODPlus"
-		AssemblyFile="AnalysisManagerMODPlusPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" />
 	<ToolRunner
 		Tool="QC_ART"
 		Class="AnalysisManagerQCARTPlugin.AnalysisToolRunnerQCART"
-		AssemblyFile="AnalysisManagerQCARTPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" />
 	<ToolRunner
 		Tool="Formularity"
 		Class="AnalysisManagerFormularityPlugin.AnalysisToolRunnerFormularity"
-		AssemblyFile="AnalysisManagerFormularityPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerFormularityPlugin.dll" />
 	<ToolRunner
 		Tool="TopFD"
 		Class="AnalysisManagerTopFDPlugIn.AnalysisToolRunnerTopFD"
-		AssemblyFile="AnalysisManagerTopFDPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerTopFDPlugIn.dll" />
 	<ToolRunner
 		Tool="TopPIC"
 		Class="AnalysisManagerTopPICPlugIn.AnalysisToolRunnerTopPIC"
-		AssemblyFile="AnalysisManagerTopPICPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" />
 	<ToolRunner
 		Tool="ThermoPeakDataExporter"
 		Class="AnalysisManagerThermoPeakDataExporterPlugIn.AnalysisToolRunnerThermoPeakDataExporter"
-		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" />
 	<ToolRunner
 		Tool="MSFragger"
 		Class="AnalysisManagerMSFraggerPlugIn.AnalysisToolRunnerMSFragger"
-		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll" />
 	<ToolRunner
 		Tool="PepProtProphet"
 		Class="AnalysisManagerPepProtProphetPlugIn.AnalysisToolRunnerPepProtProphet"
-		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" />
 	<ToolRunner
 		Tool="MaxqPeak"
 		Class="AnalysisManagerMaxQuantPlugIn.AnalysisToolRunnerMaxQuant"
@@ -421,6 +342,10 @@
 		Tool="DiaNN"
 		Class="AnalysisManagerDiaNNPlugIn.AnalysisToolRunnerDiaNN"
 		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
+	<ToolRunner
+		Tool="FragPipe"
+		Class="AnalysisManagerFragPipePlugIn.AnalysisToolRunnerFragPipe"
+		AssemblyFile="AnalysisManagerFragPipePlugIn.dll" />
 
 </ToolRunners>
 
@@ -428,398 +353,319 @@
 	<Resourcer
 		Tool="Inspect"
 		Class="AnalysisManagerInSpecTPlugIn.AnalysisResourcesIN"
-		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerInSpecTPlugIn.dll" />
 	<Resourcer
 		Tool="Results_Transfer"
 		Class="AnalysisManagerResultsXferPlugin.AnalysisResourcesResultXfer"
-		AssemblyFile="AnalysisManagerResultsXferPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerResultsXferPlugin.dll" />
 	<Resourcer
 		Tool="DataExtractor"
 		Class="AnalysisManagerExtractionPlugin.AnalysisResourcesExtraction"
-		AssemblyFile="AnalysisManagerExtractionPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" />
 	<Resourcer
 		Tool="DataExtractorSplitFASTA"
 		Class="AnalysisManagerExtractionPlugin.AnalysisResourcesExtraction"
-		AssemblyFile="AnalysisManagerExtractionPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" />
 	<Resourcer
 		Tool="DTA_Gen"
 		Class="DTASpectraFileGen.DtaGenResources"
-		AssemblyFile="DTASpectraFileGen.dll"
-	/>
+		AssemblyFile="DTASpectraFileGen.dll" />
 	<Resourcer
 		Tool="XTandem"
 		Class="AnalysisManagerXTandemPlugIn.AnalysisResourcesXT"
-		AssemblyFile="AnalysisManagerXTandemPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerXTandemPlugIn.dll" />
 	<Resourcer
 		Tool="SEQUEST"
 		Class="AnalysisManagerSequestPlugin.AnalysisResourcesSeq"
-		AssemblyFile="AnalysisManagerSequestPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerSequestPlugin.dll" />
 	<Resourcer
 		Tool="TurboSEQUEST"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="ICR2LS"
 		Class="AnalysisManagerICR2LSPlugIn.AnalysisResourcesIcr2ls"
-		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" />
 	<Resourcer
 		Tool="TIC_ICR"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="TIC_LCQ"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="QTOFSequest"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="QTOFPEK"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="DeNovoID"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="AgilentSEQUEST"
 		Class="AnalysisManagerSequestPlugin.AnalysisResourcesSeq"
-		AssemblyFile="AnalysisManagerSequestPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerSequestPlugin.dll" />
 	<Resourcer
 		Tool="MLynxPEK"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="AgilentTOFPEK"
 		Class="AnalysisManagerBase.AnalysisResources"
-		AssemblyFile="AnalysisManagerBase.dll"
-	/>
+		AssemblyFile="AnalysisManagerBase.dll" />
 	<Resourcer
 		Tool="LTQ_FTPEK"
 		Class="AnalysisManagerICR2LSPlugIn.AnalysisResourcesIcr2ls"
-		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerICR2LSPlugIn.dll" />
 	<Resourcer
 		Tool="MASIC_Finnigan"
 		Class="AnalysisManagerMasicPlugin.AnalysisResourcesMASIC"
-		AssemblyFile="AnalysisManagerMasicPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" />
 	<Resourcer
 		Tool="MASIC_Agilent"
 		Class="AnalysisManagerMasicPlugin.AnalysisResourcesMASIC"
-		AssemblyFile="AnalysisManagerMasicPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMasicPlugin.dll" />
 	<Resourcer
 		Tool="Decon2ls"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisResourcesDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<Resourcer
 		Tool="Decon2ls_V2"
 		Class="AnalysisManagerDecon2lsV2PlugIn.AnalysisResourcesDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsV2PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsV2PlugIn.dll" />
 	<Resourcer
 		Tool="Decon2ls_Agilent"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisResourcesDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<Resourcer
 		Tool="TIC_D2L"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisResourcesDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<Resourcer
 		Tool="TIC_D2L_Agilent"
 		Class="AnalysisManagerDecon2lsPlugIn.AnalysisResourcesDecon2ls"
-		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDecon2lsPlugIn.dll" />
 	<Resourcer
 		Tool="MSMSSpectraPreprocessor"
 		Class="MSMSSpectrumFilterAM.AnalysisResourcesMsMsSpectrumFilter"
-		AssemblyFile="MsMsSpectrumFilterAM.dll"
-	/>
+		AssemblyFile="MsMsSpectrumFilterAM.dll" />
 	<Resourcer
 		Tool="DTA_Split"
 		Class="AnalysisManagerDtaSplitPlugIn.AnalysisResourcesDtaSplit"
-		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaSplitPlugIn.dll" />
 	<Resourcer
 		Tool="InspectResultsAssembly"
 		Class="AnalysisManagerInspResultsAssemblyPlugIn.AnalysisResourcesInspResultsAssembly"
-		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerInspResultsAssemblyPlugIn.dll" />
 	<Resourcer
 		Tool="MSXML_Gen"
 		Class="AnalysisManagerMsXmlGenPlugIn.AnalysisResourcesMSXMLGen"
-		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMsXmlGenPlugIn.dll" />
 	<Resourcer
 		Tool="MSXML_Bruker"
 		Class="AnalysisManagerMsXmlBrukerPlugIn.AnalysisResourcesMSXMLBruker"
-		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMsXmlBrukerPlugIn.dll" />
 	<Resourcer
 		Tool="DTA_Import"
 		Class="AnalysisManagerDtaImportPlugIn.AnalysisResourcesDtaImport"
-		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaImportPlugIn.dll" />
 	<Resourcer
 		Tool="MSClusterDTAtoDAT"
 		Class="AnalysisManagerMSClusterDTAtoDATPlugIn.AnalysisResourcesDTAtoDAT"
-		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSClusterDTAtoDATPlugIn.dll" />
 	<Resourcer
 		Tool="LCMSFeatureFinder"
 		Class="AnalysisManagerLCMSFeatureFinderPlugIn.AnalysisResourcesLCMSFF"
-		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerLCMSFeatureFinderPlugIn.dll" />
 	<Resourcer
 		Tool="OMSSA"
 		Class="AnalysisManagerOMSSAPlugIn.AnalysisResourcesOM"
-		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerOMSSAPlugIn.dll" />
 	<Resourcer
 		Tool="DtaRefinery"
 		Class="AnalysisManagerDtaRefineryPlugIn.AnalysisResourcesDtaRefinery"
-		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDtaRefineryPlugIn.dll" />
 	<Resourcer
 		Tool="XTandem_HPC"
 		Class="AnalysisManagerXTandemHPCPlugIn.AnalysisResourcesXTHPC"
-		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerXTandemHPCPlugIn.dll" />
 	<Resourcer
 		Tool="MzXML_Aggregator"
 		Class="AnalysisManagerPRIDEMzXMLPlugIn.AnalysisResourcesPRIDEMzXML"
-		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPRIDEMzXMLPlugIn.dll" />
 	<Resourcer
 		Tool="Phospho_FDR_Aggregator"
 		Class="AnalysisManagerPhospho_FDR_AggregatorPlugIn.AnalysisResourcesPhosphoFdrAggregator"
-		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll" />
 	<Resourcer
 		Tool="msgf"
 		Class="AnalysisManagerMSGFPlugin.AnalysisResourcesMSGF"
-		AssemblyFile="AnalysisManagerMSGFPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFPlugin.dll" />
 	<Resourcer
 		Tool="MSGFPlus"
 		Class="AnalysisManagerMSGFDBPlugin.AnalysisResourcesMSGFDB"
-		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" />
 	<Resourcer
 		Tool="MSGFPlus_HPC"
 		Class="AnalysisManagerMSGFDBPlugin.AnalysisResourcesMSGFDB"
-		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll"
-	/>	
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" />	
 	<Resourcer
 		Tool="MultiAlign"
 		Class="AnalysisManagerMultiAlignPlugIn.AnalysisResourcesMultiAlign"
-		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMultiAlignPlugIn.dll" />
 	<Resourcer
 		Tool="MultiAlign_Aggregator"
 		Class="AnalysisManagerMultiAlign_AggregatorPlugIn.AnalysisResourcesMultiAlignAggregator"
-		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMultiAlign_AggregatorPlugIn.dll" />
 	<Resourcer
 		Tool="MSDeconv"
 		Class="AnalysisManagerMSDeconvPlugin.AnalysisResourcesMSDeconv"
-		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSDeconvPlugIn.dll" />
 	<Resourcer
 		Tool="MSAlign"
 		Class="AnalysisManagerMSAlignPlugin.AnalysisResourcesMSAlign"
-		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignPlugIn.dll" />
 	<Resourcer
 		Tool="MSAlign_Histone"
 		Class="AnalysisManagerMSAlignHistonePlugin.AnalysisResourcesMSAlignHistone"
-		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignHistonePlugIn.dll" />
 	<Resourcer
 		Tool="APE"
 		Class="AnalysisManager_Ape_PlugIn.AnalysisResourcesApe"
-		AssemblyFile="AnalysisManager_Ape_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Ape_PlugIn.dll" />
 	<Resourcer
 		Tool="Mage"
 		Class="AnalysisManager_Mage_PlugIn.AnalysisResourcesMage"
-		AssemblyFile="AnalysisManager_Mage_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Mage_PlugIn.dll" />
 	<Resourcer
 		Tool="Cyclops"
 		Class="AnalysisManager_Cyclops_PlugIn.AnalysisResourcesCyclops"
-		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_Cyclops_PlugIn.dll" />
 	<Resourcer
 		Tool="SMAQC"
 		Class="AnalysisManagerSMAQCPlugIn.AnalysisResourcesSMAQC"
-		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerSMAQCPlugIn.dll" />
 	<Resourcer
 		Tool="IDPicker"
 		Class="AnalysisManagerIDPickerPlugIn.AnalysisResourcesIDPicker"
-		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerIDPickerPlugIn.dll" />
 	<Resourcer
 		Tool="AScore"
 		Class="AnalysisManager_AScore_PlugIn.AnalysisResourcesAScore"
-		AssemblyFile="AnalysisManager_AScore_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_AScore_PlugIn.dll" />
 	<Resourcer
 		Tool="IDM"
 		Class="AnalysisManager_IDM_Plugin.AnalysisResourcesIDM"
-		AssemblyFile="AnalysisManager_IDM_Plugin.dll"
-	/>
+		AssemblyFile="AnalysisManager_IDM_Plugin.dll" />
 	<Resourcer
 		Tool="LipidMapSearch"
 		Class="AnalysisManagerLipidMapSearchPlugIn.AnalysisResourcesLipidMapSearch"
-		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerLipidMapSearchPlugIn.dll" />
 	<Resourcer
 		Tool="MSAlign_Quant"
 		Class="AnalysisManagerMSAlignQuantPlugIn.AnalysisResourcesMSAlignQuant"
-		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSAlignQuantPlugIn.dll" />
 	<Resourcer
 		Tool="IDP_Mac"
 		Class="AnalysisManagerIDPickerPlugIn.AnalysisResourcesIDP"
-		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerIDPMacPlugIn.dll" />
 	<Resourcer
 		Tool="DataImport"
 		Class="AnalysisManagerDataImportPlugIn.AnalysisResourcesDataImport"
-		AssemblyFile="AnalysisManagerDataImportPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerDataImportPlugIn.dll" />
 	<Resourcer
 		Tool="MSGFPlus_IMS"
 		Class="AnalysisManagerMSGFDB_IMSPlugIn.AnalysisResourcesMSGFDB_IMS"
-		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSGFDB_IMSPlugIn.dll" />
 	<Resourcer
 		Tool="ProSight_Quant"
 		Class="AnalysisManagerProSightQuantPlugIn.AnalysisResourcesProSightQuant"
-		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerProSightQuantPlugIn.dll" />
 	<Resourcer
 		Tool="PRIDE_Converter"
 		Class="AnalysisManagerPRIDEConverterPlugIn.AnalysisResourcesPRIDEConverter"
-		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPRIDEConverterPlugIn.dll" />
 	<Resourcer
 		Tool="Results_Cleanup"
 		Class="AnalysisManagerResultsCleanupPlugin.AnalysisResourcesResultsCleanup"
-		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerResultsCleanupPlugin.dll" />
 	<Resourcer
 		Tool="RepoPkgr"
 		Class="AnalysisManager_RepoPkgr_PlugIn.AnalysisResourcesRepoPkgr"
-		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManager_RepoPkgr_PlugIn.dll" />
 	<Resourcer
 		Tool="MODa"
 		Class="AnalysisManagerMODaPlugin.AnalysisResourcesMODa"
-		AssemblyFile="AnalysisManagerMODaPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMODaPlugin.dll" />
 	<Resourcer
 		Tool="DeconPeakDetector"
 		Class="AnalysisManagerDeconPeakDetectorPlugin.AnalysisResourcesDeconPeakDetector"
-		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerDeconPeakDetectorPlugin.dll" />
 	<Resourcer
 		Tool="GlyQ_IQ"
 		Class="AnalysisManagerGlyQIQPlugin.AnalysisResourcesGlyQIQ"
-		AssemblyFile="AnalysisManagerGlyQIQPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerGlyQIQPlugin.dll" />
 	<Resourcer
 		Tool="PBF_Gen"
 		Class="AnalysisManagerPBFGenerator.AnalysisResourcesPBFGenerator"
-		AssemblyFile="AnalysisManagerPBFGenerator.dll"
-	/>
+		AssemblyFile="AnalysisManagerPBFGenerator.dll" />
 	<Resourcer
 		Tool="MSPathFinder"
 		Class="AnalysisManagerMSPathFinderPlugIn.AnalysisResourcesMSPathFinder"
-		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSPathFinderPlugIn.dll" />
 	<Resourcer
 		Tool="MZ_Refinery"
 		Class="AnalysisManagerMzRefineryPlugIn.AnalysisResourcesMzRefinery"
-		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMzRefineryPlugIn.dll" />
 	<Resourcer
 		Tool="ProMex"
 		Class="AnalysisManagerProMexPlugIn.AnalysisResourcesProMex"
-		AssemblyFile="AnalysisManagerProMexPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerProMexPlugIn.dll" />
 	<Resourcer
 		Tool="Bruker_DA_Export"
 		Class="AnalysisManagerBrukerDAExportPlugin.AnalysisResourcesBrukerDAExport"
-		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerBrukerDAExportPlugin.dll" />
 	<Resourcer
 		Tool="NOMSI"
 		Class="AnalysisManagerNOMSIPlugin.AnalysisResourcesNOMSI"
-		AssemblyFile="AnalysisManagerNOMSIPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerNOMSIPlugin.dll" />
 	<Resourcer
 		Tool="MODPlus"
 		Class="AnalysisManagerMODPlusPlugin.AnalysisResourcesMODPlus"
-		AssemblyFile="AnalysisManagerMODPlusPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerMODPlusPlugin.dll" />
 	<Resourcer
 		Tool="QC_ART"
 		Class="AnalysisManagerQCARTPlugin.AnalysisResourcesQCART"
-		AssemblyFile="AnalysisManagerQCARTPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerQCARTPlugin.dll" />
 	<Resourcer
 		Tool="Formularity"
 		Class="AnalysisManagerFormularityPlugin.AnalysisResourcesFormularity"
-		AssemblyFile="AnalysisManagerFormularityPlugin.dll"
-	/>
+		AssemblyFile="AnalysisManagerFormularityPlugin.dll" />
 	<Resourcer
 		Tool="TopFD"
 		Class="AnalysisManagerTopFDPlugIn.AnalysisResourcesTopFD"
-		AssemblyFile="AnalysisManagerTopFDPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerTopFDPlugIn.dll" />
 	<Resourcer
 		Tool="TopPIC"
 		Class="AnalysisManagerTopPICPlugIn.AnalysisResourcesTopPIC"
-		AssemblyFile="AnalysisManagerTopPICPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerTopPICPlugIn.dll" />
 	<Resourcer
 		Tool="ThermoPeakDataExporter"
 		Class="AnalysisManagerThermoPeakDataExporterPlugIn.AnalysisResourcesThermoPeakDataExporter"
-		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerThermoPeakDataExporterPlugIn.dll" />
 	<Resourcer
 		Tool="MSFragger"
 		Class="AnalysisManagerMSFraggerPlugIn.AnalysisResourcesMSFragger"
-		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerMSFraggerPlugIn.dll" />
 	<Resourcer
 		Tool="PepProtProphet"
 		Class="AnalysisManagerPepProtProphetPlugIn.AnalysisResourcesPepProtProphet"
-		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll"
-	/>
+		AssemblyFile="AnalysisManagerPepProtProphetPlugIn.dll" />
 	<Resourcer
 		Tool="MaxqPeak"
 		Class="AnalysisManagerMaxQuantPlugIn.AnalysisResourcesMaxQuant"
@@ -844,6 +690,10 @@
 		Tool="DiaNN"
 		Class="AnalysisManagerDiaNNPlugIn.AnalysisResourcesDiaNN"
 		AssemblyFile="AnalysisManagerDiaNNPlugIn.dll" />
+	<Resourcer
+		Tool="FragPipe"
+		Class="AnalysisManagerFragPipePlugIn.AnalysisResourcesFragPipe"
+		AssemblyFile="AnalysisManagerFragPipePlugIn.dll" />
 
 </Resourcers>
 
