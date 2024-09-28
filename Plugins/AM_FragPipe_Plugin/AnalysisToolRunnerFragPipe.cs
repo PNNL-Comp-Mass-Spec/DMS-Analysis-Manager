@@ -27,7 +27,7 @@ namespace AnalysisManagerFragPipePlugIn
     // ReSharper disable once UnusedMember.Global
     public class AnalysisToolRunnerFragPipe : AnalysisToolRunnerBase
     {
-        // Ignore Spelling: frag
+        // Ignore Spelling: dia, frag
 
         private const string FRAGPIPE_BATCH_FILE_PATH = @"fragpipe_v22.0\bin\fragpipe.bat";
 
@@ -47,24 +47,30 @@ namespace AnalysisManagerFragPipePlugIn
             ProcessingComplete = 99
         }
 
-        private bool mToolVersionWritten;
+        private RunDosProgram mCmdRunner;
+
+        private string mConsoleOutputErrorMsg;
+
+        /// <summary>
+        /// Dictionary of experiment group working directories
+        /// </summary>
+        /// <remarks>
+        /// Keys are experiment group name, values are the corresponding working directory
+        /// </remarks>
+        private Dictionary<string, DirectoryInfo> mExperimentGroupWorkingDirectories;
 
         // Populate this with a tool version reported to the console
         private string mFragPipeVersion;
 
         private string mFragPipeProgLoc;
 
-        private string mConsoleOutputErrorMsg;
-
-        private int mDatasetCount;
-
         private string mLocalFASTAFilePath;
 
         private DateTime mLastConsoleOutputParse;
 
-        private bool mWarnedInvalidDatasetCount;
+        private bool mToolVersionWritten;
 
-        private RunDosProgram mCmdRunner;
+        private DirectoryInfo mWorkingDirectory;
 
         private static ZipFileTools mZipTool;
 
@@ -91,6 +97,10 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
+
+                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+
+                mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
                 // Determine the path to FragPipe
 
@@ -260,6 +270,25 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
+        /// <summary>
+        /// Get appropriate path of the working directory for the given experiment
+        /// </summary>
+        /// <remarks>
+        /// <para>If all the datasets belong to the same experiment, return the job's working directory</para>
+        /// <para>Otherwise, return a subdirectory below the working directory, based on the experiment's name</para>
+        /// </remarks>
+        /// <param name="experimentGroupName">Experiment group name</param>
+        /// <param name="experimentGroupCount">Experiment group count</param>
+        private DirectoryInfo GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
+        {
+            if (experimentGroupCount <= 1)
+                return mWorkingDirectory;
+
+            var cleanName = Global.ReplaceInvalidPathChars(experimentGroupName);
+
+            return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, cleanName));
+        }
+
         public static List<FileInfo> FindDatasetPinFileAndPepXmlFiles(
             DirectoryInfo workingDirectory,
             bool diaSearchEnabled,
@@ -337,6 +366,124 @@ namespace AnalysisManagerFragPipePlugIn
         {
             var options = ignoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled;
             return new Regex(matchPattern, options);
+        }
+
+        private bool MoveDatasetsIntoSubdirectories(DataPackageInfo dataPackageInfo, SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
+        {
+            try
+            {
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = item.Key;
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
+
+                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetFile = dataPackageInfo.DatasetFiles[datasetId];
+
+                        var sourceDirectoryPath = mWorkingDirectory.FullName;
+                        var targetDirectoryPath = experimentWorkingDirectory.FullName;
+
+                        var success = MoveFile(sourceDirectoryPath, datasetFile, targetDirectoryPath);
+
+                        if (!success)
+                            return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MoveResultsIntoSubdirectories", ex);
+                return false;
+            }
+        }
+
+        private bool MoveFile(string sourceDirectoryPath, string fileName, string targetDirectoryPath)
+        {
+            try
+            {
+                var sourceFile = new FileInfo(Path.Combine(sourceDirectoryPath, fileName));
+
+                var targetPath = Path.Combine(targetDirectoryPath, sourceFile.Name);
+
+                sourceFile.MoveTo(targetPath);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Error in MoveFile for {0}", fileName), ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Organize .mzML files and populate several dictionaries
+        /// </summary>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetIDsByExperimentGroup">
+        /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
+        /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
+        /// </param>
+        /// <returns>Result code</returns>
+        private CloseOutType OrganizeDatasetFiles(
+            out DataPackageInfo dataPackageInfo,
+            out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
+        {
+            // Keys in this dictionary are experiment group names, values are the working directory to use
+            mExperimentGroupWorkingDirectories.Clear();
+
+            // If this job applies to a single dataset, dataPackageID will be 0
+            // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+            // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
+            dataPackageInfo = new DataPackageInfo(dataPackageID, this);
+            RegisterEvents(dataPackageInfo);
+
+            var dataPackageDatasets = dataPackageInfo.GetDataPackageDatasets();
+
+            datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
+
+            // If Experiment Groups are defined, create a subdirectory for each experiment group
+            // If using TMT, put a separate annotation.txt file in each subdirectory (the filename must end with "annotation.txt")
+
+            var experimentGroupNames = new SortedSet<string>();
+
+            foreach (var item in datasetIDsByExperimentGroup.Keys)
+            {
+                experimentGroupNames.Add(item);
+            }
+
+            var experimentCount = experimentGroupNames.Count;
+
+            // Populate a dictionary with experiment group names and corresponding working directories
+            foreach (var experimentGroupName in experimentGroupNames)
+            {
+                var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
+
+                mExperimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
+            }
+
+            if (experimentCount <= 1)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            // Since we have multiple experiment groups, create a subdirectory for each one
+            foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
+            {
+                if (!experimentGroupDirectory.Exists)
+                {
+                    experimentGroupDirectory.Create();
+                }
+            }
+
+            // Since we have multiple experiment groups, move the pepXML and .pin files into subdirectories
+            var moveSuccess = MoveDatasetsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
+
+            return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>
@@ -654,13 +801,14 @@ namespace AnalysisManagerFragPipePlugIn
             {
                 LogMessage("Preparing to run FragPipe");
 
-                // If this job applies to a single dataset, dataPackageID will be 0
-                // We still need to create an instance of DataPackageInfo to retrieve the experiment name associated with the job's dataset
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+                var moveFilesSuccess = OrganizeDatasetFiles(
+                    out var dataPackageInfo,
+                    out var datasetIDsByExperimentGroup);
 
-                // The constructor for DataPackageInfo reads data package metadata from packed job parameters, which were created by the resource class
-                var dataPackageInfo = new DataPackageInfo(dataPackageID, this);
-                RegisterEvents(dataPackageInfo);
+                if (moveFilesSuccess != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return moveFilesSuccess;
+                }
 
                 if (dataPackageInfo.DatasetFiles.Count == 0)
                 {
@@ -690,7 +838,9 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var options = new FragPipeOptions(mJobParams);
+                var datasetCount = dataPackageInfo.DatasetFiles.Count;
+
+                var options = new FragPipeOptions(mJobParams, datasetCount);
                 RegisterEvents(options);
 
                 options.LoadFragPipeOptions(workflowFilePath);
@@ -711,9 +861,6 @@ namespace AnalysisManagerFragPipePlugIn
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
-                mWarnedInvalidDatasetCount = false;
 
                 // Set up and execute a program runner to run FragPipe
 
