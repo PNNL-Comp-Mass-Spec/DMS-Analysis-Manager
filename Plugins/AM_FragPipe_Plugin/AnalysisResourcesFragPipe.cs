@@ -280,8 +280,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// </remarks>
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
         /// <param name="dynamicModCount">Number of dynamic mods</param>
-        /// <param name="databaseSplitCount"></param>
-        public CloseOutType ValidateFragPipeMemorySize(double fastaFileSizeMB, int dynamicModCount, int databaseSplitCount)
+        /// <param name="databaseSplitCount">Dataset split count</param>
+        private CloseOutType ValidateFragPipeMemorySize(double fastaFileSizeMB, int dynamicModCount, int databaseSplitCount)
         {
             var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var fragPipeMemorySizeMB);
 

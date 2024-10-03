@@ -37,7 +37,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string PIN_EXTENSION = ".pin";
 
-        public const float PROGRESS_PCT_INITIALIZING = 1;
+        internal const float PROGRESS_PCT_INITIALIZING = 1;
 
         private enum ProgressPercentValues
         {
@@ -289,7 +289,7 @@ namespace AnalysisManagerFragPipePlugIn
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, cleanName));
         }
 
-        public static List<FileInfo> FindDatasetPinFileAndPepXmlFiles(
+        private static List<FileInfo> FindDatasetPinFileAndPepXmlFiles(
             DirectoryInfo workingDirectory,
             bool diaSearchEnabled,
             string datasetName,
@@ -1345,7 +1345,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="pepXmlFiles">Typically this is a single .pepXML file, but for DIA searches, this is a set of .pepXML files</param>
         /// <param name="addPinFile">When true, add the .pin file to the first zipped .pepXML file</param>
         /// <returns>True if success, false if an error</returns>
-        public static bool ZipPepXmlAndPinFiles(
+        private static bool ZipPepXmlAndPinFiles(
             AnalysisToolRunnerBase toolRunner,
             DataPackageInfo dataPackageInfo,
             string datasetName,
