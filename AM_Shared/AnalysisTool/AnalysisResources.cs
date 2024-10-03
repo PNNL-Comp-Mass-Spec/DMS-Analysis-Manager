@@ -5162,6 +5162,7 @@ namespace AnalysisManagerBase.AnalysisTool
             {
                 {"DiaNN", IGenerateFile.ParamFileType.DiaNN},
                 {"DiaNN_SpecLib", IGenerateFile.ParamFileType.DiaNN},
+                {"FragPipe", IGenerateFile.ParamFileType.FragPipe},
                 {"Inspect", IGenerateFile.ParamFileType.Inspect},
                 {"MaxQuant", IGenerateFile.ParamFileType.MaxQuant},
                 {"MODa", IGenerateFile.ParamFileType.MODa},
