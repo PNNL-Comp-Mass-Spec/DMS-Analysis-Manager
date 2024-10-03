@@ -6,6 +6,7 @@
 //
 //*********************************************************************************************************
 
+using System;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM.Logging;
@@ -118,6 +119,7 @@ namespace AnalysisManagerBase.DataFileTools
     /// <summary>
     /// Defines minimum required functionality for classes that will filter spectra files
     /// </summary>
+    [Obsolete("This interface is unused")]
     public interface ISpectraFilter
     {
         /// <summary>
