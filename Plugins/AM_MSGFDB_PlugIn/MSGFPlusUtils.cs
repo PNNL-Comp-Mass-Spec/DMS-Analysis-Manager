@@ -819,13 +819,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="workingDirectory">Working directory</param>
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory)
         {
-            var arguments =
-                " -mzid:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -tsv:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
-                " -unroll" +
-                " -showDecoy";
-
-            return arguments;
+            return " -mzid:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                   " -tsv:" + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                   " -unroll" +
+                   " -showDecoy";
         }
 
         /// <summary>
@@ -842,16 +839,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             // We're using "-XX:+UseConcMarkSweepGC" as directed at https://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
             // due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
 
-            var arguments =
-                " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfPlusProgLoc +
-                " edu.ucsd.msjava.ui.MzIDToTsv" +
-                " -i " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
-                " -o " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
-                " -showQValue 1" +
-                " -showDecoy 1" +
-                " -unroll 1";
-
-            return arguments;
+            return " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfPlusProgLoc +
+                   " edu.ucsd.msjava.ui.MzIDToTsv" +
+                   " -i " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                   " -o " + Global.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                   " -showQValue 1" +
+                   " -showDecoy 1" +
+                   " -unroll 1";
         }
 
         /// <summary>
@@ -1505,8 +1499,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             MSGFPlusParameter paramInfo,
             string replacementParameterName)
         {
-            var replacementParameter = GetMSGFPlusParameter(msgfPlusParameters, replacementParameterName, paramInfo.Value);
-            return replacementParameter;
+            return GetMSGFPlusParameter(msgfPlusParameters, replacementParameterName, paramInfo.Value);
         }
 
         private string GetSettingFromMSGFPlusParamFile(string sourceParameterFilePath, string settingToFind)
