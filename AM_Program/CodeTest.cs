@@ -822,16 +822,16 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Split apart a _dta.txt file
         /// </summary>
-        /// <param name="rootFileName"></param>
-        /// <param name="resultsFolder"></param>
-        public void TestConcatenation(string rootFileName, string resultsFolder)
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="resultsFolder">Results folder path</param>
+        public void TestConcatenation(string datasetName, string resultsFolder)
         {
             Console.WriteLine("Splitting concatenated DTA file");
 
             var fileSplitter = new SplitCattedFiles();
             var filesToSkip = new SortedSet<string>();
 
-            fileSplitter.SplitCattedDTAsOnly(rootFileName, resultsFolder, filesToSkip);
+            fileSplitter.SplitCattedDTAsOnly(datasetName, resultsFolder, filesToSkip);
 
             Console.WriteLine("Completed splitting concatenated DTA file");
         }

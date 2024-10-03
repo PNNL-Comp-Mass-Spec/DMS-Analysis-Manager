@@ -23,7 +23,7 @@ namespace AnalysisManagerProg
     /// </summary>
     public class PluginLoader : EventNotifier
     {
-        // Ignore Spelling: Resourcer, Resourcers
+        // Ignore Spelling: Prog, Resourcer, Resourcers
 
         private enum PluginClassTypes
         {
@@ -49,12 +49,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="summaryFile"></param>
-        /// <param name="MgrFolderPath"></param>
-        public PluginLoader(SummaryFile summaryFile, string MgrFolderPath)
+        /// <param name="summaryFile">Summary file</param>
+        /// <param name="managerFolderPath">Manager folder</param>
+        public PluginLoader(SummaryFile summaryFile, string managerFolderPath)
         {
             mSummaryFile = summaryFile;
-            mMgrFolderPath = MgrFolderPath;
+            mMgrFolderPath = managerFolderPath;
         }
 
 #if PLUGIN_DEBUG_MODE_ENABLED
