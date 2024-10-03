@@ -483,10 +483,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                             if (dataColumns.Length < fitColumnIndex)
                                 continue;
 
-                            if (double.TryParse(dataColumns[fitColumnIndex], out var fitValue))
+                            if (double.TryParse(dataColumns[fitColumnIndex], out var fitValue) && fitValue <= maxFitValue)
                             {
-                                if (fitValue <= maxFitValue)
-                                    dataLineCount = 1;
+                                dataLineCount = 1;
                             }
                         }
                         else

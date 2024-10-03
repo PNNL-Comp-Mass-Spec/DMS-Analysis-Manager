@@ -1694,15 +1694,14 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                     if (int.TryParse(reMatch.Groups["X"].Value, out X))
                         success = true;
-
-                    Y = 0;
                 }
                 else
                 {
                     R = 0;
                     X = 0;
-                    Y = 0;
                 }
+
+                Y = 0;
             }
 
             return success;
@@ -1723,22 +1722,16 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             var param = jobParams.GetParam("MALDI_Imaging_startSectionX");
 
-            if (!string.IsNullOrEmpty(param))
+            if (!string.IsNullOrEmpty(param) && int.TryParse(param, out startSectionX))
             {
-                if (int.TryParse(param, out startSectionX))
-                {
-                    applySectionFilter = true;
-                }
+                applySectionFilter = true;
             }
 
             param = jobParams.GetParam("MALDI_Imaging_endSectionX");
 
-            if (!string.IsNullOrEmpty(param))
+            if (!string.IsNullOrEmpty(param) && int.TryParse(param, out endSectionX))
             {
-                if (int.TryParse(param, out endSectionX))
-                {
-                    applySectionFilter = true;
-                }
+                applySectionFilter = true;
             }
 
             return applySectionFilter;
