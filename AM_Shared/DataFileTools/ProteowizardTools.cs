@@ -8,6 +8,8 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class ProteowizardTools : EventNotifier
     {
+        // Ignore Spelling: Proteo, Proteowizard
+
         /// <summary>
         /// Debug level
         /// </summary>

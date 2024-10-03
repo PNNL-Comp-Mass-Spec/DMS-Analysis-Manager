@@ -9,6 +9,8 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class FastaContaminantUtility
     {
+        // Ignore Spelling: FASTA
+
         /// <summary>
         /// Keys are protein names, values are key/value pairs where the key is description and the value is protein sequence
         /// </summary>

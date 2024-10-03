@@ -25,7 +25,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290</NoWarn>
+    <NoWarn>IDE0028, IDE0290, IDE0305</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,7 +35,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <NoWarn>IDE0028, IDE0290</NoWarn>
+    <NoWarn>IDE0028, IDE0290, IDE0305</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -49,6 +49,7 @@
     <Compile Include="AnalysisToolRunnerFragPipe.cs" />
     <Compile Include="BooleanParameter.cs" />
     <Compile Include="FragPipeOptions.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IntegerParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

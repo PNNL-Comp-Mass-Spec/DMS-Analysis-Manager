@@ -93,6 +93,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
 
+        // ReSharper disable GrammarMistakeInComment
+
         /// <summary>
         /// Bruker_FT directory data
         /// </summary>
@@ -146,6 +148,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// there is not a ser or fid file
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER = "bruker_tof_tdf";
+
+        // ReSharper restore GrammarMistakeInComment
 
         // ReSharper restore CommentTypo
 
@@ -507,6 +511,8 @@ namespace AnalysisManagerBase.AnalysisTool
             /// </summary>
             ZippedSFolders = 8,
 
+            // ReSharper disable once GrammarMistakeInComment
+
             /// <summary>
             /// .D directory is the analysis.baf file; there is also .m subdirectory that has a apexAcquisition.method file
             /// </summary>
@@ -521,6 +527,8 @@ namespace AnalysisManagerBase.AnalysisTool
             /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
             /// </summary>
             BrukerMALDIImaging = 11,
+
+            // ReSharper disable once GrammarMistakeInComment
 
             /// <summary>
             /// Used by Maxis_01; Inside the .D directory is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
