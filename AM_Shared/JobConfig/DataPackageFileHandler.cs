@@ -136,10 +136,10 @@ namespace AnalysisManagerBase.JobConfig
         /// Look for the cache info file in that directory, then use that to find the location of the actual .mzML.gz file
         /// </summary>
         /// <remarks>Uses the highest job step to determine the input directory, meaning the .mzML.gz file returned will be the one used by MS-GF+</remarks>
-        /// <param name="datasetName"></param>
-        /// <param name="job"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="job">Job number</param>
         /// <param name="stepToolFilter">step tool to filter on; if an empty string, returns the input directory for the primary step tool for the job</param>
-        /// <param name="workDirInfo"></param>
+        /// <param name="workDirInfo">Working directory</param>
         /// <returns>Path to the .mzML or .mzML.gz file; empty string if not found</returns>
         private string FindMzMLForJob(string datasetName, int job, string stepToolFilter, FileSystemInfo workDirInfo)
         {
@@ -346,8 +346,8 @@ namespace AnalysisManagerBase.JobConfig
         /// Originally .mzid files were named _msgfplus.zip
         /// We switched to naming them _msgfplus.mzid.gz in January 2014
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="splitFastaResultID"></param>
+        /// <param name="datasetName">dataset name</param>
+        /// <param name="splitFastaResultID">Split FASTA result ID</param>
         /// <param name="zipFileCandidates">Potential names of zip files to decompress</param>
         /// <param name="gzipFileCandidates">Potential names of gzip files to decompress</param>
         private void GetMzIdFilesToFind(
@@ -382,8 +382,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Construct the path to the JobInfo file for the given job
         /// </summary>
-        /// <param name="job"></param>
-        /// <param name="workDirPath"></param>
+        /// <param name="job">Job number</param>
+        /// <param name="workDirPath">Working directory path</param>
         public static string GetJobInfoFilePath(int job, string workDirPath)
         {
             return Path.Combine(workDirPath, JOB_INFO_FILE_PREFIX + job + ".txt");
@@ -393,7 +393,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Return the full path to the most recently unzipped file (.zip or .gz)
         /// Returns an empty string if no recent unzipped files
         /// </summary>
-        /// <param name="zipTools"></param>
+        /// <param name="zipTools">Zip tools instance</param>
         private string MostRecentUnzippedFile(ZipFileTools zipTools)
         {
             if (zipTools.MostRecentUnzippedFiles.Count > 0)
@@ -407,9 +407,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Move the file into a subdirectory below the working directory
         /// </summary>
-        /// <param name="workDirInfo"></param>
-        /// <param name="dataPkgJob"></param>
-        /// <param name="sourceFile"></param>
+        /// <param name="workDirInfo">Working directory</param>
+        /// <param name="dataPkgJob">Data package job info</param>
+        /// <param name="sourceFile">Source file</param>
         /// <returns>Full path to the destination file path</returns>
         private string MoveFileToJobSubdirectory(FileSystemInfo workDirInfo, DataPackageJobInfo dataPkgJob, FileInfo sourceFile)
         {
@@ -432,8 +432,8 @@ namespace AnalysisManagerBase.JobConfig
         /// If the location of the file specified by SpectraData points to a .mzML or .mzML.gz file, return true
         /// Otherwise, return false
         /// </summary>
-        /// <param name="mzIdFileToInspect"></param>
-        /// <param name="zipTools"></param>
+        /// <param name="mzIdFileToInspect">Path of the .mzid file to inspect</param>
+        /// <param name="zipTools">Zip tools instance</param>
         private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, ZipFileTools zipTools)
         {
             try
@@ -505,8 +505,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Examine the contents of a .mzid file to determine if a .mzML file was searched
         /// </summary>
-        /// <param name="reader"></param>
-        /// <param name="mzidFilePath"></param>
+        /// <param name="reader">XML reader</param>
+        /// <param name="mzidFilePath">.mzid file path</param>
         /// <returns>True if the location attribute of the SpectraData element has a .mzML or .mzML.gz file</returns>
         private bool MSGFPlusSearchUsedMzML(XmlReader reader, string mzidFilePath)
         {
@@ -542,9 +542,9 @@ namespace AnalysisManagerBase.JobConfig
         /// Process a single data package peptide hit job
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="cachedJobMetadata"></param>
-        /// <param name="zipTools"></param>
-        /// <param name="workDirInfo"></param>
+        /// <param name="cachedJobMetadata">Cached job metadata</param>
+        /// <param name="zipTools">Zip tools instance</param>
+        /// <param name="workDirInfo">Working directory</param>
         /// <param name="dataPkgJob">Data package job</param>
         private bool ProcessOnePeptideHitJob(
             DataPackageRetrievalOptionsType retrievalOptions,
@@ -785,11 +785,11 @@ namespace AnalysisManagerBase.JobConfig
         /// Process files found for a single peptide hit job (as tracked by filesToGet)
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="localDirectoryPath"></param>
-        /// <param name="prefixRequired"></param>
+        /// <param name="localDirectoryPath">Local directory path</param>
+        /// <param name="prefixRequired">If true, add the file to pendingFileRenames</param>
         /// <param name="filesToGet">Keys in this list are filenames; values are true if the file is required and false if not required</param>
-        /// <param name="foundFiles"></param>
-        /// <param name="pendingFileRenames"></param>
+        /// <param name="foundFiles">Output: list of found files</param>
+        /// <param name="pendingFileRenames">Output: files to rename</param>
         private bool ProcessPeptideHitJobFiles(
             DataPackageRetrievalOptionsType retrievalOptions,
             string localDirectoryPath,
@@ -1116,11 +1116,11 @@ namespace AnalysisManagerBase.JobConfig
         /// will return false if a .mzML (or .mzXML) file cannot be found for any of the datasets
         /// </param>
         /// <param name="dataPackageDatasets">
-        /// Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
+        /// Output: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
         /// </param>
         /// <param name="datasetRawFilePaths">
         /// <para>
-        /// Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
+        /// Output: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
         /// </para>
         /// <para>
         /// If skipDatasetsWithExistingMzML is true, datasets will not be added to datasetRawFilePaths if an existing .mzML file is found
@@ -1416,7 +1416,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Also creates a batch file that can be manually run to retrieve the instrument data files
         /// </summary>
         /// <param name="retrievalOptions">File retrieval options</param>
-        /// <param name="dataPackagePeptideHitJobs">Output parameter: Job info for the peptide_hit jobs associated with this data package</param>
+        /// <param name="dataPackagePeptideHitJobs">Output: Job info for the peptide_hit jobs associated with this data package</param>
         /// <param name="progressPercentAtStart">Percent complete value to use for computing incremental progress</param>
         /// <param name="progressPercentAtFinish">Percent complete value to use for computing incremental progress</param>
         /// <returns>True if success, false if an error</returns>
@@ -2038,14 +2038,14 @@ namespace AnalysisManagerBase.JobConfig
         /// Unzip the PepXML file (_pepXML.zip) if it was retrieved
         /// If the .mzid file is named Dataset_msgfplus.zip, unzip it, then compress it so that it's named Dataset.mzid.gz
         /// </summary>
-        /// <param name="zipTools"></param>
-        /// <param name="workDirInfo"></param>
-        /// <param name="prefixRequired"></param>
-        /// <param name="dataPkgJob"></param>
-        /// <param name="foundFiles"></param>
+        /// <param name="zipTools">Zip tools instance</param>
+        /// <param name="workDirInfo">Working directory</param>
+        /// <param name="prefixRequired">If true, add the job number to the start of the file name</param>
+        /// <param name="dataPkgJob">Data package job</param>
+        /// <param name="foundFiles">List of found files</param>
         /// <param name="zipFileCandidates">Candidate .mzid.zip files</param>
         /// <param name="gzipFileCandidates">Candidate .mzid.gz files</param>
-        /// <param name="zippedPepXmlFile"></param>
+        /// <param name="zippedPepXmlFile">Zipped .pepXML file</param>
         private bool UnzipFiles(
             ZipFileTools zipTools,
             FileSystemInfo workDirInfo,

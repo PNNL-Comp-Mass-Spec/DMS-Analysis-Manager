@@ -42,8 +42,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="statusFile"></param>
+        /// <param name="sender"> Message sender</param>
+        /// <param name="statusFile">Status file instance</param>
         public MessageQueueLogger(MessageSender sender, StatusFile statusFile)
         {
             mStatusFile = statusFile;
@@ -55,8 +55,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// Push status message onto the local status message queue
         /// to be sent off by the PostalWorker thread
         /// </summary>
-        /// <param name="statusMessage"></param>
-        /// <param name="managerName"></param>
+        /// <param name="statusMessage">Status message</param>
+        /// <param name="managerName">Manager name</param>
         public void LogStatusMessage(string statusMessage, string managerName)
         {
             var messageContainer = new MessageContainer(statusMessage, managerName);

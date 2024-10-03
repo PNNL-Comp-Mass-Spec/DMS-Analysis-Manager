@@ -62,7 +62,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel">Debug level</param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         public ConsoleOutputFileParser(short debugLevel)
         {
             ConsoleOutputErrorMsg = string.Empty;

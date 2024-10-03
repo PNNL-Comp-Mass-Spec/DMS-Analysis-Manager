@@ -52,7 +52,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParams"></param>
+        /// <param name="jobParams">Job parameters</param>
         public ProteinCollectionInfo(IJobParams jobParams)
         {
             LegacyFastaName = jobParams.GetParam("LegacyFastaFileName");

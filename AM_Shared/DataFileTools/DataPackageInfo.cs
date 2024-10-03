@@ -207,7 +207,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dataPackageID"></param>
+        /// <param name="dataPackageID">Data package ID</param>
         public DataPackageInfo(int dataPackageID)
         {
             DataPackageID = dataPackageID;
@@ -226,8 +226,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor that loads metadata from packaged job parameter dictionaries
         /// </summary>
-        /// <param name="dataPackageID"></param>
-        /// <param name="toolRunner"></param>
+        /// <param name="dataPackageID">Data package ID</param>
+        /// <param name="toolRunner">Tool runner instance</param>
         /// <param name="warnIfMissingFileInfo">When true, warn if dataset file info is missing</param>
         public DataPackageInfo(int dataPackageID, AnalysisToolRunnerBase toolRunner, bool warnIfMissingFileInfo = true)
         {
@@ -265,8 +265,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor that loads metadata from dictionary dataPackageDatasets
         /// </summary>
-        /// <param name="dataPackageID"></param>
-        /// <param name="dataPackageDatasets"></param>
+        /// <param name="dataPackageID">Data package ID</param>
+        /// <param name="dataPackageDatasets">Dictionary of datasets in the data package; values are dataset IDs</param>
         /// <param name="warnIfMissingFileInfo">When true, warn if dataset file info is missing</param>
         public DataPackageInfo(int dataPackageID, Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets, bool warnIfMissingFileInfo = true)
         {
@@ -399,7 +399,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Store data package info a packed job parameters
         /// </summary>
-        /// <param name="analysisResources"></param>
+        /// <param name="analysisResources">Analysis resources instance</param>
         public void StorePackedDictionaries(AnalysisResources analysisResources)
         {
             analysisResources.StorePackedJobParameterDictionary(Datasets, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASETS);

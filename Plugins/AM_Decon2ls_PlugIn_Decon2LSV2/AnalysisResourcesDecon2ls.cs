@@ -145,7 +145,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Read the setting for ProcessMSMS from the DeconTools parameter file
         /// </summary>
         /// <param name="paramFile"></param>
-        /// <param name="processMSMS">Output parameter: true if ProcessMSMS is true in the parameter file</param>
+        /// <param name="processMSMS">Output: true if ProcessMSMS is true in the parameter file</param>
         /// <returns>True if success, false if an error</returns>
         private bool IsMSMSProcessingEnabled(FileSystemInfo paramFile, out bool processMSMS)
         {

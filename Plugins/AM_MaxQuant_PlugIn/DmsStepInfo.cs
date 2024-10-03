@@ -34,7 +34,7 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="id">Step ID</param>
         public DmsStepInfo(int id)
         {
             ID = id;

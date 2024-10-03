@@ -39,9 +39,9 @@
         /// <summary>
         /// Constructor that accepts a value
         /// </summary>
-        /// <param name="parameterName"></param>
-        /// <param name="parameterValue"></param>
-        /// <param name="required"></param>
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="parameterValue">Parameter value</param>
+        /// <param name="required">If true, the parameter is required</param>
         // ReSharper disable once UnusedMember.Global
         public IntegerParameter(string parameterName, int parameterValue, bool required = true)
         {
@@ -53,10 +53,10 @@
         /// <summary>
         /// Constructor that accepts a range of allowed values
         /// </summary>
-        /// <param name="parameterName"></param>
-        /// <param name="minAllowedValue"></param>
-        /// <param name="maxAllowedValue"></param>
-        /// /// <param name="required"></param>
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="minAllowedValue">Minimum allowed value</param>
+        /// <param name="maxAllowedValue">Maximum allowed value</param>
+        /// <param name="required">If true, the parameter is required</param>
         public IntegerParameter(string parameterName, int? minAllowedValue, int? maxAllowedValue, bool required = true)
         {
             ParameterName = parameterName;
@@ -69,7 +69,7 @@
         /// Set the value for this parameter
         /// </summary>
         /// <remarks>Sets IsDefined to true</remarks>
-        /// <param name="parameterValue"></param>
+        /// <param name="parameterValue">Parameter value</param>
         public void SetValue(int parameterValue)
         {
             ParameterValue = parameterValue;

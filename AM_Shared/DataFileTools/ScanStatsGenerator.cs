@@ -47,8 +47,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="msFileInfoScannerDLLPath"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="msFileInfoScannerDLLPath">MS File Info Scanner DLL path</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public ScanStatsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;

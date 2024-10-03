@@ -108,8 +108,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// Add a static or dynamic modification to the modificationsByResidue dictionary
         /// </summary>
         /// <param name="modificationsByResidue">Dictionary of modifications, by residue or position</param>
-        /// <param name="residueOrPositionName"></param>
-        /// <param name="modificationMass"></param>
+        /// <param name="residueOrPositionName">Residue or position name</param>
+        /// <param name="modificationMass">Modification mass</param>
         private void AppendModificationMass(
             IDictionary<string, SortedSet<double>> modificationsByResidue,
             string residueOrPositionName,
@@ -304,7 +304,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Returns a description of the number of dynamic mods, e.g. "2 dynamic mods"
         /// </summary>
-        /// <param name="dynamicModCount"></param>
+        /// <param name="dynamicModCount">Dynamic mod count</param>
         /// <returns></returns>
         public static string GetDynamicModCountDescription(int dynamicModCount)
         {
@@ -453,7 +453,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Return true if the value is an empty string or the word "auto"
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">Value</param>
         public bool IsUndefinedOrAuto(string value)
         {
             return string.IsNullOrWhiteSpace(value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase);
@@ -463,7 +463,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// Parse the FragPipe workflow file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="workflowFilePath"></param>
+        /// <param name="workflowFilePath">Workflow file path</param>
         /// <returns>True if success, false if an error</returns>
         public bool LoadFragPipeOptions(string workflowFilePath)
         {

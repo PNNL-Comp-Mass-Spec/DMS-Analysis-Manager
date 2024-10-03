@@ -102,7 +102,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Add a PSM Observation
         /// </summary>
-        /// <param name="observation"></param>
+        /// <param name="observation">PSM observation</param>
         public void AddObservation(PSMObservation observation)
         {
             Observations.Add(observation);

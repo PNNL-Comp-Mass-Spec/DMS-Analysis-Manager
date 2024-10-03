@@ -106,8 +106,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Examine a directory to see if it has any new or changed files
         /// </summary>
-        /// <param name="workingDirectoryMetadata"></param>
-        /// <param name="directoryToCheck"></param>
+        /// <param name="workingDirectoryMetadata">Working directory metadata</param>
+        /// <param name="directoryToCheck">Directory to examine</param>
         /// <param name="isModified">True if modified, false if unmodified</param>
         /// <returns>True if success, false if an error</returns>
         private bool CheckDirectoryModified(
@@ -326,8 +326,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Zip a directory, plus optionally its subdirectories
         /// </summary>
-        /// <param name="zipTools"></param>
-        /// <param name="directoryToZip"></param>
+        /// <param name="zipTools">Zip tools instance</param>
+        /// <param name="directoryToZip">Directory to compress</param>
         /// <param name="recurse">True to include subdirectories</param>
         /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
         /// <returns>True if success, false if an error</returns>
@@ -375,10 +375,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Separately zip each of the subdirectories of the target directory
         /// </summary>
-        /// <param name="zipTools"></param>
+        /// <param name="zipTools">Zip tools instance</param>
         /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
-        /// <param name="targetDirectory"></param>
-        /// <param name="zipDirectoryFiles"></param>
+        /// <param name="targetDirectory">Directory whose subdirectories should be compressed</param>
+        /// <param name="zipDirectoryFiles">If true, also compress the files in the target directory</param>
         /// <returns>True if success, false if an error</returns>
         private bool ZipSubdirectories(ZipFileTools zipTools, bool deleteFilesAfterZip, DirectoryInfo targetDirectory, bool zipDirectoryFiles)
         {
@@ -401,9 +401,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// If directoriesToZipSubsSeparately contains the current directory, zip each subdirectory separately
         /// </summary>
-        /// <param name="zipTools"></param>
-        /// <param name="directoriesToZipSubsSeparately"></param>
-        /// <param name="currentDirectory"></param>
+        /// <param name="zipTools">Zip tools instance</param>
+        /// <param name="directoriesToZipSubsSeparately">Dictionary of subdirectories to zip separately</param>
+        /// <param name="currentDirectory">Current directory</param>
         /// <param name="deleteFilesAfterZip">When true, delete the source files after the .zip file is created (useful to save disk space)</param>
         /// <param name="errorOccurred">Output: true if an error occurs</param>
         /// <returns>True if success, false if an error</returns>

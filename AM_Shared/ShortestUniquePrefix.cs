@@ -48,10 +48,10 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Given list of strings, determine the shortest unique prefix for each string, optionally expanding abbreviations to the next space or punctuation mark
+        /// Given a list of strings, determine the shortest unique prefix for each string, optionally expanding abbreviations to the next space or punctuation mark
         /// </summary>
         /// <remarks>Based on code at https://www.geeksforgeeks.org/find-shortest-unique-prefix-every-word-given-list-set-2-using-sorting/</remarks>
-        /// <param name="wordList"></param>
+        /// <param name="wordList">List of words</param>
         /// <param name="expandResultsToNextPunctuation">When true, expand the abbreviations to include text up until the next punctuation mark (or end of string if not found)</param>
         /// <param name="punctuationList">Punctuation marks to look for (defaults to underscore, dash, and space)</param>
         /// <returns>Dictionary where keys are the original words and values are the shortened version of each word</returns>

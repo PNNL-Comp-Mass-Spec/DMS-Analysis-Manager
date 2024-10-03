@@ -54,12 +54,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="fileCopyUtilities"></param>
-        /// <param name="jobParams"></param>
-        /// <param name="myEmslUtilities"></param>
-        /// <param name="datasetName"></param>
-        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
-        /// <param name="auroraAvailable"></param>
+        /// <param name="fileCopyUtilities">File copy utilities instance</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="myEmslUtilities">MyEMSL utilities</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="auroraAvailable">If true, Aurora is available</param>
         public DirectorySearch(
             FileCopyUtilities fileCopyUtilities,
             IJobParams jobParams,
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds the dataset directory containing Bruker MALDI imaging .zip files
         /// </summary>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         /// <returns>The full path to the dataset directory</returns>
         public string FindBrukerMALDIImagingFolders(bool assumeUnpurged = false)
         {
@@ -223,7 +223,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             // If a matching directory isn't found, ServerPath will contain the directory path defined by Job Param "DatasetStoragePath"
 
             var datasetDirPath = FindValidDirectory(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
-                                                 retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
+                                                    retrievingInstrumentDataDir: true, assumeUnpurged: assumeUnpurged);
 
             return string.IsNullOrEmpty(datasetDirPath) ? string.Empty : datasetDirPath;
         }
@@ -231,7 +231,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds a file named DatasetName.FileExtension
         /// </summary>
-        /// <param name="fileExtension"></param>
+        /// <param name="fileExtension">File extension to append to the dataset name</param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
         public string FindDatasetFile(string fileExtension)
         {
@@ -242,8 +242,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Finds a file named DatasetName.FileExtension
         /// </summary>
         /// <param name="maxAttempts">Maximum number of attempts to look for the directory</param>
-        /// <param name="fileExtension"></param>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="fileExtension">File extension to append to the dataset name</param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         /// <returns>The full path to the file; an empty string if no match</returns>
         public string FindDatasetFile(
             int maxAttempts,
@@ -257,7 +257,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
             var dataFileName = DatasetName + fileExtension;
 
-            var datasetDirPath = FindValidDirectory(DatasetName, dataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
+            var datasetDirPath = FindValidDirectory(
+                DatasetName, dataFileName, directoryNameToFind: "", maxAttempts: maxAttempts,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: false,
                 assumeUnpurged: assumeUnpurged,
                 validDirectoryFound: out _,
@@ -286,7 +287,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds a .Raw directory below the dataset directory
         /// </summary>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
         private string FindDotDFolder(bool assumeUnpurged = false)
         {
@@ -296,7 +297,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds a .D directory below the dataset directory
         /// </summary>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         private string FindDotRawFolder(bool assumeUnpurged = false)
         {
             return FindDotXFolder(AnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
@@ -305,8 +306,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds a subdirectory (typically Dataset.D or Dataset.Raw) below the dataset directory
         /// </summary>
-        /// <param name="directoryExtension"></param>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="directoryExtension">Directory extension to find</param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         /// <returns>The full path to the directory; an empty string if no match</returns>
         public string FindDotXFolder(string directoryExtension, bool assumeUnpurged)
         {
@@ -350,6 +351,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Finds the best .mgf file for the current dataset
         /// </summary>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
+        /// <param name="assumeUnpurged">When true, FindValidDirectory() will return the path to the dataset directory on the storage server</param>
         public string FindMGFFile(int maxAttempts, bool assumeUnpurged)
         {
             // Data files are in a subdirectory off of the main dataset directory
@@ -418,7 +421,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         public string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir)
         {
             const string directoryNameToFind = "";
-            return FindValidDirectory(dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
+            return FindValidDirectory(
+                dsName, fileNameToFind, directoryNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logDirectoryNotFound: true, retrievingInstrumentDataDir: retrievingInstrumentDataDir);
         }
 
@@ -431,7 +435,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the directory; can contain a wildcard, e.g. *.zip</param>
         /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
-        /// <param name="assumeUnpurged"></param>
+        /// <param name="assumeUnpurged">If true, assume the file is unpurged</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         private string FindValidDirectory(string dsName, string fileNameToFind, bool retrievingInstrumentDataDir, bool assumeUnpurged)
         {
@@ -501,9 +505,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="logDirectoryNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="retrievingInstrumentDataDir">Set to true when retrieving an instrument data directory</param>
         /// <param name="assumeUnpurged">When true, this method returns the path to the dataset directory on the storage server</param>
-        /// <param name="validDirectoryFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
-        /// <param name="directoryNotFoundMessage">Output parameter: description to be used when validDirectoryFound is false</param>
-        /// <param name="myEmslFileIDsInBestPath">Output parameter: when the directory returned by this method is MyEMSL, this will have the FileID of the file found in the directory</param>
+        /// <param name="validDirectoryFound">Output: True if a valid directory is ultimately found, otherwise false</param>
+        /// <param name="directoryNotFoundMessage">Output: describes the directory (and possibly file) that could not be found</param>
+        /// <param name="myEmslFileIDsInBestPath">Output: when the directory returned by this method is MyEMSL, this will have the FileID of the file found in the directory</param>
         /// <returns>Path to the most appropriate dataset directory</returns>
         public string FindValidDirectory(
             string datasetName,
@@ -546,7 +550,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
 
                 if (retrievingInstrumentDataDir && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
-                    // The instrument data is purged and we're retrieving instrument data
+                    // The instrument data is purged, and we're retrieving instrument data
                     // Skip the primary dataset directory since the primary data files were most likely purged
                 }
                 else

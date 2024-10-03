@@ -260,10 +260,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Index the FASTA file (if needed) then run MS-GF+
         /// </summary>
-        /// <param name="javaProgLoc"></param>
+        /// <param name="javaProgLoc">Java .exe path</param>
         /// <param name="mzidResultsFile">MS-GF+ results file</param>
-        /// <param name="processingError"></param>
-        /// <param name="tooManySkippedSpectra"></param>
+        /// <param name="processingError">Output: true if an error occurred</param>
+        /// <param name="tooManySkippedSpectra">Output: true if MS-GF+ skipped too many spectra because they did not appear centroided</param>
         private CloseOutType RunMSGFPlus(
             string javaProgLoc,
             out FileInfo mzidResultsFile,
@@ -741,7 +741,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Convert the .mzid file created by MS-GF+ to a .tsv file
         /// </summary>
-        /// <param name="mzidFileName"></param>
+        /// <param name="mzidFileName">.mzid file name</param>
         /// <returns>The name of the .tsv file if successful; empty string if an error</returns>
         private string ConvertMZIDToTSV(string mzidFileName)
         {
@@ -927,9 +927,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Generate an MS-GF+ results file name using the dataset name, the given suffix, and optionally some additional text
         /// </summary>
-        /// <param name="fileNamePrefix">Prefix text (may be an empty string)</param>
-        /// <param name="fileName"></param>
-        /// <param name="fileNameSuffix">Suffix text (may be an empty string)</param>
+        /// <param name="fileNamePrefix">Prefix text (allowed to be an empty string)</param>
+        /// <param name="fileName">File name</param>
+        /// <param name="fileNameSuffix">Suffix text (allowed to be an empty string)</param>
         private string GenerateResultFileName(string fileNamePrefix, string fileName, string fileNameSuffix)
         {
             return fileNamePrefix + Path.GetFileNameWithoutExtension(fileName) +
@@ -940,9 +940,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Determine the amount of memory to reserve for Java
         /// </summary>
         /// <remarks>Based on job parameter MSGFPlusJavaMemorySize and the FASTA file size</remarks>
-        /// <param name="jobParams"></param>
-        /// <param name="fastaFile"></param>
-        /// <param name="warningMessage"></param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="warningMessage">Output: warning message</param>
         /// <returns>Memory to reserve, in MB</returns>
         public static int GetMemoryRequiredForFASTA(IJobParams jobParams, FileInfo fastaFile, out string warningMessage)
         {
@@ -1201,7 +1201,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Convert the .mzid file to a TSV file and create the PeptideToProtein map file (Dataset_msgfplus_PepToProtMap.txt)
         /// </summary>
         /// <remarks>Assumes that the calling method has verified that resultsFileName exists</remarks>
-        /// <param name="resultsFileName"></param>
+        /// <param name="resultsFileName">Results file name</param>
         /// <returns>True if success, false if an error</returns>
         private CloseOutType PostProcessMSGFPlusResults(string resultsFileName)
         {

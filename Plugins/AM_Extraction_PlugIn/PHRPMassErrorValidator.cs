@@ -40,7 +40,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public PHRPMassErrorValidator(int debugLevel)
         {
             mDebugLevel = debugLevel;
@@ -50,14 +50,14 @@ namespace AnalysisManagerExtractionPlugin
         /// Read the precursor mass tolerance from the search engine's parameter file
         /// Next, compute the mass error for each PSM and keep track of the 100 largest mass errors
         /// </summary>
-        /// <param name="inputFilePath"></param>
-        /// <param name="resultType"></param>
-        /// <param name="searchEngineParamFilePath"></param>
-        /// <param name="largestMassErrors"></param>
-        /// <param name="precursorMassTolerance"></param>
-        /// <param name="psmCount"></param>
-        /// <param name="errorCount"></param>
-        /// <param name="diaSearchEnabled"></param>
+        /// <param name="inputFilePath">Input file path (tab-delimited text file created by PHRP)</param>
+        /// <param name="resultType">PHRP result type enum</param>
+        /// <param name="searchEngineParamFilePath">Search engine parameter file path</param>
+        /// <param name="largestMassErrors">Output: dictionary of the largest mass errors</param>
+        /// <param name="precursorMassTolerance">Output: precursor mass tolerance, in Da</param>
+        /// <param name="psmCount">Output: number of PSMs</param>
+        /// <param name="errorCount">Output: number of errors</param>
+        /// <param name="diaSearchEnabled">Output: true if the search results come from a DIA dataset</param>
         /// <returns>True if success, false if an error</returns>
         private bool ExaminePHRPResults(
             string inputFilePath,
@@ -303,8 +303,8 @@ namespace AnalysisManagerExtractionPlugin
         /// If processing MSFragger results and the value for data_type in the parameter file is 1 or 2, return true since we're processing DIA data
         /// Otherwise, return false
         /// </summary>
-        /// <param name="resultType"></param>
-        /// <param name="searchEngineParams"></param>
+        /// <param name="resultType">PHRP result type</param>
+        /// <param name="searchEngineParams">Search engine parameters</param>
         private bool MSFraggerDIASearchEnabled(PeptideHitResultTypes resultType, SearchEngineParameters searchEngineParams)
         {
             if (resultType != PeptideHitResultTypes.MSFragger)
@@ -324,9 +324,9 @@ namespace AnalysisManagerExtractionPlugin
         /// between the precursor neutral mass value and the computed monoisotopic mass value
         /// is more than 6 Da away (more for higher charge states)
         /// </summary>
-        /// <param name="inputFilePath"></param>
-        /// <param name="resultType"></param>
-        /// <param name="searchEngineParamFilePath"></param>
+        /// <param name="inputFilePath">Input file path (tab-delimited text file created by PHRP)</param>
+        /// <param name="resultType">PHRP result type</param>
+        /// <param name="searchEngineParamFilePath">Search engine parameter file path</param>
         /// <returns>True if less than ErrorThresholdPercent of the data is bad; false otherwise</returns>
         public bool ValidatePHRPResultMassErrors(string inputFilePath, PeptideHitResultTypes resultType, string searchEngineParamFilePath)
         {

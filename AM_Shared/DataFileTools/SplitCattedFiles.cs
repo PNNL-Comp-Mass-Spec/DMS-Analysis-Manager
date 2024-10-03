@@ -38,8 +38,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Split a _dta.txt file into individual .dta files
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="resultsFolderPath">Results folder path</param>
         /// <param name="filesToSkip">Files to skip</param>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> filesToSkip)
         {
@@ -61,8 +61,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Split an _out.txt file into individual .out files
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="resultsFolderPath"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="resultsFolderPath">Results folder path</param>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath)
         {
             var outFilePath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Count the number of .out or .dta files in a _out.txt or _dta.txt file
         /// </summary>
-        /// <param name="concatenatedFilePath"></param>
+        /// <param name="concatenatedFilePath">_dta.txt file path</param>
         private void CountFilesInConcatenatedTextFile(string concatenatedFilePath)
         {
             var concatenatedFile = new FileInfo(concatenatedFilePath);

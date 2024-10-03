@@ -180,7 +180,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="destinationFilePath">Destination file path</param>
         /// <param name="overwrite">True to overwrite if it exists</param>
-        /// <param name="increaseHoldoffOnEachRetry"></param>
+        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each retry</param>
         // ReSharper disable once UnusedMember.Global
         public void CopyFileWithRetry(string sourceFilePath, string destinationFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
         {

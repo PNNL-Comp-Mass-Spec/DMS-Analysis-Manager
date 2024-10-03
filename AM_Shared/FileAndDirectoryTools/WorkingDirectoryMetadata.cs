@@ -56,7 +56,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Store information about a file in the working directory
         /// </summary>
-        /// <param name="fileToAdd"></param>
+        /// <param name="fileToAdd">File to add</param>
         public void AddWorkingDirectoryFile(FileInfo fileToAdd)
         {
             if (fileToAdd.Directory == null)
@@ -80,8 +80,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Store information about a file in the working directory
         /// </summary>
-        /// <param name="parentDirectoryPath"></param>
-        /// <param name="metadata"></param>
+        /// <param name="parentDirectoryPath">Parent directory path</param>
+        /// <param name="metadata">File metadata</param>
         public void AddWorkingDirectoryFile(string parentDirectoryPath, FileMetadata metadata)
         {
             if (WorkingDirectoryFiles.TryGetValue(parentDirectoryPath, out var subdirectoryFiles))

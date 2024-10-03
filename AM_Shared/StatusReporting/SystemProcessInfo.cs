@@ -98,7 +98,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Determine the core usage for a given process (by ID)
         /// </summary>
-        /// <param name="processID"></param>
+        /// <param name="processID">Process ID</param>
         public float GetCoreUsageByProcessID(int processID)
         {
             if (Global.LinuxOS)
@@ -156,7 +156,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Report an error
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">Error message</param>
         /// <param name="ex">Exception (allowed to be null)</param>
         protected void OnWindowsProcessErrorEvent(string message, Exception ex)
         {

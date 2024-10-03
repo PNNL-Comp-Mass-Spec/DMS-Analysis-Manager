@@ -74,7 +74,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel">Debug level (higher number means more messages)</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="workingDir">Working directory path</param>
         /// <param name="traceMode">Set to true to show additional debug messages</param>
         public MyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)

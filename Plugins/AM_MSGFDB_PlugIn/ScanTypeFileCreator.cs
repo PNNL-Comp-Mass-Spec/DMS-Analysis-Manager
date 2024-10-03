@@ -47,8 +47,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="workDirectoryPath"></param>
-        /// <param name="datasetName"></param>
+        /// <param name="workDirectoryPath">Working directory path</param>
+        /// <param name="datasetName">Dataset name</param>
         public ScanTypeFileCreator(string workDirectoryPath, string datasetName)
         {
             WorkDir = workDirectoryPath;
@@ -310,9 +310,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Return true if the value in the first index of dataColumns is an Integer
+        /// Return true if the value in the first index of dataColumns is an integer
         /// </summary>
-        /// <param name="dataColumns"></param>
+        /// <param name="dataColumns">List of data columns</param>
         private bool FirstColumnIsInteger(IReadOnlyList<string> dataColumns)
         {
             return int.TryParse(dataColumns[0], out _);

@@ -157,9 +157,9 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Return true if property ModificationName matches modificationName or if property ModificationMass is within tolerance of modificationMass
         /// </summary>
-        /// <param name="modificationName"></param>
-        /// <param name="modificationMass"></param>
-        /// <param name="massTolerance"></param>
+        /// <param name="modificationName">Modification name</param>
+        /// <param name="modificationMass">Modification mass</param>
+        /// <param name="massTolerance">Mass tolerance</param>
         private bool MatchesModNameOrMass(string modificationName, double modificationMass, double massTolerance = 0.00125)
         {
             return ModificationName.Equals(modificationName, StringComparison.OrdinalIgnoreCase) ||

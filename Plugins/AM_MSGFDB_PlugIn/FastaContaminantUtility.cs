@@ -68,8 +68,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Append a protein to a FASTA file
         /// </summary>
         /// <remarks>Nothing is appended if proteinName is not found in mProteins</remarks>
-        /// <param name="fastaWriter"></param>
-        /// <param name="proteinName"></param>
+        /// <param name="fastaWriter">FASTA file writer</param>
+        /// <param name="proteinName">Protein name</param>
         public void WriteProteinToFasta(StreamWriter fastaWriter, string proteinName)
         {
             if (!mProteins.TryGetValue(proteinName, out var kvDetails))

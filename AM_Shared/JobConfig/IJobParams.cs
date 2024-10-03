@@ -204,15 +204,15 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Add new dataset name and ID to DatasetInfoList
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="datasetID"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetID">Dataset ID</param>
         void AddDatasetInfo(string datasetName, int datasetID);
 
         /// <summary>
         /// Add a filename to definitely move to the results directory
         /// </summary>
-        /// <remarks>FileName can be a file path; only the filename will be stored in ResultFilesToKeep</remarks>
-        /// <param name="fileName"></param>
+        /// <remarks>fileName can be a file path; only the filename will be stored in ResultFilesToKeep</remarks>
+        /// <param name="fileName">File name</param>
         void AddResultFileToKeep(string fileName);
 
         /// <summary>
@@ -233,14 +233,14 @@ namespace AnalysisManagerBase.JobConfig
         /// For partial file names, use <a cref="AddResultFileExtensionToSkip">AddResultFileExtensionToSkip</a>
         /// </para>
         /// </remarks>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File name</param>
         void AddResultFileToSkip(string fileName);
 
         /// <summary>
         /// Add a filename extension to not move to the results directory
         /// </summary>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-        /// <param name="fileExtension"></param>
+        /// <param name="fileExtension">File extension</param>
         void AddResultFileExtensionToSkip(string fileExtension);
 
         /// <summary>
@@ -381,7 +381,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Remove a filename that was previously added to ResultFilesToSkip
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File name</param>
         void RemoveResultFileToSkip(string fileName);
 
         /// <summary>

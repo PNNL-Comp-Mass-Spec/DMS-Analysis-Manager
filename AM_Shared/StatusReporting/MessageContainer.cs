@@ -19,8 +19,8 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="managerName"></param>
+        /// <param name="message">Message</param>
+        /// <param name="managerName">Manager name</param>
         public MessageContainer(string message, string managerName)
         {
             Message = message;

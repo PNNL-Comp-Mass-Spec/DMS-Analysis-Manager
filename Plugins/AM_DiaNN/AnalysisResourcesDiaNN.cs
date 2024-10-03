@@ -318,8 +318,8 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Convert a list of modification definitions to a semicolon separated string
         /// </summary>
-        /// <param name="modDefinitions"></param>
-        /// <param name="removeSpaces"></param>
+        /// <param name="modDefinitions">List of modification definitions</param>
+        /// <param name="removeSpaces">If true, remove spaces</param>
         private string CollapseModifications(List<ModificationInfo> modDefinitions, bool removeSpaces = true)
         {
             var modificationList = new StringBuilder();

@@ -53,8 +53,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Adds the given PSM if the list has fewer than MaximumPSMsToKeep PSMs, or if the specEValue is less than the worst scoring entry in the list
         /// </summary>
-        /// <param name="psm"></param>
-        /// <param name="protein"></param>
+        /// <param name="psm">PSM info</param>
+        /// <param name="protein">Protein name</param>
         /// <returns>True if the PSM was stored, otherwise false</returns>
         public bool AddPSM(PSMInfo psm, string protein)
         {

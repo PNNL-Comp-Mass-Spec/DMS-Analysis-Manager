@@ -64,7 +64,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// Examine the names in datasetNames
         /// Create a mapping from full name to abbreviated name
         /// </summary>
-        /// <param name="datasetNames"></param>
+        /// <param name="datasetNames">List of dataset names</param>
         /// <param name="longestCommonBaseName">Output: longest common base name</param>
         /// <param name="warnings">Output: warning messages</param>
         /// <returns>Dictionary where keys are dataset names and values are abbreviated names</returns>
@@ -192,8 +192,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Find the longest string of letters in common at the start of the items
         /// </summary>
-        /// <param name="items"></param>
-        /// <param name="caseSensitive"></param>
+        /// <param name="items">List of strings</param>
+        /// <param name="caseSensitive">If true, use case-sensitive comparisons</param>
         public static string LongestCommonStringFromStart(List<string> items, bool caseSensitive = false)
         {
             if (items.Count == 0)
@@ -223,9 +223,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Find the longest string of letters in common between string1 and string 2
         /// </summary>
-        /// <param name="string1"></param>
-        /// <param name="string2"></param>
-        /// <param name="comparisonType"></param>
+        /// <param name="string1">First string</param>
+        /// <param name="string2">Second string</param>
+        /// <param name="comparisonType">Comparison type enum</param>
         public static string LongestCommonStringFromStart(string string1, string string2, StringComparison comparisonType = StringComparison.OrdinalIgnoreCase)
         {
             if (string2.Length < string1.Length)

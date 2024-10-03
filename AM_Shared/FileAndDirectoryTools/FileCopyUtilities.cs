@@ -50,16 +50,16 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Delegate for CopyWithLocksComplete
         /// </summary>
-        /// <param name="startTimeUtc"></param>
-        /// <param name="destinationFilePath"></param>
+        /// <param name="startTimeUtc">Start time, in UTC</param>
+        /// <param name="destinationFilePath">Destination file path</param>
         public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destinationFilePath);
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="prismFileTools"></param>
-        /// <param name="myEmslUtilities"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="prismFileTools">FileTools instance</param>
+        /// <param name="myEmslUtilities">MyEMSL utilities instance</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public FileCopyUtilities(
             FileTools prismFileTools,
             MyEMSLUtilities myEmslUtilities,
@@ -391,7 +391,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Test for file existence with a retry loop in case of temporary glitch
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File path</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         public bool FileExistsWithRetry(string fileName, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
@@ -401,7 +401,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Test for file existence with a retry loop in case of temporary glitch
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File path</param>
         /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>True if the file exists, otherwise false</returns>
@@ -414,7 +414,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Test for file existence with a retry loop in case of temporary glitch
         /// </summary>
-        /// <param name="fileName"></param>
+        /// <param name="fileName">File path</param>
         /// <param name="retryHoldoffSeconds">Number of seconds to wait between subsequent attempts to check for the file</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>

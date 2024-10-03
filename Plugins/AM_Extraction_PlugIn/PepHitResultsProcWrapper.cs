@@ -61,11 +61,11 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Converts MSFragger, MaxQuant, MS-GF+, MSAlign, MODa, MODPlus, X!Tandem, etc. output file to a flat file
         /// </summary>
-        /// <param name="peptideSearchResultsFilePath"></param>
-        /// <param name="createFirstHitsFile"></param>
-        /// <param name="createSynopsisFile"></param>
-        /// <param name="fastaFilePath"></param>
-        /// <param name="resultType"></param>
+        /// <param name="peptideSearchResultsFilePath">Peptide search results file path</param>
+        /// <param name="createFirstHitsFile">If true, create the first hits file</param>
+        /// <param name="createSynopsisFile">If true, create the synopsis file</param>
+        /// <param name="fastaFilePath">FASTA file path</param>
+        /// <param name="resultType">PHRP result type enum</param>
         /// <param name="outputFileBaseName">Base name to use for output files; PHRP will auto-determine the name if this is an empty string</param>
         /// <returns>Enum indicating success or failure</returns>
         public CloseOutType ExtractDataFromResults(

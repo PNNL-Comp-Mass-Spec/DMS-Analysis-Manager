@@ -19,8 +19,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a status message at the console, tagging it as a debug message
         /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
+        /// <param name="format">Status message format string</param>
+        /// <param name="args">Values to substitute in the format string</param>
         [StringFormatMethod("format")]
         public void LogDebug(string format, params object[] args)
         {
@@ -49,8 +49,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// Log an error message
         /// </summary>
         /// <remarks>The error is shown in red in the console</remarks>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
+        /// <param name="format">Error message format string</param>
+        /// <param name="args">Values to substitute in the format string</param>
         [StringFormatMethod("format")]
         public void LogError(string format, params object[] args)
         {
@@ -103,8 +103,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a status message at the console
         /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
+        /// <param name="format">Status message format string</param>
+        /// <param name="args">Values to substitute in the format string</param>
         [StringFormatMethod("format")]
         public void LogMessage(string format, params object[] args)
         {
@@ -132,8 +132,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Show a warning message at the console and write to the log file
         /// </summary>
-        /// <param name="format"></param>
-        /// <param name="args"></param>
+        /// <param name="format">Warning message format string</param>
+        /// <param name="args">Values to substitute in the format string</param>
         [StringFormatMethod("format")]
         public void LogWarning(string format, params object[] args)
         {
@@ -153,8 +153,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Register event handlers
         /// </summary>
-        /// <param name="processingClass"></param>
-        /// <param name="writeDebugEventsToLog"></param>
+        /// <param name="processingClass">Processing class instance</param>
+        /// <param name="writeDebugEventsToLog">If true, write debug events to the log</param>
         protected virtual void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
@@ -177,8 +177,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Unregister the event handler for the given LogLevel
         /// </summary>
-        /// <param name="processingClass"></param>
-        /// <param name="messageType"></param>
+        /// <param name="processingClass">Processing class instance</param>
+        /// <param name="messageType">Message type</param>
         protected void UnregisterEventHandler(EventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             UnregisterEventHandler((IEventNotifier)processingClass, messageType);
@@ -187,8 +187,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Unregister the event handler for the given LogLevel
         /// </summary>
-        /// <param name="processingClass"></param>
-        /// <param name="messageType"></param>
+        /// <param name="processingClass">Processing class instance</param>
+        /// <param name="messageType">Message type</param>
         protected void UnregisterEventHandler(IEventNotifier processingClass, BaseLogger.LogLevels messageType)
         {
             switch (messageType)

@@ -32,7 +32,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Convert Bytes to Gigabytes
         /// </summary>
-        /// <param name="bytes"></param>
+        /// <param name="bytes">Bytes</param>
         // ReSharper disable once UnusedMember.Global
         public static double BytesToGB(long bytes)
         {
@@ -42,7 +42,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Convert Bytes to Megabytes
         /// </summary>
-        /// <param name="bytes"></param>
+        /// <param name="bytes">Bytes</param>
         public static double BytesToMB(long bytes)
         {
             return bytes / 1024.0 / 1024.0;
@@ -51,7 +51,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
-        /// <param name="targetDirectory"></param>
+        /// <param name="targetDirectory">Target directory</param>
         private double GetFreeDiskSpaceLinux(DirectoryInfo targetDirectory)
         {
             var driveInfo = GetLocalDriveInfo(targetDirectory);
@@ -66,7 +66,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Determine the free disk space on the drive with the given directory
         /// </summary>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
-        /// <param name="targetDirectory"></param>
+        /// <param name="targetDirectory">Target directory</param>
         /// <returns>Free space, in MB</returns>
         private double GetFreeDiskSpaceWindows(DirectoryInfo targetDirectory)
         {
@@ -108,7 +108,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Get a DriveInfo instance for the drive with the given target directory (must be on the local host)
         /// Supports both Windows and Linux paths
         /// </summary>
-        /// <param name="targetDirectory"></param>
+        /// <param name="targetDirectory">Target directory</param>
         public DriveInfo GetLocalDriveInfo(DirectoryInfo targetDirectory)
         {
             var baseWarningMsg = "Unable to instantiate a DriveInfo object for " + targetDirectory.FullName;
@@ -177,11 +177,11 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Check the free space on the drive with the given directory, logging a message if insufficient space
         /// </summary>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
-        /// <param name="directoryDescription"></param>
-        /// <param name="directoryPath"></param>
-        /// <param name="minFreeSpaceMB"></param>
+        /// <param name="directoryDescription">Directory description</param>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="minFreeSpaceMB">Minimum free space, in MB</param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <param name="logToDatabase"></param>
+        /// <param name="logToDatabase">If true, log a message to the database if insufficient space</param>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
         public bool ValidateFreeDiskSpace(
             string directoryDescription,
@@ -197,15 +197,15 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Check the free space on the drive with the given directory
         /// </summary>
         /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
-        /// <param name="directoryDescription"></param>
-        /// <param name="directoryPath"></param>
-        /// <param name="minFreeSpaceMB"></param>
+        /// <param name="directoryDescription">Directory description</param>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="minFreeSpaceMB">Minimum free space, in MB</param>
         /// <param name="logFreeSpaceBelowThreshold">
         /// When true, if insufficient free space, either log a message with LogTools or raise an error event
         /// When false, if insufficient free space simply return false
         /// </param>
         /// <param name="errorMessage">Output: error message</param>
-        /// <param name="logToDatabase"></param>
+        /// <param name="logToDatabase">If true, log a message to the database if insufficient space</param>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
         public bool ValidateFreeDiskSpace(
             string directoryDescription,

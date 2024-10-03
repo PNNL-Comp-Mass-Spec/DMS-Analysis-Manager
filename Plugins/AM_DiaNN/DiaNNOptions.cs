@@ -628,7 +628,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// Parse the DIA-NN parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="paramFilePath"></param>
+        /// <param name="paramFilePath">Parameter file path</param>
         /// <returns>True if success, false if an error</returns>
         public bool LoadDiaNNOptions(string paramFilePath)
         {

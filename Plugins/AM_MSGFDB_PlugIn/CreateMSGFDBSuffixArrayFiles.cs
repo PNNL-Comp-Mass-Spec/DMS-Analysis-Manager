@@ -44,7 +44,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="managerName"></param>
+        /// <param name="managerName">Manager name</param>
         public CreateMSGFDBSuffixArrayFiles(string managerName)
         {
             mMgrName = managerName;
@@ -273,16 +273,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Copies the suffix array files for the specified FASTA file to the remote MSGFPlus_Index_File share
         /// </summary>
         /// <remarks>this method is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
-        /// <param name="fastaFile"></param>
-        /// <param name="remoteIndexDirPath"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="remoteIndexDirPath">Remove index directory ptah</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.FileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">
         /// When true, assumes that the index files were previously copied to remoteIndexDirPath,
         /// and we should simply create the .MSGFPlusIndexFileInfo file for the matching files
         /// This option is used by the MSGFPlusIndexFileCopier program when switch /X is provided
         /// </param>
-        /// <param name="errorMessage"></param>
+        /// <param name="errorMessage">Output: Error message</param>
         public static bool CopyIndexFilesToRemote(FileInfo fastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
                                                   bool createIndexFileForExistingFiles, out string errorMessage)
         {
@@ -385,7 +385,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Will copy the files from msgfPlusIndexFilesDirPathBase if they exist
         /// </summary>
         /// <param name="logFileDir">Log file directory</param>
-        /// <param name="debugLevel">1 for normal, 2 for more verbose, 5 for the most verbose</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="javaProgLoc">Path to Java executable</param>
         /// <param name="msgfPlusProgLoc">Path to the MS-GF+ .jar file</param>
         /// <param name="fastaFilePath">FASTA file path (on the local computer)</param>
@@ -945,8 +945,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Delete old MS-GF+ index files
         /// </summary>
-        /// <param name="remoteIndexDirPath"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="remoteIndexDirPath">Remote index directory path</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         private void DeleteOldIndexFiles(string remoteIndexDirPath, short debugLevel)
         {
             try
@@ -1048,9 +1048,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Constructs a list of suffix array files that should exist
         /// Looks for each of those files
         /// </summary>
-        /// <param name="fastaFileIsDecoy"></param>
-        /// <param name="outputNameBase"></param>
-        /// <param name="directoryPathToSearch"></param>
+        /// <param name="fastaFileIsDecoy">True if the FASTA file has forward and reverse sequences</param>
+        /// <param name="outputNameBase">Base output name</param>
+        /// <param name="directoryPathToSearch">Directory path to search</param>
         /// <param name="filesToFind">List of files that should exist; calling method must have initialized it</param>
         /// <param name="existingFileList">Output param: semicolon separated list of existing files</param>
         /// <param name="missingFiles">Output param: semicolon separated list of missing files</param>
@@ -1116,7 +1116,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Check whether jarFilePath matches MSGFDB.jar
         /// </summary>
-        /// <param name="jarFilePath"></param>
+        /// <param name="jarFilePath">.jar file path</param>
         public bool IsMSGFPlus(string jarFilePath)
         {
             const string MSGFDB_JAR_NAME = "MSGFDB.jar";
@@ -1136,7 +1136,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Look for errors in the console output file created by the call to BuildSA
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private string ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             try
@@ -1216,7 +1216,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="fastaFile">FASTA file</param>
         /// <param name="outputNameBase">Base output name</param>
-        /// <param name="debugLevel">Debug level</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <returns>True if the file is valid, false if it is missing, corrupt, or from the legacy MSGFDB</returns>
         private bool ValidateCannoFile(FileInfo fastaFile, string outputNameBase, int debugLevel)
         {
@@ -1286,7 +1286,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="directoryPathToCheck">Directory to check</param>
         /// <param name="filesToCopy">Dictionary with filenames and file sizes</param>
         /// <param name="usingLegacyFasta">True when using a legacy FASTA file (not protein collection based)</param>
-        /// <param name="minWriteTimeThresholdUTC"></param>
+        /// <param name="minWriteTimeThresholdUTC">Minimum write time threshold for the index files, in UTC</param>
         /// <param name="verifyingRemoteDirectory">True when validating files on a remote server, false if verifying the local DMS_Temp_Org directory</param>
         /// <returns>True if all files are found and are the right size</returns>
         private bool ValidateFiles(string directoryPathToCheck, Dictionary<string, long> filesToCopy, bool usingLegacyFasta,

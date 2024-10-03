@@ -27,10 +27,9 @@
         /// <summary>
         /// Constructor that accepts a value
         /// </summary>
-        /// <param name="parameterName"></param>
-        /// <param name="parameterValue"></param>
-        /// <param name="required"></param>
-        // ReSharper disable once UnusedMember.Global
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="parameterValue">Parameter value</param>
+        /// <param name="required">If true, the parameter is required</param>
         public BooleanParameter(string parameterName, bool parameterValue, bool required = true)
         {
             ParameterName = parameterName;
@@ -38,11 +37,11 @@
             SetValue(parameterValue);
         }
 
-         /// <summary>
+        /// <summary>
         /// Set the value for this parameter
         /// </summary>
         /// <remarks>Sets IsDefined to true</remarks>
-        /// <param name="parameterValue"></param>
+        /// <param name="parameterValue">Parameter value</param>
         public void SetValue(bool parameterValue)
         {
             ParameterValue = parameterValue;

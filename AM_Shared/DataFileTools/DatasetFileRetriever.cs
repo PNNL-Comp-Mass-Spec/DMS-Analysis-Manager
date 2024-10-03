@@ -28,7 +28,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="resourcer"></param>
+        /// <param name="resourcer">Resourcer instance</param>
         public DatasetFileRetriever(AnalysisResources resourcer)
         {
             mResourceClass = resourcer;
@@ -252,11 +252,11 @@ namespace AnalysisManagerBase.DataFileTools
         /// </para>
         /// </param>
         /// <param name="dataPackageDatasets">
-        /// Output parameter: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
+        /// Output: Dataset info for the datasets associated with this data package; keys are Dataset ID, values are data package info
         /// </param>
         /// <param name="datasetRawFilePaths">
         /// <para>
-        /// Output parameter: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
+        /// Output: Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
         /// </para>
         /// <para>
         /// If skipDatasetsWithExistingMzML is true, datasets will not be added to datasetRawFilePaths if an existing .mzML file is found

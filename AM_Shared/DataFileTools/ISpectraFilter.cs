@@ -143,8 +143,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Initializes parameters. Must be called before executing Start()
         /// </summary>
-        /// <param name="InitParams"></param>
-        void Setup(SpectraFilterParams InitParams);
+        /// <param name="initParams">Spectrum filter parameters</param>
+        void Setup(SpectraFilterParams initParams);
 
         /// <summary>
         /// Starts the spectra filter operation

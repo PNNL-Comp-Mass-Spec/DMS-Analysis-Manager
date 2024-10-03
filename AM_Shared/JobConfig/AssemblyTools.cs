@@ -20,7 +20,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Call summaryFile.Add for each loaded assembly
         /// </summary>
-        /// <param name="summaryFile"></param>
+        /// <param name="summaryFile">Summary file instance</param>
         [Obsolete("Unused")]
         private void GetLoadedAssemblyInfo(SummaryFile summaryFile)
         {
@@ -41,7 +41,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Call summaryFile.Add for each DLL in the application directory
         /// </summary>
-        /// <param name="summaryFile"></param>
+        /// <param name="summaryFile">Summary file instance</param>
         public void GetComponentFileVersionInfo(SummaryFile summaryFile)
         {
             // Create a reference to the current directory.

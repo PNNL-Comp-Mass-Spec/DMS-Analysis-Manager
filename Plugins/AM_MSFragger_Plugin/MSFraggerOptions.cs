@@ -119,7 +119,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParams"></param>
+        /// <param name="jobParams">Job parameters</param>
         public MSFraggerOptions(IJobParams jobParams)
         {
             mJobParams = jobParams;
@@ -137,8 +137,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Add a static or dynamic modification to the modificationsByResidue dictionary
         /// </summary>
         /// <param name="modificationsByResidue">Dictionary of modifications, by residue or position</param>
-        /// <param name="residueOrPositionName"></param>
-        /// <param name="modificationMass"></param>
+        /// <param name="residueOrPositionName">Residue or position name</param>
+        /// <param name="modificationMass">Modification mass</param>
         private void AppendModificationMass(
             IDictionary<string, SortedSet<double>> modificationsByResidue,
             string residueOrPositionName,
@@ -162,7 +162,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <remarks>Peptide and protein static terminal modifications in staticModifications are indicated by Nterm_peptide, Cterm_peptide, add_Nterm_protein, and Cterm_protein</remarks>
         /// <param name="staticModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
         /// <param name="variableModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
-        /// <param name="reporterIonMode"></param>
+        /// <param name="reporterIonMode">Output: Reporter ion mode enum</param>
         /// <returns>True if success, false if an error</returns>
         // ReSharper restore CommentTypo
         private bool DetermineReporterIonMode(
@@ -265,7 +265,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <remarks>
         /// This method will return reporterIonMode if it is not Tmt11 or Tmt16, or if job parameter ReporterIonMode is undefined to "auto"
         /// </remarks>
-        /// <param name="reporterIonMode"></param>
+        /// <param name="reporterIonMode">Reporter ion mode to use if job parameter "ReporterIonMode" is "auto"</param>
         private ReporterIonModes DetermineReporterIonMode(ReporterIonModes reporterIonMode)
         {
             if (reporterIonMode != ReporterIonModes.Tmt11 && reporterIonMode != ReporterIonModes.Tmt16)
@@ -306,9 +306,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Look for text in affectedResidueList
         /// For each match found, append to affectedResidues
         /// </summary>
-        /// <param name="affectedResidueList"></param>
-        /// <param name="residueMatcher"></param>
-        /// <param name="affectedResidues"></param>
+        /// <param name="affectedResidueList">String of affected residues</param>
+        /// <param name="residueMatcher">Residue matcher RegEx</param>
+        /// <param name="affectedResidues">List of affected residue symbols</param>
         /// <returns>Updated version of affectedResidueList with the matches removed</returns>
         private string ExtractMatches(string affectedResidueList, Regex residueMatcher, ICollection<string> affectedResidues)
         {
@@ -333,8 +333,8 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Returns a description of the number of dynamic mods, e.g. "2 dynamic mods"
         /// </summary>
-        /// <param name="dynamicModCount"></param>
-        /// <returns></returns>
+        /// <param name="dynamicModCount">Dynamic mod count</param>
+        /// <returns>Description of the number of dynamic mods</returns>
         public static string GetDynamicModCountDescription(int dynamicModCount)
         {
             return dynamicModCount == 1 ?
@@ -365,7 +365,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <para>Keys in the output dictionaries are single letter amino acid symbols and values are a list of modifications masses for the amino acid</para>
         /// <para>Keys can alternatively be a description of the peptide or protein terminus (see <see cref="C_TERM_PEPTIDE"/></para> and similar constants)
         /// </remarks>
-        /// <param name="paramFileEntries"></param>
+        /// <param name="paramFileEntries">List of parameter file entries, as Key/Value pairs</param>
         /// <param name="staticModsByResidue">Output: dictionary of static modifications, by residue or position</param>
         /// <param name="variableModsByResidue">Output: dictionary of dynamic modifications, by residue or position</param>
         /// <returns>True if modifications were successfully parsed, false if an error</returns>
@@ -547,7 +547,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Return true if the value is an empty string or the word "auto"
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">Parameter value to examine</param>
         public bool IsUndefinedOrAuto(string value)
         {
             return string.IsNullOrWhiteSpace(value) || value.Equals("auto", StringComparison.OrdinalIgnoreCase);
@@ -557,7 +557,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Parse the MSFragger parameter file to determine certain processing options
         /// </summary>
         /// <remarks>Also looks for job parameters that can be used to enable/disable processing options</remarks>
-        /// <param name="paramFilePath"></param>
+        /// <param name="paramFilePath">Parameter file path</param>
         /// <returns>True if success, false if an error</returns>
         public bool LoadMSFraggerOptions(string paramFilePath)
         {
@@ -750,9 +750,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Parse a static or dynamic mod parameter to determine the modification mass, and (if applicable) the affected residues
         /// </summary>
         /// <remarks>Assumes the calling method already removed any comment text (beginning with the # sign)</remarks>
-        /// <param name="parameter"></param>
-        /// <param name="modMass"></param>
-        /// <param name="affectedResidues"></param>
+        /// <param name="parameter">Key/value parameter</param>
+        /// <param name="modMass">Output: modification mass</param>
+        /// <param name="affectedResidues">Output: list of affected residues</param>
         /// <returns>True if success, false if an error</returns>
         private bool ParseModMass(KeyValuePair<string, string> parameter, out double modMass, out List<string> affectedResidues)
         {
@@ -826,7 +826,7 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// <summary>
         /// Examine MSFragger parameters to check for errors
         /// </summary>
-        /// <param name="paramFile"></param>
+        /// <param name="paramFile">Parameter file</param>
         /// <returns>True if no problems, false if errors</returns>
         public bool ValidateMSFraggerOptions(FileInfo paramFile)
         {

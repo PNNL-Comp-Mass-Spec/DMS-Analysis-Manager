@@ -277,10 +277,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="mgrParams"></param>
-        /// <param name="jobParams"></param>
-        /// <param name="workDir"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="workDir">Working directory</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public MSGFPlusUtils(IMgrParams mgrParams, IJobParams jobParams, string workDir, short debugLevel)
         {
             mMgrParams = mgrParams;
@@ -423,9 +423,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Append one or more lines from the start of sourceFile to the end of targetFile
         /// </summary>
-        /// <param name="workDir"></param>
-        /// <param name="sourceFile"></param>
-        /// <param name="targetFile"></param>
+        /// <param name="workDir">Working directory</param>
+        /// <param name="sourceFile">Source file path</param>
+        /// <param name="targetFile">Target file path</param>
         /// <param name="headerLinesToAppend">Number of lines to append</param>
         private void AppendConsoleOutputHeader(string workDir, string sourceFile, string targetFile, int headerLinesToAppend)
         {
@@ -545,9 +545,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the instrument ID if needed
         /// </summary>
         /// <param name="paramFileLine">MS-GF+ parameter file line tracking instrument ID; its value may get updated by this method</param>
-        /// <param name="instrumentIDNew"></param>
-        /// <param name="autoSwitchReason"></param>
-        /// <param name="callerName"></param>
+        /// <param name="instrumentIDNew">New instrument ID</param>
+        /// <param name="autoSwitchReason">Reason for updating the instrument ID</param>
+        /// <param name="callerName">Calling method name</param>
         private void AutoUpdateInstrumentIDIfChanged(
             MSGFPlusKeyValueParamFileLine paramFileLine,
             string instrumentIDNew,
@@ -814,9 +814,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Construct the path for converting a .mzid file to .tsv using MzidToTsvConverter.exe
         /// </summary>
-        /// <param name="mzidFileName"></param>
-        /// <param name="tsvFileName"></param>
-        /// <param name="workingDirectory"></param>
+        /// <param name="mzidFileName">.mzid file name</param>
+        /// <param name="tsvFileName">.tsv file name</param>
+        /// <param name="workingDirectory">Working directory</param>
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory)
         {
             var arguments =
@@ -831,11 +831,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Obtain the MzidToTsv command line arguments
         /// </summary>
-        /// <param name="mzidFileName"></param>
-        /// <param name="tsvFileName"></param>
-        /// <param name="workingDirectory"></param>
-        /// <param name="msgfPlusProgLoc"></param>
-        /// <param name="javaMemorySizeMB"></param>
+        /// <param name="mzidFileName">.mzid file name</param>
+        /// <param name="tsvFileName">.tsv file name</param>
+        /// <param name="workingDirectory">Working directory</param>
+        /// <param name="msgfPlusProgLoc">MS-GF+ program location</param>
+        /// <param name="javaMemorySizeMB">Java memory size, in MB</param>
         [Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")]
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfPlusProgLoc, int javaMemorySizeMB)
         {
@@ -857,8 +857,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Create file params\enzymes.txt using enzymeDefs
         /// </summary>
-        /// <param name="outputDirectory"></param>
-        /// <param name="enzymeDefs"></param>
+        /// <param name="outputDirectory">Output directory</param>
+        /// <param name="enzymeDefs">List of enzyme definitions</param>
         /// <returns>True if successful, or if enzymeDefs is empty</returns>
         private bool CreateEnzymeDefinitionsFile(FileSystemInfo outputDirectory, IEnumerable<string> enzymeDefs)
         {
@@ -967,9 +967,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Create the peptide to protein mapping file, Dataset_msgfplus_PepToProtMap.txt
         /// </summary>
-        /// <param name="resultsFileName"></param>
-        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
-        /// <param name="localOrgDbFolder"></param>
+        /// <param name="resultsFileName">Results file name</param>
+        /// <param name="resultsIncludeAutoAddedDecoyPeptides">True if the results include auto-added decoy peptides</param>
+        /// <param name="localOrgDbFolder">Local FASTA file database directory</param>
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
@@ -979,10 +979,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Create the peptide to protein mapping file, Dataset_msgfplus_PepToProtMap.txt
         /// </summary>
-        /// <param name="resultsFileName"></param>
-        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
-        /// <param name="localOrgDbFolder"></param>
-        /// <param name="peptideInputFileFormat"></param>
+        /// <param name="resultsFileName">Results file name</param>
+        /// <param name="resultsIncludeAutoAddedDecoyPeptides">True if the results include auto-added decoy peptides</param>
+        /// <param name="localOrgDbFolder">Local FASTA file database directory</param>
+        /// <param name="peptideInputFileFormat">Peptide input file format enum</param>
         public CloseOutType CreatePeptideToProteinMapping(
             string resultsFileName,
             bool resultsIncludeAutoAddedDecoyPeptides,
@@ -1402,9 +1402,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Get the given MS-GF+ parameter by name
         /// Throws an exception if an invalid name
         /// </summary>
-        /// <param name="msgfPlusParameters"></param>
-        /// <param name="parameterName"></param>
-        /// <param name="parameterValue"></param>
+        /// <param name="msgfPlusParameters">MS-GF+ parameters</param>
+        /// <param name="parameterName">Parameter name</param>
+        /// <param name="parameterValue">New value to assign to the parameter</param>
         /// <returns>Parameter, if found</returns>
         private MSGFPlusParameter GetMSGFPlusParameter(IEnumerable<MSGFPlusParameter> msgfPlusParameters, string parameterName, string parameterValue)
         {
@@ -1497,9 +1497,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Get an MS-GF+ parameter to replace the given parameter
         /// </summary>
-        /// <param name="msgfPlusParameters"></param>
-        /// <param name="paramInfo"></param>
-        /// <param name="replacementParameterName"></param>
+        /// <param name="msgfPlusParameters">MS-GF+ parameters</param>
+        /// <param name="paramInfo">Parameter info</param>
+        /// <param name="replacementParameterName">Replacement parameter name</param>
         private MSGFPlusParameter GetReplacementParameter(
             IEnumerable<MSGFPlusParameter> msgfPlusParameters,
             MSGFPlusParameter paramInfo,
@@ -1771,7 +1771,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
         /// </summary>
-        /// <param name="scanTypeFilePath"></param>
+        /// <param name="scanTypeFilePath">Scan type file path</param>
         /// <param name="lowResMSn">Low Res MSn spectra</param>
         /// <param name="highResMSn">High Res MSn spectra (but not HCD)</param>
         /// <param name="hcdMSn">HCD Spectra</param>
@@ -1902,7 +1902,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Verify that the MS-GF+ .mzid file ends with XML tag MzIdentML
         /// </summary>
-        /// <param name="mzidFile"></param>
+        /// <param name="mzidFile">.mzid file</param>
         public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo mzidFile)
         {
             // Check whether the mzid file ends with XML tag </MzIdentML>
@@ -2719,7 +2719,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (isTDA)
                 {
-                    // Parameter file contains TDA=1 and we're running MS-GF+
+                    // Parameter file contains TDA=1, and we're running MS-GF+
                     ResultsIncludeAutoAddedDecoyPeptides = true;
                 }
             }
@@ -2981,7 +2981,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Return true if paramValue is an empty string or "None"
         /// </summary>
-        /// <param name="paramValue"></param>
+        /// <param name="paramValue">Parameter value to examine</param>
         private bool EmptyOrNone(string paramValue)
         {
             return string.IsNullOrWhiteSpace(paramValue) || Global.IsMatch(paramValue, "None");
@@ -2990,17 +2990,23 @@ namespace AnalysisManagerMSGFDBPlugIn
         // ReSharper disable once CommentTypo
 
         /// <summary>
-        /// Determine the instrument mode based on the number of low res and high res MS2 spectra
+        /// Determine the instrument mode based on the number of low-res and high-res MS2 spectra
         /// This method is used when the dataset's instrument group does not have a preferred Instrument ID value
         /// </summary>
         /// <param name="countLowResMSn">Total number of spectra that are MSn (does not include HCD-MSn)</param>
         /// <param name="countHighResMSn">Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
         /// <param name="countLowResHCD">Total number of spectra that are HCD-MSn</param>
         /// <param name="countHighResHCD">Total number of spectra that are HCD-HMSn or SA_HCD-HMSn</param>
-        /// <param name="instrumentIDNew"></param>
-        /// <param name="autoSwitchReason"></param>
+        /// <param name="instrumentIDNew">Output: new instrument ID to use (empty string if it should not be changed)</param>
+        /// <param name="autoSwitchReason">Output: auto-switch reason</param>
         /// <returns>True if successful, false if countLowResMSn, countHighResMSn, countLowResHCD, and countHighResHCD are all 0</returns>
-        private bool ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countLowResHCD, int countHighResHCD, out string instrumentIDNew, out string autoSwitchReason)
+        private bool ExamineScanTypes(
+            int countLowResMSn,
+            int countHighResMSn,
+            int countLowResHCD,
+            int countHighResHCD,
+            out string instrumentIDNew,
+            out string autoSwitchReason)
         {
             instrumentIDNew = string.Empty;
             autoSwitchReason = string.Empty;
@@ -3110,7 +3116,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Contact the database to determine the number of MSn scans of various type for the given dataset
         /// </summary>
-        /// <param name="datasetName"></param>
+        /// <param name="datasetName">Dataset name</param>
         /// <param name="countLowResMSn">Output: Total number of spectra that are MSn (does not include HCD-MSn)</param>
         /// <param name="countHighResMSn">Output: Total number of spectra that are HMSn (does not include HCD-HMSn or SA_HCD-HMSn)</param>
         /// <param name="countLowResHCD">Output: Total number of spectra that are HCD-MSn</param>
@@ -3374,7 +3380,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Override the parameter value if defined in overrideParams
         /// </summary>
-        /// <param name="overrideParams"></param>
+        /// <param name="overrideParams">Parameters to override</param>
         /// <param name="paramFileLine">MS-GF+ parameter file line</param>
         private void PossiblyOverrideParameter(IReadOnlyDictionary<string, string> overrideParams, MSGFPlusKeyValueParamFileLine paramFileLine)
         {
@@ -3413,12 +3419,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// If the data line is of the form "pool-1-thread-7: Task 7 completed"
+        /// If the data line is of the form "pool-1-thread-7: Task 7 completed",
         /// extract out the task number that completed
         /// </summary>
         /// <remarks>This type of status line was removed in January 2017</remarks>
-        /// <param name="dataLine"></param>
-        /// <param name="completedTasks"></param>
+        /// <param name="dataLine">Data line</param>
+        /// <param name="completedTasks">List of completed tasks</param>
         private void UpdateCompletedTasks(string dataLine, ISet<int> completedTasks)
         {
             var reMatch = reTaskComplete.Match(dataLine);
@@ -3442,8 +3448,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Look for seconds elapsed, minutes elapsed, or hours elapsed in dataLine
         /// If found, and if larger than totalElapsedTimeHours, update totalElapsedTimeHours
         /// </summary>
-        /// <param name="dataLine"></param>
-        /// <param name="totalElapsedTimeHours"></param>
+        /// <param name="dataLine">Data line</param>
+        /// <param name="totalElapsedTimeHours">Total elapsed time, in hours</param>
         private void UpdateElapsedTime(string dataLine, ref float totalElapsedTimeHours)
         {
             var reElapsedTimeMatch = reElapsedTime.Match(dataLine);
@@ -3472,9 +3478,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// If the data line is of the form "Search progress: 27 / 36 tasks, 92.33%	"
         /// extract out the number of completed tasks and the percent complete
         /// </summary>
-        /// <param name="dataLine"></param>
-        /// <param name="percentCompleteAllTasks"></param>
-        /// <param name="tasksCompleteViaSearchProgress"></param>
+        /// <param name="dataLine">Data line</param>
+        /// <param name="percentCompleteAllTasks">Processing percent complete, across all tasks</param>
+        /// <param name="tasksCompleteViaSearchProgress">Number of completed tasks</param>
         private void UpdatePercentComplete(string dataLine, ref float percentCompleteAllTasks, ref int tasksCompleteViaSearchProgress)
         {
             var reProgressMatch = rePercentComplete.Match(dataLine);
@@ -3500,9 +3506,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Verify that the static mods, dynamic mods, and/or custom amino acid definitions are valid
         /// </summary>
-        /// <param name="staticMods"></param>
-        /// <param name="dynamicMods"></param>
-        /// <param name="customAminoAcids"></param>
+        /// <param name="staticMods">List of static mods</param>
+        /// <param name="dynamicMods">List of dynamic mods</param>
+        /// <param name="customAminoAcids">List of custom amino acids</param>
         private bool ValidateMSGFPlusModifications(
             IEnumerable<string> staticMods,
             IEnumerable<string> dynamicMods,
@@ -3673,7 +3679,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// If a new file is created, the source file will be renamed to have extension .original
         /// </summary>
         /// <param name="sourceParamFile">FileInfo object to the source parameter file. If a new parameter file was created, this will now have extension .original</param>
-        /// <param name="msgfPlusParamFileLines"></param>
+        /// <param name="msgfPlusParamFileLines">List of lines read from the MS-GF+ parameter file</param>
         /// <param name="alwaysCreate">If false, only replace the original file if at least one parameter has been updated; if true, always replace it</param>
         /// <param name="finalParamFile">FileInfo object to the parameter file to use; will have path sourceParameterFilePath</param>
         private CloseOutType WriteMSGFPlusParameterFile(

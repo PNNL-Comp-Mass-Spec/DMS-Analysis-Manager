@@ -120,8 +120,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update the evaluation code and evaluation message
         /// </summary>
-        /// <param name="evalCode"></param>
-        /// <param name="evalMsg"></param>
+        /// <param name="evalCode">Evaluation code</param>
+        /// <param name="evalMsg">Evaluation message</param>
         void UpdateEvalCode(int evalCode, string evalMsg);
     }
 }

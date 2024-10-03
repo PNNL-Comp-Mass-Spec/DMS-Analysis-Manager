@@ -20,8 +20,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Create a _PrecursorInfo.txt file using the dataset's _ScanStats.txt and _ScanStatsEx.txt files
         /// </summary>
-        /// <param name="workingDirectory"></param>
-        /// <param name="datasetName"></param>
+        /// <param name="workingDirectory">Working directory path</param>
+        /// <param name="datasetName">Dataset name</param>
         /// <returns>True if success, false if an error</returns>
         public bool CreatePrecursorInfoFile(string workingDirectory, string datasetName)
         {
@@ -45,9 +45,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Create a _PrecursorInfo.txt file using the dataset's _ScanStats.txt and _ScanStatsEx.txt files
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="scanStatsFile"></param>
-        /// <param name="extendedScanStatsFile"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="scanStatsFile">Scan stats file</param>
+        /// <param name="extendedScanStatsFile">Extended scan stats file</param>
         /// <returns>True if success, false if an error</returns>
         public bool CreatePrecursorInfoFile(string datasetName, FileInfo scanStatsFile, FileInfo extendedScanStatsFile)
         {

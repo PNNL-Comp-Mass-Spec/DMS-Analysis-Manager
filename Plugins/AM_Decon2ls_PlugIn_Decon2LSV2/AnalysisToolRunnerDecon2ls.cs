@@ -444,7 +444,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Examines isosFilePath to look for data lines
         /// </summary>
         /// <param name="isosFilePath">Isos file path</param>
-        /// <param name="dataLineCount">Output parameter: total data line count</param>
+        /// <param name="dataLineCount">Output: total data line count</param>
         /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
         /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns false</returns>

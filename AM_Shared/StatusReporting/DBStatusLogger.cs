@@ -232,8 +232,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// This method is only used if manager parameter LogStatusToBrokerDB is true
         /// Typically LogStatusToBrokerDB is false, and the manager instead reports status via LogStatusToMessageQueue
         /// </remarks>
-        /// <param name="statusInfo"></param>
-        /// <param name="forceLogToDB"></param>
+        /// <param name="statusInfo">Status info instance</param>
+        /// <param name="forceLogToDB">If true, log the status to the database even if not enough time has elapsed</param>
         public void LogStatus(StatusInfo statusInfo, bool forceLogToDB)
         {
             try

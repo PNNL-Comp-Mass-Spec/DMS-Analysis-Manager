@@ -98,11 +98,11 @@ namespace AnalysisManagerProg
         /// Constructor
         /// </summary>
         /// <param name="mgrConfigDBConnectionString">Connection string to the manager_control database; if empty, database access is disabled</param>
-        /// <param name="managerName"></param>
-        /// <param name="debugLevel"></param>
-        /// <param name="mgrDirectoryPath"></param>
-        /// <param name="workingDirPath"></param>
-        /// <param name="traceMode"></param>
+        /// <param name="managerName">Manager name</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="mgrDirectoryPath">Manager directory path</param>
+        /// <param name="workingDirPath">Working directory path</param>
+        /// <param name="traceMode">True if trace mode is enabled</param>
         public CleanupMgrErrors(
             string mgrConfigDBConnectionString,
             string managerName,
@@ -131,8 +131,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Automatically clean old files from the work directory if managerErrorCleanupMode is not CleanupModes.Disabled
         /// </summary>
-        /// <param name="managerErrorCleanupMode"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="managerErrorCleanupMode">Manager error cleanup mode enum</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public bool AutoCleanupManagerErrors(CleanupModes managerErrorCleanupMode, int debugLevel)
         {
             if (!mInitialized)
@@ -401,7 +401,7 @@ namespace AnalysisManagerProg
         /// Deletes the file given by flagFilePath
         /// </summary>
         /// <param name="flagFilePath">Full path to the file to delete</param>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
         private bool DeleteFlagFile(string flagFilePath, int debugLevel)
         {

@@ -107,9 +107,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Initializes parameters. Must be called before executing Start()
         /// </summary>
-        /// <param name="InitParams"></param>
-        /// <param name="toolRunner"></param>
-        void Setup(SpectraFileProcessorParams InitParams, AnalysisToolRunnerBase toolRunner);
+        /// <param name="initParams">Spectra file processor parameters</param>
+        /// <param name="toolRunner">Tool runner instance</param>
+        void Setup(SpectraFileProcessorParams initParams, AnalysisToolRunnerBase toolRunner);
 
         /// <summary>
         /// Starts the spectra file creation process

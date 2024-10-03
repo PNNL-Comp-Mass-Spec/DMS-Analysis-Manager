@@ -667,7 +667,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Example value is 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
-        /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this method)</param>
+        /// <param name="remoteCacheFilePath">Output: the target file path (determined by this method)</param>
         /// <returns>True if success, false if an error</returns>
         protected bool CopyFileToServerCache(
             string cacheDirectoryPath,
@@ -790,7 +790,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Contrast with CopyMSXmlToCache in AnalysisToolRunnerMSXMLGen, where the target directory is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
         /// </remarks>
-        /// <param name="sourceFilePath"></param>
+        /// <param name="sourceFilePath">Source file path</param>
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to true to automatically purge old files if the space usage is over 20 TB</param>
@@ -950,15 +950,15 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies each of the files in the source directory to the target directory
         /// Uses CopyFileWithRetry to retry the copy up to retryCount times
         /// </summary>
-        /// <param name="rootSourceDirectoryPath"></param>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
-        /// <param name="analysisResults"></param>
-        /// <param name="errorEncountered"></param>
-        /// <param name="failedFileCount"></param>
-        /// <param name="retryCount"></param>
-        /// <param name="retryHoldoffSeconds"></param>
-        /// <param name="increaseHoldoffOnEachRetry"></param>
+        /// <param name="rootSourceDirectoryPath">Root source directory path</param>
+        /// <param name="sourceDirectoryPath">Source directory path (either the same as rootSourceDirectoryPath or a subdirectory of the root source directory)</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
+        /// <param name="analysisResults">Analysis results instance</param>
+        /// <param name="errorEncountered">Running sum of the number of errors encountered</param>
+        /// <param name="failedFileCount">Running sum of the number of failed files</param>
+        /// <param name="retryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
+        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each retry</param>
         private bool CopyResultsFolderRecursive(
             string rootSourceDirectoryPath,
             string sourceDirectoryPath,
@@ -1529,7 +1529,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Delete the file if it exists; logging an error if the deletion fails
         /// </summary>
-        /// <param name="filePath"></param>
+        /// <param name="filePath">File path</param>
         protected void DeleteTemporaryFile(string filePath)
         {
             try
@@ -1816,7 +1816,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <param name="updateIntervalSeconds">Update interval, in seconds</param>
         /// <param name="mgrParams">Manager params</param>
-        /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
+        /// <param name="debugLevel">Input/Output: set to the current debug level, will be updated to the debug level in the manager control DB</param>
         /// <returns>True for success; false for error</returns>
         public static bool GetCurrentMgrDebugLevelFromDB(int updateIntervalSeconds, IMgrParams mgrParams, ref short debugLevel)
         {
@@ -2086,7 +2086,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Gets the .zip file path to create when zipping a single file
         /// </summary>
-        /// <param name="sourceFilePath"></param>
+        /// <param name="sourceFilePath">Source file path</param>
         public string GetZipFilePathForFile(string sourceFilePath)
         {
             return ZipFileTools.GetZipFilePathForFile(sourceFilePath);
@@ -2278,7 +2278,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Looks up dataset information for the data package associated with this analysis job
         /// </summary>
-        /// <param name="dataPackageDatasets"></param>
+        /// <param name="dataPackageDatasets">Output: dictionary of datasets in the data package; keys are dataset ID</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
@@ -2438,7 +2438,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Logs current progress to the log file at a given interval (track progress with mProgress)
         /// </summary>
         /// <remarks>Longer log intervals when mDebugLevel is 0 or 1; shorter intervals for 5</remarks>
-        /// <param name="toolName"></param>
+        /// <param name="toolName">Tool name</param>
         protected void LogProgress(string toolName)
         {
             int logIntervalMinutes;
@@ -2471,8 +2471,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Logs mProgress to the log file at interval logIntervalMinutes (track progress with mProgress)
         /// </summary>
         /// <remarks>Calls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
-        /// <param name="toolName"></param>
-        /// <param name="logIntervalMinutes"></param>
+        /// <param name="toolName">Tool name</param>
+        /// <param name="logIntervalMinutes">Log interval, in minutes</param>
         protected void LogProgress(string toolName, int logIntervalMinutes)
         {
             const int CONSOLE_PROGRESS_INTERVAL_MINUTES = 1;
@@ -2863,8 +2863,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Notify the user that the settings file is missing a required parameter
         /// </summary>
-        /// <param name="jobParams"></param>
-        /// <param name="parameterName"></param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="parameterName">Parameter name</param>
         public static string NotifyMissingParameter(IJobParams jobParams, string parameterName)
         {
             var settingsFile = jobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
@@ -2902,7 +2902,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Adds double quotes around a path if it contains a space
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">Path to possibly quote</param>
         /// <returns>The path (updated if necessary)</returns>
         public static string PossiblyQuotePath(string path)
         {
@@ -2975,7 +2975,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Purge old server cache files
         /// </summary>
-        /// <param name="cacheDirectoryPath"></param>
+        /// <param name="cacheDirectoryPath">Cache directory path</param>
         public void PurgeOldServerCacheFiles(string cacheDirectoryPath)
         {
             // Value prior to December 2014: 3 TB
@@ -2988,8 +2988,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Test method for PurgeOldServerCacheFiles
         /// </summary>
-        /// <param name="cacheDirectoryPath"></param>
-        /// <param name="spaceUsageThresholdGB"></param>
+        /// <param name="cacheDirectoryPath">Cache directory path</param>
+        /// <param name="spaceUsageThresholdGB">Space usage threshold, in GB</param>
         public void PurgeOldServerCacheFilesTest(string cacheDirectoryPath, int spaceUsageThresholdGB)
         {
             if (cacheDirectoryPath.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
@@ -3304,9 +3304,9 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Replace an updated file
         /// </summary>
-        /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
-        /// <param name="originalFile"></param>
-        /// <param name="updatedFile"></param>
+        /// <remarks>First deletes originalFile, then renames the updated file to the original file's path</remarks>
+        /// <param name="originalFile">Original file</param>
+        /// <param name="updatedFile">Updated file</param>
         /// <returns>True if success, false if an error</returns>
         protected bool ReplaceUpdatedFile(FileInfo originalFile, FileInfo updatedFile)
         {
@@ -3568,8 +3568,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <returns>True if success, false if an error</returns>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath)
         {
@@ -3579,8 +3579,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, bool copySubdirectories)
@@ -3596,8 +3596,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="fileNameFilterSpec">Filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, string fileNameFilterSpec)
@@ -3614,8 +3614,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <returns>True if success, false if an error</returns>
         protected bool SynchronizeFolders(string sourceDirectoryPath, string targetDirectoryPath, List<string> fileNameFilterSpecs)
@@ -3631,8 +3631,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
         /// <remarks>Will retry failed copies up to 3 times</remarks>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <returns>True if success, false if an error</returns>
@@ -3647,8 +3647,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
@@ -3662,8 +3662,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copies new/changed files from the source directory to the target directory
         /// </summary>
-        /// <param name="sourceDirectoryPath"></param>
-        /// <param name="targetDirectoryPath"></param>
+        /// <param name="sourceDirectoryPath">Source directory path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
         /// <param name="fileNameFilterSpecs">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="fileNameExclusionSpecs">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
@@ -3955,8 +3955,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update the evaluation code and evaluation message
         /// </summary>
-        /// <param name="evalCode"></param>
-        /// <param name="evalMsg"></param>
+        /// <param name="evalCode">Evaluation code</param>
+        /// <param name="evalMsg">Evaluation message</param>
         public void UpdateEvalCode(int evalCode, string evalMsg)
         {
             mEvalCode = evalCode;
@@ -4111,7 +4111,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update Status.xml now using percentComplete
         /// </summary>
-        /// <param name="percentComplete"></param>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         protected void UpdateStatusRunning(float percentComplete)
         {
             mProgress = percentComplete;
@@ -4121,8 +4121,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Update Status.xml now using percentComplete and spectrumCountTotal
         /// </summary>
-        /// <param name="percentComplete"></param>
-        /// <param name="spectrumCountTotal"></param>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
+        /// <param name="spectrumCountTotal">Total number of spectra to process</param>
         protected void UpdateStatusRunning(float percentComplete, int spectrumCountTotal)
         {
             mProgress = percentComplete;
@@ -4130,7 +4130,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Make sure the _DTA.txt file exists and has at least one spectrum in it
+        /// Make sure the _dta.txt file exists and has at least one spectrum in it
         /// </summary>
         /// <returns>True if success; false if failure</returns>
         protected bool ValidateCDTAFile()
@@ -4143,7 +4143,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Validate that a _dta.txt file is not empty
         /// </summary>
-        /// <param name="dtaFilePath"></param>
+        /// <param name="dtaFilePath">_dta.txt file path</param>
         protected bool ValidateCDTAFile(string dtaFilePath)
         {
             var dataFound = false;
@@ -4289,8 +4289,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Zip a file
         /// </summary>
         /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in mJobParams</remarks>
-        /// <param name="fileToCompress"></param>
-        /// <param name="fileDescription"></param>
+        /// <param name="fileToCompress">File to compress</param>
+        /// <param name="fileDescription">File description</param>
         /// <returns>True if success, false if an error</returns>
         public bool ZipOutputFile(FileInfo fileToCompress, string fileDescription)
         {

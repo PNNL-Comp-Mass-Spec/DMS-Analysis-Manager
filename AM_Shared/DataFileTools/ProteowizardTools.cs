@@ -18,7 +18,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public ProteowizardTools(int debugLevel)
         {
             mDebugLevel = debugLevel;

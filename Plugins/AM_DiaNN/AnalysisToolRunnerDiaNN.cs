@@ -551,7 +551,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Parse the DIA-NN console output file to determine the DIA-NN version and to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">DIA-NN console output file path</param>
         private void ParseDiaNNConsoleOutputFileCreateSpecLib(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -708,7 +708,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Parse the DIA-NN console output file to determine the DIA-NN version and to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">DIA-NN console output file path</param>
         private void ParseDiaNNConsoleOutputFileSearchDIA(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo
@@ -1549,7 +1549,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// DIA-NN 1.8.1 (Data-Independent Acquisition by Neural Networks)
         /// DIA-NN 1.9.1 (Data-Independent Acquisition by Neural Networks)
         /// </remarks>
-        /// <param name="dataLine"></param>
+        /// <param name="dataLine">Data line with version info</param>
         private void StoreDiaNNVersion(string dataLine)
         {
             var charIndex = dataLine.IndexOf('(');

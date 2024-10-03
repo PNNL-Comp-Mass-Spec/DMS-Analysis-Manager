@@ -73,7 +73,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="debugLevel">Debug level</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="workDir">Working directory</param>
         public ZipFileTools(int debugLevel, string workDir)
         {

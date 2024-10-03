@@ -68,7 +68,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="derivedClassName"></param>
+        /// <param name="derivedClassName">Derived class name</param>
         protected AnalysisMgrBase(string derivedClassName)
         {
             mDerivedClassName = derivedClassName;
@@ -331,8 +331,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Register event handlers
         /// </summary>
-        /// <param name="processingClass"></param>
-        /// <param name="writeDebugEventsToLog"></param>
+        /// <param name="processingClass">Processing class instance</param>
+        /// <param name="writeDebugEventsToLog">If true, write debug events to the log</param>
         protected override void RegisterEvents(IEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             base.RegisterEvents(processingClass, writeDebugEventsToLog);
@@ -346,8 +346,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Update progress and re-write the analysis status file
         /// </summary>
         /// <remarks>This does not display a message at console (intentionally)</remarks>
-        /// <param name="progressMessage"></param>
-        /// <param name="percentComplete"></param>
+        /// <param name="progressMessage">Progress message</param>
+        /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             mStatusTools.CurrentOperation = progressMessage;

@@ -130,7 +130,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="mgrParams">An IMgrParams object containing manager parameters</param>
-        /// <param name="debugLevel">Debug level</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         protected DBTask(IMgrParams mgrParams, short debugLevel)
         {
             mMgrParams = mgrParams;
@@ -172,7 +172,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Populate the job parameters list using XML-based job parameters
         /// </summary>
-        /// <param name="jobParamsXML"></param>
+        /// <param name="jobParamsXML">XML job parameters, as a string</param>
         protected IEnumerable<JobParameter> ParseXMLJobParameters(string jobParamsXML)
         {
             try

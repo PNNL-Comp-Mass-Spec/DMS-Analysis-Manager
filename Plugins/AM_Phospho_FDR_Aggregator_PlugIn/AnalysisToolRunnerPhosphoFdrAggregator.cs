@@ -791,8 +791,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Run AScore against the Synopsis and First hits files in the Job subdirectories
         /// </summary>
         /// <param name="progLoc">AScore exe path</param>
-        /// <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>
-        /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+        /// <param name="fileSuffixesToCombine">Output: File suffixes that were processed</param>
+        /// <param name="processingRunTimes">Output: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
         private bool ProcessSynopsisFiles(string progLoc, out List<string> fileSuffixesToCombine, out Dictionary<string, double> processingRunTimes)
         {
@@ -984,7 +984,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="inputFilePath"></param>
         /// <param name="ascoreParamFilePath"></param>
         /// <param name="fileTypeTag">Should be syn or fht; append to the AScore_ConsoleOutput file</param>
-        /// <param name="processingRunTimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
+        /// <param name="processingRunTimes">Output: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
         private bool RunAscore(
             string progLoc,

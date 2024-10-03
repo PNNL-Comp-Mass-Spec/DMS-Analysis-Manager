@@ -317,7 +317,7 @@ namespace MSGFResultsSummarizer
         /// <param name="job">Job number</param>
         /// <param name="sourceDirectoryPath">Source folder path</param>
         /// <param name="connectionString">DMS connection string</param>
-        /// <param name="debugLevel">Debug Level</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <param name="traceMode">When true, show database queries</param>
         public ResultsSummarizer(
             PeptideHitResultTypes resultType,
@@ -358,8 +358,8 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Append PSM stats if available, otherwise append zeros
         /// </summary>
-        /// <param name="psmStats"></param>
-        /// <param name="stats"></param>
+        /// <param name="psmStats">PSM stats</param>
+        /// <param name="stats">List to append stats to</param>
         private void AppendStats(PSMStats psmStats, ICollection<string> stats)
         {
             if (psmStats == null)
@@ -1105,9 +1105,9 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Initialize a NormalizedPeptideInfo object using a clean sequence and list of modifications,
         /// </summary>
-        /// <param name="peptideCleanSequence"></param>
-        /// <param name="modifications"></param>
-        /// <param name="seqID"></param>
+        /// <param name="peptideCleanSequence">Peptide clean sequence (no modifications)</param>
+        /// <param name="modifications">List of modifications</param>
+        /// <param name="seqID">Sequence ID</param>
         public static NormalizedPeptideInfo GetNormalizedPeptideInfo(
             string peptideCleanSequence,
             IEnumerable<KeyValuePair<string, int>> modifications,
@@ -2063,7 +2063,7 @@ namespace MSGFResultsSummarizer
         /// Lookup dataset name using dataset ID
         /// </summary>
         /// <remarks>True if success, false if an error, including if the dataset is not found in the database</remarks>
-        /// <param name="datasetID"></param>
+        /// <param name="datasetID">Dataset ID</param>
         /// <param name="datasetName">Output: dataset name, if found</param>
         private bool LookupDatasetNameByID(int datasetID, out string datasetName)
         {
@@ -2226,8 +2226,8 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Parse a sequence with mod symbols
         /// </summary>
-        /// <param name="sequenceWithMods"></param>
-        /// <param name="seqID"></param>
+        /// <param name="sequenceWithMods">Sequence, with modification symbols</param>
+        /// <param name="seqID">Sequence ID</param>
         private NormalizedPeptideInfo NormalizeSequence(string sequenceWithMods, int seqID)
         {
             var aminoAcidList = new StringBuilder(sequenceWithMods.Length);
@@ -2457,7 +2457,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Summarize the results by inter-relating filteredPSMs, resultToSeqMap, and seqToProteinMap
         /// </summary>
-        /// <param name="usingMSGFOrEValueFilter"></param>
+        /// <param name="usingMSGFOrEValueFilter">When true, PSMs were filtered using MSGF score or Spec EValue</param>
         /// <param name="filteredPSMs">Filter-passing results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <param name="seqToProteinMap">Sequence to protein map (keys are sequence ID, values are proteins)</param>
         /// <param name="sequenceInfo">Sequence information (keys are sequence ID, values are sequences</param>

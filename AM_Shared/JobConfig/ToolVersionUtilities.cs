@@ -85,13 +85,13 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="mgrParams"></param>
-        /// <param name="jobParams"></param>
-        /// <param name="job"></param>
-        /// <param name="dataset"></param>
-        /// <param name="stepToolName"></param>
-        /// <param name="debugLevel"></param>
-        /// <param name="workDir"></param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="job">Job number</param>
+        /// <param name="dataset">Dataset name</param>
+        /// <param name="stepToolName">Step tool name</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="workDir">Working directory</param>
         public ToolVersionUtilities(IMgrParams mgrParams, IJobParams jobParams, int job, string dataset, string stepToolName, short debugLevel, string workDir)
         {
             mMgrParams = mgrParams;
@@ -204,9 +204,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
-        /// <param name="binaryFilePath"></param>
-        /// <param name="versionInfoFilePath"></param>
-        /// <param name="version"></param>
+        /// <param name="binaryFilePath">Executable or DLL file path</param>
+        /// <param name="versionInfoFilePath">Version info file path</param>
+        /// <param name="version">Output: binary file version</param>
         private bool ReadVersionInfoFile(string binaryFilePath, string versionInfoFilePath, out string version)
         {
             version = string.Empty;
@@ -288,8 +288,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Retrieve the tool version info file for the given peptide hit result type
         /// </summary>
-        /// <param name="fileSearchUtility"></param>
-        /// <param name="resultType"></param>
+        /// <param name="fileSearchUtility">File search utility</param>
+        /// <param name="resultType">Peptide hit result type</param>
         /// <returns>True if the file is found and successfully copied, otherwise false</returns>
         public bool RetrieveToolVersionInfoFile(FileSearch fileSearchUtility, PeptideHitResultTypes resultType)
         {
@@ -382,9 +382,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="stepToolNameOverride"></param>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="toolVersionInfo">Tool version info string</param>
+        /// <param name="stepToolNameOverride">Optional step tool name to use, instead of the default (which is "Tool_Version_Info_" + StepToolName + ".txt")</param>
         public void SaveToolVersionInfoFile(string directoryPath, string toolVersionInfo, string stepToolNameOverride = "")
         {
             try
@@ -423,7 +423,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolVersionInfo">Version info string (maximum length is 900 characters on SQL Server)</param>
         /// <param name="toolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True if success, false if an error</returns>
@@ -582,7 +582,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Store the tool version info in the database
         /// </summary>
-        /// <param name="toolVersionInfo"></param>
+        /// <param name="toolVersionInfo">Tool version info string</param>
         public bool StoreToolVersionInDatabase(string toolVersionInfo)
         {
             var analysisTask = new AnalysisJob(mMgrParams, DebugLevel);
@@ -791,8 +791,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
         /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="filePath"></param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="filePath">File path</param>
         /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string filePath)
         {
@@ -802,8 +802,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
         /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="filePath"></param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="filePath">File path</param>
         /// <returns>True if success, false if an error</returns>
         public bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string filePath)
         {
@@ -813,8 +813,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Uses the specified DLLVersionInspector to determine the version of a .NET DLL or .Exe
         /// </summary>
-        /// <param name="toolVersionInfo"></param>
-        /// <param name="filePath"></param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="filePath">File path</param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success, false if an error</returns>
         private bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string filePath, string versionInspectorExeName)

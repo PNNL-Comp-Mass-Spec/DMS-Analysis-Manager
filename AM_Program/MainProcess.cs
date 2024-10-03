@@ -343,7 +343,7 @@ namespace AnalysisManagerProg
             // Delete any temporary files that may be left in the manager directory
             RemoveTempFiles();
 
-            // Setup the loggers
+            // Configure the loggers
 
             var logFileNameBase = GetBaseLogFileName();
 
@@ -434,7 +434,7 @@ namespace AnalysisManagerProg
             LogTools.WorkDirPath = mWorkDirPath;
 
             // Set up the manager cleanup class
-            ShowTrace("Setup the manager cleanup class");
+            ShowTrace("Set up the manager cleanup class");
 
             string mgrConfigDBConnectionString;
 
@@ -1435,7 +1435,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Given a log file with a name like AnalysisMgr_2009-03-25.txt or AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
         /// </summary>
-        /// <param name="logFilePath"></param>
+        /// <param name="logFilePath">Log file path</param>
         private string DecrementLogFilePath(string logFilePath)
         {
             try
@@ -1811,7 +1811,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Get the base log file name, as defined in the manager parameters
         /// </summary>
-        /// <param name="mgrParams"></param>
+        /// <param name="mgrParams">Manager parameters</param>
         public static string GetBaseLogFileName(IMgrParams mgrParams)
         {
             var logFileNameBase = mgrParams.GetParam("LogFileName", DEFAULT_BASE_LOGFILE_NAME);
@@ -2801,8 +2801,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Show a trace message only if TraceMode is true
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="emptyLinesBeforeMessage"></param>
+        /// <param name="message">Trace message</param>
+        /// <param name="emptyLinesBeforeMessage">Number of empty lines to display before showing the message</param>
         private void ShowTrace(string message, int emptyLinesBeforeMessage = 1)
         {
             if (!TraceMode)
@@ -2814,8 +2814,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Show a message at the console, preceded by a time stamp
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="emptyLinesBeforeMessage"></param>
+        /// <param name="message">Trace message</param>
+        /// <param name="emptyLinesBeforeMessage">Number of empty lines to display before showing the message</param>
         public static void ShowTraceMessage(string message, int emptyLinesBeforeMessage = 1)
         {
             BaseLogger.ShowTraceMessage(message, false, "  ", emptyLinesBeforeMessage);
@@ -2825,7 +2825,7 @@ namespace AnalysisManagerProg
         /// Return true if the result code indicates a step tool was skipped,
         /// or if waiting for another job to finish creating a file that this job needs
         /// </summary>
-        /// <param name="resultCode"></param>
+        /// <param name="resultCode">Result code</param>
         private bool SkippedStepTool(CloseOutType resultCode)
         {
             return resultCode is
@@ -2896,7 +2896,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Updates status file to indicate that the manager is closing
         /// </summary>
-        /// <param name="managerCloseMessage"></param>
+        /// <param name="managerCloseMessage">Manager close message</param>
         private void UpdateClose(string managerCloseMessage)
         {
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref mMostRecentJobInfo);
@@ -2908,8 +2908,8 @@ namespace AnalysisManagerProg
         /// Reloads the manager settings from the manager control database
         /// if at least MinutesBetweenUpdates minutes have elapsed since the last update
         /// </summary>
-        /// <param name="lastConfigDBUpdate"></param>
-        /// <param name="minutesBetweenUpdates"></param>
+        /// <param name="lastConfigDBUpdate">Last config DB update time</param>
+        /// <param name="minutesBetweenUpdates">Minimum elapsed time, in minutes</param>
         private bool UpdateManagerSettings(ref DateTime lastConfigDBUpdate, double minutesBetweenUpdates)
         {
             if (DateTime.UtcNow.Subtract(lastConfigDBUpdate).TotalMinutes < minutesBetweenUpdates)
@@ -3006,7 +3006,7 @@ namespace AnalysisManagerProg
         /// Confirms that the remote share for storing results is accessible and has sufficient free space
         /// </summary>
         /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
-        /// <param name="toolResourcer"></param>
+        /// <param name="toolResourcer">Tool resourcer instance</param>
         /// <param name="errorMessage">Output: error message (empty string if no issues)</param>
         /// <param name="directoryWithInsufficientSpace">Output: path to the directory with insufficient space (empty string if no issues)</param>
         private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage, out string directoryWithInsufficientSpace)
@@ -3434,8 +3434,8 @@ namespace AnalysisManagerProg
         /// Logs the first error while loading a plugin as an error
         /// Subsequent errors are logged as warnings
         /// </summary>
-        /// <param name="errorMessage"></param>
-        /// <param name="ex"></param>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="ex">Exception (can be null)</param>
         private void PluginLoader_ErrorEventHandler(string errorMessage, Exception ex)
         {
             mPluginLoaderErrorCount++;
@@ -3483,8 +3483,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Event handler for file watcher
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">Sender</param>
+        /// <param name="e">File system event arguments</param>
         private void ConfigFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             mConfigFileWatcher.EnableRaisingEvents = false;

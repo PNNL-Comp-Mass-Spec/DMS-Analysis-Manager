@@ -13,9 +13,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Extract the string value inside an XML element
         /// </summary>
-        /// <param name="elementList"></param>
-        /// <param name="elementName"></param>
-        /// <param name="valueIfMissing"></param>
+        /// <param name="elementList">List of XML elements</param>
+        /// <param name="elementName">Element name</param>
+        /// <param name="valueIfMissing">Value to return, if the element name is not found</param>
         /// <returns>String value, or valueIfMissing if a parse error</returns>
         public static string GetXmlValue(IEnumerable<XElement> elementList, string elementName, string valueIfMissing = "")
         {
@@ -35,9 +35,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Extract a date value inside an XML element
         /// </summary>
-        /// <param name="elementList"></param>
-        /// <param name="elementName"></param>
-        /// <param name="valueIfMissing"></param>
+        /// <param name="elementList">List of XML elements</param>
+        /// <param name="elementName">Element name</param>
+        /// <param name="valueIfMissing">Date to return, if the element name is not found</param>
         /// <returns>Date, or valueIfMissing if a parse error</returns>
         public static DateTime GetXmlValue(IEnumerable<XElement> elementList, string elementName, DateTime valueIfMissing)
         {
@@ -59,9 +59,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Extract an integer value inside an XML element
         /// </summary>
-        /// <param name="elementList"></param>
-        /// <param name="elementName"></param>
-        /// <param name="valueIfMissing"></param>
+        /// <param name="elementList">List of XML elements</param>
+        /// <param name="elementName">Element name</param>
+        /// <param name="valueIfMissing">Value to return, if the element name is not found</param>
         /// <returns>Value, or valueIfMissing if a parse error</returns>
         public static int GetXmlValue(IEnumerable<XElement> elementList, string elementName, int valueIfMissing)
         {
@@ -83,9 +83,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Extract a float value inside an XML element
         /// </summary>
-        /// <param name="elementList"></param>
-        /// <param name="elementName"></param>
-        /// <param name="valueIfMissing"></param>
+        /// <param name="elementList">List of XML elements</param>
+        /// <param name="elementName">Element name</param>
+        /// <param name="valueIfMissing">Value to return, if the element name is not found</param>
         /// <returns>Value, or valueIfMissing if a parse error</returns>
         public static float GetXmlValue(IEnumerable<XElement> elementList, string elementName, float valueIfMissing)
         {

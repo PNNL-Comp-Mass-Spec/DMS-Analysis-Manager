@@ -406,8 +406,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Convert the MODa output file to a tab-delimited text file
         /// </summary>
-        /// <param name="filteredMODaResultsFileName">Output parameter: name of the filtered results file (in the working directory)</param>
-        /// <param name="keepAllResults"></param>
+        /// <param name="filteredMODaResultsFileName">Output: name of the filtered results file (in the working directory)</param>
+        /// <param name="keepAllResults">If true, keep all results</param>
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFileName, bool keepAllResults)
         {
@@ -731,7 +731,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Create the Peptide to Protein map file for the given MS-GF+ results file
         /// </summary>
-        /// <param name="resultsFileName"></param>
+        /// <param name="resultsFileName">Results file name</param>
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType CreateMSGFPlusResultsProteinToPeptideMappingFile(string resultsFileName)
         {
@@ -2191,12 +2191,12 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Run the Peptide Hit Results Processor
         /// </summary>
-        /// <param name="toolName"></param>
-        /// <param name="inputFileName"></param>
-        /// <param name="resultType"></param>
+        /// <param name="toolName">Tool name</param>
+        /// <param name="inputFileName">Input file name</param>
+        /// <param name="resultType">Peptide hit results type enum</param>
         /// <param name="synopsisFileName">If defined, calls ValidatePHRPResultMassErrors() to validate mass errors in the synopsis file</param>
-        /// <param name="createFirstHitsFile"></param>
-        /// <param name="createSynopsisFile"></param>
+        /// <param name="createFirstHitsFile">If true, create the first hits file</param>
+        /// <param name="createSynopsisFile">If true, create the synopsis file</param>
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType RunPHRPWork(
             string toolName,
@@ -2218,14 +2218,14 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks>
         /// Note that for data package based MSFragger jobs that have multiple experiment groups, this method is called once for each experiment group
         /// </remarks>
-        /// <param name="toolName"></param>
-        /// <param name="inputFileName"></param>
-        /// <param name="resultType"></param>
+        /// <param name="toolName">Tool name</param>
+        /// <param name="inputFileName">Input file name</param>
+        /// <param name="resultType">Peptide hit results type enum</param>
         /// <param name="synopsisFileName">If defined, calls ValidatePHRPResultMassErrors() to validate mass errors in the synopsis file</param>
-        /// <param name="createFirstHitsFile"></param>
-        /// <param name="createSynopsisFile"></param>
-        /// <param name="outputFileBaseName"></param>
-        /// <param name="synopsisFileNameFromPHRP"></param>
+        /// <param name="createFirstHitsFile">If true, create the first hits file</param>
+        /// <param name="createSynopsisFile">If true, create the synopsis file</param>
+        /// <param name="outputFileBaseName">Output file base name</param>
+        /// <param name="synopsisFileNameFromPHRP">Output: synopsis file name, from PHRP</param>
         /// <returns>CloseOutType representing success or failure</returns>
         private CloseOutType RunPHRPWork(
             string toolName,
@@ -2457,9 +2457,9 @@ namespace AnalysisManagerExtractionPlugin
         /// Store the list of files in a zip file (overwriting any existing zip file),
         /// then call AddResultFileToSkip() for each file
         /// </summary>
-        /// <param name="fileListDescription"></param>
-        /// <param name="filesToZip"></param>
-        /// <param name="zipFileName"></param>
+        /// <param name="fileListDescription">File list description</param>
+        /// <param name="filesToZip">List of files to zip</param>
+        /// <param name="zipFileName">Zip file name</param>
         /// <returns>True if successful, false if an error</returns>
         private bool ZipFiles(string fileListDescription, IReadOnlyList<FileInfo> filesToZip, string zipFileName)
         {
@@ -3189,7 +3189,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Update the DIA-NN report.tsv file to remove duplicate .mzML entries and possibly shorten the Run names
         /// </summary>
-        /// <param name="reportFile"></param>
+        /// <param name="reportFile">DIA-NN report.tsv file</param>
         private bool UpdateDiannReportFile(FileSystemInfo reportFile)
         {
             try
@@ -3284,8 +3284,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Validate the header names in headerNames
         /// </summary>
-        /// <param name="reportFile"></param>
-        /// <param name="headerNames"></param>
+        /// <param name="reportFile">DIA-NN report.tsv file</param>
+        /// <param name="headerNames">List of header names</param>
         /// <returns>True if the first two columns are 'File.Name' and 'Run', otherwise false</returns>
         private bool ValidateDiannReportFileHeaderLine(FileSystemInfo reportFile, IReadOnlyList<string> headerNames)
         {
@@ -3431,8 +3431,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Event handler for the MSGResultsSummarizer
         /// </summary>
-        /// <param name="errorMessage"></param>
-        /// <param name="ex"></param>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="ex">Exception</param>
         private void MSGFResultsSummarizer_ErrorHandler(string errorMessage, Exception ex)
         {
             if (errorMessage.IndexOf("permission was denied", StringComparison.OrdinalIgnoreCase) >= 0 ||

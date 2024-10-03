@@ -73,12 +73,12 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dmsConnectionString"></param>
-        /// <param name="proteinSeqsDBConnectionString"></param>
-        /// <param name="numSplitParts"></param>
-        /// <param name="managerName"></param>
-        /// <param name="traceMode"></param>
-        /// <param name="fileCopyUtils"></param>
+        /// <param name="dmsConnectionString">DMS connection string</param>
+        /// <param name="proteinSeqsDBConnectionString">ProteinSeqs DB connection string</param>
+        /// <param name="numSplitParts">Number of parts to split the FASTA file info</param>
+        /// <param name="managerName">Manager name</param>
+        /// <param name="traceMode">If true, show additional messages</param>
+        /// <param name="fileCopyUtils">File copy utilities</param>
         public SplitFastaFileUtilities(
             string dmsConnectionString,
             string proteinSeqsDBConnectionString,
@@ -104,8 +104,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Creates a new lock file to allow the calling process to either create the split FASTA file or validate that the split FASTA file exists
         /// </summary>
-        /// <param name="baseFastaFile"></param>
-        /// <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
+        /// <param name="baseFastaFile">Base FASTA file</param>
+        /// <param name="lockFilePath">Output: path to the newly created lock file</param>
         /// <returns>Lock file handle</returns>
         private StreamWriter CreateLockStream(FileSystemInfo baseFastaFile, out string lockFilePath)
         {
@@ -240,8 +240,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Lookup the details for LegacyFASTAFileName in the database
         /// </summary>
-        /// <param name="legacyFASTAFileName"></param>
-        /// <param name="organismName">Output parameter: the organism name for this FASTA file</param>
+        /// <param name="legacyFASTAFileName">Legacy FASTA file name</param>
+        /// <param name="organismName">Output: the organism name for this FASTA file</param>
         /// <returns>The path to the file if found; empty string if no match</returns>
         private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
         {
@@ -678,8 +678,8 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Delegate for SplittingBaseFastaFile
         /// </summary>
-        /// <param name="baseFastaFileName"></param>
-        /// <param name="numSplitParts"></param>
+        /// <param name="baseFastaFileName">Base FASTA file name</param>
+        /// <param name="numSplitParts">Number of parts to split the FASTA file into</param>
         public delegate void SplittingBaseFastaFileEventHandler(string baseFastaFileName, int numSplitParts);
 
         /// <summary>

@@ -29,8 +29,8 @@ namespace AnalysisManagerProg
         /// <param name="mgrParams">Object containing manager parameters</param>
         /// <param name="jobParams">Object containing job parameters</param>
         /// <param name="statusTools">Object for updating status file as job progresses</param>
-        /// <param name="summaryFile"></param>
-        /// <param name="myEMSLUtilities"></param>
+        /// <param name="summaryFile">Summary file</param>
+        /// <param name="myEMSLUtilities">MyEMSL utilities</param>
         public override void Setup(
             string stepToolName,
             IMgrParams mgrParams,

@@ -325,10 +325,10 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
-        /// Given a linked list of progress values (which should have populated in ascending order), find the next progress value
+        /// Given a linked list of progress values (which should have been populated in ascending order), find the next progress value
         /// </summary>
-        /// <param name="progressValues"></param>
-        /// <param name="currentProgress"></param>
+        /// <param name="progressValues">List of progress values</param>
+        /// <param name="currentProgress">Current progress</param>
         /// <returns>Next progress value, or 100 if either the current value is not found, or the next value is not defined</returns>
         private static int GetNextProgressValue(LinkedList<int> progressValues, int currentProgress)
         {
@@ -489,7 +489,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Parse the FragPipe console output file to determine the FragPipe version and to track the search progress
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private void ParseFragPipeConsoleOutputFile(string consoleOutputFilePath)
         {
             // ReSharper disable CommentTypo

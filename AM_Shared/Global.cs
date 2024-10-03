@@ -144,7 +144,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Convert Bytes to Gigabytes
         /// </summary>
-        /// <param name="bytes"></param>
+        /// <param name="bytes">Bytes</param>
         public static double BytesToGB(long bytes)
         {
             return DirectorySpaceTools.BytesToGB(bytes);
@@ -153,7 +153,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Convert Bytes to Megabytes
         /// </summary>
-        /// <param name="bytes"></param>
+        /// <param name="bytes">Bytes</param>
         public static double BytesToMB(long bytes)
         {
             return DirectorySpaceTools.BytesToMB(bytes);
@@ -162,9 +162,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Examines count to determine which string to return
         /// </summary>
-        /// <param name="count"></param>
-        /// <param name="textIfOneItem"></param>
-        /// <param name="textIfZeroOrMultiple"></param>
+        /// <param name="count">Count of the number of items being described</param>
+        /// <param name="textIfOneItem">Text to return if count equals one</param>
+        /// <param name="textIfZeroOrMultiple">Text to return if count is not one</param>
         /// <returns>Returns textIfOneItem if count is 1; otherwise, returns textIfZeroOrMultiple</returns>
         public static string CheckPlural(int count, string textIfOneItem, string textIfZeroOrMultiple)
         {
@@ -180,7 +180,7 @@ namespace AnalysisManagerBase
         /// If TraceStopPoint matches currentTraceLocation, exit the application immediately
         /// </summary>
         /// <remarks>If TraceMode is true, will show the current trace point name if not a match</remarks>
-        /// <param name="currentTraceLocation"></param>
+        /// <param name="currentTraceLocation">Current trace location</param>
         public static void CheckStopTrace(string currentTraceLocation)
         {
             CheckStopTrace(TraceStopPoint, currentTraceLocation, TraceMode);
@@ -190,9 +190,9 @@ namespace AnalysisManagerBase
         /// If traceStopPoint matches currentTraceLocation, exit the application immediately
         /// </summary>
         /// <remarks>If traceModeEnabled is true, will show the current trace point name if not a match</remarks>
-        /// <param name="traceStopPoint"></param>
-        /// <param name="currentTraceLocation"></param>
-        /// <param name="traceModeEnabled"></param>
+        /// <param name="traceStopPoint">Trace stop point</param>
+        /// <param name="currentTraceLocation">Current trace location</param>
+        /// <param name="traceModeEnabled">If true, trace mode is enabled</param>
         public static void CheckStopTrace(string traceStopPoint, string currentTraceLocation, bool traceModeEnabled)
         {
             if (string.IsNullOrEmpty(traceStopPoint))
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Collapse a list of items to a tab-delimited list
         /// </summary>
-        /// <param name="fieldNames"></param>
+        /// <param name="fieldNames">List of strings</param>
         public static string CollapseList(List<string> fieldNames)
         {
             return FlattenList(fieldNames, "\t");
@@ -222,7 +222,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Assure that the directory exists; attempt to create it if missing
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <returns>DirectoryInfo object</returns>
         public static DirectoryInfo CreateDirectoryIfMissing(string directoryPath)
         {
@@ -250,7 +250,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Delete the lock file for the corresponding data file
         /// </summary>
-        /// <param name="dataFilePath"></param>
+        /// <param name="dataFilePath">Data file path</param>
         public static void DeleteLockFile(string dataFilePath)
         {
             try
@@ -291,8 +291,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Flatten a list of items into a single string, with items separated by delimiter
         /// </summary>
-        /// <param name="itemList"></param>
-        /// <param name="delimiter"></param>
+        /// <param name="itemList">List of strings</param>
+        /// <param name="delimiter">Delimiter</param>
         public static string FlattenList(List<string> itemList, string delimiter)
         {
             if (itemList == null || itemList.Count == 0)
@@ -306,8 +306,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Flatten a list of items into a single string, with items separated by delimiter
         /// </summary>
-        /// <param name="itemList"></param>
-        /// <param name="delimiter"></param>
+        /// <param name="itemList">List of strings</param>
+        /// <param name="delimiter">Delimiter</param>
         public static string FlattenList(SortedSet<string> itemList, string delimiter)
         {
             if (itemList == null || itemList.Count == 0)
@@ -424,7 +424,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
         /// </summary>
-        /// <param name="ex"></param>
+        /// <param name="ex">Exception</param>
         /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.vb:line 86"</returns>
         public static string GetExceptionStackTrace(Exception ex)
         {
@@ -434,7 +434,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parses the .StackTrace text of the given exception to return a compact description of the current stack
         /// </summary>
-        /// <param name="ex"></param>
+        /// <param name="ex">Exception</param>
         /// <param name="multiLineOutput">When true, format the stack trace using newline characters instead of -:-</param>
         /// <returns>String similar to "Stack trace: CodeTest.Test-:-CodeTest.TestException-:-CodeTest.InnerTestException in CodeTest.vb:line 86"</returns>
         public static string GetExceptionStackTrace(Exception ex, bool multiLineOutput)
@@ -450,7 +450,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Sleep for the specified seconds
         /// </summary>
-        /// <param name="waitTimeSeconds"></param>
+        /// <param name="waitTimeSeconds">Wait time, in seconds</param>
         public static void IdleLoop(double waitTimeSeconds)
         {
             ConsoleMsgUtils.SleepSeconds(waitTimeSeconds);
@@ -463,8 +463,8 @@ namespace AnalysisManagerBase
         /// A null string is considered equivalent to an empty string.
         /// Thus, two null strings are considered equal.
         /// </remarks>
-        /// <param name="text1"></param>
-        /// <param name="text2"></param>
+        /// <param name="text1">First string</param>
+        /// <param name="text2">Second string</param>
         /// <returns>True if they match; false if not</returns>
         public static bool IsMatch(string text1, string text2)
         {
@@ -475,8 +475,8 @@ namespace AnalysisManagerBase
         /// Compare two strings (not case-sensitive)
         /// </summary>
         /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
-        /// <param name="text1"></param>
-        /// <param name="text2"></param>
+        /// <param name="text1">First string</param>
+        /// <param name="text2">Second string</param>
         /// <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
         /// <returns>True if they match; false if not</returns>
         public static bool IsMatch(string text1, string text2, bool treatNullAsEmptyString)
@@ -580,7 +580,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Examines filePath to look for spaces
         /// </summary>
-        /// <param name="filePath"></param>
+        /// <param name="filePath">File path</param>
         /// <returns>filePath as-is if no spaces, otherwise filePath surrounded by double quotes </returns>
         public static string PossiblyQuotePath(string filePath)
         {
@@ -603,9 +603,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Get the named attribute from the given element
         /// </summary>
-        /// <param name="item"></param>
-        /// <param name="attributeName"></param>
-        /// <param name="attributeValue"></param>
+        /// <param name="item">XElement item</param>
+        /// <param name="attributeName">Attribute name</param>
+        /// <param name="attributeValue">Output: attribute value</param>
         /// <returns>True if found, otherwise false</returns>
         public static bool TryGetAttribute(XElement item, string attributeName, out string attributeValue)
         {
@@ -630,9 +630,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Tries to retrieve the string value at index colIndex in dataColumns()
         /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="value"></param>
+        /// <param name="dataColumns">Array of strings</param>
+        /// <param name="colIndex">Column index</param>
+        /// <param name="value">Output: value at the given index</param>
         /// <returns>True if success; false if colIndex is less than 0 or colIndex is out of range for dataColumns()</returns>
         public static bool TryGetValue(string[] dataColumns, int colIndex, out string value)
         {
@@ -642,9 +642,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Tries to convert the text at index colIndex of dataColumns to an integer
         /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="value"></param>
+        /// <param name="dataColumns">Array of strings</param>
+        /// <param name="colIndex">Column index</param>
+        /// <param name="value">Output: integer value at the given index; zero if not an integer</param>
         /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
         public static bool TryGetValueInt(string[] dataColumns, int colIndex, out int value)
         {
@@ -654,9 +654,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Tries to convert the text at index colIndex of dataColumns to a float
         /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="value"></param>
+        /// <param name="dataColumns">Array of strings</param>
+        /// <param name="colIndex">Column index</param>
+        /// <param name="value">Output: float value at the given index; zero if not an integer</param>
         /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to a float</returns>
         public static bool TryGetValueFloat(string[] dataColumns, int colIndex, out float value)
         {
@@ -666,7 +666,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Converts value to an integer
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">Number stored as a string</param>
         /// <param name="defaultValue">Integer to return if value is not numeric</param>
         public static int CIntSafe(string value, int defaultValue)
         {
@@ -676,7 +676,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Converts value to a single (aka float)
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">Number stored as a string</param>
         /// <param name="defaultValue">Float to return if value is not numeric</param>
         public static float CSngSafe(string value, float defaultValue)
         {
@@ -688,9 +688,9 @@ namespace AnalysisManagerBase
         /// However, if file targetFileName already exists, that file will first be backed up
         /// Furthermore, up to versionCountToKeep old versions of the file will be kept
         /// </summary>
-        /// <param name="sourceFilePath"></param>
-        /// <param name="targetDirectoryPath"></param>
-        /// <param name="targetFileName"></param>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="targetDirectoryPath">Target directory path</param>
+        /// <param name="targetFileName">Target file name</param>
         /// <param name="versionCountToKeep">Maximum backup copies of the file to keep; must be 9 or less</param>
         /// <returns>True if Success, false if failure </returns>
         public static bool CopyAndRenameFileWithBackup(string sourceFilePath, string targetDirectoryPath, string targetFileName, int versionCountToKeep)
@@ -777,7 +777,7 @@ namespace AnalysisManagerBase
         /// Creates a .hashcheck file for the specified file
         /// The file will be created in the same directory as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
-        /// <param name="dataFilePath"></param>
+        /// <param name="dataFilePath">Data file path</param>
         /// <param name="computeMD5Hash">If true, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
@@ -807,8 +807,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Notify the user at console that an error occurred while writing to a log file or posting a log message to the database
         /// </summary>
-        /// <param name="logMessage"></param>
-        /// <param name="ex"></param>
+        /// <param name="logMessage">Log message</param>
+        /// <param name="ex">Exception</param>
         public static void ErrorWritingToLog(string logMessage, Exception ex)
         {
             ConsoleMsgUtils.ShowError("Error logging errors; log message: " + logMessage, ex);
@@ -887,9 +887,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Replaces text in a string, ignoring case
         /// </summary>
-        /// <param name="textToSearch"></param>
-        /// <param name="textToFind"></param>
-        /// <param name="replacementText"></param>
+        /// <param name="textToSearch">Text to search</param>
+        /// <param name="textToFind">Text to find</param>
+        /// <param name="replacementText">Replacement text</param>
         public static string ReplaceIgnoreCase(string textToSearch, string textToFind, string replacementText)
         {
             var charIndex = textToSearch.IndexOf(textToFind, StringComparison.OrdinalIgnoreCase);
@@ -923,7 +923,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Show a trace message at the console, prepending it with a timestamp that includes milliseconds
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="message">Trace message</param>
         public static void ShowTimestampTrace(string message)
         {
             ConsoleMsgUtils.ShowDebug("{0:yyyy-MM-dd hh:mm:ss.fff tt}: {1}", DateTime.Now, message);

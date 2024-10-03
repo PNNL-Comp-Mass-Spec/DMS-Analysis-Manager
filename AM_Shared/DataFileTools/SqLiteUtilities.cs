@@ -204,9 +204,9 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Copy a SQLite table from one file to another
         /// </summary>
-        /// <param name="sourceDBPath"></param>
-        /// <param name="tableName"></param>
-        /// <param name="targetDBPath"></param>
+        /// <param name="sourceDBPath">Source SQLite file path</param>
+        /// <param name="tableName">Table name</param>
+        /// <param name="targetDBPath">Target SQLite file path</param>
         public bool CopySqliteTable(string sourceDBPath, string tableName, string targetDBPath)
         {
             try

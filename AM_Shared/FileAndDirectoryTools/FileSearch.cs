@@ -56,15 +56,15 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="fileCopyUtilities"></param>
-        /// <param name="directorySearch"></param>
-        /// <param name="myEmslUtilities"></param>
-        /// <param name="mgrParams"></param>
-        /// <param name="jobParams"></param>
-        /// <param name="datasetName"></param>
-        /// <param name="debugLevel"></param>
-        /// <param name="workingDir"></param>
-        /// <param name="auroraAvailable"></param>
+        /// <param name="fileCopyUtilities">File copy utilities instance</param>
+        /// <param name="directorySearch">Directory search instance</param>
+        /// <param name="myEmslUtilities">MyEMSL utilities</param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="workingDir">Working directory path</param>
+        /// <param name="auroraAvailable">If true, Aurora is available</param>
         public FileSearch(
             FileCopyUtilities fileCopyUtilities,
             DirectorySearch directorySearch,
@@ -258,7 +258,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
+        /// <param name="sourceDirPath">Output: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if an error</returns>
         public bool FindAndRetrieveMiscFiles(string fileNameOrPattern, bool unzip, bool searchArchivedDatasetDir, out string sourceDirPath, bool logFileNotFound = true)
@@ -272,7 +272,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="fileNameOrPattern">Name of file to be retrieved (supports wildcards)</param>
         /// <param name="unzip">True if the retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetDir">True if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="sourceDirPath">Output parameter: the directory from which the file was copied</param>
+        /// <param name="sourceDirPath">Output: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <param name="logRemoteFilePath">When true, log the full path of the remote file after copying it locally</param>
         /// <returns>True if success, false if an error</returns>
@@ -772,7 +772,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for _maxq_syn.txt files in the given directory
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <returns>List of found files; empty list if no match</returns>
         public List<FileInfo> FindMaxQuantSynopsisFiles(string directoryPath)
         {
@@ -789,7 +789,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for _diann_syn.txt files in the given directory
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>List of found files; empty list if no match</returns>
         public static List<FileInfo> FindDiaNNSynopsisFiles(string directoryPath, out string errorMessage)
@@ -802,7 +802,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for _maxq_syn.txt files in the given directory
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>List of found files; empty list if no match</returns>
         public static List<FileInfo> FindMaxQuantSynopsisFiles(string directoryPath, out string errorMessage)
@@ -815,7 +815,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for _msfragger_syn.txt files in the given directory
         /// </summary>
-        /// <param name="directoryPath"></param>
+        /// <param name="directoryPath">Directory path</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>List of found files; empty list if no match</returns>
         public static List<FileInfo> FindMSFraggerSynopsisFiles(string directoryPath, out string errorMessage)
@@ -828,8 +828,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for _maxq_syn.txt or _msfragger_syn.txt files in the given directory
         /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="searchPattern"></param>
+        /// <param name="directoryPath">Directory path</param>
+        /// <param name="searchPattern">Search pattern</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>List of found files; empty list if no match</returns>
         private static List<FileInfo> FindSynopsisFiles(string directoryPath, string searchPattern, out string errorMessage)
@@ -852,7 +852,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the newest .mzXML file for this dataset (not .mzML)
         /// </summary>
         /// <remarks>Supports both gzipped mzXML/mzML files and unzipped ones (gzipping was enabled in September 2014)</remarks>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <param name="hashCheckFilePath">Output: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
         [Obsolete("Use FindNewestMsXmlFileInCache which can find both .mzXML and .mzML files")]
         public string FindMZXmlFile(out string hashCheckFilePath)
@@ -977,10 +977,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
         /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="msXmlFile">Output parameter: FileInfo object for the source .mzML or .mzXML file</param>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="msXmlFile">Output: FileInfo object for the source .mzML or .mzXML file</param>
+        /// <param name="hashCheckFilePath">Output: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool FindMsXmlFileForJobInCache(
             AnalysisResources.MSXMLOutputTypeConstants msXmlType,
@@ -1025,10 +1025,10 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
         /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="sourceFileInfo">Output parameter: FileInfo object for the source .mzML, .mzXML, or .pbf file</param>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="sourceFileInfo">Output: FileInfo object for the source .mzML, .mzXML, or .pbf file</param>
+        /// <param name="hashCheckFilePath">Output: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool FindMsXmlFileForJobInCache(
             string resultFileExtension,
@@ -1424,8 +1424,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Find a .mzML or .mzXML file in the specified directory
         /// </summary>
         /// <param name="gzippedMsXmlFileName">File to find (should end in .gz)</param>
-        /// <param name="msXmlType"></param>
-        /// <param name="directory"></param>
+        /// <param name="msXmlType">File extension</param>
+        /// <param name="directory">Directory</param>
         /// <param name="msXmlFile">Output: file if found, otherwise null</param>
         /// <returns>True if the file is found, otherwise false</returns>
         private bool FindMsXmlFileInDirectory(
@@ -1504,7 +1504,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Supports gzipped .mzML files and supports both gzipped .mzXML files and unzipped ones (gzipping was enabled in September 2014)
         /// </remarks>
         /// <param name="msXmlType">File type to find (mzXML or mzML)</param>
-        /// <param name="hashCheckFilePath">Output parameter: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
+        /// <param name="hashCheckFilePath">Output: path to the hashcheck file if the .mzML or .mzXML file was found in the MSXml cache</param>
         /// <returns>Full path to the file if a match; empty string if no match</returns>
         public string FindNewestMsXmlFileInCache(
             AnalysisResources.MSXMLOutputTypeConstants msXmlType,
@@ -1657,12 +1657,12 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Split apart coordinates that look like "R00X438Y093" into R, X, and Y
         /// </summary>
-        /// <param name="coordinate"></param>
-        /// <param name="rxyMatcher"></param>
-        /// <param name="rxMatcher"></param>
-        /// <param name="R"></param>
-        /// <param name="X"></param>
-        /// <param name="Y"></param>
+        /// <param name="coordinate">Imaging coordinate</param>
+        /// <param name="rxyMatcher">RegEx for matching R, X, and Y</param>
+        /// <param name="rxMatcher">RegEx for matching R and X</param>
+        /// <param name="R">Output: R</param>
+        /// <param name="X">Output: X</param>
+        /// <param name="Y">Output: Y</param>
         /// <returns>True if success, false otherwise</returns>
         private bool GetBrukerImagingFileCoords(string coordinate, Regex rxyMatcher, Regex rxMatcher, out int R, out int X, out int Y)
         {
@@ -1712,9 +1712,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for job parameters BrukerMALDI_Imaging_startSectionX and BrukerMALDI_Imaging_endSectionX
         /// If defined, populates startSectionX and endSectionX with the Start and End X values to filter on
         /// </summary>
-        /// <param name="jobParams"></param>
-        /// <param name="startSectionX"></param>
-        /// <param name="endSectionX"></param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="startSectionX">Output: first X section to process</param>
+        /// <param name="endSectionX">Output: last X section process</param>
         private bool GetBrukerImagingSectionFilter(IJobParams jobParams, out int startSectionX, out int endSectionX)
         {
             var applySectionFilter = false;
@@ -1833,9 +1833,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
@@ -1857,9 +1857,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// InputFolderName should be in the form MSXML_Gen_1_105_367204
         /// </remarks>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
@@ -1880,9 +1880,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Uses the job's InputFolderName parameter to dictate which subdirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
@@ -1920,9 +1920,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <param name="callingMethodCanRegenerateMissingFile">True if the calling method has logic defined for generating the .mzML file if it is not found</param>
         /// <param name="checkOutputFolder">When true, look for the file in the output folder for the job step</param>
         /// <param name="warnFileNotFound">When true, log a warning if the file cannot be found</param>
-        /// <param name="errorMessage">Output parameter: Error message</param>
-        /// <param name="fileMissingFromCache">Output parameter: will be true if the file was not found in the cache</param>
-        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
+        /// <param name="errorMessage">Output: Error message</param>
+        /// <param name="fileMissingFromCache">Output: will be true if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         public bool RetrieveCachedMSXMLFile(
             string resultFileExtension,
@@ -2003,7 +2003,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by progLocName
         /// </summary>
         /// <remarks>progLocName is typically DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
-        /// <param name="progLocName"></param>
+        /// <param name="progLocName">Manager parameter name that specifies the program directory</param>
         public bool RetrievePNNLOmicsResourceFiles(string progLocName)
         {
             const string OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml";
@@ -2219,8 +2219,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves an Agilent ion trap .mgf file or .cdf/.mgf pair for analysis job in progress
         /// </summary>
         /// <param name="getCdfAlso">True if a .cdf file is needed along with the .mgf file</param>
-        /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="maxAttempts"></param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
+        /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>True if success, false if an error</returns>
         private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
@@ -2283,8 +2283,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
         /// </summary>
         /// <remarks>The retrieved file might be gzipped</remarks>
-        /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="sourceFilePath">Output parameter: Returns the full path to the file that was retrieved</param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
+        /// <param name="sourceFilePath">Output: Returns the full path to the file that was retrieved</param>
         /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
@@ -2305,7 +2305,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Retrieves this dataset's .mzXML or .mzML file
         /// </summary>
-        /// <param name="createStoragePathInfoOnly"></param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
         /// <param name="sourceFilePath">Full path to the file that should be retrieved</param>
         /// <param name="hashCheckFilePath">Hash check file path</param>
         /// <returns>True if success, false if not retrieved or a hash error</returns>
@@ -2350,9 +2350,9 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Verify the hash value of a given .mzXML or .mzML file
         /// </summary>
         /// <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
-        /// <param name="sourceFile"></param>
+        /// <param name="sourceFile">File to examine</param>
         /// <param name="hashCheckFilePath">Hash check file path</param>
-        /// <param name="createStoragePathInfoOnly"></param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
         /// <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
         private bool RetrieveMzXMLFileVerifyHash(FileSystemInfo sourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)
         {
@@ -2486,7 +2486,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
-        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates storage path info files, and doesn't actually copy the files</param>
         /// <returns>True if the file was found and retrieved, otherwise false</returns>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
         {
@@ -2503,7 +2503,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
-        /// <param name="createStoragePathInfoOnly"></param>
+        /// <param name="createStoragePathInfoOnly">If true, creates storage path info files, and doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise false</returns>
@@ -2524,7 +2524,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
         /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates storage path info files, and doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise false</returns>
@@ -2553,7 +2553,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Looks for the files in any SIC directory that exists for the dataset
         /// </summary>
         /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates storage path info files, and doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
         /// <param name="retrieveReporterIonsFile">If true, retrieves the ReporterIons.txt file</param>
@@ -2712,7 +2712,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// </summary>
         /// <param name="masicResultsDirPath">Source directory to copy files from</param>
         /// <param name="retrieveSICStatsFile">If true, also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates storage path info files, and doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If true, retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If true, retrieves the ScanStatsEx.txt file</param>
         /// <param name="retrieveReporterIonsFile">If true, retrieves the ReporterIons.txt file</param>
@@ -3105,8 +3105,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// Retrieves a directory with a name like Dataset.D or Dataset.Raw
         /// </summary>
         /// <param name="directoryExtension">Extension on the directory name; for example, ".D"</param>
-        /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="fileNamesToSkip"></param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
+        /// <param name="fileNamesToSkip">List of file names to skip</param>
         /// <returns>True if success, false if an error</returns>
         private bool RetrieveDotXFolder(
             string directoryExtension,
@@ -3217,7 +3217,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// The data is stored as zip files with names like 0_R00X433.zip
         /// This data is unzipped into a subdirectory in the Chameleon cached data directory
         /// </summary>
-        /// <param name="unzipOverNetwork"></param>
+        /// <param name="unzipOverNetwork">If true, unzip the file over the network; if false, copy locally first</param>
         public bool RetrieveBrukerMALDIImagingFolders(bool unzipOverNetwork)
         {
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
@@ -3672,8 +3672,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Returns true if the filename ends with any of the suffixes in nonCriticalFileSuffixes
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="nonCriticalFileSuffixes"></param>
+        /// <param name="fileName">File name</param>
+        /// <param name="nonCriticalFileSuffixes">List of file suffixes that are not required</param>
         private bool SafeToIgnore(string fileName, IReadOnlyCollection<string> nonCriticalFileSuffixes)
         {
             if (nonCriticalFileSuffixes != null)

@@ -566,7 +566,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Check whether the ScanStats file has detailed scan type info
         /// </summary>
-        /// <param name="scanStatsFilePath"></param>
+        /// <param name="scanStatsFilePath">Scan stats file path</param>
         public static bool ValidateScanStatsFileHasDetailedScanTypes(string scanStatsFilePath)
         {
             var columnNameWithScanType = new List<string>

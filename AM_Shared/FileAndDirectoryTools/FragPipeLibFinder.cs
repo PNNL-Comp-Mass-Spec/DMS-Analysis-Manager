@@ -148,7 +148,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib
         /// </remarks>
-        /// <param name="libDirectory"></param>
+        /// <param name="libDirectory">Output: FragPipe lib directory info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindFragPipeLibDirectory(out DirectoryInfo libDirectory)
         {
@@ -191,7 +191,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools
         /// </remarks>
-        /// <param name="toolsDirectory"></param>
+        /// <param name="toolsDirectory">Output: FragPipe tools directory info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindFragPipeToolsDirectory(out DirectoryInfo toolsDirectory)
         {
@@ -236,7 +236,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\batmass-io-1.30.0.jar
         /// </remarks>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileBatmassIO(out FileInfo jarFile)
         {
@@ -262,7 +262,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\commons-math3-3.6.1.jar
         /// </remarks>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileCommonsMath(out FileInfo jarFile)
         {
@@ -287,7 +287,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\original-crystalc-1.4.2.jar
         /// </remarks>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileCrystalC(out FileInfo jarFile)
         {
@@ -312,7 +312,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\lib\fragpipe-21.1.jar
         /// </remarks>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileFragPipe(out FileInfo jarFile)
         {
@@ -338,7 +338,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <remarks>
         /// Typically at C:\DMS_Programs\MSFragger\fragpipe\tools\grppr-0.3.23.jar
         /// </remarks>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileGrppr(out FileInfo jarFile)
         {
@@ -361,7 +361,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the IonQuant .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileIonQuant(out FileInfo jarFile)
         {
@@ -385,7 +385,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the JFreeChart .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileJFreeChart(out FileInfo jarFile)
         {
@@ -409,7 +409,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the MSBooster .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFileMSBooster(out FileInfo jarFile)
         {
@@ -433,7 +433,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the PtmShepherd .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         public bool FindJarFilePtmShepherd(out FileInfo jarFile)
         {
@@ -457,7 +457,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the smile-core .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         [Obsolete("Deprecated with FragPipe v18")]
         public bool FindJarFileSmileCore(out FileInfo jarFile)
@@ -482,7 +482,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the smile-math .jar file
         /// </summary>
-        /// <param name="jarFile"></param>
+        /// <param name="jarFile">Output: .jar file info</param>
         /// <returns>True if found, otherwise false</returns>
         [Obsolete("Deprecated with FragPipe v18")]
         public bool FindJarFileSmileMath(out FileInfo jarFile)
@@ -507,7 +507,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Find the Java C++ presets platform directory
         /// </summary>
-        /// <param name="cppPresetsDirectory"></param>
+        /// <param name="cppPresetsDirectory">Output: Java C++ presets directory info</param>
         /// <returns>True if found, otherwise false</returns>
         [Obsolete("Deprecated with FragPipe v18")]
         public bool FindCppPresetsPlatformDirectory(out DirectoryInfo cppPresetsDirectory)
@@ -645,8 +645,8 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
         /// <summary>
         /// Look for a subdirectory below the site-packages directory for the given Python package
         /// </summary>
-        /// <param name="packageName"></param>
-        /// <param name="errorMessage"></param>
+        /// <param name="packageName">Python package name</param>
+        /// <param name="errorMessage">Output: error message</param>
         /// <returns>True if the package was found, otherwise false</returns>
         public static bool PythonPackageInstalled(string packageName, out string errorMessage)
         {

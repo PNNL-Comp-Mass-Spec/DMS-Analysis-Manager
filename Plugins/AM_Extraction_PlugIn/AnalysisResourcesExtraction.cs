@@ -70,10 +70,10 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Examines the SEQUEST, X!Tandem, Inspect, or MS-GF+ param file to determine if ETD mode is enabled
+        /// Examines the SEQUEST, X!Tandem, or MS-GF+ param file to determine if ETD mode is enabled
         /// </summary>
-        /// <param name="resultType"></param>
-        /// <param name="searchToolParamFilePath"></param>
+        /// <param name="resultType">Result type</param>
+        /// <param name="searchToolParamFilePath">Parameter file path for the search tool</param>
         /// <returns>True if we should run AScore, otherwise false</returns>
         private bool CheckAScoreRequired(string resultType, string searchToolParamFilePath)
         {
@@ -503,7 +503,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Retrieves input files needed for extraction
         /// </summary>
         /// <param name="resultTypeName">String specifying type of analysis results input to extraction process</param>
-        /// <param name="createPepToProtMapFile"></param>
+        /// <param name="createPepToProtMapFile">Output: if true, create the PepToProtMap.txt file after the FASTA file is retrieved</param>
         /// <returns>CloseOutType specifying results</returns>
         private CloseOutType GetInputFiles(string resultTypeName, out bool createPepToProtMapFile)
         {
@@ -1469,8 +1469,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Examine residuesToSearch to look for any residue in residuesToFind
         /// </summary>
-        /// <param name="residuesToSearch"></param>
-        /// <param name="residuesToFind"></param>
+        /// <param name="residuesToSearch">One letter amino acid symbols to search</param>
+        /// <param name="residuesToFind">One letter amino acid symbols to find</param>
         /// <returns>True if residuesToSearch has any of the residues in residuesToFind</returns>
         private bool HasAnyResidue(string residuesToSearch, string residuesToFind)
         {

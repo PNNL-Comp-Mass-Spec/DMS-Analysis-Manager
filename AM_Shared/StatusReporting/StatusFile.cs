@@ -76,8 +76,14 @@ namespace AnalysisManagerBase.StatusReporting
 
         private readonly string[] mRecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
+        /// <summary>
+        /// Dictionary of task status code enums and descriptions
+        /// </summary>
         private readonly Dictionary<TaskStatusCodes, string> mTaskStatusMap;
 
+        /// <summary>
+        /// Dictionary of task status detail code enums and descriptions
+        /// </summary>
         private readonly Dictionary<TaskStatusDetailCodes, string> mTaskStatusDetailMap;
 
         private int mWritingErrorCountSaved;
@@ -373,9 +379,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure update_manager_and_task_status
         /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
         /// </remarks>
-        /// <param name="logStatusToBrokerDB"></param>
-        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline</param>
-        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
+        /// <param name="logStatusToBrokerDB">If true, log status to the broker database</param>
+        /// <param name="brokerDBConnectionString">Connection string to DMS_Pipeline (if SQL Server), or simply DMS if Postgres</param>
+        /// <param name="brokerDBStatusUpdateIntervalMinutes">Status update interval, in minutes</param>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
             if (Global.OfflineMode)
@@ -412,9 +418,12 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Configure the memory logging settings
         /// </summary>
-        /// <param name="logMemoryUsage"></param>
-        /// <param name="minimumMemoryUsageLogIntervalMinutes"></param>
-        /// <param name="memoryUsageLogFolderPath"></param>
+        /// <param name="logMemoryUsage">If true, log memory usage</param>
+        /// <param name="minimumMemoryUsageLogIntervalMinutes">Log interval, in minutes</param>
+        /// <param name="memoryUsageLogFolderPath">
+        /// Directory where memory log file(s) should be created
+        /// If this is an empty string, the log file is created in the working directory
+        /// </param>
         public void ConfigureMemoryLogging(bool logMemoryUsage, float minimumMemoryUsageLogIntervalMinutes, string memoryUsageLogFolderPath)
         {
             if (logMemoryUsage)
@@ -442,9 +451,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <remarks>
         /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
         /// </remarks>
-        /// <param name="logStatusToMessageQueue"></param>
-        /// <param name="msgQueueURI"></param>
-        /// <param name="messageQueueTopicMgrStatus"></param>
+        /// <param name="logStatusToMessageQueue">When true, the status XML is being sent to the manager status message queue</param>
+        /// <param name="msgQueueURI">URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616</param>
+        /// <param name="messageQueueTopicMgrStatus"> Topic name for the manager status message queue</param>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
             if (Global.OfflineMode)
@@ -471,7 +480,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Converts the manager status enum to a string value
         /// </summary>
-        /// <param name="mgrStatusMap"></param>
+        /// <param name="mgrStatusMap">Dictionary of manager status code enums and descriptions</param>
         /// <param name="statusEnum">A MgrStatus enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         public static string ConvertMgrStatusToString(Dictionary<MgrStatusCodes, string> mgrStatusMap, MgrStatusCodes statusEnum)
@@ -496,7 +505,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Converts the task status enum to a string value
         /// </summary>
-        /// <param name="taskStatusMap"></param>
+        /// <param name="taskStatusMap">Dictionary of task status code enums and descriptions</param>
         /// <param name="statusEnum">A Task Status enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         public static string ConvertTaskStatusToString(Dictionary<TaskStatusCodes, string> taskStatusMap, TaskStatusCodes statusEnum)
@@ -521,7 +530,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Converts the task status detail enum to a string value
         /// </summary>
-        /// <param name="taskStatusDetailMap"></param>
+        /// <param name="taskStatusDetailMap">Dictionary of task status detail code enums and descriptions</param>
         /// <param name="statusEnum">A TaskStatusDetail enum</param>
         /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         public static string ConvertTaskStatusDetailToString(Dictionary<TaskStatusDetailCodes, string> taskStatusDetailMap, TaskStatusDetailCodes statusEnum)
@@ -593,9 +602,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Populate the status code to status description dictionaries
         /// </summary>
-        /// <param name="mgrStatusMap"></param>
-        /// <param name="taskStatusMap"></param>
-        /// <param name="taskStatusDetailMap"></param>
+        /// <param name="mgrStatusMap">Dictionary of manager status code enums and descriptions</param>
+        /// <param name="taskStatusDetailMap">Dictionary of task status detail code enums and descriptions</param>
+        /// <param name="taskStatusMap">Dictionary of task status code enums and descriptions</param>
         public static void DefineEnumToStringMapping(
             IDictionary<MgrStatusCodes, string> mgrStatusMap,
             IDictionary<TaskStatusCodes, string> taskStatusMap,
@@ -638,7 +647,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Enable logging messages directly to the broker database (DMS_Pipeline)
         /// </summary>
         /// <remarks>If mBrokerDBLogger is already configured, simply exits the method</remarks>
-        /// <param name="statusIntervalMinutes"></param>
+        /// <param name="statusIntervalMinutes">Status update interval, in minutes</param>
         public void EnableBrokerDbLoggingNow(int statusIntervalMinutes = 15)
         {
             try
@@ -1061,7 +1070,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Store core usage history
         /// </summary>
-        /// <param name="coreUsageHistory"></param>
+        /// <param name="coreUsageHistory">Core usage history queue</param>
         public void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory)
         {
             ProgRunnerCoreUsageHistory = coreUsageHistory;
@@ -1102,7 +1111,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Copies messages from recentErrorMessages to mRecentErrorMessages; ignores messages that are Nothing or blank
         /// </summary>
-        /// <param name="recentErrorMessages"></param>
+        /// <param name="recentErrorMessages">List of recent error messages</param>
         private void StoreRecentErrorMessages(IEnumerable<string> recentErrorMessages)
         {
             if (recentErrorMessages == null)
@@ -1227,8 +1236,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Updates status file to indicate that the manager is closing
         /// </summary>
-        /// <param name="managerIdleMessage"></param>
-        /// <param name="recentErrorMessages"></param>
+        /// <param name="managerIdleMessage">Manager status message</param>
+        /// <param name="recentErrorMessages">List of recent error messages</param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, will force mBrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
@@ -1259,7 +1268,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Logs to the status file that the manager is disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        /// <param name="managerStatus"></param>
+        /// <param name="managerStatus">Manager status message</param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         public void UpdateDisabled(MgrStatusCodes managerStatus, string managerDisableMessage)
         {
@@ -1270,7 +1279,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Logs to the status file that the manager is disabled
         /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
-        /// <param name="managerStatus"></param>
+        /// <param name="managerStatus">Manager status message</param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>

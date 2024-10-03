@@ -32,7 +32,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Constructor for appending a new line to the parameter file
         /// </summary>
         /// <remarks>If the line has a parameter, use the constructor that takes a MSGFPlusParameter object instead</remarks>
-        /// <param name="paramFileLine"></param>
+        /// <param name="paramFileLine">Key/value parameter file line</param>
         /// <param name="isAdditionalLine">Set this to true if this is an additional parameter line (or blank line or comment line) that needs to be appended</param>
         public MSGFPlusKeyValueParamFileLine(
             KeyValueParamFileLine paramFileLine,
@@ -44,7 +44,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor for appending a new parameter to the parameter file
         /// </summary>
-        /// <param name="paramInfo"></param>
+        /// <param name="paramInfo">MS-GF+ parameter</param>
         public MSGFPlusKeyValueParamFileLine(MSGFPlusParameter paramInfo) : base(0, paramInfo.GetKeyValueParamNoComment())
         {
             StoreParameter(paramInfo);
@@ -54,7 +54,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Change this line to a comment when re-writing the parameter file
         /// </summary>
-        /// <param name="commentReason"></param>
+        /// <param name="commentReason">Comment reason</param>
         public void ChangeLineToComment(string commentReason = "")
         {
             if (string.IsNullOrWhiteSpace(commentReason))
@@ -72,7 +72,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Replace the parameter associated with this parameter file line
         /// </summary>
-        /// <param name="paramInfo"></param>
+        /// <param name="paramInfo">MS-GF+ parameter</param>
         public void ReplaceParameter(MSGFPlusParameter paramInfo)
         {
             StoreParameter(paramInfo);
@@ -82,7 +82,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Associate a parameter with this parameter file line
         /// </summary>
-        /// <param name="paramInfo"></param>
+        /// <param name="paramInfo">MS-GF+ parameter</param>
         public void StoreParameter(MSGFPlusParameter paramInfo)
         {
             StoreParameter(paramInfo.ParameterName, paramInfo.Value);
@@ -92,8 +92,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update the value for this line's parameter
         /// </summary>
-        /// <param name="valueOverride"></param>
-        /// <param name="includeOriginalAsComment"></param>
+        /// <param name="valueOverride">New value to use</param>
+        /// <param name="includeOriginalAsComment">If true, include the original value as a comment</param>
         public void UpdateParamValue(string valueOverride, bool includeOriginalAsComment = false)
         {
             var originalValue = string.Copy(ParamInfo.GetKeyValueParamNoComment());

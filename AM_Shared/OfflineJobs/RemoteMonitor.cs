@@ -451,7 +451,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Read the .jobstatus file retrieved from the remote host
         /// </summary>
-        /// <param name="jobStatusFilePath"></param>
+        /// <param name="jobStatusFilePath">Job status file path</param>
         private RemoteJobStatusCodes ParseJobStatusFile(string jobStatusFilePath)
         {
             RemoteJobStatusCodes jobStatus;
@@ -931,8 +931,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Delegate for StaleJobStatusFileEvent and StaleLockFileEvent
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="ageHours"></param>
+        /// <param name="fileName">File name</param>
+        /// <param name="ageHours">Age, in hours</param>
         public delegate void StaleFileEventHandler(string fileName, int ageHours);
 
         /// <summary>
@@ -948,8 +948,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Raise an event indicating that the .jobstatus file is stale (modified over 24 hours ago)
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="ageHours"></param>
+        /// <param name="fileName">File name</param>
+        /// <param name="ageHours">Age, in hours</param>
         private void OnStaleJobStatusFileEvent(string fileName, int ageHours)
         {
             StaleJobStatusFileEvent?.Invoke(fileName, ageHours);
@@ -958,8 +958,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Raise an event indicating that the lock file is stale (modified over 24 hours ago)
         /// </summary>
-        /// <param name="fileName"></param>
-        /// <param name="ageHours"></param>
+        /// <param name="fileName">File name</param>
+        /// <param name="ageHours">Age, in hours</param>
         private void OnStaleLockFileEvent(string fileName, int ageHours)
         {
             StaleLockFileEvent?.Invoke(fileName, ageHours);

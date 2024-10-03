@@ -142,7 +142,7 @@
         /// Stats are updated by adding the new counts to the existing counts. This is valid for SpectraSearched, TotalPSMs, and TotalPSMsFDRFilter,
         /// but is misleading for UniquePeptides, UniqueProteins, UniquePeptidesFDRFilter, and UniqueProteinsFDRFilter.
         /// </remarks>
-        /// <param name="psmResults"></param>
+        /// <param name="psmResults">PSM results</param>
         public void AppendResults(PSMResults psmResults)
         {
             var originalScanCount = SpectraSearched;

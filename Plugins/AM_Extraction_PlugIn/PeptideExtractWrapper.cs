@@ -95,7 +95,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="mgrParams">IMgrParams object containing manager settings</param>
         /// <param name="jobParams">IJobParams object containing job parameters</param>
-        /// <param name="StatusTools"></param>
+        /// <param name="StatusTools">Status tools instance</param>
         public PeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
         {
             mDebugLevel = (short)mgrParams.GetParam("DebugLevel", 1);
@@ -126,7 +126,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Setup the extractor and start extraction process
+            // Configure the extractor and start extraction process
             mExtractTools = new SequestFileExtractor(startParams);
             mExtractTools.EndTask += ExtractTools_EndTask;
 

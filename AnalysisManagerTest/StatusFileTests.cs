@@ -25,9 +25,9 @@ namespace AnalysisManagerTest
         /// <summary>
         /// Test writing the status file
         /// </summary>
-        /// <param name="statusFileName"></param>
-        /// <param name="offlineMode"></param>
-        /// <param name="linuxOS"></param>
+        /// <param name="statusFileName">Status file name</param>
+        /// <param name="offlineMode">True if the manager is offline</param>
+        /// <param name="linuxOS">True if running on Linux</param>
         [Test]
         [TestCase("StatusTest.xml", false, false)]
         [TestCase("StatusTestOffline.xml", true, false)]

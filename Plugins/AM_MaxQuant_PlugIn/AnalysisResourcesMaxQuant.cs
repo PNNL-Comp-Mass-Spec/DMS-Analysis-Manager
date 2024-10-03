@@ -240,12 +240,12 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// Examine the nodes to determine if this job step should be skipped
         /// Also reads and returns the value of the protein description parse rule node
         /// </summary>
-        /// <param name="workingDirectory"></param>
-        /// <param name="maxQuantParameterFileName"></param>
-        /// <param name="requireFastaFileNodes"></param>
+        /// <param name="workingDirectory">Working directory</param>
+        /// <param name="maxQuantParameterFileName">MaxQuant parameter file name</param>
+        /// <param name="requireFastaFileNodes">If true, require that the FASTA file nodes be defined</param>
         /// <param name="abortProcessing">Output: will be true if an error occurred</param>
         /// <param name="skipReason">Output: skip reason</param>
-        /// <param name="dmsSteps">Output: </param>
+        /// <param name="dmsSteps">Output: dictionary of step numbers and MaxQuant processing step names</param>
         /// <param name="proteinDescriptionParseRule">Output: protein description parse rule (RegEx for extracting protein descriptions from the FASTA file)</param>
         /// <returns>True if this job step should be skipped, otherwise false</returns>
         private bool CheckSkipMaxQuant(
@@ -594,7 +594,7 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// Retrieve files ScanStats.txt and ScanStatsEx.txt for the dataset
         /// </summary>
         /// <remarks>The calling method should have already called OverrideCurrentDatasetInfo</remarks>
-        /// <param name="dataPkgDataset"></param>
+        /// <param name="dataPkgDataset">Data package dataset info</param>
         private CloseOutType GetScanStatsFiles(DataPackageDatasetInfo dataPkgDataset)
         {
             try
@@ -826,8 +826,8 @@ namespace AnalysisManagerMaxQuantPlugIn
         /// Look for static and dynamic modifications in the MaxQuant parameter file for this job
         /// Assure that they are defined in the local MaxQuant modifications.xml file
         /// </summary>
-        /// <param name="workingDirectoryPath"></param>
-        /// <param name="maxQuantParameterFileName"></param>
+        /// <param name="workingDirectoryPath">Working directory path</param>
+        /// <param name="maxQuantParameterFileName">MaxQuant parameter file name</param>
         /// <returns>True if the modifications are valid, false if missing</returns>
         private bool ValidateMaxQuantModificationNames(
             string workingDirectoryPath,

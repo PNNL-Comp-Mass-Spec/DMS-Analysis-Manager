@@ -206,7 +206,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Convert a list of settings to XML
         /// </summary>
-        /// <param name="settings"></param>
+        /// <param name="settings">List of settings, as Key/Value pairs</param>
         private static string ConstructRemoteInfoXml(IEnumerable<KeyValuePair<string, string>> settings)
         {
             var xmlText = new StringBuilder();
@@ -426,9 +426,9 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the base status file name, of the form JobX_StepY_TimeStamp
         /// </summary>
-        /// <param name="job"></param>
-        /// <param name="step"></param>
-        /// <param name="remoteTimestamp"></param>
+        /// <param name="job">Job number</param>
+        /// <param name="step">Step number</param>
+        /// <param name="remoteTimestamp">Remote timestamp</param>
         /// <returns>Status filename</returns>
         private static string GetBaseStatusFilename(int job, int step, string remoteTimestamp)
         {
@@ -456,8 +456,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// <summary>
         /// Construct the path to the .jobstatus file for the running offline job
         /// </summary>
-        /// <param name="mgrParams"></param>
-        /// <param name="jobParams"></param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="jobParams">Job parameters</param>
         public static string GetOfflineJobStatusFilePath(IMgrParams mgrParams, IJobParams jobParams)
         {
             var job = jobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
@@ -543,7 +543,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Construct the XML string that should be stored as job parameter RemoteInfo
         /// </summary>
         /// <remarks>RemoteInfo is sent to the database via stored procedure set_step_task_complete</remarks>
-        /// <param name="useDefaultManagerRemoteInfo"></param>
+        /// <param name="useDefaultManagerRemoteInfo">If true, use default remote manager info</param>
         /// <returns>String with XML</returns>
         private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
         {
@@ -641,7 +641,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file from the remote TaskQueue directory
         /// </summary>
         /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for a .jobstatus file </remarks>
-        /// <param name="jobStatusFilePathLocal"></param>
+        /// <param name="jobStatusFilePathLocal">Local job status file path</param>
         /// <returns>True if success, otherwise false</returns>
         public bool RetrieveJobStatusFile(out string jobStatusFilePathLocal)
         {
@@ -668,7 +668,7 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Retrieve the given status file from the remote TaskQueue directory
         /// </summary>
         /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for desired file </remarks>
-        /// <param name="statusFileName"></param>
+        /// <param name="statusFileName">Status file name</param>
         /// <param name="statusFilePathLocal">Output: full path to the status file on the local drive</param>
         /// <returns>True if success, otherwise false</returns>
         public bool RetrieveStatusFile(string statusFileName, out string statusFilePathLocal)
@@ -977,8 +977,8 @@ namespace AnalysisManagerBase.OfflineJobs
         /// Wait for another manager to finish copying a file to a remote host
         /// </summary>
         /// <param name="sourceFile">Source file</param>
-        /// <param name="remoteFile"></param>
-        /// <param name="abortCopy"></param>
+        /// <param name="remoteFile">Remote file</param>
+        /// <param name="abortCopy">Output: if true, abort the copy since the remote file is larger than the expected value</param>
         public bool WaitForRemoteFileCopy(FileInfo sourceFile, SftpFile remoteFile, out bool abortCopy)
         {
             var remoteFilePath = remoteFile.FullName;

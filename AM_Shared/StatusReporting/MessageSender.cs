@@ -35,9 +35,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="brokerUri"></param>
-        /// <param name="topicName"></param>
-        /// <param name="processorName"></param>
+        /// <param name="brokerUri">Message broker URI</param>
+        /// <param name="topicName">Topic name</param>
+        /// <param name="processorName">Manager name</param>
         public MessageSender(string brokerUri, string topicName, string processorName)
         {
             mTopicName = topicName;
@@ -52,7 +52,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// If connection does not exist, make it
         /// If connection objects don't work, erase them and make another set
         /// </remarks>
-        /// <param name="messageContainer"></param>
+        /// <param name="messageContainer">Message container</param>
         public void SendMessage(MessageContainer messageContainer)
         {
             if (mIsDisposed)
@@ -97,8 +97,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Create set of NMS connection objects necessary to talk to the ActiveMQ broker
         /// </summary>
-        /// <param name="retryCount"></param>
-        /// <param name="timeoutSeconds"></param>
+        /// <param name="retryCount">Retry count</param>
+        /// <param name="timeoutSeconds">Timeout, in seconds</param>
         private void CreateConnection(int retryCount = 2, int timeoutSeconds = 15)
         {
             if (mHasConnection)

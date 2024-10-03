@@ -873,7 +873,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Parse the MSConvert console output file to look for errors from MzRefiner
         /// </summary>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private void ParseMSConvertConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example console output

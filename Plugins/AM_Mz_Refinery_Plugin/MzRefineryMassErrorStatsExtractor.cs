@@ -33,9 +33,9 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="mgrParams"></param>
-        /// <param name="debugLevel"></param>
-        /// <param name="postResultsToDB"></param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="postResultsToDB">When true, post the results to the database</param>
         public MzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short debugLevel, bool postResultsToDB = true)
         {
             mMgrParams = mgrParams;
@@ -79,10 +79,10 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <summary>
         /// Parse the PPM Error Charter console output file to extract the mass error reported in this table
         /// </summary>
-        /// <param name="datasetName"></param>
-        /// <param name="datasetID"></param>
-        /// <param name="psmJob"></param>
-        /// <param name="ppmErrorCharterConsoleOutputFilePath"></param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="datasetID">Dataset ID</param>
+        /// <param name="psmJob">PSM job number</param>
+        /// <param name="ppmErrorCharterConsoleOutputFilePath">PPM Error Charter console output file path</param>
         public bool ParsePPMErrorCharterOutput(string datasetName, int datasetID, int psmJob, string ppmErrorCharterConsoleOutputFilePath)
         {
             // Example console output:

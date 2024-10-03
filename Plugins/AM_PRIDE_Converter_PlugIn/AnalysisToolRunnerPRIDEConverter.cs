@@ -909,7 +909,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Convert the _dta.txt file to a .mgf file
         /// </summary>
         /// <param name="dataPkgJob"></param>
-        /// <param name="mgfFilePath">Output parameter: path of the newly created .mgf file</param>
+        /// <param name="mgfFilePath">Output: path of the newly created .mgf file</param>
         /// <returns>True if success, false if an error</returns>
         private bool ConvertCDTAToMGF(DataPackageJobInfo dataPkgJob, out string mgfFilePath)
         {
@@ -1739,7 +1739,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="job"></param>
         /// <param name="dataset"></param>
         /// <param name="filterThresholds"></param>
-        /// <param name="prideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
+        /// <param name="prideReportXMLFilePath">Output: the full path of the newly created .msgf-report.xml file</param>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("No longer used")]
         private bool CreateMSGFReportFile(int job, string dataset, FilterThresholds filterThresholds,
@@ -2526,7 +2526,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="job"></param>
         /// <param name="dataset"></param>
         /// <param name="prideReportXMLFilePath"></param>
-        /// <param name="prideXmlFilePath">Output parameter: the full path of the newly created .msgf-pride.xml file</param>
+        /// <param name="prideXmlFilePath">Output: the full path of the newly created .msgf-pride.xml file</param>
         /// <returns>True if success, false if an error</returns>
         [Obsolete("No longer used")]
         private bool CreatePrideXMLFile(int job, string dataset, string prideReportXMLFilePath, out string prideXmlFilePath)
@@ -4607,8 +4607,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="dataPkgDatasetInfo">Dataset info for this job</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
-        /// <param name="mzIdFilePaths">Output parameter: path to the .mzid.gz file for this job (will be multiple files if a SplitFasta search was performed)</param>
-        /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
+        /// <param name="mzIdFilePaths">Output: path to the .mzid.gz file for this job (will be multiple files if a SplitFasta search was performed)</param>
+        /// <param name="mzIdExistsRemotely">Output: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <param name="templateParameters"></param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMzIdFiles(
@@ -4746,8 +4746,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="splitFastaResultID">For SplitFasta jobs, the part number being processed; 0 for non-SplitFasta jobs</param>
         /// <param name="sampleMetadata">Sample Metadata</param>
-        /// <param name="mzIdFilePath">Output parameter: path to the .mzid.gz file being processed</param>
-        /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
+        /// <param name="mzIdFilePath">Output: path to the .mzid.gz file being processed</param>
+        /// <param name="mzIdExistsRemotely">Output: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <returns>True if success, false if an error</returns>
         private bool UpdateMzIdFile(
             string remoteTransferDirectory,

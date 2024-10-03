@@ -25,8 +25,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Write XML to disk
         /// </summary>
-        /// <param name="xmlText"></param>
-        /// <param name="outputFilePath"></param>
+        /// <param name="xmlText">XML, as a string</param>
+        /// <param name="outputFilePath">Output file path</param>
         public bool WriteXMLToFile(string xmlText, string outputFilePath)
         {
             XmlDocument doc;

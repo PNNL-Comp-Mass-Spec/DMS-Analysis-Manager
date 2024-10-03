@@ -27,7 +27,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="peptideCleanSequence"></param>
+        /// <param name="peptideCleanSequence">Peptide clean sequence (no mod symbols)</param>
         public NormalizedPeptideInfo(string peptideCleanSequence)
         {
             CleanSequence = peptideCleanSequence;

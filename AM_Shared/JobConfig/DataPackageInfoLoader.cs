@@ -44,9 +44,9 @@ namespace AnalysisManagerBase.JobConfig
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="callingClass"></param>
-        /// <param name="dbTools"></param>
-        /// <param name="dataPackageID"></param>
+        /// <param name="callingClass">Calling class instance</param>
+        /// <param name="dbTools">DB tools instance</param>
+        /// <param name="dataPackageID">Data package ID</param>
         public DataPackageInfoLoader(AnalysisMgrBase callingClass, IDBTools dbTools, int dataPackageID)
         {
             DBTools = dbTools;
@@ -312,7 +312,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </remarks>
         /// <param name="dbTools">Instance of IDbTools</param>
         /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dataPackageJobs">Jobs associated with the given data package</param>
+        /// <param name="dataPackageJobs">Output: dictionary tracking jobs associated with the given data package; keys are job numbers, values are job info</param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
         public static bool LoadDataPackageJobInfo(
             IDBTools dbTools,
@@ -431,8 +431,8 @@ namespace AnalysisManagerBase.JobConfig
         /// <remarks>This procedure is used by AnalysisToolRunnerPRIDEConverter</remarks>
         /// <param name="dbTools">DMS_Pipeline database connection</param>
         /// <param name="jobNumber">Job number</param>
-        /// <param name="jobParameters">Output parameter: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
-        /// <param name="errorMsg"></param>
+        /// <param name="jobParameters">Output: Dictionary of job parameters where keys are parameter names (section names are ignored)</param>
+        /// <param name="errorMsg">Output: error message</param>
         /// <returns>True if success, false if an error</returns>
         private static bool LookupJobParametersFromHistory(
             IDBTools dbTools,
@@ -662,7 +662,7 @@ namespace AnalysisManagerBase.JobConfig
         /// Parse results from V_DMS_Data_Package_Aggregation_Jobs
         /// or from
         /// </summary>
-        /// <param name="curRow"></param>
+        /// <param name="curRow">Current row</param>
         public static DataPackageJobInfo ParseDataPackageJobInfoRow(DataRow curRow)
         {
             var dataPkgJob = curRow["job"].CastDBVal<int>();
@@ -774,7 +774,7 @@ namespace AnalysisManagerBase.JobConfig
             additionalJobs = new List<DataPackageJobInfo>();
 
             // This dictionary will track the jobs associated with this aggregation job's data package
-            // Key is job number, value is an instance of DataPackageJobInfo
+            // Keys is job number, value is an instance of DataPackageJobInfo
             Dictionary<int, DataPackageJobInfo> dataPackageJobs;
 
             try

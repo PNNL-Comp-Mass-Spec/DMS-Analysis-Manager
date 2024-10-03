@@ -104,7 +104,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Add a synonym for the parameter name
         /// </summary>
-        /// <param name="synonymName"></param>
+        /// <param name="synonymName">Synonym name</param>
         public void AddSynonym(string synonymName)
         {
             if (string.Equals(ParameterName, synonymName, StringComparison.OrdinalIgnoreCase))
@@ -130,7 +130,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Check whether this parameter has this synonym
         /// </summary>
-        /// <param name="parameterName"></param>
+        /// <param name="parameterName">Parameter name</param>
         public bool HasSynonym(string parameterName)
         {
             return SynonymList.Contains(parameterName);
@@ -140,8 +140,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Update the comment for this parameter
         /// </summary>
         /// <remarks>This comment is the text to be included on the same line as this parameter's Key=Value definition the param file</remarks>
-        /// <param name="comment"></param>
-        /// <param name="whitespaceBeforeComment"></param>
+        /// <param name="comment">Comment</param>
+        /// <param name="whitespaceBeforeComment">Whitespace to add before the comment</param>
         public void UpdateComment(string comment, string whitespaceBeforeComment)
         {
             Comment = comment ?? string.Empty;
@@ -168,8 +168,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// If value ends with an exclamation mark, the exclamation mark will be removed and ValueLocked will be set to true
         /// This method will return true in this case, since the value was likely changed (but cannot be changed again)
         /// </remarks>
-        /// <param name="value"></param>
-        /// <param name="callerName"></param>
+        /// <param name="value">New value</param>
+        /// <param name="callerName">Calling method name</param>
         /// <returns>
         /// True if the value was updated or the value is locked, but the new value is the same
         /// False if the value is locked and the new value is different

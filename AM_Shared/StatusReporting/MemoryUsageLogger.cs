@@ -77,8 +77,9 @@ namespace AnalysisManagerBase.StatusReporting
         /// Use WriteMemoryUsageLogEntry to append an entry to the log file.
         /// Alternatively use GetMemoryUsageSummary() to retrieve the memory usage as a string</remarks>
         /// <param name="logFolderPath">
-        /// Folder in which to write the memory log file(s)
-        /// If this is an empty string, the log file is created in the working directory</param>
+        /// Directory where memory log file(s) should be created
+        /// If this is an empty string, the log file is created in the working directory
+        /// </param>
         /// <param name="minLogIntervalMinutes">Minimum log interval, in minutes</param>
         public MemoryUsageLogger(string logFolderPath, float minLogIntervalMinutes = 5)
         {
@@ -99,7 +100,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Assure that old log files are zipped by year
         /// </summary>
-        /// <param name="currentLogFilePath"></param>
+        /// <param name="currentLogFilePath">Current log file path</param>
         private void ArchiveOldLogs(string currentLogFilePath)
         {
             try

@@ -125,8 +125,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Display the version of all DLLs in the application folder, including the .NET framework that they were compiled against
         /// </summary>
-        /// <param name="displayDllPath"></param>
-        /// <param name="fileNameFileSpec"></param>
+        /// <param name="displayDllPath">Directory to examine</param>
+        /// <param name="fileNameFileSpec">File name search pattern</param>
         public void DisplayDllVersions(string displayDllPath, string fileNameFileSpec = "*.dll")
         {
             try
@@ -872,7 +872,7 @@ namespace AnalysisManagerProg
         /// Test creation of a .fasta file from a protein collection
         /// Also calls Running BuildSA
         /// </summary>
-        /// <param name="destinationDirectory"></param>
+        /// <param name="destinationDirectory">Destination directory</param>
         public bool TestProteinDBExport(string destinationDirectory)
         {
             // ReSharper disable StringLiteralTypo
@@ -927,10 +927,10 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test creation of a .fasta file from a protein collection
         /// </summary>
-        /// <param name="destinationDirectory"></param>
-        /// <param name="legacyFasta"></param>
-        /// <param name="proteinCollectionList"></param>
-        /// <param name="proteinOptions"></param>
+        /// <param name="destinationDirectory">Destination directory</param>
+        /// <param name="legacyFasta">Legacy FASTA file name, or empty string if exporting protein collections</param>
+        /// <param name="proteinCollectionList">Protein collection list</param>
+        /// <param name="proteinOptions">Protein options</param>
         public bool TestProteinDBExport(string destinationDirectory, string legacyFasta, string proteinCollectionList, string proteinOptions)
         {
             // Instantiate FASTA tool if not already done
@@ -955,7 +955,7 @@ namespace AnalysisManagerProg
             // Initialize FASTA generation state variables
             mGenerationComplete = false;
 
-            // Setup a timer to prevent an infinite loop if there's a FASTA generation problem
+            // Set up a timer to prevent an infinite loop if there's a FASTA generation problem
             mFastaTimer = new System.Timers.Timer();
             mFastaTimer.Elapsed += FastaTimer_Elapsed;
 
@@ -1440,7 +1440,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Convert a zip file to a gzip file
         /// </summary>
-        /// <param name="zipFilePath"></param>
+        /// <param name="zipFilePath">Zip file path</param>
         public void ConvertZipToGZip(string zipFilePath)
         {
             const int debugLevel = 2;
@@ -1559,7 +1559,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Retrieve and decompress MALDI data
         /// </summary>
-        /// <param name="sourceDatasetFolder"></param>
+        /// <param name="sourceDatasetFolder">Source dataset directory</param>
         public bool TestMALDIDataUnzip(string sourceDatasetFolder)
         {
             const int debugLevel = 2;
@@ -1808,7 +1808,7 @@ namespace AnalysisManagerProg
         /// Determine the InstrumentID value used for a set of analysis jobs
         /// </summary>
         /// <param name="jobList">Comma or new-line separated list of job numbers</param>
-        /// <param name="resultsFilePath"></param>
+        /// <param name="resultsFilePath">Results file path</param>
         public void ExamineInstrumentID(string jobList, string resultsFilePath = @"C:\Temp\InstrumentIDsByJob.txt")
         {
             try

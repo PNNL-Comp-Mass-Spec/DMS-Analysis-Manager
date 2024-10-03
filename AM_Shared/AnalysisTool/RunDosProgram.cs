@@ -56,7 +56,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Delegate for ConsoleOutputEventHandler
         /// </summary>
-        /// <param name="newText"></param>
+        /// <param name="newText">Text written to the console</param>
         public delegate void ConsoleOutputEventHandler(string newText);
 
         /// <summary>
@@ -234,7 +234,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Constructor
         /// </summary>
         /// <param name="workDir">Work directory for input/output files, if any</param>
-        /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
+        /// <param name="debugLevel">Debug level for logging; 1=minimal logging; 5=detailed logging</param>
         public RunDosProgram(string workDir, int debugLevel = 1)
         {
             WorkDir = workDir;

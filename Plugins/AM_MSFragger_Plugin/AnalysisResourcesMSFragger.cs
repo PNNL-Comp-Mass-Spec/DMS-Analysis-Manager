@@ -224,9 +224,9 @@ namespace AnalysisManagerMSFraggerPlugIn
         /// Larger FASTA files need more memory
         /// 10 GB of memory was not sufficient for a 26 MB FASTA file, but 15 GB worked when using 2 dynamic mods
         /// </remarks>
-        /// <param name="fastaFileSizeMB"></param>
-        /// <param name="dynamicModCount"></param>
-        /// <param name="databaseSplitCount"></param>
+        /// <param name="fastaFileSizeMB">FASTA file path, in MB</param>
+        /// <param name="dynamicModCount">Number of dynamic mods</param>
+        /// <param name="databaseSplitCount">Number of files to split the FASTA file into</param>
         public CloseOutType ValidateJavaMemorySize(double fastaFileSizeMB, int dynamicModCount, int databaseSplitCount)
         {
             var recommendedMemorySizeMB = GetJavaMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var msFraggerJavaMemorySizeMB);

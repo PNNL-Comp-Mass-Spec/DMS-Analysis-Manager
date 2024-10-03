@@ -23,9 +23,9 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="section"></param>
-        /// <param name="name"></param>
-        /// <param name="value"></param>
+        /// <param name="section">Section name</param>
+        /// <param name="name">Parameter name</param>
+        /// <param name="value">Parameter value</param>
         public JobParameter(string section, string name, string value)
         {
             Section = section;
