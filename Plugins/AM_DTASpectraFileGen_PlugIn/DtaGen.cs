@@ -23,6 +23,8 @@ namespace DTASpectraFileGen
     /// </summary>
     public abstract class DtaGen : EventNotifier, ISpectraFileProcessor
     {
+        // Ignore Spelling: DTA, Loc, Prog
+
         protected string mErrMsg = string.Empty;
         protected string mWorkDir = string.Empty;    // Working directory on analysis machine
         protected string mDatasetName = string.Empty;

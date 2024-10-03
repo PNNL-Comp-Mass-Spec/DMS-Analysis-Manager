@@ -19,6 +19,8 @@ namespace AnalysisManagerBase.StatusReporting
     /// </summary>
     public class DBStatusLogger : EventNotifier
     {
+        // Ignore Spelling: Prog
+
         /// <summary>
         /// Status info
         /// </summary>
