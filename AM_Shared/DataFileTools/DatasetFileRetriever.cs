@@ -47,7 +47,7 @@ namespace AnalysisManagerBase.DataFileTools
                 false,
                 out var validDirectoryFound,
                 false,
-                out var _);
+                out _);
 
             if (validDirectoryFound)
             {
