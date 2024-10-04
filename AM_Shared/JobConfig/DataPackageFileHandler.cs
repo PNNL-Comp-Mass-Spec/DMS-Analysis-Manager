@@ -1143,10 +1143,6 @@ namespace AnalysisManagerBase.JobConfig
         {
             ErrorMessage = string.Empty;
 
-            // This dictionary tracks the info for the datasets associated with this aggregation job's data package
-            // Keys are DatasetID, values are dataset info
-            dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
-
             // Keys in this dictionary are dataset name, values are paths to the local file or directory for the dataset
             datasetRawFilePaths = new Dictionary<string, string>();
 
@@ -1182,6 +1178,7 @@ namespace AnalysisManagerBase.JobConfig
             catch (Exception ex)
             {
                 OnErrorEvent("Error calling LoadDataPackageDatasetInfo", ex);
+                dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
                 return false;
             }
 
