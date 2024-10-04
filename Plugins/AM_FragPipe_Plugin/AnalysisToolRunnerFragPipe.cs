@@ -1103,6 +1103,10 @@ namespace AnalysisManagerFragPipePlugIn
 
             const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
 
+            const string DATABASE_PATH_PARAMETER = "database.db-path";
+            const string OUTPUT_FORMAT_PARAMETER = "msfragger.output_format";
+            const string SLICE_DB_PARAMETER = "msfragger.misc.slice-db";
+
             try
             {
                 var workflowFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
@@ -1136,7 +1140,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                         var trimmedLine = dataLine.Trim();
 
-                        if (trimmedLine.StartsWith("database.db-path"))
+                        if (trimmedLine.StartsWith(DATABASE_PATH_PARAMETER))
                         {
                             if (fastaFileDefined)
                                 continue;
@@ -1148,13 +1152,13 @@ namespace AnalysisManagerFragPipePlugIn
 
                             var pathToUse = mLocalFASTAFilePath.Replace(@"\", @"\\");
 
-                            WriteWorkflowFileSetting(writer, "database_name", pathToUse, comment);
+                            WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, pathToUse, comment);
 
                             fastaFileDefined = true;
                             continue;
                         }
 
-                        if (trimmedLine.StartsWith("output_format"))
+                        if (trimmedLine.StartsWith(OUTPUT_FORMAT_PARAMETER))
                         {
                             if (outputFormatDefined)
                                 continue;
@@ -1169,7 +1173,7 @@ namespace AnalysisManagerFragPipePlugIn
                             else
                             {
                                 // Auto-change the output format to tsv_pepxml_pin
-                                WriteWorkflowFileSetting(writer, "output_format", REQUIRED_OUTPUT_FORMAT, comment);
+                                WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, comment);
 
                                 LogWarning("Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files", setting.ParamValue, REQUIRED_OUTPUT_FORMAT);
                             }
@@ -1178,12 +1182,12 @@ namespace AnalysisManagerFragPipePlugIn
                             continue;
                         }
 
-                        if (trimmedLine.StartsWith("msfragger.misc.slice-db"))
+                        if (trimmedLine.StartsWith(SLICE_DB_PARAMETER))
                         {
                             if (dbSplitCountDefined)
                                 continue;
 
-                            writer.WriteLine("msfragger.misc.slice-db={0}", Math.Max(1, databaseSplitCount));
+                            writer.WriteLine("{0}={1}", SLICE_DB_PARAMETER, Math.Max(1, databaseSplitCount));
 
                             dbSplitCountDefined = true;
                             continue;
@@ -1194,12 +1198,12 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!fastaFileDefined)
                     {
-                        WriteWorkflowFileSetting(writer, "database_name", mLocalFASTAFilePath, FASTA_FILE_COMMENT);
+                        WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, mLocalFASTAFilePath, FASTA_FILE_COMMENT);
                     }
 
                     if (!outputFormatDefined)
                     {
-                        WriteWorkflowFileSetting(writer, "output_format", REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
+                        WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
                     }
                 }
 
