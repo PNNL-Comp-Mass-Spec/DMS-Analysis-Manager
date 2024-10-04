@@ -226,9 +226,6 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var outputDirectoryPaths = new SortedSet<string>();
 
-                // ToDo: get this from the job parameters
-                var dataType = "DDA";
-
                 foreach (var item in dataPackageInfo.DatasetFiles)
                 {
                     var datasetID = item.Key;
@@ -246,6 +243,17 @@ namespace AnalysisManagerFragPipePlugIn
                     }
 
                     outputDirectoryPaths.Add(Path.Combine(mWorkDir, experimentNameToUse));
+
+                    string dataType;
+
+                    if (dataPackageInfo.DatasetTypes.TryGetValue(datasetID, out var datasetType))
+                    {
+                        dataType = datasetType.Contains("DIA") ? "DIA" : "DDA";
+                    }
+                    else
+                    {
+                        dataType = "DDA";
+                    }
 
                     const string BIOREPLICATE = "";
 
