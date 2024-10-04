@@ -336,8 +336,8 @@ namespace AnalysisManagerFragPipePlugIn
 
             var affectedResidue = affectedResidues[0].Trim();
 
-            // Amino acids static mods have both the symbol and the name, e.g. "K (lysine)"
-            // Only return the symbol
+            // Amino acid static mods have both the symbol and the name, e.g. "K (lysine)"
+            // Only return the symbol (note that the calling method should have already removed the space and any following text)
 
             if (affectedResidue.Length <= 1)
                 return affectedResidue;
@@ -347,6 +347,7 @@ namespace AnalysisManagerFragPipePlugIn
 
             return affectedResidue;
         }
+
         /// <summary>
         /// Examine the FragPipe workflow parameters to determine the static and dynamic (variable) modifications
         /// </summary>
@@ -530,7 +531,6 @@ namespace AnalysisManagerFragPipePlugIn
             }
 
             OnErrorEvent("Invalid value for {0} in the MSFraggerParameter file; it should be between {1} and {2}", parameter.ParameterName, parameter.MinValue, parameter.MaxValue);
-
             return false;
         }
 
@@ -596,7 +596,7 @@ namespace AnalysisManagerFragPipePlugIn
 
             foreach (var staticMod in staticModList.Split(';'))
             {
-                if (!ParseModDefinition(FIX_MODS_PARAMETER_NAME, staticMod, out var modEnabled, out var modMass, out var affectedResidues))
+                if (!ParseModDefinition(FIX_MODS_PARAMETER_NAME, staticMod, terminalStaticModParameters, out var modEnabled, out var modMass, out var affectedResidues))
                     return false;
 
                 if (!modEnabled)
@@ -663,6 +663,33 @@ namespace AnalysisManagerFragPipePlugIn
             out double modMass,
             out List<string> affectedResidues)
         {
+            return ParseModDefinition(
+                modParameterName,
+                modDefinition,
+                new Dictionary<string, string>(),
+                out modEnabled,
+                out modMass,
+                out affectedResidues);
+        }
+
+        /// <summary>
+        /// Parse a static or dynamic mod parameter to determine the modification mass, and (if applicable) the affected residues
+        /// </summary>
+        /// <param name="modParameterName">Modification parameter name ("msfragger.table.fix-mods" or "msfragger.table.var-mods")</param>
+        /// <param name="modDefinition">Modification definition</param>
+        /// <param name="terminalStaticModParameters">Terminal static mod parameters</param>
+        /// <param name="modEnabled">Output: true if the modification is enabled, otherwise false</param>
+        /// <param name="modMass">Output: modification mass</param>
+        /// <param name="affectedResidues">Output: list of affected residues</param>
+        /// <returns>True if success, false if an error</returns>
+        private bool ParseModDefinition(
+        string modParameterName,
+        string modDefinition,
+        Dictionary<string, string> terminalStaticModParameters,
+        out bool modEnabled,
+        out double modMass,
+        out List<string> affectedResidues)
+        {
             // ReSharper disable CommentTypo
 
             // Example dynamic mods from parameter msfragger.table.var-mods
@@ -717,15 +744,31 @@ namespace AnalysisManagerFragPipePlugIn
                 return true;
             }
 
-            affectedResidues = ParseAffectedResidueList(modParts[1]);
-
-            if (double.TryParse(modParts[0], out modMass))
+            if (!double.TryParse(modParts[0], out modMass))
             {
+                OnErrorEvent("Modification mass in FragPipe workflow file is not numeric; {0}: {1}", modParameterName, modDefinition);
+                affectedResidues = new List<string>();
+                return false;
+            }
+
+            foreach (var staticModParameter in terminalStaticModParameters)
+            {
+                if (!modParts[1].Equals(staticModParameter.Key))
+                    continue;
+
+                affectedResidues = new List<string>
+                {
+                    modParts[1]
+                };
+
                 return true;
             }
 
-            OnErrorEvent("Modification mass in FragPipe workflow file is not numeric; {0}: {1}", modParameterName, modDefinition);
-            return false;
+            var spaceIndex = modParts[1].IndexOf(' ');
+
+            affectedResidues = ParseAffectedResidueList(spaceIndex > 0 ? modParts[1].Substring(0, spaceIndex) : modParts[1]);
+
+            return true;
         }
 
         private void UpdateReporterIonModeStats(IDictionary<ReporterIonModes, int> reporterIonModeStats, ReporterIonModes reporterIonMode)
