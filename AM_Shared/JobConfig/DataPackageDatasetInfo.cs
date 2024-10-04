@@ -19,6 +19,11 @@ namespace AnalysisManagerBase.JobConfig
         public int DatasetID { get; }
 
         /// <summary>
+        /// Dataset type, e.g. HMS-HCD-MSn, HMS-HCD-HMSn, DIA-HMS-HCD-HMSn, HMS-HCD-CID-MSn
+        /// </summary>
+        public string DatasetType { get; set; }
+
+        /// <summary>
         /// Instrument
         /// </summary>
         public string Instrument { get; set; }
@@ -197,6 +202,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             Dataset = datasetName;
             DatasetID = datasetId;
+            DatasetType = string.Empty;
 
             Instrument = string.Empty;
             InstrumentGroup = string.Empty;

@@ -219,6 +219,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                         dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, dataset.Value.RawDataType);
                         dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataset.Value.DatasetDirectoryPath);
+                        dataPackageInfo.DatasetTypes.Add(datasetID, dataset.Value.DatasetType);
                     }
                     else if (!skipDatasetsWithExistingMzML)
                     {
@@ -341,6 +342,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 var rawDataTypeName = mResourceClass.JobParams.GetParam("RawDataType");
                 var rawDataType = AnalysisResources.GetRawDataType(rawDataTypeName);
+                var datasetType = mResourceClass.JobParams.GetParam("DatasetType");
 
                 var instrumentName = mResourceClass.JobParams.GetParam("Instrument");
                 var instrumentGroup = mResourceClass.JobParams.GetParam("InstrumentGroup");
@@ -358,7 +360,8 @@ namespace AnalysisManagerBase.DataFileTools
                     Experiment = experimentName,
                     DatasetDirectoryPath = Path.Combine(datasetStoragePath, datasetDirectoryName),
                     DatasetArchivePath = datasetArchivePath,
-                    RawDataType = rawDataTypeName
+                    RawDataType = rawDataTypeName,
+                    DatasetType = datasetType
                 };
 
                 dataPackageDatasets.Add(datasetID, dataPackageDatasetInfo);
@@ -400,6 +403,7 @@ namespace AnalysisManagerBase.DataFileTools
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, DataPackageInfo.FILE_DATASET);
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, msXmlDataType);
                     dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
+                    dataPackageInfo.DatasetTypes.Add(datasetID, dataPackageDatasetInfo.DatasetType);
 
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -496,6 +500,7 @@ namespace AnalysisManagerBase.DataFileTools
                     dataPackageInfo.DatasetFileTypes.Add(datasetID, isDirectory ? "Directory" : DataPackageInfo.FILE_DATASET);
                     dataPackageInfo.DatasetRawDataTypeNames.Add(datasetID, rawDataTypeName);
                     dataPackageInfo.DatasetStoragePaths.Add(datasetID, dataPackageDatasetInfo.DatasetDirectoryPath);
+                    dataPackageInfo.DatasetTypes.Add(datasetID, dataPackageDatasetInfo.DatasetType);
 
                     dataPackageDatasetInfo.IsDirectoryBased = isDirectory;
 

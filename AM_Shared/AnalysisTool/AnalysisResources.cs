@@ -3639,6 +3639,7 @@ namespace AnalysisManagerBase.AnalysisTool
 
             mJobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, dataPkgDataset.Dataset);
             mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgDataset.DatasetID.ToString());
+            mJobParams.AddAdditionalParameter(jobParamsSection, "DatasetType", dataPkgDataset.DatasetType);
 
             mJobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgDataset.Instrument);
             mJobParams.AddAdditionalParameter(jobParamsSection, "InstrumentGroup", dataPkgDataset.InstrumentGroup);

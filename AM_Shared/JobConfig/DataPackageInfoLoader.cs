@@ -159,7 +159,7 @@ namespace AnalysisManagerBase.JobConfig
             sqlStr.Append("SELECT dataset, dataset_id, instrument_name, instrument_group, package_comment,");
             sqlStr.Append("       experiment, experiment_reason, experiment_comment, organism,");
             sqlStr.Append("       experiment_newt_id, experiment_newt_name, experiment_tissue_id, experiment_tissue_name,");
-            sqlStr.Append("       dataset_folder_path, archive_folder_path, raw_data_type ");
+            sqlStr.Append("       dataset_folder_path, archive_folder_path, dataset_type, raw_data_type ");
             sqlStr.Append("FROM V_DMS_Data_Package_Datasets ");
             sqlStr.Append("WHERE data_pkg_id = " + dataPackageID + " ");
             sqlStr.Append("ORDER BY dataset");
@@ -535,7 +535,7 @@ namespace AnalysisManagerBase.JobConfig
             var packageComment = curRow["package_comment"].CastDBVal<string>();
 
             // Examine the comment to look for "MSFragger Group GroupName" (or similar)
-            // Example allowed comments:
+            // Example comments:
             //   MSFragger Group CohortA
             //   MSFragger Group 1
             //   MSFrag Group CohortA
@@ -544,6 +544,7 @@ namespace AnalysisManagerBase.JobConfig
             //   FragPipe Group 5
 
             // Also match MaxQuant prefixes, in case the same data package is used for both MSFragger and MaxQuant
+            // Example comments:
             //   MaxQuant Group CohortA
             //   MaxQuant Group 5
             //   Maxq Group: CohortA
@@ -599,7 +600,7 @@ namespace AnalysisManagerBase.JobConfig
             // Parameter groups are most commonly used to group datasets when using label-free quantitation (LFQ).
             // Datasets grouped together will be normalized together.
 
-            // Example allowed comments:
+            // Example comments:
             //   MaxQuant Group 1
             //   Maxq Group: 3
             //   MQ Group 10
@@ -624,7 +625,7 @@ namespace AnalysisManagerBase.JobConfig
             //   - Use fractions 11, 12, 13, etc. for the second sample group
             //   - Use fractions 21, 22, 23, etc. for the third sample group
 
-            // Example allowed comments:
+            // Example comments:
             //   MaxQuant Fraction 1
             //   Maxq Fraction: 3
             //   MQ Fraction 10
@@ -650,6 +651,7 @@ namespace AnalysisManagerBase.JobConfig
                 Experiment_NEWT_Name = curRow["experiment_newt_name"].CastDBVal<string>(),
                 DatasetDirectoryPath = curRow["dataset_folder_path"].CastDBVal<string>(),
                 DatasetArchivePath = curRow["archive_folder_path"].CastDBVal<string>(),
+                DatasetType = curRow["dataset_type"].CastDBVal<string>(),
                 RawDataType = curRow["raw_data_type"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
                 DatasetExperimentGroup = datasetExperimentGroup,

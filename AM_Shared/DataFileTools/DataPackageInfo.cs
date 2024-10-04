@@ -63,7 +63,7 @@ namespace AnalysisManagerBase.DataFileTools
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypeNames";
 
         /// <summary>
-        /// Packed parameter x
+        /// Packed parameter PackedParam_DatasetStoragePaths
         /// </summary>
         /// <remarks>
         /// Tracks the dataset directory on the storage server for each dataset
@@ -71,6 +71,16 @@ namespace AnalysisManagerBase.DataFileTools
         /// Values are storage path
         /// </remarks>
         private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS = "PackedParam_DatasetStoragePaths";
+
+        /// <summary>
+        /// Packed parameter PackedParam_DatasetTypes
+        /// </summary>
+        /// <remarks>
+        /// Tracks the dataset type of each dataset
+        /// Keys are dataset IDs
+        /// Values are Dataset Type, e.g. HMS-HCD-MSn, HMS-HCD-HMSn, DIA-HMS-HCD-HMSn, HMS-HCD-CID-MSn
+        /// </remarks>
+        private const string JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_TYPES = "PackedParam_DatasetTypes";
 
         /// <summary>
         /// Packed parameter PackedParam_DatasetMaxQuantFractionNumbers
@@ -157,6 +167,12 @@ namespace AnalysisManagerBase.DataFileTools
 
         /// <summary>
         /// Keys are dataset IDs
+        /// Values are dataset type, e.g. HMS-HCD-MSn, HMS-HCD-HMSn, DIA-HMS-HCD-HMSn, HMS-HCD-CID-MSn
+        /// </summary>
+        public Dictionary<int, string> DatasetTypes { get; }
+
+        /// <summary>
+        /// Keys are dataset IDs
         /// Values are the MaxQuant fraction number read from the Package Comment field for the dataset
         /// </summary>
         /// <remarks>
@@ -218,6 +234,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFileTypes = new Dictionary<int, string>();
             DatasetRawDataTypeNames = new Dictionary<int, string>();
             DatasetStoragePaths = new Dictionary<int, string>();
+            DatasetTypes = new Dictionary<int, string>();
             DatasetMaxQuantFractionNumber = new Dictionary<int, int>();
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
             DatasetExperimentGroup = new Dictionary<int, string>();
@@ -240,6 +257,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFileTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             DatasetRawDataTypeNames = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES);
             DatasetStoragePaths = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS);
+            DatasetTypes = toolRunner.ExtractPackedJobParameterDictionaryIntegerKey(JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_TYPES);
             DatasetMaxQuantFractionNumber = new Dictionary<int, int>();
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
             DatasetExperimentGroup = new Dictionary<int, string>();
@@ -278,6 +296,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFileTypes = new Dictionary<int, string>();
             DatasetRawDataTypeNames = new Dictionary<int, string>();
             DatasetStoragePaths = new Dictionary<int, string>();
+            DatasetTypes = new Dictionary<int, string>();
             DatasetMaxQuantFractionNumber = new Dictionary<int, int>();
             DatasetMaxQuantParamGroup = new Dictionary<int, int>();
             DatasetExperimentGroup = new Dictionary<int, string>();
@@ -293,6 +312,7 @@ namespace AnalysisManagerBase.DataFileTools
                 DatasetFileTypes.Add(datasetId, datasetInfo.IsDirectoryBased ? DIRECTORY_DATASET : FILE_DATASET);
                 DatasetRawDataTypeNames.Add(datasetId, datasetInfo.RawDataType);
                 DatasetStoragePaths.Add(datasetId, datasetInfo.DatasetDirectoryPath);
+                DatasetTypes.Add(datasetId, datasetInfo.DatasetType);
                 DatasetMaxQuantFractionNumber.Add(datasetId, datasetInfo.MaxQuantFractionNumber);
                 DatasetMaxQuantParamGroup.Add(datasetId, datasetInfo.MaxQuantParamGroup);
                 DatasetExperimentGroup.Add(datasetId, datasetInfo.DatasetExperimentGroup);
@@ -331,7 +351,7 @@ namespace AnalysisManagerBase.DataFileTools
         {
             var hasDataPackage = DataPackageID > 0;
 
-            // Assure that the dictionaries contain all of the dataset IDs in the Datasets dictionary
+            // Assure that the dictionaries contain each of the dataset IDs in the Datasets dictionary
             foreach (var datasetId in Datasets.Keys)
             {
                 AddKeyIfMissing("Experiments", Experiments, datasetId);
@@ -339,6 +359,7 @@ namespace AnalysisManagerBase.DataFileTools
                 AddKeyIfMissing("DatasetFileTypes", DatasetFileTypes, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetRawDataTypeNames", DatasetRawDataTypeNames, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetStoragePaths", DatasetStoragePaths, datasetId, warnIfMissingFileInfo);
+                AddKeyIfMissing("DatasetTypes", DatasetTypes, datasetId, warnIfMissingFileInfo);
                 AddKeyIfMissing("DatasetMaxQuantFractionNumber", DatasetMaxQuantFractionNumber, datasetId, hasDataPackage);
                 AddKeyIfMissing("DatasetMaxQuantParamGroup", DatasetMaxQuantParamGroup, datasetId, hasDataPackage);
                 AddKeyIfMissing("DatasetExperimentGroup", DatasetExperimentGroup, datasetId, hasDataPackage);
@@ -356,6 +377,7 @@ namespace AnalysisManagerBase.DataFileTools
             DatasetFileTypes.Clear();
             DatasetRawDataTypeNames.Clear();
             DatasetStoragePaths.Clear();
+            DatasetTypes.Clear();
             DatasetMaxQuantFractionNumber.Clear();
             DatasetMaxQuantParamGroup.Clear();
             DatasetExperimentGroup.Clear();
@@ -381,6 +403,7 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     DatasetDirectoryPath = DatasetStoragePaths[datasetId],
                     DatasetExperimentGroup = DatasetExperimentGroup[datasetId],
+                    DatasetType = DatasetTypes[datasetId],
                     Experiment = Experiments[datasetId],
                     IsDirectoryBased = DatasetFileTypes[datasetId].Equals("Directory"),
                     MaxQuantFractionNumber = DatasetMaxQuantFractionNumber[datasetId],
@@ -408,6 +431,7 @@ namespace AnalysisManagerBase.DataFileTools
             analysisResources.StorePackedJobParameterDictionary(DatasetFileTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_FILE_TYPES);
             analysisResources.StorePackedJobParameterDictionary(DatasetRawDataTypeNames, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_RAW_DATA_TYPES);
             analysisResources.StorePackedJobParameterDictionary(DatasetStoragePaths, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_STORAGE_PATHS);
+            analysisResources.StorePackedJobParameterDictionary(DatasetTypes, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_TYPES);
             analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantFractionNumber, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_FRACTION_NUMBERS);
             analysisResources.StorePackedJobParameterDictionary(DatasetMaxQuantParamGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_MAX_QUANT_PARAM_GROUPS);
             analysisResources.StorePackedJobParameterDictionary(DatasetExperimentGroup, JOB_PARAM_DICTIONARY_DATA_PACKAGE_DATASET_EXPERIMENT_GROUPS);
