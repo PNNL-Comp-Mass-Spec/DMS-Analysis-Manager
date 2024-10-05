@@ -754,10 +754,10 @@ namespace AnalysisManagerFragPipePlugIn
                             if (!string.IsNullOrWhiteSpace(versionInfo) && versionInfo.Contains(" version"))
                             {
                                 mFragPipeVersion = string.Format("{0}; {1}", mFragPipeVersion, versionInfo);
+                                versionFound = true;
                             }
                         }
 
-                        versionFound = true;
                         continue;
                     }
 
