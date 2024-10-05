@@ -246,6 +246,9 @@ namespace AnalysisManagerFragPipePlugIn
 
                     string dataType;
 
+                    // Data types supported by FragPipe: DDA, DDA+, DIA, DIA-Quant, DIA-Lib
+                    // This method chooses either DDA or DIA, depending on the dataset type
+
                     if (dataPackageInfo.DatasetTypes.TryGetValue(datasetID, out var datasetType))
                     {
                         dataType = datasetType.Contains("DIA") ? "DIA" : "DDA";
