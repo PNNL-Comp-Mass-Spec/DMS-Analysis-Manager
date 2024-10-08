@@ -89,11 +89,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     LogError("Parameter 'DTARefineryLoc' not defined for this manager");
                 else
                     LogError("Cannot find DTA_Refinery program file: " + progLoc);
+
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Verify that Python.exe exists
-            // Python3ProgLoc will be something like this: "C:\Python36"
+            // Python3ProgLoc will be something like this: "C:\Python3"
             var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
 
             if (!Directory.Exists(pythonProgLoc))
@@ -102,6 +103,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     LogError("Parameter 'Python3ProgLoc' not defined for this manager");
                 else
                     LogError("Cannot find python in directory: " + pythonProgLoc);
+
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
