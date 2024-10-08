@@ -288,6 +288,119 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
+        /// Determine the path to the FragPipe tools directory
+        /// </summary>
+        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY)</param>
+        /// <param name="fragPipeProgLoc">Output: path to the FragPipe directory below DMS_Programs</param>
+        /// <returns>True if the directory was found, false if missing or an error</returns>
+        private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out string fragPipeProgLoc)
+        {
+            try
+            {
+                // Manager parameter "FragPipeProgLoc" should be "C:\DMS_Programs\FragPipe"
+                fragPipeProgLoc = mMgrParams.GetParam("FragPipeProgLoc");
+
+                if (!Directory.Exists(fragPipeProgLoc))
+                {
+                    if (fragPipeProgLoc.Length == 0)
+                    {
+                        LogError("Parameter 'FragPipeProgLoc' not defined for this manager", true);
+                    }
+                    else
+                    {
+                        LogError("Cannot find the FragPipe directory: " + fragPipeProgLoc, true);
+                    }
+
+                    toolsDirectory = null;
+                    return false;
+                }
+
+                toolsDirectory = new DirectoryInfo(Path.Combine(fragPipeProgLoc, FRAGPIPE_TOOLS_DIRECTORY_PATH));
+
+                if (toolsDirectory.Exists)
+                    return true;
+
+                LogError("Cannot find the FragPipe tools directory: " + toolsDirectory.FullName, true);
+                return false;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error determining FragPipe tool locations", ex);
+                toolsDirectory = null;
+                fragPipeProgLoc = string.Empty;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Determine the path to the FragPipe tools directory, DiaNN.exe, and Python.exe
+        /// </summary>
+        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY)</param>
+        /// <param name="diannExe">Output: path to DiaNN.exe</param>
+        /// <param name="pythonExe">Output: path to python.exe</param>
+        /// <returns>True if the directory was found, false if missing or an error</returns>
+        private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out FileInfo diannExe, out FileInfo pythonExe)
+        {
+            try
+            {
+                if (!DetermineFragPipeToolLocations(out toolsDirectory, out var fragPipeProgLoc))
+                {
+                    diannExe = null;
+                    pythonExe = null;
+                    return false;
+                }
+
+                diannExe = new FileInfo(Path.Combine(fragPipeProgLoc, FRAGPIPE_DIANN_FILE_PATH));
+
+                if (!diannExe.Exists)
+                {
+                    LogError("Cannot find the DiaNN executable: " + diannExe.FullName, true);
+
+                    pythonExe = null;
+                    return false;
+                }
+
+                // Verify that Python.exe exists
+                // Python3ProgLoc will be something like this: "C:\Python3"
+                var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
+
+                if (!Directory.Exists(pythonProgLoc))
+                {
+                    if (pythonProgLoc.Length == 0)
+                    {
+                        LogError("Parameter 'Python3ProgLoc' not defined for this manager", true);
+                    }
+                    else
+                    {
+                        LogError("The Python directory does not exist: " + pythonProgLoc, true);
+                    }
+
+                    pythonExe = null;
+                    return false;
+                }
+
+                pythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
+
+                if (!pythonExe.Exists)
+                {
+                    LogError("Python executable not found at: " + pythonExe.FullName, true);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error determining FragPipe tool locations", ex);
+                toolsDirectory = null;
+                diannExe = null;
+                pythonExe = null;
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Get appropriate path of the working directory for the given experiment
         /// </summary>
         /// <remarks>
