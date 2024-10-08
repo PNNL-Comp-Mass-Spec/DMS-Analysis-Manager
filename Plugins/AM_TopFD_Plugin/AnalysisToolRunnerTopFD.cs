@@ -588,6 +588,7 @@ namespace AnalysisManagerTopFDPlugIn
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = Path.Combine(mWorkDir, TOPFD_CONSOLE_OUTPUT)
             };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

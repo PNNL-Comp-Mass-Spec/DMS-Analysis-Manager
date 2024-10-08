@@ -48,12 +48,14 @@ namespace AnalysisManager_AScore_PlugIn
             if (mMyEMSLDatasetInfo == null)
             {
                 var debugLevel = (short)mgrParams.GetParam("DebugLevel", 2);
+
                 mMyEMSLDatasetInfo = new DatasetListInfo
                 {
                     ReportMetadataURLs = mgrParams.TraceMode || debugLevel >= 2,
                     ThrowErrors = true,
                     TraceMode = mgrParams.TraceMode
                 };
+
                 RegisterEvents(mMyEMSLDatasetInfo);
             }
         }

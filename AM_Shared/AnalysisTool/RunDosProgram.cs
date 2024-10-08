@@ -96,7 +96,7 @@ namespace AnalysisManagerBase.AnalysisTool
         public string CachedConsoleError => mProgRunner == null ? string.Empty : mProgRunner.CachedConsoleError;
 
         /// <summary>
-        /// When true then will cache the text the external program writes to the console
+        /// When true, cache the text the external program writes to the console
         /// Can retrieve using the CachedConsoleOutput read-only property
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
@@ -219,7 +219,7 @@ namespace AnalysisManagerBase.AnalysisTool
         public string WorkDir { get; set; }
 
         /// <summary>
-        /// When true then will write the standard output to a file in real-time
+        /// When true, write the standard output to a file in real-time
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// Define the path to the file using property ConsoleOutputFilePath; if not defined, the file
         /// will be created in the WorkDir (though, if WorkDir is blank, will be created in the directory with the Program we're running)

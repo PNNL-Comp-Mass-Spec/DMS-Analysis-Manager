@@ -220,6 +220,7 @@ namespace AnalysisManagerExtractionPlugin
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = mPHRPConsoleOutputFilePath
                 };
+
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

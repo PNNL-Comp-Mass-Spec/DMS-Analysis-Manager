@@ -630,6 +630,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
+
                 RegisterEvents(mzidToTsvRunner);
 
                 if (Global.LinuxOS)
@@ -776,6 +777,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
+
                 RegisterEvents(mzidToTsvRunner);
 
                 // This process is typically quite fast, so we do not track CPU usage

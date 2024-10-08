@@ -592,6 +592,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="datasetIDsByExperimentGroup">
         /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
         /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
+        /// However, if there is only one dataset in dataPackageInfo, the experiment name of the dataset will be used
         /// </param>
         /// <returns>Result code</returns>
         private CloseOutType OrganizeDatasetFiles(
@@ -645,7 +646,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
             }
 
-            // Since we have multiple experiment groups, move the pepXML and .pin files into subdirectories
+            // Since we have multiple experiment groups, move the .mzML files into subdirectories
             var moveSuccess = MoveDatasetsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;

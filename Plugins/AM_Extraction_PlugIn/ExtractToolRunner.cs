@@ -590,6 +590,7 @@ namespace AnalysisManagerExtractionPlugin
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, toolName + "_Filter_ConsoleOutput.txt")
                 };
+
                 RegisterEvents(progRunner);
 
                 var success = progRunner.RunProgram(javaProgLoc, arguments, toolName + "_Filter", true);
@@ -1267,6 +1268,7 @@ namespace AnalysisManagerExtractionPlugin
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = mMzidMergerConsoleOutputFilePath
                 };
+
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += MzidMerger_LoopWaiting;
 

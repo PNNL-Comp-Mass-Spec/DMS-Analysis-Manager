@@ -850,6 +850,7 @@ namespace AnalysisManagerMaxQuantPlugIn
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = RuntimeOptions.ConsoleOutputFilePath
             };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

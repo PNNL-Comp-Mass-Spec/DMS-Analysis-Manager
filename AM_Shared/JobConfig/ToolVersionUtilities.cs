@@ -856,6 +856,7 @@ namespace AnalysisManagerBase.JobConfig
                     WriteConsoleOutputToFile = false,
                     MonitorInterval = 250
                 };
+
                 RegisterEvents(progRunner);
 
                 var success = progRunner.RunProgram(appPath, args, "DLLVersionInspector", false);

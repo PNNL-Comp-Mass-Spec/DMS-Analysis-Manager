@@ -222,6 +222,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 WriteConsoleOutputToFile = false,
                 ConsoleOutputFilePath = mConsoleOutputFile
             };
+
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

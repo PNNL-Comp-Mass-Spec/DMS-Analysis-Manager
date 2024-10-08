@@ -66,6 +66,7 @@ namespace AnalysisManagerBase.JobConfig
         {
             // Keys in this dictionary are experiment group name; values are a list of dataset IDs
             // If a dataset does not have an experiment group name, it will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
+            // However, if there is only one dataset in dataPackageDatasets, the experiment name of the dataset will be used
             var datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
 
             foreach (var item in dataPackageDatasets)

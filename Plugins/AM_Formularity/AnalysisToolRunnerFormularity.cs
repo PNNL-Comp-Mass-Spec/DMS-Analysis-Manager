@@ -330,6 +330,7 @@ namespace AnalysisManagerFormularityPlugin
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = false
                 };
+
                 RegisterEvents(cmdRunner);
 
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -788,6 +789,7 @@ namespace AnalysisManagerFormularityPlugin
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = mConsoleOutputFile
             };
+
             RegisterEvents(cmdRunner);
 
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;

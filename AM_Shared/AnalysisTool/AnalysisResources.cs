@@ -1401,6 +1401,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     {
                         DecoyProteinsUseXXX = decoyProteinsUseXXX
                     };
+
                     RegisterEvents(mFastaTools);
 
                     mFastaTools.FileGenerationStarted += FastaTools_FileGenerationStarted;

@@ -112,6 +112,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, SMAQC_CONSOLE_OUTPUT)
                 };
+
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

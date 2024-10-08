@@ -531,6 +531,7 @@ namespace AnalysisManagerQCARTPlugin
                 WriteConsoleOutputToFile = false
                 // ConsoleOutputFilePath = mCurrentConsoleOutputFile
             };
+
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

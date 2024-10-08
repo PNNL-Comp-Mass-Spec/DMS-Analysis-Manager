@@ -722,6 +722,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = Path.Combine(mWorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE)
             };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

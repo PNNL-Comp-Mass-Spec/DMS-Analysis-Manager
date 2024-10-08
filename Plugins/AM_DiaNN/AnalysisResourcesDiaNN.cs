@@ -364,6 +364,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = diaNNVersionConsoleOutputFile.FullName
                 };
+
                 RegisterEvents(cmdRunner);
 
                 LogMessage("Determining DIA-NN version");

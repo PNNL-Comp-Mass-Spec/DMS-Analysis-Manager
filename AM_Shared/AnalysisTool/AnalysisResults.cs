@@ -72,7 +72,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="targetDirPath">The destination directory path.</param>
         /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <param name="maxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
-        /// <param name="continueOnError">When true, then will continue copying even if an error occurs</param>
+        /// <param name="continueOnError">When true, continue copying even if an error occurs</param>
         public void CopyDirectory(string sourceDirPath, string targetDirPath, bool overwrite, int maxRetryCount, bool continueOnError)
         {
             var sourceDirectory = new DirectoryInfo(sourceDirPath);

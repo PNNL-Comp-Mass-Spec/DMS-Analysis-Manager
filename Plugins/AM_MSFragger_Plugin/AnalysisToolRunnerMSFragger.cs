@@ -266,6 +266,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = false
                 };
+
                 RegisterEvents(cmdRunner);
 
                 LogMessage("Verifying that the .mzML {0} centroided", dataPackageInfo.DatasetFiles.Count == 1 ? "file is" : "files are");
@@ -822,6 +823,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, MSFRAGGER_CONSOLE_OUTPUT)
                 };
+
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

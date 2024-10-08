@@ -541,6 +541,7 @@ namespace AnalysisManagerProg
                 // Allow the console output filename to be auto-generated
                 ConsoleOutputFilePath = string.Empty
             };
+
             RegisterEvents(mProgRunner);
 
             if (!mProgRunner.RunProgram(exePath, arguments, "MSConvert", true))
@@ -2118,6 +2119,7 @@ namespace AnalysisManagerProg
                 DebugLevel = 1,
                 MonitorInterval = 1000
             };
+
             RegisterEvents(progRunner);
 
             progRunner.RunProgram(appPath, "input.xml", "X!Tandem", false);
@@ -2159,6 +2161,7 @@ namespace AnalysisManagerProg
                 CreateNoWindow = false,
                 EchoOutputToConsole = false
             };
+
             RegisterEvents(progRunner);
 
             if (string.IsNullOrEmpty(consoleOutputFileName) || !writeConsoleOutputFileRealtime)

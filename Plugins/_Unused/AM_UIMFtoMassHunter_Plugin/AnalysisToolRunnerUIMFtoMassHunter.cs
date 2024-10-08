@@ -147,6 +147,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
                 WriteConsoleOutputToFile = false,
                 ConsoleOutputFilePath = mConsoleOutputFile
             };
+
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

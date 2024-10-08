@@ -2009,6 +2009,7 @@ namespace AnalysisManagerMSGFPlugin
                 WriteConsoleOutputToFile = true,
                 ConsoleOutputFilePath = Path.Combine(mWorkDir, MSGF_CONSOLE_OUTPUT)
             };
+
             RegisterEvents(mMSGFRunner);
             mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
 

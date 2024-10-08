@@ -390,6 +390,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     ConsoleOutputFilePath = Path.Combine(mWorkingDirectory.FullName, PHILOSOPHER_CONSOLE_OUTPUT),
                     MonitorInterval = DEFAULT_MONITOR_INTERVAL_MSEC
                 };
+
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

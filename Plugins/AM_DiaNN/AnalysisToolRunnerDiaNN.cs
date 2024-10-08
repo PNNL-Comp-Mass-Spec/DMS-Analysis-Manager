@@ -402,6 +402,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = diaNNPlotterConsoleOutputFile.FullName
                 };
+
                 RegisterEvents(cmdRunner);
 
                 return cmdRunner.RunProgram(diannPlotterProgram.FullName, arguments.ToString(), "DiaNN-Plotter", true);
@@ -1226,6 +1227,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, mDiaNNConsoleOutputFile)
                 };
+
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

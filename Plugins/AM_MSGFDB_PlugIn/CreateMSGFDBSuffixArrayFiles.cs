@@ -806,6 +806,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = consoleOutputFilePath
                 };
+
                 RegisterEvents(buildSA);
 
                 currentTask = "Run BuildSA using " + arguments;
