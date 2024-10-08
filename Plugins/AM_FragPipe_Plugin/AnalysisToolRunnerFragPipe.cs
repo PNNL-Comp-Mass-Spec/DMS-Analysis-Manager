@@ -212,9 +212,18 @@ namespace AnalysisManagerFragPipePlugIn
         /// Create the manifest file, which lists the input .mzML files, the experiment for each (optional), and the data type for each
         /// </summary>
         /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetIDsByExperimentGroup">
+        /// Keys in this dictionary are experiment group names, values are a list of Dataset IDs for each experiment group
+        /// If experiment group names are not defined in the data package, this dictionary will have a single entry named __UNDEFINED_EXPERIMENT_GROUP__
+        /// However, if there is only one dataset in dataPackageInfo, the experiment name of the dataset will be used
+        /// </param>
         /// <param name="manifestFilePath">Output: manifest file path</param>
         /// <param name="diaSearchEnabled">Output: true if the data type is DIA, DIA-Quant, or DIA-Lib</param>
-        private bool CreateManifestFile(DataPackageInfo dataPackageInfo, out string manifestFilePath, out bool diaSearchEnabled)
+        private bool CreateManifestFile(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            out string manifestFilePath,
+            out bool diaSearchEnabled)
         {
             diaSearchEnabled = false;
 
@@ -255,49 +264,52 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var outputDirectoryPaths = new SortedSet<string>();
 
-                foreach (var item in dataPackageInfo.DatasetFiles)
+                foreach (var experimentGroup in datasetIDsByExperimentGroup)
                 {
-                    var datasetID = item.Key;
-                    var datasetFilePath = Path.Combine(mWorkDir, item.Value);
+                    var experimentGroupName = experimentGroup.Key;
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
-                    string experimentNameToUse;
+                    var datasetFileDirectory = datasetIDsByExperimentGroup.Count == 1
+                        ? mWorkDir
+                        : experimentWorkingDirectory.FullName;
 
-                    if (dataPackageInfo.Experiments.TryGetValue(datasetID, out var experimentName))
+                    foreach (var datasetID in experimentGroup.Value)
                     {
-                        experimentNameToUse = experimentName;
-                    }
-                    else
-                    {
-                        experimentNameToUse = "Results";
-                    }
+                        var datasetFile = dataPackageInfo.DatasetFiles[datasetID];
+                        var datasetFilePath = Path.Combine(datasetFileDirectory, datasetFile);
 
-                    outputDirectoryPaths.Add(Path.Combine(mWorkDir, experimentNameToUse));
+                        var experimentNameToUse = dataPackageInfo.Experiments.TryGetValue(datasetID, out var experimentName)
+                            ? experimentName
+                            : "Results";
 
-                    string dataType;
+                        outputDirectoryPaths.Add(Path.Combine(mWorkDir, experimentNameToUse));
 
-                    // Data types supported by FragPipe: DDA, DDA+, DIA, DIA-Quant, DIA-Lib
-                    // This method chooses either DDA or DIA, depending on the dataset type
+                        string dataType;
 
-                    if (dataPackageInfo.DatasetTypes.TryGetValue(datasetID, out var datasetType))
-                    {
-                        if (datasetType.Contains("DIA"))
+                        // Data types supported by FragPipe: DDA, DDA+, DIA, DIA-Quant, DIA-Lib
+                        // This method chooses either DDA or DIA, depending on the dataset type
+
+                        if (dataPackageInfo.DatasetTypes.TryGetValue(datasetID, out var datasetType))
                         {
-                            diaSearchEnabled = true;
-                            dataType = "DIA";
+                            if (datasetType.Contains("DIA"))
+                            {
+                                diaSearchEnabled = true;
+                                dataType = "DIA";
+                            }
+                            else
+                            {
+                                dataType = "DDA";
+                            }
                         }
                         else
                         {
                             dataType = "DDA";
                         }
-                    }
-                    else
-                    {
-                        dataType = "DDA";
-                    }
 
-                    const string BIOREPLICATE = "";
+                        const string BIOREPLICATE = "";
 
-                    writer.WriteLine("{0}\t{1}\t{2}\t{3}", datasetFilePath, experimentNameToUse, BIOREPLICATE, dataType);
+                        writer.WriteLine("{0}\t{1}\t{2}\t{3}", datasetFilePath, experimentNameToUse, BIOREPLICATE, dataType);
+                    }
                 }
 
                 // Make sure each of the output directories exists
@@ -438,12 +450,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// <para>Otherwise, return a subdirectory below the working directory, based on the experiment's name</para>
         /// </remarks>
         /// <param name="experimentGroupName">Experiment group name</param>
-        /// <param name="experimentGroupCount">Experiment group count</param>
-        private DirectoryInfo GetExperimentGroupWorkingDirectory(string experimentGroupName, int experimentGroupCount)
+        private DirectoryInfo GetExperimentGroupWorkingDirectory(string experimentGroupName)
         {
-            if (experimentGroupCount <= 1)
-                return mWorkingDirectory;
-
             var cleanName = Global.ReplaceInvalidPathChars(experimentGroupName);
 
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, cleanName));
@@ -629,7 +637,7 @@ namespace AnalysisManagerFragPipePlugIn
             // Populate a dictionary with experiment group names and corresponding working directories
             foreach (var experimentGroupName in experimentGroupNames)
             {
-                var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
+                var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName);
 
                 mExperimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
             }
@@ -986,7 +994,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // Create the manifest file
-                var manifestCreated = CreateManifestFile(dataPackageInfo, out var manifestFilePath, out var diaSearchEnabled);
+                var manifestCreated = CreateManifestFile(dataPackageInfo, datasetIDsByExperimentGroup, out var manifestFilePath, out var diaSearchEnabled);
 
                 if (!manifestCreated)
                 {
