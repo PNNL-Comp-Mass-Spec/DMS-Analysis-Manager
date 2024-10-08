@@ -322,7 +322,6 @@ namespace AnalysisManagerFragPipePlugIn
 
                 LogError("Cannot find the FragPipe tools directory: " + toolsDirectory.FullName, true);
                 return false;
-
             }
             catch (Exception ex)
             {
@@ -857,27 +856,30 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!versionFound)
                     {
-                        // Determine the FragPipe version
+                        // Determine the versions of FragPipe, MSFragger, IonQuant, Philosopher, etc.
 
                         if (string.IsNullOrEmpty(mFragPipeVersion) &&
-                            dataLine.StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
+                            dataLine.Trim().StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
                         {
                             LogDebug(dataLine, mDebugLevel);
-                            mFragPipeVersion = string.Copy(dataLine);
+                            mFragPipeVersion = dataLine.Trim();
                         }
+
+                        versionFound = true;
 
                         // The next few lines should have version numbers for additional programs, including MSFragger, IonQuant, and Philosopher
 
-                        while (!reader.EndOfStream)
+                        while (!reader.EndOfStream && linesRead < 20)
                         {
-                            var versionInfo = reader.ReadLine();
+                            var trimmedLine = reader.ReadLine()?.Trim();
                             linesRead++;
 
-                            if (!string.IsNullOrWhiteSpace(versionInfo) && versionInfo.Contains(" version"))
-                            {
-                                mFragPipeVersion = string.Format("{0}; {1}", mFragPipeVersion, versionInfo);
-                                versionFound = true;
-                            }
+                            if (string.IsNullOrWhiteSpace(trimmedLine) || !trimmedLine.Contains(" version"))
+                                continue;
+
+                            mFragPipeVersion = mFragPipeVersion.Length > 0
+                                ? string.Format("{0}; {1}", mFragPipeVersion, trimmedLine)
+                                : trimmedLine;
                         }
 
                         continue;
