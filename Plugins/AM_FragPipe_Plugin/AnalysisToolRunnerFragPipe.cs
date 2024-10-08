@@ -979,7 +979,21 @@ namespace AnalysisManagerFragPipePlugIn
                 mProgress = (int)ProgressPercentValues.StartingFragPipe;
                 ResetProgRunnerCpuUsage();
 
-                mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
+                var fragPipeBatchFile = new FileInfo(mFragPipeProgLoc);
+
+                if (!fragPipeBatchFile.Exists)
+                {
+                    LogError(string.Format("FragPipe batch file not found: {0}", mFragPipeProgLoc));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (fragPipeBatchFile.Directory == null)
+                {
+                    LogError(string.Format("FragPipe batch file parent directory is null: {0}", mFragPipeProgLoc));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                mCmdRunner = new RunDosProgram(fragPipeBatchFile.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -994,7 +1008,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // Set up and execute a program runner to run FragPipe
 
-                var processingSuccess = StartFragPipe(fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
+                var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
 
                 if (!mToolVersionWritten)
                 {
@@ -1114,6 +1128,7 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         private bool StartFragPipe(
+            FileInfo fragPipeBatchFile,
             double fastaFileSizeMB,
             string manifestFilePath,
             string workflowFilePath,
@@ -1164,10 +1179,10 @@ namespace AnalysisManagerFragPipePlugIn
 
             // ReSharper restore CommentTypo
 
-            // ToDo: Determine these using a new method
-            var toolsDirectory = new DirectoryInfo(@"C:\DMS_Programs\FragPipe\fragpipe_v22.0\tools");
-            var diannExePath = new FileInfo(@"C:\DMS_Programs\FragPipe\fragpipe_v22.0\tools\diann\1.8.2_beta_8\win\DiaNN.exe");
-            var pythonExePath = new FileInfo(@"C:\Python3\python.exe");
+            if (!DetermineFragPipeToolLocations(out var toolsDirectory, out var diannExePath, out var pythonExePath))
+            {
+                return false;
+            }
 
             var arguments = new StringBuilder();
 
@@ -1183,11 +1198,18 @@ namespace AnalysisManagerFragPipePlugIn
             arguments.AppendFormat(" --config-diann {0}", diannExePath.FullName);
             arguments.AppendFormat(" --config-python {0}", pythonExePath.FullName);
 
-            LogDebug(mFragPipeProgLoc + " " + arguments);
+            if (fragPipeBatchFile.Directory == null)
+            {
+                LogError(string.Format("Unable to determine the parent directory of the FragPipe batch file: {0}", fragPipeBatchFile.FullName));
+                return false;
+            }
+
+            LogDebug("cd {0}", fragPipeBatchFile.Directory.FullName);
+            LogDebug(fragPipeBatchFile.Name + " " + arguments);
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            return mCmdRunner.RunProgram(mFragPipeProgLoc, arguments.ToString(), "FragPipe", true);
+            return mCmdRunner.RunProgram(fragPipeBatchFile.FullName, arguments.ToString(), "FragPipe", true);
         }
 
         /// <summary>
