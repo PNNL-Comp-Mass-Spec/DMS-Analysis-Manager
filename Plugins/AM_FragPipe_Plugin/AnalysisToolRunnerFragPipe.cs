@@ -68,6 +68,9 @@ namespace AnalysisManagerFragPipePlugIn
         // Populate this with a tool version reported to the console
         private string mFragPipeVersion;
 
+        /// <summary>
+        /// Path to fragpipe.bat, e.g. C:\DMS_Programs\FragPipe\fragpipe_v22.0\bin\fragpipe.bat
+        /// </summary>
         private string mFragPipeProgLoc;
 
         private string mLocalFASTAFilePath;
@@ -183,6 +186,26 @@ namespace AnalysisManagerFragPipePlugIn
             mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
             base.CopyFailedResultsToArchiveDirectory();
+        }
+
+        /// <summary>
+        /// Search for files matching the pattern in the given directory and all subdirectories
+        /// If one or more files is found, at the newest one to toolFiles
+        /// </summary>
+        /// <param name="toolFiles">List of files to include in the version info string</param>
+        /// <param name="parentDirectory">Parent directory</param>
+        /// <param name="searchPattern">Search pattern, e.g. "MSFragger-*.jar"</param>
+        private void AddNewestMatchingFile(ICollection<FileInfo> toolFiles, DirectoryInfo parentDirectory, string searchPattern)
+        {
+            var matchingFiles = parentDirectory.GetFiles(searchPattern, SearchOption.AllDirectories);
+
+            if (matchingFiles.Length == 0)
+            {
+                LogWarning("Could not find a match for {0} in {1}", searchPattern, parentDirectory.FullName);
+                return;
+            }
+
+            toolFiles.Add(GetNewestFile(matchingFiles));
         }
 
         /// <summary>
@@ -489,6 +512,11 @@ namespace AnalysisManagerFragPipePlugIn
             return string.IsNullOrWhiteSpace(setting.Comment)
                 ? defaultComment
                 : setting.Comment;
+        }
+
+        private static FileInfo GetNewestFile(IEnumerable<FileInfo> files)
+        {
+            return (from file in files orderby file.LastWriteTimeUtc descending select file).FirstOrDefault();
         }
 
         private static Regex GetRegEx(string matchPattern, bool ignoreCase = true)
@@ -1221,14 +1249,26 @@ namespace AnalysisManagerFragPipePlugIn
         {
             LogDebug("Determining tool version info", mDebugLevel);
 
+            var fragPipeExePath = mFragPipeProgLoc.Replace(".bat", ".exe");
+
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
-                new(mFragPipeProgLoc)
+                new(fragPipeExePath)
             };
 
             try
             {
-                return SetStepTaskToolVersion(mFragPipeProgLoc, toolFiles);
+                // ReSharper disable once InvertIf
+
+                // Add MSFragger, IonQuant, and Philosopher to toolFiles:
+                if (DetermineFragPipeToolLocations(out var toolsDirectory, out _))
+                {
+                    AddNewestMatchingFile(toolFiles, toolsDirectory, "MSFragger-*.jar");
+                    AddNewestMatchingFile(toolFiles, toolsDirectory, "IonQuant-*.jar");
+                    AddNewestMatchingFile(toolFiles, toolsDirectory, "Philosopher-*.exe");
+                }
+
+                return SetStepTaskToolVersion(mFragPipeVersion, toolFiles);
             }
             catch (Exception ex)
             {
