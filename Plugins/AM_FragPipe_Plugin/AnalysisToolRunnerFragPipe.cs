@@ -899,13 +899,13 @@ namespace AnalysisManagerFragPipePlugIn
                         {
                             LogDebug(dataLine, mDebugLevel);
                             mFragPipeVersion = dataLine.Trim();
-                        }
 
-                        versionFound = true;
+                            versionFound = true;
+                        }
 
                         // The next few lines should have version numbers for additional programs, including MSFragger, IonQuant, and Philosopher
 
-                        while (!reader.EndOfStream && linesRead < 20)
+                        while (versionFound && !reader.EndOfStream && linesRead < 20)
                         {
                             var trimmedLine = reader.ReadLine()?.Trim();
                             linesRead++;
