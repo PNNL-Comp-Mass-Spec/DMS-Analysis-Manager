@@ -1862,7 +1862,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in MoveResultsIntoSubdirectories", ex);
+                LogError("Error in MoveResultsToFromSubdirectories", ex);
                 return false;
             }
         }

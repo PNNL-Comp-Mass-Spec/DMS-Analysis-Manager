@@ -33,7 +33,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string FRAGPIPE_BATCH_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\bin\fragpipe.bat";
 
-        private const string FRAGPIPE_TOOLS_DIRECTORY_PATH= FRAGPIPE_INSTANCE_DIRECTORY + @"\tools";
+        private const string FRAGPIPE_TOOLS_DIRECTORY_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools";
 
         private const string FRAGPIPE_DIANN_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools\diann\1.8.2_beta_8\win\DiaNN.exe";
 
