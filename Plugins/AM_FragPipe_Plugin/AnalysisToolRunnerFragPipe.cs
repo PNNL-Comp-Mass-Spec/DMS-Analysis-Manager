@@ -135,8 +135,15 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var organizeResult = OrganizeFilesForFragPipe(out var dataPackageInfo, out var datasetIDsByExperimentGroup);
+
+                if (organizeResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return organizeResult;
+                }
+
                 // Process the mzML files using FragPipe
-                var processingResult = StartFragPipe(fastaFile);
+                var processingResult = StartFragPipe(fastaFile, dataPackageInfo, datasetIDsByExperimentGroup, out var diaSearchEnabled, out var databaseSplitCount);
 
                 mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
@@ -161,10 +168,13 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                PostProcessResults(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount);
+
                 // ToDo: Confirm that it is safe to skip file Dataset_uncalibrated.mgf
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
-                var success = CopyResultsToTransferDirectory();
+                var subdirectoriesToSkip = new SortedSet<string>();
+                var success = CopyResultsToTransferDirectory(true, subdirectoriesToSkip);
 
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -569,7 +579,7 @@ namespace AnalysisManagerFragPipePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in MoveResultsIntoSubdirectories", ex);
+                LogError("Error in MoveDatasetsIntoSubdirectories", ex);
                 return false;
             }
         }
@@ -589,6 +599,79 @@ namespace AnalysisManagerFragPipePlugIn
             catch (Exception ex)
             {
                 LogError(string.Format("Error in MoveFile for {0}", fileName), ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// If datasetIDsByExperimentGroup only has one experiment group, move the results out of the subdirectory
+        /// </summary>
+        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
+        private bool MoveResultsOutOfSubdirectory(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
+        {
+            try
+            {
+                if (datasetIDsByExperimentGroup.Count <= 1)
+                {
+                    // Nothing to do
+                    return true;
+                }
+
+                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
+
+                foreach (var item in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = item.Key;
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
+
+                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
+                    foreach (var datasetId in item.Value)
+                    {
+                        var datasetName = dataPackageInfo.Datasets[datasetId];
+
+                        var sourceDirectoryPath = experimentWorkingDirectory.FullName;
+                        var targetDirectoryPath = mWorkingDirectory.FullName;
+
+                        var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
+
+                        if (!pepXmlSuccess)
+                            return false;
+
+                        if (databaseSplitCount > 1)
+                        {
+                            // .pin files are not created for split FASTA MSFragger searches
+                            continue;
+                        }
+
+                        var pinSuccess = MoveFile(sourceDirectoryPath, datasetName + PIN_EXTENSION, targetDirectoryPath);
+
+                        if (!pinSuccess)
+                            return false;
+
+                        var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                        var msstatsFiles = sourceDirectory.GetFiles("*msstats.csv");
+
+                        if (msstatsFiles.Length == 0)
+                            continue;
+
+                        foreach (var msstatsFile in msstatsFiles)
+                        {
+                            var msstatsSuccess = MoveFile(sourceDirectoryPath, msstatsFile.Name, targetDirectoryPath);
+
+                            if (!msstatsSuccess)
+                                return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MoveResultsOutOfSubdirectory", ex);
                 return false;
             }
         }
@@ -658,6 +741,30 @@ namespace AnalysisManagerFragPipePlugIn
             var moveSuccess = MoveDatasetsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
 
             return moveSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+        }
+
+        private CloseOutType OrganizeFilesForFragPipe(
+            out DataPackageInfo dataPackageInfo,
+            out SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
+        {
+            LogMessage("Preparing to run FragPipe");
+
+            var moveFilesSuccess = OrganizeDatasetFiles(
+                out dataPackageInfo,
+                out datasetIDsByExperimentGroup);
+
+            if (moveFilesSuccess != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return moveFilesSuccess;
+            }
+
+            if (dataPackageInfo.DatasetFiles.Count == 0)
+            {
+                LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty after calling OrganizeDatasetFiles)");
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -972,125 +1079,14 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
-        private CloseOutType StartFragPipe(FileInfo fastaFile)
+        private CloseOutType PostProcessResults(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            bool diaSearchEnabled,
+            int databaseSplitCount)
         {
             try
             {
-                LogMessage("Preparing to run FragPipe");
-
-                var moveFilesSuccess = OrganizeDatasetFiles(
-                    out var dataPackageInfo,
-                    out var datasetIDsByExperimentGroup);
-
-                if (moveFilesSuccess != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return moveFilesSuccess;
-                }
-
-                if (dataPackageInfo.DatasetFiles.Count == 0)
-                {
-                    LogError("No datasets were found (dataPackageInfo.DatasetFiles is empty)");
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                }
-
-                // Create the manifest file
-                var manifestCreated = CreateManifestFile(dataPackageInfo, datasetIDsByExperimentGroup, out var manifestFilePath, out var diaSearchEnabled);
-
-                if (!manifestCreated)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Customize the path to the FASTA file
-                var workflowResultCode = UpdateFragPipeWorkflowFile(out var workflowFilePath, out var databaseSplitCount);
-
-                if (workflowResultCode != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return workflowResultCode;
-                }
-
-                if (string.IsNullOrWhiteSpace(workflowFilePath))
-                {
-                    LogError("FragPipe workflow file name returned by UpdateFragPipeParameterFile is empty");
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var datasetCount = dataPackageInfo.DatasetFiles.Count;
-
-                var options = new FragPipeOptions(mJobParams, datasetCount);
-                RegisterEvents(options);
-
-                options.LoadFragPipeOptions(workflowFilePath);
-
-                LogMessage("Running FragPipe");
-                mProgress = (int)ProgressPercentValues.StartingFragPipe;
-                ResetProgRunnerCpuUsage();
-
-                var fragPipeBatchFile = new FileInfo(mFragPipeProgLoc);
-
-                if (!fragPipeBatchFile.Exists)
-                {
-                    LogError(string.Format("FragPipe batch file not found: {0}", mFragPipeProgLoc));
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (fragPipeBatchFile.Directory == null)
-                {
-                    LogError(string.Format("FragPipe batch file parent directory is null: {0}", mFragPipeProgLoc));
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // When running FragPipe, CacheStandardOutput needs to be false,
-                // otherwise the program runner will randomly lock up, preventing FragPipe from finishing
-
-                mCmdRunner = new RunDosProgram(fragPipeBatchFile.Directory.FullName, mDebugLevel)
-                {
-                    CreateNoWindow = true,
-                    CacheStandardOutput = false,
-                    EchoOutputToConsole = true,
-                    WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT)
-                };
-
-                RegisterEvents(mCmdRunner);
-                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-
-                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                // Set up and execute a program runner to run FragPipe
-
-                var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
-
-                if (!mToolVersionWritten)
-                {
-                    if (string.IsNullOrWhiteSpace(mFragPipeVersion))
-                    {
-                        ParseFragPipeConsoleOutputFile(Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT));
-                    }
-                    mToolVersionWritten = StoreToolVersionInfo();
-                }
-
-                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                {
-                    LogError(mConsoleOutputErrorMsg);
-                }
-
-                if (!processingSuccess)
-                {
-                    LogError("Error running FragPipe");
-
-                    if (mCmdRunner.ExitCode != 0)
-                    {
-                        LogWarning("FragPipe returned a non-zero exit code: " + mCmdRunner.ExitCode);
-                    }
-                    else
-                    {
-                        LogWarning("Call to FragPipe failed (but exit code is 0)");
-                    }
-
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
                 var successCount = 0;
 
                 // Validate that FragPipe created a .pepXML file for each dataset
@@ -1171,14 +1167,137 @@ namespace AnalysisManagerFragPipePlugIn
                     }
                 }
 
-                mStatusTools.UpdateAndWrite(mProgress);
-                LogDebug("FragPipe Search Complete", mDebugLevel);
+                var moveSuccess = MoveResultsOutOfSubdirectory(dataPackageInfo, datasetIDsByExperimentGroup);
+
+                if (!moveSuccess)
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
+                LogError("Error in PostProcessResults", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private CloseOutType StartFragPipe(
+            FileInfo fastaFile,
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            out bool diaSearchEnabled,
+            out int databaseSplitCount)
+        {
+            try
+            {
+                // Create the manifest file
+                var manifestCreated = CreateManifestFile(dataPackageInfo, datasetIDsByExperimentGroup, out var manifestFilePath, out diaSearchEnabled);
+
+                if (!manifestCreated)
+                {
+                    databaseSplitCount = 0;
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Customize the path to the FASTA file
+                var workflowResultCode = UpdateFragPipeWorkflowFile(out var workflowFilePath, out databaseSplitCount);
+
+                if (workflowResultCode != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return workflowResultCode;
+                }
+
+                if (string.IsNullOrWhiteSpace(workflowFilePath))
+                {
+                    LogError("FragPipe workflow file name returned by UpdateFragPipeParameterFile is empty");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                var datasetCount = dataPackageInfo.DatasetFiles.Count;
+
+                var options = new FragPipeOptions(mJobParams, datasetCount);
+                RegisterEvents(options);
+
+                options.LoadFragPipeOptions(workflowFilePath);
+
+                LogMessage("Running FragPipe");
+                mProgress = (int)ProgressPercentValues.StartingFragPipe;
+                ResetProgRunnerCpuUsage();
+
+                var fragPipeBatchFile = new FileInfo(mFragPipeProgLoc);
+
+                if (!fragPipeBatchFile.Exists)
+                {
+                    LogError(string.Format("FragPipe batch file not found: {0}", mFragPipeProgLoc));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (fragPipeBatchFile.Directory == null)
+                {
+                    LogError(string.Format("FragPipe batch file parent directory is null: {0}", mFragPipeProgLoc));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // When running FragPipe, CacheStandardOutput needs to be false,
+                // otherwise the program runner will randomly lock up, preventing FragPipe from finishing
+
+                mCmdRunner = new RunDosProgram(fragPipeBatchFile.Directory.FullName, mDebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = false,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT)
+                };
+
+                RegisterEvents(mCmdRunner);
+                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
+
+                // Set up and execute a program runner to run FragPipe
+                var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
+
+                if (!mToolVersionWritten)
+                {
+                    if (string.IsNullOrWhiteSpace(mFragPipeVersion))
+                    {
+                        ParseFragPipeConsoleOutputFile(Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT));
+                    }
+                    mToolVersionWritten = StoreToolVersionInfo();
+                }
+
+                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                {
+                    LogError(mConsoleOutputErrorMsg);
+                }
+
+                if (!processingSuccess)
+                {
+                    LogError("Error running FragPipe");
+
+                    if (mCmdRunner.ExitCode != 0)
+                    {
+                        LogWarning("FragPipe returned a non-zero exit code: " + mCmdRunner.ExitCode);
+                    }
+                    else
+                    {
+                        LogWarning("Call to FragPipe failed (but exit code is 0)");
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                mStatusTools.UpdateAndWrite(mProgress);
+                LogDebug("FragPipe Search Complete", mDebugLevel);
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
                 LogError("Error in StartFragPipe", ex);
+                diaSearchEnabled = false;
+                databaseSplitCount = 0;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
