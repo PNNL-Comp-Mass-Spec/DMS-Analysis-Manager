@@ -29,7 +29,13 @@ namespace AnalysisManagerFragPipePlugIn
     {
         // Ignore Spelling: dia, frag
 
-        private const string FRAGPIPE_BATCH_FILE_PATH = @"fragpipe_v22.0\bin\fragpipe.bat";
+        private const string FRAGPIPE_INSTANCE_DIRECTORY = "fragpipe_v22.0";
+
+        private const string FRAGPIPE_BATCH_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\bin\fragpipe.bat";
+
+        private const string FRAGPIPE_TOOLS_DIRECTORY_PATH= FRAGPIPE_INSTANCE_DIRECTORY + @"\tools";
+
+        private const string FRAGPIPE_DIANN_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools\diann\1.8.2_beta_8\win\DiaNN.exe";
 
         private const string FRAGPIPE_CONSOLE_OUTPUT = "FragPipe_ConsoleOutput.txt";
 
