@@ -1040,10 +1040,13 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // When running FragPipe, CacheStandardOutput needs to be false,
+                // otherwise the program runner will randomly lock up, preventing FragPipe from finishing
+
                 mCmdRunner = new RunDosProgram(fragPipeBatchFile.Directory.FullName, mDebugLevel)
                 {
                     CreateNoWindow = true,
-                    CacheStandardOutput = true,
+                    CacheStandardOutput = false,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT)
