@@ -280,7 +280,15 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (dataPackageInfo.DatasetTypes.TryGetValue(datasetID, out var datasetType))
                     {
-                        dataType = datasetType.Contains("DIA") ? "DIA" : "DDA";
+                        if (datasetType.Contains("DIA"))
+                        {
+                            diaSearchEnabled = true;
+                            dataType = "DIA";
+                        }
+                        else
+                        {
+                            dataType = "DDA";
+                        }
                     }
                     else
                     {
