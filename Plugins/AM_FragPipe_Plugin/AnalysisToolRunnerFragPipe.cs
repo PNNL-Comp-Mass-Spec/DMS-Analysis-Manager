@@ -235,7 +235,7 @@ namespace AnalysisManagerFragPipePlugIn
                 foreach (var item in dataPackageInfo.DatasetFiles)
                 {
                     var datasetID = item.Key;
-                    var datasetFilePath = item.Value;
+                    var datasetFilePath = Path.Combine(mWorkDir, item.Value);
 
                     string experimentNameToUse;
 
