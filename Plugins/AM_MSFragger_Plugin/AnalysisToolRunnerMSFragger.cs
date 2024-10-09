@@ -1373,8 +1373,9 @@ namespace AnalysisManagerMSFraggerPlugIn
             mJobParams.AddResultFileToSkip(fastaFile.Name);
 
             // ReSharper disable once StringLiteralTypo
-            mJobParams.AddResultFileExtensionToSkip("pepindex");
+            mJobParams.AddResultFileExtensionToSkip(".pepindex");
 
+            // This file was created by older versions of MSFragger, but has not been seen with MSFragger 4.1
             mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;
