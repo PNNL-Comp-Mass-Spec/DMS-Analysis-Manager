@@ -282,6 +282,9 @@ namespace AnalysisManagerFragPipePlugIn
                     var experimentGroupName = experimentGroup.Key;
                     var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
+                    // If there is only one experiment group, leave the .mzML files in the working directory
+                    // If multiple experiment groups, method MoveDatasetsIntoSubdirectories will move the .mzML files into the experiment group subdirectory
+
                     var datasetFileDirectory = datasetIDsByExperimentGroup.Count == 1
                         ? mWorkDir
                         : experimentWorkingDirectory.FullName;
@@ -663,16 +666,18 @@ namespace AnalysisManagerFragPipePlugIn
                 mExperimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
             }
 
-            if (experimentCount <= 1)
-                return CloseOutType.CLOSEOUT_SUCCESS;
-
-            // Since we have multiple experiment groups, create a subdirectory for each one
+            // Create a subdirectory for each experiment group
             foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
             {
                 if (!experimentGroupDirectory.Exists)
                 {
                     experimentGroupDirectory.Create();
                 }
+            }
+
+            if (experimentCount <= 1)
+            {
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
             // Since we have multiple experiment groups, move the .mzML files into subdirectories
