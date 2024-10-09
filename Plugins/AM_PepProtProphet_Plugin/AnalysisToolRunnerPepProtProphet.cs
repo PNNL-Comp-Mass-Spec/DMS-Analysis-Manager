@@ -772,7 +772,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                // Zip the _ion.tsv, _peptide.tsv, and _protein.tsv files created for each experiment group,
+                // Zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group,
                 // but only if there are more than three experiment groups
                 var zipSuccessPsmTsv = ZipPsmTsvFiles(usedProteinProphet);
 
@@ -5707,7 +5707,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         }
 
         /// <summary>
-        /// Zip the _ion.tsv, _peptide.tsv, and _protein.tsv files created for each experiment group,
+        /// Zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group,
         /// but only if there are more than three experiment groups
         /// </summary>
         /// <param name="usedProteinProphet">True if Protein Prophet was used</param>

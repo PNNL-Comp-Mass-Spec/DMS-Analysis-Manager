@@ -1975,6 +1975,7 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             if (!isGzipFile)
                 return true;
 
+            // Skip files Dataset.mzML.gz and Dataset.mzML
             // Do not skip all .gz files because we compress MS-GF+ results using .gz and we want to keep those
 
             mJobParams.AddResultFileToSkip(sourceFile.Name);
