@@ -612,6 +612,57 @@ namespace AnalysisManagerFragPipePlugIn
                 return false;
             }
         }
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Move the retention time .png files into each experiment group's working directory, renaming to end with _RTplot.png
+        /// Move the score histogram .png files into each experiment group's working directory, removing "_edited" from the name
+        /// </summary>
+        private void MovePlotFiles()
+        {
+            try
+            {
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
+                {
+                    foreach (var plotFile in experimentGroupDirectory.GetFiles("*.png", SearchOption.AllDirectories))
+                    {
+                        if (plotFile.Directory == null)
+                        {
+                            plotFile.MoveTo(Path.Combine(experimentGroupDirectory.FullName, plotFile.Name));
+                            continue;
+                        }
+
+                        if (plotFile.Directory.FullName.Equals(experimentGroupDirectory.FullName))
+                            continue;
+
+                        string targetFileName;
+
+                        if (plotFile.Directory.Name.Equals("RT_calibration_curves", StringComparison.OrdinalIgnoreCase) ||
+                            plotFile.Directory.Name.Equals("RTPlots", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Plots in this directory show observed vs. predicted retention time (aka elution time)
+
+                            // ReSharper disable once StringLiteralTypo
+                            targetFileName = string.Format("{0}_RTplot.png", Path.GetFileNameWithoutExtension(plotFile.Name));
+                        }
+                        else if (plotFile.Directory.Name.Equals("score_histograms", StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetFileName = plotFile.Name.Replace("_edited_", "_");
+                        }
+                        else
+                        {
+                            targetFileName = plotFile.Name;
+                        }
+
+                        plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, targetFileName));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MovePlotFiles", ex);
+            }
+        }
 
         /// <summary>
         /// Organize .mzML files and populate several dictionaries
@@ -1120,6 +1171,9 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (!experimentGroupSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
+
+                // Move the plot files into each experiment group working directory
+                MovePlotFiles();
 
                 // Rename or zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group
                 var zipSuccessPsmTsv = ZipOrRenamePsmTsvFiles(datasetCount);
