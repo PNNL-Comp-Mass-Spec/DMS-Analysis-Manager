@@ -159,7 +159,9 @@ namespace AnalysisManagerFragPipePlugIn
                 Global.IdleLoop(0.5);
                 AppUtils.GarbageCollectNow();
 
-                if (!AnalysisJob.SuccessOrNoData(processingResult))
+                var postProcessResult = PostProcessResults(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount);
+
+                if (!AnalysisJob.SuccessOrNoData(processingResult) || !AnalysisJob.SuccessOrNoData(postProcessResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, move the output files into the results directory,
@@ -168,9 +170,7 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                PostProcessResults(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount);
-
-                // ToDo: Confirm that it is safe to skip file Dataset_uncalibrated.mgf
+                // This file may have been created by MSFragger; ignore it
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 var subdirectoriesToSkip = new SortedSet<string>();
@@ -269,6 +269,9 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 manifestFilePath = Path.Combine(mWorkDir, "datasets.fp-manifest");
+
+                // FragPipe creates the following file, which is the same as datasets.fp-manifest but with a different text encoding; skip it
+                mJobParams.AddResultFileToSkip("fragpipe-files.fp-manifest");
 
                 using var writer = new StreamWriter(new FileStream(manifestFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -452,6 +455,12 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
+        private static void FindDatasetPinFiles(string sourceDirectoryPath, string datasetName, out FileInfo pinFile, out FileInfo pinFileEdited)
+        {
+            pinFile = new FileInfo(Path.Combine(sourceDirectoryPath, string.Format("{0}{1}", datasetName, PIN_EXTENSION)));
+            pinFileEdited = new FileInfo(Path.Combine(sourceDirectoryPath, string.Format("{0}_edited{1}", datasetName, PIN_EXTENSION)));
+        }
+
         /// <summary>
         /// Get appropriate path of the working directory for the given experiment
         /// </summary>
@@ -475,7 +484,9 @@ namespace AnalysisManagerFragPipePlugIn
         {
             var pepXmlFiles = new List<FileInfo>();
 
-            pinFile = new FileInfo(Path.Combine(workingDirectory.FullName, datasetName + ".pin"));
+            FindDatasetPinFiles(workingDirectory.FullName, datasetName, out var pinFileUnedited, out var pinFileEdited);
+
+            pinFile = pinFileEdited.Exists ? pinFileEdited : pinFileUnedited;
 
             if (diaSearchEnabled)
             {
@@ -599,79 +610,6 @@ namespace AnalysisManagerFragPipePlugIn
             catch (Exception ex)
             {
                 LogError(string.Format("Error in MoveFile for {0}", fileName), ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// If datasetIDsByExperimentGroup only has one experiment group, move the results out of the subdirectory
-        /// </summary>
-        /// <param name="dataPackageInfo">Data package info</param>
-        /// <param name="datasetIDsByExperimentGroup">Keys are experiment group name, values are lists of dataset IDs</param>
-        private bool MoveResultsOutOfSubdirectory(
-            DataPackageInfo dataPackageInfo,
-            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
-        {
-            try
-            {
-                if (datasetIDsByExperimentGroup.Count <= 1)
-                {
-                    // Nothing to do
-                    return true;
-                }
-
-                var databaseSplitCount = mJobParams.GetJobParameter("MSFragger", "DatabaseSplitCount", 1);
-
-                foreach (var item in datasetIDsByExperimentGroup)
-                {
-                    var experimentGroupName = item.Key;
-                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
-
-                    // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-                    foreach (var datasetId in item.Value)
-                    {
-                        var datasetName = dataPackageInfo.Datasets[datasetId];
-
-                        var sourceDirectoryPath = experimentWorkingDirectory.FullName;
-                        var targetDirectoryPath = mWorkingDirectory.FullName;
-
-                        var pepXmlSuccess = MoveFile(sourceDirectoryPath, datasetName + PEPXML_EXTENSION, targetDirectoryPath);
-
-                        if (!pepXmlSuccess)
-                            return false;
-
-                        if (databaseSplitCount > 1)
-                        {
-                            // .pin files are not created for split FASTA MSFragger searches
-                            continue;
-                        }
-
-                        var pinSuccess = MoveFile(sourceDirectoryPath, datasetName + PIN_EXTENSION, targetDirectoryPath);
-
-                        if (!pinSuccess)
-                            return false;
-
-                        var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
-                        var msstatsFiles = sourceDirectory.GetFiles("*msstats.csv");
-
-                        if (msstatsFiles.Length == 0)
-                            continue;
-
-                        foreach (var msstatsFile in msstatsFiles)
-                        {
-                            var msstatsSuccess = MoveFile(sourceDirectoryPath, msstatsFile.Name, targetDirectoryPath);
-
-                            if (!msstatsSuccess)
-                                return false;
-                        }
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in MoveResultsOutOfSubdirectory", ex);
                 return false;
             }
         }
@@ -1087,6 +1025,7 @@ namespace AnalysisManagerFragPipePlugIn
         {
             try
             {
+                var datasetCount = 0;
                 var successCount = 0;
 
                 // Validate that FragPipe created a .pepXML file for each dataset
@@ -1104,6 +1043,7 @@ namespace AnalysisManagerFragPipePlugIn
                     foreach (var datasetID in experimentGroup.Value)
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetID];
+                        datasetCount++;
 
                         string optionalDatasetInfo;
 
@@ -1155,24 +1095,43 @@ namespace AnalysisManagerFragPipePlugIn
                             LogError(string.Format("FragPipe did not create a .pin file{0}", optionalDatasetInfo));
                         }
 
-                        var zipSuccess = ZipPepXmlAndPinFiles(this, dataPackageInfo, datasetName, pepXmlFiles, pinFile.Exists);
+                        var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo, datasetName, pepXmlFiles, pinFile.Exists);
 
-                        if (!zipSuccess)
+                        if (!zipSuccessPepXml)
+                            continue;
+
+                        successCount++;
+
+                        if (successCount > 1)
                             continue;
 
                         mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
                         mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
-
-                        successCount++;
                     }
                 }
 
-                var moveSuccess = MoveResultsOutOfSubdirectory(dataPackageInfo, datasetIDsByExperimentGroup);
+                if (datasetCount != dataPackageInfo.Datasets.Count)
+                {
+                    LogWarning("Dataset count differs from dataPackageInfo.Datasets.Count: {0} vs. {1}", datasetCount, dataPackageInfo.Datasets.Count);
+                }
 
-                if (!moveSuccess)
+                var experimentGroupSuccess = successCount == datasetCount;
+
+                if (!experimentGroupSuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                return successCount == dataPackageInfo.Datasets.Count ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                // Zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group,
+                // but only if there are more than three experiment groups
+                var zipSuccessPsmTsv = ZipPsmTsvFiles();
+
+                if (!zipSuccessPsmTsv)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
+                // Skip additional files, including interact-Dataset.pep.xml and spectraRT_full.tsv
+                mJobParams.AddResultFileExtensionToSkip(".pep.xml");
+                mJobParams.AddResultFileExtensionToSkip("spectraRT_full.tsv");
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -1611,11 +1570,13 @@ namespace AnalysisManagerFragPipePlugIn
 
             fastaFile.CopyTo(mLocalFASTAFilePath, true);
 
+            // Add the FASTA file and the associated index files to the list of files to skip when copying results to the transfer directory
             mJobParams.AddResultFileToSkip(fastaFile.Name);
 
             // ReSharper disable once StringLiteralTypo
-            mJobParams.AddResultFileExtensionToSkip("pepindex");
+            mJobParams.AddResultFileExtensionToSkip(".pepindex");
 
+            // This file was created by older versions of MSFragger, but has not been seen with MSFragger 4.1
             mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
 
             return true;
@@ -1680,16 +1641,41 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
-        /// Zip the .pepXML file(s) created by FragPipe
+        /// Store the list of files in a zip file (overwriting any existing zip file), then call AddResultFileToSkip() for each file
         /// </summary>
-        /// <param name="toolRunner">Tool runner instance (since this is a static method)</param>
+        /// <param name="fileListDescription">File list description</param>
+        /// <param name="filesToZip">Files to zip</param>
+        /// <param name="zipFileName">Zip file name</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool ZipFiles(string fileListDescription, IReadOnlyList<FileInfo> filesToZip, string zipFileName)
+        {
+            var zipFilePath = Path.Combine(mWorkingDirectory.FullName, zipFileName);
+
+            var success = mZipTools.ZipFiles(filesToZip, zipFilePath);
+
+            if (!success)
+            {
+                LogError("Error zipping " + fileListDescription + " to create " + zipFileName);
+                return false;
+            }
+
+            foreach (var item in filesToZip)
+            {
+                mJobParams.AddResultFileToSkip(item.Name);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Zip the .pepXML file(s) and .pin file created by FragPipe
+        /// </summary>
         /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="pepXmlFiles">Typically this is a single .pepXML file, but for DIA searches, this is a set of .pepXML files</param>
         /// <param name="addPinFile">When true, add the .pin file to the first zipped .pepXML file</param>
         /// <returns>True if success, false if an error</returns>
-        private static bool ZipPepXmlAndPinFiles(
-            AnalysisToolRunnerBase toolRunner,
+        private bool ZipPepXmlAndPinFiles(
             DataPackageInfo dataPackageInfo,
             string datasetName,
             List<FileInfo> pepXmlFiles,
@@ -1697,7 +1683,7 @@ namespace AnalysisManagerFragPipePlugIn
         {
             if (pepXmlFiles.Count == 0)
             {
-                toolRunner.LogError("Empty file list sent to method ZipPepXmlAndPinFiles");
+                LogError("Empty file list sent to method ZipPepXmlAndPinFiles");
                 return false;
             }
 
@@ -1743,10 +1729,10 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // pepXML file created by FragPipe is empty for dataset
-                toolRunner.LogError("pepXML file created by FragPipe is empty{0}", optionalDatasetInfo);
+                LogError("pepXML file created by FragPipe is empty{0}", optionalDatasetInfo);
             }
 
-            var success = ZipPepXmlAndPinFile(toolRunner, datasetName, primaryPepXmlFile[0], addPinFile);
+            var success = ZipPepXmlAndPinFile(datasetName, primaryPepXmlFile[0], addPinFile);
 
             if (!success)
                 return false;
@@ -1760,7 +1746,7 @@ namespace AnalysisManagerFragPipePlugIn
             {
                 var zipFileNameOverride = string.Format("{0}_pepXML.zip", Path.GetFileNameWithoutExtension(pepXmlFile.Name));
 
-                var success2 = ZipPepXmlAndPinFile(toolRunner, datasetName, pepXmlFile, false, zipFileNameOverride);
+                var success2 = ZipPepXmlAndPinFile(datasetName, pepXmlFile, false, zipFileNameOverride);
 
                 if (success2)
                     successCount++;
@@ -1769,7 +1755,7 @@ namespace AnalysisManagerFragPipePlugIn
             if (successCount == additionalPepXmlFiles.Count)
                 return true;
 
-            toolRunner.LogError("Zip failure for {0} / {1} .pepXML files created by FragPipe", additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count);
+            LogError("Zip failure for {0} / {1} .pepXML files created by FragPipe", additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count);
 
             return false;
         }
@@ -1779,17 +1765,16 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Zip the .pepXML file created by FragPipe
         /// </summary>
-        /// <param name="toolRunner">Tool runner instance (since this is a static method)</param>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="pepXmlFile">.pepXML file</param>
         /// <param name="addPinFile">If true, add this dataset's .pin file to the .zip file</param>
         /// <param name="zipFileNameOverride">If an empty string, name the .zip file DatasetName_pepXML.zip; otherwise, use this name</param>
         /// <returns>True if success, false if an error</returns>
-        private static bool ZipPepXmlAndPinFile(AnalysisToolRunnerBase toolRunner, string datasetName, FileInfo pepXmlFile, bool addPinFile, string zipFileNameOverride = "")
+        private bool ZipPepXmlAndPinFile(string datasetName, FileInfo pepXmlFile, bool addPinFile, string zipFileNameOverride = "")
         {
-            mZipTool ??= new ZipFileTools(toolRunner.DebugLevel, toolRunner.WorkingDirectory);
+            mZipTool ??= new ZipFileTools(DebugLevel, WorkingDirectory);
 
-            var zipSuccess = toolRunner.ZipOutputFile(pepXmlFile, ".pepXML file");
+            var zipSuccess = ZipOutputFile(pepXmlFile, ".pepXML file");
 
             if (!zipSuccess)
             {
@@ -1801,7 +1786,7 @@ namespace AnalysisManagerFragPipePlugIn
 
             if (!zipFile.Exists)
             {
-                toolRunner.LogError("Zipped pepXML file not found; cannot rename");
+                LogError("Zipped pepXML file not found; cannot rename");
                 return false;
             }
 
@@ -1810,13 +1795,13 @@ namespace AnalysisManagerFragPipePlugIn
                 zipFileNameOverride = datasetName + "_pepXML.zip";
             }
 
-            var newZipFilePath = Path.Combine(toolRunner.WorkingDirectory, zipFileNameOverride);
+            var newZipFilePath = Path.Combine(WorkingDirectory, zipFileNameOverride);
 
             var existingTargetFile = new FileInfo(newZipFilePath);
 
             if (existingTargetFile.Exists)
             {
-                toolRunner.LogMessage("Replacing {0} with updated version", existingTargetFile.Name);
+                LogMessage("Replacing {0} with updated version", existingTargetFile.Name);
                 existingTargetFile.Delete();
             }
 
@@ -1825,25 +1810,109 @@ namespace AnalysisManagerFragPipePlugIn
             if (!addPinFile)
                 return true;
 
-            // Add the .pin file to the zip file
-
-            var pinFile = new FileInfo(Path.Combine(pepXmlFile.Directory.FullName, datasetName + PIN_EXTENSION));
-
-            if (!pinFile.Exists)
+            if (pepXmlFile.Directory == null)
             {
-                toolRunner.LogError(".pin file not found; cannot add: " + pinFile.Name);
+                LogWarning("Parent directory of file {0} is null; cannot search for .pin files", pepXmlFile.Name);
+                return true;
+            }
+
+            // Add the Dataset_edited.pin file to the zip file
+            // If not found, but Dataset.pin exists, add it
+
+            FindDatasetPinFiles(pepXmlFile.Directory.FullName, datasetName, out var pinFile, out var pinFileEdited);
+
+            if (!pinFile.Exists && !pinFileEdited.Exists)
+            {
+                LogError(".pin file not found; cannot add: " + pinFile.Name);
                 return false;
             }
 
-            var success = mZipTool.AddToZipFile(zipFile.FullName, pinFile);
+            FileInfo pinFileToUse;
+
+            if (pinFileEdited.Exists)
+            {
+                pinFileToUse = pinFileEdited;
+                mJobParams.AddResultFileToSkip(pinFile.Name);
+            }
+            else
+            {
+                pinFileToUse = pinFile;
+                mJobParams.AddResultFileToSkip(pinFileEdited.Name);
+            }
+
+            var success = mZipTool.AddToZipFile(zipFile.FullName, pinFileToUse);
 
             if (success)
             {
                 return true;
             }
 
-            toolRunner.LogError("Error adding {0} to {1}", pinFile.Name, zipFile.FullName);
+            LogError("Error adding {0} to {1}", pinFileToUse.Name, zipFile.FullName);
             return false;
+        }
+
+        /// <summary>
+        /// Zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group,
+        /// but only if there are more than three experiment groups
+        /// </summary>
+        /// <returns>True if successful, false if error</returns>
+        private bool ZipPsmTsvFiles()
+        {
+            try
+            {
+                if (mExperimentGroupWorkingDirectories.Count <= 3)
+                    return true;
+
+                var validExperimentGroupCount = 0;
+                var filesToZip = new List<FileInfo>();
+
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
+                {
+                    var experimentGroup = experimentGroupDirectory.Name;
+
+                    var ionFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_ion.tsv"));
+                    var peptideFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_peptide.tsv"));
+                    var proteinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_protein.tsv"));
+                    var psmFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_psm.tsv"));
+
+                    if (ionFile.Exists)
+                        filesToZip.Add(ionFile);
+                    else
+                        LogError("File not found: " + ionFile.Name);
+
+                    if (peptideFile.Exists)
+                        filesToZip.Add(peptideFile);
+                    else
+                        LogError("File not found: " + peptideFile.Name);
+
+                    if (proteinFile.Exists)
+                        filesToZip.Add(proteinFile);
+                    else
+                        LogWarning("File not found: " + proteinFile.Name);
+
+                    if (psmFile.Exists)
+                        filesToZip.Add(psmFile);
+                    else
+                        LogError("File not found: " + psmFile.Name);
+
+                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists)
+                    {
+                        validExperimentGroupCount++;
+                    }
+                }
+
+                // Zip the files to create Dataset_PSM_tsv.zip
+                var fileListDescription = string.Format("PSM .tsv files in {0}", mWorkingDirectory.Name);
+
+                var zipSuccess = ZipFiles(fileListDescription, filesToZip, AnalysisResources.ZIPPED_MSFRAGGER_PSM_TSV_FILES);
+
+                return zipSuccess && validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipPsmTsvFiles", ex);
+                return false;
+            }
         }
 
         /// <summary>
