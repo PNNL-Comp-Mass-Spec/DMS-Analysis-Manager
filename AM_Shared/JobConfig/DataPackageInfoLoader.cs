@@ -59,6 +59,7 @@ namespace AnalysisManagerBase.JobConfig
         /// </summary>
         /// <remarks>
         /// Datasets that do not have an experiment group defined will be assigned to __UNDEFINED_EXPERIMENT_GROUP__
+        /// However, if there is only one dataset in dataPackageDatasets, the experiment name of the dataset will be used
         /// </remarks>
         /// <returns>Dictionary where keys are experiment group name and values are dataset ID</returns>
         public static SortedDictionary<string, SortedSet<int>> GetDataPackageDatasetsByExperimentGroup(

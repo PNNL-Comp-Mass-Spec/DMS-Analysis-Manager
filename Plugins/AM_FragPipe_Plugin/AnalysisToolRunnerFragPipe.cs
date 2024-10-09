@@ -294,11 +294,7 @@ namespace AnalysisManagerFragPipePlugIn
                         var datasetFile = dataPackageInfo.DatasetFiles[datasetID];
                         var datasetFilePath = Path.Combine(datasetFileDirectory, datasetFile);
 
-                        var experimentNameToUse = dataPackageInfo.Experiments.TryGetValue(datasetID, out var experimentName)
-                            ? experimentName
-                            : "Results";
-
-                        outputDirectoryPaths.Add(Path.Combine(mWorkDir, experimentNameToUse));
+                        outputDirectoryPaths.Add(Path.Combine(mWorkDir, experimentGroup.Key));
 
                         string dataType;
 
@@ -324,7 +320,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                         const string BIOREPLICATE = "";
 
-                        writer.WriteLine("{0}\t{1}\t{2}\t{3}", datasetFilePath, experimentNameToUse, BIOREPLICATE, dataType);
+                        writer.WriteLine("{0}\t{1}\t{2}\t{3}", datasetFilePath, experimentGroup.Key, BIOREPLICATE, dataType);
                     }
                 }
 
