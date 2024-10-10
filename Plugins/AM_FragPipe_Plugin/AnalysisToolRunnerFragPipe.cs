@@ -1128,6 +1128,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // Move the plot files into each experiment group working directory
                 MovePlotFiles();
 
+                // Zip the .pepXML file(s) and .pin file(s)
                 var zipSuccessPepXml = ZipPepXmlFiles(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount, out var datasetCount);
 
                 if (!zipSuccessPepXml)
@@ -1799,7 +1800,7 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
-        /// Zip the .pepXML file(s) and .pin file created by FragPipe
+        /// Zip the .pepXML file(s) and .pin file(s) created by FragPipe
         /// </summary>
         /// <param name="dataPackageInfo">Data package info</param>
         /// <param name="datasetName">Dataset name</param>
