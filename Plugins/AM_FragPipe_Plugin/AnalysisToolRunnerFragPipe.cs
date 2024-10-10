@@ -656,7 +656,7 @@ namespace AnalysisManagerFragPipePlugIn
                             targetFileName = plotFile.Name;
                         }
 
-                        plotFile.MoveTo(Path.Combine(mWorkingDirectory.FullName, targetFileName));
+                        plotFile.MoveTo(Path.Combine(experimentGroupDirectory.FullName, targetFileName));
                     }
                 }
             }
