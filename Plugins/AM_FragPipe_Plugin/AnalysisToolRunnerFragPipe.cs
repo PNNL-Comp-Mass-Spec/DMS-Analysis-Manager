@@ -666,6 +666,52 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
+        private bool MoveResultsIntoDirectory(DirectoryInfo sourceDirectory, FileSystemInfo targetDirectory, bool recurse)
+        {
+            try
+            {
+                foreach (var sourceFile in sourceDirectory.GetFiles())
+                {
+                    var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFile.Name));
+
+                    if (targetFile.Exists)
+                    {
+                        LogError("Cannot move file from {0} since the target file exists: {1}", sourceDirectory.FullName, targetFile.FullName);
+                        return false;
+                    }
+
+                    var success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
+
+                    if (!success)
+                        return false;
+                }
+
+                if (!recurse)
+                    return true;
+
+                // Also move files in subdirectories
+                foreach (var subdirectory in sourceDirectory.GetDirectories())
+                {
+                    if (subdirectory.GetFileSystemInfos().Length == 0)
+                        continue;
+
+                    var targetSubdirectory = new DirectoryInfo(Path.Combine(targetDirectory.FullName, subdirectory.Name));
+
+                    var filesMoved = MoveResultsIntoDirectory(subdirectory, targetSubdirectory, true);
+
+                    if (!filesMoved)
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in MoveResultsIntoWorkingDirectory", ex);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Organize .mzML files and populate several dictionaries
         /// </summary>
@@ -1099,7 +1145,16 @@ namespace AnalysisManagerFragPipePlugIn
                 if (!zipSuccessPsmTsv)
                     return CloseOutType.CLOSEOUT_FAILED;
 
-                // Skip additional files, including interact-Dataset.pep.xml and spectraRT_full.tsv
+                if (datasetIDsByExperimentGroup.Count == 1)
+                {
+                    var experimentGroupName = datasetIDsByExperimentGroup.FirstOrDefault().Key;
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
+
+                    var filesMoved = MoveResultsIntoDirectory(experimentWorkingDirectory, mWorkingDirectory, true);
+
+                    if (!filesMoved)
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
                 mJobParams.AddResultFileExtensionToSkip(".pep.xml");
                 mJobParams.AddResultFileExtensionToSkip("spectraRT_full.tsv");
 
