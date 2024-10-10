@@ -45,6 +45,8 @@ namespace AnalysisManagerFragPipePlugIn
 
         internal const float PROGRESS_PCT_INITIALIZING = 1;
 
+        private const string PROTEIN_PROPHET_RESULTS_FILE = "combined.prot.xml";
+
         private enum ProgressPercentValues
         {
             Initializing = 0,
@@ -1085,6 +1087,12 @@ namespace AnalysisManagerFragPipePlugIn
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
 
+                // Zip the combined protein prophet groups file
+                var zipSuccessProteinProphetResults = ZipProteinProphetResultsFile();
+
+                if (!zipSuccessProteinProphetResults)
+                    return CloseOutType.CLOSEOUT_FAILED;
+
                 // Rename or zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group
                 var zipSuccessPsmTsv = ZipOrRenamePsmTsvFiles(datasetCount);
 
@@ -2021,6 +2029,38 @@ namespace AnalysisManagerFragPipePlugIn
             catch (Exception ex)
             {
                 LogError("Error in ZipPepXmlFiles", ex);
+                return false;
+            }
+        }
+
+        private bool ZipProteinProphetResultsFile()
+        {
+            try
+            {
+                // Look for the Protein Prophet results file
+                var proteinGroupsFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, PROTEIN_PROPHET_RESULTS_FILE));
+
+                if (!proteinGroupsFile.Exists)
+                {
+                    LogWarning("Protein prophet results file not found: {0}", proteinGroupsFile.FullName);
+                    return true;
+                }
+
+                var zipFilePath = Path.Combine(mWorkingDirectory.FullName, "ProteinProphet_Protein_Groups.zip");
+
+                var fileZipped = mZipTools.ZipFile(proteinGroupsFile.FullName, false, zipFilePath);
+
+                if (!fileZipped)
+                {
+                    return false;
+                }
+
+                mJobParams.AddResultFileToSkip(PROTEIN_PROPHET_RESULTS_FILE);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipProteinProphetResultsFile", ex);
                 return false;
             }
         }
