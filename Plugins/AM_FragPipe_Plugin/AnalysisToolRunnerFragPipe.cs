@@ -598,11 +598,16 @@ namespace AnalysisManagerFragPipePlugIn
 
         private bool MoveFile(string sourceDirectoryPath, string fileName, string targetDirectoryPath)
         {
+            return MoveFile(sourceDirectoryPath, fileName, targetDirectoryPath, fileName);
+        }
+
+        private bool MoveFile(string sourceDirectoryPath, string sourceFileName, string targetDirectoryPath, string targetFileName)
+        {
             try
             {
-                var sourceFile = new FileInfo(Path.Combine(sourceDirectoryPath, fileName));
+                var sourceFile = new FileInfo(Path.Combine(sourceDirectoryPath, sourceFileName));
 
-                var targetPath = Path.Combine(targetDirectoryPath, sourceFile.Name);
+                var targetPath = Path.Combine(targetDirectoryPath, targetFileName);
 
                 sourceFile.MoveTo(targetPath);
 
@@ -610,10 +615,18 @@ namespace AnalysisManagerFragPipePlugIn
             }
             catch (Exception ex)
             {
-                LogError(string.Format("Error in MoveFile for {0}", fileName), ex);
+                LogError(
+                    string.Format("Error in MoveFile, moving file {0} from {1} to {2}{3}",
+                        sourceFileName,
+                        sourceDirectoryPath,
+                        targetDirectoryPath,
+                        sourceFileName.Equals(targetFileName) ? string.Empty : string.Format(", renaming to {0}", targetFileName)),
+                    ex);
+
                 return false;
             }
         }
+
         // ReSharper disable once CommentTypo
 
         /// <summary>
@@ -674,13 +687,34 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     var targetFile = new FileInfo(Path.Combine(targetDirectory.FullName, sourceFile.Name));
 
-                    if (targetFile.Exists)
-                    {
-                        LogError("Cannot move file from {0} since the target file exists: {1}", sourceDirectory.FullName, targetFile.FullName);
-                        return false;
-                    }
+                    bool success;
 
-                    var success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
+                    if (!targetFile.Exists)
+                    {
+                        success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
+                    }
+                    else
+                    {
+                        // Append the source directory name to the file
+                        var alternateName = string.Format("{0}_{1}{2}",
+                            Path.GetFileNameWithoutExtension(sourceFile.Name),
+                            sourceDirectory.Name,
+                            Path.GetExtension(sourceFile.Name));
+
+                        var alternateTargetFile = new FileInfo(Path.Combine(targetDirectory.FullName, alternateName));
+
+                        if (alternateTargetFile.Exists)
+                        {
+                            LogError("Cannot move file from {0} since the target file exists ({1}), and the alternate target file also exists ({2}",
+                                sourceDirectory.FullName,
+                                targetFile.FullName,
+                                alternateName);
+
+                            return false;
+                        }
+
+                        success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName, alternateTargetFile.Name);
+                    }
 
                     if (!success)
                         return false;
