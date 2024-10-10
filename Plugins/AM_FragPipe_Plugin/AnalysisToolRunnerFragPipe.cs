@@ -1155,7 +1155,10 @@ namespace AnalysisManagerFragPipePlugIn
                     if (!filesMoved)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                // Skip additional files, including interact-Dataset.pep.xml, protein.fas, and spectraRT_full.tsv
                 mJobParams.AddResultFileExtensionToSkip(".pep.xml");
+                mJobParams.AddResultFileExtensionToSkip("protein.fas");
                 mJobParams.AddResultFileExtensionToSkip("spectraRT_full.tsv");
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
