@@ -1722,6 +1722,107 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
+        /// If there are three or fewer experiment groups, move the PSM .tsv files into the working directory, renaming them using the experiment group name
+        /// If there are more than three experiment groups, combine all the PSM .tsv files into a single zip file named Dataset_PSM_tsv.zip
+        /// </summary>
+        /// <remarks>
+        /// In order to conform with how MSFragger is automated and how the data extraction tool expects to find the files,
+        /// the .zip files are stored in the working directory, and not in the experiment group working directory
+        /// </remarks>
+        /// <param name="datasetCount">Dataset count</param>
+        /// <returns>True if successful, false if error</returns>
+        private bool ZipOrRenamePsmTsvFiles(int datasetCount)
+        {
+            try
+            {
+                var validExperimentGroupCount = 0;
+
+                // Keys in this dictionary are the source file, values are the target file
+                var filesToRename = new Dictionary<FileInfo, FileInfo>();
+
+                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
+                {
+                    string baseNameToUse;
+
+                    if (datasetCount > 1 || Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
+                    {
+                        baseNameToUse = experimentGroupDirectory.Name;
+                    }
+                    else
+                    {
+                        baseNameToUse = mDatasetName;
+                    }
+
+                    var ionFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "ion.tsv"));
+                    var peptideFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "peptide.tsv"));
+                    var proteinFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv"));
+                    var psmFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "psm.tsv"));
+
+                    var renamedIonFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_ion.tsv"));
+                    var renamedPeptideFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_peptide.tsv"));
+                    var renamedProteinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_protein.tsv"));
+                    var renamedPsmFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_psm.tsv"));
+
+                    if (ionFile.Exists)
+                        filesToRename.Add(ionFile, renamedIonFile);
+                    else
+                        LogError("File not found: " + ionFile.Name);
+
+                    if (peptideFile.Exists)
+                        filesToRename.Add(peptideFile, renamedPeptideFile);
+                    else
+                        LogError("File not found: " + peptideFile.Name);
+
+                    if (proteinFile.Exists)
+                        filesToRename.Add(proteinFile, renamedProteinFile);
+                    else
+                        LogWarning("File not found: " + proteinFile.Name);
+
+                    if (psmFile.Exists)
+                        filesToRename.Add(psmFile, renamedPsmFile);
+                    else
+                        LogError("File not found: " + psmFile.Name);
+
+                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists)
+                    {
+                        validExperimentGroupCount++;
+                    }
+                }
+
+                var filesToZip = new List<FileInfo>();
+
+                foreach (var tsvFile in filesToRename)
+                {
+                    if (tsvFile.Value.Exists)
+                    {
+                        LogError("Cannot rename file {0} since the target file already exists: {1}", tsvFile.Key.FullName, tsvFile.Value.FullName);
+                        return false;
+                    }
+
+                    tsvFile.Key.MoveTo(tsvFile.Value.FullName);
+                    filesToZip.Add(tsvFile.Value);
+                }
+
+                if (mExperimentGroupWorkingDirectories.Count <= 3)
+                {
+                    return validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
+                }
+
+                // Zip the files to create Dataset_PSM_tsv.zip
+                var fileListDescription = string.Format("PSM .tsv files in {0}", mWorkingDirectory.Name);
+
+                var zipSuccess = ZipFiles(fileListDescription, filesToZip, AnalysisResources.ZIPPED_MSFRAGGER_PSM_TSV_FILES);
+
+                return zipSuccess && validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipOrRenamePsmTsvFiles", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Zip the .pepXML file(s) and .pin file created by FragPipe
         /// </summary>
         /// <param name="dataPackageInfo">Data package info</param>
@@ -1903,106 +2004,6 @@ namespace AnalysisManagerFragPipePlugIn
 
             LogError("Error adding {0} to {1}", pinFileToUse.Name, zipFile.FullName);
             return false;
-        }
-
-        /// <summary>
-        /// If there are three or fewer experiment groups, move the PSM .tsv files into the working directory, renaming them using the experiment group name
-        /// If there are more than three experiment groups, combine all the PSM .tsv files into a single zip file named Dataset_PSM_tsv.zip
-        /// </summary>
-        /// <remarks>
-        /// In order to conform with how MSFragger is automated and how the data extraction tool expects to find the files,
-        /// the .zip files are stored in the working directory, and not in the Experiment Group Working Directory
-        /// </remarks>
-        /// <param name="datasetCount">Dataset count</param>
-        /// <returns>True if successful, false if error</returns>
-        private bool ZipOrRenamePsmTsvFiles(int datasetCount)
-        {
-            try
-            {
-                var validExperimentGroupCount = 0;
-
-                var filesToRename = new Dictionary<FileInfo, FileInfo>();
-
-                foreach (var experimentGroupDirectory in mExperimentGroupWorkingDirectories.Values)
-                {
-                    string baseNameToUse;
-
-                    if (datasetCount > 1 || Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
-                    {
-                        baseNameToUse = experimentGroupDirectory.Name;
-                    }
-                    else
-                    {
-                        baseNameToUse = mDatasetName;
-                    }
-
-                    var ionFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "ion.tsv"));
-                    var peptideFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "peptide.tsv"));
-                    var proteinFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "protein.tsv"));
-                    var psmFile = new FileInfo(Path.Combine(experimentGroupDirectory.FullName, "psm.tsv"));
-
-                    var renamedIonFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_ion.tsv"));
-                    var renamedPeptideFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_peptide.tsv"));
-                    var renamedProteinFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_protein.tsv"));
-                    var renamedPsmFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, baseNameToUse + "_psm.tsv"));
-
-                    if (ionFile.Exists)
-                        filesToRename.Add(ionFile, renamedIonFile);
-                    else
-                        LogError("File not found: " + ionFile.Name);
-
-                    if (peptideFile.Exists)
-                        filesToRename.Add(peptideFile, renamedPeptideFile);
-                    else
-                        LogError("File not found: " + peptideFile.Name);
-
-                    if (proteinFile.Exists)
-                        filesToRename.Add(proteinFile, renamedProteinFile);
-                    else
-                        LogWarning("File not found: " + proteinFile.Name);
-
-                    if (psmFile.Exists)
-                        filesToRename.Add(psmFile, renamedPsmFile);
-                    else
-                        LogError("File not found: " + psmFile.Name);
-
-                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists)
-                    {
-                        validExperimentGroupCount++;
-                    }
-                }
-
-                var filesToZip = new List<FileInfo>();
-
-                foreach (var tsvFile in filesToRename)
-                {
-                    if (tsvFile.Value.Exists)
-                    {
-                        LogError("Cannot rename file {0} since the target file already exists: {1}", tsvFile.Key.FullName, tsvFile.Value.FullName);
-                        return false;
-                    }
-
-                    tsvFile.Key.MoveTo(tsvFile.Value.FullName);
-                    filesToZip.Add(tsvFile.Value);
-                }
-
-                if (mExperimentGroupWorkingDirectories.Count <= 3)
-                {
-                    return validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
-                }
-
-                // Zip the files to create Dataset_PSM_tsv.zip
-                var fileListDescription = string.Format("PSM .tsv files in {0}", mWorkingDirectory.Name);
-
-                var zipSuccess = ZipFiles(fileListDescription, filesToZip, AnalysisResources.ZIPPED_MSFRAGGER_PSM_TSV_FILES);
-
-                return zipSuccess && validExperimentGroupCount == mExperimentGroupWorkingDirectories.Count;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in ZipOrRenamePsmTsvFiles", ex);
-                return false;
-            }
         }
 
         /// <summary>
