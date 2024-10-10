@@ -1077,103 +1077,13 @@ namespace AnalysisManagerFragPipePlugIn
         {
             try
             {
-                var datasetCount = 0;
-                var successCount = 0;
-
-                // Validate that FragPipe created a .pepXML file for each dataset
-                // For DIA data, the program creates several .pepXML files
-
-                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset (though with DIA data there is only a .pin file, not a .tsv file)
-                // If databaseSplitCount is more than 1, we will create a .tsv file using the data in the .pepXML file
-
-                // Zip each .pepXML file
-                foreach (var experimentGroup in datasetIDsByExperimentGroup)
-                {
-                    var experimentGroupName = experimentGroup.Key;
-                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
-
-                    foreach (var datasetID in experimentGroup.Value)
-                    {
-                        var datasetName = dataPackageInfo.Datasets[datasetID];
-                        datasetCount++;
-
-                        string optionalDatasetInfo;
-
-                        if (dataPackageInfo.Datasets.Count > 0)
-                        {
-                            optionalDatasetInfo = " for dataset " + datasetName;
-                        }
-                        else
-                        {
-                            optionalDatasetInfo = string.Empty;
-                        }
-
-                        var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(experimentWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile);
-
-                        if (pepXmlFiles.Count == 0)
-                        {
-                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-                            if (diaSearchEnabled)
-                            {
-                                // FragPipe did not create any .pepXML files
-                                LogError(string.Format("FragPipe did not create any .pepXML files{0}", optionalDatasetInfo));
-                            }
-                            else
-                            {
-                                // FragPipe did not create a .pepXML file
-                                LogError(string.Format("FragPipe did not create a .pepXML file{0}", optionalDatasetInfo));
-                            }
-
-                            // Treat this as a fatal error
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
-
-                        var tsvFile = new FileInfo(Path.Combine(experimentWorkingDirectory.FullName, datasetName + ".tsv"));
-
-                        var splitFastaSearch = databaseSplitCount > 1;
-
-                        if (!diaSearchEnabled && !tsvFile.Exists)
-                        {
-                            if (!splitFastaSearch)
-                            {
-                                LogError(string.Format("FragPipe did not create a .tsv file{0}", optionalDatasetInfo));
-                            }
-
-                            // ToDo: create a .tsv file using the .pepXML file
-                        }
-
-                        if (!pinFile.Exists && !splitFastaSearch)
-                        {
-                            LogError(string.Format("FragPipe did not create a .pin file{0}", optionalDatasetInfo));
-                        }
-
-                        var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo, datasetName, pepXmlFiles, pinFile.Exists);
-
-                        if (!zipSuccessPepXml)
-                            continue;
-
-                        successCount++;
-
-                        if (successCount > 1)
-                            continue;
-
-                        mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
-                        mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
-                    }
-                }
-
-                if (datasetCount != dataPackageInfo.Datasets.Count)
-                {
-                    LogWarning("Dataset count differs from dataPackageInfo.Datasets.Count: {0} vs. {1}", datasetCount, dataPackageInfo.Datasets.Count);
-                }
-
-                var experimentGroupSuccess = successCount == datasetCount;
-
-                if (!experimentGroupSuccess)
-                    return CloseOutType.CLOSEOUT_FAILED;
-
                 // Move the plot files into each experiment group working directory
                 MovePlotFiles();
+
+                var zipSuccessPepXml = ZipPepXmlFiles(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount, out var datasetCount);
+
+                if (!zipSuccessPepXml)
+                    return CloseOutType.CLOSEOUT_FAILED;
 
                 // Rename or zip the _ion.tsv, _peptide.tsv, _protein.tsv, and _psm.tsv files created for each experiment group
                 var zipSuccessPsmTsv = ZipOrRenamePsmTsvFiles(datasetCount);
@@ -2004,6 +1914,115 @@ namespace AnalysisManagerFragPipePlugIn
 
             LogError("Error adding {0} to {1}", pinFileToUse.Name, zipFile.FullName);
             return false;
+        }
+
+        private bool ZipPepXmlFiles(
+            DataPackageInfo dataPackageInfo,
+            SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
+            bool diaSearchEnabled,
+            int databaseSplitCount,
+            out int datasetCount)
+        {
+            datasetCount = 0;
+
+            try
+            {
+                var successCount = 0;
+
+                // Validate that FragPipe created a .pepXML file for each dataset
+                // For DIA data, the program creates several .pepXML files
+
+                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset (though with DIA data there is only a .pin file, not a .tsv file)
+                // If databaseSplitCount is more than 1, we will create a .tsv file using the data in the .pepXML file
+
+                // Zip each .pepXML file
+                foreach (var experimentGroup in datasetIDsByExperimentGroup)
+                {
+                    var experimentGroupName = experimentGroup.Key;
+                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
+
+                    foreach (var datasetID in experimentGroup.Value)
+                    {
+                        var datasetName = dataPackageInfo.Datasets[datasetID];
+                        datasetCount++;
+
+                        string optionalDatasetInfo;
+
+                        if (dataPackageInfo.Datasets.Count > 0)
+                        {
+                            optionalDatasetInfo = " for dataset " + datasetName;
+                        }
+                        else
+                        {
+                            optionalDatasetInfo = string.Empty;
+                        }
+
+                        var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(experimentWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile);
+
+                        if (pepXmlFiles.Count == 0)
+                        {
+                            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                            if (diaSearchEnabled)
+                            {
+                                // FragPipe did not create any .pepXML files
+                                LogError(string.Format("FragPipe did not create any .pepXML files{0}", optionalDatasetInfo));
+                            }
+                            else
+                            {
+                                // FragPipe did not create a .pepXML file
+                                LogError(string.Format("FragPipe did not create a .pepXML file{0}", optionalDatasetInfo));
+                            }
+
+                            // Treat this as a fatal error
+                            return false;
+                        }
+
+                        var tsvFile = new FileInfo(Path.Combine(experimentWorkingDirectory.FullName, datasetName + ".tsv"));
+
+                        var splitFastaSearch = databaseSplitCount > 1;
+
+                        if (!diaSearchEnabled && !tsvFile.Exists)
+                        {
+                            if (!splitFastaSearch)
+                            {
+                                LogError(string.Format("FragPipe did not create a .tsv file{0}", optionalDatasetInfo));
+                            }
+
+                            // ToDo: create a .tsv file using the .pepXML file
+                        }
+
+                        if (!pinFile.Exists && !splitFastaSearch)
+                        {
+                            LogError(string.Format("FragPipe did not create a .pin file{0}", optionalDatasetInfo));
+                        }
+
+                        var zipSuccessPepXml = ZipPepXmlAndPinFiles(dataPackageInfo, datasetName, pepXmlFiles, pinFile.Exists);
+
+                        if (!zipSuccessPepXml)
+                            continue;
+
+                        successCount++;
+
+                        if (successCount > 1)
+                            continue;
+
+                        mJobParams.AddResultFileExtensionToSkip(PEPXML_EXTENSION);
+                        mJobParams.AddResultFileExtensionToSkip(PIN_EXTENSION);
+                    }
+                }
+
+                if (datasetCount != dataPackageInfo.Datasets.Count)
+                {
+                    LogWarning("Dataset count differs from dataPackageInfo.Datasets.Count: {0} vs. {1}", datasetCount, dataPackageInfo.Datasets.Count);
+                }
+
+                return successCount == datasetCount;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in ZipPepXmlFiles", ex);
+                return false;
+            }
         }
 
         /// <summary>
