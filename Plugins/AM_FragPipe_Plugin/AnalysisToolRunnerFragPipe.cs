@@ -176,9 +176,6 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // This file may have been created by MSFragger; ignore it
-                mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
-
                 var subdirectoriesToSkip = new SortedSet<string>();
                 var success = CopyResultsToTransferDirectory(true, subdirectoriesToSkip);
 
@@ -1334,10 +1331,12 @@ namespace AnalysisManagerFragPipePlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Skip additional files, including interact-Dataset.pep.xml, protein.fas, and spectraRT_full.tsv
+                // Skip additional files, including interact-Dataset.pep.xml and protein.fas
                 mJobParams.AddResultFileExtensionToSkip(".pep.xml");
                 mJobParams.AddResultFileExtensionToSkip("protein.fas");
-                mJobParams.AddResultFileExtensionToSkip("spectraRT_full.tsv");
+
+                // This file may have been created by MSFragger; ignore it
+                mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
