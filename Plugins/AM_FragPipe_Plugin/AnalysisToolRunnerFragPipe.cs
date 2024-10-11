@@ -1586,12 +1586,13 @@ namespace AnalysisManagerFragPipePlugIn
             {
                 // ReSharper disable once InvertIf
 
-                // Add MSFragger, IonQuant, and Philosopher to toolFiles:
+                // Add MSFragger, IonQuant, Philosopher, and TMT-Integrator to toolFiles:
                 if (DetermineFragPipeToolLocations(out var toolsDirectory, out _))
                 {
                     AddNewestMatchingFile(toolFiles, toolsDirectory, "MSFragger-*.jar");
                     AddNewestMatchingFile(toolFiles, toolsDirectory, "IonQuant-*.jar");
                     AddNewestMatchingFile(toolFiles, toolsDirectory, "Philosopher-*.exe");
+                    AddNewestMatchingFile(toolFiles, toolsDirectory, "tmt-integrator-*.jar");
                 }
 
                 return SetStepTaskToolVersion(mFragPipeVersion, toolFiles);
