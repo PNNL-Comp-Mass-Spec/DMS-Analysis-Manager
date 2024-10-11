@@ -1394,7 +1394,12 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // If reporter ions are defined, create annotation.txt files
-                CreateReporterIonAnnotationFiles(options);
+                var annotationFileSuccess = CreateReporterIonAnnotationFiles(options);
+
+                if (!annotationFileSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 LogMessage("Running FragPipe");
                 mProgress = (int)ProgressPercentValues.StartingFragPipe;
