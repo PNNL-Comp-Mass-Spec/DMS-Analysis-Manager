@@ -19,6 +19,7 @@ using AnalysisManagerBase.JobConfig;
 using AnalysisManagerMSFraggerPlugIn;
 using PRISM;
 using PRISM.AppSettings;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerFragPipePlugIn
 {
@@ -1245,6 +1246,13 @@ namespace AnalysisManagerFragPipePlugIn
 
                 options.LoadFragPipeOptions(workflowFilePath);
 
+                var reporterIonModeValidated = UpdateReporterIonModeIfRequired(options);
+
+                if (!reporterIonModeValidated)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 LogMessage("Running FragPipe");
                 mProgress = (int)ProgressPercentValues.StartingFragPipe;
                 ResetProgRunnerCpuUsage();
@@ -1577,6 +1585,57 @@ namespace AnalysisManagerFragPipePlugIn
                 workflowFilePath = string.Empty;
                 databaseSplitCount = 1;
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private bool UpdateReporterIonModeIfRequired(FragPipeOptions options)
+        {
+            try
+            {
+                // Keys in this dictionary are dataset IDs, values are experiment names
+                var experimentNames = ExtractPackedJobParameterList(AnalysisResourcesFragPipe.JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
+
+                if (experimentNames.Count == 0)
+                {
+                    LogWarning("Packed job parameter {0} is missing or empty; this is unexpected and likely a bug",
+                        AnalysisResourcesFragPipe.JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
+
+                    var experiment = mJobParams.GetJobParameter("Experiment", string.Empty);
+
+                    experimentNames.Add(experiment);
+                }
+
+                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
+                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
+                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
+
+                var connectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
+
+                var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
+                RegisterEvents(dbTools);
+
+                var success = ReporterIonInfo.GetReporterIonModeForExperiments(
+                    dbTools, experimentNames, options.ReporterIonMode,
+                    out var message, out var reporterIonModeToUse);
+
+                if (!success)
+                {
+                    LogError(message);
+                    return false;
+                }
+
+                if (options.ReporterIonMode == reporterIonModeToUse)
+                    return true;
+
+                LogMessage(message);
+                options.ReporterIonMode = reporterIonModeToUse;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in UpdateReporterIonModeIfRequired", ex);
+                return false;
             }
         }
 
