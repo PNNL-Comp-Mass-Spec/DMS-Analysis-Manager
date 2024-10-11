@@ -31,6 +31,8 @@ namespace AnalysisManagerFragPipePlugIn
     {
         // Ignore Spelling: dia, frag
 
+        private const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
+
         private const string FRAGPIPE_INSTANCE_DIRECTORY = "fragpipe_v22.0";
 
         private const string FRAGPIPE_BATCH_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\bin\fragpipe.bat";
@@ -342,6 +344,136 @@ namespace AnalysisManagerFragPipePlugIn
             {
                 LogError("Error in CreateManifestFile", ex);
                 manifestFilePath = string.Empty;
+                return false;
+            }
+        }
+
+        private FileInfo CreateReporterIonAnnotationFile(ReporterIonInfo.ReporterIonModes reporterIonMode, FileInfo aliasNameFile, string sampleNamePrefix)
+        {
+            try
+            {
+                var reporterIonNames = ReporterIonInfo.GetReporterIonNames(reporterIonMode);
+
+                if (reporterIonNames.Count == 0)
+                {
+                    LogWarning("Unrecognized reporter ion mode in CreateReporterIonAnnotationFile: " + reporterIonMode);
+                }
+
+                return ReporterIonInfo.CreateReporterIonAnnotationFile(reporterIonMode, aliasNameFile, sampleNamePrefix);
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateReporterIonAnnotationFile", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Create annotation.txt files that define alias names for reporter ions
+        /// </summary>
+        /// <param name="options">Processing options</param>
+        private bool CreateReporterIonAnnotationFiles(FragPipeOptions options)
+        {
+            try
+            {
+                if (options.ReporterIonMode == ReporterIonInfo.ReporterIonModes.Disabled)
+                {
+                    // Nothing to do
+                    return true;
+                }
+
+                LogMessage("Creating annotation.txt files that define alias names for reporter ions");
+
+                var successCount = 0;
+
+                var reporterIonType = options.ReporterIonMode switch
+                {
+                    ReporterIonInfo.ReporterIonModes.Itraq4 => "iTraq",
+                    ReporterIonInfo.ReporterIonModes.Itraq8 => "iTraq",
+                    ReporterIonInfo.ReporterIonModes.Tmt6 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt10 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt11 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt16 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt18 => "TMT",
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+
+                var groupNumber = 0;
+
+                // If multiple experiment groups are defined, try to get shorter experiment group names, which will be used for the sample names in the AliasNames.txt files
+                var experimentGroupAbbreviations = ReporterIonInfo.GetAbbreviatedExperimentGroupNames(mExperimentGroupWorkingDirectories.Keys.ToList());
+
+                foreach (var experimentGroup in mExperimentGroupWorkingDirectories)
+                {
+                    groupNumber++;
+
+                    var aliasNamePrefix = experimentGroup.Key.Equals(DataPackageInfoLoader.UNDEFINED_EXPERIMENT_GROUP)
+                        ? string.Format("annotation_{0}_", groupNumber)
+                        : experimentGroup.Key + "_";
+
+                    var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("{0}{1}", aliasNamePrefix, ANNOTATION_FILE_SUFFIX)));
+                    var genericAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasNames.txt"));
+                    var genericAliasFile2 = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasName.txt"));
+
+                    if (experimentSpecificAliasFile.Exists || genericAliasFile.Exists || genericAliasFile2.Exists)
+                    {
+                        FileInfo sourceAnnotationFile;
+
+                        if (experimentSpecificAliasFile.Exists)
+                        {
+                            // Copy the file into the experiment group working directory
+                            sourceAnnotationFile = experimentSpecificAliasFile;
+                        }
+                        else if (genericAliasFile.Exists)
+                        {
+                            // Copy the file into the experiment group working directory, renaming it to end with _annotation.txt (as required by FragPipe)
+                            sourceAnnotationFile = genericAliasFile;
+                        }
+                        else if (genericAliasFile2.Exists)
+                        {
+                            // Copy the file into the experiment group working directory, renaming it to end with _annotation.txt (as required by FragPipe)
+                            sourceAnnotationFile = genericAliasFile2;
+                        }
+                        else
+                        {
+                            throw new Exception("If statement logic error in CreateReporterIonAnnotationFiles when determining the source and target annotation.txt files");
+                        }
+
+                        var targetFile = new FileInfo(Path.Combine(experimentGroup.Value.FullName, experimentSpecificAliasFile.Name));
+
+                        sourceAnnotationFile.CopyTo(targetFile.FullName);
+                        continue;
+                    }
+
+                    LogMessage(
+                        "{0} alias file not found; will auto-generate file {1} for use by TMT Integrator",
+                        reporterIonType, experimentSpecificAliasFile.Name);
+
+                    string prefixToUse;
+
+                    if (experimentGroupAbbreviations.TryGetValue(experimentGroup.Key, out var sampleNamePrefix))
+                    {
+                        prefixToUse = sampleNamePrefix;
+                    }
+                    else
+                    {
+                        LogWarning("Experiment group {0} was not found in the dictionary returned by GetAbbreviatedExperimentGroupNames", experimentGroup.Key);
+                        prefixToUse = string.Empty;
+                    }
+
+                    var annotationFile = CreateReporterIonAnnotationFile(options.ReporterIonMode, experimentSpecificAliasFile, prefixToUse);
+
+                    if (annotationFile == null)
+                        return false;
+
+                    successCount++;
+                }
+
+                return successCount == mExperimentGroupWorkingDirectories.Count;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateReporterIonAnnotationFiles", ex);
                 return false;
             }
         }
@@ -693,6 +825,15 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!targetFile.Exists)
                     {
+                        success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
+                    }
+                    else if(targetFile.Name.EndsWith(ANNOTATION_FILE_SUFFIX))
+                    {
+                        LogDebug("MoveResultsIntoDirectory: replacing {0} with {1}", targetFile.FullName, sourceFile.FullName);
+
+                        // Replace the target file with the source file
+                        targetFile.Delete();
+
                         success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
                     }
                     else
@@ -1252,6 +1393,9 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                // If reporter ions are defined, create annotation.txt files
+                CreateReporterIonAnnotationFiles(options);
 
                 LogMessage("Running FragPipe");
                 mProgress = (int)ProgressPercentValues.StartingFragPipe;
