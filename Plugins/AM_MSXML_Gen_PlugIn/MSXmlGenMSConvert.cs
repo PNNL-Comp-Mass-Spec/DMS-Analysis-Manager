@@ -7,9 +7,9 @@
 // Also used by RecalculatePrecursorIonsUpdateMzML in AnalysisToolRunnerMSXMLGen to re-index a .mzML file to create a new .mzML file
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;

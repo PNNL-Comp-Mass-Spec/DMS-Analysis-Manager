@@ -1,8 +1,8 @@
-﻿using AnalysisManagerBase;
-using NUnit.Framework;
-using System;
+﻿using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.StatusReporting;
+using NUnit.Framework;
 
 namespace AnalysisManagerTest
 {

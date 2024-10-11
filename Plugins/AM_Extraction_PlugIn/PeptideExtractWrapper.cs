@@ -6,14 +6,14 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using PRISM;
 using System;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
 using SequestResultsProcessor;
 
 namespace AnalysisManagerExtractionPlugin

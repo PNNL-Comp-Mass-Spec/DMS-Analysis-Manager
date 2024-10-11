@@ -5,13 +5,13 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using MyEMSLReader;
-using PRISM;
 using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using MyEMSLReader;
+using PRISM;
 
 namespace AnalysisManagerLCMSFeatureFinderPlugIn
 {

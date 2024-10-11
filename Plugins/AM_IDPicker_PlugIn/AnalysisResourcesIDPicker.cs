@@ -1,14 +1,14 @@
-﻿using AnalysisManagerBase;
-using PHRPReader;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PHRPReader;
 using PHRPReader.Reader;
 using PRISMDatabaseUtils;
-using System;
 
 namespace AnalysisManagerIDPickerPlugIn
 {

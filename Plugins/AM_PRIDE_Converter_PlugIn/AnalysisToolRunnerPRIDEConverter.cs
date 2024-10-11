@@ -1,7 +1,4 @@
-﻿using AnalysisManagerBase;
-using MyEMSLReader;
-using PHRPReader;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -9,9 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
+using MyEMSLReader;
+using PHRPReader;
 using PHRPReader.Data;
 using PHRPReader.Reader;
 

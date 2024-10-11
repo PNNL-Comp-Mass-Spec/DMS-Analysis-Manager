@@ -1,8 +1,8 @@
-using AnalysisManagerBase;
-using Mage;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.JobConfig;
+using Mage;
 
 namespace AnalysisManager_Mage_PlugIn
 {

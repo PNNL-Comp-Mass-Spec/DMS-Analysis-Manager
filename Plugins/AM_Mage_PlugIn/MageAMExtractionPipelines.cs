@@ -1,8 +1,8 @@
-﻿using AnalysisManagerBase;
+﻿using System;
+using AnalysisManagerBase;
+using AnalysisManagerBase.JobConfig;
 using Mage;
 using MageExtExtractionFilters;
-using System;
-using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Mage_PlugIn
 {

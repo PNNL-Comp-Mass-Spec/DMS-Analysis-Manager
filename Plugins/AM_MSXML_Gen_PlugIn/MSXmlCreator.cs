@@ -7,11 +7,11 @@
 //
 //*********************************************************************************************************
 
-using PRISM;
 using System;
 using System.IO;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 
 // ReSharper disable UnusedMember.Global
 namespace AnalysisManagerMsXmlGenPlugIn

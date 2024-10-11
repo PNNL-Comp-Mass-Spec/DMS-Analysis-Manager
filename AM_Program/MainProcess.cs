@@ -6,10 +6,6 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using PRISM;
-using PRISM.AppSettings;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,11 +13,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
+using PRISM.AppSettings;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 using PRISMDatabaseUtils.Logging;
 

@@ -5,16 +5,16 @@
 **                                                              **
 *****************************************************************/
 
-using AnalysisManagerBase;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
+using PRISM;
 
 namespace AnalysisManagerFormularityPlugin
 {

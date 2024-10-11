@@ -5,16 +5,16 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using Mage;
-using PHRPReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using Mage;
+using PHRPReader;
 
 namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 {

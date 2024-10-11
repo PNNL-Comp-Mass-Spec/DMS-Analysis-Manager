@@ -1,15 +1,15 @@
-using AnalysisManagerBase;
-using Mage;
-using MageExtExtractionFilters;
-using MyEMSLReader;
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using Mage;
+using MageExtExtractionFilters;
+using MyEMSLReader;
+using PRISM.Logging;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManager_AScore_PlugIn

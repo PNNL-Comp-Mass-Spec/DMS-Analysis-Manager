@@ -1,10 +1,10 @@
-using AnalysisManagerBase;
-using Cyclops;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using Cyclops;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {

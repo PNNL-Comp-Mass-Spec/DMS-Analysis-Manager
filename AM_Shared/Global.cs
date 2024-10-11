@@ -1,7 +1,4 @@
-﻿using PRISM;
-using PRISM.Logging;
-using PRISMWin;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +8,10 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
+using PRISMWin;
 
 // ReSharper disable UnusedMember.Global
 

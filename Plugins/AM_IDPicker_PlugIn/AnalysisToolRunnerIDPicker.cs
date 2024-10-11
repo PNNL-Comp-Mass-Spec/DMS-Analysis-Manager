@@ -1,12 +1,12 @@
-using AnalysisManagerBase;
-using PHRPReader;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PHRPReader;
 
 namespace AnalysisManagerIDPickerPlugIn
 {

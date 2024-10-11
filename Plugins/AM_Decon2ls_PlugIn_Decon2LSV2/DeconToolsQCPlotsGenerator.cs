@@ -1,7 +1,7 @@
-﻿using PRISM;
-using System;
+﻿using System;
 using System.IO;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {

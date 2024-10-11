@@ -13,11 +13,11 @@
 //
 // Copyright 2017 Battelle Memorial Institute
 
+using System;
+using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 using PRISM.Logging;
-using System;
-using System.Threading;
 
 namespace AnalysisManagerProg
 {

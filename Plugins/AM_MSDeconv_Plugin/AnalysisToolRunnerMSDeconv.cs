@@ -5,15 +5,15 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using MSDataFileReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using MSDataFileReader;
 
 namespace AnalysisManagerMSDeconvPlugIn
 {

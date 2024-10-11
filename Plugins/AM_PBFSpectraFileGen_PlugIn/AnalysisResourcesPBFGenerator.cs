@@ -5,8 +5,8 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
 using System;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 

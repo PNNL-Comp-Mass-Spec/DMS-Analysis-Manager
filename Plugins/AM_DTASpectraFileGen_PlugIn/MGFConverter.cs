@@ -1,9 +1,9 @@
-﻿using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
+using PRISM;
 
 namespace DTASpectraFileGen
 {

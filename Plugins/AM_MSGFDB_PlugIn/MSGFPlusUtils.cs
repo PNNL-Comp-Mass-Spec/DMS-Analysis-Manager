@@ -1,7 +1,4 @@
-﻿using AnalysisManagerBase;
-using PeptideToProteinMapEngine;
-using PRISM;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -10,8 +7,11 @@ using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PeptideToProteinMapEngine;
+using PRISM;
 using PRISM.AppSettings;
 using PRISMDatabaseUtils;
 

@@ -4,9 +4,9 @@
 // Started November 2005
 // Re-worked in 2012 to use MascotGenericFileToDTA.dll
 
-using AnalysisManagerBase;
 using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 

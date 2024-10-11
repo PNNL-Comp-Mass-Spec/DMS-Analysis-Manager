@@ -6,16 +6,16 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Xml;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMasicPlugin

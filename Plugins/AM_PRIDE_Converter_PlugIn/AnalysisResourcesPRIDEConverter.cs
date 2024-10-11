@@ -1,10 +1,10 @@
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISM.Logging;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {

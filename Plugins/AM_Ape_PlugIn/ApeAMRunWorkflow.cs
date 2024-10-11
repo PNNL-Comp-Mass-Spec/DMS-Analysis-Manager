@@ -1,6 +1,6 @@
-﻿using AnalysisManagerBase;
-using System;
+﻿using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.JobConfig;
 
 namespace AnalysisManager_Ape_PlugIn

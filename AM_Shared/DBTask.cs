@@ -1,4 +1,3 @@
-using PRISM.Logging;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -7,6 +6,7 @@ using System.Text;
 using System.Xml.Linq;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 //*********************************************************************************************************

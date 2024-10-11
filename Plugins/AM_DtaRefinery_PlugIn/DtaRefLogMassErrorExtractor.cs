@@ -1,11 +1,11 @@
-﻿using AnalysisManagerBase;
-using PRISM;
-using System;
+﻿using System;
 using System.Data;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerDtaRefineryPlugIn

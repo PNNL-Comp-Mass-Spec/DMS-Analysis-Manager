@@ -6,18 +6,18 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using AnalysisManagerMSGFDBPlugIn;
-using PHRPReader;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using AnalysisManagerMSGFDBPlugIn;
+using PHRPReader;
 using PRISM.Logging;
 
 namespace AnalysisManagerExtractionPlugin

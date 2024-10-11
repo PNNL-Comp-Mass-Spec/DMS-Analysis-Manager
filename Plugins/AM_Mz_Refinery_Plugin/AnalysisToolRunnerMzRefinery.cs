@@ -5,18 +5,18 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using AnalysisManagerMSGFDBPlugIn;
-using MsMsDataFileReader;
-using PRISM;
-using PRISMDatabaseUtils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using AnalysisManagerMSGFDBPlugIn;
+using MsMsDataFileReader;
+using PRISM;
+using PRISMDatabaseUtils;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {

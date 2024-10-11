@@ -5,14 +5,14 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 
 namespace AnalysisManagerProMexPlugIn
 {

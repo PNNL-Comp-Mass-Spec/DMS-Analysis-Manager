@@ -1,12 +1,12 @@
-using AnalysisManagerBase;
-using InterDetect;
-using PRISM;
-using PRISM.Logging;
 using System;
 using System.IO;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
+using InterDetect;
+using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_IDM_Plugin
 {

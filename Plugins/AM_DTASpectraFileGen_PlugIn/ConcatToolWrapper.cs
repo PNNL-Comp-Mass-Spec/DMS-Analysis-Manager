@@ -6,9 +6,9 @@
 //
 //*********************************************************************************************************
 
+using System;
 using AnalysisManagerBase;
 using FileConcatenator;
-using System;
 
 namespace DTASpectraFileGen
 {

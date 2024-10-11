@@ -6,13 +6,13 @@
 //
 //*********************************************************************************************************
 
-using AnalysisManagerBase;
-using PRISM;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Xml;
+using AnalysisManagerBase;
+using PRISM;
 using PRISMDatabaseUtils;
 using PRISMDatabaseUtils.AppSettings;
 

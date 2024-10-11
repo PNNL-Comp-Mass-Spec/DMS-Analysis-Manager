@@ -1,11 +1,11 @@
-using AnalysisManagerBase;
-using MyEMSLReader;
 using System;
 using System.IO;
 using System.Xml;
+using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using MyEMSLReader;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {
