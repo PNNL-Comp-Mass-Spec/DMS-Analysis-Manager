@@ -16,6 +16,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using AnalysisManagerMSFraggerPlugIn;
 using PRISM;
 using PRISM.AppSettings;
 

@@ -424,7 +424,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (options.ReporterIonMode == ReporterIonModes.Tmt16)
+                if (options.ReporterIonMode == ReporterIonInfo.ReporterIonModes.Tmt16)
                 {
                     // Switch to 18-plex TMT if any of the datasets associated with this job has TMT18 labeling defined for the experiment in DMS
                     var success = UpdateReporterIonModeIfRequired(options);
@@ -437,7 +437,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var phosphoSearch = PhosphoModDefined(options.FraggerOptions.VariableModifications);
 
-                if (options.OpenSearch || options.FraggerOptions.ReporterIonMode != ReporterIonModes.Disabled && phosphoSearch)
+                if (options.OpenSearch || options.FraggerOptions.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled && phosphoSearch)
                 {
                     var runPTMProphetParam = mJobParams.GetJobParameter("RunPTMProphet", string.Empty);
 
@@ -492,9 +492,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (options.RunMSBooster)
                 {
-                    if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                    if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
                     {
-                        if (options.ReporterIonMode is ReporterIonModes.Tmt6 or ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11)
+                        if (options.ReporterIonMode is ReporterIonInfo.ReporterIonModes.Tmt6 or ReporterIonInfo.ReporterIonModes.Tmt10 or ReporterIonInfo.ReporterIonModes.Tmt11)
                         {
                             LogMessage("Running MSBooster since it supports reporter ion mode {0}", options.ReporterIonMode);
                         }
@@ -604,14 +604,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mProgress = (int)ProgressPercentValues.ResultsFilterComplete;
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
                 {
                     LogMessage("Based on static and/or dynamic mods, the reporter ion mode is {0}", options.ReporterIonMode);
                 }
 
                 var ms1QuantDisabled = mJobParams.GetJobParameter("MS1QuantDisabled", false);
 
-                if (!ms1QuantDisabled && (options.ReporterIonMode != ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant))
+                if (!ms1QuantDisabled && (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled || options.RunFreeQuant && !options.RunIonQuant))
                 {
                     // Always run FreeQuant when we have reporter ions
                     // If no reporter ions, either run FreeQuant or run IonQuant
@@ -624,7 +624,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     mProgress = (int)ProgressPercentValues.FreeQuantOrLabelQuantComplete;
                 }
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
                 {
                     if (!options.RunLabelQuant)
                     {
@@ -730,7 +730,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 }
 
                 // Only run TMT-Integrator if Protein Prophet was used, since TMT-Integrator expects that file combined.prot.xml exists
-                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonModes.Disabled && options.RunProteinProphet)
+                if (options.RunLabelQuant && options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled && options.RunProteinProphet)
                 {
                     var tmtIntegratorSuccess = RunTmtIntegrator(options);
 
@@ -1238,45 +1238,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
         }
 
-        private FileInfo CreateReporterIonAliasNameFile(ReporterIonModes reporterIonMode, FileInfo aliasNameFile, string sampleNamePrefix)
+        private FileInfo CreateReporterIonAliasNameFile(ReporterIonInfo.ReporterIonModes reporterIonMode, FileInfo aliasNameFile, string sampleNamePrefix)
         {
             try
             {
-                using var writer = new StreamWriter(new FileStream(aliasNameFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+                var reporterIonNames = ReporterIonInfo.GetReporterIonNames(reporterIonMode);
 
-                var reporterIonNames = GetReporterIonNames(reporterIonMode);
-
-                // Example output (space-delimited):
-                // 126 sample-01
-                // 127N sample-02
-                // 127C sample-03
-                // 128N sample-04
-
-                // If sampleNamePrefix is not an empty string, it will be included before each sample name, e.g.
-                // 126 QC_Shew_20_01_R01_sample-01
-                // 127N QC_Shew_20_01_R01_sample-02
-                // 127C QC_Shew_20_01_R01_sample-03
-                // 128N QC_Shew_20_01_R01_sample-04
-
-                if (string.IsNullOrWhiteSpace(sampleNamePrefix))
+                if (reporterIonNames.Count == 0)
                 {
-                    sampleNamePrefix = string.Empty;
-                }
-                else if (!sampleNamePrefix.EndsWith("_"))
-                {
-                    sampleNamePrefix += "_";
+                    LogWarning("Unrecognized reporter ion mode in CreateReporterIonAliasNameFile: " + reporterIonMode);
                 }
 
-                var sampleNumber = 0;
-
-                foreach (var reporterIon in reporterIonNames)
-                {
-                    sampleNumber++;
-                    writer.WriteLine("{0} {1}sample-{2:D2}", reporterIon, sampleNamePrefix, sampleNumber);
-                }
-
-                aliasNameFile.Refresh();
-                return aliasNameFile;
+                return ReporterIonInfo.CreateReporterIonAnnotationFile(reporterIonMode, aliasNameFile, sampleNamePrefix);
             }
             catch (Exception ex)
             {
@@ -1303,33 +1276,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     LogWarning("Error deleting directory {0}: {1}", directory.FullName, ex.Message);
                 }
             }
-        }
-
-        /// <summary>
-        /// Obtain a dictionary mapping the experiment group names to abbreviated versions, assuring that each abbreviation is unique
-        /// </summary>
-        /// <remarks>If there is only one experiment group, the dictionary will have an empty string for the abbreviated name</remarks>
-        /// <param name="experimentGroupNames">Experiment group name</param>
-        /// <returns>Dictionary mapping experiment group name to abbreviated name</returns>
-        private Dictionary<string, string> GetAbbreviatedExperimentGroupNames(IReadOnlyList<string> experimentGroupNames)
-        {
-            var experimentGroupNameMap = new Dictionary<string, string>();
-
-            switch (experimentGroupNames.Count)
-            {
-                case 0:
-                    return experimentGroupNameMap;
-
-                case 1:
-                    experimentGroupNameMap.Add(experimentGroupNames[0], string.Empty);
-                    return experimentGroupNameMap;
-            }
-
-            var uniquePrefixTool = new ShortestUniquePrefix();
-
-            // Keys in this dictionary are experiment group names
-            // Values are the abbreviated name to use
-            return uniquePrefixTool.GetShortestUniquePrefix(experimentGroupNames, true);
         }
 
         internal static string GetCurrentPhilosopherToolDescription(PhilosopherToolType currentTool)
@@ -1419,109 +1365,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
         {
             // ReSharper disable once StringLiteralTypo
             return string.Format("{0}_percolator_{1}_psms.tsv", datasetName, isDecoy ? "decoy" : "target");
-        }
-
-        private byte GetReporterIonChannelCount(ReporterIonModes reporterIonMode)
-        {
-            return reporterIonMode switch
-            {
-                ReporterIonModes.Itraq4 => 4,
-                ReporterIonModes.Itraq8 => 8,
-                ReporterIonModes.Tmt6 => 6,
-                ReporterIonModes.Tmt10 => 10,
-                ReporterIonModes.Tmt11 => 11,
-                ReporterIonModes.Tmt16 => 16,
-                ReporterIonModes.Tmt18 => 18,
-                ReporterIonModes.Disabled => 0,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-
-        private IEnumerable GetReporterIonNames(ReporterIonModes reporterIonMode)
-        {
-            var reporterIonNames = new List<string>();
-
-            switch (reporterIonMode)
-            {
-                case ReporterIonModes.Tmt6:
-                    reporterIonNames.Add("126");
-                    reporterIonNames.Add("127N");
-                    reporterIonNames.Add("128C");
-                    reporterIonNames.Add("129N");
-                    reporterIonNames.Add("130C");
-                    reporterIonNames.Add("131");
-                    return reporterIonNames;
-
-                case ReporterIonModes.Tmt10 or ReporterIonModes.Tmt11 or ReporterIonModes.Tmt16 or ReporterIonModes.Tmt18:
-                    reporterIonNames.Add("126");
-                    reporterIonNames.Add("127N");
-                    reporterIonNames.Add("127C");
-                    reporterIonNames.Add("128N");
-                    reporterIonNames.Add("128C");
-                    reporterIonNames.Add("129N");
-                    reporterIonNames.Add("129C");
-                    reporterIonNames.Add("130N");
-                    reporterIonNames.Add("130C");
-                    reporterIonNames.Add("131N");
-
-                    if (reporterIonMode == ReporterIonModes.Tmt10)
-                        return reporterIonNames;
-
-                    // TMT 11, TMT 16, and TMT 18
-                    reporterIonNames.Add("131C");
-
-                    if (reporterIonMode == ReporterIonModes.Tmt11)
-                        return reporterIonNames;
-
-                    // TMT 16 and TMT 18
-                    reporterIonNames.Add("132N");
-                    reporterIonNames.Add("132C");
-                    reporterIonNames.Add("133N");
-                    reporterIonNames.Add("133C");
-                    reporterIonNames.Add("134N");
-
-                    if (reporterIonMode == ReporterIonModes.Tmt16)
-                        return reporterIonNames;
-
-                    // TMT 18
-                    reporterIonNames.Add("134C");
-                    reporterIonNames.Add("135N");
-
-                    return reporterIonNames;
-            }
-
-            if (reporterIonMode != ReporterIonModes.Itraq4 && reporterIonMode != ReporterIonModes.Itraq8)
-            {
-                LogWarning("Unrecognized reporter ion mode in GetReporterIonNames: " + reporterIonMode);
-                return reporterIonNames;
-            }
-
-            if (reporterIonMode == ReporterIonModes.Itraq8)
-            {
-                // 8-plex iTRAQ
-                reporterIonNames.Add("113");
-            }
-
-            if (reporterIonMode is ReporterIonModes.Itraq4 or ReporterIonModes.Itraq8)
-            {
-                // 4-plex and 8-plex iTRAQ
-                reporterIonNames.Add("114");
-                reporterIonNames.Add("115");
-                reporterIonNames.Add("116");
-                reporterIonNames.Add("117");
-            }
-
-            if (reporterIonMode != ReporterIonModes.Itraq8)
-            {
-                return reporterIonNames;
-            }
-
-            // 8-plex iTRAQ
-            reporterIonNames.Add("118");
-            reporterIonNames.Add("119");
-            reporterIonNames.Add("121");
-
-            return reporterIonNames;
         }
 
         /// <summary>
@@ -2155,9 +1998,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Version 15 of FragPipe would append --labels if reporter ions were in use
                 // This was disabled in version 16 but was re-enabled in v19 when the "--plex" argument was added
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
                 {
-                    var plex = GetReporterIonChannelCount(options.ReporterIonMode);
+                    var plex = ReporterIonInfo.GetReporterIonChannelCount(options.ReporterIonMode);
 
                     arguments.Append(" --labels");
                     arguments.AppendFormat(" --plex {0}", plex);
@@ -3076,21 +2919,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 var reporterIonType = options.ReporterIonMode switch
                 {
-                    ReporterIonModes.Itraq4 => "iTraq",
-                    ReporterIonModes.Itraq8 => "iTraq",
-                    ReporterIonModes.Tmt6 => "TMT",
-                    ReporterIonModes.Tmt10 => "TMT",
-                    ReporterIonModes.Tmt11 => "TMT",
-                    ReporterIonModes.Tmt16 => "TMT",
-                    ReporterIonModes.Tmt18 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Itraq4 => "iTraq",
+                    ReporterIonInfo.ReporterIonModes.Itraq8 => "iTraq",
+                    ReporterIonInfo.ReporterIonModes.Tmt6 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt10 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt11 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt16 => "TMT",
+                    ReporterIonInfo.ReporterIonModes.Tmt18 => "TMT",
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                var plex = GetReporterIonChannelCount(options.ReporterIonMode);
+                var plex = ReporterIonInfo.GetReporterIonChannelCount(options.ReporterIonMode);
                 var autoGeneratedAliasNameFile = false;
 
                 // If multiple experiment groups are defined, try to get shorter experiment group names, which will be used for the sample names in the AliasNames.txt files
-                var experimentGroupAbbreviations = GetAbbreviatedExperimentGroupNames(mExperimentGroupWorkingDirectories.Keys.ToList());
+                var experimentGroupAbbreviations = ReporterIonInfo.GetAbbreviatedExperimentGroupNames(mExperimentGroupWorkingDirectories.Keys.ToList());
 
                 foreach (var experimentGroup in mExperimentGroupWorkingDirectories)
                 {
@@ -3865,7 +3708,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 arguments.Append("proteinprophet --maxppmdiff 2000000");
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled && !options.OpenSearch)
+                if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled && !options.OpenSearch)
                 {
                     arguments.Append(" --minprob 0.5");
                 }
@@ -4544,7 +4387,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 // ReSharper restore CommentTypo
 
-                var plex = GetReporterIonChannelCount(options.ReporterIonMode);
+                var plex = ReporterIonInfo.GetReporterIonChannelCount(options.ReporterIonMode);
 
                 int memoryToReserveGB;
 
@@ -5497,18 +5340,6 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     experimentNames.Add(experiment);
                 }
 
-                // Keys in this dictionary are experiment names, values are quoted experiment names
-                var quotedExperimentNames = new Dictionary<string, string>();
-
-                // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
-                foreach (var experiment in experimentNames)
-                {
-                    if (quotedExperimentNames.ContainsKey(experiment))
-                        continue;
-
-                    quotedExperimentNames.Add(experiment, string.Format("'{0}'", experiment));
-                }
-
                 // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
                 // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
@@ -5518,44 +5349,21 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
                 RegisterEvents(dbTools);
 
-                var sqlStr = new StringBuilder();
-
-                sqlStr.Append("SELECT labelling, COUNT(*) AS experiments ");
-                sqlStr.Append("FROM V_Experiment_Export ");
-                sqlStr.AppendFormat("WHERE experiment IN ({0}) ", string.Join(",", quotedExperimentNames.Values));
-                sqlStr.Append("GROUP BY labelling");
-
-                var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
+                var success = ReporterIonInfo.GetReporterIonModeForExperiments(
+                    dbTools, experimentNames, options.ReporterIonMode,
+                    out var message, out var reporterIonModeToUse);
 
                 if (!success)
                 {
-                    LogError("Error querying V_Experiment_Export in UpdateReporterIonModeIfRequired");
+                    LogError(message);
                     return false;
                 }
 
-                var experimentLabels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                if (options.ReporterIonMode == reporterIonModeToUse)
+                    return true;
 
-                foreach (DataRow curRow in resultSet.Rows)
-                {
-                    var labelName = curRow[0].CastDBVal<string>();
-
-                    if (experimentLabels.TryGetValue(labelName, out var experimentCount))
-                    {
-                        experimentLabels[labelName] = experimentCount + 1;
-                        continue;
-                    }
-
-                    experimentLabels.Add(labelName, 1);
-                }
-
-                if (experimentLabels.ContainsKey("TMT18"))
-                {
-                    LogMessage("Changing the reporter ion mode from {0} to {1} based on experiment labelling info",
-                        options.ReporterIonMode,
-                        ReporterIonModes.Tmt18);
-
-                    options.ReporterIonMode = ReporterIonModes.Tmt18;
-                }
+                LogMessage(message);
+                options.ReporterIonMode = reporterIonModeToUse;
 
                 return true;
             }

@@ -76,6 +76,10 @@
       <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
       <Name>AM_Shared</Name>
     </ProjectReference>
+    <ProjectReference Include="..\AM_MSFragger_Plugin\AnalysisManagerMSFraggerPlugIn.csproj">
+      <Project>{dae7c38e-a9ac-44c2-ac16-f3cea558927d}</Project>
+      <Name>AnalysisManagerMSFraggerPlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

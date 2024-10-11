@@ -107,7 +107,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     }
                 }
 
-                if (options.ReporterIonMode != ReporterIonModes.Disabled && options.DatasetCount > 1)
+                if (options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled && options.DatasetCount > 1)
                 {
                     currentTask = "Validate free memory for TMT-Integrator";
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     return datasetCopyResult;
                 }
 
-                if (dataPackageID > 0 && options.ReporterIonMode != ReporterIonModes.Disabled)
+                if (dataPackageID > 0 && options.ReporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
                 {
                     var copyResultCode = RetrieveAliasNameFiles(dataPackageID);
 

@@ -5,28 +5,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerFragPipePlugin;
+using AnalysisManagerMSFraggerPlugIn;
 using PRISM;
 using PRISM.AppSettings;
 
 namespace AnalysisManagerFragPipePlugIn
 {
     // Ignore Spelling: Frag, workflow
-
-    // ReSharper disable IdentifierTypo
-
-    public enum ReporterIonModes
-    {
-        Disabled = 0,
-        Itraq4 = 1,
-        Itraq8 = 2,
-        Tmt6 = 3,
-        Tmt10 = 4,
-        Tmt11 = 5,
-        Tmt16 = 6,
-        Tmt18 = 7
-    }
-
-    // ReSharper restore IdentifierTypo
 
     public class FragPipeOptions : EventNotifier
     {
@@ -69,7 +54,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Reporter ion mode defined in the parameter file
         /// </summary>
-        public ReporterIonModes ReporterIonMode { get; set; }
+        public ReporterIonInfo.ReporterIonModes ReporterIonMode { get; set; }
 
         /// <summary>
         /// Constructor
@@ -133,43 +118,43 @@ namespace AnalysisManagerFragPipePlugIn
         /// <remarks>Peptide and protein static terminal modifications in staticModifications are indicated by Nterm_peptide, Cterm_peptide, add_Nterm_protein, and Cterm_protein</remarks>
         /// <param name="staticModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
         /// <param name="variableModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
-        /// <param name="reporterIonMode">Output: reporter ion mode</param>
+        /// <param name="reporterIonMode">Output: reporter ion mode enum</param>
         /// <returns>True if success, false if an error</returns>
         // ReSharper restore CommentTypo
         private bool DetermineReporterIonMode(
             IReadOnlyDictionary<string, SortedSet<double>> staticModifications,
             IReadOnlyDictionary<string, SortedSet<double>> variableModifications,
-            out ReporterIonModes reporterIonMode)
+            out ReporterIonInfo.ReporterIonModes reporterIonMode)
         {
-            reporterIonMode = ReporterIonModes.Disabled;
+            reporterIonMode = ReporterIonInfo.ReporterIonModes.Disabled;
 
             try
             {
-                ReporterIonModes staticNTermMode;
-                ReporterIonModes staticLysineMode;
+                ReporterIonInfo.ReporterIonModes staticNTermMode;
+                ReporterIonInfo.ReporterIonModes staticLysineMode;
 
                 // ReSharper disable once StringLiteralTypo
 
                 if (staticModifications.TryGetValue(N_TERM_PEPTIDE, out var staticNTermModMass) && staticNTermModMass.Count > 0)
                 {
-                    staticNTermMode = GetReporterIonModeFromModMass(staticNTermModMass.First());
+                    staticNTermMode = ReporterIonInfo.GetReporterIonModeFromModMass(staticNTermModMass.First());
                 }
                 else
                 {
-                    staticNTermMode = ReporterIonModes.Disabled;
+                    staticNTermMode = ReporterIonInfo.ReporterIonModes.Disabled;
                 }
 
                 if (staticModifications.TryGetValue("K", out var staticLysineModMass) && staticLysineModMass.Count > 0)
                 {
-                    staticLysineMode = GetReporterIonModeFromModMass(staticLysineModMass.First());
+                    staticLysineMode = ReporterIonInfo.GetReporterIonModeFromModMass(staticLysineModMass.First());
                 }
                 else
                 {
-                    staticLysineMode = ReporterIonModes.Disabled;
+                    staticLysineMode = ReporterIonInfo.ReporterIonModes.Disabled;
                 }
 
                 // Keys in this dictionary are modification masses, values are the reporter ion mode that corresponds to the modification mass (if any)
-                var dynamicModModes = new Dictionary<double, ReporterIonModes>();
+                var dynamicModModes = new Dictionary<double, ReporterIonInfo.ReporterIonModes>();
 
                 foreach (var residueOrLocation in variableModifications)
                 {
@@ -178,22 +163,22 @@ namespace AnalysisManagerFragPipePlugIn
                         if (dynamicModModes.Keys.Contains(modMass))
                             continue;
 
-                        dynamicModModes.Add(modMass, GetReporterIonModeFromModMass(modMass));
+                        dynamicModModes.Add(modMass, ReporterIonInfo.GetReporterIonModeFromModMass(modMass));
                     }
                 }
 
-                var reporterIonModeStats = new Dictionary<ReporterIonModes, int>();
+                var reporterIonModeStats = new Dictionary<ReporterIonInfo.ReporterIonModes, int>();
 
                 UpdateReporterIonModeStats(reporterIonModeStats, staticNTermMode);
                 UpdateReporterIonModeStats(reporterIonModeStats, staticLysineMode);
                 UpdateReporterIonModeStats(reporterIonModeStats, dynamicModModes.Values.ToList());
 
                 // Keys in this dictionary are reporter ion modes, values are the number of dynamic or static modifications that indicate the given mode
-                var matchedReporterIonModes = new Dictionary<ReporterIonModes, int>();
+                var matchedReporterIonModes = new Dictionary<ReporterIonInfo.ReporterIonModes, int>();
 
                 foreach (var item in reporterIonModeStats)
                 {
-                    if (item.Key != ReporterIonModes.Disabled && item.Value > 0)
+                    if (item.Key != ReporterIonInfo.ReporterIonModes.Disabled && item.Value > 0)
                     {
                         matchedReporterIonModes.Add(item.Key, item.Value);
                     }
@@ -202,7 +187,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // ReSharper disable once ConvertIfStatementToSwitchStatement
                 if (matchedReporterIonModes.Count == 0)
                 {
-                    reporterIonMode = ReporterIonModes.Disabled;
+                    reporterIonMode = ReporterIonInfo.ReporterIonModes.Disabled;
                     return true;
                 }
 
@@ -225,7 +210,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         /// <summary>
         /// <para>
-        /// <see cref="GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT.
+        /// <see cref="ReporterIonInfo.GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT.
         /// For both 16-plex and 18-plex TMT, it sets ReporterIonMode to Tmt16.
         /// </para>
         /// <para>
@@ -236,10 +221,10 @@ namespace AnalysisManagerFragPipePlugIn
         /// <remarks>
         /// This method will return reporterIonMode if it is not Tmt11 or Tmt16, or if job parameter ReporterIonMode is undefined to "auto"
         /// </remarks>
-        /// <param name="reporterIonMode">Reporter ion mode</param>
-        private ReporterIonModes DetermineReporterIonMode(ReporterIonModes reporterIonMode)
+        /// <param name="reporterIonMode">Reporter ion mode to use if job parameter "ReporterIonMode" is "auto"</param>
+        private ReporterIonInfo.ReporterIonModes DetermineReporterIonMode(ReporterIonInfo.ReporterIonModes reporterIonMode)
         {
-            if (reporterIonMode != ReporterIonModes.Tmt11 && reporterIonMode != ReporterIonModes.Tmt16)
+            if (reporterIonMode != ReporterIonInfo.ReporterIonModes.Tmt11 && reporterIonMode != ReporterIonInfo.ReporterIonModes.Tmt16)
                 return reporterIonMode;
 
             // Look for a job parameter that specifies the reporter ion mode
@@ -252,34 +237,16 @@ namespace AnalysisManagerFragPipePlugIn
                 return reporterIonMode;
             }
 
-            return reporterIonModeName.ToLower() switch
-            {
-                "tmt6" => ReporterIonModes.Tmt6,
-                "6-plex" => ReporterIonModes.Tmt6,
-                "6plex" => ReporterIonModes.Tmt6,
-                "tmt10" => ReporterIonModes.Tmt10,
-                "10-plex" => ReporterIonModes.Tmt10,
-                "10plex" => ReporterIonModes.Tmt10,
-                "tmt11" => ReporterIonModes.Tmt11,
-                "11-plex" => ReporterIonModes.Tmt11,
-                "11plex" => ReporterIonModes.Tmt11,
-                "tmt16" => ReporterIonModes.Tmt16,
-                "16-plex" => ReporterIonModes.Tmt16,
-                "16plex" => ReporterIonModes.Tmt16,
-                "tmt18" => ReporterIonModes.Tmt18,
-                "18-plex" => ReporterIonModes.Tmt18,
-                "18plex" => ReporterIonModes.Tmt18,
-                _ => ReporterIonModes.Tmt16
-            };
+            return ReporterIonInfo.DetermineReporterIonMode(reporterIonModeName);
         }
 
         /// <summary>
         /// Look for text in affectedResidueList
         /// For each match found, append to affectedResidues
         /// </summary>
-        /// <param name="affectedResidueList">String of affected residues to examine</param>
-        /// <param name="residueMatcher">Residue matcher</param>
-        /// <param name="affectedResidues">List of affected residues</param>
+        /// <param name="affectedResidueList">String of affected residues</param>
+        /// <param name="residueMatcher">Residue matcher RegEx</param>
+        /// <param name="affectedResidues">List of affected residue symbols</param>
         /// <returns>Updated version of affectedResidueList with the matches removed</returns>
         private string ExtractMatches(string affectedResidueList, Regex residueMatcher, ICollection<string> affectedResidues)
         {
@@ -305,7 +272,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// Returns a description of the number of dynamic mods, e.g. "2 dynamic mods"
         /// </summary>
         /// <param name="dynamicModCount">Dynamic mod count</param>
-        /// <returns></returns>
+        /// <returns>Description of the number of dynamic mods</returns>
         public static string GetDynamicModCountDescription(int dynamicModCount)
         {
             return dynamicModCount == 1 ?
@@ -422,33 +389,6 @@ namespace AnalysisManagerFragPipePlugIn
             OnErrorEvent("Parameter value in FragPipe workflow file is not numeric: {0} = {1}", parameter.Key, parameter.Value);
 
             return false;
-        }
-
-        private ReporterIonModes GetReporterIonModeFromModMass(double modMass)
-        {
-            if (Math.Abs(modMass - 304.207146) < 0.001)
-            {
-                // 16-plex and 18-plex TMT
-                // Use TMT 16 for now, though method DetermineReporterIonMode(ReporterIonModes reporterIonMode)
-                // will look for a job parameter to override this
-                return ReporterIonModes.Tmt16;
-            }
-
-            if (Math.Abs(modMass - 304.205353) < 0.001)
-                return ReporterIonModes.Itraq8;
-
-            if (Math.Abs(modMass - 144.102066) < 0.005)
-                return ReporterIonModes.Itraq4;
-
-            if (Math.Abs(modMass - 229.162933) < 0.005)
-            {
-                // 6-plex, 10-plex, and 11-plex TMT
-                // Use TMT 11 for now, though method DetermineReporterIonMode(ReporterIonModes reporterIonMode)
-                // will look for a job parameter to override this
-                return ReporterIonModes.Tmt11;
-            }
-
-            return ReporterIonModes.Disabled;
         }
 
         /// <summary>
@@ -683,12 +623,12 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="affectedResidues">Output: list of affected residues</param>
         /// <returns>True if success, false if an error</returns>
         private bool ParseModDefinition(
-        string modParameterName,
-        string modDefinition,
-        Dictionary<string, string> terminalStaticModParameters,
-        out bool modEnabled,
-        out double modMass,
-        out List<string> affectedResidues)
+            string modParameterName,
+            string modDefinition,
+            Dictionary<string, string> terminalStaticModParameters,
+            out bool modEnabled,
+            out double modMass,
+            out List<string> affectedResidues)
         {
             // ReSharper disable CommentTypo
 
@@ -771,12 +711,12 @@ namespace AnalysisManagerFragPipePlugIn
             return true;
         }
 
-        private void UpdateReporterIonModeStats(IDictionary<ReporterIonModes, int> reporterIonModeStats, ReporterIonModes reporterIonMode)
+        private void UpdateReporterIonModeStats(IDictionary<ReporterIonInfo.ReporterIonModes, int> reporterIonModeStats, ReporterIonInfo.ReporterIonModes reporterIonMode)
         {
-            UpdateReporterIonModeStats(reporterIonModeStats, new List<ReporterIonModes> { reporterIonMode });
+            UpdateReporterIonModeStats(reporterIonModeStats, new List<ReporterIonInfo.ReporterIonModes> { reporterIonMode });
         }
 
-        private void UpdateReporterIonModeStats(IDictionary<ReporterIonModes, int> reporterIonModeStats, IEnumerable<ReporterIonModes> reporterIonModeList)
+        private void UpdateReporterIonModeStats(IDictionary<ReporterIonInfo.ReporterIonModes, int> reporterIonModeStats, IEnumerable<ReporterIonInfo.ReporterIonModes> reporterIonModeList)
         {
             foreach (var reporterIonMode in reporterIonModeList)
             {

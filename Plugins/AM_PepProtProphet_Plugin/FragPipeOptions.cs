@@ -53,7 +53,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
         /// <remarks>
         /// In the PepProtProphet plugIn, method UpdateReporterIonModeIfRequired will change this to TMT18 if the data package has experiments with TMT 18 labeling
         /// </remarks>
-        public ReporterIonModes ReporterIonMode
+        public ReporterIonInfo.ReporterIonModes ReporterIonMode
         {
             get => FraggerOptions.ReporterIonMode;
             set => FraggerOptions.ReporterIonMode = value;
