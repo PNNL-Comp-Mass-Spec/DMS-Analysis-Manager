@@ -7207,11 +7207,12 @@
             <param name="datasetName">Dataset name</param>
             <returns>Filename</returns>
         </member>
-        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPrecursorSearchTolerances(PHRPReader.Data.SearchEngineParameters,System.Double@,System.Double@,System.Boolean@,System.Boolean@)">
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetPrecursorSearchTolerances(PHRPReader.Data.SearchEngineParameters,System.String,System.Double@,System.Double@,System.Boolean@,System.Boolean@)">
             <summary>
-            Examine the MSFragger parameters to determine the precursor mass tolerance(s)
+            Examine the MSFragger or FragPipe parameters to determine the precursor mass tolerance(s)
             </summary>
             <param name="searchEngineParams">MSFragger search engine parameters loaded from a Key=Value parameter file</param>
+            <param name="parameterPrefix">Parameter name prefix: empty string for MSFragger, "msfragger." for FragPipe</param>
             <param name="toleranceLower">Output: Tolerance to the left, e.g. -20</param>
             <param name="toleranceUpper">Output: Tolerance to the right, e.g. 20</param>
             <param name="ppmBased">Output: True if ppm-based tolerances</param>
@@ -7222,6 +7223,13 @@
             <summary>
             Search engine name
             </summary>
+        </member>
+        <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.GetSearchEngineParameterPrefix(PHRPReader.Data.SearchEngineParameters)">
+            <summary>
+            Determine if the search engine parameters were loaded from a MSFragger parameter file, or from a FragPipe workflow file
+            </summary>
+            <param name="searchEngineParams">MSFragger or FragPipe parameters</param>
+            <returns>Empty string if MSFragger parameters, "msfragger." if FragPipe workflow parameters</returns>
         </member>
         <member name="M:PHRPReader.Reader.MSFraggerSynFileReader.LoadSearchEngineParameters(System.String,PHRPReader.Data.SearchEngineParameters@)">
             <summary>
