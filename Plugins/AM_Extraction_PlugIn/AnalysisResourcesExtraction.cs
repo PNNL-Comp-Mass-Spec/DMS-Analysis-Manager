@@ -1552,6 +1552,8 @@ namespace AnalysisManagerExtractionPlugin
                     searchArchivedDatasetDir: false,
                     logFileNotFound: logModFilesFileNotFound);
 
+                var transferDirectory = mJobParams.GetParam(JOB_PARAM_TRANSFER_DIRECTORY_PATH);
+
                 if (string.IsNullOrEmpty(remoteModDefsDirectory))
                 {
                     // ModDefs file not found on the server
@@ -1561,7 +1563,7 @@ namespace AnalysisManagerExtractionPlugin
                         mJobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
-                else if (remoteModDefsDirectory.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
+                else if (remoteModDefsDirectory.StartsWith(transferDirectory, StringComparison.OrdinalIgnoreCase))
                 {
                     if (Global.FilesMatch(modDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
@@ -1570,7 +1572,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Examine the parameter file to check whether a phospho STY search was performed
-                // If so, retrieving the instrument data file so that we can run AScore
+                // If so, retrieve the instrument data file so that we can run AScore
 
                 var runAScore = CheckAScoreRequired(resultTypeName, Path.Combine(mWorkDir, paramFileName));
 
