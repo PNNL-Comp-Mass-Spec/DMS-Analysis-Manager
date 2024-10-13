@@ -2649,7 +2649,8 @@ namespace AnalysisManagerBase.AnalysisTool
                 return RESULT_TYPE_MSALIGN;
             }
 
-            if (scriptName.StartsWith("MSFragger", StringComparison.OrdinalIgnoreCase))
+            if (scriptName.StartsWith("MSFragger", StringComparison.OrdinalIgnoreCase) ||
+                scriptName.StartsWith("FragPipe", StringComparison.OrdinalIgnoreCase))
             {
                 return RESULT_TYPE_MSFRAGGER;
             }
