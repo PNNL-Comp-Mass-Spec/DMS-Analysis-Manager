@@ -80,6 +80,10 @@
       <Project>{dae7c38e-a9ac-44c2-ac16-f3cea558927d}</Project>
       <Name>AnalysisManagerMSFraggerPlugIn</Name>
     </ProjectReference>
+    <ProjectReference Include="..\AM_PepProtProphet_Plugin\AnalysisManagerPepProtProphetPlugIn.csproj">
+      <Project>{cce46827-b4ee-4cd7-b9b5-6500b5dedf9b}</Project>
+      <Name>AnalysisManagerPepProtProphetPlugIn</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

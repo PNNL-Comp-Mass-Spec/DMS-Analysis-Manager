@@ -5507,7 +5507,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in ZipPepXmlFiles", ex);
+                LogError("Error in ZipPepXmlAndPinFiles", ex);
                 return false;
             }
         }
