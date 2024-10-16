@@ -64,6 +64,8 @@ namespace AnalysisManagerFragPipePlugIn
 
         private string mConsoleOutputErrorMsg;
 
+        private int mDatasetCount;
+
         /// <summary>
         /// Dictionary of experiment group working directories
         /// </summary>
@@ -85,6 +87,8 @@ namespace AnalysisManagerFragPipePlugIn
         private DateTime mLastConsoleOutputParse;
 
         private bool mToolVersionWritten;
+
+        private bool mWarnedInvalidDatasetCount;
 
         private DirectoryInfo mWorkingDirectory;
 
@@ -1124,21 +1128,38 @@ namespace AnalysisManagerFragPipePlugIn
 
             const int CHECK_CENTROID = (int)ProgressPercentValues.StartingFragPipe + 1;
 
+            const int FIRST_SEARCH_START = (int)ProgressPercentValues.StartingFragPipe + 3;
+            const int FIRST_SEARCH_DONE = 24;
+
+            const int MAIN_SEARCH_START = 30;
+            const int MAIN_SEARCH_DONE = 50;
+
             const int FRAG_PIPE_COMPLETE = (int)ProgressPercentValues.FragPipeComplete;
 
             var processingSteps = new SortedList<int, Regex>
             {
                 { CHECK_CENTROID          , GetRegEx("^CheckCentroid") },
-                { CHECK_CENTROID + 1      , GetRegEx("^MSFragger *") },
-                { 50                      , GetRegEx("^Percolator *") },
-                { 55                      , GetRegEx("^PTMProphet *") },
-                { 60                      , GetRegEx("^ProteinProphet *") },
-                { 70                      , GetRegEx("^PhilosopherDbAnnotate *") },
-                { 75                      , GetRegEx("^PhilosopherFilter *") },
-                { 80                      , GetRegEx("^PhilosopherReport *") },
-                { 85                      , GetRegEx("^IonQuant *") },
-                { 90                      , GetRegEx("^TmtIntegrator *") },
-                { FRAG_PIPE_COMPLETE      , GetRegEx("^Please cite") }
+                { CHECK_CENTROID + 1      , GetRegEx("^MSFragger[: ]") },
+                { FIRST_SEARCH_START      , GetRegEx(@"^\*+FIRST SEARCH\*+") },
+                { FIRST_SEARCH_DONE       , GetRegEx(@"^\*+FIRST SEARCH DONE") },
+                { FIRST_SEARCH_DONE + 1   , GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+") },
+                { MAIN_SEARCH_START       , GetRegEx(@"^\*+MAIN SEARCH\*+") },
+                { MAIN_SEARCH_DONE        , GetRegEx(@"^\*+MAIN SEARCH DONE") },
+                { MAIN_SEARCH_DONE + 1    , GetRegEx("^Percolator[: ]") },
+                { 55                      , GetRegEx("^PTMProphet[: ]") },
+                { 60                      , GetRegEx("^ProteinProphet[: ]") },
+                { 70                      , GetRegEx("^PhilosopherDbAnnotate[: ]") },
+                { 75                      , GetRegEx("^PhilosopherFilter[: ]") },
+                { 80                      , GetRegEx("^PhilosopherReport[: ]") },
+                { 85                      , GetRegEx("^IonQuant[: ]") },
+                { 90                      , GetRegEx("^TmtIntegrator[: ]") },
+                { FRAG_PIPE_COMPLETE      , GetRegEx("^Please cite[: ]") }
+            };
+
+            var slabProgressRanges = new Dictionary<int, int>
+            {
+                {FIRST_SEARCH_START, FIRST_SEARCH_DONE}, // First Search progress range
+                {MAIN_SEARCH_START, MAIN_SEARCH_DONE}    // Main Search progress range
             };
 
             // Use a linked list to keep track of the progress values
@@ -1151,10 +1172,6 @@ namespace AnalysisManagerFragPipePlugIn
             }
 
             progressValues.AddLast(100);
-
-            /*
-             * ToDo: determine if any of these should be used to compute progress more accurately
-             * For implementation details, see the MSFragger plugin
 
             // RegEx to match lines like:
             //  001. Sample_Bane_06May21_20-11-16.mzML 1.0 s | deisotoping 0.6 s
@@ -1170,7 +1187,6 @@ namespace AnalysisManagerFragPipePlugIn
             var progressMatcher = new Regex(@"progress: \d+/\d+ \((?<PercentComplete>[0-9.]+)%\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var splitFastaMatcher = new Regex(@"^[\t ]*(?<Action>STARTED|DONE): slice (?<CurrentSplitFile>\d+) of (?<TotalSplitFiles>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-             */
 
             var linesRead = 0;
 
@@ -1194,9 +1210,6 @@ namespace AnalysisManagerFragPipePlugIn
                 mConsoleOutputErrorMsg = string.Empty;
                 var currentProgress = 0;
 
-                /*
-                 * ToDo: remove these if not needed
-
                 var currentSlice = 0;
                 var totalSlices = 0;
 
@@ -1205,11 +1218,13 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var currentDatasetId = 0;
                 float datasetProgress = 0;
-                */
 
                 using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
+                var executionOrderFound = false;
+                var fragPipeConfigFound = false;
                 var versionFound = false;
+                var extractVersionInfo = string.IsNullOrEmpty(mFragPipeVersion);
 
                 while (!reader.EndOfStream)
                 {
@@ -1219,34 +1234,54 @@ namespace AnalysisManagerFragPipePlugIn
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
+                    var trimmedLine = dataLine.Trim();
+
                     if (!versionFound)
                     {
-                        // Determine the versions of FragPipe, MSFragger, IonQuant, Philosopher, etc.
-
-                        if (string.IsNullOrEmpty(mFragPipeVersion) &&
-                            dataLine.Trim().StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
+                        if (dataLine.Trim().StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
                         {
-                            LogDebug(dataLine, mDebugLevel);
-                            mFragPipeVersion = dataLine.Trim();
-
                             versionFound = true;
                         }
 
-                        // The next few lines should have version numbers for additional programs, including MSFragger, IonQuant, and Philosopher
-
-                        while (versionFound && !reader.EndOfStream && linesRead < 20)
+                        if (versionFound && extractVersionInfo)
                         {
-                            var trimmedLine = reader.ReadLine()?.Trim();
-                            linesRead++;
+                            // Determine the versions of FragPipe, MSFragger, IonQuant, Philosopher, etc.
 
-                            if (string.IsNullOrWhiteSpace(trimmedLine) || !trimmedLine.Contains(" version"))
-                                continue;
+                            LogDebug(dataLine, mDebugLevel);
+                            mFragPipeVersion = dataLine.Trim();
 
-                            mFragPipeVersion = mFragPipeVersion.Length > 0
-                                ? string.Format("{0}; {1}", mFragPipeVersion, trimmedLine)
-                                : trimmedLine;
+                            // The next few lines should have version numbers for additional programs, including MSFragger, IonQuant, and Philosopher
+
+                            while (versionFound && !reader.EndOfStream && linesRead < 20)
+                            {
+                                var currentLine = reader.ReadLine()?.Trim();
+                                linesRead++;
+
+                                if (string.IsNullOrWhiteSpace(currentLine) || !currentLine.Contains(" version"))
+                                    continue;
+
+                                mFragPipeVersion = mFragPipeVersion.Length > 0
+                                    ? string.Format("{0}; {1}", mFragPipeVersion, currentLine)
+                                    : currentLine;
+                            }
+
+                            continue;
                         }
+                    }
 
+                    if (!executionOrderFound && trimmedLine.StartsWith("Execution order", StringComparison.OrdinalIgnoreCase))
+                    {
+                        executionOrderFound = true;
+                    }
+
+                    if (!fragPipeConfigFound && trimmedLine.IndexOf("fragpipe.config", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        fragPipeConfigFound = true;
+                    }
+
+                    // Do not look for processing step keywords until after either "Execution order" is shown or the FragPipe config is shown
+                    if (!(executionOrderFound || fragPipeConfigFound))
+                    {
                         continue;
                     }
 
@@ -1256,7 +1291,65 @@ namespace AnalysisManagerFragPipePlugIn
                             continue;
 
                         currentProgress = processingStep.Key;
+
+                        if (currentProgress == MAIN_SEARCH_START)
+                        {
+                            // Reset slice tracking variables
+                            currentSlice = 0;
+                            totalSlices = 0;
+
+                            currentDatasetId = 0;
+                            datasetProgress = 0;
+                        }
+
                         break;
+                    }
+
+                    var splitFastaProgressMatch = splitFastaMatcher.Match(dataLine);
+
+                    if (splitFastaProgressMatch.Success &&
+                        splitFastaProgressMatch.Groups["Action"].Value.Equals("STARTED", StringComparison.OrdinalIgnoreCase))
+                    {
+                        currentSplitFastaFile = int.Parse(splitFastaProgressMatch.Groups["CurrentSplitFile"].Value);
+
+                        if (splitFastaFileCount == 0)
+                        {
+                            splitFastaFileCount = int.Parse(splitFastaProgressMatch.Groups["TotalSplitFiles"].Value);
+                        }
+                    }
+
+                    // Check whether the line starts with the text error
+                    // Future: possibly adjust this check
+
+                    if (currentProgress > 1 &&
+                        dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
+                        string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                    {
+                        mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
+                    }
+
+                    var sliceMatch = sliceMatcher.Match(dataLine);
+
+                    if (sliceMatch.Success)
+                    {
+                        currentSlice = int.Parse(sliceMatch.Groups["Current"].Value);
+                        totalSlices = int.Parse(sliceMatch.Groups["Total"].Value);
+                    }
+                    else if (currentSlice > 0)
+                    {
+                        var datasetMatch = datasetMatcher.Match(dataLine);
+
+                        if (datasetMatch.Success)
+                        {
+                            currentDatasetId = int.Parse(datasetMatch.Groups["DatasetNumber"].Value);
+                        }
+
+                        var progressMatch = progressMatcher.Match(dataLine);
+
+                        if (progressMatch.Success)
+                        {
+                            datasetProgress = float.Parse(progressMatch.Groups["PercentComplete"].Value);
+                        }
                     }
 
                     // Check whether the line starts with the text error
@@ -1270,10 +1363,81 @@ namespace AnalysisManagerFragPipePlugIn
                     }
                 }
 
-                var effectiveProgressOverall = currentProgress;
+                float effectiveProgressOverall;
+
+                var processSlab = slabProgressRanges.Any(item => currentProgress >= item.Key && currentProgress < item.Value);
+
+                if (processSlab && totalSlices > 0)
+                {
+                    float currentProgressOnSlice;
+                    float nextProgressOnSlice;
+
+                    if (currentDatasetId > 0 && currentDatasetId > mDatasetCount)
+                    {
+                        if (!mWarnedInvalidDatasetCount)
+                        {
+                            if (mDatasetCount == 0)
+                            {
+                                LogWarning(
+                                    "mDatasetCount is 0 in ParseFragPipeConsoleOutputFile; this indicates a programming bug. " +
+                                    "Auto-updating dataset count to " + currentDatasetId);
+                            }
+                            else
+                            {
+                                LogWarning("CurrentDatasetId is greater than mDatasetCount in ParseFragPipeConsoleOutputFile; this indicates a programming bug. " +
+                                           "Auto-updating dataset count from {0} to {1}", mDatasetCount, currentDatasetId);
+                            }
+
+                            mWarnedInvalidDatasetCount = true;
+                        }
+
+                        mDatasetCount = currentDatasetId;
+                    }
+
+                    if (currentDatasetId == 0 || mDatasetCount == 0)
+                    {
+                        currentProgressOnSlice = 0;
+                        nextProgressOnSlice = 100;
+                    }
+                    else
+                    {
+                        currentProgressOnSlice = (currentDatasetId - 1) * (100f / mDatasetCount);
+                        nextProgressOnSlice = currentDatasetId * (100f / mDatasetCount);
+                    }
+
+                    // First compute the effective progress for this slice
+                    var sliceProgress = ComputeIncrementalProgress(currentProgressOnSlice, nextProgressOnSlice, datasetProgress);
+
+                    // Next compute the progress processing each of the slices (which as a group can be considered a "slab")
+                    var currentProgressOnSlab = (currentSlice - 1) * (100f / totalSlices);
+                    var nextProgressOnSlab = currentSlice * (100f / totalSlices);
+
+                    var slabProgress = ComputeIncrementalProgress(currentProgressOnSlab, nextProgressOnSlab, sliceProgress);
+
+                    // Now compute the effective overall progress
+
+                    var nextProgress = GetNextProgressValue(progressValues, currentProgress);
+
+                    effectiveProgressOverall = ComputeIncrementalProgress(currentProgress, nextProgress, slabProgress);
+                }
+                else
+                {
+                    effectiveProgressOverall = currentProgress;
+                }
 
                 if (float.IsNaN(effectiveProgressOverall))
                 {
+                    return;
+                }
+
+                if (currentSplitFastaFile > 0 && splitFastaFileCount > 0)
+                {
+                    // Compute overall progress as 25 plus a value between 0 and 25, where 25 is MAIN_SEARCH_DONE / 2.0
+
+                    var currentProgressOnSplitFasta = (currentSplitFastaFile - 1) * (MAIN_SEARCH_DONE / 2f / splitFastaFileCount);
+                    var nextProgressOnSplitFasta = currentSplitFastaFile * (MAIN_SEARCH_DONE / 2f / splitFastaFileCount);
+
+                    mProgress = 25 + ComputeIncrementalProgress(currentProgressOnSplitFasta, nextProgressOnSplitFasta, 25);
                     return;
                 }
 
@@ -1304,7 +1468,7 @@ namespace AnalysisManagerFragPipePlugIn
                 MovePlotFiles();
 
                 // Zip the .pepXML file(s) and .pin file(s)
-                var zipSuccessPepXml = ZipPepXmlFiles(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount, out var datasetCount);
+                var zipSuccessPepXml = ZipPepXmlFiles(dataPackageInfo, datasetIDsByExperimentGroup, diaSearchEnabled, databaseSplitCount);
 
                 if (!zipSuccessPepXml)
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1353,6 +1517,17 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // This file may have been created by MSFragger; ignore it
                 mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
+
+                // Skip the FragPipe log file since file FragPipe_ConsoleOutput.txt should include the log file text
+                var fragPipeLogFileMatcher = new Regex(@"log_\d{4}-", RegexOptions.Compiled);
+
+                foreach (var logFile in mWorkingDirectory.GetFiles("log_ *.txt"))
+                {
+                    if (fragPipeLogFileMatcher.IsMatch(logFile.Name))
+                    {
+                        mJobParams.AddResultFileToSkip(logFile.Name);
+                    }
+                }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -1417,8 +1592,12 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
+                mWarnedInvalidDatasetCount = false;
+
                 LogMessage("Running FragPipe");
                 mProgress = (int)ProgressPercentValues.StartingFragPipe;
+
                 ResetProgRunnerCpuUsage();
 
                 var fragPipeBatchFile = new FileInfo(mFragPipeProgLoc);
@@ -2244,10 +2423,9 @@ namespace AnalysisManagerFragPipePlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             bool diaSearchEnabled,
-            int databaseSplitCount,
-            out int datasetCount)
+            int databaseSplitCount)
         {
-            datasetCount = 0;
+            var datasetCount = 0;
 
             try
             {
@@ -2305,12 +2483,9 @@ namespace AnalysisManagerFragPipePlugIn
 
                         var splitFastaSearch = databaseSplitCount > 1;
 
-                        if (!diaSearchEnabled && !tsvFile.Exists)
+                        if (!diaSearchEnabled && !tsvFile.Exists && !splitFastaSearch)
                         {
-                            if (!splitFastaSearch)
-                            {
-                                LogError(string.Format("FragPipe did not create a .tsv file{0}", optionalDatasetInfo));
-                            }
+                            LogError(string.Format("FragPipe did not create a .tsv file{0}", optionalDatasetInfo));
 
                             // ToDo: create a .tsv file using the .pepXML file
                         }
