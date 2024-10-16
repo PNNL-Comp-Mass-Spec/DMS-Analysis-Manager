@@ -1139,7 +1139,7 @@ namespace AnalysisManagerFragPipePlugIn
             var processingSteps = new SortedList<int, Regex>
             {
                 { CHECK_CENTROID          , GetRegEx("^CheckCentroid") },
-                { CHECK_CENTROID + 1      , GetRegEx("^MSFragger[: ]") },
+                { CHECK_CENTROID + 1      , GetRegEx("^Checking spectral files") },
                 { FIRST_SEARCH_START      , GetRegEx(@"^\*+FIRST SEARCH\*+") },
                 { FIRST_SEARCH_DONE       , GetRegEx(@"^\*+FIRST SEARCH DONE") },
                 { FIRST_SEARCH_DONE + 1   , GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+") },
