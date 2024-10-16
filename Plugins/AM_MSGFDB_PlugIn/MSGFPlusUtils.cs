@@ -503,7 +503,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (Global.IsMatch(instrumentGroup, "Bruker_Amazon_Ion_Trap"))
             {
-                // Non-Thermo Instrument, low res MS/MS
+                // Non-Thermo Instrument, low-res MS/MS
                 instrumentIDNew = "0";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
@@ -511,7 +511,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (Global.IsMatch(instrumentGroup, "IMS"))
             {
-                // Non-Thermo Instrument, high res MS/MS
+                // Non-Thermo Instrument, high-res MS/MS
                 instrumentIDNew = "1";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
@@ -519,7 +519,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (Global.IsMatch(instrumentGroup, "Sciex_TripleTOF"))
             {
-                // Non-Thermo Instrument, high res MS/MS
+                // Non-Thermo Instrument, high-res MS/MS
                 instrumentIDNew = "1";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
                 return true;
@@ -529,7 +529,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 Global.IsMatch(instrumentGroup, "timsTOF_SCP") ||
                 Global.IsMatch(instrumentGroup, "timsTOF_Flex"))
             {
-                // Bruker TOF with high res MS/MS
+                // Bruker TOF with high-res MS/MS
                 // Use instrument type 2 (TOF)
                 instrumentIDNew = "2";
                 autoSwitchReason = "based on instrument group " + instrumentGroup;
@@ -1767,8 +1767,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
         /// </summary>
         /// <param name="scanTypeFilePath">Scan type file path</param>
-        /// <param name="lowResMSn">Low Res MSn spectra</param>
-        /// <param name="highResMSn">High Res MSn spectra (but not HCD)</param>
+        /// <param name="lowResMSn">Low-res MSn spectra</param>
+        /// <param name="highResMSn">High-res MSn spectra (but not HCD)</param>
         /// <param name="hcdMSn">HCD Spectra</param>
         /// <param name="other">Spectra that are not MSn</param>
         public bool LoadScanTypeFile(string scanTypeFilePath, out Dictionary<int, string> lowResMSn, out Dictionary<int, string> highResMSn,
@@ -1834,9 +1834,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
                     {
-                        // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
+                        // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high-res MSn or low-res MSn
                         // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
-                        // We'll assume low res
+                        // We'll assume low-res
                         lowResMSn.Add(scanNumber, scanType);
                     }
                     else
@@ -2512,9 +2512,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                             else if (!string.IsNullOrWhiteSpace(assumedScanType))
                             {
+                                // ReSharper disable GrammarMistakeInComment
+
                                 // Override FragmentationMethodID using assumedScanType
                                 // AssumedScanType is an optional job setting; see for example:
                                 //  IonTrapDefSettings_AssumeHCD.xml with <item key="AssumedScanType" value="HCD"/>
+
+                                // ReSharper restore GrammarMistakeInComment
+
                                 switch (assumedScanType.ToUpper())
                                 {
                                     case "CID":
@@ -2754,7 +2759,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Set paramFileThreadCount to the number of cores on this computer
                 // However, do not exceed 8 cores on machines with less than 16 cores, since this can actually slow down MS-GF+ due to context switching
-                // Furthermore, Java will restrict all of the threads to a single NUMA node, and we don't want too many threads on a single node
+                // Furthermore, Java will restrict the threads to a single NUMA node, and we don't want too many threads on a single node
                 // For machines with 16 or more cores, use 75% of the cores
 
                 var coreCount = GetCoreCount();
@@ -2805,7 +2810,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (coreCount >= 16)
                     {
-                        // There are enough spare cores that we can use 75% of all of the cores
+                        // There are enough spare cores that we can use 75% of the cores
                         var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
 
                         if (paramFileThreadCount > maxAllowedCores)
@@ -2825,7 +2830,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    // Example message: The system has 8 cores; MS-GF+ will use 7 cores")
+                    // Example message: The system has 8 cores; MS-GF+ will use 7 cores
                     OnStatusEvent("The system has " + coreCount + " cores; MS-GF+ will use " + paramFileThreadCount + " cores");
                 }
             }
@@ -2920,15 +2925,15 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // InstrumentID values:
             // #  0 means Low-res LCQ/LTQ (Default for CID and ETD); use InstrumentID=0 if analyzing a dataset with low-res CID and high-res HCD spectra
-            // #  1 means High-res LTQ (Default for HCD; also appropriate for high res CID); use InstrumentID=1 for Orbitrap, Lumos, Eclipse, and Ascend instruments with high res MS2 spectra
+            // #  1 means High-res LTQ (Default for HCD; also appropriate for high-res CID); use InstrumentID=1 for Orbitrap, Lumos, Eclipse, and Ascend instruments with high-res MS2 spectra
             // #  2 means TOF
             // #  3 means Q-Exactive; use InstrumentID=3 for Q Exactive, QEHFX, and Exploris instruments
 
             // The logic for determining InstrumentID is:
             // If the instrument is a QExactive, QEHFX, or Exploris, use InstrumentID 3
-            // If the instrument has HCD spectra (which are typically high res MS2, but sometimes low res), use InstrumentID 1
-            // If the instrument has high res MS2 spectra, use InstrumentID 1
-            // If the instrument has low res MS2 spectra, use InstrumentID 0
+            // If the instrument has HCD spectra (which are typically high-res MS2, but sometimes low-res), use InstrumentID 1
+            // If the instrument has high-res MS2 spectra, use InstrumentID 1
+            // If the instrument has low-res MS2 spectra, use InstrumentID 0
 
             if (string.IsNullOrEmpty(instrumentGroup))
                 instrumentGroup = "#Undefined#";
@@ -2938,11 +2943,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Instrument ID is not obvious from the instrument group
                 // Examine the scan types in scanTypeFilePath
 
-                // If low res MS1,  Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
+                // If low-res MS1,  Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
 
-                // If high res MS2, Instrument Group is typically VelosOrbi, or LTQ_FT
+                // If high-res MS2, Instrument Group is typically VelosOrbi, or LTQ_FT
 
-                // Count the number of High res CID or ETD spectra
+                // Count the number of high-res CID or ETD spectra
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
                 var scanTypeFileLoaded = LoadScanTypeFile(scanTypeFilePath, out var lowResMSn, out var highResMSn, out var hcdMSn, out _);
@@ -3052,11 +3057,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (countHighResHCD == 0 && countHighResMSn == 0)
             {
-                autoSwitchReason = "since all of the spectra are low res MSn";
+                autoSwitchReason = "since all of the spectra are low-res MSn";
             }
             else
             {
-                autoSwitchReason = "since there is a mix of low res and high res spectra";
+                autoSwitchReason = "since there is a mix of low-res and high-res spectra";
             }
 
             return true;
@@ -3304,7 +3309,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                // Make sure that all of the elements in modClean have a number after them
+                // Make sure that the elements in modClean have a number after them
                 // For example, auto-change C6H7N3O to C6H7N3O1
 
                 var reElementSplitter = new Regex(@"(?<Atom>[A-Z])(?<Count>\d*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -3431,6 +3436,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (reMatch.Success)
             {
                 var taskNumber = int.Parse(reMatch.Groups["TaskNumber"].Value);
+
+                // ReSharper disable once CanSimplifySetAddingWithSingleCall
 
                 if (completedTasks.Contains(taskNumber))
                 {
