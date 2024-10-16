@@ -1857,41 +1857,45 @@ namespace AnalysisManagerMSGFDBPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Check for a modification definition that has an incorrect tag type
+        /// </summary>
+        /// <param name="definitionDataClean">Modification definition, in a standardized form</param>
+        /// <param name="definitionType">Modification definition type</param>
+        /// <param name="expectedTag">Expected modification type tag</param>
+        /// <param name="invalidTag">Invalid tag to look for</param>
+        /// <returns>True if an incorrect tag is present, false if no errors</returns>
         private bool MisleadingModDef(string definitionDataClean, string definitionType, string expectedTag, string invalidTag)
         {
-            if (definitionDataClean.Contains("," + invalidTag + ","))
+            if (!definitionDataClean.Contains("," + invalidTag + ","))
+                return false;
+
+            // ReSharper disable GrammarMistakeInComment
+
+            // One of the following is true:
+            //  Static (fixed) mod is listed as dynamic or custom
+            //  Dynamic (optional) mod is listed as static or custom
+            //  Custom amino acid def is listed as a dynamic or static
+
+            // ReSharper restore GrammarMistakeInComment
+
+            var verboseTag = invalidTag switch
             {
-                // One of the following is true:
-                //  Static (fixed) mod is listed as dynamic or custom
-                //  Dynamic (optional) mod is listed as static or custom
-                //  Custom amino acid def is listed as a dynamic or static
+                "opt" => MSGFPLUS_OPTION_DYNAMIC_MOD,
+                "fix" => MSGFPLUS_OPTION_STATIC_MOD,
+                "custom" => MSGFPLUS_OPTION_CUSTOM_AA,
+                _ => "??"
+            };
 
-                var verboseTag = "??";
-                switch (invalidTag)
-                {
-                    case "opt":
-                        verboseTag = MSGFPLUS_OPTION_DYNAMIC_MOD;
-                        break;
-                    case "fix":
-                        verboseTag = MSGFPLUS_OPTION_STATIC_MOD;
-                        break;
-                    case "custom":
-                        verboseTag = MSGFPLUS_OPTION_CUSTOM_AA;
-                        break;
-                }
+            // Abort the analysis since the parameter file is misleading and needs to be fixed
+            // Example messages:
+            //  Dynamic mod definition contains ,fix, -- update the param file to have ,opt, or change to StaticMod=
+            //  Static mod definition contains ,opt,  -- update the param file to have ,fix, or change to DynamicMod=
+            ErrorMessage = string.Format("{0} definition contains ,{1}, -- update the param file to have ,{2}, or change to {3}=", definitionType, invalidTag, expectedTag, verboseTag);
+            OnErrorEvent(ErrorMessage);
 
-                // Abort the analysis since the parameter file is misleading and needs to be fixed
-                // Example messages:
-                //  Dynamic mod definition contains ,fix, -- update the param file to have ,opt, or change to StaticMod="
-                //  Static mod definition contains ,opt, -- update the param file to have ,fix, or change to DynamicMod="
-                ErrorMessage = string.Format("{0} definition contains ,{1}, -- update the param file to have ,{2}, or change to {3}=",
-                                             definitionType, invalidTag, expectedTag, verboseTag);
-                OnErrorEvent(ErrorMessage);
+            return true;
 
-                return true;
-            }
-
-            return false;
         }
 
         /// <summary>
