@@ -1238,7 +1238,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!versionFound)
                     {
-                        if (dataLine.Trim().StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
+                        if (trimmedLine.Trim().StartsWith("FragPipe version", StringComparison.OrdinalIgnoreCase))
                         {
                             versionFound = true;
                         }
@@ -1247,8 +1247,8 @@ namespace AnalysisManagerFragPipePlugIn
                         {
                             // Determine the versions of FragPipe, MSFragger, IonQuant, Philosopher, etc.
 
-                            LogDebug(dataLine, mDebugLevel);
-                            mFragPipeVersion = dataLine.Trim();
+                            LogDebug(trimmedLine, mDebugLevel);
+                            mFragPipeVersion = trimmedLine;
 
                             // The next few lines should have version numbers for additional programs, including MSFragger, IonQuant, and Philosopher
 
@@ -1287,10 +1287,18 @@ namespace AnalysisManagerFragPipePlugIn
 
                     foreach (var processingStep in processingSteps)
                     {
-                        if (!processingStep.Value.IsMatch(dataLine))
+                        if (!processingStep.Value.IsMatch(trimmedLine))
                             continue;
 
-                        currentProgress = processingStep.Key;
+                        if (processingStep.Key > currentProgress)
+                        {
+                            currentProgress = processingStep.Key;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Not changing progress from {0} to {1} for console output line {2}",
+                                currentProgress, processingStep.Key, trimmedLine);
+                        }
 
                         if (currentProgress == MAIN_SEARCH_START)
                         {
@@ -1305,7 +1313,7 @@ namespace AnalysisManagerFragPipePlugIn
                         break;
                     }
 
-                    var splitFastaProgressMatch = splitFastaMatcher.Match(dataLine);
+                    var splitFastaProgressMatch = splitFastaMatcher.Match(trimmedLine);
 
                     if (splitFastaProgressMatch.Success &&
                         splitFastaProgressMatch.Groups["Action"].Value.Equals("STARTED", StringComparison.OrdinalIgnoreCase))
@@ -1318,17 +1326,7 @@ namespace AnalysisManagerFragPipePlugIn
                         }
                     }
 
-                    // Check whether the line starts with the text error
-                    // Future: possibly adjust this check
-
-                    if (currentProgress > 1 &&
-                        dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
-                        string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                    {
-                        mConsoleOutputErrorMsg = "Error running MSFragger: " + dataLine;
-                    }
-
-                    var sliceMatch = sliceMatcher.Match(dataLine);
+                    var sliceMatch = sliceMatcher.Match(trimmedLine);
 
                     if (sliceMatch.Success)
                     {
@@ -1337,14 +1335,14 @@ namespace AnalysisManagerFragPipePlugIn
                     }
                     else if (currentSlice > 0)
                     {
-                        var datasetMatch = datasetMatcher.Match(dataLine);
+                        var datasetMatch = datasetMatcher.Match(trimmedLine);
 
                         if (datasetMatch.Success)
                         {
                             currentDatasetId = int.Parse(datasetMatch.Groups["DatasetNumber"].Value);
                         }
 
-                        var progressMatch = progressMatcher.Match(dataLine);
+                        var progressMatch = progressMatcher.Match(trimmedLine);
 
                         if (progressMatch.Success)
                         {
@@ -1356,7 +1354,7 @@ namespace AnalysisManagerFragPipePlugIn
                     // Future: possibly adjust this check
 
                     if (currentProgress > 1 &&
-                        dataLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
+                        trimmedLine.StartsWith("error", StringComparison.OrdinalIgnoreCase) &&
                         string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                     {
                         mConsoleOutputErrorMsg = "Error running FragPipe: " + dataLine;
