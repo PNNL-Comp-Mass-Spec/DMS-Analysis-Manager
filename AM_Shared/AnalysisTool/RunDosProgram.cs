@@ -22,7 +22,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Monitor interval, in milliseconds
         /// </summary>
-        /// <remarks>Values over 10 seconds (10000 milliseconds) will result in a 10 second monitoring interval</remarks>
+        /// <remarks>Values over 10 seconds (10000 milliseconds) will result in a 10-second monitoring interval</remarks>
         private int mMonitorInterval = 2000;
 
         private string mCachedConsoleErrors = string.Empty;
@@ -258,6 +258,15 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             mAbortProgramPostLogEntry = postLogEntry;
             ProgramAborted = true;
+        }
+
+        /// <summary>
+        /// Assure that the console output file data has been written to disk
+        /// </summary>
+        /// <param name="closeFile">If true, close the console output file</param>
+        public void FlushConsoleOutputFileNow(bool closeFile)
+        {
+            mProgRunner?.FlushConsoleOutputFile(closeFile);
         }
 
         /// <summary>

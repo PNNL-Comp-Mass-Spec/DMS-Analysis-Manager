@@ -1632,6 +1632,8 @@ namespace AnalysisManagerFragPipePlugIn
                 // Set up and execute a program runner to run FragPipe
                 var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
 
+                mCmdRunner.FlushConsoleOutputFileNow(true);
+
                 if (!mToolVersionWritten)
                 {
                     if (string.IsNullOrWhiteSpace(mFragPipeVersion))
