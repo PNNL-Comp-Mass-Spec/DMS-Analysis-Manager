@@ -1519,7 +1519,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // Skip the FragPipe log file since file FragPipe_ConsoleOutput.txt should include the log file text
                 var fragPipeLogFileMatcher = new Regex(@"log_\d{4}-", RegexOptions.Compiled);
 
-                foreach (var logFile in mWorkingDirectory.GetFiles("log_ *.txt"))
+                foreach (var logFile in mWorkingDirectory.GetFiles("log_*.txt"))
                 {
                     if (fragPipeLogFileMatcher.IsMatch(logFile.Name))
                     {
