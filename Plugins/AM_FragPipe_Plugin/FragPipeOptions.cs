@@ -552,8 +552,6 @@ namespace AnalysisManagerFragPipePlugIn
             SortedSet<string> aminoAcidSymbols,
             string staticModList)
         {
-            var matchFound = false;
-
             foreach (var staticMod in staticModList.Split(';'))
             {
                 if (!ParseModDefinition(FIX_MODS_PARAMETER_NAME, staticMod, terminalStaticModParameters, out var modEnabled, out var modMass, out var affectedResidues))
@@ -571,6 +569,8 @@ namespace AnalysisManagerFragPipePlugIn
 
                     return false;
                 }
+
+                var matchFound = false;
 
                 foreach (var staticModParameter in terminalStaticModParameters)
                 {
@@ -599,7 +599,6 @@ namespace AnalysisManagerFragPipePlugIn
                         AppendModificationMass(staticModsByResidue, aminoAcidSymbol, modMass);
                     }
 
-                    matchFound = true;
                     break;
                 }
             }
