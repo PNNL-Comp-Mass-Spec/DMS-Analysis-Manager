@@ -410,8 +410,8 @@ namespace AnalysisManagerFragPipePlugIn
                     groupNumber++;
 
                     var aliasNamePrefix = experimentGroup.Key.Equals(DataPackageInfoLoader.UNDEFINED_EXPERIMENT_GROUP)
-                        ? string.Format("annotation_{0}_", groupNumber)
-                        : experimentGroup.Key + "_";
+                        ? string.Format("annotation_{0}", groupNumber)
+                        : experimentGroup.Key;
 
                     var experimentSpecificAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, string.Format("{0}{1}", aliasNamePrefix, ANNOTATION_FILE_SUFFIX)));
                     var genericAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasNames.txt"));
