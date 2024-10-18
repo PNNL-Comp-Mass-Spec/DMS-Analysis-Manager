@@ -135,18 +135,18 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // ReSharper disable once StringLiteralTypo
 
-                if (staticModifications.TryGetValue(N_TERM_PEPTIDE, out var staticNTermModMass) && staticNTermModMass.Count > 0)
+                if (staticModifications.TryGetValue(N_TERM_PEPTIDE, out var staticNTermModMasses) && staticNTermModMasses.Count > 0)
                 {
-                    staticNTermMode = ReporterIonInfo.GetReporterIonModeFromModMass(staticNTermModMass.First());
+                    staticNTermMode = GetReporterIonModeFromMassList(staticNTermModMasses);
                 }
                 else
                 {
                     staticNTermMode = ReporterIonInfo.ReporterIonModes.Disabled;
                 }
 
-                if (staticModifications.TryGetValue("K", out var staticLysineModMass) && staticLysineModMass.Count > 0)
+                if (staticModifications.TryGetValue("K", out var staticLysineModMasses) && staticLysineModMasses.Count > 0)
                 {
-                    staticLysineMode = ReporterIonInfo.GetReporterIonModeFromModMass(staticLysineModMass.First());
+                    staticLysineMode = GetReporterIonModeFromMassList(staticLysineModMasses);
                 }
                 else
                 {
@@ -198,7 +198,6 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 OnErrorEvent("The FragPipe workflow file has more than one reporter ion mode defined: {0}", string.Join(", ", matchedReporterIonModes.Keys.ToList()));
-
                 return false;
             }
             catch (Exception ex)
@@ -207,6 +206,7 @@ namespace AnalysisManagerFragPipePlugIn
                 return false;
             }
         }
+
 
         /// <summary>
         /// <para>
@@ -389,6 +389,26 @@ namespace AnalysisManagerFragPipePlugIn
             OnErrorEvent("Parameter value in FragPipe workflow file is not numeric: {0} = {1}", parameter.Key, parameter.Value);
 
             return false;
+        }
+
+        /// <summary>
+        /// Examine the modification masses to look for a known reporter ion mod mass
+        /// </summary>
+        /// <param name="modMasses">List of static or dynamic modification masses</param>
+        /// <returns>Reporter ion mode</returns>
+        private ReporterIonInfo.ReporterIonModes GetReporterIonModeFromMassList(SortedSet<double> modMasses)
+        {
+            foreach (var modMass in modMasses)
+            {
+                var reporterIonMode = ReporterIonInfo.GetReporterIonModeFromModMass(modMass);
+
+                if (reporterIonMode != ReporterIonInfo.ReporterIonModes.Disabled)
+                {
+                    return reporterIonMode;
+                }
+            }
+
+            return ReporterIonInfo.ReporterIonModes.Disabled;
         }
 
         /// <summary>
