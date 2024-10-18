@@ -26,7 +26,7 @@ public static class ReporterIonInfo
     }
 
     /// <summary>
-    /// Create a file that define alias names for reporter ions
+    /// Create a file that defines alias names for reporter ions
     /// </summary>
     /// <param name="reporterIonMode">Reporter ion mode</param>
     /// <param name="aliasNameFile">Alias name file (aka annotation.txt file)</param>

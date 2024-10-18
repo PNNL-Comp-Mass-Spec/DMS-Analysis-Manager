@@ -1895,7 +1895,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             OnErrorEvent(ErrorMessage);
 
             return true;
-
         }
 
         /// <summary>
