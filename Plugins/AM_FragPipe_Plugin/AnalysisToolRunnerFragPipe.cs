@@ -1462,6 +1462,11 @@ namespace AnalysisManagerFragPipePlugIn
         {
             try
             {
+                // If the FragPipe workflow file has "msfragger.write_calibrated_mzml=true" or "msfragger.write_uncalibrated_mgf=true",
+                // FragPipe creates large output files that we don't want to keep (even if post-processing fails)
+                mJobParams.AddResultFileExtensionToSkip("_calibrated.mzML");
+                mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
+
                 // Move the plot files into each experiment group working directory
                 MovePlotFiles();
 
@@ -1512,9 +1517,6 @@ namespace AnalysisManagerFragPipePlugIn
                 // Skip additional files, including interact-Dataset.pep.xml and protein.fas
                 mJobParams.AddResultFileExtensionToSkip(".pep.xml");
                 mJobParams.AddResultFileExtensionToSkip("protein.fas");
-
-                // This file may have been created by MSFragger; ignore it
-                mJobParams.AddResultFileExtensionToSkip("_uncalibrated.mgf");
 
                 // Skip the FragPipe log file since file FragPipe_ConsoleOutput.txt should include the log file text
                 var fragPipeLogFileMatcher = new Regex(@"log_\d{4}-", RegexOptions.Compiled);
