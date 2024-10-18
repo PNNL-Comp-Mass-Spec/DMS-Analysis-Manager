@@ -1439,6 +1439,13 @@ namespace AnalysisManagerFragPipePlugIn
                     return;
                 }
 
+                if (effectiveProgressOverall < mProgress)
+                {
+                    // Show a message if the new progress value is less than the current progress value
+                    // This could be an indication that the progress computation logic needs to be updated
+                    ConsoleMsgUtils.ShowDebug("The new progress value is less than the existing progress value: {0:F2} vs. {1:F2}", effectiveProgressOverall, mProgress);
+                }
+
                 mProgress = effectiveProgressOverall;
             }
             catch (Exception ex)
