@@ -207,10 +207,9 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
-
         /// <summary>
         /// <para>
-        /// <see cref="ReporterIonInfo.GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT.
+        /// Method <see cref="ReporterIonInfo.GetReporterIonModeFromModMass"/> sets the ReporterIonMode to Tmt11 for 6-plex, 10-plex, and 11-plex TMT.
         /// For both 16-plex and 18-plex TMT, it sets ReporterIonMode to Tmt16.
         /// </para>
         /// <para>
