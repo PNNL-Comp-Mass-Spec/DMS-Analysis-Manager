@@ -66,7 +66,7 @@ namespace AnalysisManagerBase.JobConfig
         public string Experiment_NEWT_Name { get; set; }
 
         /// <summary>
-        /// Analysis tool
+        /// Analysis tool (specifically, the pipeline script name)
         /// </summary>
         public string Tool { get; set; }
 

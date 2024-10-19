@@ -2621,7 +2621,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 return resultTypeName;
             }
 
-            // The ToolName job parameter holds the name of the job script we are executing
+            // The ToolName job parameter holds the name of the pipeline script we are executing
             var scriptName = jobParams.GetParam("ToolName");
 
             if (scriptName.StartsWith("DiaNN", StringComparison.OrdinalIgnoreCase))

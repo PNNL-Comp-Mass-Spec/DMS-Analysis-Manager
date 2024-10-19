@@ -3826,7 +3826,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 mSummaryFile.Add("=====================================================================================");
                 mSummaryFile.Add(Environment.NewLine);
 
-                // The ToolName job parameter holds the name of the job script we are executing
+                // The ToolName job parameter holds the name of the pipeline script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
                 var stepTool = mJobParams.GetParam("StepTool");
 

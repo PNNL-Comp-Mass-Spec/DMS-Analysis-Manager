@@ -1823,7 +1823,7 @@ namespace AnalysisManagerExtractionPlugin
                 synopsisFileNamesFromPHRP.Add(synopsisFileNameFromPHRP);
 
                 // Summarize the number of PSMs in the synopsis file
-                // This is done by this class since the MSFragger script does not have an MSGF job step
+                // This is done by this class since the MSFragger and FragPipe scripts do not have an MSGF job step
 
                 const double thresholdForMSGFSpecEValueOrPEP = ResultsSummarizer.DEFAULT_MSGF_SPEC_EVALUE_THRESHOLD;
 
@@ -2233,7 +2233,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Run the Peptide Hit Results Processor
         /// </summary>
         /// <remarks>
-        /// Note that for data package based MSFragger jobs that have multiple experiment groups, this method is called once for each experiment group
+        /// Note that for data package based MSFragger or FragPipe jobs that have multiple experiment groups, this method is called once for each experiment group
         /// </remarks>
         /// <param name="toolName">Tool name</param>
         /// <param name="inputFileName">Input file name</param>
@@ -3349,6 +3349,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var paramFilePath = Path.Combine(mWorkDir, searchEngineParamFileName);
 
+                // The "ToolName" parameter holds the pipeline script name
                 var toolName = mJobParams.GetJobParameter("ToolName", string.Empty);
 
                 // The default error threshold is 5%

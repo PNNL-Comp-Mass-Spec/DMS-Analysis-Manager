@@ -311,6 +311,7 @@ namespace AnalysisManagerBase.JobConfig
 
                 var toolVersionFileNewName = string.Empty;
 
+                // The ToolName job parameter holds the name of the pipeline script we are executing
                 var toolNameForScript = mJobParams.GetJobParameter("ToolName", string.Empty);
 
                 if (resultType == PeptideHitResultTypes.MSGFPlus && toolNameForScript == "MSGFPlus_IMS")

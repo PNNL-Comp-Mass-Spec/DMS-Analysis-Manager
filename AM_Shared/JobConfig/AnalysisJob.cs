@@ -2060,7 +2060,7 @@ namespace AnalysisManagerBase.JobConfig
         /// <returns>Tool name and step number</returns>
         public string GetCurrentJobToolDescription()
         {
-            // The ToolName job parameter holds the name of the job script we are executing
+            // The ToolName job parameter holds the name of the pipeline script we are executing
             var scriptName = GetParam("ToolName");
 
             var stepTool = GetParam("StepTool");

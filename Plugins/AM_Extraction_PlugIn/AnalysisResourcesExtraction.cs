@@ -823,6 +823,10 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Retrieve MSFragger or FragPipe result files
+        /// </summary>
+        /// <returns>CloseOutType specifying results</returns>
         private CloseOutType GetMSFraggerFiles()
         {
             var filesToGet = new List<string>();
@@ -1609,7 +1613,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Retrieve the instrument data file
 
-                // The ToolName job parameter holds the name of the job script we are executing
+                // The ToolName job parameter holds the name of the pipeline script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
                 if (scriptName.IndexOf("mzXML", StringComparison.OrdinalIgnoreCase) >= 0 || scriptName.IndexOf("msgfplus_bruker", StringComparison.OrdinalIgnoreCase) >= 0)
