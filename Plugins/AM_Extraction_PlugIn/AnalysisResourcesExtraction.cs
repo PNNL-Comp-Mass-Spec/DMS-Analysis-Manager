@@ -515,7 +515,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (string.IsNullOrWhiteSpace(inputFolderName))
                 {
-                    LogError("Input_Folder is not defined for this job step (job parameter inputFolderName); cannot retrieve input files");
+                    LogError("Input_Folder_Name is not defined for this job step in table sw.t_job_steps (job parameter inputFolderName); cannot retrieve input files");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
