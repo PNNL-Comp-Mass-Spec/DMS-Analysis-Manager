@@ -198,7 +198,12 @@ namespace AnalysisManagerExtractionPlugin
 
                     case AnalysisResources.RESULT_TYPE_MSFRAGGER:
                         // Run PHRP
-                        currentAction = "running peptide hits result processor for MSFragger";
+                        var scriptName = mJobParams.GetParam("ToolName");
+
+                        // Example values for currentAction:
+                        //  "running peptide hits result processor for MSFragger"
+                        //  "running peptide hits result processor for FragPipe"
+                        currentAction = string.Format("running peptide hits result processor for {0}", scriptName);
                         result = RunPhrpForMSFragger();
                         break;
 
