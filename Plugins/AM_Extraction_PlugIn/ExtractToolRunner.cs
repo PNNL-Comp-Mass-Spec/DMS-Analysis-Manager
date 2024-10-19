@@ -2394,6 +2394,12 @@ namespace AnalysisManagerExtractionPlugin
 
                 var synopsisFilePath = Path.Combine(mWorkDir, synopsisFileNameFromPHRP);
 
+                if (!File.Exists(synopsisFilePath))
+                {
+                    LogError(string.Format("Synopsis file not found: {0}", synopsisFilePath));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 if (!ValidatePHRPResultMassErrors(synopsisFilePath, resultType, parameterFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
