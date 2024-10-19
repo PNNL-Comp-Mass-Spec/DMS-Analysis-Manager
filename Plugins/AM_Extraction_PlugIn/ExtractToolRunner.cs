@@ -1747,6 +1747,15 @@ namespace AnalysisManagerExtractionPlugin
             return resultOverall;
         }
 
+        /// <summary>
+        /// Run PHRP for MSFragger (or FragPipe)
+        /// </summary>
+        /// <param name="baseDatasetName">Base dataset name</param>
+        /// <param name="inputFileName">Input file name, e.g. Dataset_psm.tsv</param>
+        /// <param name="postJobPSMResultsToDB">When true, store the PSM results in the database</param>
+        /// <param name="synopsisFileNamesFromPHRP">Output: PHRP synopsis file names</param>
+        /// <param name="psmResults">Output: PSM results</param>
+        /// <returns>True if successful, false if an error</returns>
         private CloseOutType RunPhrpForMSFragger(
             string baseDatasetName,
             string inputFileName,
@@ -1807,6 +1816,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
+                    successOverall = result;
                     continue;
                 }
 
