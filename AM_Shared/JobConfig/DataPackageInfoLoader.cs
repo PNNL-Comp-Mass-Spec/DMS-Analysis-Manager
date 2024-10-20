@@ -558,15 +558,17 @@ namespace AnalysisManagerBase.JobConfig
 
             string datasetExperimentGroup;
 
+            bool isMaxQuantA;
+
             if (match1.Success)
             {
                 var prefixName = match1.Groups["PrefixName"].Value;
                 var groupNameOrId = match1.Groups["GroupName"].Value;
 
-                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
-                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+                isMaxQuantA = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                              prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
 
-                if (isMaxQuant && int.TryParse(groupNameOrId, out _))
+                if (isMaxQuantA && int.TryParse(groupNameOrId, out _))
                 {
                     // Matched a MaxQuant Group ID
                     // To avoid integer-based result file names, store Group1, Group2, etc.
@@ -594,13 +596,13 @@ namespace AnalysisManagerBase.JobConfig
 
                     datasetExperimentGroup = match2.Groups["GroupName"].Value;
 
-                    isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
-                                 prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+                    isMaxQuantA = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                                  prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
                     datasetExperimentGroup = string.Empty;
-                    isMaxQuant = false;
+                    isMaxQuantA = false;
                 }
             }
 
@@ -617,19 +619,21 @@ namespace AnalysisManagerBase.JobConfig
             var match3 = maxQuantGroupMatcher.Match(packageComment);
 
             int paramGroupIndexOrNumber;
+            bool isMaxQuantB;
 
             if (match3.Success)
             {
                 var prefixName = match3.Groups["PrefixName"].Value;
 
-                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
-                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+                isMaxQuantB = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                              prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
 
                 paramGroupIndexOrNumber = int.Parse(match3.Groups["GroupIndex"].Value);
             }
             else
             {
                 paramGroupIndexOrNumber = 0;
+                isMaxQuantB = false;
             }
 
             // Examine the comment to look for MaxQuant fraction numbers (must be numeric)
@@ -654,20 +658,24 @@ namespace AnalysisManagerBase.JobConfig
             var match4 = maxQuantFractionMatcher.Match(packageComment);
 
             int fractionNumber;
+            bool isMaxQuantC;
 
             if (match4.Success)
             {
                 var prefixName = match4.Groups["PrefixName"].Value;
 
-                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
-                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+                isMaxQuantC = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                              prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
 
                 fractionNumber = int.Parse(match4.Groups["FractionNumber"].Value);
             }
             else
             {
                 fractionNumber = 0;
+                isMaxQuantC = false;
             }
+
+            isMaxQuant = isMaxQuantA || isMaxQuantB || isMaxQuantC;
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
