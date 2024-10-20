@@ -398,14 +398,9 @@ namespace AnalysisManagerBase.JobConfig
             {
                 var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
 
-                if (!dataPackageJobs.ContainsKey(dataPkgJob.Job))
+                if (dataPackageJobs.TryGetValue(dataPkgJob.Job, out var existingPkgJob))
                 {
-                    dataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
-                }
-                else
-                {
-                    // Existing job; append an additional SharedResultsFolder
-                    var existingPkgJob = dataPackageJobs[dataPkgJob.Job];
+                    // Existing job; append an additional shared results folder
 
                     foreach (var sharedResultsFolder in dataPkgJob.SharedResultsFolders)
                     {
@@ -414,6 +409,10 @@ namespace AnalysisManagerBase.JobConfig
 
                         existingPkgJob.SharedResultsFolders.Add(sharedResultsFolder);
                     }
+                }
+                else
+                {
+                    dataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
                 }
             }
 
