@@ -221,7 +221,7 @@ namespace AnalysisManagerBase.JobConfig
 
             foreach (DataRow curRow in resultSet.Rows)
             {
-                var datasetInfo = ParseDataPackageDatasetInfoRow(curRow);
+                var datasetInfo = ParseDataPackageDatasetInfoRow(curRow, out var isMaxQuant);
 
                 if (placeholderDatasetMatcher.IsMatch(datasetInfo.Dataset))
                 {
@@ -240,10 +240,10 @@ namespace AnalysisManagerBase.JobConfig
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup) || int.TryParse(datasetInfo.DatasetExperimentGroup, out _))
+                if (string.IsNullOrWhiteSpace(datasetInfo.DatasetExperimentGroup) || isMaxQuant && int.TryParse(datasetInfo.DatasetExperimentGroup, out _))
                 {
                     // The data package did not have a custom experiment group name defined in the dataset comment of the data package
-                    // Or, the dataset experiment group is an integer
+                    // Or, the dataset experiment group is an integer, which indicates a MaxQuant Parameter Group (described at https://prismwiki.pnl.gov/wiki/MaxQuant#MaxQuant_Parameter_Groups)
 
                     // Optionally use the dataset name or experiment name for Dataset Experiment Group
                     if (autoDefineExperimentGroupWithDatasetName)
@@ -526,7 +526,7 @@ namespace AnalysisManagerBase.JobConfig
             }
         }
 
-        private static DataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow)
+        private static DataPackageDatasetInfo ParseDataPackageDatasetInfoRow(DataRow curRow, out bool isMaxQuant)
         {
             var datasetName = curRow["dataset"].CastDBVal<string>();
             var datasetId = curRow["dataset_id"].CastDBVal<int>();
@@ -564,9 +564,10 @@ namespace AnalysisManagerBase.JobConfig
                 var prefixName = match1.Groups["PrefixName"].Value;
                 var groupNameOrId = match1.Groups["GroupName"].Value;
 
-                if ((prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
-                    prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase)) &&
-                    int.TryParse(groupNameOrId, out _))
+                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+
+                if (isMaxQuant && int.TryParse(groupNameOrId, out _))
                 {
                     // Matched a MaxQuant Group ID
                     // To avoid integer-based result file names, store Group1, Group2, etc.
@@ -590,11 +591,17 @@ namespace AnalysisManagerBase.JobConfig
 
                 if (match2.Success)
                 {
+                    var prefixName = match2.Groups["PrefixName"].Value;
+
                     datasetExperimentGroup = match2.Groups["GroupName"].Value;
+
+                    isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                                 prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
                     datasetExperimentGroup = string.Empty;
+                    isMaxQuant = false;
                 }
             }
 
@@ -606,13 +613,25 @@ namespace AnalysisManagerBase.JobConfig
             //   MaxQuant Group 1
             //   Maxq Group: 3
             //   MQ Group 10
-            var maxQuantGroupMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Group[_ :]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var maxQuantGroupMatcher = new Regex(@"(?<PrefixName>MaxQuant|Maxq|MQ)[_ ]*Group[_ :]*(?<GroupIndex>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match3 = maxQuantGroupMatcher.Match(packageComment);
 
-            var paramGroupIndexOrNumber = match3.Success
-                ? int.Parse(match3.Groups["GroupIndex"].Value)
-                : 0;
+            int paramGroupIndexOrNumber;
+
+            if (match3.Success)
+            {
+                var prefixName = match3.Groups["PrefixName"].Value;
+
+                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+
+                paramGroupIndexOrNumber = int.Parse(match3.Groups["GroupIndex"].Value);
+            }
+            else
+            {
+                paramGroupIndexOrNumber = 0;
+            }
 
             // Examine the comment to look for MaxQuant fraction numbers (must be numeric)
             // Fraction numbers are used during Match Between Runs to determine which datasets to examine to find additional PSMs
@@ -631,13 +650,25 @@ namespace AnalysisManagerBase.JobConfig
             //   MaxQuant Fraction 1
             //   Maxq Fraction: 3
             //   MQ Fraction 10
-            var maxQuantFractionMatcher = new Regex(@"(MaxQuant|Maxq|MQ)[_ ]*Fraction[_ :]*(?<FractionNumber>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var maxQuantFractionMatcher = new Regex(@"(?<PrefixName>MaxQuant|Maxq|MQ)[_ ]*Fraction[_ :]*(?<FractionNumber>\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
             var match4 = maxQuantFractionMatcher.Match(packageComment);
 
-            var fractionNumber = match4.Success
-                ? int.Parse(match4.Groups["FractionNumber"].Value)
-                : 0;
+            int fractionNumber;
+
+            if (match4.Success)
+            {
+                var prefixName = match4.Groups["PrefixName"].Value;
+
+                isMaxQuant = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
+                             prefixName.StartsWith("MQ", StringComparison.OrdinalIgnoreCase);
+
+                fractionNumber = int.Parse(match4.Groups["FractionNumber"].Value);
+            }
+            else
+            {
+                fractionNumber = 0;
+            }
 
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
