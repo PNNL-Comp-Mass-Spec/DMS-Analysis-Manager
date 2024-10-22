@@ -1145,7 +1145,8 @@ namespace AnalysisManagerFragPipePlugIn
                 { FIRST_SEARCH_DONE + 1   , GetRegEx(@"^\*+MASS CALIBRATION AND PARAMETER OPTIMIZATION\*+") },
                 { MAIN_SEARCH_START       , GetRegEx(@"^\*+MAIN SEARCH\*+") },
                 { MAIN_SEARCH_DONE        , GetRegEx(@"^\*+MAIN SEARCH DONE") },
-                { MAIN_SEARCH_DONE + 1    , GetRegEx("^Percolator[: ]") },
+                { MAIN_SEARCH_DONE + 1    , GetRegEx("^MSBooster[: ]") },
+                { 53                      , GetRegEx("^Percolator[: ]") },
                 { 55                      , GetRegEx("^PTMProphet[: ]") },
                 { 60                      , GetRegEx("^ProteinProphet[: ]") },
                 { 70                      , GetRegEx("^PhilosopherDbAnnotate[: ]") },
@@ -1439,7 +1440,7 @@ namespace AnalysisManagerFragPipePlugIn
                     return;
                 }
 
-                if (effectiveProgressOverall < mProgress)
+                if (effectiveProgressOverall < mProgress && mProgress > (int)ProgressPercentValues.StartingFragPipe)
                 {
                     // Show a message if the new progress value is less than the current progress value
                     // This could be an indication that the progress computation logic needs to be updated
