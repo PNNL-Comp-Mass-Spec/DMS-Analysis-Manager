@@ -930,7 +930,7 @@ namespace AnalysisManagerFragPipePlugIn
                 experimentGroupNames.Add(item);
             }
 
-            var experimentCount = experimentGroupNames.Count;
+            var experimentGroupCount = experimentGroupNames.Count;
 
             // Populate a dictionary with experiment group names and corresponding working directories
             foreach (var experimentGroupName in experimentGroupNames)
@@ -949,7 +949,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
             }
 
-            if (experimentCount <= 1)
+            if (experimentGroupCount <= 1)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

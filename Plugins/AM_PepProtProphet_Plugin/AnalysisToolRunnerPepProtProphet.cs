@@ -1447,12 +1447,12 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 mCurrentPhilosopherTool = PhilosopherToolType.WorkspaceManager;
 
-                var experimentCount = experimentGroupNames.Count;
+                var experimentGroupCount = experimentGroupNames.Count;
 
                 // Populate a dictionary with experiment group names and corresponding working directories
                 foreach (var experimentGroupName in experimentGroupNames)
                 {
-                    var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentCount);
+                    var workingDirectory = GetExperimentGroupWorkingDirectory(experimentGroupName, experimentGroupCount);
 
                     mExperimentGroupWorkingDirectories.Add(experimentGroupName, workingDirectory);
                 }
@@ -1465,7 +1465,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 if (workDirSuccess != CloseOutType.CLOSEOUT_SUCCESS)
                     return workDirSuccess;
 
-                if (experimentCount <= 1)
+                if (experimentGroupCount <= 1)
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // Since we have multiple experiment groups, initialize the workspace for each one
