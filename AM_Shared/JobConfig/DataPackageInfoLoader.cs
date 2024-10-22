@@ -204,17 +204,28 @@ namespace AnalysisManagerBase.JobConfig
             // The ToolName job parameter holds the name of the job script we are executing
             var scriptName = callingClass.JobParams.GetJobParameter("ToolName", "MSFragger or FragPipe");
 
+            // This holds a message that will be shown if one or more datasets does not have an experiment group name defined in the package_comment column
+            string autoDefineMessage;
+
             if (autoDefineExperimentGroupWithDatasetName)
             {
-                // Auto defining FragPipe experiment group names using dataset names
-                // Auto defining MSFragger experiment group names using dataset names
-                callingClass.LogMessage("Auto defining {0} experiment group names using dataset names", scriptName);
+                // Datasets without a 'Package Comment' will have their FragPipe experiment group name auto-defined using dataset name
+                // Datasets without a 'Package Comment' will have their FragPipe_DataPkg experiment group name auto-defined using dataset name
+                // Datasets without a 'Package Comment' will have their MSFragger experiment group name auto-defined using dataset name
+                autoDefineMessage = string.Format("Datasets without a 'Package Comment' will have their " +
+                                                  "{0} experiment group name auto-defined using dataset name", scriptName);
             }
             else if (autoDefineExperimentGroupWithExperimentName)
             {
-                // Auto defining FragPipe experiment group names using experiment names
-                // Auto defining MSFragger experiment group names using experiment names
-                callingClass.LogMessage("Auto defining {0} experiment group names using experiment names", scriptName);
+                // Datasets without a 'Package Comment' will have their FragPipe experiment group name auto-defined using experiment name
+                // Datasets without a 'Package Comment' will have their FragPipe_DataPkg experiment group name auto-defined using experiment name
+                // Datasets without a 'Package Comment' will have their MSFragger experiment group name auto-defined using experiment name
+                autoDefineMessage = string.Format("Datasets without a 'Package Comment' will have their " +
+                                                  "{0} experiment group name auto-defined using experiment name", scriptName);
+            }
+            else
+            {
+                autoDefineMessage = string.Empty;
             }
 
             // ReSharper disable once NotAccessedVariable
@@ -272,7 +283,7 @@ namespace AnalysisManagerBase.JobConfig
 
             if (dataPackageDatasets.Count == 0)
             {
-                errorMessage = string.Format("No datasets were found for data package ID {0} using view V_DMS_Data_Package_Datasets", dataPackageID);
+                errorMessage = string.Format("No datasets were found for data package ID {0} using view sw.v_dms_data_package_datasets", dataPackageID);
 
                 if (logErrors)
                 {
@@ -284,6 +295,11 @@ namespace AnalysisManagerBase.JobConfig
 
             if (customNameExperimentGroupCount == 0)
             {
+                if (!string.IsNullOrWhiteSpace(autoDefineMessage))
+                {
+                    callingClass.LogMessage(autoDefineMessage);
+                }
+
                 errorMessage = string.Empty;
                 return true;
             }
@@ -302,6 +318,11 @@ namespace AnalysisManagerBase.JobConfig
 
             // ReSharper disable once StringLiteralTypo
             callingClass.LogMessage("{0} had a custom experiment group defined in the dataset's 'Package Comment' field", datasetDescription);
+
+            if (customNameExperimentGroupCount < dataPackageDatasets.Count && !string.IsNullOrWhiteSpace(autoDefineMessage))
+            {
+                callingClass.LogMessage(autoDefineMessage);
+            }
 
             errorMessage = string.Empty;
             return true;
