@@ -158,11 +158,13 @@ namespace AnalysisManagerBase.JobConfig
             // Query view sw.v_dms_data_package_datasets                              (on SQL Server, view V_DMS_Data_Package_Datasets in the DMS_Pipeline database)
             // That view references view dpkg.v_dms_data_package_aggregation_datasets (on SQL Server, view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database)
 
+            var viewSchema = dbTools.DbServerType == DbServerTypes.PostgreSQL ? "sw." : string.Empty;
+
             sqlStr.Append("SELECT dataset, dataset_id, instrument_name, instrument_group, package_comment,");
             sqlStr.Append("       experiment, experiment_reason, experiment_comment, organism,");
             sqlStr.Append("       experiment_newt_id, experiment_newt_name, experiment_tissue_id, experiment_tissue_name,");
             sqlStr.Append("       dataset_folder_path, archive_folder_path, dataset_type, raw_data_type ");
-            sqlStr.Append("FROM V_DMS_Data_Package_Datasets ");
+            sqlStr.AppendFormat("FROM {0}v_dms_data_package_datasets ", viewSchema);
             sqlStr.Append("WHERE data_pkg_id = " + dataPackageID + " ");
             sqlStr.Append("ORDER BY dataset");
 
@@ -332,13 +334,15 @@ namespace AnalysisManagerBase.JobConfig
             // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs
             // Order by Step ascending, since the SharedResultsFolders list is processed in reverse (last item first)
 
+            var viewSchema = dbTools.DbServerType == DbServerTypes.PostgreSQL ? "sw." : string.Empty;
+
             sqlStr.Append("SELECT job, dataset, dataset_id, instrument_name, instrument_group,");
             sqlStr.Append("       experiment, experiment_reason, experiment_comment, organism, experiment_newt_id, experiment_newt_name,");
             sqlStr.Append("       tool, result_type, settings_file_name, parameter_file_name,");
             sqlStr.Append("       organism_db_name, protein_collection_list, protein_options,");
             sqlStr.Append("       server_storage_path, archive_storage_path, results_folder, dataset_folder,");
             sqlStr.Append("       step, shared_results_folder, raw_data_type ");
-            sqlStr.Append("FROM V_DMS_Data_Package_Aggregation_Jobs ");
+            sqlStr.AppendFormat("FROM {0}v_dms_data_package_aggregation_jobs ", viewSchema);
             sqlStr.Append("WHERE data_pkg_id = " + dataPackageID + " ");
             sqlStr.Append("ORDER BY dataset, tool, job, step");
 
@@ -360,11 +364,12 @@ namespace AnalysisManagerBase.JobConfig
                 // If the data package exists and has datasets associated with it, log this as a warning but return true
                 // Otherwise, log an error and return false
 
-                // Use V_DMS_Data_Package_Datasets in the DMS_Pipeline database to count the number of datasets in the data package
+                // Use view v_dms_data_package_datasets to count the number of datasets in the data package
+                // On SQL Server, this view is in the DMS_Pipeline database
 
                 sqlStr.Clear();
                 sqlStr.Append("SELECT Count(*) AS datasets ");
-                sqlStr.Append("FROM V_DMS_Data_Package_Datasets ");
+                sqlStr.AppendFormat("FROM {0}v_dms_data_package_datasets ", viewSchema);
                 sqlStr.Append("WHERE data_pkg_id = " + dataPackageID);
 
                 var successForDatasets = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var dataPackageDatasets);
@@ -593,7 +598,6 @@ namespace AnalysisManagerBase.JobConfig
                 if (match2.Success)
                 {
                     var prefixName = match2.Groups["PrefixName"].Value;
-
                     datasetExperimentGroup = match2.Groups["GroupName"].Value;
 
                     isMaxQuantA = prefixName.StartsWith("MaxQ", StringComparison.OrdinalIgnoreCase) ||
