@@ -247,11 +247,17 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private void AppendAdditionalArguments(DiaNNOptions options, StringBuilder arguments)
         {
-            if (options.MatchBetweenRuns)
-            {
-                // ReSharper disable once StringLiteralTypo
+            // The following is shown by DIA-NN v1.9.2:
+            // "WARNING: it is strongly recommended to enable MBR when analysing with a large library, if this is a quantitative analysis"
 
-                // Enable Match-Between-Runs (including when searching just one dataset, effective with DIA-NN v1.9.2)
+            // However, testing shows that if --reanalyse is used when only one dataset is being searched, the software will disable it, showing:
+            // "WARNING: MBR turned off, two or more raw files are required"
+
+            // Therefore, only use --reanalyse if there are multiple datasets
+
+            if (options.MatchBetweenRuns && mDatasetCount > 1)
+            {
+                // Enable Match-Between-Runs
                 arguments.Append(" --reanalyse");
             }
 
