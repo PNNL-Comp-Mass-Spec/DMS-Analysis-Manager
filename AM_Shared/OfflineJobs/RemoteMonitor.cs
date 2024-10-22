@@ -647,7 +647,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 using (var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    char[] sepChars = { '=' };
+                    char[] sepChars = ['='];
 
                     while (!reader.EndOfStream)
                     {
@@ -808,7 +808,7 @@ namespace AnalysisManagerBase.OfflineJobs
 
                 using var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                char[] sepChars = { '=' };
+                char[] sepChars = ['='];
 
                 while (!reader.EndOfStream)
                 {
