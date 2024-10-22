@@ -1792,7 +1792,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Initialize the Philosopher workspace (creates a hidden directory named .meta)
             // If Experiment Groups are defined, we also create a subdirectory for each experiment group and initialize it
 
-            var experimentGroupNames = new SortedSet<string>();
+            var experimentGroupNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in datasetIDsByExperimentGroup.Keys)
             {

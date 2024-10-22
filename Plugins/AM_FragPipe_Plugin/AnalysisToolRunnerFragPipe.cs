@@ -923,7 +923,7 @@ namespace AnalysisManagerFragPipePlugIn
             // If Experiment Groups are defined, create a subdirectory for each experiment group
             // If using TMT, put a separate annotation.txt file in each subdirectory (the filename must end with "annotation.txt")
 
-            var experimentGroupNames = new SortedSet<string>();
+            var experimentGroupNames = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var item in datasetIDsByExperimentGroup.Keys)
             {
