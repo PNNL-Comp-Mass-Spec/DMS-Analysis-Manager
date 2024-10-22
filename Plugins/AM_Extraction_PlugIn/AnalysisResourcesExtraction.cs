@@ -938,6 +938,9 @@ namespace AnalysisManagerExtractionPlugin
                 if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.Equals("reprint.int.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.Equals("reprint.spc.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.StartsWith("combined_site_", StringComparison.OrdinalIgnoreCase) ||
                     retrievedFiles.Contains(tsvFile.Name))
                 {
                     // Either this is not a Dataset_psm.tsv file, or the file was already retrieved (via Dataset_PSM_tsv.zip)
