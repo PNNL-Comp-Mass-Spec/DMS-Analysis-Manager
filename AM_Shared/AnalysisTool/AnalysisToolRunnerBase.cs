@@ -1713,9 +1713,7 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             var jobParameters = new Dictionary<string, string>();
 
-            var extractedParams = ExtractPackedJobParameterList(packedJobParameterName);
-
-            foreach (var paramEntry in extractedParams)
+            foreach (var paramEntry in ExtractPackedJobParameterList(packedJobParameterName))
             {
                 var equalsIndex = paramEntry.LastIndexOf('=');
 
