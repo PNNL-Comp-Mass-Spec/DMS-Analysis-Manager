@@ -188,6 +188,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private int GetDatasetCountAndCacheExperimentNames()
         {
+            // Output parameter errorMessage is ignored here because logErrors is true
             var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets, out _, true);
 
             // Populate a SortedSet with the experiments in the data package (or, if no data package, this job's experiment)
