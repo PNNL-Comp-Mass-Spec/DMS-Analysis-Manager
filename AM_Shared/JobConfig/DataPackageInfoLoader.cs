@@ -155,8 +155,8 @@ namespace AnalysisManagerBase.JobConfig
 
             var sqlStr = new StringBuilder();
 
-            // Note that this queries view V_DMS_Data_Package_Datasets in the DMS_Pipeline database
-            // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
+            // Query view sw.v_dms_data_package_datasets                              (on SQL Server, view V_DMS_Data_Package_Datasets in the DMS_Pipeline database)
+            // That view references view dpkg.v_dms_data_package_aggregation_datasets (on SQL Server, view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database)
 
             sqlStr.Append("SELECT dataset, dataset_id, instrument_name, instrument_group, package_comment,");
             sqlStr.Append("       experiment, experiment_reason, experiment_comment, organism,");
@@ -325,8 +325,8 @@ namespace AnalysisManagerBase.JobConfig
 
             var sqlStr = new StringBuilder();
 
-            // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
-            // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
+            // Note that this queries view sw.v_dms_data_package_aggregation_jobs (on SQL Server, view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database)
+            // That view references view dpkg.v_dms_data_package_aggregation_jobs (on SQL Server, view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database)
             // The two views have the same name, but some columns differ
 
             // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs

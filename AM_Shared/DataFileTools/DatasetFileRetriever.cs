@@ -108,7 +108,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// Retrieve instrument files for either the current job (if dataPackageID is 0)
         /// or for the jobs associated with a data package
         /// </summary>
-        /// <param name="dataPackageID">0 to use the current job and dataset, non-zero to use jobs in a data package</param>
+        /// <param name="dataPackageID">0 to use the current job and dataset, positive number to use datasets in a data package</param>
         /// <param name="retrieveMsXmlFiles">
         /// <para>
         /// True if this job's settings file indicates to use .mzML (or .mzXML) files instead of the original instrument file
@@ -160,7 +160,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Determine the dataset files associated with the current data package
         /// </summary>
-        /// <param name="dataPackageInfo">Data package info</param>
+        /// <param name="dataPackageInfo">Data package info; dictionaries in this object will be populated by this method (using data obtained from RetrieveDataPackageDatasetFiles)</param>
         /// <param name="retrieveMsXmlFiles">
         /// <para>
         /// True if this job's settings file indicates to use .mzML (or .mzXML) files instead of the original instrument file
@@ -188,8 +188,10 @@ namespace AnalysisManagerBase.DataFileTools
 
                 var filesRetrieved = RetrieveDataPackageDatasetFiles(
                     retrieveMsXmlFiles,
-                    out dataPackageDatasets, out var datasetRawFilePaths,
-                    0, progressPercentAtFinish,
+                    out dataPackageDatasets,
+                    out var datasetRawFilePaths,
+                    0,
+                    progressPercentAtFinish,
                     skipDatasetsWithExistingMzML
                     );
 

@@ -106,7 +106,7 @@ namespace AnalysisManagerBase.JobConfig
         /// For MaxQuant, overrides the experiment name for the given dataset (in the MaxQuant parameter file)
         /// </para>
         /// <para>
-        /// For MSFragger, used to roll up quantitation info amongst datasets in the same group
+        /// For MSFragger (and FragPipe), used to roll up quantitation info amongst datasets in the same group
         /// </para>
         /// <para>
         /// aka ExperimentGroup or ExperimentGroupName

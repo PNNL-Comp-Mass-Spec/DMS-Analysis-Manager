@@ -481,7 +481,7 @@ namespace AnalysisManagerBase.OfflineJobs
                 // Note: do not configure status to push to the BrokerDB or the MessageQueue
                 // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
                 // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
-                // The Status Message DB Updater will then push that info into table T_Processor_Status in the DMS_Pipeline database
+                // The Status Message DB Updater will then push that info into table sw.t_processor_status (on SQL Server, table T_Processor_Status in the DMS_Pipeline database)
 
                 var mgrStatus = XMLUtils.GetXmlValue(managerInfo, "MgrStatus");
                 status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
