@@ -3344,7 +3344,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     dataPackageError = true;
                 }
 
-                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
+                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>(StringComparer.OrdinalIgnoreCase);
                 return false;
             }
             catch (Exception ex)
@@ -3352,7 +3352,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 LogError("Error in LookupDataPackageInfo calling LoadDataPackageDatasetInfo", ex);
                 dataPackageError = true;
 
-                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>();
+                datasetIDsByExperimentGroup = new SortedDictionary<string, SortedSet<int>>(StringComparer.OrdinalIgnoreCase);
                 return false;
             }
         }

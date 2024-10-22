@@ -235,7 +235,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mFastaFilePath = string.Empty;
 
-                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>(StringComparer.OrdinalIgnoreCase);
 
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 

@@ -107,7 +107,7 @@ public static class ReporterIonInfo
     /// <returns>Dictionary mapping experiment group name to abbreviated name</returns>
     public static Dictionary<string, string> GetAbbreviatedExperimentGroupNames(IReadOnlyList<string> experimentGroupNames)
     {
-        var experimentGroupNameMap = new Dictionary<string, string>();
+        var experimentGroupNameMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         switch (experimentGroupNames.Count)
         {

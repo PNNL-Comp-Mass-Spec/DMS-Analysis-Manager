@@ -118,7 +118,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
-                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>();
+                mExperimentGroupWorkingDirectories = new Dictionary<string, DirectoryInfo>(StringComparer.OrdinalIgnoreCase);
 
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
