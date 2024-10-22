@@ -247,11 +247,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private void AppendAdditionalArguments(DiaNNOptions options, StringBuilder arguments)
         {
-            if (options.MatchBetweenRuns && mDatasetCount > 1)
+            if (options.MatchBetweenRuns)
             {
                 // ReSharper disable once StringLiteralTypo
 
-                // Enable Match-Between-Runs
+                // Enable Match-Between-Runs (including when searching just one dataset, effective with DIA-NN v1.9.2)
                 arguments.Append(" --reanalyse");
             }
 
