@@ -1573,7 +1573,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (string.IsNullOrWhiteSpace(workflowFilePath))
                 {
-                    LogError("FragPipe workflow file name returned by UpdateFragPipeParameterFile is empty");
+                    LogError("FragPipe workflow file name returned by UpdateFragPipeWorkflowFile is empty");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
