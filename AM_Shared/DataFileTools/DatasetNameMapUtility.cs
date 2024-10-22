@@ -153,6 +153,8 @@ namespace AnalysisManagerBase.DataFileTools
                     var baseNameToAdd = CombineDatasetNameParts(item.Key, item.Value, partCountToUse, 12, 25);
                     baseNameByDatasetName.Add(item.Key, baseNameToAdd);
 
+                    // ReSharper disable once CanSimplifySetAddingWithSingleCall
+
                     if (baseDatasetNames.Contains(baseNameToAdd))
                     {
                         warnings.Add(string.Format(
