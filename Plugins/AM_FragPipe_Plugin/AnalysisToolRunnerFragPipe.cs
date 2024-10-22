@@ -1577,9 +1577,9 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var datasetCount = dataPackageInfo.DatasetFiles.Count;
+                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
 
-                var options = new FragPipeOptions(mJobParams, datasetCount);
+                var options = new FragPipeOptions(mJobParams, mDatasetCount);
                 RegisterEvents(options);
 
                 options.LoadFragPipeOptions(workflowFilePath);
@@ -1599,7 +1599,6 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                mDatasetCount = dataPackageInfo.DatasetFiles.Count;
                 mWarnedInvalidDatasetCount = false;
 
                 LogMessage("Running FragPipe");
