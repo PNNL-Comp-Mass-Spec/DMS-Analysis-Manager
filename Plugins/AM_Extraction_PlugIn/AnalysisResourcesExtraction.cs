@@ -888,7 +888,9 @@ namespace AnalysisManagerExtractionPlugin
                     if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathZipFile, logFileNotFound: false))
                     {
                         if (string.IsNullOrWhiteSpace(sourceDirPath))
+                        {
                             sourceDirPath = sourceDirPathZipFile;
+                        }
 
                         mJobParams.AddResultFileToSkip(fileName);
 
@@ -948,12 +950,18 @@ namespace AnalysisManagerExtractionPlugin
                     continue;
                 }
 
-                if (tsvFile.DirectoryName != null && tsvFile.DirectoryName.Equals("tmt-report", StringComparison.OrdinalIgnoreCase))
+                if (tsvFile.Directory == null)
+                {
+                    LogWarning("Unable to determine the parent directory of the Dataset.tsv file: {0}", tsvFile.FullName);
+                    continue;
+                }
+
+                if (tsvFile.Directory.Name.Equals("tmt-report", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
 
-                if (FileSearchTool.FindAndRetrieveMiscFiles(tsvFile.Name, false))
+                if (mFileCopyUtilities.CopyFileToWorkDir(tsvFile.Name, tsvFile.Directory.FullName, mWorkDir, BaseLogger.LogLevels.ERROR, false))
                 {
                     mJobParams.AddResultFileToSkip(tsvFile.Name);
                 }
@@ -1144,8 +1152,7 @@ namespace AnalysisManagerExtractionPlugin
                         var mzidFile = baseName + mzidSuffix;
                         currentStep = "Retrieving " + mzidFile;
 
-                        if (!FileSearchTool.FindAndRetrieveMiscFiles(mzidFile, unzip: true,
-                                                                 searchArchivedDatasetDir: true, logFileNotFound: true))
+                        if (!FileSearchTool.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetDir: true, logFileNotFound: true))
                         {
                             // Errors were reported in method call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -1156,8 +1163,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (!mzidFileInfo.Exists)
                         {
-                            LogError(string.Format(
-                                         "FileSearch.FindAndRetrieveMiscFiles returned true, but {0} was not found in the working directory", mzidFile));
+                            LogError(string.Format("FileSearch.FindAndRetrieveMiscFiles returned true, but {0} was not found in the working directory", mzidFile));
                         }
 
                         if (mzidFileInfo.LastWriteTimeUtc > newestMzIdOrTsvFile)
