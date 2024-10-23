@@ -930,10 +930,11 @@ namespace AnalysisManagerExtractionPlugin
 
             // Now copy the individual Dataset.tsv file(s), which we'll treat as optional
             // PHRP reads data from columns num_matched_ions and tot_num_ions and includes these in the synopsis file
+            // For FragPipe, the Dataset.tsv files are stored in subdirectories when more than one experiment group is defined
 
             var sourceDirectory = new DirectoryInfo(sourceDirPath);
 
-            foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv"))
+            foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv", SearchOption.AllDirectories))
             {
                 if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
@@ -944,6 +945,11 @@ namespace AnalysisManagerExtractionPlugin
                     retrievedFiles.Contains(tsvFile.Name))
                 {
                     // Either this is not a Dataset_psm.tsv file, or the file was already retrieved (via Dataset_PSM_tsv.zip)
+                    continue;
+                }
+
+                if (tsvFile.DirectoryName != null && tsvFile.DirectoryName.Equals("tmt-report", StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
                 }
 
