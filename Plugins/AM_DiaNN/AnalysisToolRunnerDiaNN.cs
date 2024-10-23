@@ -1377,7 +1377,12 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.Append(" --fasta-search");
                 arguments.AppendFormat(" --min-fr-mz {0}", options.FragmentIonMzMin);
                 arguments.AppendFormat(" --max-fr-mz {0}", options.FragmentIonMzMax);
-                arguments.Append(" --met-excision");
+
+                if (options.TrimNTerminalMethionine)
+                {
+                    arguments.Append(" --met-excision");
+                }
+
                 arguments.AppendFormat(" --cut {0}", options.CleavageSpecificity);
                 arguments.AppendFormat(" --missed-cleavages {0}", options.MissedCleavages);
                 arguments.AppendFormat(" --min-pep-len {0}", options.PeptideLengthMin);
@@ -1468,7 +1473,12 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
                 arguments.Append(" --gen-spec-lib");
                 arguments.AppendFormat(" --fasta {0}", fastaFile.FullName);
-                arguments.Append(" --met-excision");
+
+                if (options.TrimNTerminalMethionine)
+                {
+                    arguments.Append(" --met-excision");
+                }
+
                 arguments.AppendFormat(" --cut {0}", options.CleavageSpecificity);
                 arguments.AppendFormat(" --var-mods {0}", options.MaxDynamicModsPerPeptide);
 
