@@ -417,6 +417,8 @@ namespace AnalysisManagerFragPipePlugIn
                     var genericAliasFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasNames.txt"));
                     var genericAliasFile2 = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "AliasName.txt"));
 
+                    var targetFile = new FileInfo(Path.Combine(experimentGroup.Value.FullName, experimentSpecificAliasFile.Name));
+
                     if (experimentSpecificAliasFile.Exists || genericAliasFile.Exists || genericAliasFile2.Exists)
                     {
                         FileInfo sourceAnnotationFile;
@@ -441,15 +443,13 @@ namespace AnalysisManagerFragPipePlugIn
                             throw new Exception("If statement logic error in CreateReporterIonAnnotationFiles when determining the source and target annotation.txt files");
                         }
 
-                        var targetFile = new FileInfo(Path.Combine(experimentGroup.Value.FullName, experimentSpecificAliasFile.Name));
-
                         sourceAnnotationFile.CopyTo(targetFile.FullName);
                         continue;
                     }
 
                     LogMessage(
                         "{0} alias file not found; will auto-generate file {1} for use by TMT Integrator",
-                        reporterIonType, experimentSpecificAliasFile.Name);
+                        reporterIonType, targetFile.Name);
 
                     string prefixToUse;
 
@@ -463,7 +463,7 @@ namespace AnalysisManagerFragPipePlugIn
                         prefixToUse = string.Empty;
                     }
 
-                    var annotationFile = CreateReporterIonAnnotationFile(options.ReporterIonMode, experimentSpecificAliasFile, prefixToUse);
+                    var annotationFile = CreateReporterIonAnnotationFile(options.ReporterIonMode, targetFile, prefixToUse);
 
                     if (annotationFile == null)
                         return false;
@@ -2480,7 +2480,7 @@ namespace AnalysisManagerFragPipePlugIn
                             }
                             else
                             {
-                                // FragPipe did not create a .pepXML file
+                                // FragPipe did not create a .pepXML file for dataset
                                 LogError(string.Format("FragPipe did not create a .pepXML file{0}", optionalDatasetInfo));
                             }
 
