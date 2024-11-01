@@ -259,14 +259,15 @@ namespace AnalysisManagerBase.JobConfig
                     // Or, the dataset experiment group is an integer, which indicates a MaxQuant Parameter Group (described at https://prismwiki.pnl.gov/wiki/MaxQuant#MaxQuant_Parameter_Groups)
 
                     // Optionally use the dataset name or experiment name for Dataset Experiment Group
+                    // Replace dashes with underscores because MSBooster for FragPipe v23 auto-changes dashes to underscores
                     if (autoDefineExperimentGroupWithDatasetName)
                     {
-                        datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset;
+                        datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset.Replace('-', '_');
                         autoDefinedExperimentGroupCount++;
                     }
                     else if (autoDefineExperimentGroupWithExperimentName)
                     {
-                        datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment;
+                        datasetInfo.DatasetExperimentGroup = datasetInfo.Experiment.Replace('-', '_');
                         autoDefinedExperimentGroupCount++;
                     }
                 }
@@ -702,6 +703,11 @@ namespace AnalysisManagerBase.JobConfig
 
             isMaxQuant = isMaxQuantA || isMaxQuantB || isMaxQuantC;
 
+            // If running MSFragger or FragPipe, replace dashes with underscores because MSBooster for FragPipe v23 auto-changes dashes to underscores
+            var datasetExperimentGroupToUse = isMaxQuant
+                ? datasetExperimentGroup
+                : datasetExperimentGroup.Replace('-', '_');
+
             return new DataPackageDatasetInfo(datasetName, datasetId)
             {
                 Instrument = curRow["instrument_name"].CastDBVal<string>(),
@@ -719,7 +725,7 @@ namespace AnalysisManagerBase.JobConfig
                 DatasetType = curRow["dataset_type"].CastDBVal<string>(),
                 RawDataType = curRow["raw_data_type"].CastDBVal<string>(),
                 DataPackageComment = packageComment,
-                DatasetExperimentGroup = datasetExperimentGroup,
+                DatasetExperimentGroup = datasetExperimentGroupToUse,
                 MaxQuantParamGroup = paramGroupIndexOrNumber,
                 MaxQuantFractionNumber = fractionNumber
             };
