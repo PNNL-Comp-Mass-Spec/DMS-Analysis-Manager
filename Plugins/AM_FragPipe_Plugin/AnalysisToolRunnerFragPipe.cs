@@ -1533,6 +1533,7 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     if (fragPipeLogFileMatcher.IsMatch(logFile.Name))
                     {
+                        // This is a file of the form log_2024-11-01_11-38-19.txt; skip it
                         mJobParams.AddResultFileToSkip(logFile.Name);
                     }
                 }
