@@ -1452,7 +1452,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         break;
 
                     default:
-                        // Processing a single .mzML file
+                        // Processing a single .mzML file or a single TimsTOF .d directory
                         arguments.AppendFormat(" --f \"{0}\"", Path.Combine(mWorkDir, dataPackageInfo.DatasetFiles.First().Value));
                         break;
                 }
@@ -1510,7 +1510,11 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --pg-level 2");
                         break;
 
+#pragma warning disable RCS1069
                     case ProteinInferenceModes.Off:
+                        // Do not append a parameter
+#pragma warning restore RCS1069
+
                     default:
                         arguments.AppendFormat(" --no-prot-inf");
                         break;
@@ -1529,7 +1533,11 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --high-acc");
                         break;
 
+#pragma warning disable RCS1069
                     case QuantificationAlgorithms.HighPrecision:
+                        // Do not append a parameter
+#pragma warning restore RCS1069
+
                     default:
                         break;
                 }
@@ -1544,7 +1552,11 @@ namespace AnalysisManagerDiaNNPlugIn
                         arguments.AppendFormat(" --no-norm");
                         break;
 
+#pragma warning disable RCS1069
                     case CrossRunNormalizationModes.RTDependent:
+                        // Do not append a parameter
+#pragma warning restore RCS1069
+
                     default:
                         break;
                 }

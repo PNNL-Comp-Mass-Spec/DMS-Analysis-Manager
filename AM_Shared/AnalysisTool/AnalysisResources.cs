@@ -536,7 +536,7 @@ namespace AnalysisManagerBase.AnalysisTool
             BrukerTOFBaf = 12,
 
             /// <summary>
-            /// Used by External_Bruker_timsTOF; Inside the .D directory are files analysis.tdf and analysis.tdf_bin
+            /// Used by timsTOFScp01, timsTOFFlex02, and timsTOFFlex02_Imaging; Inside the .D directory are files analysis.tdf and analysis.tdf_bin
             /// </summary>
             BrukerTOFTdf = 13
         }
