@@ -119,8 +119,14 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
-                // Require that the input files be mzML files
-                const bool retrieveMsXmlFiles = true;
+                // The ToolName job parameter holds the name of the pipeline script we are executing
+                var scriptName = mJobParams.GetParam("ToolName");
+
+
+                // If the script is DiaNN or DiaNN_DataPkg, the input file is a .mzML file
+                // If the script is DiaNN_timsTOF or DiaNN_timsTOF_DataPkg, the input file is the .tdf file in the .d directory
+
+                var retrieveMsXmlFiles = !scriptName.StartsWith("DiaNN_timsTOF", StringComparison.OrdinalIgnoreCase);
 
                 LogMessage("Getting param file", 2);
 

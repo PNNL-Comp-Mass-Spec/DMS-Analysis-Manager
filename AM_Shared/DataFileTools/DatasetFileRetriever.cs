@@ -82,8 +82,9 @@ namespace AnalysisManagerBase.DataFileTools
                     return mResourceClass.DatasetName + AnalysisResources.DOT_RAW_EXTENSION;
 
                 case AnalysisResources.RawDataTypeConstants.AgilentDFolder:
-                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
                 case AnalysisResources.RawDataTypeConstants.BrukerFTFolder:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFBaf:
+                case AnalysisResources.RawDataTypeConstants.BrukerTOFTdf:
                     isDirectory = true;
                     return mResourceClass.DatasetName + AnalysisResources.DOT_D_EXTENSION;
 
@@ -437,6 +438,18 @@ namespace AnalysisManagerBase.DataFileTools
 
                             break;
 
+                        case AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER:
+                            // Retrieve the .D directory
+                            currentTask = string.Format("Retrieve .D directory; instrument: {0}", instrumentName);
+                            var dotDSuccessTDF = mResourceClass.FileSearchTool.RetrieveDotDFolder(false, skipBafAndTdfFiles: false);
+
+                            if (!dotDSuccessTDF)
+                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
+                            // Override the directory layout for MyEMSL files
+                            directoryLayoutForMyEMSLFiles = MyEMSLReader.Downloader.DownloadLayout.SingleDataset;
+                            break;
+
                         case AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES:
                             // Check whether the dataset directory has an Agilent .D directory
                             // If it does, and if PreferUIMF is false, retrieve it; otherwise, retrieve the .UIMF file
@@ -489,8 +502,10 @@ namespace AnalysisManagerBase.DataFileTools
                                     AnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                     AnalysisResources.RAW_DATA_TYPE_DOT_D_FOLDERS + ", " +
                                     AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", " +
-                                    AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES + ", or " +
-                                    AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+                                    AnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER + ", " +
+                                    AnalysisResources.RAW_DATA_TYPE_BRUKER_TOF_TDF_FOLDER + ", or " +
+                                    AnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES
+                                    );
                             }
 
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
