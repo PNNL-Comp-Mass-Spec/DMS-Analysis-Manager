@@ -425,18 +425,43 @@ namespace AnalysisManager_Mage_PlugIn
                     AddTMTReporterIons(ionColumns, 35);
                 }
 
-                if (ionColumns.Count > 0)
+                // Data in table T_Reporter_Ions was loaded from the _ReportIons.txt files created by MASIC
+                // Verify that the expected columns are defined and that they match those in the t_alias.txt file
+
+                if (ionColumns.Count > 0 && !TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
                 {
-                    if (!TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", ionColumns, out errorMessage, out exceptionDetail))
+                    if (ionColumns.Count is 16 or 18)
                     {
-                        errorMessage = string.Format(
-                            "Table T_Reporter_Ions in Results.db3 {0}; " +
-                            "compare setting '{1}' in the ApeWorkflowStepList parameter " +
-                            "of the Ape step at https://dms2.pnl.gov/pipeline_jobs/show/{2} " +
-                            "to values in the ion column in the t_alias.txt file (in the data package directory)",
-                             errorMessage, labelingScheme, mJob);
-                        return false;
+                        var legacyColumn = new List<string> { "Ion_131.144" };
+
+                        if (TableContainsDataAndColumns(resultsDB, "T_Reporter_Ions", legacyColumn, out _, out _))
+                        {
+                            // ReSharper disable once GrammarMistakeInComment
+
+                            // The data package has one or more MASIC jobs that were analyzed with a version of MASIC released prior to September 19, 2024
+                            // The target m/z value for 131C changed from 131.144 to 131.145 on that date, and the MASIC jobs must therefore be r-run
+
+                            // Example message:
+                            // "Table T_Reporter_Ions in Results.db3 is missing column Ion_131.145; the target m/z value for 131C in 16-plex and 18-plex TMT was changed in MASIC on September 19, 2024, switching from 131.144 to 131.145; re-run the MASIC jobs"
+                            errorMessage = string.Format(
+                                "Table T_Reporter_Ions in Results.db3 {0}; " +
+                                "the target m/z value for 131C in 16-plex and 18-plex TMT was changed in MASIC on September 19, 2024, switching from 131.144 to 131.145; re-run the MASIC jobs",
+                                errorMessage);
+
+                            return false;
+                        }
                     }
+
+                    // Example message:
+                    // "Table T_Reporter_Ions in Results.db3 is missing column Ion_131.145; compare setting 'TMT16Plex' in the ApeWorkflowStepList parameter of the Ape step at https://dms2.pnl.gov/pipeline_jobs/show/2301881"
+                    errorMessage = string.Format(
+                        "Table T_Reporter_Ions in Results.db3 {0}; " +
+                        "compare setting '{1}' in the ApeWorkflowStepList parameter " +
+                        "of the Ape step at https://dms2.pnl.gov/pipeline_jobs/show/{2} " +
+                        "to values in the ion column in the t_alias.txt file (in the data package directory)",
+                        errorMessage, labelingScheme, mJob);
+
+                    return false;
                 }
             }
             catch (Exception ex)
