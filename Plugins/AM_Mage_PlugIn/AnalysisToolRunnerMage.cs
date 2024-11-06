@@ -140,13 +140,15 @@ namespace AnalysisManager_Mage_PlugIn
             if (plex < 11)
                 return;
 
-            // Add the extra 11-plex TMT ion
-            ionColumns.Add("Ion_131.144");
-
             if (plex < 16)
+            {
+                // Add the extra 11-plex TMT ion
+                ionColumns.Add("Ion_131.144");
                 return;
+            }
 
             // Add the extra 16-plex TMT ions
+            ionColumns.Add("Ion_131.145");      // Use 131.145 instead of 131.144 since the target m/z was altered slightly in MASIC on September 19, 2024
             ionColumns.Add("Ion_132.142");
             ionColumns.Add("Ion_132.148");
             ionColumns.Add("Ion_133.145");
