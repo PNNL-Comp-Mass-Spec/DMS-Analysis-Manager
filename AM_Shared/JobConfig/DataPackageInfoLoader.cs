@@ -75,11 +75,13 @@ namespace AnalysisManagerBase.JobConfig
                 var datasetId = item.Key;
                 var datasetInfo = item.Value;
 
-                var experimentGroup = datasetInfo.DatasetExperimentGroup;
+                // Replace dashes with underscores because MSBooster for FragPipe v22 auto-changes dashes to underscores
+                var experimentGroup = datasetInfo.DatasetExperimentGroup.Replace('-', '_');
 
                 if (string.IsNullOrWhiteSpace(experimentGroup) && dataPackageDatasets.Count == 1)
                 {
-                    var experimentName = datasetInfo.Experiment;
+                    // Replace dashes with underscores because MSBooster for FragPipe v22 auto-changes dashes to underscores
+                    var experimentName = datasetInfo.Experiment.Replace('-', '_');
 
                     var singleDatasetGroup = new SortedSet<int>
                     {
@@ -259,7 +261,7 @@ namespace AnalysisManagerBase.JobConfig
                     // Or, the dataset experiment group is an integer, which indicates a MaxQuant Parameter Group (described at https://prismwiki.pnl.gov/wiki/MaxQuant#MaxQuant_Parameter_Groups)
 
                     // Optionally use the dataset name or experiment name for Dataset Experiment Group
-                    // Replace dashes with underscores because MSBooster for FragPipe v23 auto-changes dashes to underscores
+                    // Replace dashes with underscores because MSBooster for FragPipe v22 auto-changes dashes to underscores
                     if (autoDefineExperimentGroupWithDatasetName)
                     {
                         datasetInfo.DatasetExperimentGroup = datasetInfo.Dataset.Replace('-', '_');
@@ -703,7 +705,7 @@ namespace AnalysisManagerBase.JobConfig
 
             isMaxQuant = isMaxQuantA || isMaxQuantB || isMaxQuantC;
 
-            // If running MSFragger or FragPipe, replace dashes with underscores because MSBooster for FragPipe v23 auto-changes dashes to underscores
+            // If running MSFragger or FragPipe, replace dashes with underscores because MSBooster for FragPipe v22 auto-changes dashes to underscores
             var datasetExperimentGroupToUse = isMaxQuant
                 ? datasetExperimentGroup
                 : datasetExperimentGroup.Replace('-', '_');
