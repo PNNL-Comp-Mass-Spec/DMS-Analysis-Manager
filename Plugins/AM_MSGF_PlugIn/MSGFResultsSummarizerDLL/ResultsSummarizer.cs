@@ -1232,10 +1232,14 @@ namespace MSGFResultsSummarizer
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
                 startupOptions.LoadMSGFResults = loadMSGFResults;
                 startupOptions.MaxProteinsPerPSM = 1000;
+                // Use AutoDetermineDatasetName() to determine the dataset name if the dataset name is "Aggregation" (meaning we're loading PSMs from a multi-dataset based MaxQuant or MSFragger job)
+                var datasetNameToUse = mDatasetName.Equals(AGGREGATION_JOB_DATASET, StringComparison.OrdinalIgnoreCase)
+                    ? ReaderFactory.AutoDetermineDatasetName(synopsisFileName, ResultType)
+                    : mDatasetName;
 
                 // Load the result to sequence mapping, sequence IDs, and protein information
                 // This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
-                var seqMapReader = new PHRPSeqMapReader(mDatasetName, mWorkDir, ResultType, Path.GetFileName(synopsisFilePath));
+                var seqMapReader = new PHRPSeqMapReader(datasetNameToUse, mWorkDir, ResultType, synopsisFileName);
 
                 var sequenceInfoAvailable = false;
 
