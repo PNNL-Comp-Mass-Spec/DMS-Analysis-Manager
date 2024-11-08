@@ -1195,8 +1195,6 @@ namespace MSGFResultsSummarizer
             var specEValueOrPEP = PSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
             var eValue = PSMInfo.UNKNOWN_EVALUE;
 
-            var loadMSGFResults = true;
-
             // RegEx for determining that a peptide has a missed cleavage (i.e. an internal tryptic cleavage point)
             var missedCleavageMatcher = new Regex("[KR][^P][A-Z]", RegexOptions.Compiled);
 
@@ -1214,24 +1212,8 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (ResultType is
-                    PeptideHitResultTypes.DiaNN or
-                    PeptideHitResultTypes.MaxQuant or
-                    PeptideHitResultTypes.MODa or
-                    PeptideHitResultTypes.MODPlus or
-                    PeptideHitResultTypes.MSAlign or
-                    PeptideHitResultTypes.MSFragger or
-                    PeptideHitResultTypes.MSPathFinder)
-                {
-                    loadMSGFResults = false;
-                }
+                var synopsisFileName = Path.GetFileName(synopsisFilePath);
 
-                // Note that this will set .LoadModsAndSeqInfo to false
-                // That is fine because we will have access to the modification info from the _SeqInfo.txt file
-                // Since we're looking for trypsin and keratin proteins, we need to change MaxProteinsPerPSM back to a large number
-                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
-                startupOptions.LoadMSGFResults = loadMSGFResults;
-                startupOptions.MaxProteinsPerPSM = 1000;
                 // Use AutoDetermineDatasetName() to determine the dataset name if the dataset name is "Aggregation" (meaning we're loading PSMs from a multi-dataset based MaxQuant or MSFragger job)
                 var datasetNameToUse = mDatasetName.Equals(AGGREGATION_JOB_DATASET, StringComparison.OrdinalIgnoreCase)
                     ? ReaderFactory.AutoDetermineDatasetName(synopsisFileName, ResultType)
@@ -1272,6 +1254,24 @@ namespace MSGFResultsSummarizer
                         sequenceInfoAvailable = true;
                     }
                 }
+
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
+
+                // Load MSGFResults for MS-GF+, TopPIC, and X!Tandem, but not for other PSM tools
+                startupOptions.LoadMSGFResults =
+                    ResultType is not (
+                        PeptideHitResultTypes.DiaNN or
+                        PeptideHitResultTypes.MaxQuant or
+                        PeptideHitResultTypes.MODa or
+                        PeptideHitResultTypes.MODPlus or
+                        PeptideHitResultTypes.MSAlign or
+                        PeptideHitResultTypes.MSFragger or
+                        PeptideHitResultTypes.MSPathFinder);
+
+                // Set MaxProteinsPerPSM to a large number since we're looking for trypsin and keratin proteins
+                startupOptions.MaxProteinsPerPSM = 1000;
+
+                startupOptions.LoadModsAndSeqInfo = !sequenceInfoAvailable;
 
                 // ReSharper disable CommentTypo
 
