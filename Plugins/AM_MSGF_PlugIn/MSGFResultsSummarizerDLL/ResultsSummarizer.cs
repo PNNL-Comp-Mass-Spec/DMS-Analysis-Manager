@@ -1075,7 +1075,6 @@ namespace MSGFResultsSummarizer
                 MaxProteinsPerPSM = 1
             };
         }
-        }
 
         private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
         {
@@ -1091,7 +1090,7 @@ namespace MSGFResultsSummarizer
         /// Initialize a NormalizedPeptideInfo object using a clean sequence and list of modifications,
         /// </summary>
         /// <param name="peptideCleanSequence">Peptide clean sequence (no modifications)</param>
-        /// <param name="modifications">List of modifications</param>
+        /// <param name="modifications">List of modifications; keys are mod names or symbols; values are the 1-based residue number</param>
         /// <param name="seqID">Sequence ID</param>
         public static NormalizedPeptideInfo GetNormalizedPeptideInfo(
             string peptideCleanSequence,
@@ -1529,7 +1528,14 @@ namespace MSGFResultsSummarizer
 
                     if (!normalized)
                     {
-                        normalizedPeptide = NormalizeSequence(currentPSM.Peptide, seqID);
+                        if (startupOptions.LoadModsAndSeqInfo && currentPSM.ModifiedResidues.Count > 0)
+                        {
+                            normalizedPeptide = NormalizeSequence(currentPSM.Peptide, currentPSM.ModifiedResidues, seqID);
+                        }
+                        else
+                        {
+                            normalizedPeptide = NormalizeSequence(currentPSM.Peptide, seqID);
+                        }
                     }
 
                     var normalizedSeqID = FindNormalizedSequence(normalizedPeptidesByCleanSequence, normalizedPeptide);
@@ -1923,6 +1929,40 @@ namespace MSGFResultsSummarizer
             return GetNormalizedPeptideInfo(aminoAcidList.ToString(), modList, seqID);
         }
 
+        // ReSharper disable CommentTypo
+
+        /// <summary>
+        /// Parse a sequence that does not have mod symbols, but instead has modifications tracked via a list of modification descriptors
+        /// </summary>
+        /// <param name="peptideSequence">Clean sequence, typically with prefix and suffix residues, e.g. R.VIISAPSADAPMFVMGVNHEK.Y or R.KPGINVASDWSIHLR.-</param>
+        /// <param name="modifications">List of modifications</param>
+        /// <param name="seqID">Sequence ID</param>
+        // ReSharper restore CommentTypo
+        private NormalizedPeptideInfo NormalizeSequence(string peptideSequence, List<AminoAcidModInfo> modifications, int seqID)
+        {
+            var aminoAcidList = new StringBuilder(peptideSequence.Length);
+
+            // In this list, keys are mod names or symbols; values are the 1-based residue number
+            var modList = new List<KeyValuePair<string, int>>();
+
+            PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(peptideSequence, out var primarySequence, out _, out _);
+
+            for (var index = 0; index <= primarySequence.Length - 1; index++)
+            {
+                if (ReaderFactory.IsLetterAtoZ(primarySequence[index]))
+                {
+                    aminoAcidList.Append(primarySequence[index]);
+                }
+            }
+
+            foreach (var modDescriptor in modifications)
+            {
+                modList.Add(new KeyValuePair<string, int>(modDescriptor.ModDefinition.MassCorrectionTag, modDescriptor.ResidueLocInPeptide));
+            }
+
+            return GetNormalizedPeptideInfo(aminoAcidList.ToString(), modList, seqID);
+        }
+
         private NormalizedPeptideInfo NormalizeSequence(string peptideCleanSequence, SequenceInfo seqInfo, int seqID)
         {
             var modList = new List<KeyValuePair<string, int>>();
@@ -1936,7 +1976,7 @@ namespace MSGFResultsSummarizer
             {
                 var colonIndex = modDescriptor.IndexOf(':');
                 string modName;
-                var residueNumber = 0;
+                int residueNumber;
 
                 if (colonIndex > 0)
                 {
@@ -1946,12 +1986,17 @@ namespace MSGFResultsSummarizer
                 else
                 {
                     modName = modDescriptor;
+                    residueNumber = 0;
                 }
 
                 if (string.IsNullOrWhiteSpace(modName))
                 {
                     // Empty mod name; this is unexpected
-                    throw new Exception(string.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}", seqInfo.SeqID, seqInfo.ModDescription));
+                    throw new Exception(string.Format("Empty mod name parsed from the ModDescription for SeqID {0}: {1}",
+                        seqInfo.SeqID,
+                        seqInfo.ModDescription.Equals(modDescriptor)
+                            ? seqInfo.ModDescription
+                            : string.Format("{0} ({1})", modDescriptor, seqInfo.ModDescription)));
                 }
 
                 modList.Add(new KeyValuePair<string, int>(modName, residueNumber));
