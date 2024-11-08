@@ -1067,14 +1067,14 @@ namespace MSGFResultsSummarizer
 
         private StartupOptions GetMinimalMemoryPHRPStartupOptions()
         {
-            var startupOptions = new StartupOptions
+            return new StartupOptions
             {
                 LoadModsAndSeqInfo = false,
                 LoadMSGFResults = false,
                 LoadScanStatsData = false,
                 MaxProteinsPerPSM = 1
             };
-            return startupOptions;
+        }
         }
 
         private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
