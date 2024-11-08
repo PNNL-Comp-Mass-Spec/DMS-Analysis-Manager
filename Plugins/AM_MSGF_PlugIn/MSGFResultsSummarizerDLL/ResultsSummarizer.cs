@@ -100,17 +100,17 @@ namespace MSGFResultsSummarizer
             TMT16plex = 4
         }
 
-        private string mErrorMessage = string.Empty;
         private readonly short mDebugLevel;
+        private string mErrorMessage = string.Empty;
         private readonly bool mTraceMode;
 
-        private PSMStats mMSGFBasedCounts;
         private PSMStats mFDRBasedCounts;
+        private PSMStats mMSGFBasedCounts;
 
+        private readonly string mConnectionString;
         private readonly string mDatasetName;
         private readonly int mJob;
         private readonly string mWorkDir;
-        private readonly string mConnectionString;
 
         private readonly IDBTools mStoredProcedureExecutor;
 
@@ -136,6 +136,12 @@ namespace MSGFResultsSummarizer
         private string mMSGFSynopsisFileName = string.Empty;
 
         /// <summary>
+        /// If this is false, DMS will not be contacted to look up scan stats for the dataset
+        /// </summary>
+        /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
+        public bool ContactDatabase { get; set; }
+
+        /// <summary>
         /// Dataset name
         /// </summary>
         /// <remarks>
@@ -143,12 +149,6 @@ namespace MSGFResultsSummarizer
         /// This information is used by
         /// </remarks>
         public string DatasetName { get; set; }
-
-        /// <summary>
-        /// If this is false, DMS will not be contacted to look up scan stats for the dataset
-        /// </summary>
-        /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
-        public bool ContactDatabase { get; set; }
 
         public bool DatasetScanStatsLookupError { get; private set; }
 
@@ -193,8 +193,6 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        public string OutputDirectoryPath { get; set; } = string.Empty;
-
         /// <summary>
         /// Number of MS/MS scans that do not have a PSM
         /// </summary>
@@ -204,12 +202,9 @@ namespace MSGFResultsSummarizer
         private int MSnScansNoPSM { get; set; }
 
         /// <summary>
-        /// Total number of MS/MS spectra
+        /// Output directory path
         /// </summary>
-        /// <remarks>
-        /// <remarks>For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets</remarks>
-        /// </remarks>
-        private int TotalMSnScans { get; set; }
+        public string OutputDirectoryPath { get; set; } = string.Empty;
 
         /// <summary>
         /// Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
@@ -240,6 +235,14 @@ namespace MSGFResultsSummarizer
         /// Number of MS/MS spectra that the PSM identification tool processed
         /// </summary>
         public int SpectraSearched { get; private set; }
+
+        /// <summary>
+        /// Total number of MS/MS spectra
+        /// </summary>
+        /// <remarks>
+        /// <remarks>For multi-dataset based jobs (aka aggregation jobs), this is the sum across all datasets</remarks>
+        /// </remarks>
+        private int TotalMSnScans { get; set; }
 
         public int TotalPSMsFDR => mFDRBasedCounts?.TotalPSMs ?? 0;
 
@@ -376,106 +379,6 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        private void ExamineFirstHitsFile(string firstHitsOrSynopsisFilePath, bool isFirstHitsFile)
-        {
-            try
-            {
-                // Initialize the dictionary that will be used to track the number of spectra searched (grouped by dataset if MaxQuant or MSFragger results)
-                // Keys are dataset name or ID (empty string if not MaxQuant or MSFragger)
-                // Values are a dictionary where keys are Scan_Charge and values are scan number
-
-                var uniqueSpectraByDataset = new Dictionary<string, Dictionary<string, int>>();
-
-                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
-
-                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(firstHitsOrSynopsisFilePath, 80));
-                var lastStatusTime = DateTime.UtcNow;
-
-                using var reader = new ReaderFactory(firstHitsOrSynopsisFilePath, startupOptions);
-                RegisterEvents(reader);
-
-                while (reader.MoveNext())
-                {
-                    var currentPSM = reader.CurrentPSM;
-
-                    var datasetIdOrName = ResultType switch
-                    {
-                        PeptideHitResultTypes.DiaNN => GetDiaNNDatasetIdOrName(currentPSM),
-                        PeptideHitResultTypes.MaxQuant => GetMaxQuantDatasetIdOrName(currentPSM),
-                        PeptideHitResultTypes.MSFragger => GetMSFraggerDatasetIdOrName(currentPSM),
-                        _ => string.Empty
-                    };
-
-                    var scanKey = currentPSM.Charge >= 0 ? currentPSM.ScanNumber + "_" + currentPSM.Charge : currentPSM.ScanNumber.ToString();
-
-                    if (uniqueSpectraByDataset.TryGetValue(datasetIdOrName, out var uniqueSpectra))
-                    {
-                        if (!uniqueSpectra.ContainsKey(scanKey))
-                        {
-                            uniqueSpectra.Add(scanKey, currentPSM.ScanNumber);
-                        }
-                    }
-                    else
-                    {
-                        var newUniqueSpectra = new Dictionary<string, int>
-                        {
-                            {scanKey, currentPSM.ScanNumber}
-                        };
-                        uniqueSpectraByDataset.Add(datasetIdOrName, newUniqueSpectra);
-                    }
-
-                    if (DateTime.UtcNow.Subtract(lastStatusTime).TotalMilliseconds < 500)
-                    {
-                        continue;
-                    }
-
-                    Console.Write(".");
-                    lastStatusTime = DateTime.UtcNow;
-                }
-
-                Console.WriteLine();
-
-                // This value for total spectra searched is only accurate when firstHitsOrSynopsisFile is a first hits file
-                // For MaxQuant, MSFragger, and several other tools, firstHitsOrSynopsisFile will be a synopsis file, and thus only has spectra with identified PSMs
-                // Method CheckForScanGaps will update SpectraSearched when isFirstHitsFile is false
-
-                SpectraSearched = 0;
-
-                foreach (var item in uniqueSpectraByDataset)
-                {
-                    SpectraSearched += item.Value.Count;
-                }
-
-                // Set these to defaults for now
-                MaximumScanGapAdjacentMSn = 0;
-                MSnScansNoPSM = 0;
-                TotalMSnScans = 0;
-
-                if (!ContactDatabase)
-                {
-                    return;
-                }
-
-                var scanListByDataset = new Dictionary<string, List<int>>();
-
-                foreach (var item in uniqueSpectraByDataset)
-                {
-                    scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
-                }
-
-                // If isFirstHitsFile is true, we use the number of PSMs in that file as an estimate for the total spectra searched
-                // Thus, when isFirstHitsFile is true, set updateTotalSpectraSearched to false when calling CheckForScanGaps
-                var updateTotalSpectraSearched = !isFirstHitsFile;
-
-                CheckForScanGaps(scanListByDataset, updateTotalSpectraSearched);
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Error in ExamineFirstHitsFile: " + ex.Message, ex);
-                Console.WriteLine(ex.StackTrace);
-            }
-        }
-
         /// <summary>
         /// Look for scan range gaps in the spectra list
         /// </summary>
@@ -600,6 +503,106 @@ namespace MSGFResultsSummarizer
             }
         }
 
+        private void ExamineFirstHitsFile(string firstHitsOrSynopsisFilePath, bool isFirstHitsFile)
+        {
+            try
+            {
+                // Initialize the dictionary that will be used to track the number of spectra searched (grouped by dataset if MaxQuant or MSFragger results)
+                // Keys are dataset name or ID (empty string if not MaxQuant or MSFragger)
+                // Values are a dictionary where keys are Scan_Charge and values are scan number
+
+                var uniqueSpectraByDataset = new Dictionary<string, Dictionary<string, int>>();
+
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
+
+                OnStatusEvent("Reading PSMs from " + PathUtils.CompactPathString(firstHitsOrSynopsisFilePath, 80));
+                var lastStatusTime = DateTime.UtcNow;
+
+                using var reader = new ReaderFactory(firstHitsOrSynopsisFilePath, startupOptions);
+                RegisterEvents(reader);
+
+                while (reader.MoveNext())
+                {
+                    var currentPSM = reader.CurrentPSM;
+
+                    var datasetIdOrName = ResultType switch
+                    {
+                        PeptideHitResultTypes.DiaNN => GetDiaNNDatasetIdOrName(currentPSM),
+                        PeptideHitResultTypes.MaxQuant => GetMaxQuantDatasetIdOrName(currentPSM),
+                        PeptideHitResultTypes.MSFragger => GetMSFraggerDatasetIdOrName(currentPSM),
+                        _ => string.Empty
+                    };
+
+                    var scanKey = currentPSM.Charge >= 0 ? currentPSM.ScanNumber + "_" + currentPSM.Charge : currentPSM.ScanNumber.ToString();
+
+                    if (uniqueSpectraByDataset.TryGetValue(datasetIdOrName, out var uniqueSpectra))
+                    {
+                        if (!uniqueSpectra.ContainsKey(scanKey))
+                        {
+                            uniqueSpectra.Add(scanKey, currentPSM.ScanNumber);
+                        }
+                    }
+                    else
+                    {
+                        var newUniqueSpectra = new Dictionary<string, int>
+                        {
+                            {scanKey, currentPSM.ScanNumber}
+                        };
+                        uniqueSpectraByDataset.Add(datasetIdOrName, newUniqueSpectra);
+                    }
+
+                    if (DateTime.UtcNow.Subtract(lastStatusTime).TotalMilliseconds < 500)
+                    {
+                        continue;
+                    }
+
+                    Console.Write(".");
+                    lastStatusTime = DateTime.UtcNow;
+                }
+
+                Console.WriteLine();
+
+                // This value for total spectra searched is only accurate when firstHitsOrSynopsisFile is a first hits file
+                // For MaxQuant, MSFragger, and several other tools, firstHitsOrSynopsisFile will be a synopsis file, and thus only has spectra with identified PSMs
+                // Method CheckForScanGaps will update SpectraSearched when isFirstHitsFile is false
+
+                SpectraSearched = 0;
+
+                foreach (var item in uniqueSpectraByDataset)
+                {
+                    SpectraSearched += item.Value.Count;
+                }
+
+                // Set these to defaults for now
+                MaximumScanGapAdjacentMSn = 0;
+                MSnScansNoPSM = 0;
+                TotalMSnScans = 0;
+
+                if (!ContactDatabase)
+                {
+                    return;
+                }
+
+                var scanListByDataset = new Dictionary<string, List<int>>();
+
+                foreach (var item in uniqueSpectraByDataset)
+                {
+                    scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
+                }
+
+                // If isFirstHitsFile is true, we use the number of PSMs in that file as an estimate for the total spectra searched
+                // Thus, when isFirstHitsFile is true, set updateTotalSpectraSearched to false when calling CheckForScanGaps
+                var updateTotalSpectraSearched = !isFirstHitsFile;
+
+                CheckForScanGaps(scanListByDataset, updateTotalSpectraSearched);
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Error in ExamineFirstHitsFile: " + ex.Message, ex);
+                Console.WriteLine(ex.StackTrace);
+            }
+        }
+
         /// <summary>
         /// Either filter by MSGF or filter by FDR, then update the stats
         /// </summary>
@@ -702,6 +705,22 @@ namespace MSGFResultsSummarizer
             }
 
             return success;
+        }
+
+        private bool FilterPSMsByEValue(double eValueThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
+        {
+            filteredPSMs.Clear();
+
+            foreach (var item in from item in psmResults where item.Value.BestEValue <= eValueThreshold select item)
+            {
+                foreach (var observation in item.Value.Observations)
+                {
+                    observation.PassesFilter = observation.EValue <= eValueThreshold;
+                }
+                filteredPSMs.Add(item.Key, item.Value);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -876,22 +895,6 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        private bool FilterPSMsByEValue(double eValueThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
-        {
-            filteredPSMs.Clear();
-
-            foreach (var item in from item in psmResults where item.Value.BestEValue <= eValueThreshold select item)
-            {
-                foreach (var observation in item.Value.Observations)
-                {
-                    observation.PassesFilter = observation.EValue <= eValueThreshold;
-                }
-                filteredPSMs.Add(item.Key, item.Value);
-            }
-
-            return true;
-        }
-
         private bool FilterPSMsByMSGFSpecEValueOrPEP(double msgfThreshold, IDictionary<int, PSMInfo> psmResults, IDictionary<int, PSMInfo> filteredPSMs)
         {
             filteredPSMs.Clear();
@@ -973,6 +976,16 @@ namespace MSGFResultsSummarizer
             return PSMInfo.UNKNOWN_SEQUENCE_ID;
         }
 
+        private string GetDiaNNDatasetIdOrName(PSM currentPSM)
+        {
+            var datasetID = currentPSM.GetScoreInt(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.DatasetID));
+
+            if (datasetID > 0)
+                return datasetID.ToString();
+
+            return currentPSM.GetScore(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.Dataset));
+        }
+
         private string GetExpectedModSummaryFileName(
             string synopsisFileName,
             string synopsisFileNameFromPHRP,
@@ -1004,16 +1017,6 @@ namespace MSGFResultsSummarizer
             return baseName + modSummaryFileSuffix;
         }
 
-        private string GetDiaNNDatasetIdOrName(PSM currentPSM)
-        {
-            var datasetID = currentPSM.GetScoreInt(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.DatasetID));
-
-            if (datasetID > 0)
-                return datasetID.ToString();
-
-            return currentPSM.GetScore(DiaNNSynFileReader.GetColumnNameByID(DiaNNSynFileColumns.Dataset));
-        }
-
         /// <summary>
         /// Return a file info instance for the file, auto-switching from _msgfplus_ to _msgfdb_ if required
         /// </summary>
@@ -1035,38 +1038,6 @@ namespace MSGFResultsSummarizer
             return altFileInfo.Exists ? altFileInfo : fileInfo;
         }
 
-        private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
-        {
-            var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
-
-            if (datasetID > 0)
-                return datasetID.ToString();
-
-            return currentPSM.GetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.Dataset));
-        }
-
-        private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
-        {
-            var datasetID = currentPSM.GetScoreInt(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.DatasetID));
-
-            if (datasetID > 0)
-                return datasetID.ToString();
-
-            return currentPSM.GetScore(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.Dataset));
-        }
-
-        private StartupOptions GetMinimalMemoryPHRPStartupOptions()
-        {
-            var startupOptions = new StartupOptions
-            {
-                LoadModsAndSeqInfo = false,
-                LoadMSGFResults = false,
-                LoadScanStatsData = false,
-                MaxProteinsPerPSM = 1
-            };
-            return startupOptions;
-        }
-
         /// <summary>
         /// Get the RegEx for matching keratin proteins
         /// </summary>
@@ -1084,22 +1055,36 @@ namespace MSGFResultsSummarizer
             return new(@"(K[1-2]C\d+[A-K]*|K22[E,O]|K1CI)_HUMAN", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         }
 
-        /// <summary>
-        /// Get the RegEx for matching trypsin proteins
-        /// </summary>
-        /// <remarks>Used by SMAQC</remarks>
-        public static Regex GetTrypsinRegEx()
+        private string GetMaxQuantDatasetIdOrName(PSM currentPSM)
         {
-            // ReSharper disable CommentTypo
+            var datasetID = currentPSM.GetScoreInt(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.DatasetID));
 
-            // RegEx to match trypsin proteins, including
-            //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
-            //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
-            //   Contaminant_Trypa
+            if (datasetID > 0)
+                return datasetID.ToString();
 
-            return new("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return currentPSM.GetScore(MaxQuantSynFileReader.GetColumnNameByID(MaxQuantSynFileColumns.Dataset));
+        }
 
-            // ReSharper restore CommentTypo
+        private StartupOptions GetMinimalMemoryPHRPStartupOptions()
+        {
+            var startupOptions = new StartupOptions
+            {
+                LoadModsAndSeqInfo = false,
+                LoadMSGFResults = false,
+                LoadScanStatsData = false,
+                MaxProteinsPerPSM = 1
+            };
+            return startupOptions;
+        }
+
+        private string GetMSFraggerDatasetIdOrName(PSM currentPSM)
+        {
+            var datasetID = currentPSM.GetScoreInt(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.DatasetID));
+
+            if (datasetID > 0)
+                return datasetID.ToString();
+
+            return currentPSM.GetScore(MSFraggerSynFileReader.GetColumnNameByID(MSFraggerSynFileColumns.Dataset));
         }
 
         /// <summary>
@@ -1120,6 +1105,10 @@ namespace MSGFResultsSummarizer
             return normalizedPeptide;
         }
 
+        /// <summary>
+        /// Obtain the summarized PSM results
+        /// </summary>
+        /// <returns>PSM results</returns>
         public PSMResults GetPsmResults()
         {
             double reportThreshold;
@@ -1170,342 +1159,22 @@ namespace MSGFResultsSummarizer
             };
         }
 
-        private bool PostJobPSMResults(int job)
-        {
-            var psmResults = GetPsmResults();
-
-            return PostJobPSMResults(job, psmResults);
-        }
-
-        public bool PostJobPSMResults(int job, PSMResults psmResults)
-        {
-            try
-            {
-                // Call stored procedure store_job_psm_stats in DMS5
-
-                var dbTools = mStoredProcedureExecutor;
-
-                var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
-
-                // Define parameter for procedure's return value
-                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
-                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
-
-                dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: job);
-                dbTools.AddTypedParameter(cmd, "@msgfThreshold", SqlType.Float, value: psmResults.MSGFThreshold);
-                dbTools.AddTypedParameter(cmd, "@fdrThreshold", SqlType.Float, value: psmResults.FDRThreshold);
-                dbTools.AddTypedParameter(cmd, "@spectraSearched", SqlType.Int, value: psmResults.SpectraSearched);
-                dbTools.AddTypedParameter(cmd, "@totalPSMs", SqlType.Int, value: psmResults.TotalPSMs);
-                dbTools.AddTypedParameter(cmd, "@uniquePeptides", SqlType.Int, value: psmResults.UniquePeptides);
-                dbTools.AddTypedParameter(cmd, "@uniqueProteins", SqlType.Int, value: psmResults.UniqueProteins);
-                dbTools.AddTypedParameter(cmd, "@totalPSMsFDRFilter", SqlType.Int, value: psmResults.TotalPSMsFDRFilter);
-                dbTools.AddTypedParameter(cmd, "@uniquePeptidesFDRFilter", SqlType.Int, value: psmResults.UniquePeptidesFDRFilter);
-                dbTools.AddTypedParameter(cmd, "@uniqueProteinsFDRFilter", SqlType.Int, value: psmResults.UniqueProteinsFDRFilter);
-
-                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
-                dbTools.AddTypedParameter(cmd, "@msgfThresholdIsEValue", SqlType.TinyInt, value: psmResults.MsgfThresholdIsEValue);
-
-                dbTools.AddTypedParameter(cmd, "@percentMSnScansNoPSM", SqlType.Real, value: psmResults.PercentMSnScansNoPSM);
-                dbTools.AddTypedParameter(cmd, "@maximumScanGapAdjacentMSn", SqlType.Int, value: psmResults.MaximumScanGapAdjacentMSn);
-                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptideCountFDR", SqlType.Int, value: psmResults.UniquePhosphopeptideCountFDR);
-                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptidesCTermK", SqlType.Int, value: psmResults.UniquePhosphopeptidesCTermK);
-                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptidesCTermR", SqlType.Int, value: psmResults.UniquePhosphopeptidesCTermR);
-                dbTools.AddTypedParameter(cmd, "@missedCleavageRatio", SqlType.Real, value: psmResults.MissedCleavageRatio);
-                dbTools.AddTypedParameter(cmd, "@missedCleavageRatioPhospho", SqlType.Real, value: psmResults.MissedCleavageRatioPhospho);
-                dbTools.AddTypedParameter(cmd, "@trypticPeptides", SqlType.Int, value: psmResults.TrypticPeptides);
-                dbTools.AddTypedParameter(cmd, "@keratinPeptides", SqlType.Int, value: psmResults.KeratinPeptides);
-                dbTools.AddTypedParameter(cmd, "@trypsinPeptides", SqlType.Int, value: psmResults.TrypsinPeptides);
-
-                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
-                dbTools.AddTypedParameter(cmd, "@dynamicReporterIon", SqlType.TinyInt, value: psmResults.DynamicReporterIon);
-
-                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingNTermReporterIon);
-                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingReporterIon);
-                dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
-                dbTools.AddTypedParameter(cmd, "@uniqueUbiquitinPeptidesFDR", SqlType.Int, value: psmResults.UniqueUbiquitinPeptidesFDR);
-
-                // Call the procedure (retry the call if it fails, up to 3 times)
-                var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
-
-                var returnCode = DBToolsBase.GetReturnCode(returnParam);
-
-                if (resCode == 0 && returnCode == 0)
-                {
-                    return true;
-                }
-
-                string logMessage;
-
-                if (resCode != 0 && returnCode == 0)
-                {
-                    logMessage = string.Format(
-                        "ExecuteSP() reported result code {0} storing PSM results in database using {1}",
-                        resCode, STORE_JOB_PSM_RESULTS_SP_NAME);
-                }
-                else
-                {
-                    logMessage = string.Format(
-                        "Error storing PSM results in database, {0} returned {1}",
-                        STORE_JOB_PSM_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
-                }
-
-                SetErrorMessage(logMessage);
-
-                if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    mErrorMessage += "; " + errorMessage;
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Exception storing PSM Results in database: " + ex.Message, ex);
-                return false;
-            }
-        }
-
-        // ReSharper disable once CommentTypo
-
         /// <summary>
-        /// Process this dataset's synopsis file to determine the PSM stats
+        /// Get the RegEx for matching trypsin proteins
         /// </summary>
-        /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
-        /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
-        /// <returns>True if success, false if an error</returns>
-        public bool ProcessPSMResults(string synopsisFileNameFromPHRP = "")
+        /// <remarks>Used by SMAQC</remarks>
+        public static Regex GetTrypsinRegEx()
         {
-            DatasetScanStatsLookupError = false;
+            // ReSharper disable CommentTypo
 
-            try
-            {
-                mDynamicReporterIonPTM = false;
-                mDynamicReporterIonType = ReporterIonTypes.None;
-                mDynamicReporterIonName = string.Empty;
+            // RegEx to match trypsin proteins, including
+            //   TRYP_PIG, sp|TRYP_PIG, Contaminant_TRYP_PIG, Cntm_P00761|TRYP_PIG
+            //   Contaminant_TRYP_BOVIN And gi|136425|sp|P00760|TRYP_BOVIN
+            //   Contaminant_Trypa
 
-                mErrorMessage = string.Empty;
+            return new("(TRYP_(PIG|BOVIN)|Contaminant_Trypa)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                mMSGFBasedCounts?.Clear();
-                mFDRBasedCounts?.Clear();
-
-                SpectraSearched = 0;
-
-                // Define the file paths
-
-                // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                string firstHitsOrSynopsisFileName;
-
-                // We use the Synopsis file to count the number of peptides and proteins observed
-                string synopsisFileName;
-
-                // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
-
-                if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
-                {
-                    synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
-                }
-                else
-                {
-                    synopsisFileName = synopsisFileNameFromPHRP;
-                }
-
-                bool isFirstHitsFile;
-
-                if (ResultType is
-                    PeptideHitResultTypes.DiaNN or
-                    PeptideHitResultTypes.MaxQuant or
-                    PeptideHitResultTypes.MODa or
-                    PeptideHitResultTypes.MODPlus or
-                    PeptideHitResultTypes.MSAlign or
-                    PeptideHitResultTypes.MSFragger or
-                    PeptideHitResultTypes.MSPathFinder or
-                    PeptideHitResultTypes.XTandem)
-                {
-                    // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
-                    firstHitsOrSynopsisFileName = synopsisFileName;
-                    isFirstHitsFile = false;
-                }
-                else
-                {
-                    firstHitsOrSynopsisFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
-                    isFirstHitsFile = true;
-                }
-
-                // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
-
-                if (synopsisFileName == null)
-                    throw new NullReferenceException(nameof(synopsisFileName) + " is null");
-
-                if (string.IsNullOrWhiteSpace(synopsisFileName))
-                    throw new Exception(nameof(synopsisFileName) + " is an empty string");
-
-                var defaultModSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
-
-                const string DIANN_MOD_SUMMARY_FILE_SUFFIX = "_diann_syn_ModSummary.txt";
-
-                const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
-
-                const string MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX = "_msfragger_syn_ModSummary.txt";
-
-                string modSummaryFileName;
-
-                // ReSharper disable once ConvertIfStatementToSwitchStatement
-                if (ResultType is PeptideHitResultTypes.DiaNN &&
-                    defaultModSummaryFileName.Equals("Aggregation" + DIANN_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Need to switch from Aggregation_diann_syn_ModSummary to the actual ModSummary.txt file name,
-                    // which is based on the longest common text that the dataset names have in common
-
-                    modSummaryFileName = GetExpectedModSummaryFileName(
-                        synopsisFileName, synopsisFileNameFromPHRP,
-                        "_diann_syn",
-                        DIANN_MOD_SUMMARY_FILE_SUFFIX,
-                        out var criticalError);
-
-                    if (criticalError)
-                        return false;
-                }
-                else if (ResultType is PeptideHitResultTypes.MaxQuant &&
-                    defaultModSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name,
-                    // which is based on the longest common text that the dataset names have in common
-
-                    modSummaryFileName = GetExpectedModSummaryFileName(
-                        synopsisFileName, synopsisFileNameFromPHRP,
-                        "_maxq_syn",
-                        MAXQ_MOD_SUMMARY_FILE_SUFFIX,
-                        out var criticalError);
-
-                    if (criticalError)
-                        return false;
-                }
-                else if (ResultType is PeptideHitResultTypes.MSFragger &&
-                         defaultModSummaryFileName.Equals("Aggregation" + MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Need to switch from Aggregation_msfragger_syn_ModSummary to the actual ModSummary.txt file name,
-                    // which is based on the longest common text that the dataset names have in common
-
-                    modSummaryFileName = GetExpectedModSummaryFileName(
-                        synopsisFileName, synopsisFileNameFromPHRP,
-                        "_msfragger_syn",
-                        MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX,
-                        out var criticalError);
-
-                    if (criticalError)
-                        return false;
-                }
-                else
-                {
-                    modSummaryFileName = defaultModSummaryFileName;
-                }
-
-                mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(synopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
-
-                var firstHitsOrSynopsisFile = GetFileInfo(mWorkDir, firstHitsOrSynopsisFileName);
-                var synopsisFile = GetFileInfo(mWorkDir, synopsisFileName);
-                var modSummaryFile = GetFileInfo(mWorkDir, modSummaryFileName);
-
-                if (!synopsisFile.Exists)
-                {
-                    SetErrorMessage("File not found, cannot summarize results: " + synopsisFile.FullName);
-                    return false;
-                }
-
-                if (!modSummaryFile.Exists)
-                {
-                    OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods while summarizing results");
-                }
-                else
-                {
-                    ParseModSummaryFile(modSummaryFile.FullName);
-                }
-
-                // Determine the number of MS/MS spectra searched
-
-                if (firstHitsOrSynopsisFile.Exists)
-                {
-                    ExamineFirstHitsFile(firstHitsOrSynopsisFile.FullName, isFirstHitsFile);
-                }
-
-                // Load the PSMs and sequence info
-
-                // ReSharper disable CommentTypo
-
-                // The keys in this dictionary are NormalizedSeqID values, which are custom-assigned
-                // by this class to keep track of peptide sequences on a basis where modifications are tracked with some wiggle room
-
-                // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
-                // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
-
-                // The values contain mapped protein name, FDR, and MSGF SpecEValue, and the scans that the normalized peptide was observed in
-                // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
-                // If those files are not found, we'll simply use the protein information stored in psmResults
-                var normalizedPSMs = new Dictionary<int, PSMInfo>();
-
-                // ReSharper restore CommentTypo
-
-                var successLoading = LoadPSMs(synopsisFile.FullName, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
-
-                if (!successLoading)
-                {
-                    return false;
-                }
-
-                // Filter on MSGF or EValue and compute the stats
-
-                ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = true", 3);
-
-                var success = FilterAndComputeStats(usingMSGFOrEValueFilter: true, normalizedPSMs, seqToProteinMap, sequenceInfo);
-
-                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
-
-                // Filter on FDR and compute the stats
-
-                ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = false", 3);
-
-                var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter: false, normalizedPSMs, seqToProteinMap, sequenceInfo);
-
-                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
-
-                if (!(success || successViaFDR))
-                    return false;
-
-                if (SaveResultsToTextFile)
-                {
-                    // Note: Continue processing even if this step fails
-                    SaveResultsToFile();
-                }
-
-                if (!PostJobPSMResultsToDB)
-                    return true;
-
-                if (!ContactDatabase)
-                {
-                    SetErrorMessage("Cannot post results to the database because ContactDatabase is false");
-                    return false;
-                }
-
-                if (mJob == 0)
-                {
-                    ReportDebugMessage("Cannot call PostJobPSMResults since the job could not be determined");
-                    return false;
-                }
-
-                ReportDebugMessage("Call PostJobPSMResults for job " + mJob);
-
-                var psmResultsPosted = PostJobPSMResults(mJob);
-
-                ReportDebugMessage("PostJobPSMResults returned " + psmResultsPosted);
-
-                return psmResultsPosted;
-            }
-            catch (Exception ex)
-            {
-                SetErrorMessage("Error in ProcessPSMResults: " + ex.Message, ex);
-                Console.WriteLine(ex.StackTrace);
-                return false;
-            }
+            // ReSharper restore CommentTypo
         }
 
         /// <summary>
@@ -2383,6 +2052,344 @@ namespace MSGFResultsSummarizer
             {
                 OnWarningEvent("Exception parsing the ModSummary file: " + ex.Message);
                 Console.WriteLine(ex.StackTrace);
+            }
+        }
+
+        private bool PostJobPSMResults(int job)
+        {
+            var psmResults = GetPsmResults();
+
+            return PostJobPSMResults(job, psmResults);
+        }
+
+        public bool PostJobPSMResults(int job, PSMResults psmResults)
+        {
+            try
+            {
+                // Call stored procedure store_job_psm_stats in DMS5
+
+                var dbTools = mStoredProcedureExecutor;
+
+                var cmd = dbTools.CreateCommand(STORE_JOB_PSM_RESULTS_SP_NAME, CommandType.StoredProcedure);
+
+                // Define parameter for procedure's return value
+                // If querying a Postgres DB, dbTools will auto-change "@return" to "_returnCode"
+                var returnParam = dbTools.AddParameter(cmd, "@Return", SqlType.Int, ParameterDirection.ReturnValue);
+
+                dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: job);
+                dbTools.AddTypedParameter(cmd, "@msgfThreshold", SqlType.Float, value: psmResults.MSGFThreshold);
+                dbTools.AddTypedParameter(cmd, "@fdrThreshold", SqlType.Float, value: psmResults.FDRThreshold);
+                dbTools.AddTypedParameter(cmd, "@spectraSearched", SqlType.Int, value: psmResults.SpectraSearched);
+                dbTools.AddTypedParameter(cmd, "@totalPSMs", SqlType.Int, value: psmResults.TotalPSMs);
+                dbTools.AddTypedParameter(cmd, "@uniquePeptides", SqlType.Int, value: psmResults.UniquePeptides);
+                dbTools.AddTypedParameter(cmd, "@uniqueProteins", SqlType.Int, value: psmResults.UniqueProteins);
+                dbTools.AddTypedParameter(cmd, "@totalPSMsFDRFilter", SqlType.Int, value: psmResults.TotalPSMsFDRFilter);
+                dbTools.AddTypedParameter(cmd, "@uniquePeptidesFDRFilter", SqlType.Int, value: psmResults.UniquePeptidesFDRFilter);
+                dbTools.AddTypedParameter(cmd, "@uniqueProteinsFDRFilter", SqlType.Int, value: psmResults.UniqueProteinsFDRFilter);
+
+                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
+                dbTools.AddTypedParameter(cmd, "@msgfThresholdIsEValue", SqlType.TinyInt, value: psmResults.MsgfThresholdIsEValue);
+
+                dbTools.AddTypedParameter(cmd, "@percentMSnScansNoPSM", SqlType.Real, value: psmResults.PercentMSnScansNoPSM);
+                dbTools.AddTypedParameter(cmd, "@maximumScanGapAdjacentMSn", SqlType.Int, value: psmResults.MaximumScanGapAdjacentMSn);
+                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptideCountFDR", SqlType.Int, value: psmResults.UniquePhosphopeptideCountFDR);
+                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptidesCTermK", SqlType.Int, value: psmResults.UniquePhosphopeptidesCTermK);
+                dbTools.AddTypedParameter(cmd, "@uniquePhosphopeptidesCTermR", SqlType.Int, value: psmResults.UniquePhosphopeptidesCTermR);
+                dbTools.AddTypedParameter(cmd, "@missedCleavageRatio", SqlType.Real, value: psmResults.MissedCleavageRatio);
+                dbTools.AddTypedParameter(cmd, "@missedCleavageRatioPhospho", SqlType.Real, value: psmResults.MissedCleavageRatioPhospho);
+                dbTools.AddTypedParameter(cmd, "@trypticPeptides", SqlType.Int, value: psmResults.TrypticPeptides);
+                dbTools.AddTypedParameter(cmd, "@keratinPeptides", SqlType.Int, value: psmResults.KeratinPeptides);
+                dbTools.AddTypedParameter(cmd, "@trypsinPeptides", SqlType.Int, value: psmResults.TrypsinPeptides);
+
+                // PostgresDBTools will auto-convert the boolean DynamicReporterIon to 0 or 1 for this TinyInt parameter
+                dbTools.AddTypedParameter(cmd, "@dynamicReporterIon", SqlType.TinyInt, value: psmResults.DynamicReporterIon);
+
+                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingNTermReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingNTermReporterIon);
+                dbTools.AddTypedParameter(cmd, "@percentPSMsMissingReporterIon", SqlType.Real, value: psmResults.PercentPSMsMissingReporterIon);
+                dbTools.AddTypedParameter(cmd, "@uniqueAcetylPeptidesFDR", SqlType.Int, value: psmResults.UniqueAcetylPeptidesFDR);
+                dbTools.AddTypedParameter(cmd, "@uniqueUbiquitinPeptidesFDR", SqlType.Int, value: psmResults.UniqueUbiquitinPeptidesFDR);
+
+                // Call the procedure (retry the call if it fails, up to 3 times)
+                var resCode = mStoredProcedureExecutor.ExecuteSP(cmd, out var errorMessage);
+
+                var returnCode = DBToolsBase.GetReturnCode(returnParam);
+
+                if (resCode == 0 && returnCode == 0)
+                {
+                    return true;
+                }
+
+                string logMessage;
+
+                if (resCode != 0 && returnCode == 0)
+                {
+                    logMessage = string.Format(
+                        "ExecuteSP() reported result code {0} storing PSM results in database using {1}",
+                        resCode, STORE_JOB_PSM_RESULTS_SP_NAME);
+                }
+                else
+                {
+                    logMessage = string.Format(
+                        "Error storing PSM results in database, {0} returned {1}",
+                        STORE_JOB_PSM_RESULTS_SP_NAME, returnParam.Value.CastDBVal<string>());
+                }
+
+                SetErrorMessage(logMessage);
+
+                if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    mErrorMessage += "; " + errorMessage;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Exception storing PSM Results in database: " + ex.Message, ex);
+                return false;
+            }
+        }
+
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Process this dataset's synopsis file to determine the PSM stats
+        /// </summary>
+        /// <remarks>If synopsisFilePath is an empty string it will be auto-determined</remarks>
+        /// <param name="synopsisFileNameFromPHRP">Optional: Synopsis file name, as reported by PHRP</param>
+        /// <returns>True if success, false if an error</returns>
+        public bool ProcessPSMResults(string synopsisFileNameFromPHRP = "")
+        {
+            DatasetScanStatsLookupError = false;
+
+            try
+            {
+                mDynamicReporterIonPTM = false;
+                mDynamicReporterIonType = ReporterIonTypes.None;
+                mDynamicReporterIonName = string.Empty;
+
+                mErrorMessage = string.Empty;
+
+                mMSGFBasedCounts?.Clear();
+                mFDRBasedCounts?.Clear();
+
+                SpectraSearched = 0;
+
+                // Define the file paths
+
+                // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
+                string firstHitsOrSynopsisFileName;
+
+                // We use the Synopsis file to count the number of peptides and proteins observed
+                string synopsisFileName;
+
+                // ReSharper disable ConvertIfStatementToConditionalTernaryExpression
+
+                if (string.IsNullOrWhiteSpace(synopsisFileNameFromPHRP))
+                {
+                    synopsisFileName = ReaderFactory.GetPHRPSynopsisFileName(ResultType, mDatasetName);
+                }
+                else
+                {
+                    synopsisFileName = synopsisFileNameFromPHRP;
+                }
+
+                bool isFirstHitsFile;
+
+                if (ResultType is
+                    PeptideHitResultTypes.DiaNN or
+                    PeptideHitResultTypes.MaxQuant or
+                    PeptideHitResultTypes.MODa or
+                    PeptideHitResultTypes.MODPlus or
+                    PeptideHitResultTypes.MSAlign or
+                    PeptideHitResultTypes.MSFragger or
+                    PeptideHitResultTypes.MSPathFinder or
+                    PeptideHitResultTypes.XTandem)
+                {
+                    // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
+                    firstHitsOrSynopsisFileName = synopsisFileName;
+                    isFirstHitsFile = false;
+                }
+                else
+                {
+                    firstHitsOrSynopsisFileName = ReaderFactory.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
+                    isFirstHitsFile = true;
+                }
+
+                // ReSharper restore ConvertIfStatementToConditionalTernaryExpression
+
+                if (synopsisFileName == null)
+                    throw new NullReferenceException(nameof(synopsisFileName) + " is null");
+
+                if (string.IsNullOrWhiteSpace(synopsisFileName))
+                    throw new Exception(nameof(synopsisFileName) + " is an empty string");
+
+                var defaultModSummaryFileName = ReaderFactory.GetPHRPModSummaryFileName(ResultType, DatasetName);
+
+                const string DIANN_MOD_SUMMARY_FILE_SUFFIX = "_diann_syn_ModSummary.txt";
+
+                const string MAXQ_MOD_SUMMARY_FILE_SUFFIX = "_maxq_syn_ModSummary.txt";
+
+                const string MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX = "_msfragger_syn_ModSummary.txt";
+
+                string modSummaryFileName;
+
+                // ReSharper disable once ConvertIfStatementToSwitchStatement
+                if (ResultType is PeptideHitResultTypes.DiaNN &&
+                    defaultModSummaryFileName.Equals("Aggregation" + DIANN_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_diann_syn_ModSummary to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
+
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_diann_syn",
+                        DIANN_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
+                        return false;
+                }
+                else if (ResultType is PeptideHitResultTypes.MaxQuant &&
+                    defaultModSummaryFileName.Equals("Aggregation" + MAXQ_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_maxq_syn_ModSummary.txt to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
+
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_maxq_syn",
+                        MAXQ_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
+                        return false;
+                }
+                else if (ResultType is PeptideHitResultTypes.MSFragger &&
+                         defaultModSummaryFileName.Equals("Aggregation" + MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Need to switch from Aggregation_msfragger_syn_ModSummary to the actual ModSummary.txt file name,
+                    // which is based on the longest common text that the dataset names have in common
+
+                    modSummaryFileName = GetExpectedModSummaryFileName(
+                        synopsisFileName, synopsisFileNameFromPHRP,
+                        "_msfragger_syn",
+                        MSFRAGGER_MOD_SUMMARY_FILE_SUFFIX,
+                        out var criticalError);
+
+                    if (criticalError)
+                        return false;
+                }
+                else
+                {
+                    modSummaryFileName = defaultModSummaryFileName;
+                }
+
+                mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(synopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
+
+                var firstHitsOrSynopsisFile = GetFileInfo(mWorkDir, firstHitsOrSynopsisFileName);
+                var synopsisFile = GetFileInfo(mWorkDir, synopsisFileName);
+                var modSummaryFile = GetFileInfo(mWorkDir, modSummaryFileName);
+
+                if (!synopsisFile.Exists)
+                {
+                    SetErrorMessage("File not found, cannot summarize results: " + synopsisFile.FullName);
+                    return false;
+                }
+
+                if (!modSummaryFile.Exists)
+                {
+                    OnWarningEvent("ModSummary.txt file not found; will not be able to examine dynamic mods while summarizing results");
+                }
+                else
+                {
+                    ParseModSummaryFile(modSummaryFile.FullName);
+                }
+
+                // Determine the number of MS/MS spectra searched
+
+                if (firstHitsOrSynopsisFile.Exists)
+                {
+                    ExamineFirstHitsFile(firstHitsOrSynopsisFile.FullName, isFirstHitsFile);
+                }
+
+                // Load the PSMs and sequence info
+
+                // ReSharper disable CommentTypo
+
+                // The keys in this dictionary are NormalizedSeqID values, which are custom-assigned
+                // by this class to keep track of peptide sequences on a basis where modifications are tracked with some wiggle room
+
+                // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
+                // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
+
+                // The values contain mapped protein name, FDR, and MSGF SpecEValue, and the scans that the normalized peptide was observed in
+                // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
+                // If those files are not found, we'll simply use the protein information stored in psmResults
+                var normalizedPSMs = new Dictionary<int, PSMInfo>();
+
+                // ReSharper restore CommentTypo
+
+                var successLoading = LoadPSMs(synopsisFile.FullName, normalizedPSMs, out var seqToProteinMap, out var sequenceInfo);
+
+                if (!successLoading)
+                {
+                    return false;
+                }
+
+                // Filter on MSGF or EValue and compute the stats
+
+                ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = true", 3);
+
+                var success = FilterAndComputeStats(usingMSGFOrEValueFilter: true, normalizedPSMs, seqToProteinMap, sequenceInfo);
+
+                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
+
+                // Filter on FDR and compute the stats
+
+                ReportDebugMessage("Call FilterAndComputeStats with usingMSGFOrEValueFilter = false", 3);
+
+                var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter: false, normalizedPSMs, seqToProteinMap, sequenceInfo);
+
+                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
+
+                if (!(success || successViaFDR))
+                    return false;
+
+                if (SaveResultsToTextFile)
+                {
+                    // Note: Continue processing even if this step fails
+                    SaveResultsToFile();
+                }
+
+                if (!PostJobPSMResultsToDB)
+                    return true;
+
+                if (!ContactDatabase)
+                {
+                    SetErrorMessage("Cannot post results to the database because ContactDatabase is false");
+                    return false;
+                }
+
+                if (mJob == 0)
+                {
+                    ReportDebugMessage("Cannot call PostJobPSMResults since the job could not be determined");
+                    return false;
+                }
+
+                ReportDebugMessage("Call PostJobPSMResults for job " + mJob);
+
+                var psmResultsPosted = PostJobPSMResults(mJob);
+
+                ReportDebugMessage("PostJobPSMResults returned " + psmResultsPosted);
+
+                return psmResultsPosted;
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage("Error in ProcessPSMResults: " + ex.Message, ex);
+                Console.WriteLine(ex.StackTrace);
+                return false;
             }
         }
 
