@@ -135,13 +135,13 @@
       <Version>6.1.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.4.37</Version>
+      <Version>1.5.4</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.8.40</Version>
+      <Version>2.9.1</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.1.19</Version>
+      <Version>1.1.21</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>3.1.0</Version>
@@ -224,7 +224,6 @@ xcopy "$(TargetDir)ProteinFileReader.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)RDotNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Renci.SshNet.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)UIMFLibrary.dll" "$(ProjectDir)..\AM_Common\" /D /Y
-
 </PostBuildEvent>
   </PropertyGroup>
 </Project>
