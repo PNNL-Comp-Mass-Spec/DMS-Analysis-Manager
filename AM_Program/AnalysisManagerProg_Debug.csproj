@@ -56,6 +56,10 @@
     <Reference Include="FilterMsMsSpectra">
       <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
     </Reference>
+    <Reference Include="Mage, Version=1.5.9083.38672, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\Mage.dll</HintPath>
+    </Reference>
     <Reference Include="MsMsDataFileReader">
       <HintPath>..\AM_Common\MsMsDataFileReader.dll</HintPath>
     </Reference>
