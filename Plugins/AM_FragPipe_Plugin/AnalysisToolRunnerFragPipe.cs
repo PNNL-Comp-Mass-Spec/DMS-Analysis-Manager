@@ -1828,8 +1828,12 @@ namespace AnalysisManagerFragPipePlugIn
             try
             {
                 var workflowFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
+
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName));
-                var updatedFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName + ".new"));
+                sourceFile.MoveTo(sourceFile.FullName + ".original");
+                mJobParams.AddResultFileToSkip(sourceFile.Name);
+
+                var updatedFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName));
 
                 databaseSplitCount = mJobParams.GetJobParameter(
                     AnalysisResourcesFragPipe.DATABASE_SPLIT_COUNT_SECTION,
@@ -1924,10 +1928,6 @@ namespace AnalysisManagerFragPipePlugIn
                         WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
                     }
                 }
-
-                // Replace the original parameter file with the updated one
-                sourceFile.Delete();
-                updatedFile.MoveTo(Path.Combine(mWorkDir, workflowFileName));
 
                 workflowFilePath = updatedFile.FullName;
 
@@ -2103,6 +2103,8 @@ namespace AnalysisManagerFragPipePlugIn
             {
                 // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
                 // But, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
+
+                LogDebug("Verifying that the FASTA file has decoy proteins");
 
                 var success = SplitFastaFileUtilities.DetermineIfDecoyFastaFile(fastaFile, out var isDecoyFASTA, out var debugMessage, out var errorMessage);
 
