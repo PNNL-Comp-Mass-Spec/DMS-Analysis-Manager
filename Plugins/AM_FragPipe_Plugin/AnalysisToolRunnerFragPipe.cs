@@ -2099,37 +2099,20 @@ namespace AnalysisManagerFragPipePlugIn
 
         private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
         {
-            const string DECOY_PREFIX = "XXX_";
-
             try
             {
                 // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
                 // But, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
 
-                var forwardCount = 0;
-                var decoyCount = 0;
+                var success = SplitFastaFileUtilities.DetermineIfDecoyFastaFile(fastaFile, out var isDecoyFASTA, out var debugMessage, out var errorMessage);
 
-                var reader = new ProteinFileReader.FastaFileReader(fastaFile.FullName);
+                if (!string.IsNullOrWhiteSpace(debugMessage))
+                    LogDebug(debugMessage);
 
-                while (reader.ReadNextProteinEntry())
-                {
-                    if (reader.ProteinName.StartsWith(DECOY_PREFIX))
-                        decoyCount++;
-                    else
-                        forwardCount++;
-                }
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    LogError(errorMessage);
 
-                var fileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                if (decoyCount == 0)
-                {
-                    LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins", fastaFile.Name, fileSizeMB, forwardCount);
-                    return false;
-                }
-
-                LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins", fastaFile.Name, fileSizeMB, forwardCount, decoyCount);
-
-                return true;
+                return success && isDecoyFASTA;
             }
             catch (Exception ex)
             {

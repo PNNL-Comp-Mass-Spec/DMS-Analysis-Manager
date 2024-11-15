@@ -238,6 +238,57 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
+        /// Examine the protein names to count the number of proteins that start with XXX_
+        /// </summary>
+        /// <param name="fastaFile">FASTA file to examine</param>
+        /// <param name="isDecoyFASTA">Output: True if any of the proteins start with XXX_, otherwise false</param>
+        /// <param name="debugMessage">Output: debug message</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if no errors, false if an error</returns>
+        public static bool DetermineIfDecoyFastaFile(FileInfo fastaFile, out bool isDecoyFASTA, out string debugMessage, out string errorMessage)
+        {
+            const string DECOY_PREFIX = "XXX_";
+
+            try
+            {
+                var forwardCount = 0;
+                var decoyCount = 0;
+
+                var reader = new ProteinFileReader.FastaFileReader(fastaFile.FullName);
+
+                while (reader.ReadNextProteinEntry())
+                {
+                    if (reader.ProteinName.StartsWith(DECOY_PREFIX))
+                        decoyCount++;
+                    else
+                        forwardCount++;
+                }
+
+                var fileSizeMB = fastaFile.Length / 1024.0 / 1024;
+
+                if (decoyCount == 0)
+                {
+                    debugMessage = string.Format("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins", fastaFile.Name, fileSizeMB, forwardCount);
+                    errorMessage = string.Empty;
+                    isDecoyFASTA = false;
+                    return true;
+                }
+
+                debugMessage = string.Format("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins", fastaFile.Name, fileSizeMB, forwardCount, decoyCount);
+                errorMessage = string.Empty;
+                isDecoyFASTA = true;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                debugMessage = string.Empty;
+                errorMessage = string.Format("Error in IsDecoyFastaFile: {0}; {1}", ex.Message, StackTraceFormatter.GetExceptionStackTrace(ex));
+                isDecoyFASTA = false;
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Lookup the details for LegacyFASTAFileName in the database
         /// </summary>
         /// <param name="legacyFASTAFileName">Legacy FASTA file name</param>
