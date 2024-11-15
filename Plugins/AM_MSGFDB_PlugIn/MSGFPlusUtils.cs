@@ -1348,7 +1348,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return string.Empty;
                 }
 
-                const string NAME_PREFIX = "XXX_";
+                const string DECOY_PREFIX = "XXX_";
 
                 using (var writer = new StreamWriter(new FileStream(decoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -1366,7 +1366,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             WriteProteinSequence(writer, fastaFileReader.ProteinSequence);
 
                             // Write the decoy protein
-                            writer.WriteLine(PROTEIN_LINE_START_CHAR + NAME_PREFIX + fastaFileReader.ProteinName +
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + DECOY_PREFIX + fastaFileReader.ProteinName +
                                              PROTEIN_LINE_ACCESSION_END_CHAR + fastaFileReader.ProteinDescription);
                             WriteProteinSequence(writer, ReverseString(fastaFileReader.ProteinSequence));
                         }

@@ -102,6 +102,7 @@ namespace AnalysisManager_Ape_PlugIn
             const string SOURCE_TABLE = "T_Row_Metadata";
 
             bool success;
+
             try
             {
                 var parsimonyRunner = new SetCover.Runner();
