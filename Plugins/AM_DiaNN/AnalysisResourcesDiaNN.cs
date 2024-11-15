@@ -316,6 +316,7 @@ namespace AnalysisManagerDiaNNPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
+
         private static int BoolToTinyInt(bool value)
         {
             return value ? 1 : 0;
@@ -538,10 +539,10 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var cmd = dbTools.CreateCommand(SP_NAME_GET_SPECTRAL_LIBRARY_ID, CommandType.StoredProcedure);
 
-                if (dbServerType == DbServerTypes.PostgreSQL)
-                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Boolean).Value = allowCreateNewLibrary;
-                else
+                if (dbServerType == DbServerTypes.MSSQLServer)
                     dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Bit).Value = BoolToTinyInt(allowCreateNewLibrary);
+                else
+                    dbTools.AddParameter(cmd, "@allowAddNew", SqlType.Boolean).Value = allowCreateNewLibrary;
 
                 dbTools.AddParameter(cmd, "@dmsSourceJob", SqlType.Int).Value = mJob;
                 dbTools.AddParameter(cmd, "@proteinCollectionList", SqlType.VarChar, 2000).Value = proteinCollectionInfo.ProteinCollectionList;
@@ -549,10 +550,10 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@fragmentIonMzMin", SqlType.Real).Value = (float)options.FragmentIonMzMin;
                 dbTools.AddParameter(cmd, "@fragmentIonMzMax", SqlType.Real).Value = (float)options.FragmentIonMzMax;
 
-                if (dbServerType == DbServerTypes.PostgreSQL)
-                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Boolean).Value = options.TrimNTerminalMethionine;
-                else
+                if (dbServerType == DbServerTypes.MSSQLServer)
                     dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Bit).Value = BoolToTinyInt(options.TrimNTerminalMethionine);
+                else
+                    dbTools.AddParameter(cmd, "@trimNTerminalMet", SqlType.Boolean).Value = options.TrimNTerminalMethionine;
 
                 dbTools.AddParameter(cmd, "@cleavageSpecificity", SqlType.VarChar, 64).Value = options.CleavageSpecificity;
                 dbTools.AddParameter(cmd, "@missedCleavages", SqlType.Int).Value = options.MissedCleavages;
@@ -563,10 +564,10 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@precursorChargeMin", SqlType.Int).Value = options.PrecursorChargeMin;
                 dbTools.AddParameter(cmd, "@precursorChargeMax", SqlType.Int).Value = options.PrecursorChargeMax;
 
-                if (dbServerType == DbServerTypes.PostgreSQL)
-                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Boolean).Value = options.StaticCysCarbamidomethyl;
-                else
+                if (dbServerType == DbServerTypes.MSSQLServer)
                     dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Bit).Value = BoolToTinyInt(options.StaticCysCarbamidomethyl);
+                else
+                    dbTools.AddParameter(cmd, "@staticCysCarbamidomethyl", SqlType.Boolean).Value = options.StaticCysCarbamidomethyl;
 
                 var staticMods = CollapseModifications(options.StaticModDefinitions);
 
@@ -643,14 +644,14 @@ namespace AnalysisManagerDiaNNPlugIn
                 var libraryName = Convert.ToString(libraryNameParam.Value);
                 var storagePath = Convert.ToString(storagePathParam.Value);
 
-                if (dbServerType == DbServerTypes.PostgreSQL)
-                {
-                    createNewLibrary = Convert.ToBoolean(shouldMakeLibraryParam.Value);
-                }
-                else
+                if (dbServerType == DbServerTypes.MSSQLServer)
                 {
                     var shouldMakeLibrary = Convert.ToInt32(shouldMakeLibraryParam.Value);
                     createNewLibrary = shouldMakeLibrary > 0;
+                }
+                else
+                {
+                    createNewLibrary = Convert.ToBoolean(shouldMakeLibraryParam.Value);
                 }
 
                 switch (libraryStateID)
