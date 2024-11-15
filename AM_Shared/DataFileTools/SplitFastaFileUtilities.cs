@@ -101,6 +101,11 @@ namespace AnalysisManagerBase.DataFileTools
             mFileCopyUtilities = fileCopyUtils;
         }
 
+        private static int BoolToTinyInt(bool value)
+        {
+            return value ? 1 : 0;
+        }
+
         /// <summary>
         /// Creates a new lock file to allow the calling process to either create the split FASTA file or validate that the split FASTA file exists
         /// </summary>
@@ -332,7 +337,22 @@ namespace AnalysisManagerBase.DataFileTools
             return string.Empty;
         }
 
-        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.FastaFileInfoType> splitFastaFiles)
+        private bool IsDecoyFastaFile(string fastaFilePath, out bool isDecoyFASTA)
+        {
+            var fastaFile = new FileInfo(fastaFilePath);
+
+            var success = DetermineIfDecoyFastaFile(fastaFile, out isDecoyFASTA, out var debugMessage, out var errorMessage);
+
+            if (!string.IsNullOrWhiteSpace(debugMessage))
+                OnDebugEvent(debugMessage);
+
+            if (!string.IsNullOrWhiteSpace(errorMessage))
+                OnErrorEvent(errorMessage);
+
+            return success && isDecoyFASTA;
+        }
+
+        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.FastaFileInfoType> splitFastaFiles, bool isDecoyFASTA)
         {
             var splitFastaName = "??";
 
@@ -370,6 +390,16 @@ namespace AnalysisManagerBase.DataFileTools
                     dbTools.AddTypedParameter(cmd, "@numProteins", SqlType.Int, value: currentSplitFasta.NumProteins);
                     dbTools.AddTypedParameter(cmd, "@numResidues", SqlType.BigInt, value: currentSplitFasta.NumResidues);
                     dbTools.AddTypedParameter(cmd, "@fileSizeKB", SqlType.Int, value: (int)Math.Round(splitFastaFileInfo.Length / 1024.0));
+
+                    if (dbTools.DbServerType == DbServerTypes.MSSQLServer)
+                    {
+                        dbTools.AddTypedParameter(cmd, "@isDecoy", SqlType.TinyInt, value: BoolToTinyInt(isDecoyFASTA));
+                    }
+                    else
+                    {
+                        dbTools.AddTypedParameter(cmd, "@isDecoy", SqlType.Boolean, value: isDecoyFASTA);
+                    }
+
                     var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
                     var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
@@ -432,7 +462,7 @@ namespace AnalysisManagerBase.DataFileTools
             try
             {
                 // Only call procedure refresh_cached_organism_db_info if the connection string points to ProteinSeqs or CBDMS
-                if (mProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 ||
+                if (mProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 &&
                     mProteinSeqsDBConnectionString.IndexOf("Data Source=cbdms", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     // Most likely the connection string is "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms",
@@ -650,9 +680,23 @@ namespace AnalysisManagerBase.DataFileTools
 
                 OnStatusEvent("FASTA file successfully split into " + mNumSplitParts + " parts");
 
+                OnStatusEvent("Determining if the base FASTA file has decoy proteins");
+
+                var decoyStatusSuccess = IsDecoyFastaFile(fastaFilePath, out var isDecoyFASTA);
+
+                if (!decoyStatusSuccess)
+                {
+                    if (string.IsNullOrWhiteSpace(ErrorMessage))
+                    {
+                        ErrorMessage = "IsDecoyFastaFile returned false for " + fastaFilePath;
+                    }
+
+                    return false;
+                }
+
                 // Store the newly created FASTA file names, plus their protein and residue stats, in DMS
                 currentTask = "StoreSplitFastaFileNames";
-                success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo);
+                success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo, isDecoyFASTA);
 
                 if (!success)
                 {
@@ -661,6 +705,7 @@ namespace AnalysisManagerBase.DataFileTools
                         ErrorMessage = "StoreSplitFastaFileNames returned false; unknown error";
                         OnErrorEvent(ErrorMessage);
                     }
+
                     DeleteLockStream(lockFilePath, lockStream);
                     return false;
                 }
