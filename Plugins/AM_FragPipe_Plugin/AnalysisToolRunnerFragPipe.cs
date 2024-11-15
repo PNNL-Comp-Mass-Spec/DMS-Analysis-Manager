@@ -1637,7 +1637,16 @@ namespace AnalysisManagerFragPipePlugIn
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                var fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
+                double fastaFileSizeMB;
+
+                if (databaseSplitCount > 1)
+                {
+                    fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024 / databaseSplitCount;
+                }
+                else
+                {
+                    fastaFileSizeMB = fastaFile.Length / 1024.0 / 1024;
+                }
 
                 // Set up and execute a program runner to run FragPipe
                 var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
