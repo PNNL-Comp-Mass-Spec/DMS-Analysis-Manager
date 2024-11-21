@@ -656,7 +656,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     xmlResultsClean = xmlResults;
                 }
 
-                // Call stored procedure store_smaqc_results in DMS5
+                // Call procedure store_smaqc_results in DMS5
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 

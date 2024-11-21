@@ -2115,7 +2115,7 @@ namespace MSGFResultsSummarizer
         {
             try
             {
-                // Call stored procedure store_job_psm_stats in DMS5
+                // Call procedure store_job_psm_stats in DMS5
 
                 var dbTools = mStoredProcedureExecutor;
 

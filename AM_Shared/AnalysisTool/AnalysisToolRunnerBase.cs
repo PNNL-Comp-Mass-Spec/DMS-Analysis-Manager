@@ -47,7 +47,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>
         /// This text will be sent to the database via the CompletionMessage parameter,
-        /// and the job will be assigned state No Export (14) in DMS (see stored procedure update_job_state)
+        /// and the job will be assigned state No Export (14) in DMS (see procedure update_job_state)
         /// </remarks>
         public const string NO_RESULTS_ABOVE_THRESHOLD = "No results above threshold";
 

@@ -162,9 +162,9 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Stored procedure that could be used to report manager status; typically not used
+        /// procedure that could be used to report manager status; typically not used
         /// </summary>
-        /// <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
+        /// <remarks>This procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         private const string SP_NAME_UPDATE_MANAGER_STATUS = "update_manager_and_task_status";
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace AnalysisManagerBase.StatusReporting
         }
 
         /// <summary>
-        /// Pipeline database stored procedure executor
+        /// Pipeline database procedure executor
         /// </summary>
         private IDBTools PipelineDBProcedureExecutor { get; }
 

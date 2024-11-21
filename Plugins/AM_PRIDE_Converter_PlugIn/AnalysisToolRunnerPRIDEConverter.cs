@@ -200,7 +200,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         /// <summary>
         /// Sample info for each mzid.gz file
-        /// (instantiated with a case insensitive comparer)
+        /// (instantiated with a case-insensitive comparer)
         /// </summary>
         /// <remarks>
         /// Keys are mzid.gz file names

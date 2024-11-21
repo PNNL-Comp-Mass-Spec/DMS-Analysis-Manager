@@ -96,12 +96,12 @@ namespace AnalysisManagerBase
         protected string mBrokerConnStr;
 
         /// <summary>
-        /// DMS stored procedure executor
+        /// DMS procedure executor
         /// </summary>
         public IDBTools DMSProcedureExecutor { get; }
 
         /// <summary>
-        /// Pipeline database stored procedure executor
+        /// Pipeline database procedure executor
         /// </summary>
         public IDBTools PipelineDBProcedureExecutor { get; }
 

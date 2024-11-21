@@ -27,7 +27,7 @@ namespace AnalysisManagerBase.JobConfig
         public const string MSCONVERT_EXE_NAME = "MSConvert.exe";
 
         /// <summary>
-        /// Stored procedure name for storing the step tool version
+        /// procedure name for storing the step tool version
         /// </summary>
         private const string SP_NAME_SET_TASK_TOOL_VERSION = "set_step_task_tool_version";
 
@@ -589,7 +589,7 @@ namespace AnalysisManagerBase.JobConfig
             var analysisTask = new AnalysisJob(mMgrParams, DebugLevel);
             var dbTools = analysisTask.PipelineDBProcedureExecutor;
 
-            // Setup for execution of the stored procedure
+            // Setup for execution of the procedure
             var cmd = dbTools.CreateCommand(SP_NAME_SET_TASK_TOOL_VERSION, CommandType.StoredProcedure);
 
             dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: mJobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0));
@@ -597,7 +597,7 @@ namespace AnalysisManagerBase.JobConfig
             dbTools.AddParameter(cmd, "@toolVersionInfo", SqlType.VarChar, 900, toolVersionInfo);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the stored procedure (retry the call, up to 4 times)
+            // Execute the procedure (retry the call, up to 4 times)
             var resCode = dbTools.ExecuteSP(cmd, 4);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -614,7 +614,7 @@ namespace AnalysisManagerBase.JobConfig
             }
 
             OnErrorEvent(
-                "Stored procedure {0} reported return code {1}",
+                "procedure {0} reported return code {1}",
                 SP_NAME_SET_TASK_TOOL_VERSION, returnCodeParam.Value.CastDBVal<string>());
 
             return false;

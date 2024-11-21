@@ -662,7 +662,7 @@ namespace AnalysisManagerMasicPlugin
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure store_reporter_ion_obs_stats in the DMS database
+                // Call procedure store_reporter_ion_obs_stats in the DMS database
                 // Data is stored in tables T_Reporter_Ion_Observation_Rates and T_Reporter_Ion_Observation_Rates_Addnl
                 var sqlCmd = dbTools.CreateCommand(STORE_REPORTER_ION_OBS_STATS_SP_NAME, CommandType.StoredProcedure);
 

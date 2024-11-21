@@ -46,12 +46,12 @@ namespace AnalysisManagerBase.JobConfig
         public const string STEP_PARAMETERS_SECTION = "StepParameters";
 
         /// <summary>
-        /// Stored procedure to call once the analysis finishes
+        /// procedure to call once the analysis finishes
         /// </summary>
         protected const string SP_NAME_SET_COMPLETE = "set_step_task_complete";
 
         /// <summary>
-        /// Stored procedure the manager calls to indicate that a deadlock occurred, and this manager was not assigned a job
+        /// procedure the manager calls to indicate that a deadlock occurred, and this manager was not assigned a job
         /// </summary>
         private const string SP_NAME_REPORT_IDLE = "report_manager_idle";
 
@@ -1874,7 +1874,7 @@ namespace AnalysisManagerBase.JobConfig
         }
 
         /// <summary>
-        /// Call stored procedure report_manager_idle to inform the database that this manager did not receive a job
+        /// Call procedure report_manager_idle to inform the database that this manager did not receive a job
         /// </summary>
         /// <remarks>This is used when a Deadlock occurs while requesting a job</remarks>
         private void ReportManagerIdle()
@@ -1885,7 +1885,7 @@ namespace AnalysisManagerBase.JobConfig
                 return;
             }
 
-            // Setup for execution of the stored procedure
+            // Setup for execution of the procedure
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_REPORT_IDLE, CommandType.StoredProcedure);
 
             PipelineDBProcedureExecutor.AddParameter(cmd, "@managerName", SqlType.VarChar, 128, ManagerName);
@@ -1902,7 +1902,7 @@ namespace AnalysisManagerBase.JobConfig
             var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
             var returnCodeParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-            // Execute the Stored Procedure (retry the call, up to 3 times)
+            // Execute the procedure (retry the call, up to 3 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -1914,14 +1914,14 @@ namespace AnalysisManagerBase.JobConfig
 
             if (resCode != 0 && returnCode == 0)
             {
-                LogError("ExecuteSP() reported result code {0} calling stored procedure {1}", resCode, SP_NAME_REPORT_IDLE);
+                LogError("ExecuteSP() reported result code {0} calling procedure {1}", resCode, SP_NAME_REPORT_IDLE);
                 return;
             }
 
             var outputMessage = messageParam.Value.CastDBVal<string>();
             var message = string.IsNullOrWhiteSpace(outputMessage) ? "Unknown error" : outputMessage;
 
-            LogError("Stored procedure {0} reported return code {1}, message: {2}",
+            LogError("procedure {0} reported return code {1}, message: {2}",
                 SP_NAME_REPORT_IDLE, returnCodeParam.Value.CastDBVal<string>(), message);
         }
 
@@ -1945,7 +1945,7 @@ namespace AnalysisManagerBase.JobConfig
 
             evalMsg ??= string.Empty;
 
-            // Setup for execution of stored procedure set_step_task_complete
+            // Setup for execution of procedure set_step_task_complete
             var cmd = PipelineDBProcedureExecutor.CreateCommand(SP_NAME_SET_COMPLETE, CommandType.StoredProcedure);
 
             var job = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
@@ -2023,7 +2023,7 @@ namespace AnalysisManagerBase.JobConfig
 
             var messageParam = PipelineDBProcedureExecutor.AddParameter(cmd, "@message", SqlType.VarChar, 512, string.Empty, ParameterDirection.InputOutput);
 
-            // Call Stored Procedure set_step_task_complete (retry the call, up to 20 times)
+            // Call procedure set_step_task_complete (retry the call, up to 20 times)
             var resCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
@@ -2036,7 +2036,7 @@ namespace AnalysisManagerBase.JobConfig
             var errorMessage = resCode != 0 && returnCode == 0
                 ? string.Format("ExecuteSP() reported result code {0} setting analysis job complete, job {1}", resCode, job)
                 : string.Format(
-                    "Stored procedure {0} reported return code {1}, job {2}",
+                    "procedure {0} reported return code {1}, job {2}",
                     SP_NAME_SET_COMPLETE, returnCodeParam.Value.CastDBVal<string>(), job);
 
             var messageDetails = messageParam.Value?.CastDBVal<string>();

@@ -636,7 +636,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 var datasetID = mJobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
-                // Call stored procedure store_qcart_results
+                // Call procedure store_qcart_results
                 // Retry up to 3 times
 
                 var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);

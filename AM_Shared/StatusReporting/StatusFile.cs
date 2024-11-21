@@ -154,7 +154,7 @@ namespace AnalysisManagerBase.StatusReporting
 
         /// <summary>
         /// When true, status messages are being sent directly to the broker database
-        /// using stored procedure update_manager_and_task_status
+        /// using procedure update_manager_and_task_status
         /// </summary>
         public bool LogToBrokerQueue { get; private set; }
 
@@ -376,7 +376,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// Configure the Broker DB logging settings
         /// </summary>
         /// <remarks>
-        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using stored procedure update_manager_and_task_status
+        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database using procedure update_manager_and_task_status
         /// Analysis managers typically have logStatusToBrokerDB is false and logStatusToMessageQueue is true
         /// </remarks>
         /// <param name="logStatusToBrokerDB">If true, log status to the broker database</param>

@@ -189,7 +189,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call stored procedure store_dta_ref_mass_error_stats in DMS5
+                // Call procedure store_dta_ref_mass_error_stats in DMS5
                 // Data is stored in table T_Dataset_QC
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 

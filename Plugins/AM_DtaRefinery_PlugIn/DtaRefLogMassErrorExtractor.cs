@@ -203,7 +203,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         {
             try
             {
-                // Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
+                // Call procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;

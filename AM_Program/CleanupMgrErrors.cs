@@ -60,7 +60,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Cleanup status codes for stored procedure report_manager_error_cleanup
+        /// Cleanup status codes for procedure report_manager_error_cleanup
         /// </summary>
         public enum CleanupActionCodes
         {

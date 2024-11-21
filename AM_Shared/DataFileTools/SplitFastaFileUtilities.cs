@@ -382,7 +382,7 @@ namespace AnalysisManagerBase.DataFileTools
                     var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString, debugMode: mTraceMode);
                     RegisterEvents(dbTools);
 
-                    // Setup for execution of the stored procedure
+                    // Setup for execution of the procedure
                     var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE, CommandType.StoredProcedure);
 
                     dbTools.AddParameter(cmd, "@fastaFileName", SqlType.VarChar, 128, splitFastaName);
@@ -473,7 +473,7 @@ namespace AnalysisManagerBase.DataFileTools
                 var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, debugMode: mTraceMode);
                 RegisterEvents(dbTools);
 
-                // Setup for execution of the stored procedure
+                // Setup for execution of the procedure
                 var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);
 
                 var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);

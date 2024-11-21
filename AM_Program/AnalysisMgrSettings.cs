@@ -31,11 +31,15 @@ namespace AnalysisManagerProg
         // Ignore Spelling: ack, DMS, holdoff, mgractive, Prog, proteinseqs
 
         /// <summary>
-        /// Stored procedure used to acknowledge that a manager update is required
+        /// Procedure used to acknowledge that a manager update is required
         /// </summary>
         private const string SP_NAME_ACK_MANAGER_UPDATE = "ack_manager_update_required";
 
+        /// <summary>
+        /// Procedure used to update parameter TaskRequestEnableTime for the given manager
+        /// </summary>
         private const string SP_NAME_PAUSE_MANAGER_TASK_REQUESTS = "pause_manager_task_requests";
+
         /// <summary>
         /// File with settings loaded when OfflineMode is enabled
         /// </summary>
@@ -110,7 +114,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Calls stored procedure ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
+        /// Calls procedure ack_manager_update_required to acknowledge that the manager has exited so that an update can be applied
         /// </summary>
         public void AckManagerUpdateRequired()
         {
@@ -357,7 +361,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Calls stored procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
+        /// Calls procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
         /// </summary>
         /// <remarks>
         /// This will effectively put the manager to sleep, since it will not request new jobs

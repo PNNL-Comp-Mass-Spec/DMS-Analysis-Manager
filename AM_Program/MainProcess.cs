@@ -804,9 +804,9 @@ namespace AnalysisManagerProg
                             break;
 
                         case DBTask.RequestTaskResult.TooManyRetries:
-                            ShowTrace("Too many retries calling the stored procedure");
+                            ShowTrace("Too many retries calling the procedure");
 
-                            // There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
+                            // There were too many retries calling the procedure; errors were logged by RequestTaskResult
                             // Bump up loopCount to the maximum to exit the loop
                             UpdateStatusIdle("Excessive retries requesting task");
                             loopCount = maxLoopCount;

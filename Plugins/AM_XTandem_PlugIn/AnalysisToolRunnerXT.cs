@@ -159,7 +159,7 @@ namespace AnalysisManagerXTandemPlugIn
             else if (mXTandemResultsCount == 0)
             {
                 // Storing "No results above threshold" in mMessage will result in the job being assigned state No Export (14) in DMS
-                // See stored procedure update_job_state
+                // See procedure update_job_state
                 mMessage = NO_RESULTS_ABOVE_THRESHOLD;
                 LogError(mMessage);
                 noResults = true;

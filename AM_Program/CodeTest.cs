@@ -1408,7 +1408,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Obtain job step parameters using a stored procedure
+        /// Obtain job step parameters using a procedure
         /// </summary>
         public void TestRunSP()
         {

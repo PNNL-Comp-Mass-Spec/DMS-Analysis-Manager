@@ -497,7 +497,7 @@ namespace AnalysisManagerBase.JobConfig
                 }
                 else
                 {
-                    // Call stored procedure get_job_step_params_as_table_use_history
+                    // Call procedure get_job_step_params_as_table_use_history
 
                     var cmd = dbTools.CreateCommand("get_job_step_params_as_table_use_history", CommandType.StoredProcedure);
 

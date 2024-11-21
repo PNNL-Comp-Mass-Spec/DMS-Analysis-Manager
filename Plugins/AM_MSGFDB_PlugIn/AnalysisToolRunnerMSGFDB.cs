@@ -664,7 +664,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // See if any spectra were processed
                 if (!mzidResultsFile.Exists)
                 {
-                    // Note that DMS stored procedure auto_reset_failed_jobs looks for jobs with these phrases in the job comment
+                    // Note that DMS procedure auto_reset_failed_jobs looks for jobs with these phrases in the job comment
                     //   "None of the spectra are centroided; unable to process"
                     //   "skipped xx% of the spectra because they did not appear centroided"
                     //   "skip xx% of the spectra because they did not appear centroided"

@@ -41,7 +41,7 @@ namespace AnalysisManagerBase
         bool TraceMode { get; }
 
         /// <summary>
-        /// Calls stored procedure ack_manager_update_required in the Manager Control DB
+        /// Calls procedure ack_manager_update_required in the Manager Control DB
         /// </summary>
         void AckManagerUpdateRequired();
 
@@ -51,7 +51,7 @@ namespace AnalysisManagerBase
         bool DisableManagerLocally();
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
+        /// Gets a parameter from the manager parameters dictionary (case-insensitive keys)
         /// </summary>
         /// <remarks>Returns empty string if key isn't found</remarks>
         /// <param name="itemKey">Key name for item</param>
@@ -59,7 +59,7 @@ namespace AnalysisManagerBase
         string GetParam(string itemKey);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
+        /// Gets a parameter from the manager parameters dictionary (case-insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -67,7 +67,7 @@ namespace AnalysisManagerBase
         string GetParam(string itemKey, string valueIfMissing);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
+        /// Gets a parameter from the manager parameters dictionary (case-insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
         bool GetParam(string itemKey, bool valueIfMissing);
 
         /// <summary>
-        /// Gets a parameter from the manager parameters dictionary (case insensitive keys)
+        /// Gets a parameter from the manager parameters dictionary (case-insensitive keys)
         /// </summary>
         /// <param name="itemKey">Key name for item</param>
         /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
@@ -83,14 +83,14 @@ namespace AnalysisManagerBase
         int GetParam(string itemKey, int valueIfMissing);
 
         /// <summary>
-        /// Check for the existence of a job task parameter (case insensitive parameter names)
+        /// Check for the existence of a job task parameter (case-insensitive parameter names)
         /// </summary>
         /// <param name="name">Parameter name</param>
         /// <returns>True if the parameter is defined, false if not</returns>
         bool HasParam(string name);
 
         /// <summary>
-        /// Calls stored procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
+        /// Calls procedure pause_manager_task_requests to update manager parameter TaskRequestEnableTime
         /// </summary>
         /// <param name="holdoffIntervalMinutes">Holdoff interval, in minutes</param>
         void PauseManagerTaskRequests(int holdoffIntervalMinutes = 60);
