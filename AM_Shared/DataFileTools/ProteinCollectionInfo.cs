@@ -32,6 +32,16 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// True if using a split FASTA file
         /// </summary>
+        /// <remarks>
+        /// <para>
+        /// This will be true if parameter "SplitFasta" is true in a settings file for scripts
+        /// MSGFPlus_SplitFasta, MSGFPlus_MzML_SplitFasta, or MSGFPlus_MzML_SplitFasta_NoRefine
+        /// </para>
+        /// <para>
+        /// This property should always be false for scripts MSFragger and FragPipe, since settings files for those scripts
+        /// use parameter "DatabaseSplitCount" to enable FASTA file splitting (which is handled natively by the tool)
+        /// </para>
+        /// </remarks>
         public bool UsingSplitFasta { get; set; }
 
         /// <summary>
@@ -58,10 +68,17 @@ namespace AnalysisManagerBase.DataFileTools
             LegacyFastaName = jobParams.GetParam("LegacyFastaFileName");
             ProteinCollectionOptions = jobParams.GetParam("ProteinOptions");
             ProteinCollectionList = jobParams.GetParam("ProteinCollectionList");
-            UsingSplitFasta = jobParams.GetJobParameter("SplitFasta", false);
 
-            // When running DTA_Refinery, we override UsingSplitFasta to false
-            if (string.Equals(jobParams.GetParam("StepTool"), "DTA_Refinery"))
+            // The "SplitFasta" settings file parameter is applicable to settings files for scripts MSGFPlus_SplitFasta, MSGFPlus_MzML_SplitFasta, and MSGFPlus_MzML_SplitFasta_NoRefine
+            // In contrast, settings files for scripts MSFragger and FragPipe use parameter "DatabaseSplitCount" to enable FASTA file splitting (which is handled natively by MSFragger and FragPipe)
+
+            if (jobParams.TryGetParam("ParallelMSGFPlus", "SplitFasta", out _, false))
+            {
+                UsingSplitFasta = jobParams.GetJobParameter("ParallelMSGFPlus", "SplitFasta", false);
+            }
+
+            // When running DTA_Refinery, assure that UsingSplitFasta is false
+            if (UsingSplitFasta && string.Equals(jobParams.GetParam("StepTool"), "DTA_Refinery"))
             {
                 UsingSplitFasta = false;
             }

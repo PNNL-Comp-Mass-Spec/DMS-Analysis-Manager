@@ -1481,6 +1481,19 @@ namespace AnalysisManagerBase.AnalysisTool
             string legacyFastaToUse;
             var orgDBDescription = proteinCollectionInfo.OrgDBDescription;
 
+            // The ToolName job parameter holds the name of the pipeline script we are executing
+            var scriptName = mJobParams.GetParam("ToolName");
+
+            if (proteinCollectionInfo.UsingSplitFasta && (scriptName.StartsWith("FragPipe", StringComparison.OrdinalIgnoreCase) || scriptName.StartsWith("MSFragger", StringComparison.OrdinalIgnoreCase)))
+            {
+                LogError(string.Format(
+                    "The settings file for this {0} job has \"SplitFasta\" defined; " +
+                    "it should instead use \"DatabaseSplitCount\" to enable FASTA file splitting (see, for example, FragPipe_SplitFASTA_10x.xml)",
+                    scriptName));
+
+                return false;
+            }
+
             if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
             {
                 if (!proteinCollectionInfo.UsingLegacyFasta)
@@ -2149,14 +2162,12 @@ namespace AnalysisManagerBase.AnalysisTool
         {
             // Decoy proteins created by MS-GF+ start with XXX_
             // Decoy proteins created by DMS start with Reversed_ or XXX_
-            var decoyPrefixes = new List<string> {
+            return new List<string> {
                 "Reversed_",
                 "XXX_",
                 "XXX.",
                 "XXX:"
             };
-
-            return decoyPrefixes;
         }
 
         /// <summary>
@@ -4842,7 +4853,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 var legacyFastaFileBaseName = string.Empty;
 
-                if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
+                if (proteinCollectionInfo.UsingLegacyFasta &&
+                    !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
                     !string.Equals(proteinCollectionInfo.LegacyFastaName, "na", StringComparison.OrdinalIgnoreCase))
                 {
                     legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
