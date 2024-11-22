@@ -57,7 +57,7 @@
   <!-- R.NET 1.7.0 uses DynamicInterop 0.8.1 -->
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.1</Version>
+      <Version>2.9.5</Version>
     </PackageReference>
     <PackageReference Include="R.NET">
       <Version>1.9.0</Version>
