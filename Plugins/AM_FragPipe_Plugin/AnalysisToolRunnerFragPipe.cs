@@ -20,6 +20,7 @@ using AnalysisManagerMSFraggerPlugIn;
 using AnalysisManagerPepProtProphetPlugIn;
 using PRISM;
 using PRISM.AppSettings;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerFragPipePlugIn
@@ -82,9 +83,9 @@ namespace AnalysisManagerFragPipePlugIn
         /// </summary>
         private string mFragPipeProgLoc;
 
-        private string mLocalFASTAFilePath;
-
         private DateTime mLastConsoleOutputParse;
+
+        private FastaFileUtilities mFastaUtils;
 
         private bool mToolVersionWritten;
 
@@ -122,6 +123,17 @@ namespace AnalysisManagerFragPipePlugIn
 
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
+                mFastaUtils = new FastaFileUtilities(mMgrParams, mJobParams);
+                RegisterEvents(mFastaUtils);
+                UnregisterEventHandler(mFastaUtils, BaseLogger.LogLevels.ERROR);
+
+                mFastaUtils.ErrorEvent += FastaUtilsErrorEventHandler;
+
+                if (!mFastaUtils.DefineConnectionStrings())
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Determine the path to FragPipe
 
                 // ReSharper disable once CommentTypo
@@ -143,6 +155,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (!ValidateFastaFile(out var fastaFile))
                 {
+                    // Abort processing
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1881,7 +1894,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                             // On Windows, the path to the FASTA file must use '\\' for directory separators, instead of '\'
 
-                            var pathToUse = mLocalFASTAFilePath.Replace(@"\", @"\\");
+                            var pathToUse = mFastaUtils.LocalFASTAFilePath.Replace(@"\", @"\\");
 
                             WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, pathToUse, comment);
 
@@ -1929,7 +1942,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!fastaFileDefined)
                     {
-                        WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, mLocalFASTAFilePath, FASTA_FILE_COMMENT);
+                        WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, mFastaUtils.LocalFASTAFilePath, FASTA_FILE_COMMENT);
                     }
 
                     if (!outputFormatDefined)
@@ -2040,96 +2053,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         private bool ValidateFastaFile(out FileInfo fastaFile)
         {
-            // Define the path to the FASTA file
-            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-
-            // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
-
-            fastaFile = new FileInfo(fastaFilePath);
-
-            if (!fastaFile.Exists)
-            {
-                // FASTA file not found
-                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
-                return false;
-            }
-
-            var proteinCollectionList = mJobParams.GetParam("ProteinCollectionList");
-
-            var fastaHasDecoys = ValidateFastaHasDecoyProteins(fastaFile);
-
-            if (!fastaHasDecoys)
-            {
-                string warningMessage;
-
-                if (string.IsNullOrWhiteSpace(proteinCollectionList) || proteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
-                {
-                    warningMessage = "Using a legacy FASTA file that does not have decoy proteins; " +
-                                     "this will lead to errors with Peptide Prophet or Percolator";
-                }
-                else
-                {
-                    warningMessage = "Protein options for this analysis job contain seq_direction=forward; " +
-                                     "decoy proteins will not be used (which will lead to errors with Peptide Prophet or Percolator)";
-                }
-
-                // The FASTA file does not have decoy sequences
-                // FragPipe will be unable to optimize parameters and Peptide Prophet will likely fail
-                LogError(warningMessage, true);
-
-                // Abort processing
-                return false;
-            }
-
-            // Copy the FASTA file to the working directory
-            // This is done because FragPipe indexes the file based on the dynamic and static mods,
-            // and we want that index file to be in the working directory
-
-            // ReSharper disable once CommentTypo
-
-            // Example index file name: ID_007564_FEA6EC69.fasta.1.pepindex
-
-            mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
-
-            fastaFile.CopyTo(mLocalFASTAFilePath, true);
-
-            // Add the FASTA file and the associated index files to the list of files to skip when copying results to the transfer directory
-            mJobParams.AddResultFileToSkip(fastaFile.Name);
-
-            // ReSharper disable once StringLiteralTypo
-            mJobParams.AddResultFileExtensionToSkip(".pepindex");
-
-            // This file was created by older versions of MSFragger, but has not been seen with MSFragger 4.1
-            mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
-
-            return true;
-        }
-
-        private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
-        {
-            try
-            {
-                // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
-                // But, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
-
-                LogDebug("Verifying that the FASTA file has decoy proteins");
-
-                var success = SplitFastaFileUtilities.DetermineIfDecoyFastaFile(fastaFile, out var isDecoyFASTA, out var debugMessage, out var errorMessage);
-
-                if (!string.IsNullOrWhiteSpace(debugMessage))
-                    LogDebug(debugMessage);
-
-                if (!string.IsNullOrWhiteSpace(errorMessage))
-                    LogError(errorMessage);
-
-                return success && isDecoyFASTA;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in ValidateFastaHasDecoyProteins", ex);
-                return false;
-            }
+            return mFastaUtils.ValidateFragPipeFastaFile(out fastaFile);
         }
 
         private void WriteWorkflowFileSetting(TextWriter writer, string paramName, string paramValue, string comment)
@@ -2584,6 +2508,11 @@ namespace AnalysisManagerFragPipePlugIn
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
             LogProgress("FragPipe");
+        }
+
+        private void FastaUtilsErrorEventHandler(string message, Exception ex)
+        {
+            LogError(message, ex, true);
         }
     }
 }

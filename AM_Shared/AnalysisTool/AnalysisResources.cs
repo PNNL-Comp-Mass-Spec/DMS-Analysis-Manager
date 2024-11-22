@@ -1507,31 +1507,6 @@ namespace AnalysisManagerBase.AnalysisTool
 
                 orgDBDescription = "Legacy DB: " + legacyFastaToUse;
 
-                // Lookup connection strings
-
-                // SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
-                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-                var proteinSeqsDBConnectionString = mMgrParams.GetParam("FastaCnString");
-
-                if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
-                {
-                    LogError("Error in CreateFastaFile: manager parameter FastaCnString is not defined");
-                    return false;
-                }
-
-                // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
-                // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-                var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
-
-                if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
-                {
-                    LogError("Error in CreateFastaFile: manager parameter ConnectionString is not defined");
-                    return false;
-                }
-
-                var dmsConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(dmsConnectionString, mMgrName);
-                var proteinSeqsDBConnectionStringToUse = DbToolsFactory.AddApplicationNameToConnectionString(proteinSeqsDBConnectionString, mMgrName);
-
                 // Lookup the MSGFPlus Index Folder path
                 var msgfPlusIndexFilesDirPathLegacyDB = mMgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
 
@@ -1549,13 +1524,14 @@ namespace AnalysisManagerBase.AnalysisTool
                     LogMessage("Verifying that split FASTA file exists: " + legacyFastaToUse);
                 }
 
-                // Make sure the original FASTA file has already been split into the appropriate number parts
-                // and that DMS knows about them
-                mSplitFastaFileUtility = new SplitFastaFileUtilities(
-                    dmsConnectionStringToUse, proteinSeqsDBConnectionStringToUse,
-                    numberOfClonedSteps, mMgrName, TraceMode, mFileCopyUtilities);
-
+                // Make sure the original FASTA file has already been split into the appropriate number parts and that DMS knows about them
+                mSplitFastaFileUtility = new SplitFastaFileUtilities(numberOfClonedSteps, mFileCopyUtilities, mMgrParams, mJobParams);
                 RegisterEvents(mSplitFastaFileUtility);
+
+                if (!mSplitFastaFileUtility.DefineConnectionStrings())
+                {
+                    return false;
+                }
 
                 // Use a custom handler for ProgressUpdate
                 mSplitFastaFileUtility.ProgressUpdate -= ProgressUpdateHandler;

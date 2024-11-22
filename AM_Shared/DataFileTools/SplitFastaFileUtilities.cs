@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using AnalysisManagerBase.FileAndDirectoryTools;
+using AnalysisManagerBase.JobConfig;
 using FastaFileSplitterDLL;
 using PRISM;
 using PRISM.Logging;
@@ -11,8 +12,9 @@ using PRISMDatabaseUtils;
 namespace AnalysisManagerBase.DataFileTools
 {
     /// <summary>
-    /// FASTA file utilities
+    /// FASTA file splitting utilities
     /// </summary>
+    /// <remarks>These are not used by MSFragger or FragPipe, since those tools natively support FASTA file splitting</remarks>
     public class SplitFastaFileUtilities : EventNotifier
     {
         // Ignore Spelling: admins, dms, FASTA, Lockfile, Seqs, Utils
@@ -27,33 +29,18 @@ namespace AnalysisManagerBase.DataFileTools
         private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
 
         /// <summary>
-        /// DMS5 database connection string
+        /// FASTA File Utilities
         /// </summary>
-        // SQL Server: Data Source=Gigasax;Initial Catalog=DMS5
-        // PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-        private readonly string mDMSConnectionString;
+        private readonly FastaFileUtilities mFastaUtils;
 
         /// <summary>
         /// File copy utilities
         /// </summary>
         private readonly FileCopyUtilities mFileCopyUtilities;
 
-        /// <summary>
-        /// Protein Sequences DB connection string
-        /// </summary>
-        /// <remarks>
-        /// SQL Server: Data Source=proteinseqs;Initial Catalog=manager_control
-        /// PostgreSQL: Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms
-        /// </remarks>
-        private readonly string mProteinSeqsDBConnectionString;
-
         private readonly int mNumSplitParts;
 
-        private readonly string mManagerName;
-
         private clsFastaFileSplitter mSplitter;
-
-        private readonly bool mTraceMode;
 
         /// <summary>
         /// Most recent error message
@@ -73,30 +60,27 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dmsConnectionString">DMS connection string</param>
-        /// <param name="proteinSeqsDBConnectionString">ProteinSeqs DB connection string</param>
+        /// <remarks>Call method DefineConnectionStrings() after instantiating this class and connecting the event handlers</remarks>
         /// <param name="numSplitParts">Number of parts to split the FASTA file info</param>
-        /// <param name="managerName">Manager name</param>
-        /// <param name="traceMode">If true, show additional messages</param>
         /// <param name="fileCopyUtils">File copy utilities</param>
+        /// <param name="mgrParams">Object holding manager parameters</param>
+        /// <param name="jobParams">Object holding job parameters</param>
         public SplitFastaFileUtilities(
-            string dmsConnectionString,
-            string proteinSeqsDBConnectionString,
             int numSplitParts,
-            string managerName,
-            bool traceMode,
-            FileCopyUtilities fileCopyUtils)
+            FileCopyUtilities fileCopyUtils,
+            IMgrParams mgrParams,
+            IJobParams jobParams
+            )
         {
-            mDMSConnectionString = dmsConnectionString;
-            mProteinSeqsDBConnectionString = proteinSeqsDBConnectionString;
             mNumSplitParts = numSplitParts;
-            mManagerName = managerName;
-            mTraceMode = traceMode;
 
             MSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
 
             ErrorMessage = string.Empty;
             WaitingForLockFile = false;
+
+            mFastaUtils = new FastaFileUtilities(mgrParams, jobParams);
+            RegisterEvents(mFastaUtils);
 
             mFileCopyUtilities = fileCopyUtils;
         }
@@ -207,6 +191,15 @@ namespace AnalysisManagerBase.DataFileTools
             return lockStream;
         }
 
+        /// <summary>
+        /// Define the connection strings using manager parameters
+        /// </summary>
+        /// <returns>True if successful, false if an error</returns>
+        public bool DefineConnectionStrings()
+        {
+            return mFastaUtils.DefineConnectionStrings();
+        }
+
         private void DeleteLockStream(string lockFilePath, TextWriter lockStream)
         {
             try
@@ -243,120 +236,17 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
-        /// Examine the protein names to count the number of proteins that start with XXX_
+        /// Add each FASTA file in splitFastaFiles to table t_organism_db_file in the database
         /// </summary>
-        /// <param name="fastaFile">FASTA file to examine</param>
-        /// <param name="isDecoyFASTA">Output: True if any of the proteins start with XXX_, otherwise false</param>
-        /// <param name="debugMessage">Output: debug message</param>
-        /// <param name="errorMessage">Output: error message</param>
-        /// <returns>True if no errors, false if an error</returns>
-        public static bool DetermineIfDecoyFastaFile(FileInfo fastaFile, out bool isDecoyFASTA, out string debugMessage, out string errorMessage)
-        {
-            const string DECOY_PREFIX = "XXX_";
-
-            try
-            {
-                var forwardCount = 0;
-                var decoyCount = 0;
-
-                var reader = new ProteinFileReader.FastaFileReader(fastaFile.FullName);
-
-                while (reader.ReadNextProteinEntry())
-                {
-                    if (reader.ProteinName.StartsWith(DECOY_PREFIX))
-                        decoyCount++;
-                    else
-                        forwardCount++;
-                }
-
-                var fileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                if (decoyCount == 0)
-                {
-                    debugMessage = string.Format("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins", fastaFile.Name, fileSizeMB, forwardCount);
-                    errorMessage = string.Empty;
-                    isDecoyFASTA = false;
-                    return true;
-                }
-
-                debugMessage = string.Format("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins", fastaFile.Name, fileSizeMB, forwardCount, decoyCount);
-                errorMessage = string.Empty;
-                isDecoyFASTA = true;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                debugMessage = string.Empty;
-                errorMessage = string.Format("Error in IsDecoyFastaFile: {0}; {1}", ex.Message, StackTraceFormatter.GetExceptionStackTrace(ex));
-                isDecoyFASTA = false;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Lookup the details for LegacyFASTAFileName in the database
-        /// </summary>
-        /// <param name="legacyFASTAFileName">Legacy FASTA file name</param>
-        /// <param name="organismName">Output: the organism name for this FASTA file</param>
-        /// <returns>The path to the file if found; empty string if no match</returns>
-        private string GetLegacyFastaFilePath(string legacyFASTAFileName, out string organismName)
-        {
-            const int timeoutSeconds = 120;
-
-            var sqlQuery = new System.Text.StringBuilder();
-
-            organismName = string.Empty;
-
-            // Query V_Legacy_Static_File_Locations in the Protein_Sequences database for the path to the FASTA file
-            // This queries table T_DMS_Organism_DB_Info in MT_Main
-            // That table is updated using data in DMS5
-            // This query should only return one row.
-            sqlQuery.Append("SELECT full_path, organism_name ");
-            sqlQuery.Append("FROM V_Legacy_Static_File_Locations ");
-            sqlQuery.Append("WHERE file_name = '" + legacyFASTAFileName + "'");
-
-            var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, timeoutSeconds, debugMode: mTraceMode);
-            RegisterEvents(dbTools);
-
-            var success = dbTools.GetQueryResultsDataTable(sqlQuery.ToString(), out var legacyStaticFiles);
-
-            if (!success)
-            {
-                return string.Empty;
-            }
-
-            foreach (DataRow dataRow in legacyStaticFiles.Rows)
-            {
-                var legacyFASTAFilePath = dataRow[0].CastDBVal<string>();
-                organismName = dataRow[1].CastDBVal<string>();
-
-                return legacyFASTAFilePath;
-            }
-
-            // Database query was successful, but no rows were returned
-            return string.Empty;
-        }
-
-        private bool IsDecoyFastaFile(string fastaFilePath, out bool isDecoyFASTA)
-        {
-            var fastaFile = new FileInfo(fastaFilePath);
-
-            var success = DetermineIfDecoyFastaFile(fastaFile, out isDecoyFASTA, out var debugMessage, out var errorMessage);
-
-            if (!string.IsNullOrWhiteSpace(debugMessage))
-                OnDebugEvent(debugMessage);
-
-            if (!string.IsNullOrWhiteSpace(errorMessage))
-                OnErrorEvent(errorMessage);
-
-            return success && isDecoyFASTA;
-        }
-
+        /// <param name="organismName">Organism name</param>
+        /// <param name="splitFastaFiles">List of FASTA files</param>
+        /// <param name="isDecoyFASTA">True if the FASTA files have forward and reverse protein sequences</param>
+        /// <returns>True if successful, false if an error</returns>
         private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.FastaFileInfoType> splitFastaFiles, bool isDecoyFASTA)
         {
             var splitFastaName = "??";
 
-            if (string.IsNullOrWhiteSpace(mDMSConnectionString))
+            if (string.IsNullOrWhiteSpace(mFastaUtils.DMSConnectionString))
             {
                 if (Global.OfflineMode)
                 {
@@ -379,7 +269,7 @@ namespace AnalysisManagerBase.DataFileTools
                     var splitFastaFileInfo = new FileInfo(currentSplitFasta.FilePath);
                     splitFastaName = splitFastaFileInfo.Name;
 
-                    var dbTools = DbToolsFactory.GetDBTools(mDMSConnectionString, debugMode: mTraceMode);
+                    var dbTools = DbToolsFactory.GetDBTools(mFastaUtils.DMSConnectionString, debugMode: mFastaUtils.MgrParams.TraceMode);
                     RegisterEvents(dbTools);
 
                     // Setup for execution of the procedure
@@ -445,7 +335,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <remarks>This procedure exits if the ProteinSeqs DB connection string does not point to ProteinSeqs or CBDMS</remarks>
         private void UpdateCachedOrganismDBInfo()
         {
-            if (string.IsNullOrWhiteSpace(mProteinSeqsDBConnectionString))
+            if (string.IsNullOrWhiteSpace(mFastaUtils.ProteinSeqsDBConnectionString))
             {
                 if (Global.OfflineMode)
                 {
@@ -462,15 +352,15 @@ namespace AnalysisManagerBase.DataFileTools
             try
             {
                 // Only call procedure refresh_cached_organism_db_info if the connection string points to ProteinSeqs or CBDMS
-                if (mProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 &&
-                    mProteinSeqsDBConnectionString.IndexOf("Data Source=cbdms", StringComparison.OrdinalIgnoreCase) < 0)
+                if (mFastaUtils.ProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 &&
+                    mFastaUtils.ProteinSeqsDBConnectionString.IndexOf("Data Source=cbdms", StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     // Most likely the connection string is "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms",
                     // which is PostgreSQL-based and does not have procedure refresh_cached_organism_db_info
                     return;
                 }
 
-                var dbTools = DbToolsFactory.GetDBTools(mProteinSeqsDBConnectionString, debugMode: mTraceMode);
+                var dbTools = DbToolsFactory.GetDBTools(mFastaUtils.ProteinSeqsDBConnectionString, debugMode: mFastaUtils.MgrParams.TraceMode);
                 RegisterEvents(dbTools);
 
                 // Setup for execution of the procedure
@@ -515,7 +405,7 @@ namespace AnalysisManagerBase.DataFileTools
             try
             {
                 currentTask = "GetLegacyFastaFilePath for splitFastaName";
-                var knownSplitFastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+                var knownSplitFastaFilePath = mFastaUtils.GetLegacyFastaFilePath(splitFastaName, out _);
                 var reSplitFiles = false;
 
                 if (!string.IsNullOrWhiteSpace(knownSplitFastaFilePath))
@@ -588,12 +478,12 @@ namespace AnalysisManagerBase.DataFileTools
                 // Split file not found
                 // Query DMS for the location of baseFastaName
                 currentTask = "GetLegacyFastaFilePath for baseFastaName";
-                var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
+                var baseFastaFilePath = mFastaUtils.GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
 
                 if (string.IsNullOrWhiteSpace(baseFastaFilePath))
                 {
                     // Base file not found
-                    ErrorMessage = "Cannot find base FASTA file in DMS using V_Legacy_Static_File_Locations: " + baseFastaFilePath + "; ConnectionString: " + mProteinSeqsDBConnectionString;
+                    ErrorMessage = "Cannot find base FASTA file in DMS using V_Legacy_Static_File_Locations: " + baseFastaFilePath + "; ConnectionString: " + mFastaUtils.ProteinSeqsDBConnectionString;
                     OnErrorEvent(ErrorMessage);
                     return false;
                 }
@@ -617,13 +507,13 @@ namespace AnalysisManagerBase.DataFileTools
                     throw new Exception("Unable to create lock file required to split " + baseFastaFile.FullName);
                 }
 
-                lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mManagerName);
+                lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mFastaUtils.MgrParams.ManagerName);
 
                 // Check again for the existence of the desired FASTA file
                 // It's possible another process created the FASTA file while this process was waiting for the other process's lock file to disappear
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
-                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+                var fastaFilePath = mFastaUtils.GetLegacyFastaFilePath(splitFastaName, out _);
 
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
@@ -682,7 +572,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 OnStatusEvent("Determining if the base FASTA file has decoy proteins");
 
-                var decoyStatusSuccess = IsDecoyFastaFile(fastaFilePath, out var isDecoyFASTA);
+                var decoyStatusSuccess = mFastaUtils.IsDecoyFastaFile(fastaFilePath, out var isDecoyFASTA);
 
                 if (!decoyStatusSuccess)
                 {

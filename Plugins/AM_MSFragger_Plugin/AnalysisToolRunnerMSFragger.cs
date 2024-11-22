@@ -18,6 +18,7 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
 using PRISM.AppSettings;
+using PRISM.Logging;
 
 namespace AnalysisManagerMSFraggerPlugIn
 {
@@ -63,9 +64,9 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private int mDatasetCount;
 
-        private string mLocalFASTAFilePath;
-
         private DateTime mLastConsoleOutputParse;
+
+        private FastaFileUtilities mFastaUtils;
 
         private bool mWarnedInvalidDatasetCount;
 
@@ -97,6 +98,17 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
+                mFastaUtils = new FastaFileUtilities(mMgrParams, mJobParams);
+                RegisterEvents(mFastaUtils);
+                UnregisterEventHandler(mFastaUtils, BaseLogger.LogLevels.ERROR);
+
+                mFastaUtils.ErrorEvent += FastaUtilsErrorEventHandler;
+
+                if (!mFastaUtils.DefineConnectionStrings())
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Determine the path to MSFragger
 
                 // ReSharper disable once CommentTypo
@@ -120,6 +132,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                 if (!ValidateFastaFile(out var fastaFile))
                 {
+                    // Abort processing
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1222,7 +1235,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                             var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
                             var comment = GetComment(setting, FASTA_FILE_COMMENT);
 
-                            WriteParameterFileSetting(writer, "database_name", mLocalFASTAFilePath, comment);
+                            WriteParameterFileSetting(writer, "database_name", mFastaUtils.LocalFASTAFilePath, comment);
 
                             fastaFileDefined = true;
                             continue;
@@ -1285,7 +1298,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
                     if (!fastaFileDefined)
                     {
-                        WriteParameterFileSetting(writer, "database_name", mLocalFASTAFilePath, FASTA_FILE_COMMENT);
+                        WriteParameterFileSetting(writer, "database_name", mFastaUtils.LocalFASTAFilePath, FASTA_FILE_COMMENT);
                     }
 
                     if (!threadsDefined)
@@ -1316,110 +1329,7 @@ namespace AnalysisManagerMSFraggerPlugIn
 
         private bool ValidateFastaFile(out FileInfo fastaFile)
         {
-            // Define the path to the FASTA file
-            var localOrgDbFolder = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-
-            // Note that job parameter "GeneratedFastaName" gets defined by AnalysisResources.RetrieveOrgDB
-            var fastaFilePath = Path.Combine(localOrgDbFolder, mJobParams.GetParam(AnalysisJob.PEPTIDE_SEARCH_SECTION, AnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
-
-            fastaFile = new FileInfo(fastaFilePath);
-
-            if (!fastaFile.Exists)
-            {
-                // FASTA file not found
-                LogError("FASTA file not found: " + fastaFile.Name, "FASTA file not found: " + fastaFile.FullName);
-                return false;
-            }
-
-            var proteinCollectionList = mJobParams.GetParam("ProteinCollectionList");
-
-            var fastaHasDecoys = ValidateFastaHasDecoyProteins(fastaFile);
-
-            if (!fastaHasDecoys)
-            {
-                string warningMessage;
-
-                if (string.IsNullOrWhiteSpace(proteinCollectionList) || proteinCollectionList.Equals("na", StringComparison.OrdinalIgnoreCase))
-                {
-                    warningMessage = "Using a legacy FASTA file that does not have decoy proteins; " +
-                                     "this will lead to errors with Peptide Prophet or Percolator";
-                }
-                else
-                {
-                    warningMessage = "Protein options for this analysis job contain seq_direction=forward; " +
-                                     "decoy proteins will not be used (which will lead to errors with Peptide Prophet or Percolator)";
-                }
-
-                // The FASTA file does not have decoy sequences
-                // MSFragger will be unable to optimize parameters and Peptide Prophet will likely fail
-                LogError(warningMessage, true);
-
-                // Abort processing
-                return false;
-            }
-
-            // Copy the FASTA file to the working directory
-            // This is done because MSFragger indexes the file based on the dynamic and static mods,
-            // and we want that index file to be in the working directory
-
-            // ReSharper disable once CommentTypo
-
-            // Example index file name: ID_007564_FEA6EC69.fasta.1.pepindex
-
-            mLocalFASTAFilePath = Path.Combine(mWorkDir, fastaFile.Name);
-
-            fastaFile.CopyTo(mLocalFASTAFilePath, true);
-
-            mJobParams.AddResultFileToSkip(fastaFile.Name);
-
-            // ReSharper disable once StringLiteralTypo
-            mJobParams.AddResultFileExtensionToSkip(".pepindex");
-
-            // This file was created by older versions of MSFragger, but has not been seen with MSFragger 4.1
-            mJobParams.AddResultFileExtensionToSkip("peptide_idx_dict");
-
-            return true;
-        }
-
-        private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
-        {
-            const string DECOY_PREFIX = "XXX_";
-
-            try
-            {
-                // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
-                // But, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
-
-                var forwardCount = 0;
-                var decoyCount = 0;
-
-                var reader = new ProteinFileReader.FastaFileReader(fastaFile.FullName);
-
-                while (reader.ReadNextProteinEntry())
-                {
-                    if (reader.ProteinName.StartsWith(DECOY_PREFIX))
-                        decoyCount++;
-                    else
-                        forwardCount++;
-                }
-
-                var fileSizeMB = fastaFile.Length / 1024.0 / 1024;
-
-                if (decoyCount == 0)
-                {
-                    LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins, but no decoy proteins", fastaFile.Name, fileSizeMB, forwardCount);
-                    return false;
-                }
-
-                LogDebug("FASTA file {0} is {1:N1} MB and has {2:N0} forward proteins and {3:N0} decoy proteins", fastaFile.Name, fileSizeMB, forwardCount, decoyCount);
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in ValidateFastaHasDecoyProteins", ex);
-                return false;
-            }
+            return mFastaUtils.ValidateFragPipeFastaFile(out fastaFile);
         }
 
         private void WriteParameterFileSetting(TextWriter writer, string paramName, string paramValue, string comment)
@@ -1624,6 +1534,11 @@ namespace AnalysisManagerMSFraggerPlugIn
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
             LogProgress("MSFragger");
+        }
+
+        private void FastaUtilsErrorEventHandler(string message, Exception ex)
+        {
+            LogError(message, ex, true);
         }
     }
 }
