@@ -1605,9 +1605,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (string.IsNullOrEmpty(proteinOptions) || proteinOptions.Equals("na", StringComparison.OrdinalIgnoreCase))
             {
                 // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
-                var decoyPrefixes = AnalysisResources.GetDefaultDecoyPrefixes();
-
-                foreach (var decoyPrefix in decoyPrefixes)
+                foreach (var decoyPrefix in AnalysisResources.GetDefaultDecoyPrefixes())
                 {
                     var fractionDecoy = AnalysisResources.GetDecoyFastaCompositionStats(fastaFile, decoyPrefix, out _);
 
