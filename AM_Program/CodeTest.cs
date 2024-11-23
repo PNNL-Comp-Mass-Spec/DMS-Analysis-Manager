@@ -1214,7 +1214,7 @@ namespace AnalysisManagerProg
             if (serverType != DbServerTypes.MSSQLServer)
                 return;
 
-            var sqlServerLogger = new SQLServerDatabaseLogger
+            var sqlServerLogger = new PRISMDatabaseUtils.Logging.SQLServerDatabaseLogger
             {
                 EchoMessagesToFileLogger = true
             };
