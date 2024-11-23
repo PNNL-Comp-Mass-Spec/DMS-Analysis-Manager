@@ -123,7 +123,10 @@ namespace AnalysisManagerFragPipePlugIn
 
                 mWorkingDirectory = new DirectoryInfo(mWorkDir);
 
-                mFastaUtils = new FastaFileUtilities(mMgrParams, mJobParams);
+                var fileCopyUtils = new FileCopyUtilities(mFileTools, mMyEMSLUtilities, mDebugLevel);
+                RegisterEvents(fileCopyUtils);
+
+                mFastaUtils = new FastaFileUtilities(fileCopyUtils, mMgrParams, mJobParams);
                 RegisterEvents(mFastaUtils);
                 UnregisterEventHandler(mFastaUtils, BaseLogger.LogLevels.ERROR);
 
@@ -339,6 +342,7 @@ namespace AnalysisManagerFragPipePlugIn
                             dataType = "DDA";
                         }
 
+                        // ReSharper disable once IdentifierTypo
                         const string BIOREPLICATE = "";
 
                         writer.WriteLine("{0}\t{1}\t{2}\t{3}", datasetFilePath, experimentGroup.Key, BIOREPLICATE, dataType);

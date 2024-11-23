@@ -98,7 +98,10 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // Initialize class wide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
 
-                mFastaUtils = new FastaFileUtilities(mMgrParams, mJobParams);
+                var fileCopyUtils = new FileCopyUtilities(mFileTools, mMyEMSLUtilities, mDebugLevel);
+                RegisterEvents(fileCopyUtils);
+
+                mFastaUtils = new FastaFileUtilities(fileCopyUtils, mMgrParams, mJobParams);
                 RegisterEvents(mFastaUtils);
                 UnregisterEventHandler(mFastaUtils, BaseLogger.LogLevels.ERROR);
 

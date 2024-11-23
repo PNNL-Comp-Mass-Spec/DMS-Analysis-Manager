@@ -1,10 +1,12 @@
-﻿using AnalysisManagerBase.AnalysisTool;
-using AnalysisManagerBase.JobConfig;
-using System;
+﻿using System;
+using System.Data;
 using System.IO;
+using AnalysisManagerBase.AnalysisTool;
+using AnalysisManagerBase.JobConfig;
+using AnalysisManagerBase.FileAndDirectoryTools;
+using PRISM.Logging;
 using PRISM;
 using PRISMDatabaseUtils;
-using System.Data;
 
 namespace AnalysisManagerBase.DataFileTools
 {
@@ -13,6 +15,25 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class FastaFileUtilities : EventNotifier
     {
+        private const string DECOY_PREFIX = "XXX_";
+
+        private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
+
+        /// <summary>
+        /// Procedure name for adding or updating a standalone FASTA file
+        /// </summary>
+        public const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "add_update_organism_db_file";
+
+        /// <summary>
+        /// LockFile name
+        /// </summary>
+        public const string LOCK_FILE_PROGRESS_TEXT = "Lockfile";
+
+        /// <summary>
+        /// File copy utilities
+        /// </summary>
+        private readonly FileCopyUtilities mFileCopyUtilities;
+
         private readonly DirectoryInfo mWorkingDirectory;
 
         /// <summary>
@@ -53,16 +74,124 @@ namespace AnalysisManagerBase.DataFileTools
         /// Constructor
         /// </summary>
         /// <remarks>Call method DefineConnectionStrings() after instantiating this class and connecting the event handlers</remarks>
+        /// <param name="fileCopyUtils">File copy utilities</param>
         /// <param name="mgrParams">Object holding manager parameters</param>
         /// <param name="jobParams">Object holding job parameters</param>
-        public FastaFileUtilities(
-            IMgrParams mgrParams,
-            IJobParams jobParams)
+        public FastaFileUtilities(FileCopyUtilities fileCopyUtils, IMgrParams mgrParams, IJobParams jobParams)
         {
             MgrParams = mgrParams;
             JobParams = jobParams;
             mWorkingDirectory = new DirectoryInfo(MgrParams.GetParam("WorkDir"));
+
+            mFileCopyUtilities = fileCopyUtils;
+
             LocalFASTAFilePath = string.Empty;
+        }
+
+        private static int BoolToTinyInt(bool value)
+        {
+            return value ? 1 : 0;
+        }
+
+
+        /// <summary>
+        /// Creates a new lock file to allow the calling process to either create the required FASTA file or validate that it exists
+        /// </summary>
+        /// <param name="parentFastaFile">Parent FASTA file</param>
+        /// <param name="taskDescription">Description of the action being performed by the calling method</param>
+        /// <param name="lockFilePath">Output: path to the newly created lock file</param>
+        /// <returns>Lock file handle</returns>
+        public StreamWriter CreateLockStream(FileSystemInfo parentFastaFile, string taskDescription, out string lockFilePath)
+        {
+            var startTime = DateTime.UtcNow;
+            var attemptCount = 0;
+
+            StreamWriter lockStream;
+
+            lockFilePath = Path.Combine(parentFastaFile.FullName + Global.LOCK_FILE_EXTENSION);
+            var lockFi = new FileInfo(lockFilePath);
+
+            while (true)
+            {
+                attemptCount++;
+                var creatingLockFile = false;
+
+                try
+                {
+                    lockFi.Refresh();
+
+                    if (lockFi.Exists)
+                    {
+                        var lockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
+                        OnStatusEvent("{0} found; waiting until it is deleted or until {1}: {2}", LOCK_FILE_PROGRESS_TEXT, lockTimeoutTime.ToLocalTime(), lockFi.Name);
+
+                        while (lockFi.Exists && DateTime.UtcNow < lockTimeoutTime)
+                        {
+                            Global.IdleLoop(5);
+                            lockFi.Refresh();
+
+                            if (DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60)
+                            {
+                                break;
+                            }
+                        }
+
+                        lockFi.Refresh();
+
+                        if (lockFi.Exists)
+                        {
+                            OnStatusEvent("{0} still exists; assuming another process timed out; thus, now deleting file {1}", LOCK_FILE_PROGRESS_TEXT, lockFi.Name);
+                            lockFi.Delete();
+                        }
+                    }
+
+                    // Try to create a lock file so that the calling procedure can create the required FASTA file (or validate that it now exists)
+                    creatingLockFile = true;
+
+                    // Try to create the lock file
+                    // If another process is still using it, an exception will be thrown
+                    lockStream = new StreamWriter(new FileStream(lockFi.FullName, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite));
+
+                    // We have successfully created a lock file,
+                    // so we should exit the Do Loop
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    if (creatingLockFile)
+                    {
+                        if (ex.Message.Contains("being used by another process"))
+                        {
+                            OnStatusEvent("Another process has already created a {0} at {1}; will try again to monitor or create a new one", LOCK_FILE_PROGRESS_TEXT, lockFi.FullName);
+                        }
+                        else
+                        {
+                            OnWarningEvent("Exception while creating a new {0} at {1}: {2}", LOCK_FILE_PROGRESS_TEXT, lockFi.FullName, ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        OnWarningEvent("Exception while monitoring {0} at {1}: {2}", LOCK_FILE_PROGRESS_TEXT, lockFi.FullName, ex.Message);
+                    }
+                }
+
+                // Something went wrong; wait for 15 seconds then try again
+                Global.IdleLoop(15);
+
+                if (attemptCount >= 4)
+                {
+                    // Something went wrong 4 times in a row (typically either creating or deleting the .Lock file)
+                    // Abort
+
+                    // Exception: Unable to create decoy FASTA file ...
+                    // Exception: Unable to create the Lockfile required to split FASTA file ...
+                    throw new Exception(string.Format(
+                        "Unable to create the {0} required to {1}; tried 4 times without success",
+                        LOCK_FILE_PROGRESS_TEXT, taskDescription));
+                }
+            }
+
+            return lockStream;
         }
 
         /// <summary>
@@ -98,6 +227,47 @@ namespace AnalysisManagerBase.DataFileTools
         }
 
         /// <summary>
+        /// Close the lock file StreamWriter then delete the lock file
+        /// </summary>
+        /// <param name="lockFilePath"></param>
+        /// <param name="lockStream"></param>
+        public void DeleteLockFile(string lockFilePath, TextWriter lockStream)
+        {
+            try
+            {
+                lockStream?.Close();
+
+                var retryCount = 3;
+
+                while (retryCount > 0)
+                {
+                    try
+                    {
+                        var lockFi = new FileInfo(lockFilePath);
+
+                        if (lockFi.Exists)
+                        {
+                            lockFi.Delete();
+                        }
+
+                        break;
+                    }
+                    catch (Exception ex)
+                    {
+                        OnErrorEvent("Exception deleting lock file in DeleteLockFile: {0}", ex.Message);
+                        retryCount--;
+                        var random = new Random();
+                        Global.IdleLoop(0.25 + random.NextDouble());
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in DeleteLockFile: {0}", ex.Message);
+            }
+        }
+
+        /// <summary>
         /// Examine the protein names to count the number of decoy proteins (whose names start with XXX_)
         /// </summary>
         /// <remarks>Stops reading the FASTA file once 100,000 decoy proteins have been found</remarks>
@@ -108,8 +278,6 @@ namespace AnalysisManagerBase.DataFileTools
         /// <returns>True if no errors, false if an error</returns>
         public static bool DetermineIfDecoyFastaFile(FileInfo fastaFile, out bool isDecoyFASTA, out string debugMessage, out string errorMessage)
         {
-            const string DECOY_PREFIX = "XXX_";
-
             const int DECOY_COUNT_THRESHOLD = 100000;
 
             try
@@ -151,7 +319,7 @@ namespace AnalysisManagerBase.DataFileTools
             catch (Exception ex)
             {
                 debugMessage = string.Empty;
-                errorMessage = string.Format("Error in IsDecoyFastaFile: {0}; {1}", ex.Message, StackTraceFormatter.GetExceptionStackTrace(ex));
+                errorMessage = string.Format("Error in DetermineIfDecoyFastaFile: {0}; {1}", ex.Message, StackTraceFormatter.GetExceptionStackTrace(ex));
                 isDecoyFASTA = false;
                 return false;
             }
@@ -169,8 +337,6 @@ namespace AnalysisManagerBase.DataFileTools
 
             var sqlQuery = new System.Text.StringBuilder();
 
-            organismName = string.Empty;
-
             // Query V_Legacy_Static_File_Locations (i.e., pc.v_legacy_static_file_locations) for the path to the FASTA file
             // This query should only return one row
 
@@ -182,7 +348,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             sqlQuery.Append("SELECT full_path, organism_name ");
             sqlQuery.Append("FROM V_Legacy_Static_File_Locations ");
-            sqlQuery.Append("WHERE file_name = '" + legacyFASTAFileName + "'");
+            sqlQuery.AppendFormat("WHERE file_name = '{0}'", legacyFASTAFileName);
 
             var dbTools = DbToolsFactory.GetDBTools(ProteinSeqsDBConnectionString, timeoutSeconds, debugMode: MgrParams.TraceMode);
             RegisterEvents(dbTools);
@@ -191,6 +357,7 @@ namespace AnalysisManagerBase.DataFileTools
 
             if (!success)
             {
+                organismName = string.Empty;
                 return string.Empty;
             }
 
@@ -203,6 +370,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
 
             // Database query was successful, but no rows were returned
+            organismName = string.Empty;
             return string.Empty;
         }
 
@@ -454,50 +622,97 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     var indexFileDirectory = new DirectoryInfo(MSGFPlusIndexFilesFolderPathLegacyDB);
 
-                    if (indexFileDirectory.Exists)
-                    {
-                        foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
-                        {
-                            var fileSpecBase = Path.GetFileNameWithoutExtension(currentSplitFile.FilePath);
+        /// <summary>
+        /// Store the FASTA file in table t_organism_db_file in the database
+        /// </summary>
+        /// <param name="fastaFileName">FASTA file name</param>
+        /// <param name="organismName">Organism name</param>
+        /// <param name="proteinCount">Number of proteins in the FASTA file</param>
+        /// <param name="residueCount">Number of residues in the FASTA file</param>
+        /// <param name="fileSizeBytes">File size, in bytes</param>
+        /// <param name="isDecoyFASTA">True if the FASTA file has decoy proteins</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if successful, false if an error</returns>
+        public bool StoreFastaFileInfoInDatabase(
+            string fastaFileName,
+            string organismName,
+            int proteinCount,
+            long residueCount,
+            long fileSizeBytes,
+            bool isDecoyFASTA,
+            out string errorMessage)
+        {
+            var dbTools = DbToolsFactory.GetDBTools(DMSConnectionString, debugMode: MgrParams.TraceMode);
+            RegisterEvents(dbTools);
 
-                            var fileSpecsToFind = new List<string>
-                            {
-                                fileSpecBase + ".*",
-                                fileSpecBase + ".fasta.LastUsed",
-                                fileSpecBase + ".fasta.MSGFPlusIndexFileInfo",
-                                fileSpecBase + ".fasta.MSGFPlusIndexFileInfo.Lock"
-                            };
+            // Setup for execution of the procedure
+            var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE, CommandType.StoredProcedure);
 
-                            foreach (var fileSpec in fileSpecsToFind)
-                            {
-                                foreach (var fileToDelete in indexFileDirectory.GetFiles(fileSpec))
-                                {
-                                    try
-                                    {
-                                        fileToDelete.Delete();
-                                    }
-                                    catch (Exception)
-                                    {
-                                        // Ignore errors here
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            dbTools.AddParameter(cmd, "@fastaFileName", SqlType.VarChar, 128, fastaFileName);
+            dbTools.AddParameter(cmd, "@organismName", SqlType.VarChar, 128, organismName);
+            dbTools.AddTypedParameter(cmd, "@numProteins", SqlType.Int, value: proteinCount);
+            dbTools.AddTypedParameter(cmd, "@numResidues", SqlType.BigInt, value: residueCount);
+            dbTools.AddTypedParameter(cmd, "@fileSizeKB", SqlType.Int, value: (int)Math.Round(fileSizeBytes / 1024.0));
 
-                // Delete the lock file
-                currentTask = "DeleteLockStream (FASTA file created)";
-                DeleteLockStream(lockFilePath, lockStream);
+            if (dbTools.DbServerType == DbServerTypes.MSSQLServer)
+            {
+                dbTools.AddTypedParameter(cmd, "@isDecoy", SqlType.TinyInt, value: BoolToTinyInt(isDecoyFASTA));
+            }
+            else
+            {
+                dbTools.AddTypedParameter(cmd, "@isDecoy", SqlType.Boolean, value: isDecoyFASTA);
+            }
 
+            var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+            var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+
+            const int retryCount = 3;
+            var resCode = dbTools.ExecuteSP(cmd, retryCount, 2);
+
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
+
+            if (resCode == 0 && returnCode == 0)
+            {
+                errorMessage = string.Empty;
                 return true;
+            }
 
-                */
+            errorMessage = resCode != 0 && returnCode == 0
+                ? string.Format("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_UPDATE_ORGANISM_DB_FILE)
+                : string.Format("{0} reported return code {1}", SP_NAME_UPDATE_ORGANISM_DB_FILE, returnCodeParam.Value.CastDBVal<string>());
+
+            var message = messageParam.Value.CastDBVal<string>();
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                errorMessage = string.Format("{0}; message: {1}", errorMessage, message);
+            }
+
+            return false;
+        }
+
+        private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
+        {
+            try
+            {
+                // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
+                // However, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
+
+                OnDebugEvent("Verifying that the FASTA file has decoy proteins");
+
+                var success = DetermineIfDecoyFastaFile(fastaFile, out var isDecoyFASTA, out var debugMessage, out var errorMessage);
+
+                if (!string.IsNullOrWhiteSpace(debugMessage))
+                    OnDebugEvent(debugMessage);
+
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    OnDebugEvent(errorMessage);
+
+                return success && isDecoyFASTA;
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in RetrieveDecoyFASTA", ex);
-                localFastaFilePath = string.Empty;
+                OnErrorEvent("Error in ValidateFastaHasDecoyProteins", ex);
                 return false;
             }
         }
@@ -536,6 +751,8 @@ namespace AnalysisManagerBase.DataFileTools
                 if (fastaHasDecoys)
                 {
                     localFastaFilePath = Path.Combine(mWorkingDirectory.FullName, fastaFile.Name);
+
+                    // ReSharper disable once CommentTypo
 
                     // Copy the FASTA file to the working directory
 
@@ -596,35 +813,83 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in ValidateFastaFile", ex);
+                OnErrorEvent("Error in ValidateFragPipeFastaFile", ex);
                 fastaFile = null;
                 return false;
             }
         }
 
-        private bool ValidateFastaHasDecoyProteins(FileInfo fastaFile)
+        /// <summary>
+        /// Call refresh_cached_organism_db_info in the Protein Sequences database to update T_DMS_Organism_DB_Info in MT_Main
+        /// on the ProteinSeqs server using data from V_DMS_Organism_DB_File_Import (which pulls from V_Organism_DB_File_Export in DMS5)
+        /// </summary>
+        /// <remarks>This procedure exits if the ProteinSeqs DB connection string does not point to ProteinSeqs or CBDMS</remarks>
+        /// <param name="errorMessage">Output: error message</param>
+        public void UpdateCachedOrganismDBInfo(out string errorMessage)
         {
+            if (string.IsNullOrWhiteSpace(ProteinSeqsDBConnectionString))
+            {
+                if (Global.OfflineMode)
+                {
+                    // This procedure should not be called when running offline since the FASTA file
+                    // should have already been created prior to the remote task starting
+                    OnWarningEvent("Skipping call to {0} since offline", SP_NAME_REFRESH_CACHED_ORG_DB_INFO);
+                    errorMessage = string.Empty;
+                    return;
+                }
+
+                errorMessage = string.Format("Cannot call {0} since the ProteinSeqs Connection string is empty", SP_NAME_REFRESH_CACHED_ORG_DB_INFO);
+                OnErrorEvent(errorMessage);
+                return;
+            }
+
             try
             {
-                // If using a protein collection, could check for "seq_direction=decoy" in proteinOptions
-                // However, we'll instead examine the actual protein names for both Protein Collection-based and Legacy FASTA-based jobs
+                // Only call procedure refresh_cached_organism_db_info if the connection string points to ProteinSeqs or CBDMS
+                if (ProteinSeqsDBConnectionString.IndexOf("Data Source=proteinseqs", StringComparison.OrdinalIgnoreCase) < 0 &&
+                    ProteinSeqsDBConnectionString.IndexOf("Data Source=cbdms", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    // Most likely the connection string is "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms",
+                    // which is PostgreSQL-based and does not have procedure refresh_cached_organism_db_info
+                    errorMessage = string.Empty;
+                    return;
+                }
 
-                OnDebugEvent("Verifying that the FASTA file has decoy proteins");
+                var dbTools = DbToolsFactory.GetDBTools(ProteinSeqsDBConnectionString, debugMode: MgrParams.TraceMode);
+                RegisterEvents(dbTools);
 
-                var success = DetermineIfDecoyFastaFile(fastaFile, out var isDecoyFASTA, out var debugMessage, out var errorMessage);
+                // Setup for execution of the procedure
+                var cmd = dbTools.CreateCommand(SP_NAME_REFRESH_CACHED_ORG_DB_INFO, CommandType.StoredProcedure);
 
-                if (!string.IsNullOrWhiteSpace(debugMessage))
-                    OnDebugEvent(debugMessage);
+                var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
 
-                if (!string.IsNullOrWhiteSpace(errorMessage))
-                    OnDebugEvent(errorMessage);
+                const int retryCount = 3;
+                var resCode = dbTools.ExecuteSP(cmd, retryCount, 2);
 
-                return success && isDecoyFASTA;
+                var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
+
+                if (resCode != 0 && returnCode == 0)
+                {
+                    errorMessage = string.Format("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_REFRESH_CACHED_ORG_DB_INFO);
+                    OnErrorEvent(errorMessage);
+                }
+                else if (returnCode != 0)
+                {
+                    errorMessage = string.Format("Error calling {0}, return code {1}", SP_NAME_REFRESH_CACHED_ORG_DB_INFO, returnCodeParam.Value.CastDBVal<string>());
+                    OnErrorEvent(errorMessage);
+                }
+                else
+                {
+                    errorMessage = string.Empty;
+                }
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in ValidateFastaHasDecoyProteins", ex);
-                return false;
+                errorMessage = string.Format("Error in UpdateCachedOrganismDBInfo: {0}", ex.Message);
+                OnErrorEvent(errorMessage);
+            }
+        }
+
             }
         }
     }
