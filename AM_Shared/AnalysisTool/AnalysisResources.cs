@@ -2089,14 +2089,14 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Examine the FASTA file to determine the fraction of the proteins that are decoy (reverse) proteins
         /// </summary>
-        /// <remarks>Decoy proteins start with Reversed_</remarks>
+        /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
         /// <param name="fastaFile">FASTA file to examine</param>
+        /// <param name="decoyPrefix">Decoy protein prefix (case-sensitive)</param>
         /// <param name="proteinCount">Output: total protein count</param>
         /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-        public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, out int proteinCount)
+        public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, string decoyPrefix, out int proteinCount)
         {
-            var decoyProteinPrefix = GetDefaultDecoyPrefixes().First();
-            return GetDecoyFastaCompositionStats(fastaFile, decoyProteinPrefix, out proteinCount);
+            return GetDecoyFastaCompositionStats(fastaFile, new List<string> { decoyPrefix }, out proteinCount);
         }
 
         /// <summary>
@@ -2104,17 +2104,24 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>Decoy proteins start with decoyProteinPrefix</remarks>
         /// <param name="fastaFile">FASTA file to examine</param>
-        /// <param name="decoyProteinPrefix">Decoy protein prefix</param>
+        /// <param name="decoyPrefixes">Decoy protein prefixes (case-sensitive)</param>
         /// <param name="proteinCount">Output: total protein count</param>
         /// <returns>Fraction of the proteins that are decoy (for example 0.5 if half of the proteins start with Reversed_)</returns>
-        public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, string decoyProteinPrefix, out int proteinCount)
+        public static double GetDecoyFastaCompositionStats(FileInfo fastaFile, List<string> decoyPrefixes, out int proteinCount)
         {
             // Look for protein names that look like:
             // >decoyProteinPrefix
             // where
             // decoyProteinPrefix is typically XXX. or XXX_ or Reversed_
 
-            var prefixToFind = ">" + decoyProteinPrefix;
+            var prefixesToFind = new List<string>();
+
+            // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+            foreach (var decoyPrefix in decoyPrefixes)
+            {
+                prefixesToFind.Add(string.Format(">{0}", decoyPrefix));
+            }
+
             var forwardProteinCount = 0;
             var reverseProteinCount = 0;
 
@@ -2133,7 +2140,10 @@ namespace AnalysisManagerBase.AnalysisTool
                     continue;
 
                 // Protein header line found
-                if (dataLine.StartsWith(prefixToFind))
+
+                var isDecoy = prefixesToFind.Any(prefixToFind => dataLine.StartsWith(prefixToFind));
+
+                if (isDecoy)
                 {
                     reverseProteinCount++;
                 }
@@ -3772,7 +3782,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <param name="fileToPurge">FASTA file to delete</param>
         /// <param name="legacyFastaFileBaseName">Legacy FASTA file base name</param>
         /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
-        /// <param name="preview">If true, preview the delete</param>
+        /// <param name="preview">If true, show the files that would be deleted</param>
         /// <returns>Number of bytes deleted</returns>
         private static long PurgeFastaFiles(FileInfo fileToPurge, string legacyFastaFileBaseName, short debugLevel, bool preview)
         {
