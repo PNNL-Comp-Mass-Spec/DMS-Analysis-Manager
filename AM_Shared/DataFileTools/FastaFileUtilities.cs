@@ -93,6 +93,18 @@ namespace AnalysisManagerBase.DataFileTools
             return value ? 1 : 0;
         }
 
+        private bool CopyExistingDecoyFASTA(string removeFastaFilePath, FileSystemInfo localFastaFile, FileSystemInfo nonDecoyFastaFile)
+        {
+            var fileCopied = mFileCopyUtilities.CopyFileWithRetry(removeFastaFilePath, localFastaFile.FullName, true);
+
+            if (fileCopied)
+            {
+                OnStatusEvent("Using decoy FASTA file {0} instead of {1}", localFastaFile.Name, nonDecoyFastaFile.Name);
+            }
+
+            return fileCopied;
+        }
+
         private bool CreateDecoyFASTA(FileSystemInfo parentFastaFile, FileSystemInfo decoyFastaFile, out int proteinCount, out long residueCount)
         {
             proteinCount = 0;
@@ -487,8 +499,8 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         if (mFileCopyUtilities.FileExistsWithRetry(existingDecoyFastaPath, BaseLogger.LogLevels.DEBUG))
                         {
-                            currentTask = "Copy decoy FASTA to working directory";
-                            return mFileCopyUtilities.CopyFileWithRetry(existingDecoyFastaPath, localFastaFilePath, true);
+                            currentTask = "Copy the decoy FASTA to working directory";
+                            return CopyExistingDecoyFASTA(existingDecoyFastaPath, localFastaFile, fastaFile);
                         }
 
                         // If the directory exists but the decoy FASTA does not exist, re-create it
@@ -566,8 +578,8 @@ namespace AnalysisManagerBase.DataFileTools
 
                     DeleteLockFile(lockFilePath, lockStream);
 
-                    // Copy the file locally
-                    return mFileCopyUtilities.CopyFileWithRetry(existingDecoyFastaPath2, localFastaFilePath, true);
+                    // Copy the file to the working directory
+                    return CopyExistingDecoyFASTA(existingDecoyFastaPath2, localFastaFile, fastaFile);
                 }
 
                 // Create the decoy FASTA file
@@ -585,9 +597,9 @@ namespace AnalysisManagerBase.DataFileTools
                 // Copy the decoy FASTA file to the storage server
                 var remoteDecoyFastaFilePath = Path.Combine(parentFastaFile.Directory.FullName, decoyFastaFileName);
 
-                var fileCopied = mFileCopyUtilities.CopyFileWithRetry(localFastaFilePath, remoteDecoyFastaFilePath, true);
+                var fileCopiedToStorageServer = mFileCopyUtilities.CopyFileWithRetry(localFastaFilePath, remoteDecoyFastaFilePath, true);
 
-                if (!fileCopied)
+                if (!fileCopiedToStorageServer)
                 {
                     return false;
                 }
@@ -621,6 +633,8 @@ namespace AnalysisManagerBase.DataFileTools
                 // Delete the lock file
                 currentTask = "DeleteLockFile (FASTA file created)";
                 DeleteLockFile(lockFilePath, lockStream);
+
+                OnStatusEvent("Using decoy FASTA file {0} instead of {1}", localFastaFile.Name, fastaFile.Name);
 
                 return true;
             }
