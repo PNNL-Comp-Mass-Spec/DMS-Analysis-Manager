@@ -621,18 +621,18 @@ namespace AnalysisManagerIDPickerPlugIn
 
                     foreach (var prefix in reversedProteinPrefixes)
                     {
-                        if (protein.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                        {
-                            var proteinPrefix = protein.Substring(0, prefix.Length);
+                        if (!protein.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                            continue;
 
-                            if (prefixStats.TryGetValue(proteinPrefix, out var count))
-                            {
-                                prefixStats[proteinPrefix] = count + 1;
-                            }
-                            else
-                            {
-                                prefixStats.Add(proteinPrefix, 1);
-                            }
+                        var proteinPrefix = protein.Substring(0, prefix.Length);
+
+                        if (prefixStats.TryGetValue(proteinPrefix, out var count))
+                        {
+                            prefixStats[proteinPrefix] = count + 1;
+                        }
+                        else
+                        {
+                            prefixStats.Add(proteinPrefix, 1);
                         }
                     }
                 }
