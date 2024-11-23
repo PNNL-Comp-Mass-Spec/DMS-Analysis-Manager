@@ -93,6 +93,59 @@ namespace AnalysisManagerBase.DataFileTools
             return value ? 1 : 0;
         }
 
+        private bool CreateDecoyFASTA(FileSystemInfo parentFastaFile, FileSystemInfo decoyFastaFile, out int proteinCount, out long residueCount)
+        {
+            proteinCount = 0;
+            residueCount = 0;
+
+            try
+            {
+                // Create a copy of the non-decoy file
+                var fileCopied = mFileCopyUtilities.CopyFileWithRetry(parentFastaFile.FullName, decoyFastaFile.FullName, true);
+
+                if (!fileCopied)
+                {
+                    return false;
+                }
+
+                // Append the decoy proteins to the decoy FASTA file
+                var reader = new ProteinFileReader.FastaFileReader();
+
+                if (!reader.OpenFile(parentFastaFile.FullName))
+                {
+                    OnErrorEvent("Error reading FASTA file {0} with ProteinFileReader", parentFastaFile.Name);
+                    return false;
+                }
+
+                var writer = new StreamWriter(new FileStream(decoyFastaFile.FullName, FileMode.Append, FileAccess.Write, FileShare.Read));
+
+                while (reader.ReadNextProteinEntry())
+                {
+                    writer.WriteLine(">{0}{1} {2}", DECOY_PREFIX, reader.ProteinName, reader.ProteinDescription);
+
+                    var seqArray = reader.ProteinSequence.ToCharArray();
+                    Array.Reverse(seqArray);
+
+                    WriteProteinSequence(writer, new string(seqArray));
+
+                    // Increment the protein and residue counts (multiplying by two to account for both the forward and reverse proteins)
+                    proteinCount += 2;
+                    residueCount += seqArray.Length * 2;
+                }
+
+                reader.CloseFile();
+                writer.Close();
+
+                decoyFastaFile.Refresh();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in CreateDecoyFASTA", ex);
+                return false;
+            }
+        }
 
         /// <summary>
         /// Creates a new lock file to allow the calling process to either create the required FASTA file or validate that it exists
@@ -401,226 +454,183 @@ namespace AnalysisManagerBase.DataFileTools
         /// </summary>
         /// <remarks>This only applies to standalone (legacy) FASTA files</remarks>
         /// <param name="fastaFile">Non-decoy version of the FASTA file (should be local to this computer, e.g. C:\DMS_Temp_Org)</param>
-        /// <param name="localFastaFilePath">Output: path the FASTA file that was copied to the working directory</param>
+        /// <param name="localFastaFilePath">Output: path to the FASTA file that was copied to the working directory</param>
         /// <returns>True if the file was found (or created) and copied to the working directory, otherwise false</returns>
-        private bool RetrieveDecoyFASTA(FileInfo fastaFile, out string localFastaFilePath)
+        private bool RetrieveDecoyFASTA(FileSystemInfo fastaFile, out string localFastaFilePath)
         {
             var currentTask = "Initializing";
 
             try
             {
-                // ToDo: customize this code to check for _decoy.fasta files, and create them if missing
-                // ToDo: For any created files, call add_update_organism_db_file
-
-                localFastaFilePath = string.Empty;
-                return false;
-
-                /*
-                currentTask = "GetLegacyFastaFilePath for splitFastaName";
-                var knownSplitFastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
-                var reSplitFiles = false;
-
-                if (!string.IsNullOrWhiteSpace(knownSplitFastaFilePath))
+                if (fastaFile.Name.EndsWith("_decoy.fasta", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Split file is defined in the database
-                    // Make sure it exists on disk (admins occasionally delete split FASTA files to reclaim disk space)
-                    try
-                    {
-                        if (!mFileCopyUtilities.FileExistsWithRetry(knownSplitFastaFilePath, BaseLogger.LogLevels.DEBUG))
-                        {
-                            // If the directory exists but no split FASTA files exist, assume that we need to re-split the FASTA file
-                            var existingSplitFastaFile = new FileInfo(knownSplitFastaFilePath);
-
-                            if (existingSplitFastaFile.Directory?.Exists != true)
-                            {
-                                ErrorMessage = "Cannot find directory with the base FASTA file: " + knownSplitFastaFilePath;
-                                OnErrorEvent(ErrorMessage);
-                                return false;
-                            }
-
-                            // Extract out the base split FASTA name
-                            // For example, extract out "OrgDB_2018-07-14_25x" from "OrgDB_2018-07-14_25x_01.fasta"
-                            var reBaseName = new System.Text.RegularExpressions.Regex(@"(?<BaseName>.+\d+x)_\d+");
-                            var reMatch = reBaseName.Match(Path.GetFileNameWithoutExtension(knownSplitFastaFilePath));
-
-                            if (!reMatch.Success)
-                            {
-                                ErrorMessage = "Cannot determine the base split FASTA file name from: " + knownSplitFastaFilePath;
-                                OnErrorEvent(ErrorMessage);
-                                return false;
-                            }
-
-                            // Look for files matching the base name
-
-                            var splitFastaMatchSpec = reMatch.Groups["BaseName"].Value + "*.fasta";
-
-                            var existingSplitFastaFiles = existingSplitFastaFile.Directory.GetFiles(splitFastaMatchSpec);
-                            long totalSize = 0;
-
-                            foreach (var splitFastaFile in existingSplitFastaFiles)
-                            {
-                                totalSize += splitFastaFile.Length;
-                            }
-
-                            if (existingSplitFastaFiles.Length == 0 || totalSize == 0)
-                            {
-                                OnWarningEvent("Split FASTA files not found; will re-generate them to obtain " + knownSplitFastaFilePath);
-                                reSplitFiles = true;
-                            }
-                            else
-                            {
-                                ErrorMessage = "One or more split FASTA files exist, but the required one is missing: " + knownSplitFastaFilePath;
-                                OnErrorEvent(ErrorMessage);
-                                return false;
-                            }
-                        }
-                    }
-                    catch (Exception ex2)
-                    {
-                        OnErrorEvent("Exception while checking for file " + knownSplitFastaFilePath, ex2);
-                    }
-
-                    if (!reSplitFiles)
-                    {
-                        ErrorMessage = string.Empty;
-                        return true;
-                    }
-                }
-
-                // Split file not found
-                // Query DMS for the location of baseFastaName
-                currentTask = "GetLegacyFastaFilePath for baseFastaName";
-                var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
-
-                if (string.IsNullOrWhiteSpace(baseFastaFilePath))
-                {
-                    // Base file not found
-                    ErrorMessage = "Cannot find base FASTA file in DMS using V_Legacy_Static_File_Locations: " + baseFastaFilePath + "; ConnectionString: " + mProteinSeqsDBConnectionString;
-                    OnErrorEvent(ErrorMessage);
+                    OnErrorEvent("Programming bug: decoy FASTA file passed to RetrieveDecoyFASTA: {0}", fastaFile.FullName);
+                    localFastaFilePath = string.Empty;
                     return false;
                 }
 
-                var baseFastaFile = new FileInfo(baseFastaFilePath);
+                var decoyFastaFileName = string.Format("{0}_decoy.fasta", Path.GetFileNameWithoutExtension(fastaFile.Name));
 
-                if (!baseFastaFile.Exists)
+                currentTask = "Look for existing _decoy.fasta file";
+
+                var existingDecoyFastaPath = GetLegacyFastaFilePath(decoyFastaFileName, out _);
+
+                var localFastaFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, decoyFastaFileName));
+                localFastaFilePath = localFastaFile.FullName;
+
+                if (!string.IsNullOrWhiteSpace(existingDecoyFastaPath))
                 {
-                    ErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath;
-                    OnErrorEvent(ErrorMessage);
+                    // The decoy FASTA is defined in the database
+                    // Make sure it exists on disk
+
+                    try
+                    {
+                        if (mFileCopyUtilities.FileExistsWithRetry(existingDecoyFastaPath, BaseLogger.LogLevels.DEBUG))
+                        {
+                            currentTask = "Copy decoy FASTA to working directory";
+                            return mFileCopyUtilities.CopyFileWithRetry(existingDecoyFastaPath, localFastaFilePath, true);
+                        }
+
+                        // If the directory exists but the decoy FASTA does not exist, re-create it
+                        var existingDecoyFasta = new FileInfo(existingDecoyFastaPath);
+
+                        if (existingDecoyFasta.Directory?.Exists != true)
+                        {
+                            OnErrorEvent("Cannot find the directory where the decoy FASTA file would be stored: {0}", existingDecoyFastaPath);
+                            return false;
+                        }
+
+                        OnWarningEvent("Decoy FASTA file not found; will re-generate it to obtain {0}", existingDecoyFastaPath);
+                    }
+                    catch (Exception ex2)
+                    {
+                        OnErrorEvent(string.Format("Exception while checking for file {0}", existingDecoyFastaPath), ex2);
+                    }
+                }
+
+                // Decoy FASTA file not found
+                // Query DMS for the location of the non-decoy FASTA file
+                currentTask = "GetLegacyFastaFilePath for the non-decoy FASTA file";
+
+                var parentFastaFilePath = GetLegacyFastaFilePath(fastaFile.Name, out var organismNameParentFasta);
+
+                if (string.IsNullOrWhiteSpace(parentFastaFilePath))
+                {
+                    // Non-decoy FASTA file not found
+                    OnErrorEvent(
+                        "Cannot find the non-decoy FASTA file in DMS using V_Legacy_Static_File_Locations: {0}; ConnectionString: {1}",
+                        fastaFile.Name, ProteinSeqsDBConnectionString);
+
+                    return false;
+                }
+
+                var parentFastaFile = new FileInfo(parentFastaFilePath);
+
+                if (!parentFastaFile.Exists)
+                {
+                    OnErrorEvent("Cannot create the decoy FASTA file; file not found: {0}", parentFastaFilePath);
+                    return false;
+                }
+
+                if (parentFastaFile.Directory == null)
+                {
+                    OnErrorEvent("Cannot the determine the parent directory of the non-decoy FASTA file: {0}", parentFastaFilePath);
                     return false;
                 }
 
                 // Try to create a lock file
                 currentTask = "CreateLockStream";
-                var lockStream = CreateLockStream(baseFastaFile, out var lockFilePath);
+                var taskDescription = string.Format("create decoy FASTA file {0}", decoyFastaFileName);
+
+                var lockStream = CreateLockStream(parentFastaFile, taskDescription, out var lockFilePath);
 
                 if (lockStream == null)
                 {
                     // Unable to create a lock stream; an exception has likely already been thrown
-                    throw new Exception("Unable to create lock file required to split " + baseFastaFile.FullName);
+                    throw new Exception(string.Format("Unable to create the lock file required to create a decoy version of {0}", parentFastaFile.FullName));
                 }
 
-                lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mManagerName);
+                lockStream.WriteLine("Create decoy fasta, started at {0} by {1}", DateTime.Now, MgrParams.ManagerName);
 
                 // Check again for the existence of the desired FASTA file
                 // It's possible another process created the FASTA file while this process was waiting for the other process's lock file to disappear
 
-                currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
-                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
+                currentTask = "Look for existing _decoy.fasta file (2nd time)";
 
-                if (!string.IsNullOrWhiteSpace(fastaFilePath))
+                var existingDecoyFastaPath2 = GetLegacyFastaFilePath(decoyFastaFileName, out _);
+
+                if (!string.IsNullOrWhiteSpace(existingDecoyFastaPath2))
                 {
                     // The file now exists
-                    ErrorMessage = string.Empty;
-                    currentTask = "DeleteLockStream (FASTA file now exists)";
-                    DeleteLockStream(lockFilePath, lockStream);
-                    return true;
+                    currentTask = "Copy decoy FASTA to working directory (the remote FASTA file now exists)";
+
+                    DeleteLockFile(lockFilePath, lockStream);
+
+                    // Copy the file locally
+                    return mFileCopyUtilities.CopyFileWithRetry(existingDecoyFastaPath2, localFastaFilePath, true);
                 }
 
-                OnSplittingBaseFastaFile(baseFastaFile.FullName, mNumSplitParts);
+                // Create the decoy FASTA file
 
-                // Perform the splitting
-                //    Call SplitFastaFile to create a split file, using mNumSplitParts
+                currentTask = string.Format("Create FASTA file {0}", parentFastaFile);
 
-                mSplitter = new clsFastaFileSplitter
+                var decoyFastaCreated = CreateDecoyFASTA(parentFastaFile, localFastaFile, out var proteinCount, out var residueCount);
+
+                if (!decoyFastaCreated)
                 {
-                    LogMessagesToFile = false
-                };
-
-                mSplitter.ErrorEvent += Splitter_ErrorEvent;
-                mSplitter.WarningEvent += Splitter_WarningEvent;
-                mSplitter.ProgressUpdate += Splitter_ProgressChanged;
-
-                currentTask = "SplitFastaFile " + baseFastaFile.FullName;
-                var success = mSplitter.SplitFastaFile(baseFastaFile.FullName, baseFastaFile.DirectoryName, mNumSplitParts);
-
-                if (!success)
-                {
-                    if (string.IsNullOrWhiteSpace(ErrorMessage))
-                    {
-                        ErrorMessage = "FastaFileSplitter returned false; unknown error";
-                        OnErrorEvent(ErrorMessage);
-                    }
-                    DeleteLockStream(lockFilePath, lockStream);
+                    DeleteLockFile(lockFilePath, lockStream);
                     return false;
                 }
 
-                // Verify that the FASTA files were created
-                currentTask = "Verify new files";
+                // Copy the decoy FASTA file to the storage server
+                var remoteDecoyFastaFilePath = Path.Combine(parentFastaFile.Directory.FullName, decoyFastaFileName);
 
-                foreach (var currentSplitFile in mSplitter.SplitFastaFileInfo)
+                var fileCopied = mFileCopyUtilities.CopyFileWithRetry(localFastaFilePath, remoteDecoyFastaFilePath, true);
+
+                if (!fileCopied)
                 {
-                    var splitFastaFileInfo = new FileInfo(currentSplitFile.FilePath);
-
-                    if (!splitFastaFileInfo.Exists)
-                    {
-                        ErrorMessage = "Newly created split FASTA file not found: " + currentSplitFile.FilePath;
-                        OnErrorEvent(ErrorMessage);
-                        DeleteLockStream(lockFilePath, lockStream);
-                        return false;
-                    }
-                }
-
-                OnStatusEvent("FASTA file successfully split into " + mNumSplitParts + " parts");
-
-                OnStatusEvent("Determining if the base FASTA file has decoy proteins");
-
-                var decoyStatusSuccess = IsDecoyFastaFile(fastaFilePath, out var isDecoyFASTA);
-
-                if (!decoyStatusSuccess)
-                {
-                    if (string.IsNullOrWhiteSpace(ErrorMessage))
-                    {
-                        ErrorMessage = "IsDecoyFastaFile returned false for " + fastaFilePath;
-                    }
-
                     return false;
                 }
 
-                // Store the newly created FASTA file names, plus their protein and residue stats, in DMS
-                currentTask = "StoreSplitFastaFileNames";
-                success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo, isDecoyFASTA);
+                // Store the newly created decoy FASTA file name (and its protein and residue stats), in DMS
+                currentTask = "StoreDecoyFastaFileInfo";
+
+                var success = StoreFastaFileInfoInDatabase(
+                    decoyFastaFileName,
+                    organismNameParentFasta,
+                    proteinCount,
+                    residueCount,
+                    localFastaFile.Length,
+                    true,
+                    out var errorMessage);
 
                 if (!success)
                 {
-                    if (string.IsNullOrWhiteSpace(ErrorMessage))
-                    {
-                        ErrorMessage = "StoreSplitFastaFileNames returned false; unknown error";
-                        OnErrorEvent(ErrorMessage);
-                    }
+                    OnErrorEvent(string.IsNullOrWhiteSpace(errorMessage)
+                        ? "StoreFastaFileInfoInDatabase returned false; unknown error"
+                        : errorMessage);
 
-                    DeleteLockStream(lockFilePath, lockStream);
+                    DeleteLockFile(lockFilePath, lockStream);
                     return false;
                 }
 
                 // Call the procedure that syncs up this information with ProteinSeqs (only applicable if using SQL Server on ProteinSeqs or CBDMS)
                 currentTask = "UpdateCachedOrganismDBInfo";
-                UpdateCachedOrganismDBInfo();
+                UpdateCachedOrganismDBInfo(out _);
 
-                // Delete any cached MSGFPlus index files corresponding to the split FASTA files
+                // Delete the lock file
+                currentTask = "DeleteLockFile (FASTA file created)";
+                DeleteLockFile(lockFilePath, lockStream);
 
-                if (!string.IsNullOrWhiteSpace(MSGFPlusIndexFilesFolderPathLegacyDB))
-                {
-                    var indexFileDirectory = new DirectoryInfo(MSGFPlusIndexFilesFolderPathLegacyDB);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent(string.Format("Error in RetrieveDecoyFASTA ({0})", currentTask), ex);
+                localFastaFilePath = string.Empty;
+                return false;
+            }
+        }
 
         /// <summary>
         /// Store the FASTA file in table t_organism_db_file in the database
@@ -890,6 +900,16 @@ namespace AnalysisManagerBase.DataFileTools
             }
         }
 
+        private static void WriteProteinSequence(TextWriter writer, string proteinSequence)
+        {
+            var index = 0;
+            var residueCount = proteinSequence.Length;
+
+            while (index < residueCount)
+            {
+                var length = Math.Min(60, residueCount - index);
+                writer.WriteLine(proteinSequence.Substring(index, length));
+                index += 60;
             }
         }
     }
