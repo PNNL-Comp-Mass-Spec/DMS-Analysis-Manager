@@ -93,11 +93,11 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     // This procedure should not be called when running offline since the FASTA file
                     // should have already been split prior to the remote task starting
-                    OnWarningEvent("Skipping call to " + SP_NAME_UPDATE_ORGANISM_DB_FILE + " since offline");
+                    OnWarningEvent("Skipping call to {0} since offline", FastaFileUtilities.SP_NAME_UPDATE_ORGANISM_DB_FILE);
                     return true;
                 }
 
-                OnErrorEvent("Cannot call " + SP_NAME_UPDATE_ORGANISM_DB_FILE + " since the DMS Connection string is empty");
+                OnErrorEvent("Cannot call {0} since the DMS connection string is empty", FastaFileUtilities.SP_NAME_UPDATE_ORGANISM_DB_FILE);
                 return false;
             }
 
@@ -130,7 +130,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Error in StoreSplitFastaFileNames for " + splitFastaName + ": " + ex.Message;
+                ErrorMessage = string.Format("Error in StoreSplitFastaFileNames for {0}: {1}", splitFastaName, ex.Message);
                 OnErrorEvent(ErrorMessage);
                 return false;
             }
@@ -168,7 +168,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                             if (existingSplitFastaFile.Directory?.Exists != true)
                             {
-                                ErrorMessage = "Cannot find directory with the base FASTA file: " + knownSplitFastaFilePath;
+                                ErrorMessage = string.Format("Cannot find the directory with the base FASTA file: {0}", knownSplitFastaFilePath);
                                 OnErrorEvent(ErrorMessage);
                                 return false;
                             }
@@ -180,7 +180,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                             if (!reMatch.Success)
                             {
-                                ErrorMessage = "Cannot determine the base split FASTA file name from: " + knownSplitFastaFilePath;
+                                ErrorMessage = string.Format("Cannot determine the base split FASTA file name from: {0}", knownSplitFastaFilePath);
                                 OnErrorEvent(ErrorMessage);
                                 return false;
                             }
@@ -199,12 +199,12 @@ namespace AnalysisManagerBase.DataFileTools
 
                             if (existingSplitFastaFiles.Length == 0 || totalSize == 0)
                             {
-                                OnWarningEvent("Split FASTA files not found; will re-generate them to obtain " + knownSplitFastaFilePath);
+                                OnWarningEvent("Split FASTA files not found; will re-generate them to obtain {0}", knownSplitFastaFilePath);
                                 reSplitFiles = true;
                             }
                             else
                             {
-                                ErrorMessage = "One or more split FASTA files exist, but the required one is missing: " + knownSplitFastaFilePath;
+                                ErrorMessage = string.Format("One or more split FASTA files exist, but the required one is missing: {0}", knownSplitFastaFilePath);
                                 OnErrorEvent(ErrorMessage);
                                 return false;
                             }
@@ -212,7 +212,7 @@ namespace AnalysisManagerBase.DataFileTools
                     }
                     catch (Exception ex2)
                     {
-                        OnErrorEvent("Exception while checking for file " + knownSplitFastaFilePath, ex2);
+                        OnErrorEvent(string.Format("Exception while checking for file {0}", knownSplitFastaFilePath), ex2);
                     }
 
                     if (!reSplitFiles)
@@ -242,7 +242,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 if (!baseFastaFile.Exists)
                 {
-                    ErrorMessage = "Cannot split FASTA file; file not found: " + baseFastaFilePath;
+                    ErrorMessage = string.Format("Cannot split FASTA file; file not found: {0}", baseFastaFilePath);
                     OnErrorEvent(ErrorMessage);
                     return false;
                 }
@@ -257,10 +257,10 @@ namespace AnalysisManagerBase.DataFileTools
                 if (lockStream == null)
                 {
                     // Unable to create a lock stream; an exception has likely already been thrown
-                    throw new Exception("Unable to create lock file required to split " + baseFastaFile.FullName);
+                    throw new Exception(string.Format("Unable to create the lock file required to split {0}", baseFastaFile.FullName));
                 }
 
-                lockStream.WriteLine("ValidateSplitFastaFile, started at " + DateTime.Now + " by " + mFastaUtils.MgrParams.ManagerName);
+                lockStream.WriteLine("ValidateSplitFastaFile, started at {0} by {1}", DateTime.Now, mFastaUtils.MgrParams.ManagerName);
 
                 // Check again for the existence of the desired FASTA file
                 // It's possible another process created the FASTA file while this process was waiting for the other process's lock file to disappear
@@ -291,7 +291,7 @@ namespace AnalysisManagerBase.DataFileTools
                 mSplitter.WarningEvent += Splitter_WarningEvent;
                 mSplitter.ProgressUpdate += Splitter_ProgressChanged;
 
-                currentTask = "SplitFastaFile " + baseFastaFile.FullName;
+                currentTask = string.Format("SplitFastaFile {0}", baseFastaFile.FullName);
                 var success = mSplitter.SplitFastaFile(baseFastaFile.FullName, baseFastaFile.DirectoryName, mNumSplitParts);
 
                 if (!success)
@@ -332,7 +332,7 @@ namespace AnalysisManagerBase.DataFileTools
                 {
                     if (string.IsNullOrWhiteSpace(ErrorMessage))
                     {
-                        ErrorMessage = "IsDecoyFastaFile returned false for " + fastaFilePath;
+                        ErrorMessage = string.Format("IsDecoyFastaFile returned false for {0}", fastaFilePath);
                     }
 
                     return false;
@@ -340,6 +340,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 // Store the newly created FASTA file names, plus their protein and residue stats, in DMS
                 currentTask = "StoreSplitFastaFileNames";
+
                 success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo, isDecoyFASTA);
 
                 if (!success)
@@ -407,7 +408,7 @@ namespace AnalysisManagerBase.DataFileTools
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Error in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
+                ErrorMessage = string.Format("Error in ValidateSplitFastaFile for {0} at {1}: {2}", splitFastaName, currentTask, ex.Message);
                 OnErrorEvent(ErrorMessage, ex);
                 return false;
             }
@@ -437,7 +438,7 @@ namespace AnalysisManagerBase.DataFileTools
 
         private void Splitter_ErrorEvent(string message, Exception ex)
         {
-            ErrorMessage = "FASTA Splitter Error: " + message;
+            ErrorMessage = string.Format("FASTA Splitter Error: {0}", message);
             OnErrorEvent(message, ex);
         }
 
