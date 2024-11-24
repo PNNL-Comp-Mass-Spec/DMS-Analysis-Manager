@@ -614,6 +614,7 @@ namespace AnalysisManagerBase.DataFileTools
                     residueCount,
                     localFastaFile.Length,
                     true,
+                    parentFastaFile.Name,
                     out var errorMessage);
 
                 if (!success)
@@ -655,6 +656,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <param name="residueCount">Number of residues in the FASTA file</param>
         /// <param name="fileSizeBytes">File size, in bytes</param>
         /// <param name="isDecoyFASTA">True if the FASTA file has decoy proteins</param>
+        /// <param name="parentFastaFile">When adding a decoy FASTA file, the name of the parent (non-decoy) FASTA file</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>True if successful, false if an error</returns>
         public bool StoreFastaFileInfoInDatabase(
@@ -664,6 +666,7 @@ namespace AnalysisManagerBase.DataFileTools
             long residueCount,
             long fileSizeBytes,
             bool isDecoyFASTA,
+            string parentFastaFile,
             out string errorMessage)
         {
             var dbTools = DbToolsFactory.GetDBTools(DMSConnectionString, debugMode: MgrParams.TraceMode);
@@ -686,6 +689,8 @@ namespace AnalysisManagerBase.DataFileTools
             {
                 dbTools.AddTypedParameter(cmd, "@isDecoy", SqlType.Boolean, value: isDecoyFASTA);
             }
+
+            dbTools.AddParameter(cmd, "@parentFastaFile", SqlType.VarChar, 128, isDecoyFASTA ? parentFastaFile : string.Empty);
 
             var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
             var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);

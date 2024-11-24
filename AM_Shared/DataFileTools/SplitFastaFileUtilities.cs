@@ -117,6 +117,7 @@ namespace AnalysisManagerBase.DataFileTools
                         currentSplitFasta.NumResidues,
                         splitFastaFileInfo.Length,
                         isDecoyFASTA,
+                        string.Empty,
                         out var errorMessage
                     );
 
