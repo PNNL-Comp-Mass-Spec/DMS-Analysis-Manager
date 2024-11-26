@@ -17,17 +17,25 @@ namespace AnalysisManagerBase.DataFileTools
     {
         private const string DECOY_PREFIX = "XXX_";
 
-        private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
-
-        /// <summary>
-        /// Procedure name for adding or updating a standalone FASTA file
-        /// </summary>
-        public const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "add_update_organism_db_file";
-
         /// <summary>
         /// LockFile name
         /// </summary>
         public const string LOCK_FILE_PROGRESS_TEXT = "Lockfile";
+
+        /// <summary>
+        /// Procedure for refreshing cached organism DB info
+        /// </summary>
+        private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "refresh_cached_organism_db_info";
+
+        /// <summary>
+        /// Procedure for adding or updating a standalone FASTA file
+        /// </summary>
+        public const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "add_update_organism_db_file";
+
+        /// <summary>
+        /// Procedure for updating the organism DB file associated with an analysis job and its parent job request
+        /// </summary>
+        public const string SP_NAME_UPDATE_ORGANISM_DB_FILE_FOR_JOB = "update_organism_db_file_for_job";
 
         /// <summary>
         /// File copy utilities
@@ -800,8 +808,9 @@ namespace AnalysisManagerBase.DataFileTools
                     {
                         // Using a standalone (legacy) FASTA file that does not have decoy proteins; this would lead to errors with Peptide Prophet or Percolator
                         // Retrieve the decoy version of the FASTA file (if it does not exist, auto-create it)
-
                         decoyFileRetrieved = RetrieveDecoyFASTA(fastaFile, out localFastaFilePath);
+
+                        // Set this to an empty string, even if decoyFileRetrieved is false (since method RetrieveDecoyFASTA should have already logged a warning or error message)
                         warningMessage = string.Empty;
                     }
                     else
@@ -825,6 +834,20 @@ namespace AnalysisManagerBase.DataFileTools
 
                         return false;
                     }
+
+                    if (string.IsNullOrWhiteSpace(localFastaFilePath))
+                    {
+                        OnErrorEvent("Error obtaining the decoy FASTA file: decoyFileRetrieved is true, but localFastaFilePath is an empty string");
+                        return false;
+                    }
+
+                    var job = JobParams.GetJobParameter(AnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+
+                    // Call procedure update_organism_db_file_for_job to update the organism DB name for the analysis job and job request
+                    var jobUpdated = UpdateOrganismDbFileForJob(job, Path.GetFileName(localFastaFilePath));
+
+                    if (!jobUpdated)
+                        return false;
                 }
 
                 LocalFASTAFilePath = localFastaFilePath;
@@ -852,7 +875,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// Call refresh_cached_organism_db_info in the Protein Sequences database to update T_DMS_Organism_DB_Info in MT_Main
         /// on the ProteinSeqs server using data from V_DMS_Organism_DB_File_Import (which pulls from V_Organism_DB_File_Export in DMS5)
         /// </summary>
-        /// <remarks>This procedure exits if the ProteinSeqs DB connection string does not point to ProteinSeqs or CBDMS</remarks>
+        /// <remarks>This procedure exits if the ProteinSeqs DB connection string does not point to a SQL Server based instance of DMS (ProteinSeqs or CBDMS)</remarks>
         /// <param name="errorMessage">Output: error message</param>
         public void UpdateCachedOrganismDBInfo(out string errorMessage)
         {
@@ -917,6 +940,48 @@ namespace AnalysisManagerBase.DataFileTools
                 errorMessage = string.Format("Error in UpdateCachedOrganismDBInfo: {0}", ex.Message);
                 OnErrorEvent(errorMessage);
             }
+        }
+
+        /// <summary>
+        /// Update organism_db_name in t_analysis_job and t_analysis_job_request
+        /// </summary>
+        /// <param name="job">Analysis job number</param>
+        /// <param name="fastaFileName">FASTA file name (should end in _decoy.fasta)</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool UpdateOrganismDbFileForJob(int job, string fastaFileName)
+        {
+            var dbTools = DbToolsFactory.GetDBTools(DMSConnectionString, debugMode: MgrParams.TraceMode);
+            RegisterEvents(dbTools);
+
+            // Setup for execution of the procedure
+            var cmd = dbTools.CreateCommand(SP_NAME_UPDATE_ORGANISM_DB_FILE_FOR_JOB, CommandType.StoredProcedure);
+
+            dbTools.AddTypedParameter(cmd, "@job", SqlType.Int, value: job);
+            dbTools.AddParameter(cmd, "@fastaFileName", SqlType.VarChar, 128, fastaFileName);
+            var messageParam = dbTools.AddParameter(cmd, "@message", SqlType.VarChar, 512, ParameterDirection.InputOutput);
+            var returnCodeParam = dbTools.AddParameter(cmd, "@returnCode", SqlType.VarChar, 64, ParameterDirection.InputOutput);
+
+            const int retryCount = 3;
+            var resCode = dbTools.ExecuteSP(cmd, retryCount, 2);
+
+            var returnCode = DBToolsBase.GetReturnCode(returnCodeParam);
+
+            if (resCode == 0 && returnCode == 0)
+            {
+                return true;
+            }
+
+            var errorMessage = resCode != 0 && returnCode == 0
+                ? string.Format("ExecuteSP() reported result code {0} calling {1}", resCode, SP_NAME_UPDATE_ORGANISM_DB_FILE_FOR_JOB)
+                : string.Format("{0} reported return code {1}", SP_NAME_UPDATE_ORGANISM_DB_FILE_FOR_JOB, returnCodeParam.Value.CastDBVal<string>());
+
+            var message = messageParam.Value.CastDBVal<string>();
+
+            OnErrorEvent(string.IsNullOrWhiteSpace(message)
+                ? errorMessage
+                : string.Format("{0}; message: {1}", errorMessage, message));
+
+            return false;
         }
 
         private static void WriteProteinSequence(TextWriter writer, string proteinSequence)
