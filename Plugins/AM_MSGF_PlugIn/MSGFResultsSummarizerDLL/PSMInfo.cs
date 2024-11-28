@@ -162,6 +162,9 @@ namespace MSGFResultsSummarizer
             /// MaxQuant results store Posterior Error Probability (PEP) in this field
             /// </para>
             /// <para>
+            /// MSFragger (and FragPipe) results store EValue in this field
+            /// </para>
+            /// <para>
             /// MSPathFinder results store SpecEValue in this field
             /// </para>
             /// <para>

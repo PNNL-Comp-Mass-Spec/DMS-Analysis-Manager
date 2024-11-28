@@ -640,7 +640,7 @@ namespace MSGFResultsSummarizer
                 }
                 else if (MSGFSpecEValueOrPEPThreshold < 1)
                 {
-                    // Filter on MSGF (though for MSPathFinder we're using SpecEValue, and for DIA-NN and MaxQuant we're using Posterior Error Probability (PEP))
+                    // Filter on MSGF (though for MSPathFinder we use SpecEValue, for DIA-NN and MaxQuant we use Posterior Error Probability (PEP), and for MSFragger we use EValue)
                     success = FilterPSMsByMSGFSpecEValueOrPEP(MSGFSpecEValueOrPEPThreshold, normalizedPSMs, filteredPSMs);
                     filterPSMs = true;
                 }
