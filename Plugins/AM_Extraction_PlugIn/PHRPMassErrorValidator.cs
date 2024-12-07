@@ -201,9 +201,42 @@ namespace AnalysisManagerExtractionPlugin
                 // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
 
                 // For MaxQuant, precursor m/z values are loaded from the _PrecursorInfo.txt file, since precursor m/z values reported by MaxQuant are often several Da away from the observed m/z
+                // Also for MaxQuant, isobaric mods are sometimes not accounted for in the precursor m/z value reported by MaxQuant
+
                 // DIA-NN does not report observed precursor m/z values, so massError will be zero (or very close to zero) for all PSMs
 
-                var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
+                var deltaMassDa = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
+
+                if (resultType == PeptideHitResultTypes.MaxQuant)
+                {
+                    // When Isobaric mods are present, MaxQuant will sometimes treat one of them as optional
+                    foreach (var modItem in currentPSM.ModifiedResidues)
+                    {
+                        var isIsobaric = ReaderFactory.IsIsobaricMod(modItem.ModDefinition.MassCorrectionTag) ||
+                                         ReaderFactory.IsIsobaricMod(modItem.ModDefinition.UniModName) ||
+                                         ReaderFactory.IsIsobaricMod(modItem.ModDefinition.MaxQuantModName);
+
+                        if (!isIsobaric)
+                            continue;
+
+                        var adjustedDeltaMassAbs = Math.Abs(deltaMassDa + modItem.ModDefinition.ModificationMass);
+
+                        if (adjustedDeltaMassAbs < 0.1 ||
+                            Math.Abs(adjustedDeltaMassAbs - 1) < 0.1 ||
+                            Math.Abs(adjustedDeltaMassAbs - 2) < 0.1 ||
+                            Math.Abs(adjustedDeltaMassAbs - 3) < 0.1)
+                        {
+                            // The adjusted delta mass value is either close to 0 or close to 1, 2, or 3
+                            // Remove one instance of this static isobaric mod
+
+                            var calculatedMonoMassPHRP = currentPSM.PeptideMonoisotopicMass - modItem.ModDefinition.ModificationMass;
+
+                            // Update the delta mass
+                            deltaMassDa = currentPSM.PrecursorNeutralMass - calculatedMonoMassPHRP;
+                            break;
+                        }
+                    }
+                }
 
                 double toleranceCurrent;
 
@@ -219,7 +252,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (psmIsotopeErrorValue != 0)
                     {
-                        massError -= psmIsotopeErrorValue;
+                        deltaMassDa -= psmIsotopeErrorValue;
                     }
                 }
                 else
@@ -227,7 +260,7 @@ namespace AnalysisManagerExtractionPlugin
                     toleranceCurrent = precursorMassTolerance + currentPSM.Charge - 1;
                 }
 
-                if (Math.Abs(massError) <= toleranceCurrent)
+                if (Math.Abs(deltaMassDa) <= toleranceCurrent)
                 {
                     continue;
                 }
@@ -241,19 +274,19 @@ namespace AnalysisManagerExtractionPlugin
                 // Keep track of the 100 largest mass errors
                 if (largestMassErrors.Count < 100)
                 {
-                    if (!largestMassErrors.ContainsKey(massError))
+                    if (!largestMassErrors.ContainsKey(deltaMassDa))
                     {
-                        largestMassErrors.Add(massError, peptideDescription);
+                        largestMassErrors.Add(deltaMassDa, peptideDescription);
                     }
                 }
                 else
                 {
                     var minValue = largestMassErrors.Keys.Min();
 
-                    if (massError > minValue && !largestMassErrors.ContainsKey(massError))
+                    if (deltaMassDa > minValue && !largestMassErrors.ContainsKey(deltaMassDa))
                     {
                         largestMassErrors.Remove(minValue);
-                        largestMassErrors.Add(massError, peptideDescription);
+                        largestMassErrors.Add(deltaMassDa, peptideDescription);
                     }
                 }
             }
