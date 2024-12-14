@@ -2014,7 +2014,7 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Determine the dataset name by first looking for job parameter
+        /// Determine the dataset name by looking for job parameter DatasetName
         /// </summary>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="valueIfMissing">Dataset name to use if the parameter is not found</param>
@@ -2029,13 +2029,21 @@ namespace AnalysisManagerBase.AnalysisTool
             if (!string.IsNullOrWhiteSpace(valueIfMissing))
                 return valueIfMissing;
 
+            var dataPackageID = jobParams.GetJobParameter(AnalysisJob.JOB_PARAMETERS_SECTION, "DataPackageID", 0);
+
+            if (dataPackageID > 0)
+            {
+                LogDebug("Could not determine the dataset name since this job is for data package {0} and thus does not have job parameter {1}", dataPackageID, JOB_PARAM_DATASET_NAME);
+                return string.Empty;
+            }
+
             LogWarning("Could not determine the dataset name since missing job parameter {0}", JOB_PARAM_DATASET_NAME);
 
             return string.Empty;
         }
 
         /// <summary>
-        /// Determine the dataset name by first looking for job parameter
+        /// Determine the dataset name by looking for job parameters DatasetName or DatasetNum
         /// </summary>
         /// <param name="jobParams">Job parameters</param>
         /// <returns>Dataset name, or an empty string if the job parameter is not found</returns>
