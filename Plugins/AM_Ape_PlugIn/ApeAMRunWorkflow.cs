@@ -63,6 +63,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             // ReSharper restore CommentTypo
 
+            var ascoreParamFileName = GetJobParam("1_Score", "AScoreParamFilename", string.Empty);
+
             var apeWorkflowStepList = GetJobParam("ApeWorkflowStepList");
 
             if (string.IsNullOrEmpty(apeWorkflowStepList))
@@ -70,6 +72,22 @@ namespace AnalysisManager_Ape_PlugIn
                 // The job parameter originally was missing the "k" in workflow; try that version instead
                 // ReSharper disable once StringLiteralTypo
                 apeWorkflowStepList = GetJobParam("ApeWorflowStepList");
+            }
+
+            if (string.IsNullOrWhiteSpace(ascoreParamFileName) && apeWorkflowStepList.IndexOf(" ascore", StringComparison.Ordinal) > 0)
+            {
+                // ReSharper disable CommentTypo
+
+                // The workflow step list is of the form "msgfplus, TMT10Plex, 1pctFDR, default, ascore, no_precursor_filter, keep_nonquant"
+                // Change it to "msgfplus, TMT10Plex, 1pctFDR, default, no_ascore, no_precursor_filter, keep_nonquant"
+
+                // ReSharper restore CommentTypo
+
+                apeWorkflowStepList = apeWorkflowStepList.Replace(" ascore", " no_ascore");
+
+                OnStatusEvent(
+                    "Replaced 'ascore' with 'no_ascore' in the APE workflow step list since job parameter 'AScoreParamFilename' is an empty string: {0}",
+                    apeWorkflowStepList);
             }
 
             // Check whether we should compact the database

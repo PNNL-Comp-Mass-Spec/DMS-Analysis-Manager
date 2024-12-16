@@ -73,6 +73,11 @@ namespace AnalysisManager_Ape_PlugIn
             return mJobParams.GetJobParameter(paramName, defaultValue);
         }
 
+        public string GetJobParam(string sectionName, string paramName, string defaultValue)
+        {
+            return mJobParams.GetJobParameter(sectionName, paramName, defaultValue);
+        }
+
         /// <summary>Progress update</summary>
         /// <param name="progressMessage">Progress message</param>
         /// <param name="percentComplete">Value between 0 and 100</param>
