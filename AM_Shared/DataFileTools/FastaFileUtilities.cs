@@ -466,7 +466,7 @@ namespace AnalysisManagerBase.DataFileTools
             if (!string.IsNullOrWhiteSpace(errorMessage))
                 OnErrorEvent(errorMessage);
 
-            return success && isDecoyFASTA;
+            return success;
         }
 
         /// <summary>
