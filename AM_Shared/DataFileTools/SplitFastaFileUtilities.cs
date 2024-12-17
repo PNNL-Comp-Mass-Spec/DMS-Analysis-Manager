@@ -327,7 +327,7 @@ namespace AnalysisManagerBase.DataFileTools
 
                 OnStatusEvent("Determining if the base FASTA file has decoy proteins");
 
-                var decoyStatusSuccess = mFastaUtils.IsDecoyFastaFile(fastaFilePath, out var isDecoyFASTA);
+                var decoyStatusSuccess = mFastaUtils.IsDecoyFastaFile(baseFastaFile.FullName, out var isDecoyFASTA);
 
                 if (!decoyStatusSuccess)
                 {
