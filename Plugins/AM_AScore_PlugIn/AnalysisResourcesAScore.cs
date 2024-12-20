@@ -27,7 +27,7 @@ namespace AnalysisManager_AScore_PlugIn
             // WARNING: AScore accesses the files over the network, retrieving the files using Mage
             //          If the files have been purged, they may not be accessible
             //          (Mage supports retrieving files from Aurora or MyEmsl,
-            //           but this has not be tested as of July 16, 2014)
+            //           but this has not been tested as of July 16, 2014)
 
             // var success = true;
             // success = RunAScoreGetResources();

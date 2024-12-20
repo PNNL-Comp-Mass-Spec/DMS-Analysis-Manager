@@ -130,6 +130,8 @@ namespace AnalysisManager_AScore_PlugIn
                 mDatasetName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
                 mJobParams.SetParam(AnalysisJob.STEP_PARAMETERS_SECTION, AnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, mResultsDirectoryName);
 
+                mJobParams.AddResultFileExtensionToSkip("_ModSummary.txt");
+
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;

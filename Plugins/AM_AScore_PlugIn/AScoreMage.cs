@@ -25,7 +25,12 @@ namespace AnalysisManager_AScore_PlugIn
         private ManagerParameters mMgrParams;
 
         private string mSearchType = string.Empty;
+
+        /// <summary>
+        /// Job parameter "AScoreParamFilename", but without the .xml file extension
+        /// </summary>
         private string mParamFilename = string.Empty;
+
         private string mFastaFilePath = string.Empty;
         private string mErrorMessage = string.Empty;
 
@@ -38,9 +43,9 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="jobParams"></param>
-        /// <param name="mgrParams"></param>
-        /// <param name="zipTools"></param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="zipTools">Zip tools</param>
         public AScoreMagePipeline(IJobParams jobParams, IMgrParams mgrParams, ZipFileTools zipTools)
         {
             Initialize(jobParams, mgrParams, zipTools);
@@ -63,9 +68,9 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// Set up internal variables
         /// </summary>
-        /// <param name="jobParams"></param>
-        /// <param name="mgrParams"></param>
-        /// <param name="zipTools"></param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="zipTools">Zip tools</param>
         private void Initialize(IJobParams jobParams, IMgrParams mgrParams, ZipFileTools zipTools)
         {
             mJobParams = new JobParameters(jobParams);
@@ -110,7 +115,9 @@ namespace AnalysisManager_AScore_PlugIn
             var dataPackageID = mJobParams.RequireJobParam("DataPackageID");
 
             if (string.IsNullOrWhiteSpace(mParamFilename))
+            {
                 return true;
+            }
 
             if (!GetAScoreParameterFile())
             {
@@ -143,9 +150,9 @@ namespace AnalysisManager_AScore_PlugIn
             {
                 parameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
-                    "Parameter " + paramFileStoragePathKeyName + " is not defined " +
-                    "(obtained using V_Pipeline_Step_Tool_Storage_Paths in the Broker DB); " +
-                    "will assume: " + parameterFileStoragePath);
+                    string.Format(
+                        "Parameter {0} is not defined (obtained using V_Pipeline_Step_Tool_Storage_Paths in the Broker DB); will assume: {1}",
+                        paramFileStoragePathKeyName, parameterFileStoragePath));
             }
 
             // Find all parameter files that match the base name and copy to working directory
@@ -158,7 +165,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (parameterFiles.Count == 0)
             {
-                mErrorMessage = "No parameter files matching " + fileMask + " were found at " + paramFileDirectory.FullName;
+                mErrorMessage = string.Format("No parameter files matching {0} were found at {1}", fileMask, paramFileDirectory.FullName);
                 LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }
