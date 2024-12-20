@@ -611,21 +611,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         private string DetermineSpectrumFilePath(DirectoryInfo jobFolder)
         {
-            var dtaFiles = jobFolder.GetFiles("*_dta.zip");
-
-            if (dtaFiles.Length > 0)
-            {
-                var dtaFile = dtaFiles.First();
-
-                if (!UnzipFile(dtaFile.FullName))
-                {
-                    mMessage = "Error unzipping " + dtaFile.Name;
-                    return string.Empty;
-                }
-
-                return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) + ".txt");
-            }
-
             var mzMLFiles = jobFolder.GetFiles("*.mzML.gz");
 
             if (mzMLFiles.Length > 0)
@@ -641,7 +626,22 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mzMLFile.Name));
             }
 
-            mMessage = "Folder " + jobFolder.Name + " does not have a _dta.zip file or .mzML.gz file";
+            var dtaFiles = jobFolder.GetFiles("*_dta.zip");
+
+            if (dtaFiles.Length > 0)
+            {
+                var dtaFile = dtaFiles.First();
+
+                if (!UnzipFile(dtaFile.FullName))
+                {
+                    mMessage = "Error unzipping " + dtaFile.Name;
+                    return string.Empty;
+                }
+
+                return Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(dtaFile.Name) + ".txt");
+            }
+
+            mMessage = "Folder " + jobFolder.Name + " does not have a .mzML.gz file or a _dta.zip";
             return string.Empty;
         }
 
@@ -862,7 +862,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         return false;
                     }
 
-                    // Find the spectrum file; should be _dta.zip or .mzML.gz
+                    // Find the spectrum file; should be .mzML.gz (previously _dta.zip)
                     jobMetadata.SpectrumFilePath = DetermineSpectrumFilePath(jobFolder.Value);
 
                     if (string.IsNullOrWhiteSpace(jobMetadata.SpectrumFilePath))
