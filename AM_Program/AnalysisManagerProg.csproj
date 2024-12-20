@@ -47,6 +47,10 @@
     <StartupObject>AnalysisManagerProg.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AScore_DLL, Version=1.0.9119.31603, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\AScore_DLL.dll</HintPath>
+    </Reference>
     <Reference Include="Cyclops">
       <HintPath>..\AM_Common\Cyclops.dll</HintPath>
     </Reference>
