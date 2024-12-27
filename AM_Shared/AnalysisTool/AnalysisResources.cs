@@ -5572,6 +5572,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 if (Global.RunningOnDeveloperComputer())
                 {
                     LogTools.LogWarning(errMsg);
+                    ConsoleMsgUtils.ShowWarning(errMsg);
                     ConsoleMsgUtils.SleepSeconds(2);
                     return true;
                 }
