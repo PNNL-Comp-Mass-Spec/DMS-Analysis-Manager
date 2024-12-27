@@ -45,6 +45,8 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string FRAGPIPE_CONSOLE_OUTPUT = "FragPipe_ConsoleOutput.txt";
 
+        private const string FRAGPIPE_ERROR_INSUFFICIENT_MEMORY = "Not enough memory allocated to MSFragger";
+
         private const string PEPXML_EXTENSION = ".pepXML";
 
         private const string PIN_EXTENSION = ".pin";
@@ -1287,6 +1289,14 @@ namespace AnalysisManagerFragPipePlugIn
                         }
                     }
 
+                    // Check for "Not enough memory allocated to MSFragger"
+                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                    {
+                        // This is a critical error; do not attempt to compute % complete
+                        mConsoleOutputErrorMsg = "Error running FragPipe: " + dataLine;
+                        break;
+                    }
+
                     if (!executionOrderFound && trimmedLine.StartsWith("Execution order", StringComparison.OrdinalIgnoreCase))
                     {
                         executionOrderFound = true;
@@ -2400,6 +2410,12 @@ namespace AnalysisManagerFragPipePlugIn
 
                         if (pepXmlFiles.Count == 0)
                         {
+                            if (mMessage.Contains(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                            {
+                                // The error message already has "Not enough memory allocated to MSFragger"; there is no need to mention a missing .pepXML file
+                                return false;
+                            }
+
                             // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
                             if (diaSearchEnabled)
                             {
