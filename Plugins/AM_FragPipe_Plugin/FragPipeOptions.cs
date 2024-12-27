@@ -32,6 +32,11 @@ namespace AnalysisManagerFragPipePlugIn
         public int DatasetCount { get; }
 
         /// <summary>
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// </summary>
+        public int EnzymaticTerminiCount { get; private set; } = 2;
+
+        /// <summary>
         /// Dictionary of static modifications, by residue or position
         /// </summary>
         /// <remarks>
@@ -443,6 +448,8 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     return false;
                 }
+
+                EnzymaticTerminiCount = KeyValueParamFileReader.GetParameterValue(workflowEntries, "msfragger.num_enzyme_termini", 2);
 
                 var validMods = GetMSFraggerModifications(
                     workflowEntries,
