@@ -145,9 +145,12 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var dynamicModCount = options.GetDynamicModResidueCount();
 
+                // Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+                var enzymaticTerminiCount = options.EnzymaticTerminiCount;
+
                 // Possibly require additional system memory, based on the size of the FASTA file
                 // However, when FASTA file splitting is enabled, use the memory size defined by the settings file
-                var memoryCheckResultCode = ValidateFragPipeMemorySize(fastaFileSizeGB * 1024, dynamicModCount, databaseSplitCount);
+                var memoryCheckResultCode = ValidateFragPipeMemorySize(fastaFileSizeGB * 1024, dynamicModCount, enzymaticTerminiCount, databaseSplitCount);
 
                 if (memoryCheckResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return memoryCheckResultCode;
@@ -235,12 +238,22 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="jobParams">Job parameters</param>
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
         /// <param name="dynamicModCount">Number of dynamic mods</param>
+        /// <param name="enzymaticTerminiCount">
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// </param>
         /// <param name="fragPipeMemorySizeMB">FragPipeMemorySizeMB job parameter value</param>
         /// <returns>Memory size (in GB) to use with FragPipe argument --ram</returns>
-        public static int GetFragPipeMemorySizeToUse(IJobParams jobParams, double fastaFileSizeMB, int dynamicModCount, out int fragPipeMemorySizeMB)
+        public static int GetFragPipeMemorySizeToUse(
+            IJobParams jobParams,
+            double fastaFileSizeMB,
+            int dynamicModCount,
+            int enzymaticTerminiCount,
+            out int fragPipeMemorySizeMB)
         {
             // This formula is based on FASTA file size and the number of dynamic mods
             // An additional 5000 MB of memory is reserved for each dynamic mod above 2 dynamic mods
+            // For partially tryptic searches (when enzymaticTerminiCount is 1), the memory is increased by 2x (meaning a split FASTA search will be required for larger FASTA files)
+            // For non-tryptic searches (when enzymaticTerminiCount is 0), the memory is increased by 4x
 
             // Example values:
 
@@ -260,7 +273,23 @@ namespace AnalysisManagerFragPipePlugIn
             // 100                    4              70
             // 100                    5              75
 
-            var recommendedMemorySizeMB = (int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000;
+            int sizeMultiplier;
+
+            // ReSharper disable once ConvertSwitchStatementToSwitchExpression
+            switch (enzymaticTerminiCount)
+            {
+                case 0:
+                    sizeMultiplier = 4;
+                    break;
+                case 1:
+                    sizeMultiplier = 2;
+                    break;
+                default:
+                    sizeMultiplier = 1;
+                    break;
+            }
+
+            var recommendedMemorySizeMB = ((int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000) * sizeMultiplier;
 
             // Setting FragPipeMemorySizeMB is stored in the settings file for this job
             fragPipeMemorySizeMB = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
@@ -281,10 +310,17 @@ namespace AnalysisManagerFragPipePlugIn
         /// </remarks>
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
         /// <param name="dynamicModCount">Number of dynamic mods</param>
+        /// <param name="enzymaticTerminiCount">
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// </param>
         /// <param name="databaseSplitCount">Dataset split count</param>
-        private CloseOutType ValidateFragPipeMemorySize(double fastaFileSizeMB, int dynamicModCount, int databaseSplitCount)
+        private CloseOutType ValidateFragPipeMemorySize(
+            double fastaFileSizeMB,
+            int dynamicModCount,
+            int enzymaticTerminiCount,
+            int databaseSplitCount)
         {
-            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var fragPipeMemorySizeMB);
+            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, enzymaticTerminiCount, out var fragPipeMemorySizeMB);
 
             if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMB || databaseSplitCount > 1)
             {

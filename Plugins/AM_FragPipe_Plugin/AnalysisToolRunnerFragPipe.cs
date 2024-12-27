@@ -1728,7 +1728,12 @@ namespace AnalysisManagerFragPipePlugIn
 
             var dynamicModCount = options.GetDynamicModResidueCount();
 
-            var fragPipeMemorySizeGB = AnalysisResourcesFragPipe.GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, out var fragPipeMemorySizeMB);
+            var fragPipeMemorySizeGB = AnalysisResourcesFragPipe.GetFragPipeMemorySizeToUse(
+                mJobParams,
+                fastaFileSizeMB,
+                dynamicModCount,
+                options.EnzymaticTerminiCount,
+                out var fragPipeMemorySizeMB);
 
             if (fragPipeMemorySizeGB > fragPipeMemorySizeMB / 1024.0)
             {
