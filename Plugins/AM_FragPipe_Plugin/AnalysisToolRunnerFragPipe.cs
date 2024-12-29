@@ -1815,15 +1815,23 @@ namespace AnalysisManagerFragPipePlugIn
                 options.EnzymaticTerminiCount,
                 out var fragPipeMemorySizeMBJobParam);
 
-            if (fragPipeMemorySizeGB > fragPipeMemorySizeMB / 1024.0)
-            {
-                var dynamicModCountDescription = FragPipeOptions.GetDynamicModCountDescription(dynamicModCount);
+            // Construct a message similar to either of these
+            // Allocating 20 GB to FragPipe for a 22 MB FASTA file and 2 dynamic mods
+            // Allocating 20 GB to FragPipe (as defined by FragPipeMemorySizeMB in the settings file) for a 22 MB FASTA file and 2 dynamic mods
 
-                var msg = string.Format("Allocating {0:N0} GB to FragPipe for a {1:N0} MB FASTA file and {2}", fragPipeMemorySizeGB, fastaFileSizeMB, dynamicModCountDescription);
-                LogMessage(msg);
+            var dynamicModCountDescription = FragPipeOptions.GetDynamicModCountDescription(dynamicModCount);
 
-                mEvalMessage = Global.AppendToComment(mEvalMessage, msg);
-            }
+            var settingsFileComment = fragPipeMemorySizeGB > fragPipeMemorySizeMBJobParam / 1024.0
+                ? string.Empty
+                : " (as defined by FragPipeMemorySizeMB in the settings file)";
+
+            var memoryAllocationMessage = string.Format(
+                "Allocating {0:N0} GB to FragPipe{1} for a {2:N0} MB FASTA file and {3}",
+                fragPipeMemorySizeGB, settingsFileComment, fastaFileSizeMB, dynamicModCountDescription);
+
+            LogMessage(memoryAllocationMessage);
+
+            mEvalMessage = Global.AppendToComment(mEvalMessage, memoryAllocationMessage);
 
             if (Global.RunningOnDeveloperComputer())
             {
