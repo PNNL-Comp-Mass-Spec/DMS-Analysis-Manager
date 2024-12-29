@@ -718,6 +718,52 @@ namespace AnalysisManagerFragPipePlugIn
             return new Regex(matchPattern, options);
         }
 
+        private void LookForErrorsInFragPipeConsoleOutputFile(string consoleOutputFilePath)
+        {
+            try
+            {
+                if (!File.Exists(consoleOutputFilePath))
+                {
+                    if (mDebugLevel >= 4)
+                    {
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
+                    }
+
+                    return;
+                }
+
+                if (mDebugLevel >= 4)
+                {
+                    LogDebug("Looking for errors in file " + consoleOutputFilePath);
+                }
+
+                using var reader = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var trimmedLine = dataLine.Trim();
+
+                    // ReSharper disable once InvertIf
+
+                    // Check for "Not enough memory allocated to MSFragger"
+                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                    {
+                        LogError("Error running FragPipe: " + dataLine);
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in LookForErrorsInFragPipeConsoleOutputFile", ex);
+            }
+        }
+
         private bool MoveDatasetsIntoSubdirectories(DataPackageInfo dataPackageInfo, SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup)
         {
             try
@@ -1649,6 +1695,8 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                var consoleOutputFilePath = Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT);
+
                 // When running FragPipe, CacheStandardOutput needs to be false,
                 // otherwise the program runner will randomly lock up, preventing FragPipe from finishing
 
@@ -1658,7 +1706,7 @@ namespace AnalysisManagerFragPipePlugIn
                     CacheStandardOutput = false,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT)
+                    ConsoleOutputFilePath = consoleOutputFilePath
                 };
 
                 RegisterEvents(mCmdRunner);
@@ -1684,12 +1732,22 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     if (string.IsNullOrWhiteSpace(mFragPipeVersion))
                     {
-                        ParseFragPipeConsoleOutputFile(Path.Combine(mWorkDir, FRAGPIPE_CONSOLE_OUTPUT));
+                        ParseFragPipeConsoleOutputFile(consoleOutputFilePath);
                     }
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
 
-                if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                if (!processingSuccess && string.IsNullOrWhiteSpace(mConsoleOutputErrorMsg))
+                {
+                    // Parse the console output file one more time to check for a new error message
+                    ParseFragPipeConsoleOutputFile(consoleOutputFilePath);
+                }
+
+                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                {
+                    LookForErrorsInFragPipeConsoleOutputFile(consoleOutputFilePath);
+                }
+                else
                 {
                     LogError(mConsoleOutputErrorMsg);
                 }
