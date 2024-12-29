@@ -1813,7 +1813,7 @@ namespace AnalysisManagerFragPipePlugIn
                 fastaFileSizeMB,
                 dynamicModCount,
                 options.EnzymaticTerminiCount,
-                out var fragPipeMemorySizeMB);
+                out var fragPipeMemorySizeMBJobParam);
 
             if (fragPipeMemorySizeGB > fragPipeMemorySizeMB / 1024.0)
             {

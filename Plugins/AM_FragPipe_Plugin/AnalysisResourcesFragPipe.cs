@@ -241,14 +241,14 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="enzymaticTerminiCount">
         /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
         /// </param>
-        /// <param name="fragPipeMemorySizeMB">FragPipeMemorySizeMB job parameter value</param>
+        /// <param name="fragPipeMemorySizeMBJobParam">FragPipeMemorySizeMB job parameter value (from the job's settings file)</param>
         /// <returns>Memory size (in GB) to use with FragPipe argument --ram</returns>
         public static int GetFragPipeMemorySizeToUse(
             IJobParams jobParams,
             double fastaFileSizeMB,
             int dynamicModCount,
             int enzymaticTerminiCount,
-            out int fragPipeMemorySizeMB)
+            out int fragPipeMemorySizeMBJobParam)
         {
             // This formula is based on FASTA file size and the number of dynamic mods
             // An additional 5000 MB of memory is reserved for each dynamic mod above 2 dynamic mods
@@ -292,11 +292,11 @@ namespace AnalysisManagerFragPipePlugIn
             var recommendedMemorySizeMB = ((int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000) * sizeMultiplier;
 
             // Setting FragPipeMemorySizeMB is stored in the settings file for this job
-            fragPipeMemorySizeMB = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
+            fragPipeMemorySizeMBJobParam = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
 
-            var fragPipeMemorySizeGB = recommendedMemorySizeMB > fragPipeMemorySizeMB
+            var fragPipeMemorySizeGB = recommendedMemorySizeMB > fragPipeMemorySizeMBJobParam
                 ? recommendedMemorySizeMB / 1024.0
-                : fragPipeMemorySizeMB / 1024.0;
+                : fragPipeMemorySizeMBJobParam / 1024.0;
 
             return (int)Math.Ceiling(fragPipeMemorySizeGB);
         }
@@ -320,18 +320,18 @@ namespace AnalysisManagerFragPipePlugIn
             int enzymaticTerminiCount,
             int databaseSplitCount)
         {
-            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, enzymaticTerminiCount, out var fragPipeMemorySizeMB);
+            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, enzymaticTerminiCount, out var fragPipeMemorySizeMBJobParam);
 
-            if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMB || databaseSplitCount > 1)
+            if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMBJobParam || databaseSplitCount > 1)
             {
-                if (ValidateFreeMemorySize(fragPipeMemorySizeMB, StepToolName, true))
+                if (ValidateFreeMemorySize(fragPipeMemorySizeMBJobParam, StepToolName, true))
                 {
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
                 mMessage = string.Format(
                     "Not enough free memory to run FragPipe; need {0:N0} MB, as defined by the settings file",
-                    fragPipeMemorySizeMB);
+                    fragPipeMemorySizeMBJobParam);
 
                 mInsufficientFreeMemory = true;
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
@@ -361,10 +361,10 @@ namespace AnalysisManagerFragPipePlugIn
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
             }
 
-            if (recommendedMemorySizeGB * 1024 > fragPipeMemorySizeMB)
+            if (recommendedMemorySizeGB * 1024 > fragPipeMemorySizeMBJobParam)
             {
                 LogMessage("Increasing the memory allocated to FragPipe from {0:N0} GB to {1:N0} GB, due to a {2:N0} MB FASTA file and {3}",
-                    (int)Math.Floor(fragPipeMemorySizeMB / 1024.0), recommendedMemorySizeGB, fastaFileSizeMB, dynamicModCountDescription);
+                    (int)Math.Floor(fragPipeMemorySizeMBJobParam / 1024.0), recommendedMemorySizeGB, fastaFileSizeMB, dynamicModCountDescription);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
