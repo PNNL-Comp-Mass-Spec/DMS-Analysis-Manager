@@ -45,7 +45,9 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string FRAGPIPE_CONSOLE_OUTPUT = "FragPipe_ConsoleOutput.txt";
 
-        private const string FRAGPIPE_ERROR_INSUFFICIENT_MEMORY = "Not enough memory allocated to MSFragger";
+        private const string FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED = "Not enough memory allocated to MSFragger";
+
+        private const string FRAGPIPE_ERROR_OUT_OF_MEMORY = "java.lang.OutOfMemoryError";
 
         private const string PEPXML_EXTENSION = ".pepXML";
 
@@ -748,14 +750,21 @@ namespace AnalysisManagerFragPipePlugIn
 
                     var trimmedLine = dataLine.Trim();
 
-                    // ReSharper disable once InvertIf
-
                     // Check for "Not enough memory allocated to MSFragger"
-                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED))
                     {
-                        LogError("Error running FragPipe: " + dataLine);
+                        LogError("Error running FragPipe: " + trimmedLine);
                         return;
                     }
+
+                    // Check for "java.lang.OutOfMemoryError"
+                    var startIndex = trimmedLine.IndexOf(FRAGPIPE_ERROR_OUT_OF_MEMORY, StringComparison.OrdinalIgnoreCase);
+
+                    if (startIndex < 0)
+                        continue;
+
+                    LogError("Error running FragPipe: " + trimmedLine.Substring(startIndex));
+                    return;
                 }
             }
             catch (Exception ex)
@@ -1336,7 +1345,7 @@ namespace AnalysisManagerFragPipePlugIn
                     }
 
                     // Check for "Not enough memory allocated to MSFragger"
-                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED))
                     {
                         // This is a critical error; do not attempt to compute % complete
                         mConsoleOutputErrorMsg = "Error running FragPipe: " + dataLine;
@@ -1754,7 +1763,10 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (!processingSuccess)
                 {
-                    LogError("Error running FragPipe");
+                    if (!mMessage.Contains("Error running FragPipe"))
+                    {
+                        LogError("Error running FragPipe");
+                    }
 
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -2468,9 +2480,11 @@ namespace AnalysisManagerFragPipePlugIn
 
                         if (pepXmlFiles.Count == 0)
                         {
-                            if (mMessage.Contains(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY))
+                            if (mMessage.Contains(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED) ||
+                                mMessage.Contains(FRAGPIPE_ERROR_OUT_OF_MEMORY))
                             {
-                                // The error message already has "Not enough memory allocated to MSFragger"; there is no need to mention a missing .pepXML file
+                                // The error message already has "Not enough memory allocated to MSFragger" or "java.lang.OutOfMemoryError"
+                                // There is no need to mention a missing .pepXML file
                                 return false;
                             }
 
