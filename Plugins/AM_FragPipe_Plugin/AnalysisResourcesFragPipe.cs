@@ -251,27 +251,37 @@ namespace AnalysisManagerFragPipePlugIn
             out int fragPipeMemorySizeMBJobParam)
         {
             // This formula is based on FASTA file size and the number of dynamic mods
-            // An additional 5000 MB of memory is reserved for each dynamic mod above 2 dynamic mods
+            // An additional 7500 MB of memory is reserved for each dynamic mod above 1 dynamic mod
             // For partially tryptic searches (when enzymaticTerminiCount is 1), the memory is increased by 2x (meaning a split FASTA search will be required for larger FASTA files)
             // For non-tryptic searches (when enzymaticTerminiCount is 0), the memory is increased by 4x
 
             // Example values:
 
             // FASTA File Size (MB)   Dynamic Mods   Recommended Memory Size (GB)
-            // 25                     2              22
-            // 25                     3              27
-            // 25                     4              32
-            // 25                     5              37
+            // 15                     0              21
+            // 15                     1              21
+            // 15                     2              28
 
-            // 50                     2              35
-            // 50                     3              40
-            // 50                     4              45
-            // 50                     5              50
+            // 25                     0              29
+            // 25                     1              29
+            // 25                     2              36
+            // 25                     3              44
+            // 25                     4              51
+            // 25                     5              58
 
-            // 100                    2              60
-            // 100                    3              65
-            // 100                    4              70
-            // 100                    5              75
+            // 50                     0              48
+            // 50                     1              48
+            // 50                     2              55
+            // 50                     3              63
+            // 50                     4              70
+            // 50                     5              77
+
+            // 75                     0              66
+            // 75                     1              66
+            // 75                     2              73
+            // 75                     3              81
+            // 75                     4              88
+            // 75                     5              95
 
             int sizeMultiplier;
 
@@ -289,7 +299,7 @@ namespace AnalysisManagerFragPipePlugIn
                     break;
             }
 
-            var recommendedMemorySizeMB = ((int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000) * sizeMultiplier;
+            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier;
 
             // Setting FragPipeMemorySizeMB is stored in the settings file for this job
             fragPipeMemorySizeMBJobParam = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
