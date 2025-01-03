@@ -47,6 +47,8 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED = "Not enough memory allocated to MSFragger";
 
+        private const string FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_FOR_JAVA = "insufficient memory for the Java Runtime Environment";
+
         private const string FRAGPIPE_ERROR_OUT_OF_MEMORY = "java.lang.OutOfMemoryError";
 
         private const string PEPXML_EXTENSION = ".pepXML";
@@ -751,20 +753,30 @@ namespace AnalysisManagerFragPipePlugIn
                     var trimmedLine = dataLine.Trim();
 
                     // Check for "Not enough memory allocated to MSFragger"
-                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED))
+                    if (trimmedLine.StartsWith(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED, StringComparison.OrdinalIgnoreCase))
                     {
                         LogError("Error running FragPipe: " + trimmedLine);
                         return;
                     }
 
+                    // Check for "There is insufficient memory for the Java Runtime Environment to continue."
+                    var startIndexA = trimmedLine.IndexOf(FRAGPIPE_ERROR_OUT_OF_MEMORY, StringComparison.OrdinalIgnoreCase);
+
                     // Check for "java.lang.OutOfMemoryError"
-                    var startIndex = trimmedLine.IndexOf(FRAGPIPE_ERROR_OUT_OF_MEMORY, StringComparison.OrdinalIgnoreCase);
+                    var startIndexB = trimmedLine.IndexOf(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_FOR_JAVA, StringComparison.OrdinalIgnoreCase);
 
-                    if (startIndex < 0)
-                        continue;
+                    if (startIndexA >= 0)
+                    {
+                        LogError("Error running FragPipe: " + trimmedLine.Substring(startIndexA));
+                        return;
+                    }
 
-                    LogError("Error running FragPipe: " + trimmedLine.Substring(startIndex));
-                    return;
+                    // ReSharper disable once InvertIf
+                    if (startIndexB >= 0)
+                    {
+                        LogError("Error running FragPipe: " + trimmedLine.Substring(startIndexB));
+                        return;
+                    }
                 }
             }
             catch (Exception ex)
@@ -903,7 +915,7 @@ namespace AnalysisManagerFragPipePlugIn
                     {
                         success = MoveFile(sourceDirectory.FullName, sourceFile.Name, targetDirectory.FullName);
                     }
-                    else if(targetFile.Name.EndsWith(ANNOTATION_FILE_SUFFIX))
+                    else if (targetFile.Name.EndsWith(ANNOTATION_FILE_SUFFIX))
                     {
                         LogDebug("MoveResultsIntoDirectory: replacing {0} with {1}", targetFile.FullName, sourceFile.FullName);
 
@@ -2500,10 +2512,11 @@ namespace AnalysisManagerFragPipePlugIn
 
                         if (pepXmlFiles.Count == 0)
                         {
-                            if (mMessage.Contains(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED) ||
-                                mMessage.Contains(FRAGPIPE_ERROR_OUT_OF_MEMORY))
+                            if (mMessage.IndexOf(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_ALLOCATED, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                mMessage.IndexOf(FRAGPIPE_ERROR_INSUFFICIENT_MEMORY_FOR_JAVA, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                mMessage.IndexOf(FRAGPIPE_ERROR_OUT_OF_MEMORY, StringComparison.OrdinalIgnoreCase) >= 0)
                             {
-                                // The error message already has "Not enough memory allocated to MSFragger" or "java.lang.OutOfMemoryError"
+                                // The error message already has "Not enough memory allocated to MSFragger", "insufficient memory for Java" or "java.lang.OutOfMemoryError"
                                 // There is no need to mention a missing .pepXML file
                                 return false;
                             }
