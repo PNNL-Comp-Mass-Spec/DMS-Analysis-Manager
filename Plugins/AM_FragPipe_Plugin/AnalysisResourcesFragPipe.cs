@@ -304,8 +304,8 @@ namespace AnalysisManagerFragPipePlugIn
             // Setting FragPipeMemorySizeMB is stored in the settings file for this job
             fragPipeMemorySizeMBJobParam = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
 
-            // Setting FixedFragPipeMemorySizeMB is stored in the settings file for this job
-            fixedFragPipeMemorySizeJobParam = jobParams.GetJobParameter("FixedFragPipeMemorySizeMB", false);
+            // Setting FixedFragPipeMemorySize is stored in the settings file for this job
+            fixedFragPipeMemorySizeJobParam = jobParams.GetJobParameter("FixedFragPipeMemorySize", false);
 
             if (fixedFragPipeMemorySizeJobParam)
             {
