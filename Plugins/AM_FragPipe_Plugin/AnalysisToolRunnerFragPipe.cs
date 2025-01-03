@@ -1813,7 +1813,8 @@ namespace AnalysisManagerFragPipePlugIn
                 fastaFileSizeMB,
                 dynamicModCount,
                 options.EnzymaticTerminiCount,
-                out var fragPipeMemorySizeMBJobParam);
+                out var fragPipeMemorySizeMBJobParam,
+                out var fixedFragPipeMemorySizeJobParam);
 
             // Construct a message similar to either of these
             // Allocating 20 GB to FragPipe for a 22 MB FASTA file and 2 dynamic mods
@@ -1821,9 +1822,20 @@ namespace AnalysisManagerFragPipePlugIn
 
             var dynamicModCountDescription = FragPipeOptions.GetDynamicModCountDescription(dynamicModCount);
 
-            var settingsFileComment = fragPipeMemorySizeGB > fragPipeMemorySizeMBJobParam / 1024.0
-                ? string.Empty
-                : " (as defined by FragPipeMemorySizeMB in the settings file)";
+            string settingsFileComment;
+
+            if (fixedFragPipeMemorySizeJobParam)
+            {
+                settingsFileComment = " (as defined by FragPipeMemorySizeMB and FixedFragPipeMemorySize=true in the settings file)";
+            }
+            else if (fragPipeMemorySizeGB > fragPipeMemorySizeMBJobParam / 1024.0)
+            {
+                settingsFileComment = string.Empty;
+            }
+            else
+            {
+                settingsFileComment = " (as defined by FragPipeMemorySizeMB in the settings file)";
+            }
 
             var memoryAllocationMessage = string.Format(
                 "Allocating {0:N0} GB to FragPipe{1} for a {2:N0} MB FASTA file and {3}",

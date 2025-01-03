@@ -242,13 +242,15 @@ namespace AnalysisManagerFragPipePlugIn
         /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
         /// </param>
         /// <param name="fragPipeMemorySizeMBJobParam">FragPipeMemorySizeMB job parameter value (from the job's settings file)</param>
+        /// <param name="fixedFragPipeMemorySizeJobParam">FixedFragPipeMemorySize job parameter value (from the job's settings file)</param>
         /// <returns>Memory size (in GB) to use with FragPipe argument --ram</returns>
         public static int GetFragPipeMemorySizeToUse(
             IJobParams jobParams,
             double fastaFileSizeMB,
             int dynamicModCount,
             int enzymaticTerminiCount,
-            out int fragPipeMemorySizeMBJobParam)
+            out int fragPipeMemorySizeMBJobParam,
+            out bool fixedFragPipeMemorySizeJobParam)
         {
             // This formula is based on FASTA file size and the number of dynamic mods
             // An additional 7500 MB of memory is reserved for each dynamic mod above 1 dynamic mod
@@ -299,10 +301,18 @@ namespace AnalysisManagerFragPipePlugIn
                     break;
             }
 
-            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier;
-
             // Setting FragPipeMemorySizeMB is stored in the settings file for this job
             fragPipeMemorySizeMBJobParam = Math.Max(2000, jobParams.GetJobParameter("FragPipeMemorySizeMB", 10000));
+
+            // Setting FixedFragPipeMemorySizeMB is stored in the settings file for this job
+            fixedFragPipeMemorySizeJobParam = jobParams.GetJobParameter("FixedFragPipeMemorySizeMB", false);
+
+            if (fixedFragPipeMemorySizeJobParam)
+            {
+                return (int)(fragPipeMemorySizeMBJobParam / 1024.0);
+            }
+
+            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier; ;
 
             var fragPipeMemorySizeGB = recommendedMemorySizeMB > fragPipeMemorySizeMBJobParam
                 ? recommendedMemorySizeMB / 1024.0
@@ -330,9 +340,15 @@ namespace AnalysisManagerFragPipePlugIn
             int enzymaticTerminiCount,
             int databaseSplitCount)
         {
-            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(mJobParams, fastaFileSizeMB, dynamicModCount, enzymaticTerminiCount, out var fragPipeMemorySizeMBJobParam);
+            var recommendedMemorySizeGB = GetFragPipeMemorySizeToUse(
+                mJobParams,
+                fastaFileSizeMB,
+                dynamicModCount,
+                enzymaticTerminiCount,
+                out var fragPipeMemorySizeMBJobParam,
+                out var fixedFragPipeMemorySizeJobParam);
 
-            if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMBJobParam || databaseSplitCount > 1)
+            if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMBJobParam || databaseSplitCount > 1 || fixedFragPipeMemorySizeJobParam)
             {
                 if (ValidateFreeMemorySize(fragPipeMemorySizeMBJobParam, StepToolName, true))
                 {
@@ -340,8 +356,9 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 mMessage = string.Format(
-                    "Not enough free memory to run FragPipe; need {0:N0} MB, as defined by the settings file",
-                    fragPipeMemorySizeMBJobParam);
+                    "Not enough free memory to run FragPipe; need {0:N0} MB, as defined by the settings file{1}",
+                    fragPipeMemorySizeMBJobParam,
+                    fixedFragPipeMemorySizeJobParam ? " (note that FixedFragPipeMemorySize is true)" : string.Empty);
 
                 mInsufficientFreeMemory = true;
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
