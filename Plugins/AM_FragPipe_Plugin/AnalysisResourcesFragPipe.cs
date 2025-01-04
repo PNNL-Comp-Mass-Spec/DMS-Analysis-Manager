@@ -15,6 +15,7 @@ using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManagerFragPipePlugIn
 {
@@ -312,7 +313,7 @@ namespace AnalysisManagerFragPipePlugIn
                 return (int)(fragPipeMemorySizeMBJobParam / 1024.0);
             }
 
-            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier; ;
+            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier;
 
             var fragPipeMemorySizeGB = recommendedMemorySizeMB > fragPipeMemorySizeMBJobParam
                 ? recommendedMemorySizeMB / 1024.0
@@ -348,6 +349,16 @@ namespace AnalysisManagerFragPipePlugIn
                 out var fragPipeMemorySizeMBJobParam,
                 out var fixedFragPipeMemorySizeJobParam);
 
+            // Processing node memory sizes in January 2025
+            // Pubs 10-13: 32 GB
+            // Pubs 14-21: 64 GB
+            // Pubs 22-57: 96 GB
+            // Pubs 58-59: 48 GB
+            // Pubs 60-89: 24 GB
+            // Pubs 90-93: 32 GB
+
+            const string MEMORY_SIZE_MESSAGE = "Required memory is too large: use a split FASTA search, use fewer dynamic mods, and/or run a fully tryptic search";
+
             if (recommendedMemorySizeGB * 1024 < fragPipeMemorySizeMBJobParam || databaseSplitCount > 1 || fixedFragPipeMemorySizeJobParam)
             {
                 if (ValidateFreeMemorySize(fragPipeMemorySizeMBJobParam, StepToolName, true))
@@ -359,6 +370,18 @@ namespace AnalysisManagerFragPipePlugIn
                     "Not enough free memory to run FragPipe; need {0:N0} MB, as defined by the settings file{1}",
                     fragPipeMemorySizeMBJobParam,
                     fixedFragPipeMemorySizeJobParam ? " (note that FixedFragPipeMemorySize is true)" : string.Empty);
+
+                var fragPipeMemorySizeGB = fragPipeMemorySizeMBJobParam / 1024.0;
+
+                if (fragPipeMemorySizeGB > 90)
+                {
+                    // Fail out the job since the required memory is more than 90 GB, and none of the processing nodes will have sufficient memory
+                    LogTools.LogWarning(MEMORY_SIZE_MESSAGE);
+                    ConsoleMsgUtils.ShowWarning(MEMORY_SIZE_MESSAGE);
+
+                    mMessage = Global.AppendToComment(mMessage, MEMORY_SIZE_MESSAGE);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 mInsufficientFreeMemory = true;
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
@@ -373,6 +396,16 @@ namespace AnalysisManagerFragPipePlugIn
                 mMessage = string.Format(
                     "Not enough free memory to run FragPipe; need {0:N0} GB due to a {1:N0} MB FASTA file and {2}",
                     recommendedMemorySizeGB, fastaFileSizeMB, dynamicModCountDescription);
+
+                if (recommendedMemorySizeGB > 90)
+                {
+                    // Fail out the job since the required memory is more than 90 GB, and none of the processing nodes will have sufficient memory
+                    LogTools.LogWarning(MEMORY_SIZE_MESSAGE);
+                    ConsoleMsgUtils.ShowWarning(MEMORY_SIZE_MESSAGE);
+
+                    mMessage = Global.AppendToComment(mMessage, MEMORY_SIZE_MESSAGE);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
                 if (Global.RunningOnDeveloperComputer())
                 {
