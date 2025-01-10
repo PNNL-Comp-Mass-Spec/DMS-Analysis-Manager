@@ -73,7 +73,7 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run FragPipe";
-                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -384,7 +384,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 mInsufficientFreeMemory = true;
-                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
             var validFreeMemory = ValidateFreeMemorySize(recommendedMemorySizeGB * 1024, StepToolName, true);
@@ -418,7 +418,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 mInsufficientFreeMemory = true;
-                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
             if (recommendedMemorySizeGB * 1024 > fragPipeMemorySizeMBJobParam)

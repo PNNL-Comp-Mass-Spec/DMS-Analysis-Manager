@@ -91,7 +91,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("Crystal-C", AnalysisToolRunnerPepProtProphet.CRYSTALC_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                     }
                 }
 
@@ -103,7 +103,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("IonQuant", AnalysisToolRunnerPepProtProphet.ION_QUANT_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                     }
                 }
 
@@ -113,7 +113,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     if (!ValidateFreeMemorySizeGB("TMT-Integrator", AnalysisToolRunnerPepProtProphet.TMT_INTEGRATOR_MEMORY_SIZE_GB))
                     {
-                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                        return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                     }
                 }
 

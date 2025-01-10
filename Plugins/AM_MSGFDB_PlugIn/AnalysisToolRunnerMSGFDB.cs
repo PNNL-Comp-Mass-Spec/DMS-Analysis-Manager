@@ -472,7 +472,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 mMessage = "Not enough free memory to run MS-GF+";
 
                 // Immediately exit the plugin; results and console output files will not be saved
-                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
             bool validExistingResults;

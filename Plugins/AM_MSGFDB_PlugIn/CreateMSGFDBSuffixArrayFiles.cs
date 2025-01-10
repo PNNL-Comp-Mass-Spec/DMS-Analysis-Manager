@@ -718,7 +718,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     InsufficientFreeMemory = true;
                     mErrorMessage = "Cannot run BuildSA since less than " + javaMemorySizeMB + " MB of free memory";
-                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
                 // Create a lock file

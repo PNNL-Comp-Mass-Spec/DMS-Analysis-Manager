@@ -531,7 +531,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 mInsufficientFreeMemory = true;
 
                 LogError("Not enough free memory to run MS-GF+");
-                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
             success = StartMSGFPlus(javaExePath, "MS-GF+", arguments);

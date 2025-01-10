@@ -64,7 +64,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run MS-GF+";
-                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
                 // Retrieve the FASTA file
@@ -109,7 +109,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     mInsufficientFreeMemory = true;
                     mMessage = "Not enough free memory to run MS-GF+";
-                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
                 LogMessage("Getting param file", 2);

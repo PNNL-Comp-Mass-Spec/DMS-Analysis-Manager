@@ -1732,7 +1732,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     InsufficientFreeMemory = true;
                     ErrorMessage = "Not enough free memory to create suffix array files";
                     OnErrorEvent(indexedDBCreator.ErrorMessage);
-                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                    return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
                 if (result == CloseOutType.CLOSEOUT_FAILED || indexIteration > 2)

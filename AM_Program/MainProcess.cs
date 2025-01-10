@@ -1019,7 +1019,7 @@ namespace AnalysisManagerProg
             {
                 ShowTrace("NeedToAbortProcessing; closing job step task");
 
-                var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY : CloseOutType.CLOSEOUT_FAILED;
                 mAnalysisTask.CloseTask(closeOut, "Processing aborted");
 
                 mMgrErrorCleanup.CleanWorkDir();
@@ -2443,13 +2443,14 @@ namespace AnalysisManagerProg
 
                 if (toolResourcer.NeedToAbortProcessing ||
                     toolResourcer.InsufficientFreeMemory ||
-                    resultCode == CloseOutType.CLOSEOUT_RESET_JOB_STEP)
+                    resultCode == CloseOutType.CLOSEOUT_RESET_JOB_STEP ||
+                    resultCode == CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY)
                 {
                     mInsufficientFreeMemory = toolResourcer.InsufficientFreeMemory;
                     mNeedToAbortProcessing = true;
                     ShowTrace("toolResourcer.NeedToAbortProcessing is true; closing job step task");
 
-                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY : CloseOutType.CLOSEOUT_FAILED;
                     mAnalysisTask.CloseTask(closeOut, toolResourcer.Message);
 
                     if (mInsufficientFreeMemory)
@@ -2575,7 +2576,7 @@ namespace AnalysisManagerProg
                     mNeedToAbortProcessing = true;
                     ShowTrace("toolRunner.NeedToAbortProcessing is true; closing job step task");
 
-                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP : CloseOutType.CLOSEOUT_FAILED;
+                    var closeOut = mInsufficientFreeMemory ? CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY : CloseOutType.CLOSEOUT_FAILED;
                     mAnalysisTask.CloseTask(closeOut, mMostRecentErrorMessage, toolRunner);
 
                     if (mInsufficientFreeMemory)

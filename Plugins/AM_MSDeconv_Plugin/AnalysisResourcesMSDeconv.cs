@@ -36,7 +36,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 mInsufficientFreeMemory = true;
                 mMessage = "Not enough free memory to run MSDeconv";
-                return CloseOutType.CLOSEOUT_RESET_JOB_STEP;
+                return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
             LogMessage("Getting mzXML file");

@@ -107,10 +107,20 @@ namespace AnalysisManagerBase.JobConfig
         CLOSEOUT_SKIPPED_MAXQUANT = 22,
 
         /// <summary>
-        /// There is a problem with this computer, e.g. not enough free memory to run the job or not enough free disk space
+        /// There is a problem with this computer, e.g. not enough free disk space (prior to January 2025, also used for not enough free memory to run the job)
         /// Since there is nothing wrong with the job itself, set the job step's state to Enabled
         /// </summary>
         CLOSEOUT_RESET_JOB_STEP = 23,
+
+        /// <summary>
+        /// The computer does not have enough free memory to run the job
+        /// Since there is nothing wrong with the job itself, set the job step's state to Enabled
+        /// </summary>
+        /// <remarks>
+        /// If a job step fails with this error over 35 times, procedure set_step_task_complete will set the job step's state to Failed,
+        /// since it's possible the required memory is too large for any of the processing nodes
+        /// </remarks>
+        CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY = 24,
 
         /// <summary>
         /// Job is running remote
