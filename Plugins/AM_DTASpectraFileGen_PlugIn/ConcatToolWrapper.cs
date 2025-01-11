@@ -18,6 +18,8 @@ namespace DTASpectraFileGen
     /// </summary>
     public class ConcatToolWrapper
     {
+        // Ignore Spelling: Concat
+
         public enum ConcatFileTypes
         {
             CONCAT_DTA,
