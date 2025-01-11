@@ -5226,11 +5226,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return updatedCV.ToString();
         }
 
-        private void WriteConfigurationOption(XmlWriter writer, string KeyName, string Value)
+        private void WriteConfigurationOption(XmlWriter writer, string keyName, string value)
         {
             writer.WriteStartElement("Option");
-            writer.WriteElementString("Key", KeyName);
-            writer.WriteElementString("Value", Value);
+            writer.WriteElementString("Key", keyName);
+            writer.WriteElementString("Value", value);
             writer.WriteEndElement();
         }
 

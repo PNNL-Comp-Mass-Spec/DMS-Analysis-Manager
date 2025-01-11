@@ -33,29 +33,29 @@ namespace DTASpectraFileGen
 
         public string ErrMsg { get; private set; }
 
-        public string DataPath { get; set; }
+        public string WorkingDirectory { get; set; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="dataPath"></param>
-        public ConcatToolWrapper(string dataPath)
+        /// <param name="workingDirectory">Working directory path</param>
+        public ConcatToolWrapper(string workingDirectory)
         {
-            DataPath = dataPath;
-            ErrMsg = "";
+            WorkingDirectory = workingDirectory;
+            ErrMsg = string.Empty;
         }
 
-        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName)
+        public bool ConcatenateFiles(ConcatFileTypes fileType, string rootFileName)
         {
-            return ConcatenateFiles(FileType, RootFileName, false);
+            return ConcatenateFiles(fileType, rootFileName, false);
         }
 
-        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName, bool deleteSourceFilesWhenConcatenating)
+        public bool ConcatenateFiles(ConcatFileTypes fileType, string rootFileName, bool deleteSourceFilesWhenConcatenating)
         {
             try
             {
                 // Perform the concatenation
-                mCatTools = new clsConcatenateFiles(DataPath, RootFileName)
+                mCatTools = new clsConcatenateFiles(WorkingDirectory, rootFileName)
                 {
                     DeleteSourceFilesWhenConcatenating = deleteSourceFilesWhenConcatenating
                 };
@@ -67,7 +67,7 @@ namespace DTASpectraFileGen
                 mCatInProgress = true;
 
                 // Call the dll based on the concatenation type
-                switch (FileType)
+                switch (fileType)
                 {
                     case ConcatFileTypes.CONCAT_ALL:
                         mCatTools.MakeCattedDTAsAndOUTs();
@@ -80,7 +80,7 @@ namespace DTASpectraFileGen
                         break;
                     default:
                         // Shouldn't ever get here
-                        ErrMsg = "Invalid concatenation selection: " + FileType;
+                        ErrMsg = "Invalid concatenation selection: " + fileType;
                         return false;
                 }
 

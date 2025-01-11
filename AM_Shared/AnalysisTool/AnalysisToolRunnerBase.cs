@@ -3890,19 +3890,19 @@ namespace AnalysisManagerBase.AnalysisTool
         }
 
         /// <summary>
-        /// Unzips files in the specified Zip file that match the FileFilter spec
+        /// Unzips files in the specified Zip file that match the fileFilter spec
         /// Output directory is targetDirectory
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="targetDirectory">Target directory for the extracted files</param>
-        /// <param name="FileFilter">FilterSpec to apply, for example *.txt</param>
+        /// <param name="fileFilter">FilterSpec to apply, for example *.txt</param>
         /// <returns>True if success, false if an error</returns>
-        public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
+        public bool UnzipFile(string zipFilePath, string targetDirectory, string fileFilter)
         {
             mZipTools.DebugLevel = mDebugLevel;
 
             // Note that mZipTools logs error messages using LogTools
-            return mZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
+            return mZipTools.UnzipFile(zipFilePath, targetDirectory, fileFilter);
         }
 
         /// <summary>
