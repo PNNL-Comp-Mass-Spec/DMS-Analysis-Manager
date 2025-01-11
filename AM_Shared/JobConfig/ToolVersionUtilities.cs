@@ -822,7 +822,16 @@ namespace AnalysisManagerBase.JobConfig
         {
             try
             {
-                var appPath = Path.Combine(Global.GetAppDirectoryPath(), versionInspectorExeName);
+                // Typically C:\DMS_Programs\DLLVersionInspector
+                var versionInspectorDirectory = mMgrParams.GetParam("DLLVersionInspectorProgLoc", string.Empty);
+
+                if (string.IsNullOrWhiteSpace(versionInspectorDirectory))
+                {
+                    OnErrorEvent("Manager parameter DLLVersionInspectorProgLoc is undefined");
+                    return false;
+                }
+
+                var appPath = Path.Combine(versionInspectorDirectory, versionInspectorExeName);
 
                 var binaryFile = new FileInfo(filePath);
 
