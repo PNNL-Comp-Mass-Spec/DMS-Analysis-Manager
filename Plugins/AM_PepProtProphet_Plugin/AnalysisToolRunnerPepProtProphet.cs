@@ -2880,7 +2880,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 // Verify that the iProphet result file exists
                 var outputFiles = new List<FileInfo>
                 {
-                    new(Path.Combine(mWorkingDirectory.FullName, "combined.pep.xml")),
+                    new(Path.Combine(mWorkingDirectory.FullName, "combined.pep.xml"))
                 };
 
                 var outputFilesExist = ValidateOutputFilesExist("iProphet", outputFiles);
@@ -4663,7 +4663,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
             // Store paths to key files in toolFiles
             var toolFiles = new List<FileInfo> {
                 new(mPhilosopherProgLoc),
-                new(mTmtIntegratorProgLoc),
+                new(mTmtIntegratorProgLoc)
             };
 
             try

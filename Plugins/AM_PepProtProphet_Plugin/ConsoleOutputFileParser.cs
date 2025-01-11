@@ -710,7 +710,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {"Calculating sensitivity", 80},
                 {"Executing Filter", 90},
                 {"Executing Report", 95},
-                {"Plotting mass distribution", 98},
+                {"Plotting mass distribution", 98}
             };
 
             // Peptide prophet iterations status:

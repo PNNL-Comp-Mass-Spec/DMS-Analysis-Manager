@@ -53,7 +53,7 @@ namespace AnalysisManager_Mage_PlugIn
                     "WHERE Dataset_ID IN (SELECT DISTINCT Dataset_ID FROM V_Data_Package_Analysis_Jobs_Export WHERE Data_Pkg_ID = {0}) " +
                     "ORDER BY Dataset",
                     "DataPackageID")
-            },
+            }
         };
 
         /// <summary>

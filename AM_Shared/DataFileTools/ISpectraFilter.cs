@@ -41,7 +41,7 @@ namespace AnalysisManagerBase.DataFileTools
         /// <summary>
         /// Operation succeeded
         /// </summary>
-        SF_SUCCESS = 0,
+        SF_SUCCESS = 0
     }
 
     /// <summary>

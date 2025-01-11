@@ -343,7 +343,7 @@ namespace AnalysisManagerMaxQuantPlugIn
             dmsStepInfo = new DmsStepInfo(stepId)
             {
                 Tool = stepToolName,
-                StartStepName = startStepName,
+                StartStepName = startStepName
             };
 
             if (!startStepIDText.Equals("auto") && int.TryParse(startStepIDText, out var startStepID))

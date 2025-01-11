@@ -1095,7 +1095,7 @@ namespace AnalysisManagerProg
                 "QC_Shew_21_01_TMT_R03_Bane_21Jun22_22-03-01",
                 "QC_Shew_21_01_10ng_nanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r1",
                 "QC_Shew_21_01_10ng_nanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r2",
-                "QC_Shew_21_01_10ng_NanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r1",
+                "QC_Shew_21_01_10ng_NanoPOTS_12Jul22_WBEH_50_22_07_01_FAIMS_r1"
             };
 
             var uniquePrefixTool = new ShortestUniquePrefix();

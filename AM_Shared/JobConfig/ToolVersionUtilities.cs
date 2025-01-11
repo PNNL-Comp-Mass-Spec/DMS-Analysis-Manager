@@ -137,7 +137,7 @@ namespace AnalysisManagerBase.JobConfig
                     EchoOutputToConsole = false,
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(WorkDir, MSCONVERT_CONSOLE_OUTPUT),
-                    MonitorInterval = 250,
+                    MonitorInterval = 250
                 };
 
                 progRunner.DebugEvent += OnDebugEvent;
