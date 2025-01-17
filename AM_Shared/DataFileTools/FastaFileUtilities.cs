@@ -15,6 +15,8 @@ namespace AnalysisManagerBase.DataFileTools
     /// </summary>
     public class FastaFileUtilities : EventNotifier
     {
+        // Ignore Spelling: fasta, Frag, Seqs, Utils
+
         private const string DECOY_PREFIX = "XXX_";
 
         /// <summary>

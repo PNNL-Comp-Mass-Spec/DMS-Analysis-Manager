@@ -11,10 +11,10 @@ using PRISM.AppSettings;
 
 namespace AnalysisManagerFragPipePlugIn
 {
-    // Ignore Spelling: Frag, workflow
-
     public class FragPipeOptions : EventNotifier
     {
+        // Ignore Spelling: Frag, workflow
+
         private const string C_TERM_PEPTIDE = "Cterm_peptide";
         private const string N_TERM_PEPTIDE = "Nterm_peptide";
         private const string C_TERM_PROTEIN = "Cterm_protein";
