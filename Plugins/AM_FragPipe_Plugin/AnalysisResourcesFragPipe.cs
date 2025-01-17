@@ -29,6 +29,9 @@ namespace AnalysisManagerFragPipePlugIn
         internal const string DATABASE_SPLIT_COUNT_SECTION = "FragPipe";
         internal const string DATABASE_SPLIT_COUNT_PARAM = "DatabaseSplitCount";
 
+        internal const string DIANN_LIBRARY_SECTION = "FragPipe";
+        internal const string DIANN_LIBRARY_PARAM = "DiannSpectrumLibrary";
+
         internal const string JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID = "PackedParam_ExperimentsByDatasetID";
 
         /// <summary>
@@ -141,6 +144,12 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Copy the DiaNN spectrum library file, if defined
+                if (!GetDiannSpectrumLibrary())
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Parse the FragPipe workflow file so that GetDynamicModResidueCount() will be able to consider the number of residues with a dynamic mod
                 options.LoadFragPipeOptions(workflowFile.FullName);
 
@@ -227,6 +236,58 @@ namespace AnalysisManagerFragPipePlugIn
             StorePackedJobParameterList(experimentNames, JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
 
             return dataPackageDefined ? dataPackageDatasets.Count : 1;
+        }
+
+        /// <summary>
+        /// If the settings file for this job has a DiaNN spectrum library file defined, copy it to the working directory
+        /// </summary>
+        /// <returns>True if successful, false if an error•</returns>
+        private bool GetDiannSpectrumLibrary()
+        {
+            try
+            {
+                var diannSpectrumLibraryPath = mJobParams.GetJobParameter(
+                    DIANN_LIBRARY_SECTION,
+                    DIANN_LIBRARY_PARAM,
+                    string.Empty);
+
+                if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                {
+                    return true;
+                }
+
+                var remoteDiannSpectrumLibraryFile = new FileInfo(diannSpectrumLibraryPath);
+
+                if (remoteDiannSpectrumLibraryFile.Directory == null)
+                {
+                    LogError("Could not determine the parent directory of the DiaNN spectrum library file: {0}", diannSpectrumLibraryPath);
+                    return false;
+                }
+
+                if (!remoteDiannSpectrumLibraryFile.Directory.Exists)
+                {
+                    LogError("Could not find the DiaNN spectrum library file (parent directory not found): {0}", diannSpectrumLibraryPath);
+                    return false;
+                }
+
+                if (!remoteDiannSpectrumLibraryFile.Exists)
+                {
+                    LogError("Could not find the DiaNN spectrum library file (file not found): {0}", diannSpectrumLibraryPath);
+                    return false;
+                }
+
+                mFileCopyUtilities.CopyFileToWorkDir(
+                    remoteDiannSpectrumLibraryFile.Name,
+                    remoteDiannSpectrumLibraryFile.Directory.FullName,
+                    mWorkDir);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in GetDiannSpectrumLibrary", ex);
+                return false;
+            }
         }
 
         /// <summary>

@@ -49,6 +49,7 @@
     <Compile Include="AnalysisToolRunnerFragPipe.cs" />
     <Compile Include="BooleanParameter.cs" />
     <Compile Include="FragPipeOptions.cs" />
+    <Compile Include="FragPipeProgramPaths.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IntegerParameter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

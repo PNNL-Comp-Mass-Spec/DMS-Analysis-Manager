@@ -607,6 +607,16 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
+        /// <summary>
+        /// Replace colons and backslashes in the given path with \: and \\
+        /// </summary>
+        /// <param name="fileOrDirectoryPath">Path to escape</param>
+        /// <returns>Escaped path</returns>
+        private static string EscapeFragPipeWorkFlowParameterPath(string fileOrDirectoryPath)
+        {
+            return fileOrDirectoryPath.Replace(@"\", @"\\").Replace(":", @"\:");
+        }
+
         private static void FindDatasetPinFiles(string sourceDirectoryPath, string datasetName, out FileInfo pinFile, out FileInfo pinFileEdited)
         {
             pinFile = new FileInfo(Path.Combine(sourceDirectoryPath, string.Format("{0}{1}", datasetName, PIN_EXTENSION)));
@@ -1961,11 +1971,20 @@ namespace AnalysisManagerFragPipePlugIn
             const string REQUIRED_OUTPUT_FORMAT = "tsv_pepxml_pin";
 
             const string DATABASE_PATH_PARAMETER = "database.db-path";
+            const string DIANN_LIBRARY_PARAMETER = "diann.library";
             const string OUTPUT_FORMAT_PARAMETER = "msfragger.output_format";
             const string SLICE_DB_PARAMETER = "msfragger.misc.slice-db";
 
             try
             {
+                // In this dictionary, keys are FragPipe parameter names and values are the corresponding file or directory path as defined for the current analysis job
+                var fragPipeConfigParameters = new Dictionary<string, string>
+                {
+                    { "fragpipe-config.bin-diann", EscapeFragPipeWorkFlowParameterPath(fragPipePaths.DiannExe.FullName) },
+                    { "fragpipe-config.bin-python", EscapeFragPipeWorkFlowParameterPath(fragPipePaths.PythonExe.FullName) },
+                    { "fragpipe-config.tools-folder", EscapeFragPipeWorkFlowParameterPath(fragPipePaths.ToolsDirectory.FullName) }
+                };
+
                 var workflowFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName));
@@ -1979,9 +1998,27 @@ namespace AnalysisManagerFragPipePlugIn
                     AnalysisResourcesFragPipe.DATABASE_SPLIT_COUNT_PARAM,
                     1);
 
+                var diannSpectrumLibraryPath = mJobParams.GetJobParameter(
+                    AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
+                    AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM,
+                    string.Empty);
+
+                FileInfo localDiannSpectrumLibraryFile;
+
+                if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                {
+                    localDiannSpectrumLibraryFile = new FileInfo("NoLibraryDefined");
+                }
+                else
+                {
+                    var remoteDiannSpectrumLibraryFile = new FileInfo(diannSpectrumLibraryPath);
+                    localDiannSpectrumLibraryFile = new FileInfo(Path.Combine(mWorkDir, remoteDiannSpectrumLibraryFile.Name));
+                }
+
+                var dbSplitCountDefined = false;
+                var diannLibraryDefined = false;
                 var fastaFileDefined = false;
                 var outputFormatDefined = false;
-                var dbSplitCountDefined = false;
 
                 using (var reader = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var writer = new StreamWriter(new FileStream(updatedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
@@ -2011,11 +2048,36 @@ namespace AnalysisManagerFragPipePlugIn
 
                             // On Windows, the path to the FASTA file must use '\\' for directory separators, instead of '\'
 
-                            var pathToUse = mFastaUtils.LocalFASTAFilePath.Replace(@"\", @"\\");
+                            var pathToUse = EscapeFragPipeWorkFlowParameterPath(mFastaUtils.LocalFASTAFilePath);
 
-                            WriteWorkflowFileSetting(writer, DATABASE_PATH_PARAMETER, pathToUse, comment);
+                            WriteWorkflowFileSetting(writer, setting.ParamName, pathToUse, comment);
 
                             fastaFileDefined = true;
+                            continue;
+                        }
+
+                        if (trimmedLine.StartsWith(DIANN_LIBRARY_PARAMETER))
+                        {
+                            if (diannLibraryDefined)
+                                continue;
+
+                            if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                            {
+                                writer.WriteLine("{0}=", DIANN_LIBRARY_PARAMETER);
+                                diannLibraryDefined = true;
+                                continue;
+                            }
+
+                            var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
+                            var comment = GetComment(setting, string.Empty);
+
+                            // On Windows, the path to the spectrum library file must use '\\' for directory separators, instead of '\'
+
+                            var pathToUse = EscapeFragPipeWorkFlowParameterPath(localDiannSpectrumLibraryFile.FullName);
+
+                            WriteWorkflowFileSetting(writer, setting.ParamName, pathToUse, comment);
+
+                            diannLibraryDefined = true;
                             continue;
                         }
 
@@ -2029,12 +2091,12 @@ namespace AnalysisManagerFragPipePlugIn
 
                             if (setting.ParamValue.Equals(REQUIRED_OUTPUT_FORMAT, StringComparison.OrdinalIgnoreCase))
                             {
-                                writer.WriteLine(dataLine);
+                                WriteWorkflowFileSetting(writer, setting.ParamName, setting.ParamValue, comment);
                             }
                             else
                             {
                                 // Auto-change the output format to tsv_pepxml_pin
-                                WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, comment);
+                                WriteWorkflowFileSetting(writer, setting.ParamName, REQUIRED_OUTPUT_FORMAT, comment);
 
                                 LogWarning("Auto-updated the MSFragger output format from {0} to {1} because Percolator requires .pin files", setting.ParamValue, REQUIRED_OUTPUT_FORMAT);
                             }
@@ -2054,6 +2116,22 @@ namespace AnalysisManagerFragPipePlugIn
                             continue;
                         }
 
+                        var commentedConfigParamWritten = false;
+
+                        foreach (var param in fragPipeConfigParameters)
+                        {
+                            if (!trimmedLine.Contains(param.Key))
+                                continue;
+
+                            // Write a commented version of this parameter, using the file or directory path tracked in fragPipeConfigParameters
+                            writer.WriteLine("# {0}={1}", param.Key, param.Value);
+                            commentedConfigParamWritten = true;
+                            break;
+                        }
+
+                        if (commentedConfigParamWritten)
+                            continue;
+
                         writer.WriteLine(dataLine);
                     }
 
@@ -2065,6 +2143,11 @@ namespace AnalysisManagerFragPipePlugIn
                     if (!outputFormatDefined)
                     {
                         WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
+                    }
+
+                    if (!diannLibraryDefined && !string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                    {
+                        writer.WriteLine("{0}={1}", DIANN_LIBRARY_PARAMETER, EscapeFragPipeWorkFlowParameterPath(localDiannSpectrumLibraryFile.FullName));
                     }
                 }
 
