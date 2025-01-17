@@ -16,6 +16,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
+using AnalysisManagerFragPipePlugin;
 using AnalysisManagerMSFraggerPlugIn;
 using AnalysisManagerPepProtProphetPlugIn;
 using PRISM;
@@ -143,11 +144,7 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Determine the path to FragPipe
-
-                // ReSharper disable once CommentTypo
-                // Construct the relative path to the FragPipe batch file, for example:
-                // fragpipe_v22.0\bin\fragpipe.bat
+                // Determine the path to the FragPipe batch file, e.g. C:\DMS_Programs\FragPipe\fragpipe_v22.0\bin\fragpipe.bat
 
                 mFragPipeProgLoc = DetermineProgramLocation("FragPipeProgLoc", FRAGPIPE_BATCH_FILE_PATH);
 
@@ -506,8 +503,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Determine the path to the FragPipe tools directory
         /// </summary>
-        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY)</param>
-        /// <param name="fragPipeProgLoc">Output: path to the FragPipe directory below DMS_Programs</param>
+        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY), e.g. C:\DMS_Programs\FragPipe\fragpipe_v22.0\tools</param>
+        /// <param name="fragPipeProgLoc">Output: path to the FragPipe directory below DMS_Programs, e.g. C:\DMS_Programs\FragPipe</param>
         /// <returns>True if the directory was found, false if missing or an error</returns>
         private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out string fragPipeProgLoc)
         {
@@ -551,28 +548,26 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Determine the path to the FragPipe tools directory, DiaNN.exe, and Python.exe
         /// </summary>
-        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY)</param>
-        /// <param name="diannExe">Output: path to DiaNN.exe</param>
-        /// <param name="pythonExe">Output: path to python.exe</param>
+        /// <param name="fragPipePaths">Output: FragPipe program paths (tools directory, DiaNN.exe and python.exe)</param>
         /// <returns>True if the directory was found, false if missing or an error</returns>
-        private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out FileInfo diannExe, out FileInfo pythonExe)
+        private bool DetermineFragPipeToolLocations(out FragPipeProgramPaths fragPipePaths)
         {
             try
             {
-                if (!DetermineFragPipeToolLocations(out toolsDirectory, out var fragPipeProgLoc))
+                if (!DetermineFragPipeToolLocations(out var toolsDirectory, out var fragPipeProgLoc))
                 {
-                    diannExe = null;
-                    pythonExe = null;
+                    fragPipePaths = new FragPipeProgramPaths(toolsDirectory);
                     return false;
                 }
 
-                diannExe = new FileInfo(Path.Combine(fragPipeProgLoc, FRAGPIPE_DIANN_FILE_PATH));
-
-                if (!diannExe.Exists)
+                fragPipePaths = new FragPipeProgramPaths(toolsDirectory)
                 {
-                    LogError("Cannot find the DiaNN executable: " + diannExe.FullName, true);
+                    DiannExe = new FileInfo(Path.Combine(fragPipeProgLoc, FRAGPIPE_DIANN_FILE_PATH))
+                };
 
-                    pythonExe = null;
+                if (!fragPipePaths.DiannExe.Exists)
+                {
+                    LogError("Cannot find the DiaNN executable: " + fragPipePaths.DiannExe.FullName, true);
                     return false;
                 }
 
@@ -591,15 +586,14 @@ namespace AnalysisManagerFragPipePlugIn
                         LogError("The Python directory does not exist: " + pythonProgLoc, true);
                     }
 
-                    pythonExe = null;
                     return false;
                 }
 
-                pythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
+                fragPipePaths.PythonExe = new FileInfo(Path.Combine(pythonProgLoc, "python.exe"));
 
-                if (!pythonExe.Exists)
+                if (!fragPipePaths.PythonExe.Exists)
                 {
-                    LogError("Python executable not found at: " + pythonExe.FullName, true);
+                    LogError("Python executable not found at: " + fragPipePaths.PythonExe.FullName, true);
                     return false;
                 }
 
@@ -608,9 +602,7 @@ namespace AnalysisManagerFragPipePlugIn
             catch (Exception ex)
             {
                 LogError("Error determining FragPipe tool locations", ex);
-                toolsDirectory = null;
-                diannExe = null;
-                pythonExe = null;
+                fragPipePaths = new FragPipeProgramPaths(null);
                 return false;
             }
         }
@@ -1659,8 +1651,14 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (!DetermineFragPipeToolLocations(out var fragPipePaths))
+                {
+                    databaseSplitCount = 0;
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 // Customize the path to the FASTA file
-                var workflowResultCode = UpdateFragPipeWorkflowFile(out var workflowFilePath, out databaseSplitCount);
+                var workflowResultCode = UpdateFragPipeWorkflowFile(fragPipePaths, out var workflowFilePath, out databaseSplitCount);
 
                 if (workflowResultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -1745,7 +1743,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // Set up and execute a program runner to run FragPipe
-                var processingSuccess = StartFragPipe(fragPipeBatchFile, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
+                var processingSuccess = StartFragPipe(fragPipeBatchFile, fragPipePaths, fastaFileSizeMB, manifestFilePath, workflowFilePath, options);
 
                 mCmdRunner.FlushConsoleOutputFileNow(true);
 
@@ -1808,6 +1806,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         private bool StartFragPipe(
             FileInfo fragPipeBatchFile,
+            FragPipeProgramPaths fragPipePaths,
             double fastaFileSizeMB,
             string manifestFilePath,
             string workflowFilePath,
@@ -1883,11 +1882,6 @@ namespace AnalysisManagerFragPipePlugIn
 
             // ReSharper restore CommentTypo
 
-            if (!DetermineFragPipeToolLocations(out var toolsDirectory, out var diannExePath, out var pythonExePath))
-            {
-                return false;
-            }
-
             var arguments = new StringBuilder();
 
             // ReSharper disable once StringLiteralTypo
@@ -1898,9 +1892,9 @@ namespace AnalysisManagerFragPipePlugIn
             arguments.AppendFormat(" --manifest {0}", manifestFilePath);
 
             arguments.AppendFormat(" --workdir {0}", mWorkDir);
-            arguments.AppendFormat(" --config-tools-folder {0}", toolsDirectory.FullName);
-            arguments.AppendFormat(" --config-diann {0}", diannExePath.FullName);
-            arguments.AppendFormat(" --config-python {0}", pythonExePath.FullName);
+            arguments.AppendFormat(" --config-tools-folder {0}", fragPipePaths.ToolsDirectory.FullName);
+            arguments.AppendFormat(" --config-diann {0}", fragPipePaths.DiannExe.FullName);
+            arguments.AppendFormat(" --config-python {0}", fragPipePaths.PythonExe.FullName);
 
             if (fragPipeBatchFile.Directory == null)
             {
@@ -1923,6 +1917,7 @@ namespace AnalysisManagerFragPipePlugIn
         {
             LogDebug("Determining tool version info", mDebugLevel);
 
+            // fragpipe.exe should be in the same directory as fragpipe.bat
             var fragPipeExePath = mFragPipeProgLoc.Replace(".bat", ".exe");
 
             // Store paths to key files in toolFiles
@@ -1955,9 +1950,10 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Update the FASTA file name defined in the FragPipe workflow file
         /// </summary>
+        /// <param name="fragPipePaths">FragPipe tools directory, path to DiaNN.exe and path to python.exe</param>
         /// <param name="workflowFilePath">Output: workflow file path</param>
         /// <param name="databaseSplitCount">Output: database split count</param>
-        private CloseOutType UpdateFragPipeWorkflowFile(out string workflowFilePath, out int databaseSplitCount)
+        private CloseOutType UpdateFragPipeWorkflowFile(FragPipeProgramPaths fragPipePaths, out string workflowFilePath, out int databaseSplitCount)
         {
             const string FASTA_FILE_COMMENT = "FASTA File (should include decoy proteins)";
             const string FILE_FORMAT_COMMENT = "File format of output files; Percolator uses .pin files";
