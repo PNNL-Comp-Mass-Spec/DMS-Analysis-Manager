@@ -1998,21 +1998,21 @@ namespace AnalysisManagerFragPipePlugIn
                     AnalysisResourcesFragPipe.DATABASE_SPLIT_COUNT_PARAM,
                     1);
 
-                var diannSpectrumLibraryPath = mJobParams.GetJobParameter(
+                var diannSpectralLibraryPath = mJobParams.GetJobParameter(
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM,
                     string.Empty);
 
-                FileInfo localDiannSpectrumLibraryFile;
+                FileInfo localDiannSpectralLibraryFile;
 
-                if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                if (string.IsNullOrWhiteSpace(diannSpectralLibraryPath))
                 {
-                    localDiannSpectrumLibraryFile = new FileInfo("NoLibraryDefined");
+                    localDiannSpectralLibraryFile = new FileInfo("NoLibraryDefined");
                 }
                 else
                 {
-                    var remoteDiannSpectrumLibraryFile = new FileInfo(diannSpectrumLibraryPath);
-                    localDiannSpectrumLibraryFile = new FileInfo(Path.Combine(mWorkDir, remoteDiannSpectrumLibraryFile.Name));
+                    var remoteDiannSpectralLibraryFile = new FileInfo(diannSpectralLibraryPath);
+                    localDiannSpectralLibraryFile = new FileInfo(Path.Combine(mWorkDir, remoteDiannSpectralLibraryFile.Name));
                 }
 
                 var dbSplitCountDefined = false;
@@ -2061,7 +2061,7 @@ namespace AnalysisManagerFragPipePlugIn
                             if (diannLibraryDefined)
                                 continue;
 
-                            if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                            if (string.IsNullOrWhiteSpace(diannSpectralLibraryPath))
                             {
                                 writer.WriteLine("{0}=", DIANN_LIBRARY_PARAMETER);
                                 diannLibraryDefined = true;
@@ -2071,9 +2071,9 @@ namespace AnalysisManagerFragPipePlugIn
                             var setting = new KeyValueParamFileLine(lineNumber, dataLine, true);
                             var comment = GetComment(setting, string.Empty);
 
-                            // On Windows, the path to the spectrum library file must use '\\' for directory separators, instead of '\'
+                            // On Windows, the path to the spectral library file must use '\\' for directory separators, instead of '\'
 
-                            var pathToUse = EscapeFragPipeWorkFlowParameterPath(localDiannSpectrumLibraryFile.FullName);
+                            var pathToUse = EscapeFragPipeWorkFlowParameterPath(localDiannSpectralLibraryFile.FullName);
 
                             WriteWorkflowFileSetting(writer, setting.ParamName, pathToUse, comment);
 
@@ -2145,9 +2145,9 @@ namespace AnalysisManagerFragPipePlugIn
                         WriteWorkflowFileSetting(writer, OUTPUT_FORMAT_PARAMETER, REQUIRED_OUTPUT_FORMAT, FILE_FORMAT_COMMENT);
                     }
 
-                    if (!diannLibraryDefined && !string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                    if (!diannLibraryDefined && !string.IsNullOrWhiteSpace(diannSpectralLibraryPath))
                     {
-                        writer.WriteLine("{0}={1}", DIANN_LIBRARY_PARAMETER, EscapeFragPipeWorkFlowParameterPath(localDiannSpectrumLibraryFile.FullName));
+                        writer.WriteLine("{0}={1}", DIANN_LIBRARY_PARAMETER, EscapeFragPipeWorkFlowParameterPath(localDiannSpectralLibraryFile.FullName));
                     }
                 }
 

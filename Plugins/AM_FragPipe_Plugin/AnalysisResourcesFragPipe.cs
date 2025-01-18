@@ -30,7 +30,7 @@ namespace AnalysisManagerFragPipePlugIn
         internal const string DATABASE_SPLIT_COUNT_PARAM = "DatabaseSplitCount";
 
         internal const string DIANN_LIBRARY_SECTION = "FragPipe";
-        internal const string DIANN_LIBRARY_PARAM = "DiannSpectrumLibrary";
+        internal const string DIANN_LIBRARY_PARAM = "DiannSpectralLibrary";
 
         internal const string JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID = "PackedParam_ExperimentsByDatasetID";
 
@@ -144,8 +144,8 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Copy the DiaNN spectrum library file, if defined
-                if (!GetDiannSpectrumLibrary())
+                // Copy the DiaNN spectral library file, if defined
+                if (!GetDiannSpectralLibrary())
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -239,53 +239,53 @@ namespace AnalysisManagerFragPipePlugIn
         }
 
         /// <summary>
-        /// If the settings file for this job has a DiaNN spectrum library file defined, copy it to the working directory
+        /// If the settings file for this job has a DiaNN spectral library file defined, copy it to the working directory
         /// </summary>
-        /// <returns>True if successful, false if an error•</returns>
-        private bool GetDiannSpectrumLibrary()
+        /// <returns>True if successful, false if an error</returns>
+        private bool GetDiannSpectralLibrary()
         {
             try
             {
-                var diannSpectrumLibraryPath = mJobParams.GetJobParameter(
+                var diannSpectralLibraryPath = mJobParams.GetJobParameter(
                     DIANN_LIBRARY_SECTION,
                     DIANN_LIBRARY_PARAM,
                     string.Empty);
 
-                if (string.IsNullOrWhiteSpace(diannSpectrumLibraryPath))
+                if (string.IsNullOrWhiteSpace(diannSpectralLibraryPath))
                 {
                     return true;
                 }
 
-                var remoteDiannSpectrumLibraryFile = new FileInfo(diannSpectrumLibraryPath);
+                var remoteDiannSpectralLibraryFile = new FileInfo(diannSpectralLibraryPath);
 
-                if (remoteDiannSpectrumLibraryFile.Directory == null)
+                if (remoteDiannSpectralLibraryFile.Directory == null)
                 {
-                    LogError("Could not determine the parent directory of the DiaNN spectrum library file: {0}", diannSpectrumLibraryPath);
+                    LogError("Could not determine the parent directory of the DiaNN spectral library file: {0}", diannSpectralLibraryPath);
                     return false;
                 }
 
-                if (!remoteDiannSpectrumLibraryFile.Directory.Exists)
+                if (!remoteDiannSpectralLibraryFile.Directory.Exists)
                 {
-                    LogError("Could not find the DiaNN spectrum library file (parent directory not found): {0}", diannSpectrumLibraryPath);
+                    LogError("Could not find the DiaNN spectral library file (parent directory not found): {0}", diannSpectralLibraryPath);
                     return false;
                 }
 
-                if (!remoteDiannSpectrumLibraryFile.Exists)
+                if (!remoteDiannSpectralLibraryFile.Exists)
                 {
-                    LogError("Could not find the DiaNN spectrum library file (file not found): {0}", diannSpectrumLibraryPath);
+                    LogError("Could not find the DiaNN spectral library file (file not found): {0}", diannSpectralLibraryPath);
                     return false;
                 }
 
                 mFileCopyUtilities.CopyFileToWorkDir(
-                    remoteDiannSpectrumLibraryFile.Name,
-                    remoteDiannSpectrumLibraryFile.Directory.FullName,
+                    remoteDiannSpectralLibraryFile.Name,
+                    remoteDiannSpectralLibraryFile.Directory.FullName,
                     mWorkDir);
 
                 return true;
             }
             catch (Exception ex)
             {
-                LogError("Error in GetDiannSpectrumLibrary", ex);
+                LogError("Error in GetDiannSpectralLibrary", ex);
                 return false;
             }
         }
