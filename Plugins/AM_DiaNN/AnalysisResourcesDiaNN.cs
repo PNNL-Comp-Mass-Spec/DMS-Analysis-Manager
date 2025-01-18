@@ -128,7 +128,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var retrieveMsXmlFiles = !scriptName.StartsWith("DiaNN_timsTOF", StringComparison.OrdinalIgnoreCase);
 
-                LogMessage("Getting param file", 2);
+                LogMessage("Retrieving the DIA-NN param file", 2);
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

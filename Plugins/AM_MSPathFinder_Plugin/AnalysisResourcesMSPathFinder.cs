@@ -145,7 +145,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 if (!RetrieveOrgDB(localOrgDbFolder, out _))
                     return false;
 
-                LogMessage("Getting param file");
+                LogMessage("Retrieving the MSPathFinder param file");
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

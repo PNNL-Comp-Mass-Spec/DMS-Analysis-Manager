@@ -71,7 +71,7 @@ namespace AnalysisManagerMaxQuantPlugIn
 
                 var transferDirectoryPath = GetTransferDirectoryPathForJobStep(useInputDirectory, includeDatasetName);
 
-                LogMessage("Getting param file", 2);
+                LogMessage("Retrieving the MaxQuant param file", 2);
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

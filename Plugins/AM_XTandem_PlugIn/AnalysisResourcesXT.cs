@@ -47,7 +47,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return resultCode;
 
             // XTandem just copies its parameter file from the central repository
-            LogMessage("Getting param file");
+            LogMessage("Retrieving the X!Tandem param file");
 
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(mJobParams.GetParam("ParamFileName")))

@@ -45,7 +45,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
             }
 
-            LogMessage("Getting param file");
+            LogMessage("Retrieving the param file");
 
             var paramFilesCopied = 0;
 

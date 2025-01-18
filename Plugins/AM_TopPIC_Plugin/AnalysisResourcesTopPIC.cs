@@ -68,7 +68,7 @@ namespace AnalysisManagerTopPICPlugIn
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
-            LogMessage("Getting data files");
+            LogMessage("Retrieving the data files required for TopPIC");
 
             // Find the _ms2.msalign file
             // However, results for FAIMS datasets could have multiple _ms2.msalign files (one for each CV value)

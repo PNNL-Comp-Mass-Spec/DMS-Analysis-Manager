@@ -39,7 +39,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
             }
 
-            LogMessage("Getting mzXML file");
+            LogMessage("Retrieving the mzXML file");
 
             const bool unzipFile = true;
 

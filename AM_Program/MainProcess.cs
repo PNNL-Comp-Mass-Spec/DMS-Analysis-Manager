@@ -2432,7 +2432,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                ShowTrace("Getting job resources");
+                ShowTrace("Obtaining job resources");
 
                 resultCode = toolResourcer.GetResources();
 

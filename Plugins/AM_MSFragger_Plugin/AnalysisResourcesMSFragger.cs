@@ -70,7 +70,7 @@ namespace AnalysisManagerMSFraggerPlugIn
                 // In contrast, MaxQuant can work with either .raw files, .mzML files, or .mzXML files
                 const bool retrieveMsXmlFiles = true;
 
-                LogMessage("Getting param file", 2);
+                LogMessage("Retrieving the MSFragger param file", 2);
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

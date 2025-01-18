@@ -36,7 +36,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
-            LogMessage("Getting required files");
+            LogMessage("Retrieving required files");
 
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();

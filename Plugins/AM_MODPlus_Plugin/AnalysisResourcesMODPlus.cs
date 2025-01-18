@@ -135,7 +135,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 mJobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True");
 
-                LogMessage("Getting param file");
+                LogMessage("Retrieving the MODPlus param file");
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

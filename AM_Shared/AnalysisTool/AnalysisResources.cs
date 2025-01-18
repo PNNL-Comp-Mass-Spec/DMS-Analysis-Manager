@@ -2540,7 +2540,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>Closeout code</returns>
         public CloseOutType GetMzMLFile()
         {
-            LogMessage("Getting mzML file");
+            LogMessage("Retrieving the mzML file");
 
             const bool unzipFile = true;
 
@@ -2564,7 +2564,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>Closeout code</returns>
         public CloseOutType GetMzXMLFile()
         {
-            LogMessage("Getting mzXML file");
+            LogMessage("Retrieving the mzML file");
 
             // Note that capitalization matters for the extension; it must be .mzXML
             var fileToGet = mDatasetName + DOT_MZXML_EXTENSION;
@@ -2598,7 +2598,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         protected CloseOutType GetPBFFile()
         {
-            LogMessage("Getting PBF file");
+            LogMessage("Retrieving the PBF file");
 
             var success = FileSearchTool.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
 
@@ -2694,7 +2694,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <returns>Closeout code</returns>
         protected CloseOutType GetZippedMgfFile()
         {
-            LogMessage("Getting _mgf.zip file");
+            LogMessage("Retrieving the _mgf.zip file");
 
             var fileToGet = mDatasetName + MGF_ZIPPED_EXTENSION;
 

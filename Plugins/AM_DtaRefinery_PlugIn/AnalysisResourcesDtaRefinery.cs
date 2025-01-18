@@ -49,7 +49,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 return resultCode;
 
-            LogMessage("Getting param file");
+            LogMessage("Retrieving the DtaRefinery param file");
 
             // Retrieve param file
             var paramFileName = mJobParams.GetParam("ParamFileName");

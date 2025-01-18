@@ -159,7 +159,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         private CloseOutType GetMSAlignFiles()
         {
-            LogMessage("Getting data files");
+            LogMessage("Retrieving data files required for MSAlign");
 
             // Retrieve the MSAlign_Quant parameter file
             var resultCode = RetrieveMSAlignQuantParameterFile();
@@ -183,7 +183,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
         private CloseOutType GetTopPICFiles()
         {
-            LogMessage("Getting data files");
+            LogMessage("Retrieving data files required for TopPIC");
 
             // Retrieve the MSAlign_Quant parameter file
             var resultCode = RetrieveMSAlignQuantParameterFile();

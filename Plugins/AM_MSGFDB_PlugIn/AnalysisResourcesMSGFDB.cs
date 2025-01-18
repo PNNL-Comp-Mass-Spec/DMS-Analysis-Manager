@@ -112,7 +112,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
-                LogMessage("Getting param file", 2);
+                LogMessage("Retrieving the MS-GF+ param file", 2);
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query

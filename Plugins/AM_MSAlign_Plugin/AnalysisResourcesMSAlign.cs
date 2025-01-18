@@ -64,8 +64,9 @@ namespace AnalysisManagerMSAlignPlugIn
                 return resultCode;
 
             // Retrieve the MSAlign file
-            LogMessage("Getting data files");
             var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
+
+            LogMessage("Retrieving data file {0}", fileToGet);
 
             if (!FileSearchTool.FindAndRetrieveMiscFiles(fileToGet, false))
             {

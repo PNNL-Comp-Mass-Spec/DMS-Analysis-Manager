@@ -86,7 +86,7 @@ namespace AnalysisManagerFragPipePlugIn
                 // In contrast, MaxQuant can work with either .raw files, .mzML files, or .mzXML files
                 const bool retrieveMsXmlFiles = true;
 
-                LogMessage("Getting param file", 2);
+                LogMessage("Retrieving the FragPipe workflow file", 2);
 
                 // Retrieve the workflow file (aka the parameter file)
 
@@ -275,6 +275,8 @@ namespace AnalysisManagerFragPipePlugIn
                     LogError("Could not find the DiaNN spectral library file (file not found): {0}", diannSpectralLibraryPath);
                     return false;
                 }
+
+                LogMessage("Retrieving spectral library file: {0}", remoteDiannSpectralLibraryFile.FullName);
 
                 mFileCopyUtilities.CopyFileToWorkDir(
                     remoteDiannSpectralLibraryFile.Name,
