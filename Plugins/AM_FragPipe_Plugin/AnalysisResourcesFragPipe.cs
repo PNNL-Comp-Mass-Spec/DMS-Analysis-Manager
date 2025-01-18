@@ -281,6 +281,8 @@ namespace AnalysisManagerFragPipePlugIn
                     remoteDiannSpectralLibraryFile.Directory.FullName,
                     mWorkDir);
 
+                mJobParams.AddResultFileToSkip(remoteDiannSpectralLibraryFile.Name);
+
                 return true;
             }
             catch (Exception ex)
