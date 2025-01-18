@@ -763,6 +763,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// <returns>True if no problems, false if errors</returns>
         public bool ValidateFragPipeOptions(FileInfo workflowFile)
         {
+            const string RUN_DIANN_PARAMETER = "diann.run-dia-nn";
+
             try
             {
                 if (!workflowFile.Exists)
@@ -784,11 +786,12 @@ namespace AnalysisManagerFragPipePlugIn
                 var booleanParametersToValidate = new Dictionary<string, BooleanParameter>();
                 var parametersToValidate = new Dictionary<string, IntegerParameter>();
 
+                AddParameterToValidate(booleanParametersToValidate, RUN_DIANN_PARAMETER);
                 AddParameterToValidate(parametersToValidate, "msfragger.precursor_mass_units", 0, 1);
                 AddParameterToValidate(parametersToValidate, "msfragger.precursor_true_units", 0, 1);
                 AddParameterToValidate(parametersToValidate, "msfragger.fragment_mass_units", 0, 1);
                 AddParameterToValidate(parametersToValidate, "msfragger.calibrate_mass", 0, 2);
-                AddParameterToValidate(booleanParametersToValidate, "use_all_mods_in_first_search");
+                AddParameterToValidate(booleanParametersToValidate, "msfragger.use_all_mods_in_first_search");
                 AddParameterToValidate(parametersToValidate, "msfragger.deisotope", 0, 2);
 
                 // ReSharper disable once StringLiteralTypo
@@ -815,6 +818,7 @@ namespace AnalysisManagerFragPipePlugIn
                 AddParameterToValidate(parametersToValidate, "msfragger.digest_max_length", 20, 60);
                 AddParameterToValidate(parametersToValidate, "msfragger.max_fragment_charge", 1, 4);
 
+                // Update the cached values for the integer parameters
                 foreach (var parameter in workflowEntries)
                 {
                     if (!parametersToValidate.TryGetValue(parameter.Key, out var matchingParameter))
@@ -828,6 +832,7 @@ namespace AnalysisManagerFragPipePlugIn
                     matchingParameter.SetValue(parameterValue);
                 }
 
+                // Update the cached values for the boolean parameters
                 foreach (var parameter in workflowEntries)
                 {
                     if (!booleanParametersToValidate.TryGetValue(parameter.Key, out var matchingParameter))
@@ -841,6 +846,7 @@ namespace AnalysisManagerFragPipePlugIn
                     matchingParameter.SetValue(parameterValue);
                 }
 
+                // Validate the integer parameter values
                 foreach (var item in parametersToValidate)
                 {
                     if (!item.Value.IsDefined)
@@ -856,6 +862,8 @@ namespace AnalysisManagerFragPipePlugIn
                         return false;
                 }
 
+                // Validate the boolean parameter values
+
                 // ReSharper disable once ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator
                 foreach (var item in booleanParametersToValidate)
                 {
@@ -869,7 +877,36 @@ namespace AnalysisManagerFragPipePlugIn
                     return false;
                 }
 
-                return true;
+                // If diann.run-dia-nn is true, make sure that job parameter DiannSpectralLibrary specifies a spectral library
+                // Conversely, if a spectral library is defined, make sure that diann.run-dia-nn is true
+
+                var runDiann = booleanParametersToValidate[RUN_DIANN_PARAMETER];
+
+                var diannSpectralLibraryPath = mJobParams.GetJobParameter(
+                    AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
+                    AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM,
+                    string.Empty);
+
+                if (string.IsNullOrWhiteSpace(diannSpectralLibraryPath))
+                {
+                    if (!runDiann.IsDefined || !runDiann.ParameterValue)
+                        return true;
+
+                    // The FragPipe workflow has diann.run-dia-nn=true but this job's settings file does not have a value defined for parameter DiannSpectralLibrary
+                    OnErrorEvent("The FragPipe workflow has {0}=true but this job's settings file does not have a value defined for parameter {1}",
+                        RUN_DIANN_PARAMETER, AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM);
+
+                    return false;
+                }
+
+                if (runDiann.IsDefined && runDiann.ParameterValue)
+                    return true;
+
+                // This job's settings file has a spectral library defined (using parameter DiannSpectralLibrary), but the FragPipe workflow has diann.run-dia-nn=false
+                OnErrorEvent("This job's settings file has a spectral library defined (using {0}), but the FragPipe workflow has {1}=false",
+                    RUN_DIANN_PARAMETER, AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM);
+
+                return false;
             }
             catch (Exception ex)
             {
