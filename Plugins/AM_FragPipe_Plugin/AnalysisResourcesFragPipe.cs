@@ -116,9 +116,20 @@ namespace AnalysisManagerFragPipePlugIn
                 var options = new FragPipeOptions(mJobParams, datasetCount);
                 RegisterEvents(options);
 
-                if (!options.ValidateFragPipeOptions(workflowFile))
+                if (!options.ValidateFragPipeOptions(workflowFile, out var runDiann))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (runDiann)
+                {
+                    // Create directory "diann-output" since running DIA-NN
+                    var diannOutputDirectory = new DirectoryInfo(Path.Combine(mWorkDir, "diann-output"));
+
+                    if (!diannOutputDirectory.Exists)
+                    {
+                        diannOutputDirectory.Create();
+                    }
                 }
 
                 // Retrieve the FASTA file
