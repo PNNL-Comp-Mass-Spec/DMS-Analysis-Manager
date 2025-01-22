@@ -3660,6 +3660,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (!processingSuccess)
                 {
+                    // Error running Philosopher to run ProteinProphet
                     LogError("Error running Philosopher to " + currentTask);
 
                     if (mCmdRunner.ExitCode != 0)
@@ -3787,6 +3788,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
                 {
                     LogError("ProteinProphet results file not found: " + proteinGroupsFile.Name);
                     return false;
+                }
+
+                // Since the protein prophet results file was found, move the error messages mentioned above from mMessage to mEvalMessage
+
+                if (mMessage.IndexOf("Error running Philosopher", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    Global.AppendToComment(mEvalMessage, mMessage);
+                    mMessage = string.Empty;
                 }
 
                 // Zip the ProteinProphet results file, combined.prot.xml
