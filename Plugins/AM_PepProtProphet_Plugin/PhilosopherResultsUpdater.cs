@@ -36,6 +36,32 @@ namespace AnalysisManagerPepProtProphetPlugIn
             DatasetName = datasetName;
         }
 
+        private DirectoryInfo GetExperimentGroupWorkingDirectoryToUse(DirectoryInfo experimentGroupWorkingDirectory, string datasetOrExperimentGroupName)
+        {
+            if (experimentGroupWorkingDirectory.GetFiles().Length != 0)
+            {
+                return experimentGroupWorkingDirectory;
+            }
+
+            GetFilePaths(datasetOrExperimentGroupName, AnalysisJobWorkingDirectory, "psm", out var psmFile, out _);
+
+            if (psmFile.Exists)
+                return AnalysisJobWorkingDirectory;
+
+            GetFilePaths(datasetOrExperimentGroupName, AnalysisJobWorkingDirectory, "ion", out var ionFile, out _);
+
+            if (ionFile.Exists)
+                return AnalysisJobWorkingDirectory;
+
+            GetFilePaths(datasetOrExperimentGroupName, AnalysisJobWorkingDirectory, "peptide", out var peptideFile, out _);
+
+            // ReSharper disable once ConvertIfStatementToReturnStatement
+            if (peptideFile.Exists)
+                return AnalysisJobWorkingDirectory;
+
+            return experimentGroupWorkingDirectory;
+        }
+
         private void GetFilePaths(
             string datasetOrExperimentGroupName,
             FileSystemInfo workingDirectory,
@@ -146,9 +172,15 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         }
                     }
 
-                    var psmSuccess = UpdatePhilosopherPSMFile(datasetOrExperimentGroupName, experimentGroup.Value);
-                    var ionSuccess = UpdatePhilosopherIonFile(datasetOrExperimentGroupName, experimentGroup.Value);
-                    var peptideSuccess = UpdatePhilosopherPeptideFile(datasetOrExperimentGroupName, experimentGroup.Value, out var peptideCount);
+                    // For DIA searches that use a spectral library, the results might have been created in the working directory
+                    // and not in the experiment group working directory; check for this
+
+                    var experimentGroupWorkingDirectory = experimentGroup.Value;
+                    var experimentWorkingDirectory = GetExperimentGroupWorkingDirectoryToUse(experimentGroupWorkingDirectory, datasetOrExperimentGroupName);
+
+                    var psmSuccess = UpdatePhilosopherPSMFile(datasetOrExperimentGroupName, experimentWorkingDirectory);
+                    var ionSuccess = UpdatePhilosopherIonFile(datasetOrExperimentGroupName, experimentWorkingDirectory);
+                    var peptideSuccess = UpdatePhilosopherPeptideFile(datasetOrExperimentGroupName, experimentWorkingDirectory, out var peptideCount);
 
                     if (peptideCount == 0)
                     {
@@ -161,7 +193,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     totalPeptideCount += peptideCount;
 
-                    var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentGroup.Value, usedProteinProphet);
+                    var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentWorkingDirectory, usedProteinProphet);
 
                     if (psmSuccess && ionSuccess && peptideSuccess && proteinSuccess)
                         successCount++;

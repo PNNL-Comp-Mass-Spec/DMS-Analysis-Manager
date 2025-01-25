@@ -638,6 +638,32 @@ namespace AnalysisManagerFragPipePlugIn
             return new DirectoryInfo(Path.Combine(mWorkingDirectory.FullName, cleanName));
         }
 
+        private DirectoryInfo GetExperimentGroupWorkingDirectoryToUse(
+            DataPackageInfo dataPackageInfo,
+            KeyValuePair<string, SortedSet<int>> experimentGroup,
+            DirectoryInfo experimentGroupWorkingDirectory,
+            bool diaSearchEnabled)
+        {
+            if (experimentGroupWorkingDirectory.GetFiles().Length > 0)
+            {
+                return experimentGroupWorkingDirectory;
+            }
+
+            foreach (var datasetID in experimentGroup.Value)
+            {
+                var datasetName = dataPackageInfo.Datasets[datasetID];
+                var pepXmlFiles = FindDatasetPinFileAndPepXmlFiles(mWorkingDirectory, diaSearchEnabled, datasetName, out var pinFile);
+
+                if (pepXmlFiles.Count > 0)
+                    return mWorkingDirectory;
+
+                if (pinFile.Exists)
+                    return mWorkingDirectory;
+            }
+
+            return experimentGroupWorkingDirectory;
+        }
+
         private static List<FileInfo> FindDatasetPinFileAndPepXmlFiles(
             DirectoryInfo workingDirectory,
             bool diaSearchEnabled,
@@ -2452,7 +2478,6 @@ namespace AnalysisManagerFragPipePlugIn
                 return true;
 
             LogError("Zip failure for {0} / {1} .pepXML files created by FragPipe", additionalPepXmlFiles.Count - successCount, additionalPepXmlFiles.Count);
-
             return false;
         }
 
@@ -2562,14 +2587,22 @@ namespace AnalysisManagerFragPipePlugIn
                 // Validate that FragPipe created a .pepXML file for each dataset
                 // For DIA data, the program creates several .pepXML files
 
-                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset (though with DIA data there is only a .pin file, not a .tsv file)
+                // If databaseSplitCount is 1, there should also be a .tsv file and a .pin file for each dataset (though with DIA data there might only be a .pin file and not a .tsv file)
                 // If databaseSplitCount is more than 1, we will create a .tsv file using the data in the .pepXML file
 
                 // Zip each .pepXML file
                 foreach (var experimentGroup in datasetIDsByExperimentGroup)
                 {
                     var experimentGroupName = experimentGroup.Key;
-                    var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
+
+                    // For DIA searches that use a spectral library, the results might have been created in the working directory
+                    // and not in the experiment group working directory; check for this
+
+                    var experimentWorkingDirectory = GetExperimentGroupWorkingDirectoryToUse(
+                        dataPackageInfo,
+                        experimentGroup,
+                        mExperimentGroupWorkingDirectories[experimentGroupName],
+                        diaSearchEnabled);
 
                     foreach (var datasetID in experimentGroup.Value)
                     {

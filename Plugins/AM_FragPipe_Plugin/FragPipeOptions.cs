@@ -897,7 +897,7 @@ namespace AnalysisManagerFragPipePlugIn
                 var runDiannParam = booleanParametersToValidate[RUN_DIANN_PARAMETER];
 
                 runDiann = runDiannParam.IsDefined && runDiannParam.ParameterValue;
-                
+
                 var diannSpectralLibraryPath = mJobParams.GetJobParameter(
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_PARAM,
