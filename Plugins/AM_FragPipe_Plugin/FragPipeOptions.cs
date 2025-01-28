@@ -760,9 +760,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// Examine FragPipe parameters to check for errors
         /// </summary>
         /// <param name="workflowFile">FragPipe workflow file</param>
-        /// <param name="runDiann">Output: true if DIA-NN is enabled</param>
         /// <returns>True if no problems, false if errors</returns>
-        public bool ValidateFragPipeOptions(FileInfo workflowFile, out bool runDiann)
+        public bool ValidateFragPipeOptions(FileInfo workflowFile)
         {
             const string RUN_DIANN_PARAMETER = "diann.run-dia-nn";
 
@@ -771,7 +770,6 @@ namespace AnalysisManagerFragPipePlugIn
                 if (!workflowFile.Exists)
                 {
                     OnErrorEvent("FragPipe workflow file not found: " + workflowFile.FullName);
-                    runDiann = false;
                     return false;
                 }
 
@@ -782,7 +780,6 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (!workflowFileLoaded)
                 {
-                    runDiann = false;
                     return false;
                 }
 
@@ -831,7 +828,6 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!GetParamValueInt(parameter, out var parameterValue))
                     {
-                        runDiann = false;
                         return false;
                     }
 
@@ -848,7 +844,6 @@ namespace AnalysisManagerFragPipePlugIn
 
                     if (!GetParamValueBool(parameter, out var parameterValue))
                     {
-                        runDiann = false;
                         return false;
                     }
 
@@ -864,13 +859,11 @@ namespace AnalysisManagerFragPipePlugIn
                             continue;
 
                         OnErrorEvent("Parameter {0} is missing from the FragPipe workflow file", item.Key);
-                        runDiann = false;
                         return false;
                     }
 
                     if (!ParameterValueInRange(item.Value))
                     {
-                        runDiann = false;
                         return false;
                     }
                 }
@@ -887,7 +880,6 @@ namespace AnalysisManagerFragPipePlugIn
                         continue;
 
                     OnErrorEvent("Parameter {0} is missing from the FragPipe workflow file", item.Key);
-                    runDiann = false;
                     return false;
                 }
 
@@ -896,7 +888,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var runDiannParam = booleanParametersToValidate[RUN_DIANN_PARAMETER];
 
-                runDiann = runDiannParam.IsDefined && runDiannParam.ParameterValue;
+                var runDiann = runDiannParam.IsDefined && runDiannParam.ParameterValue;
 
                 var diannSpectralLibraryPath = mJobParams.GetJobParameter(
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
@@ -927,7 +919,6 @@ namespace AnalysisManagerFragPipePlugIn
             catch (Exception ex)
             {
                 OnErrorEvent("Error in ValidateFragPipeOptions", ex);
-                runDiann = false;
                 return false;
             }
         }
