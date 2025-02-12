@@ -135,6 +135,8 @@
         /// </summary>
         public int UniqueUbiquitinPeptidesFDR { get; set; }
 
+        // ReSharper disable once UnusedMember.Global
+
         /// <summary>
         /// Update the cached PSM result stats using additional PSM result stats
         /// </summary>
