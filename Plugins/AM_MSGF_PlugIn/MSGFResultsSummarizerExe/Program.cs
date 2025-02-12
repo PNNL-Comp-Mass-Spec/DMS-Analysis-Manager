@@ -222,7 +222,7 @@ namespace MSGFResultsSummarizerExe
 
                 const int DEBUG_LEVEL = 1;
 
-                // private const string GIGASAX_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+                // private const string GIGASAX_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;Encrypt=False";
 
                 const string CONNECTION_STRING = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
 

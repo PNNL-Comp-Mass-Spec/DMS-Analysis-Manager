@@ -45,7 +45,7 @@ namespace AnalysisManagerProg
 
         private bool mGenerationComplete;
 
-        // SQL Server Fasta Tools connection string: "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
+        // SQL Server Fasta Tools connection string: "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;Encrypt=False";
 
         private readonly string mFastaToolsCnStr = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
 
@@ -1182,7 +1182,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <remarks>
         /// <para>
-        /// SQL Server connection string: "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI"
+        /// SQL Server connection string: "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;Encrypt=False"
         /// </para>
         /// <para>
         /// PostgreSQL connection string: "Host=prismdb2;Port=5432;Database=dms;UserId=d3l243;"
@@ -1246,7 +1246,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDatabaseLoggingSqlServer()
         {
-            TestDatabaseLogging("Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI");
+            TestDatabaseLogging("Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;Encrypt=False");
         }
 
         /// <summary>

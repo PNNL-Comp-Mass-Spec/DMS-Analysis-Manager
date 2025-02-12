@@ -64,7 +64,7 @@ namespace MSGFResultsSummarizer
         /// </summary>
         public const double DEFAULT_FDR_THRESHOLD = 0.01;
 
-        // private const string GIGASAX_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
+        // private const string GIGASAX_CONNECTION_STRING = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;Encrypt=False";
 
         private const string DEFAULT_CONNECTION_STRING = "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms;UserId=svc-dms";
 
