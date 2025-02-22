@@ -2529,6 +2529,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <returns>True if success, false if an error</returns>
         private bool ZipPepXmlAndPinFile(string datasetName, FileInfo pepXmlFile, bool addPinFile, string zipFileNameOverride = "")
         {
+            // Instantiate the ZipFileTools instance if it is null
             mZipTool ??= new ZipFileTools(DebugLevel, WorkingDirectory);
 
             var zipSuccess = ZipOutputFile(pepXmlFile, ".pepXML file");
@@ -2644,6 +2645,7 @@ namespace AnalysisManagerFragPipePlugIn
                     {
                         var datasetName = dataPackageInfo.Datasets[datasetID];
                         datasetCount++;
+                        Console.WriteLine();
 
                         string optionalDatasetInfo;
 
