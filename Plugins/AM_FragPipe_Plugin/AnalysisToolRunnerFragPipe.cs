@@ -644,7 +644,7 @@ namespace AnalysisManagerFragPipePlugIn
             DirectoryInfo experimentGroupWorkingDirectory,
             bool diaSearchEnabled)
         {
-            if (experimentGroupWorkingDirectory.GetFiles().Length > 0)
+            if (AnalysisToolRunnerMSFragger.ExperimentGroupWorkingDirectoryHasResults(experimentGroupWorkingDirectory))
             {
                 return experimentGroupWorkingDirectory;
             }
@@ -687,18 +687,12 @@ namespace AnalysisManagerFragPipePlugIn
 
                 pepXmlFiles.AddRange(workingDirectory.GetFiles(searchPattern));
 
-                if (pepXmlFiles.Count > 0)
-                    return pepXmlFiles;
-
-                return new List<FileInfo>();
+                return pepXmlFiles.Count > 0 ? pepXmlFiles : new List<FileInfo>();
             }
 
             pepXmlFiles.Add(new FileInfo(Path.Combine(workingDirectory.FullName, datasetName + PEPXML_EXTENSION)));
 
-            if (pepXmlFiles[0].Exists)
-                return pepXmlFiles;
-
-            return new List<FileInfo>();
+            return pepXmlFiles[0].Exists ? pepXmlFiles : new List<FileInfo>();
         }
 
         /// <summary>
@@ -2337,7 +2331,21 @@ namespace AnalysisManagerFragPipePlugIn
             try
             {
                 if (mExperimentGroupWorkingDirectories.Count <= 3)
+                {
+                    // There are three or fewer experiment groups; zipping is not required
                     return true;
+                }
+
+                var ionFiles = mWorkingDirectory.GetFiles("*_ion.tsv");
+                var peptideFiles = mWorkingDirectory.GetFiles("*_peptide.tsv");
+                var proteinFiles = mWorkingDirectory.GetFiles("*_protein.tsv");
+                var psmFiles = mWorkingDirectory.GetFiles("*_psm.tsv");
+
+                if (ionFiles.Length + peptideFiles.Length + proteinFiles.Length + psmFiles.Length <= 8)
+                {
+                    // There likely is just one of each type of TSV file; zipping is not required
+                    return true;
+                }
 
                 var validExperimentGroupCount = 0;
                 var filesToZip = new List<FileInfo>();
@@ -2352,29 +2360,50 @@ namespace AnalysisManagerFragPipePlugIn
                     var psmFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, experimentGroup + "_psm.tsv"));
 
                     if (ionFile.Exists)
+                    {
                         filesToZip.Add(ionFile);
+                    }
                     else
+                    {
                         LogError("File not found: " + ionFile.Name);
+                    }
 
                     if (peptideFile.Exists)
+                    {
                         filesToZip.Add(peptideFile);
+                    }
                     else
+                    {
                         LogError("File not found: " + peptideFile.Name);
+                    }
 
                     if (proteinFile.Exists)
+                    {
                         filesToZip.Add(proteinFile);
+                    }
                     else if (usedProteinProphet)
+                    {
                         LogError("File not found: " + proteinFile.Name);
+                    }
 
                     if (psmFile.Exists)
+                    {
                         filesToZip.Add(psmFile);
+                    }
                     else
+                    {
                         LogError("File not found: " + psmFile.Name);
+                    }
 
                     if (ionFile.Exists && peptideFile.Exists && psmFile.Exists && (proteinFile.Exists || !usedProteinProphet))
                     {
                         validExperimentGroupCount++;
                     }
+                }
+
+                if (validExperimentGroupCount <= 3)
+                {
+                    return true;
                 }
 
                 // Zip the files to create Dataset_PSM_tsv.zip

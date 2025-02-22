@@ -192,6 +192,37 @@ namespace AnalysisManagerMSFraggerPlugIn
             base.CopyFailedResultsToArchiveDirectory();
         }
 
+        // ReSharper disable once UnusedMember.Global
+
+        /// <summary>
+        /// Looks for result files in the given experiment group working directory
+        /// </summary>
+        /// <remarks>Used by the FragPipe tool runner and the Philosopher Results Updater in the PepProtProphet plugin</remarks>
+        /// <param name="experimentGroupWorkingDirectory">Experiment group working directory</param>
+        /// <returns>True if result files are found (files that are not the .mzML file or related index files), otherwise false</returns>
+        public static bool ExperimentGroupWorkingDirectoryHasResults(DirectoryInfo experimentGroupWorkingDirectory)
+        {
+            var resultFilesInWorkingDirectory = 0;
+
+            foreach (var file in experimentGroupWorkingDirectory.GetFiles())
+            {
+                // ReSharper disable once StringLiteralTypo
+                if (file.Extension.Equals(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase) ||
+                    file.Extension.Equals(AnalysisResources.DOT_RAW_EXTENSION, StringComparison.OrdinalIgnoreCase) ||
+                    file.Extension.Equals(".fragtmp", StringComparison.OrdinalIgnoreCase) ||
+                    file.Extension.Equals(".ms1bin", StringComparison.OrdinalIgnoreCase) ||
+                    file.Extension.Equals(".mzBIN_calibrated", StringComparison.OrdinalIgnoreCase))
+
+                {
+                    continue;
+                }
+
+                resultFilesInWorkingDirectory++;
+            }
+
+            return resultFilesInWorkingDirectory > 0;
+        }
+
         public static List<FileInfo> FindDatasetPinFileAndPepXmlFiles(
             DirectoryInfo workingDirectory,
             bool diaSearchEnabled,

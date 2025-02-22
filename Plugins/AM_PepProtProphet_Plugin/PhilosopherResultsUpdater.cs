@@ -11,7 +11,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
     {
         // ReSharper disable CommentTypo
 
-        // Ignore Spelling: Hyperscore, Nextscore, Prev, prot, psm
+        // Ignore Spelling: dia, Hyperscore, Nextscore, Prev, prot, psm
 
         // ReSharper restore CommentTypo
 
@@ -38,7 +38,7 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
         private DirectoryInfo GetExperimentGroupWorkingDirectoryToUse(DirectoryInfo experimentGroupWorkingDirectory, string datasetOrExperimentGroupName)
         {
-            if (experimentGroupWorkingDirectory.GetFiles().Length != 0)
+            if (AnalysisManagerMSFraggerPlugIn.AnalysisToolRunnerMSFragger.ExperimentGroupWorkingDirectoryHasResults(experimentGroupWorkingDirectory))
             {
                 return experimentGroupWorkingDirectory;
             }
@@ -59,7 +59,11 @@ namespace AnalysisManagerPepProtProphetPlugIn
             if (peptideFile.Exists)
                 return AnalysisJobWorkingDirectory;
 
-            return experimentGroupWorkingDirectory;
+            OnWarningEvent(
+                "Experiment group working directory is empty, and the psm.tsv, ion.tsv, or peptide.tsv file was not found in the analysis job working directory: {0}",
+                experimentGroupWorkingDirectory);
+
+            return AnalysisJobWorkingDirectory;
         }
 
         private void GetFilePaths(
@@ -148,12 +152,17 @@ namespace AnalysisManagerPepProtProphetPlugIn
             try
             {
                 var successCount = 0;
+                var processedWorkingDirectories = new SortedSet<string>();
+
+                // For DIA searches that use a spectral library, there might only be one psm.tsv file and one protein.tsv file, and they will be in the working directory
+                // In that case, exit the for loop after successfully renaming the TSV files
+                var psmTsvFiles = AnalysisJobWorkingDirectory.GetFiles("psm.tsv", SearchOption.AllDirectories);
 
                 // ReSharper disable once LoopCanBeConvertedToQuery
                 foreach (var experimentGroup in experimentGroupWorkingDirectories)
                 {
                     var datasetOrExperimentGroupName =
-                        experimentGroupWorkingDirectories.Count <= 1
+                        experimentGroupWorkingDirectories.Count <= 1 || psmTsvFiles.Length == 1
                             ? DatasetName
                             : experimentGroup.Key;
 
@@ -170,6 +179,16 @@ namespace AnalysisManagerPepProtProphetPlugIn
                         {
                             sourceMSStatsFile.MoveTo(updatedMSStatsFile.FullName);
                         }
+                        else
+                        {
+                            GetFilePaths(datasetOrExperimentGroupName, AnalysisJobWorkingDirectory, "msstats",
+                                out var sourceMSStatsFileWorkDir, out var updatedMSStatsFileWorkDir, "csv");
+
+                            if (sourceMSStatsFileWorkDir.Exists)
+                            {
+                                sourceMSStatsFileWorkDir.MoveTo(updatedMSStatsFileWorkDir.FullName);
+                            }
+                        }
                     }
 
                     // For DIA searches that use a spectral library, the results might have been created in the working directory
@@ -177,6 +196,9 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                     var experimentGroupWorkingDirectory = experimentGroup.Value;
                     var experimentWorkingDirectory = GetExperimentGroupWorkingDirectoryToUse(experimentGroupWorkingDirectory, datasetOrExperimentGroupName);
+
+                    if (!processedWorkingDirectories.Add(experimentWorkingDirectory.FullName))
+                        continue;
 
                     var psmSuccess = UpdatePhilosopherPSMFile(datasetOrExperimentGroupName, experimentWorkingDirectory);
                     var ionSuccess = UpdatePhilosopherIonFile(datasetOrExperimentGroupName, experimentWorkingDirectory);
@@ -196,10 +218,18 @@ namespace AnalysisManagerPepProtProphetPlugIn
                     var proteinSuccess = UpdatePhilosopherProteinFile(datasetOrExperimentGroupName, experimentWorkingDirectory, usedProteinProphet);
 
                     if (psmSuccess && ionSuccess && peptideSuccess && proteinSuccess)
+                    {
                         successCount++;
+
+                        if (psmTsvFiles.Length == 1)
+                        {
+                            // There is only one psm.tsv file, and it has already been renamed, so exit the for loop
+                            break;
+                        }
+                    }
                 }
 
-                return successCount == experimentGroupWorkingDirectories.Count;
+                return successCount == experimentGroupWorkingDirectories.Count || psmTsvFiles.Length == 1 && successCount > 0;
             }
             catch (Exception ex)
             {
