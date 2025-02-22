@@ -2646,6 +2646,23 @@ namespace AnalysisManagerBase.AnalysisTool
                         subDirTargetDirectory.Create();
 
                         MoveResultFiles(subdirectory, subDirTargetDirectory, true, acceptStats, rejectStats, ref errorEncountered);
+
+                        subDirTargetDirectory.Refresh();
+
+                        if (subDirTargetDirectory.GetFiles("*", SearchOption.AllDirectories).Length != 0)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            // The subdirectory is empty (since every file in the source directory was skipped)
+                            subDirTargetDirectory.Delete(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogMessage(string.Format("AnalysisToolRunnerBase.MoveResultFiles(); Error removing empty subdirectory: {0}", ex.Message), 0, true);
+                        }
                     }
                 }
             }
