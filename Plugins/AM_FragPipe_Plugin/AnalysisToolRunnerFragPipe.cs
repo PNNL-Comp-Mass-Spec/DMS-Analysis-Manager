@@ -1586,6 +1586,10 @@ namespace AnalysisManagerFragPipePlugIn
         {
             try
             {
+                // Create a tab-delimited text file listing the files in the working directory and all subdirectories
+                // This file will only be retained if there is a problem during post-processing
+                var fileInfoFilePath = CreateWorkingDirectoryFileInfo("Before_Post_Process");
+
                 // If the FragPipe workflow file has "msfragger.write_calibrated_mzml=true" or "msfragger.write_uncalibrated_mgf=true",
                 // FragPipe creates large output files that we don't want to keep (even if post-processing fails)
                 mJobParams.AddResultFileExtensionToSkip("_calibrated.mzML");
@@ -1653,6 +1657,9 @@ namespace AnalysisManagerFragPipePlugIn
                         mJobParams.AddResultFileToSkip(logFile.Name);
                     }
                 }
+
+                // Since the post-processing succeeded, we no longer need the file info file that lists working directory files prior to post-processing
+                mJobParams.AddResultFileToSkip(Path.GetFileName(fileInfoFilePath));
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
