@@ -1987,7 +1987,19 @@ namespace AnalysisManagerBase.FileAndDirectoryTools
             var localZippedFile = Path.Combine(mWorkDir, sourceFile.Name);
 
             if (GUnzipFile(localZippedFile))
+            {
+                // Delete the zipped file since we no longer need it
+                try
+                {
+                    File.Delete(localZippedFile);
+                }
+                catch (Exception ex)
+                {
+                    OnWarningEvent("Error deleting compressed file after unzipping it: {0}", ex.Message);
+                }
+
                 return true;
+            }
 
             errorMessage = mZipTools.Message;
             return false;
