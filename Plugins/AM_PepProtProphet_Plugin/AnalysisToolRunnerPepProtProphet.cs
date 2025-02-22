@@ -4101,14 +4101,14 @@ namespace AnalysisManagerPepProtProphetPlugIn
 
                 if (processingSuccess)
                 {
-                    // ToDo: Verify that the PTM Shepherd results file was created
-                    var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Shepherd_Results.txt"));
+                    // Uncomment to verify that the PTM Shepherd results file was created
+                    // var outputFile = new FileInfo(Path.Combine(mWorkingDirectory.FullName, "PTM_Shepherd_Results.txt"));
 
-                    //if (!outputFile.Exists)
-                    //{
-                    //    LogError("IonQuant results file not found: " + outputFile.Name);
-                    //    return false;
-                    //}
+                    // if (!outputFile.Exists)
+                    // {
+                    //     LogError("IonQuant results file not found: " + outputFile.Name);
+                    //     return false;
+                    // }
 
                     return true;
                 }
