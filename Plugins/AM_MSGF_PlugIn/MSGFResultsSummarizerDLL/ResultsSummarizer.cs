@@ -585,6 +585,8 @@ namespace MSGFResultsSummarizer
 
                 var scanListByDataset = new Dictionary<string, List<int>>();
 
+                // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
+
                 foreach (var item in uniqueSpectraByDataset)
                 {
                     scanListByDataset.Add(item.Key, item.Value.Values.Distinct().ToList());
