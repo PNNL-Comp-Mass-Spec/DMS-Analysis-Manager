@@ -834,8 +834,11 @@ namespace AnalysisManagerExtractionPlugin
             // First copy the _psm.tsv file locally
             if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
             {
-                // The results directory will have a file named Aggregation_psm.tsv if no experiment groups were defined
-                // However, if experiment groups were defined, there will be one _psm.tsv file for each experiment group
+                // The results directory will have a file named Aggregation_psm.tsv if no experiment groups are defined
+                // If experiment groups are defined, there will usually be one _psm.tsv file for each experiment group
+
+                // However, there are cases where there are multiple experiment groups, but there is only an Aggregation_psm.tsv file,
+                // in particular when FragPipe runs DIA-NN with a spectral library
 
                 // Retrieve metadata about the datasets in this data package
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -864,6 +867,9 @@ namespace AnalysisManagerExtractionPlugin
 
                     filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
 
+                    // Retrieve file Aggregation_psm.tsv
+                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
+
                     // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var item in datasetIDsByExperimentGroup)
                     {
@@ -879,6 +885,14 @@ namespace AnalysisManagerExtractionPlugin
 
             var sourceDirPath = string.Empty;
             var retrievedFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // If datasetName is "Aggregation", list filesToGet should have the following files:
+            //   Dataset_PSM_tsv.zip
+            //   Aggregation_psm.tsv
+            //   ExperimentGroup1_psm.tsv
+            //   ExperimentGroup2_psm.tsv
+            //   etc.
+            // If datasetName is not "Aggregation", list filesToGet will have just one _psm.tsv file
 
             foreach (var fileName in filesToGet)
             {
@@ -915,6 +929,26 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // File already retrieved (via zip file Dataset_PSM_tsv.zip)
                     continue;
+                }
+
+                if (fileName.Equals(AGGREGATION_JOB_DATASET + "_psm.tsv"))
+                {
+                    // Look for file Aggregation_psm.tsv
+                    // If found, do not search for any additional files in filesToGet
+
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathAggregationFile, logFileNotFound: false))
+                    {
+                        if (string.IsNullOrWhiteSpace(sourceDirPath))
+                        {
+                            sourceDirPath = sourceDirPathAggregationFile;
+                        }
+
+                        mJobParams.AddResultFileToSkip(fileName);
+                        retrievedFiles.Add(fileName);
+
+                        // Exit the for loop since file Aggregation_psm.tsv was copied locally
+                        break;
+                    }
                 }
 
                 if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))

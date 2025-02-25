@@ -1578,9 +1578,17 @@ namespace AnalysisManagerExtractionPlugin
 
             var datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
 
+            var aggregationPsmTsv = new FileInfo(Path.Combine(mWorkDir, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv"));
+
+            if (aggregationPsmTsv.Exists)
+            {
+                return RunPhrpForMSFragger(mDatasetName, aggregationPsmTsv.Name, true, out _, out _);
+            }
+
             if (datasetIDsByExperimentGroup.Count <= 1)
             {
-                return RunPhrpForMSFragger(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv", true, out _, out _);
+                LogError("Data package experiment group count is one, but file Aggregation_psm.tsv file does not exist; unable to proceed with extraction");
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Multiple experiment groups
@@ -3159,7 +3167,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType SummarizePSMs(PeptideHitResultTypes resultType, string synopsisFileNameFromPHRP, double thresholdForMsgfOrSpecEValueOrPEP)
         {
-            return SummarizePSMs(resultType, synopsisFileNameFromPHRP,  thresholdForMsgfOrSpecEValueOrPEP, true, out _);
+            return SummarizePSMs(resultType, synopsisFileNameFromPHRP, thresholdForMsgfOrSpecEValueOrPEP, true, out _);
         }
 
         /// <summary>
@@ -3262,6 +3270,8 @@ namespace AnalysisManagerExtractionPlugin
                             writer.WriteLine(dataLine);
                             continue;
                         }
+
+                        // ReSharper disable once CanSimplifySetAddingWithSingleCall
 
                         // Store an empty string in the first column if the .mzML file has already been listed once
                         if (datasetFiles.Contains(lineParts[0]))
