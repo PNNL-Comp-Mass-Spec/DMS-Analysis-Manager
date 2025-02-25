@@ -3357,8 +3357,8 @@ namespace AnalysisManagerProg
 
             if (workDirDirectories.Length == 0 && workDirFiles.Length == 1)
             {
-                // If the only file in the working directory is a JobParameters xml file, try to delete it.
-                // It is likely left over from a previous job that never actually started
+                // If the only file in the working directory is a job parameters XML file, try to delete it;
+                // it is likely left over from a previous job that never actually started
                 var firstFile = workDirFiles.First();
 
                 if (firstFile.Name.StartsWith(Global.JOB_PARAMETERS_FILE_PREFIX, StringComparison.OrdinalIgnoreCase) &&
@@ -3366,7 +3366,7 @@ namespace AnalysisManagerProg
                 {
                     try
                     {
-                        LogWarning("Working directory contains a stray JobParameters file, deleting it: " + firstFile.FullName);
+                        LogWarning("Working directory contains a stray job parameters file, deleting it: " + firstFile.FullName);
 
                         firstFile.Delete();
 
