@@ -133,10 +133,10 @@
   <!-- R.NET 1.7.0 uses DynamicInterop 0.8.1 -->
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
-      <Version>2.1.0</Version>
+      <Version>2.1.1</Version>
     </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.6.146</Version>
+      <Version>3.7.115</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
