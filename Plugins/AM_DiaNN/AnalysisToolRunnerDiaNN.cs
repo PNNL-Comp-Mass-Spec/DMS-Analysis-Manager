@@ -295,10 +295,14 @@ namespace AnalysisManagerDiaNNPlugIn
                     }
                 */
 
-                if (dynamicMod.DisableScoring)
-                {
-                    arguments.AppendFormat(" --mod-no-scoring {0}", dynamicMod.ModificationName);
-                }
+                /*
+                 * Removed in DIA-NN 2.0
+                 *
+                    if (dynamicMod.DisableScoring)
+                    {
+                        arguments.AppendFormat(" --mod-no-scoring {0}", dynamicMod.ModificationName);
+                    }
+                */
 
                 if (dynamicMod.NoCutAfterMod)
                 {

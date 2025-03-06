@@ -282,8 +282,9 @@ namespace AnalysisManagerDiaNNPlugIn
         /// When true, disable scoring and localization of the dynamic mods
         /// </summary>
         /// <remarks>
-        /// <para>Introduced in DIA-NN 1.9</para>
+        /// <para>Introduced in DIA-NN 1.9, but removed in DIA-NN 2.0 when the peptidoforms and proteoforms scoring modes were added</para>
         /// </remarks>
+        [Obsolete("Removed in DIA-NN 2.0")]
         public bool DisableScoring { get; set; }
 
         /// <summary>

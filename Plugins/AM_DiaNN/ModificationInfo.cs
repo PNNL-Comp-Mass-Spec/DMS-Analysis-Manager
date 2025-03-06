@@ -66,8 +66,9 @@ namespace AnalysisManagerDiaNNPlugIn
         /// When true, disable scoring and localization for this modification
         /// </summary>
         /// <remarks>
-        /// <para>Introduced in DIA-NN 1.9</para>
+        /// <para>Introduced in DIA-NN 1.9, but removed in DIA-NN 2.0</para>
         /// </remarks>
+        [Obsolete("Removed in DIA-NN 2.0")]
         public bool DisableScoring { get; set; }
 
         // ReSharper disable once UnusedMember.Global
