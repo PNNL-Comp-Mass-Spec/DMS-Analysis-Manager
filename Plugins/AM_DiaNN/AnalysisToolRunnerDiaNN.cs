@@ -29,7 +29,7 @@ namespace AnalysisManagerDiaNNPlugIn
         // ReSharper disable CommentTypo
 
         // Ignore Spelling: acc, analyse, carbamidomethylation, Cysteine, dia, evalue, fasta, Initialising, isoforms, len
-        // Ignore Spelling: optimise, optimising, qvalue, pre, prot, proteotypic, reanalyse, Regex, silico, Xeon
+        // Ignore Spelling: optimise, optimising, qvalue, pre, prot, proteotypic, proteotypicity, reanalyse, Regex, silico, Xeon
 
         // ReSharper restore CommentTypo
 
@@ -288,7 +288,6 @@ namespace AnalysisManagerDiaNNPlugIn
                 /*
                  * Removed in DIA-NN 1.9
                  *
-
                     if (dynamicMod.MonitorMod)
                     {
                         arguments.AppendFormat(" --monitor-mod {0}", dynamicMod.ModificationName);
@@ -1519,6 +1518,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         break;
                 }
 
+                // Proteotypicity (aka protein inference mode)
                 switch (options.ProteinInferenceMode)
                 {
                     case ProteinInferenceModes.IsoformIDs:
@@ -1545,6 +1545,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (options.SpeciesGenes)
                     arguments.AppendFormat(" --species-genes");
+
+                // The following Machine learning modes are shown in the GUI, but do not have corresponding command line switches
+                // * Linear classifiers
+                // * NNs (fast)
+                // * NNs (cross-validated); this is the default mode in DIA-NN 2.0
 
                 switch (options.QuantificationStrategy)
                 {

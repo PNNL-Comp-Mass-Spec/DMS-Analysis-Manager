@@ -315,7 +315,7 @@ namespace AnalysisManagerDiaNNPlugIn
         public bool DisableScoring { get; set; }
 
         /// <summary>
-        /// When true, disable peptidoform scoring
+        /// When true, disable peptidoform scoring (documentation indicates that this option should not be used)
         /// </summary>
         /// <remarks>Only valid for dynamic modifications</remarks>
         public bool NoPeptidoforms { get; set; }
@@ -357,7 +357,7 @@ namespace AnalysisManagerDiaNNPlugIn
         public bool CreateExtractedChromatograms { get; set; } = true;
 
         /// <summary>
-        /// Protein Inference Mode
+        /// Proteotypicity (named "Protein Inference Mode" prior to DIA-NN 2.0)
         /// </summary>
         /// <remarks>
         /// To disable protein inference (protein grouping), use --no-prot-inf
@@ -775,6 +775,8 @@ namespace AnalysisManagerDiaNNPlugIn
                 }
 
                 ScoringMode = (ScoringModes)scoringMode;
+
+                // Proteotypicity (aka protein inference mode)
                 var proteinInferenceMode = GetParameterValueOrDefault(paramFileSettings, "ProteinInferenceMode", (int)ProteinInferenceMode);
 
                 if (!Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
