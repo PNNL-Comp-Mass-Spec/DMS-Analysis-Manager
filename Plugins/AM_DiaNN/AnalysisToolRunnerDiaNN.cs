@@ -1463,7 +1463,13 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --lib {0}", spectralLibraryFile.FullName);
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
-                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
+
+                // DIA-NN 1.9 and older saved the results as a .tsv file
+                // arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
+
+                // DIA-NN 2.0 creates a .parquet file
+                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.parquet").FullName);
+
                 arguments.AppendFormat(" --qvalue {0}", options.PrecursorQValue);
 
                 if (options.CreateQuantitiesMatrices)
@@ -1473,7 +1479,13 @@ namespace AnalysisManagerDiaNNPlugIn
                     arguments.Append(" --xic");
 
                 arguments.AppendFormat(" --temp {0}", mWorkDir);
-                arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
+
+                // DIA-NN 1.8 and older saved the spectral library as a .tsv file
+                // arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
+
+                // DIA-NN 1.9 and newer saves the spectral library as a .parquet file
+                arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.parquet").FullName);
+
                 arguments.Append(" --gen-spec-lib");
                 arguments.AppendFormat(" --fasta {0}", fastaFile.FullName);
 
