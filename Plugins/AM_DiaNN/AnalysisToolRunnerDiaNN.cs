@@ -1500,6 +1500,25 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (options.NoPeptidoforms)
                     arguments.AppendFormat(" --no-peptidoforms");
 
+                switch (options.ScoringMode)
+                {
+                    case ScoringModes.Generic:
+                        // Do not append a parameter
+                        break;
+
+                    case ScoringModes.Peptidoforms:
+                        arguments.AppendFormat(" --peptidoforms ");
+                        break;
+
+                    case ScoringModes.Proteoforms:
+                        arguments.AppendFormat(" --proteoforms ");
+                        break;
+
+                    // ReSharper disable once RedundantEmptySwitchSection
+                    default:
+                        break;
+                }
+
                 switch (options.ProteinInferenceMode)
                 {
                     case ProteinInferenceModes.IsoformIDs:

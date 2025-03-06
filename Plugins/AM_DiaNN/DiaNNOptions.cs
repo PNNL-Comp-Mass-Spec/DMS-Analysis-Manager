@@ -101,6 +101,33 @@ namespace AnalysisManagerDiaNNPlugIn
     }
 
     /// <summary>
+    /// Scoring modes
+    /// </summary>
+    public enum ScoringModes
+    {
+        /// <summary>
+        /// Generic (default)
+        /// </summary>
+        Generic = 0,
+
+        /// <summary>
+        /// Peptidoforms
+        /// </summary>
+        /// <remarks>
+        /// This mode aims to achieve amino acid sequence correctness at the peptide level
+        /// </remarks>
+        Peptidoforms = 1,
+
+        /// <summary>
+        /// Proteoforms
+        /// </summary>
+        /// <remarks>
+        /// This mode aims to achieve amino acid sequence correctness at the protein level
+        /// </remarks>
+        Proteoforms = 2
+    }
+
+    /// <summary>
     /// Class for tracking DIA-NN options
     /// </summary>
     public class DiaNNOptions : EventNotifier
@@ -292,6 +319,11 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         /// <remarks>Only valid for dynamic modifications</remarks>
         public bool NoPeptidoforms { get; set; }
+
+        /// <summary>
+        /// Amino acid sequence scoring mode
+        /// </summary>
+        public ScoringModes ScoringMode { get; set; } = ScoringModes.Generic;
 
         /// <summary>
         /// Generate a spectral library using DIA search results
@@ -734,6 +766,15 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 CreateExtractedChromatograms = GetParameterValueOrDefault(paramFileSettings, "CreateExtractedChromatograms", CreateExtractedChromatograms);
 
+                var scoringMode = GetParameterValueOrDefault(paramFileSettings, "ScoringMode", (int)ScoringMode);
+
+                if (!Enum.IsDefined(typeof(ScoringModes), scoringMode))
+                {
+                    OnErrorEvent("Parameter file {0} has an invalid value for ScoringMode: {1}", paramFile.Name, scoringMode);
+                    return false;
+                }
+
+                ScoringMode = (ScoringModes)scoringMode;
                 var proteinInferenceMode = GetParameterValueOrDefault(paramFileSettings, "ProteinInferenceMode", (int)ProteinInferenceMode);
 
                 if (!Enum.IsDefined(typeof(ProteinInferenceModes), proteinInferenceMode))
