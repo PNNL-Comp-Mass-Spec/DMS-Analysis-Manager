@@ -77,7 +77,15 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private string mConsoleOutputErrorMsg;
 
-        private string mDiaNNVersion;
+        /// <summary>
+        /// DIA-NN Version
+        /// </summary>
+        private Version mDiaNNVersion;
+
+        /// <summary>
+        /// Human-readable DIA-NN version
+        /// </summary>
+        private string mDiaNNVersionText;
 
         private string mDiaNNProgLoc;
 
@@ -124,7 +132,6 @@ namespace AnalysisManagerDiaNNPlugIn
                 mConsoleOutputErrorMsg = string.Empty;
 
                 // Determine the path to DIA-NN, typically "C:\DMS_Programs\DIA-NN\DiaNN.exe"
-                mDiaNNProgLoc = DetermineProgramLocation("DiaNNProgLoc", DIA_NN_EXE_NAME);
 
                 // Auto-switch from "DiaNN_SpecLib" to "DiaNN"
                 var stepToolName =
@@ -143,9 +150,30 @@ namespace AnalysisManagerDiaNNPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (string.IsNullOrWhiteSpace(stepToolVersion))
+                {
+                    // Assume that we're running DIA-NN 2.x
+                    mDiaNNVersion = new Version(2, 0);
+                }
+                else
+                {
+                    // The settings file has a specific version of DIA-NN defined (via parameter DiaNN_Version)
+                    var versionMatcher = new Regex("v(?<Version>[0-9.]+)", RegexOptions.IgnoreCase);
+                    var versionMatch = versionMatcher.Match(stepToolVersion);
+
+                    if (!versionMatch.Success)
+                    {
+                        LogError(string.Format("Unable to extract the DIA-NN version from \"{0}\" using the Regex", stepToolVersion));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    // Cache the DIA-NN version defined in the settings file
+                    mDiaNNVersion = new Version(versionMatch.Groups["Version"].ToString());
+                }
+
                 // Store the DIA-NN version info in the database after the first line is written to file DiaNN_ConsoleOutput.txt
                 mToolVersionWritten = false;
-                mDiaNNVersion = string.Empty;
+                mDiaNNVersionText = string.Empty;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
@@ -682,7 +710,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     {
                         // The first line has the DIA-NN version number
 
-                        if (string.IsNullOrEmpty(mDiaNNVersion) &&
+                        if (string.IsNullOrEmpty(mDiaNNVersionText) &&
                             dataLine.StartsWith("DIA-NN", StringComparison.OrdinalIgnoreCase))
                         {
                             StoreDiaNNVersion(dataLine);
@@ -1046,7 +1074,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     {
                         // The first line has the DIA-NN version number
 
-                        if (string.IsNullOrEmpty(mDiaNNVersion) &&
+                        if (string.IsNullOrEmpty(mDiaNNVersionText) &&
                             dataLine.StartsWith("DIA-NN", StringComparison.OrdinalIgnoreCase))
                         {
                             StoreDiaNNVersion(dataLine);
@@ -1261,7 +1289,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (!mToolVersionWritten)
                 {
-                    if (string.IsNullOrWhiteSpace(mDiaNNVersion))
+                    if (string.IsNullOrWhiteSpace(mDiaNNVersionText))
                     {
                         ParseDiaNNConsoleOutputFile();
                     }
@@ -1407,6 +1435,11 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --min-pr-charge {0}", options.PrecursorChargeMin);
                 arguments.AppendFormat(" --max-pr-charge {0}", options.PrecursorChargeMax);
 
+                if (options.DynamicModDefinitions.Count > 0)
+                {
+                    arguments.Append(" --peptidoforms");
+                }
+
                 AppendModificationArguments(options, arguments);
 
                 AppendAdditionalArguments(options, arguments);
@@ -1476,11 +1509,17 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --threads {0}", numThreadsToUse);
                 arguments.AppendFormat(" --verbose {0}", 2);
 
-                // DIA-NN 1.9 and older saved the results as a .tsv file
-                // arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
-
-                // DIA-NN 2.0 creates a .parquet file
-                arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.parquet").FullName);
+                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                if (mDiaNNVersion < new Version(2, 0))
+                {
+                    // DIA-NN 1.9 and older saved the results as a .tsv file
+                    arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.tsv").FullName);
+                }
+                else
+                {
+                    // DIA-NN 2.0 creates a .parquet file
+                    arguments.AppendFormat(" --out {0}", GetDiannResultsFilePath("report.parquet").FullName);
+                }
 
                 arguments.AppendFormat(" --qvalue {0}", options.PrecursorQValue);
 
@@ -1492,11 +1531,17 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 arguments.AppendFormat(" --temp {0}", mWorkDir);
 
-                // DIA-NN 1.8 and older saved the spectral library as a .tsv file
-                // arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
-
-                // DIA-NN 1.9 and newer saves the spectral library as a .parquet file
-                arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.parquet").FullName);
+                // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
+                if (mDiaNNVersion < new Version(1, 9))
+                {
+                    // DIA-NN 1.8 and older saved the spectral library as a .tsv file
+                    arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.tsv").FullName);
+                }
+                else
+                {
+                    // DIA-NN 1.9 and newer saves the spectral library as a .parquet file
+                    arguments.AppendFormat(" --out-lib {0}", GetDiannResultsFilePath("report-lib.parquet").FullName);
+                }
 
                 arguments.Append(" --gen-spec-lib");
                 arguments.AppendFormat(" --fasta {0}", fastaFile.FullName);
@@ -1636,9 +1681,9 @@ namespace AnalysisManagerDiaNNPlugIn
         {
             var charIndex = dataLine.IndexOf('(');
 
-            mDiaNNVersion = charIndex > 0 ? dataLine.Substring(0, charIndex).Trim() : dataLine;
+            mDiaNNVersionText = charIndex > 0 ? dataLine.Substring(0, charIndex).Trim() : dataLine;
 
-            LogDebug(mDiaNNVersion, mDebugLevel);
+            LogDebug(mDiaNNVersionText, mDebugLevel);
         }
 
         /// <summary>
@@ -1655,7 +1700,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(mDiaNNVersion, toolFiles);
+                return SetStepTaskToolVersion(mDiaNNVersionText, toolFiles);
             }
             catch (Exception ex)
             {
@@ -1697,19 +1742,21 @@ namespace AnalysisManagerDiaNNPlugIn
 
         private bool ValidateSearchResultFiles(out bool emptyResultsFile)
         {
-            var reportFile = GetDiannResultsFilePath("report.tsv");
+            var reportFileName = mDiaNNVersion < new Version(2, 0) ? "report.tsv" : "report.parquet";
+
+            var reportFile = GetDiannResultsFilePath(reportFileName);
             var reportStatsFile = GetDiannResultsFilePath("report.stats.tsv");
             var reportPdfFile = GetDiannResultsFilePath("report.pdf");
 
             if (!reportFile.Exists)
             {
-                // report.tsv file not created by DIA-NN
+                // report.parquet file not created by DIA-NN
                 LogError(string.Format("{0} file not created by DIA-NN", reportFile.Name));
                 emptyResultsFile = false;
                 return false;
             }
 
-            if (!AnalysisResources.ValidateFileHasData(reportFile.FullName, "DIA-NN report.tsv", out var errorMessage, -1, true))
+            if (!AnalysisResources.ValidateFileHasData(reportFile.FullName, string.Format("DIA-NN {0}", reportFileName), out var errorMessage, -1, true))
             {
                 LogWarning(errorMessage);
                 emptyResultsFile = true;
@@ -1717,14 +1764,23 @@ namespace AnalysisManagerDiaNNPlugIn
             }
 
             emptyResultsFile = false;
+            bool validResults;
 
-            // Use the DIA-NN plotter to create the PDF report
-            var validResults = GeneratePdfReport(reportFile, reportStatsFile, reportPdfFile);
-
-            if (!reportPdfFile.Exists)
+            if (mDiaNNVersion >= new Version(2, 0))
             {
-                // report.pdf file not created by DIA-NN-plotter
-                LogWarning("{0} file not created by DIA-NN-plotter", reportPdfFile.Name);
+                // The DIA-NN plotter that generated a PDF file was removed from DIA-NN 2.x
+                validResults = true;
+            }
+            else
+            {
+                // Use the DIA-NN plotter to create the PDF report
+                validResults = GeneratePdfReport(reportFile, reportStatsFile, reportPdfFile);
+
+                if (!reportPdfFile.Exists)
+                {
+                    // report.pdf file not created by DIA-NN-plotter
+                    LogWarning("{0} file not created by DIA-NN-plotter", reportPdfFile.Name);
+                }
             }
 
             if (!reportStatsFile.Exists)
@@ -1805,7 +1861,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             ParseDiaNNConsoleOutputFile();
 
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mDiaNNVersion))
+            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mDiaNNVersionText))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
             }

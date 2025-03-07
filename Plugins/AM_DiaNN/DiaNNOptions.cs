@@ -752,7 +752,11 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 PrecursorQValue = GetParameterValueOrDefault(paramFileSettings, "PrecursorQValue", PrecursorQValue);
 
-                DisableScoring = GetParameterValueOrDefault(paramFileSettings, "DisableScoring", DisableScoring);
+                /*
+                 * Removed in DIA-NN 2.0
+                 *
+                    DisableScoring = GetParameterValueOrDefault(paramFileSettings, "DisableScoring", DisableScoring);
+                */
 
                 NoPeptidoforms = GetParameterValueOrDefault(paramFileSettings, "NoPeptidoforms", NoPeptidoforms);
 
@@ -903,10 +907,14 @@ namespace AnalysisManagerDiaNNPlugIn
 
             modInfo = new ModificationInfo(modificationType, modDefinitionClean.ToString(), modificationName, modificationMass, affectedResidues, isFixedLabelMod);
 
-            if (DisableScoring)
-            {
-                modInfo.DisableScoring = true;
-            }
+            /*
+             * Removed in DIA-NN 2.0
+             *
+                if (DisableScoring)
+                {
+                   modInfo.DisableScoring = true;
+                }
+            */
 
             return true;
         }

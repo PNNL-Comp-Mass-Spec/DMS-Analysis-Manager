@@ -844,6 +844,7 @@ namespace AnalysisManagerProg
                         ShowTrace("Need to abort processing");
                         break;
                     }
+
                     loopCount++;
 
                     // If the only problem was deleting non result files, we want to stop the manager

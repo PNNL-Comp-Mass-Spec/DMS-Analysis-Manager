@@ -122,7 +122,6 @@ namespace AnalysisManagerDiaNNPlugIn
                 // The ToolName job parameter holds the name of the pipeline script we are executing
                 var scriptName = mJobParams.GetParam("ToolName");
 
-
                 // If the script is DiaNN or DiaNN_DataPkg, the input file is a .mzML file
                 // If the script is DiaNN_timsTOF or DiaNN_timsTOF_DataPkg, the input file is the .tdf file in the .d directory
 
