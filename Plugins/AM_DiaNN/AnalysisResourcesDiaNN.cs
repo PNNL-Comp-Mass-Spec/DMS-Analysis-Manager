@@ -344,12 +344,20 @@ namespace AnalysisManagerDiaNNPlugIn
                 : modificationList.ToString();
         }
 
+        /// <summary>
+        /// Run diann.exe without any arguments then parse the console output to determine the program version
+        /// </summary>
+        /// <param name="diannVersion">Output: DIA-NN version</param>
+        /// <returns>True if successful, false if an error</returns>
         private bool GetDiannVersion(out Version diannVersion)
         {
             try
             {
+                // Auto-switch from "DiaNN_SpecLib" to "DiaNN"
+                var stepToolName = StepToolName == DIA_NN_SPEC_LIB_STEP_TOOL ? DIA_NN_STEP_TOOL : StepToolName;
+
                 var diaNNProgLoc = AnalysisToolRunnerBase.DetermineProgramLocation(
-                    mMgrParams, mJobParams, StepToolName,
+                    mMgrParams, mJobParams, stepToolName,
                     "DiaNNProgLoc", AnalysisToolRunnerDiaNN.DIA_NN_EXE_NAME,
                     out var errorMessage, out _);
 
@@ -674,7 +682,7 @@ namespace AnalysisManagerDiaNNPlugIn
                         break;
 
                     case 3:
-                        // Complete
+                        // Complete: library already created (for the current version of DIA-NN)
                         libraryStatusCode = SpectralLibraryStatusCodes.LibraryAlreadyCreated;
                         break;
 

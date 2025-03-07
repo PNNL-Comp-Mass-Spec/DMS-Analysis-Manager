@@ -126,8 +126,20 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Determine the path to DIA-NN, typically "C:\DMS_Programs\DIA-NN\DiaNN.exe"
                 mDiaNNProgLoc = DetermineProgramLocation("DiaNNProgLoc", DIA_NN_EXE_NAME);
 
+                // Auto-switch from "DiaNN_SpecLib" to "DiaNN"
+                var stepToolName =
+                    StepToolName == AnalysisResourcesDiaNN.DIA_NN_SPEC_LIB_STEP_TOOL
+                        ? AnalysisResourcesDiaNN.DIA_NN_STEP_TOOL
+                        : StepToolName;
+
+                mDiaNNProgLoc = DetermineProgramLocation(
+                    mMgrParams, mJobParams, stepToolName,
+                    "DiaNNProgLoc", DIA_NN_EXE_NAME,
+                    out var errorMessage, out var stepToolVersion);
+
                 if (string.IsNullOrWhiteSpace(mDiaNNProgLoc))
                 {
+                    LogError("Error finding the DIA-NN executable ({0}): {1}", DIA_NN_EXE_NAME, errorMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
