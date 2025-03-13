@@ -3905,7 +3905,7 @@
             <summary>
             Looks for an existing modification with the given modification mass and target residues
             </summary>
-            <remarks>If chTargetResidue is default(char) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
+            <remarks>If chTargetResidue is '\0' (which is default(char)) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
             <param name="modificationMass">Modification mass</param>
             <param name="chTargetResidue">
             If defined, returns the first modification with the given mass and containing the residue in .TargetResidues;
@@ -3931,7 +3931,7 @@
             <summary>
             Looks for an existing modification with the given modification mass, modification type, and target residues
             </summary>
-            <remarks>If chTargetResidue is default(char) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
+            <remarks>If chTargetResidue is '\0' (which is default(char)) or AminoAcidModInfo.ResidueTerminusState.None, follows similar matching logic, but skips defined modifications with defined .TargetResidues</remarks>
             <param name="modificationMass">Modification mass</param>
             <param name="modType">Modification type</param>
             <param name="chTargetResidue">
@@ -6721,10 +6721,11 @@
             </summary>
             <returns>List of header names</returns>
         </member>
-        <member name="M:PHRPReader.Reader.DiaNNSynFileReader.GetColumnHeaderNamesAndIDs">
+        <member name="M:PHRPReader.Reader.DiaNNSynFileReader.GetColumnHeaderNamesAndIDs(System.Boolean)">
             <summary>
             Header names and enums for the PHRP synopsis file for this tool
             </summary>
+            <param name="excludeColumnsNotInParquetFile">When true, do not include column names that are not in .parquet files (used by DIA-NN 2.x)</param>
             <returns>Dictionary of header names and enum values</returns>
         </member>
         <member name="M:PHRPReader.Reader.DiaNNSynFileReader.GetColumnMapFromHeaderLine(System.Collections.Generic.List{System.String})">
