@@ -868,7 +868,7 @@ namespace AnalysisManagerExtractionPlugin
             if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
             {
                 // The results directory will have a file named Aggregation_psm.tsv if no experiment groups are defined
-                // If experiment groups are defined, there will usually be one _psm.tsv file for each experiment group
+                // If experiment groups are defined, there will usually be one _psm.tsv file for each experiment group, possibly stored in a zip file (Dataset_PSM_tsv.zip)
 
                 // However, there are cases where there are multiple experiment groups, but there is only an Aggregation_psm.tsv file,
                 // in particular when FragPipe runs DIA-NN with a spectral library
@@ -955,7 +955,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                     }
 
-                    continue;
+                    break;
                 }
 
                 if (retrievedFiles.Contains(fileName))

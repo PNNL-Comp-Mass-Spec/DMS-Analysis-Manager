@@ -203,6 +203,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Example values for currentAction:
                         //  "running peptide hits result processor for MSFragger"
                         //  "running peptide hits result processor for FragPipe"
+                        //  "running peptide hits result processor for FragPipe_DataPkg"
                         currentAction = string.Format("running peptide hits result processor for {0}", scriptName);
                         result = RunPhrpForMSFragger();
                         break;
