@@ -594,15 +594,39 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetDiaNNFiles()
         {
+            var reportParquetFile = AnalysisToolRunnerBase.GetDiannResultsFilePath(mWorkDir, DatasetName, "report.parquet");
             var reportTsvFile = AnalysisToolRunnerBase.GetDiannResultsFilePath(mWorkDir, DatasetName, "report.tsv");
+            var scanInfoFile = AnalysisToolRunnerBase.GetDiannResultsFilePath(mWorkDir, DatasetName, "ScanInfo.txt");
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(reportTsvFile.Name, false))
+            bool usingParquetFile;
+
+            if (FileSearchTool.FindAndRetrieveMiscFiles(reportParquetFile.Name, false, true, logFileNotFound: false))
             {
-                // Errors were reported in method call, so just return
+                mJobParams.AddResultFileToSkip(reportParquetFile.Name);
+                usingParquetFile = true;
+            }
+            else if (FileSearchTool.FindAndRetrieveMiscFiles(reportTsvFile.Name, false, true, logFileNotFound: false))
+            {
+                // Do not add the report.tsv file to the list of files to skip, since method UpdateDiannReportFile() updates it to remove duplicate .mzML file names
+                usingParquetFile = false;
+            }
+            else
+            {
+                LogError("Could not find the DIA-NN report file ({0} or {1})", reportParquetFile.Name, reportTsvFile.Name);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            // Do not add the report.tsv file to the list of files to skip, since method UpdateDiannReportFile() updates it to remove duplicate .mzML file names
+            // Look for a _ScanInfo.txt file (created when running DIA-NN 2.0 or newer)
+            if (usingParquetFile)
+            {
+                if (!FileSearchTool.FindAndRetrieveMiscFiles(scanInfoFile.Name, false))
+                {
+                    LogError("Scan info file not found: " + scanInfoFile.Name);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                mJobParams.AddResultFileToSkip(scanInfoFile.Name);
+            }
 
             // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
             return CloseOutType.CLOSEOUT_SUCCESS;

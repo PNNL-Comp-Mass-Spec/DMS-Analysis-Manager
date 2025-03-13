@@ -1360,13 +1360,30 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForDiaNN()
         {
-            // Edit the report file to remove duplicate .mzML names and shorten dataset names
-            var inputFile = GetDiannResultsFilePath("report.tsv");
+            var reportParquetFile = GetDiannResultsFilePath("report.parquet");
+            var reportTsvFile = GetDiannResultsFilePath("report.tsv");
 
-            var reportUpdated = UpdateDiannReportFile(inputFile);
+            FileInfo inputFile;
 
-            if (!reportUpdated)
+            if (reportParquetFile.Exists)
             {
+                inputFile = reportParquetFile;
+            }
+            else if (reportTsvFile.Exists)
+            {
+                inputFile = reportTsvFile;
+
+                // Edit the report file to remove duplicate .mzML names and shorten dataset names
+                var reportUpdated = UpdateDiannReportFile(inputFile);
+
+                if (!reportUpdated)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            else
+            {
+                LogError("Could not find the DIA-NN report file ({0} or {1})", reportParquetFile.Name, reportTsvFile.Name);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
