@@ -1979,7 +1979,6 @@ namespace AnalysisManagerBase.JobConfig
                         mzMlUsedColIndex = columnMap["SearchUsedMzML"];
 
                         headersParsed = true;
-
                         continue;
                     }
 

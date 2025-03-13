@@ -644,6 +644,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSPECT_FILES;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // This file contains top hit for each scan (no filters)
@@ -654,6 +655,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSPECT_FILES;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Get the peptide to protein mapping file
@@ -679,6 +681,7 @@ namespace AnalysisManagerExtractionPlugin
                 // The OrgDB (aka FASTA file) is not required
                 mRetrieveOrganismDB = false;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the Inspect parameter file in RetrieveMiscFiles
@@ -709,6 +712,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(msmsFile);
 
             const string peptidesFile = "peptides.txt";
@@ -718,6 +722,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(peptidesFile);
 
             // Retrieve the precursor info file (or files if we used a data package to define multiple datasets)
@@ -780,6 +785,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
             mJobParams.AddResultFileExtensionToSkip("_moda.txt");
 
@@ -789,6 +795,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the MODa parameter file in RetrieveMiscFiles
@@ -807,6 +814,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
             mJobParams.AddResultFileExtensionToSkip("_modp.txt");
 
@@ -840,6 +848,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Note that we'll obtain the MSAlign parameter file in RetrieveMiscFiles
@@ -1215,6 +1224,7 @@ namespace AnalysisManagerExtractionPlugin
                             // Errors were reported in method call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
+
                         mJobParams.AddResultFileToSkip(mzidFile);
 
                         var mzidFileInfo = new FileInfo(Path.Combine(mWorkDir, mzidFile));
@@ -1488,6 +1498,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_XT_FILES;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             // Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
@@ -1503,6 +1514,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Errors were reported in method call, so just return
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
+
             mJobParams.AddResultFileToSkip(fileToGet);
 
             if (!CopyFileToWorkDir("default_input.xml", mJobParams.GetParam("ParamFileStoragePath"), mWorkDir))
