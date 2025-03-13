@@ -1799,19 +1799,11 @@ namespace AnalysisManagerBase.AnalysisTool
             var rawDataTypeName = mJobParams.GetParam("RawDataType");
             var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
 
-            var msFileInfoScannerDir = mMgrParams.GetParam("MSFileInfoScannerDir");
+            var dllFound = GetMsFileInfoScannerDllPath(mMgrParams, out var msFileInfoScannerDLLPath, out var errorMessage);
 
-            if (string.IsNullOrEmpty(msFileInfoScannerDir))
+            if (!dllFound || !string.IsNullOrWhiteSpace(errorMessage))
             {
-                LogError("Manager parameter 'MSFileInfoScannerDir' is not defined (GenerateScanStatsFiles)");
-                return false;
-            }
-
-            var msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
-
-            if (!File.Exists(msFileInfoScannerDLLPath))
-            {
-                LogError("File Not Found (GenerateScanStatsFiles): " + msFileInfoScannerDLLPath);
+                LogError(errorMessage);
                 return false;
             }
 
@@ -2420,6 +2412,36 @@ namespace AnalysisManagerBase.AnalysisTool
 
             // Report seconds
             return timeInterval.TotalSeconds.ToString("0.0") + " seconds";
+        }
+
+        /// <summary>
+        /// Determine the path to MSFileInfoScanner.dll
+        /// </summary>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="msFileInfoScannerDLLPath">Output: path to MSFileInfoScanner</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if found, false if an error</returns>
+        public static bool GetMsFileInfoScannerDllPath(IMgrParams mgrParams, out string msFileInfoScannerDLLPath, out string errorMessage)
+        {
+            var msFileInfoScannerDir = mgrParams.GetParam("MSFileInfoScannerDir");
+
+            if (string.IsNullOrEmpty(msFileInfoScannerDir))
+            {
+                errorMessage = "Manager parameter 'MSFileInfoScannerDir' is not defined (GetMsFileInfoScannerDllPath)";
+                msFileInfoScannerDLLPath = string.Empty;
+                return false;
+            }
+
+            msFileInfoScannerDLLPath = Path.Combine(msFileInfoScannerDir, "MSFileInfoScanner.dll");
+
+            if (File.Exists(msFileInfoScannerDLLPath))
+            {
+                errorMessage = string.Empty;
+                return true;
+            }
+
+            errorMessage = "File Not Found (GetMsFileInfoScannerDllPath): " + msFileInfoScannerDLLPath;
+            return false;
         }
 
         /// <summary>

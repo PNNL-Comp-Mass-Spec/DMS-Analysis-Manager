@@ -18,6 +18,7 @@ using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
 using PRISMDatabaseUtils;
+using PSI_Interface.MSData;
 
 namespace AnalysisManagerDiaNNPlugIn
 {
@@ -40,6 +41,30 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         public const string DIA_NN_EXE_NAME = "diann.exe";
 #pragma warning restore VSSpell001
+
+        /// <summary>
+        /// Scan info file column header for scan number
+        /// </summary>
+        /// <remarks>
+        /// This column name comes from MASIC _ScanStats.txt files
+        /// </remarks>
+        public const string SCAN_INFO_FILE_SCAN_COLUMN = "ScanNumber";
+
+        /// <summary>
+        /// Scan info file column header for scan time (aka elution time)
+        /// </summary>
+        /// <remarks>
+        /// This column name comes from MASIC _ScanStats.txt files
+        /// </remarks>
+        public const string SCAN_INFO_FILE_SCAN_TIME_COLUMN = "ScanTime";
+
+        /// <summary>
+        /// Scan info file column header for scan type (aka MS Level)
+        /// </summary>
+        /// <remarks>
+        /// This column name comes from MASIC _ScanStats.txt files
+        /// </remarks>
+        public const string SCAN_INFO_FILE_SCAN_TYPE_COLUMN = "ScanType";
 
         private bool mBuildingSpectralLibrary;
 
@@ -406,6 +431,300 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
+        /// <summary>
+        /// Create the _ScanInfo.txt file for the given .mzML file or .d directory
+        /// </summary>
+        /// <param name="localDatasetFileOrDirectoryPath">Local dataset file or directory path</param>
+        /// <param name="datasetId">Dataset ID</param>
+        /// <param name="datasetStoragePath">Path to the dataset directory on the storage server</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool CreateScanInfoFile(string localDatasetFileOrDirectoryPath, int datasetId, string datasetStoragePath)
+        {
+            try
+            {
+                if (localDatasetFileOrDirectoryPath.EndsWith(AnalysisResources.DOT_D_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                {
+                    return CreateScanInfoFileDotD(new DirectoryInfo(localDatasetFileOrDirectoryPath), datasetId, datasetStoragePath);
+                }
+
+                if (localDatasetFileOrDirectoryPath.EndsWith(AnalysisResources.DOT_MZML_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                {
+                    return CreateScanInfoFileMzML(new FileInfo(localDatasetFileOrDirectoryPath));
+                }
+
+                LogError("Unable to create the _ScanInfo.txt file since the dataset is not a .mzML file or a .d directory: " + localDatasetFileOrDirectoryPath);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateScanInfoFile", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Create the _ScanInfo.txt file for the given .d directory
+        /// </summary>
+        /// <param name="localDatasetDirectory">.d directory in the working directory</param>
+        /// <param name="datasetId">Dataset ID</param>
+        /// <param name="datasetStoragePath">Path to the dataset directory on the storage server</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool CreateScanInfoFileDotD(DirectoryInfo localDatasetDirectory, int datasetId, string datasetStoragePath)
+        {
+            try
+            {
+                if (localDatasetDirectory.Parent == null)
+                {
+                    LogError(string.Format("Error in CreateScanInfoFileDotD: cannot determine the parent directory of directory {0}", localDatasetDirectory.FullName));
+                    return false;
+                }
+
+                var outputFilePath = Path.Combine(
+                    localDatasetDirectory.Parent.FullName,
+                    string.Format("{0}_ScanInfo.txt", Path.GetFileNameWithoutExtension(localDatasetDirectory.Name)));
+
+                FileInfo scanStatsFile;
+
+                var remoteDatasetDirectory = new DirectoryInfo(datasetStoragePath);
+
+                if (!remoteDatasetDirectory.Exists)
+                {
+                    LogWarning("Unable to create the _ScanInfo.txt file for the dataset since the dataset directory does not exist ({0}); will generate a _ScanStats.txt file", datasetStoragePath);
+
+                    if (!CreateScanStatsFileForDotD(datasetId, localDatasetDirectory, out scanStatsFile))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    // Find the _ScanStats.txt file in a subdirectory below the dataset directory (preferably using the one in the QC directory
+
+                    var scanStatsFiles = remoteDatasetDirectory.GetFiles("*_ScanStats.txt", SearchOption.AllDirectories);
+
+                    if (scanStatsFiles.Length == 0)
+                    {
+                        LogWarning("Unable to create the _ScanInfo.txt file for the dataset since the dataset directory " +
+                                   "since the dataset directory does not have a subdirectory with a ScanStats.txt file ({0}); " +
+                                   "will generate a _ScanStats.txt file", datasetStoragePath);
+
+                        if (!CreateScanStatsFileForDotD(datasetId, localDatasetDirectory, out scanStatsFile))
+                        {
+                            return false;
+                        }
+                    }
+
+                    var qcScanStatsFile =
+                        scanStatsFiles.FirstOrDefault(item => item.Directory?.Name.Equals("QC", StringComparison.OrdinalIgnoreCase) == true);
+
+                    scanStatsFile = qcScanStatsFile ?? scanStatsFiles[0];
+
+                    if (scanStatsFile.LastWriteTime < DateTime.Parse("2025-03-11"))
+                    {
+                        // The scan time values only have 4 digits of precision; re-make the ScanStats file using the latest version of the MSFileInfoScanner
+
+                        if (!CreateScanStatsFileForDotD(datasetId, localDatasetDirectory, out scanStatsFile))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                LogMessage("Creating the scan info file using scan stats file {0}: {1}", scanStatsFile.Name, Path.GetFileName(outputFilePath));
+
+                using var reader = new StreamReader(new FileStream(scanStatsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(GetScanInfoFileHeaderLine());
+
+                var headersParsed = false;
+
+                var scanNumberColIndex = 0;
+                var scanTimeColIndex = 0;
+                var scanTypeColIndex = 0;
+
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var dataList = dataLine.Split('\t');
+
+                    if (!headersParsed)
+                    {
+                        var requiredColumns = new List<string> { "ScanNumber", "ScanTime", "ScanType" };
+
+                        var columnMap = Global.ParseHeaderLine(dataLine, requiredColumns);
+
+                        foreach (var column in requiredColumns)
+                        {
+                            if (columnMap[column] >= 0)
+                                continue;
+
+                            LogWarning("{0} column not found in {1}", column, scanStatsFile.FullName);
+                            return false;
+                        }
+
+                        scanNumberColIndex = columnMap["ScanNumber"];
+                        scanTimeColIndex = columnMap["ScanTime"];
+                        scanTypeColIndex = columnMap["ScanType"];
+
+                        headersParsed = true;
+                        continue;
+                    }
+
+                    if (!Global.TryGetValueInt(dataList, scanNumberColIndex, out var scanNumber))
+                        continue;
+
+                    if (!Global.TryGetValueFloat(dataList, scanTimeColIndex, out var scanTime))
+                        continue;
+
+                    if (!Global.TryGetValueInt(dataList, scanTypeColIndex, out var scanType))
+                        continue;
+
+                    writer.WriteLine("{0}\t{1:0.0000###}\t{2}", scanNumber, scanTime, scanType);
+                }
+
+                mJobParams.AddResultFileExtensionToSkip("_ScanStats.txt");
+                mJobParams.AddResultFileExtensionToSkip("_ScanStatsEx.txt");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateScanInfoFileDotD", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Create the _ScanInfo.txt file for the given .mzML file
+        /// </summary>
+        /// <param name="datasetFile">.mzML file</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool CreateScanInfoFileMzML(FileInfo datasetFile)
+        {
+            var spectraRead = 0;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(datasetFile.DirectoryName))
+                {
+                    LogError(string.Format("Error in CreateScanInfoFileMzML: cannot determine the parent directory of file {0}", datasetFile.FullName));
+                    return false;
+                }
+
+                var outputFilePath = Path.Combine(
+                    datasetFile.DirectoryName,
+                    string.Format("{0}_ScanInfo.txt", Path.GetFileNameWithoutExtension(datasetFile.Name)));
+
+                LogMessage("Creating the scan info file using .mzML file {0}: {1}", datasetFile.Name, Path.GetFileName(outputFilePath));
+
+                using var reader = new SimpleMzMLReader(datasetFile.FullName);
+                using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                writer.WriteLine(GetScanInfoFileHeaderLine());
+
+                foreach (var spectrum in reader.ReadAllSpectra(false))
+                {
+                    spectraRead++;
+
+                    var nativeIdScanNumber = spectrum.NativeIdScanNumber;
+                    var spectrumScanNumber = nativeIdScanNumber == 0 ? spectrum.ScanNumber : nativeIdScanNumber;
+
+                    writer.WriteLine("{0}\t{1:0.0000###}\t{2}", spectrumScanNumber, spectrum.ScanStartTime, spectrum.MsLevel);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError(string.Format("Error in CreateScanInfoFileMzML after reading {0} spectra", spectraRead), ex);
+                return false;
+            }
+        }
+
+        private bool CreateScanInfoFiles(DataPackageInfo dataPackageInfo)
+        {
+            try
+            {
+                // Process each .mzML file or a TimsTOF .d directory
+
+                foreach (var item in dataPackageInfo.DatasetFiles)
+                {
+                    var datasetId = item.Key;
+                    var datasetStoragePath = dataPackageInfo.DatasetStoragePaths[datasetId];
+
+                    if (!CreateScanInfoFile(Path.Combine(mWorkDir, item.Value), datasetId, datasetStoragePath))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateScanInfoFiles", ex);
+                return false;
+            }
+        }
+
+        private bool CreateScanStatsFileForDotD(int datasetId, FileSystemInfo localDatasetDirectory, out FileInfo scanStatsFile)
+        {
+            try
+            {
+                var dllFound = AnalysisResources.GetMsFileInfoScannerDllPath(mMgrParams, out var msFileInfoScannerDLLPath, out var errorMessage);
+
+                if (!dllFound || !string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    LogError(errorMessage);
+                    scanStatsFile = null;
+                    return false;
+                }
+
+                var scanStatsGenerator = new ScanStatsGenerator(msFileInfoScannerDLLPath, mDebugLevel);
+                RegisterEvents(scanStatsGenerator);
+
+                LogMessage("Generating the ScanStats files for " + localDatasetDirectory.Name);
+
+                // Create files _ScanStats.txt and _ScanStatsEx.txt
+                var success = scanStatsGenerator.GenerateScanStatsFiles(localDatasetDirectory.FullName, mWorkDir, datasetId);
+
+                scanStatsFile = new FileInfo(Path.Combine(
+                    mWorkDir, string.Format("{0}_ScanStats.txt", Path.GetFileNameWithoutExtension(localDatasetDirectory.Name))));
+
+                if (success)
+                {
+                    if (scanStatsFile.Exists)
+                    {
+                        LogMessage("Generated ScanStats file using " + localDatasetDirectory.FullName);
+                        return true;
+                    }
+
+                    LogError("The ScanStatsGenerator returned true, but the ScanStats file does not exist: " + scanStatsFile.FullName);
+                    return false;
+                }
+
+                LogError("Error generating ScanStats files with ScanStatsGenerator", scanStatsGenerator.ErrorMessage);
+
+                if (scanStatsGenerator.MSFileInfoScannerErrorCount > 0)
+                {
+                    LogMessage("MSFileInfoScanner encountered " + scanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in CreateScanStatsFileForDotD", ex);
+                scanStatsFile = null;
+                return false;
+            }
+        }
+
         private bool GeneratePdfReport(FileSystemInfo reportFile, FileSystemInfo reportStatsFile, FileSystemInfo reportPdfFile)
         {
             try
@@ -459,7 +778,6 @@ namespace AnalysisManagerDiaNNPlugIn
             catch (Exception ex)
             {
                 LogError("Error in GeneratePdfReport", ex);
-
                 return false;
             }
         }
@@ -507,7 +825,9 @@ namespace AnalysisManagerDiaNNPlugIn
             return new Regex(matchPattern, options);
         }
 
+        private string GetScanInfoFileHeaderLine()
         {
+            return string.Format("{0}\t{1}\t{2}", SCAN_INFO_FILE_SCAN_COLUMN, SCAN_INFO_FILE_SCAN_TIME_COLUMN, SCAN_INFO_FILE_SCAN_TYPE_COLUMN);
         }
 
         /// <summary>
@@ -1231,6 +1551,14 @@ namespace AnalysisManagerDiaNNPlugIn
             }
         }
 
+        /// <summary>
+        /// Start DIA-NN
+        /// </summary>
+        /// <remarks>Prior to running DIA-NN, if mBuildingSpectralLibrary is false, calls CreateScanInfoFiles()</remarks>
+        /// <param name="fastaFile">FASTA file</param>
+        /// <param name="spectralLibraryFile">Spectral library file</param>
+        /// <param name="completionCode">Output: DIA-NN completion code to send to SetSpectralLibraryCreateTaskComplete (when mBuildingSpectralLibrary is true)</param>
+        /// <returns>Closeout type</returns>
         private CloseOutType StartDiaNN(
             FileSystemInfo fastaFile,
             FileSystemInfo spectralLibraryFile,
@@ -1269,6 +1597,17 @@ namespace AnalysisManagerDiaNNPlugIn
                 {
                     completionCode = DiaNNCompletionCodes.ParameterFileError;
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!mBuildingSpectralLibrary)
+                {
+                    // .parquet files created by DIA-NN 2.0 do not include MS2 scan numbers, but they do have elution time (RT)
+                    // Parse the input file(s) to create a text file with three columns: ScanNumber, ScanTime, and ScanType
+                    if (!CreateScanInfoFiles(dataPackageInfo))
+                    {
+                        completionCode = DiaNNCompletionCodes.UnknownError;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
                 }
 
                 mCmdRunner = new RunDosProgram(mWorkDir, mDebugLevel)
@@ -1771,7 +2110,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             if (mDiaNNVersion >= new Version(2, 0))
             {
-                // The DIA-NN plotter that generated a PDF file was removed from DIA-NN 2.x
+                // The DIA-NN plotter, which generated a PDF file, was removed from DIA-NN 2.x
                 validResults = true;
             }
             else
