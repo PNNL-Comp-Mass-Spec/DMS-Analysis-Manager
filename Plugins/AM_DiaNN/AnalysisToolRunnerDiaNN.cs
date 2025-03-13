@@ -507,39 +507,7 @@ namespace AnalysisManagerDiaNNPlugIn
             return new Regex(matchPattern, options);
         }
 
-        /// <summary>
-        /// Move XIC .parquet files to the working directory
-        /// </summary>
-        /// <returns>True if successful, false if an error</returns>
-        private bool MoveExtractedIonChromatogramFiles()
         {
-            try
-            {
-                var workingDirectory = new DirectoryInfo(mWorkDir);
-
-                foreach (var xicFile in workingDirectory.GetFiles("*.xic.parquet", SearchOption.AllDirectories))
-                {
-                    if (xicFile.DirectoryName == workingDirectory.FullName)
-                        continue;
-
-                    var newFileInfo = new FileInfo(Path.Combine(workingDirectory.FullName, xicFile.Name));
-
-                    if (newFileInfo.Exists)
-                    {
-                        LogError("Cannot move file {0} to {1} since a file already exists in the target location", xicFile.FullName, newFileInfo.FullName);
-                        return false;
-                    }
-
-                    xicFile.MoveTo(newFileInfo.FullName);
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LogError("Error moving XIC parquet files to the working directory", ex);
-                return false;
-            }
         }
 
         /// <summary>
@@ -586,6 +554,41 @@ namespace AnalysisManagerDiaNNPlugIn
             var spectralLibraryFile = Path.Combine(mWorkDir, remoteSpectralLibraryFile.Name);
 
             return new FileInfo(spectralLibraryFile);
+        }
+
+        /// <summary>
+        /// Move XIC .parquet files to the working directory
+        /// </summary>
+        /// <returns>True if successful, false if an error</returns>
+        private bool MoveExtractedIonChromatogramFiles()
+        {
+            try
+            {
+                var workingDirectory = new DirectoryInfo(mWorkDir);
+
+                foreach (var xicFile in workingDirectory.GetFiles("*.xic.parquet", SearchOption.AllDirectories))
+                {
+                    if (xicFile.DirectoryName == workingDirectory.FullName)
+                        continue;
+
+                    var newFileInfo = new FileInfo(Path.Combine(workingDirectory.FullName, xicFile.Name));
+
+                    if (newFileInfo.Exists)
+                    {
+                        LogError("Cannot move file {0} to {1} since a file already exists in the target location", xicFile.FullName, newFileInfo.FullName);
+                        return false;
+                    }
+
+                    xicFile.MoveTo(newFileInfo.FullName);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error moving XIC parquet files to the working directory", ex);
+                return false;
+            }
         }
 
         private void ParseDiaNNConsoleOutputFile()
