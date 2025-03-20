@@ -617,18 +617,19 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Look for a _ScanInfo.txt file (created when running DIA-NN 2.0 or newer)
-            if (usingParquetFile)
+            if (!usingParquetFile)
             {
-                if (!FileSearchTool.FindAndRetrieveMiscFiles(scanInfoFile.Name, false))
-                {
-                    LogError("Scan info file not found: " + scanInfoFile.Name);
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                }
-
-                mJobParams.AddResultFileToSkip(scanInfoFile.Name);
+                // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(scanInfoFile.Name, false))
+            {
+                LogError("Scan info file not found: " + scanInfoFile.Name);
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
+
+            mJobParams.AddResultFileToSkip(scanInfoFile.Name);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
