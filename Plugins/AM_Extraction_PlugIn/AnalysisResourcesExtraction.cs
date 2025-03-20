@@ -600,7 +600,7 @@ namespace AnalysisManagerExtractionPlugin
 
             bool usingParquetFile;
 
-            if (FileSearchTool.FindAndRetrieveMiscFiles(reportParquetFile.Name, false, true, logFileNotFound: false))
+            if (FileSearchTool.FindAndRetrieveMiscFiles(reportParquetFile.Name, false, true, out var parquetSourceDirPath, logFileNotFound: false))
             {
                 mJobParams.AddResultFileToSkip(reportParquetFile.Name);
                 usingParquetFile = true;
@@ -616,17 +616,42 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            // Look for a _ScanInfo.txt file (created when running DIA-NN 2.0 or newer)
             if (!usingParquetFile)
             {
                 // Note that we'll obtain the DIA-NN parameter file in RetrieveMiscFiles
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            if (!FileSearchTool.FindAndRetrieveMiscFiles(scanInfoFile.Name, false))
+            // Look for one or more _ScanInfo.txt files (created when running DIA-NN 2.0 or newer)
+
+            if (!FileSearchTool.FindAndRetrieveMiscFiles(scanInfoFile.Name, false, true, logFileNotFound: false))
             {
-                LogError("Scan info file not found: " + scanInfoFile.Name);
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                if (!scanInfoFile.Name.StartsWith("Aggregation", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Scan info file not found: Aggregation_ScanInfo.txt
+                    LogError("Scan info file not found: " + scanInfoFile.Name);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // This job is associated with a data package
+                // It's possible that separate _ScanInfo.txt files were created for each dataset in the data package
+
+                var sourceDir = new DirectoryInfo(parquetSourceDirPath);
+                var scanInfoFiles = sourceDir.GetFiles("*_ScanInfo.txt");
+
+                if (scanInfoFiles.Length == 0)
+                {
+                    LogError(string.Format("Scan info file not found ({0}); also did not find any dataset-named _ScanInfo.txt files", scanInfoFile.Name));
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                LogMessage(string.Format("Retrieving {0} _ScanInfo.txt files", scanInfoFiles.Length));
+
+                foreach (var sourceFile in scanInfoFiles)
+                {
+                    sourceFile.CopyTo(Path.Combine(mWorkDir, sourceFile.Name));
+                    mJobParams.AddResultFileToSkip(sourceFile.Name);
+                }
             }
 
             mJobParams.AddResultFileToSkip(scanInfoFile.Name);
