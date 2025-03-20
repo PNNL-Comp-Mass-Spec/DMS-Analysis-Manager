@@ -2390,7 +2390,7 @@ namespace AnalysisManagerFragPipePlugIn
                     }
                     else if (usedProteinProphet)
                     {
-                        LogError("File not found: " + proteinFile.Name);
+                        LogWarning("File not found: " + proteinFile.Name);
                     }
 
                     if (psmFile.Exists)
@@ -2402,7 +2402,7 @@ namespace AnalysisManagerFragPipePlugIn
                         LogError("File not found: " + psmFile.Name);
                     }
 
-                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists && (proteinFile.Exists || !usedProteinProphet))
+                    if (ionFile.Exists && peptideFile.Exists && psmFile.Exists)
                     {
                         validExperimentGroupCount++;
                     }
