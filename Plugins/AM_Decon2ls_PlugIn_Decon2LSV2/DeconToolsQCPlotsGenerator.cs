@@ -7,7 +7,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 {
     public class DeconToolsQCPlotsGenerator : EventNotifier
     {
-        // Ignore Spelling: Deisotoped
+        // Ignore Spelling: Decon, Deisotoped
 
         private const int MAX_RUNTIME_HOURS = 5;
 
