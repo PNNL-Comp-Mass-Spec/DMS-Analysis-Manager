@@ -92,7 +92,8 @@ namespace AnalysisManagerBase.DataFileTools
 
                 mMSFileInfoScanner.Options.CheckFileIntegrity = false;
                 mMSFileInfoScanner.Options.CreateDatasetInfoFile = false;
-                mMSFileInfoScanner.Options.CreateScanStatsFile = true;
+                mMSFileInfoScanner.Options.CreateScanStatsFiles = true;
+                mMSFileInfoScanner.Options.CreateEmptyScanStatsFiles = false;
                 mMSFileInfoScanner.Options.SaveLCMS2DPlots = false;
                 mMSFileInfoScanner.Options.SaveTICAndBPIPlots = false;
                 mMSFileInfoScanner.Options.CheckCentroidingStatus = false;

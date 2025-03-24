@@ -51,7 +51,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 mMSFileInfoScanner.Options.CheckFileIntegrity = false;
                 mMSFileInfoScanner.Options.CreateDatasetInfoFile = false;
-                mMSFileInfoScanner.Options.CreateScanStatsFile = false;
+                mMSFileInfoScanner.Options.CreateScanStatsFiles = false;
+                mMSFileInfoScanner.Options.CreateEmptyScanStatsFiles = false;
                 mMSFileInfoScanner.Options.SaveLCMS2DPlots = true;
                 mMSFileInfoScanner.Options.SaveTICAndBPIPlots = true;
                 mMSFileInfoScanner.Options.UpdateDatasetStatsTextFile = false;
