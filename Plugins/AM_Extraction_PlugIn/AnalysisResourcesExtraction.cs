@@ -1071,11 +1071,13 @@ namespace AnalysisManagerExtractionPlugin
 
             foreach (var tsvFile in sourceDirectory.GetFiles("*.tsv", SearchOption.AllDirectories))
             {
+                // ReSharper disable once StringLiteralTypo
                 if (tsvFile.Name.EndsWith("_ion.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_peptide.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.EndsWith("_protein.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.Equals("reprint.int.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.Equals("reprint.spc.tsv", StringComparison.OrdinalIgnoreCase) ||
+                    tsvFile.Name.Equals("sdrf.tsv", StringComparison.OrdinalIgnoreCase) ||
                     tsvFile.Name.StartsWith("combined_site_", StringComparison.OrdinalIgnoreCase) ||
                     retrievedFiles.Contains(tsvFile.Name))
                 {
