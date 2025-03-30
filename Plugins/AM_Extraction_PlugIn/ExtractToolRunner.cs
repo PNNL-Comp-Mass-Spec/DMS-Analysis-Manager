@@ -1583,7 +1583,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             if (!Global.IsMatch(mDatasetName, AnalysisResources.AGGREGATION_JOB_DATASET) || AnalysisResources.IsDataPackageDataset(mDatasetName))
             {
-                return RunPhrpForMSFragger(mDatasetName, mDatasetName + "_psm.tsv", true, out _, out _);
+                return RunPhrpForMSFragger(mDatasetName, mDatasetName + AnalysisResourcesExtraction.PSM_FILE_SUFFIX, true, out _, out _);
             }
 
             var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
@@ -1596,7 +1596,7 @@ namespace AnalysisManagerExtractionPlugin
 
             var datasetIDsByExperimentGroup = DataPackageInfoLoader.GetDataPackageDatasetsByExperimentGroup(dataPackageDatasets);
 
-            var aggregationPsmTsv = new FileInfo(Path.Combine(mWorkDir, AnalysisResources.AGGREGATION_JOB_DATASET + "_psm.tsv"));
+            var aggregationPsmTsv = new FileInfo(Path.Combine(mWorkDir, AnalysisResources.AGGREGATION_JOB_DATASET + AnalysisResourcesExtraction.PSM_FILE_SUFFIX));
 
             if (aggregationPsmTsv.Exists)
             {
@@ -1610,7 +1610,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Multiple experiment groups
-            // Run PHRP on each _psm.tsv file
+            // Run PHRP on each _psm.tsv file (or each Dataset.tsv file)
             // Keep track of overall PSM results by merging in the PSM results from each experiment group
 
             // In order to accurately determine unique peptide and protein counts, we need to create a combined _psm.tsv file,
@@ -1618,7 +1618,7 @@ namespace AnalysisManagerExtractionPlugin
 
             const string COMBINED_TSV_BASE_NAME = "Combined_Results_AllExperimentGroups";
 
-            var combinedPsmTsvFilePath = Path.Combine(mWorkDir, COMBINED_TSV_BASE_NAME + "_psm.tsv");
+            var combinedPsmTsvFilePath = Path.Combine(mWorkDir, COMBINED_TSV_BASE_NAME + AnalysisResourcesExtraction.PSM_FILE_SUFFIX);
 
             var synopsisFileNames = new List<string>();
             var psmResultsOverall = new PSMResults();
@@ -1630,7 +1630,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 foreach (var experimentGroup in datasetIDsByExperimentGroup.Keys)
                 {
-                    var inputFileName = experimentGroup + "_psm.tsv";
+                    var inputFileName = experimentGroup + AnalysisResourcesExtraction.PSM_FILE_SUFFIX;
 
                     var experimentGroupResult = RunPhrpForMSFragger(
                         experimentGroup,
@@ -1789,20 +1789,26 @@ namespace AnalysisManagerExtractionPlugin
             out List<string> synopsisFileNamesFromPHRP,
             out PSMResults psmResults)
         {
-            const string PSM_FILE_SUFFIX = "_psm.tsv";
-
             synopsisFileNamesFromPHRP = new List<string>();
             psmResults = new PSMResults();
 
             var synopsisFileName = baseDatasetName + "_msfragger_syn.txt";
 
-            var peptideSearchResultsFile = new FileInfo(Path.Combine(mWorkDir, inputFileName));
+            var peptideSearchResultsFilePSM = new FileInfo(Path.Combine(mWorkDir, inputFileName));
+            var peptideSearchResultsFileNoPSM = new FileInfo(Path.Combine(mWorkDir, inputFileName.Replace(AnalysisResourcesExtraction.PSM_FILE_SUFFIX, ".tsv")));
+            FileInfo peptideSearchResultsFile;
 
             var inputFiles = new List<FileInfo>();
 
-            if (peptideSearchResultsFile.Exists)
+            if (peptideSearchResultsFilePSM.Exists)
             {
-                inputFiles.Add(peptideSearchResultsFile);
+                inputFiles.Add(peptideSearchResultsFilePSM);
+                peptideSearchResultsFile = peptideSearchResultsFilePSM;
+            }
+            else if (peptideSearchResultsFileNoPSM.Exists)
+            {
+                inputFiles.Add(peptideSearchResultsFileNoPSM);
+                peptideSearchResultsFile = peptideSearchResultsFileNoPSM;
             }
             else
             {
@@ -1810,13 +1816,16 @@ namespace AnalysisManagerExtractionPlugin
                 var workingDirectory = new DirectoryInfo(mWorkDir);
 
                 // Use search pattern *_psm.tsv
-                inputFiles.AddRange(workingDirectory.GetFiles(string.Format("*{0}", PSM_FILE_SUFFIX)));
+                inputFiles.AddRange(workingDirectory.GetFiles(string.Format("*{0}", AnalysisResourcesExtraction.PSM_FILE_SUFFIX)));
 
                 if (inputFiles.Count == 0)
                 {
                     LogError("Did not find any _psm.tsv files in the working directory; cannot run PHRP");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
+
+                // Yes, this file does not exist, but the variable needs to have a value
+                peptideSearchResultsFile = peptideSearchResultsFilePSM;
             }
 
             var successCount = 0;
@@ -1827,7 +1836,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!peptideSearchResultsFile.Exists)
                 {
                     // Override baseDatasetName
-                    baseDatasetName = inputFile.Name.Substring(0, inputFile.Name.Length - PSM_FILE_SUFFIX.Length);
+                    baseDatasetName = inputFile.Name.Substring(0, inputFile.Name.Length - AnalysisResourcesExtraction.PSM_FILE_SUFFIX.Length);
                 }
 
                 var result = RunPHRPWork(

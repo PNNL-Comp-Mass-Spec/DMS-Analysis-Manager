@@ -44,6 +44,11 @@ namespace AnalysisManagerExtractionPlugin
         public const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
 
         /// <summary>
+        /// Suffix for _psm.tsv files
+        /// </summary>
+        internal const string PSM_FILE_SUFFIX = "_psm.tsv";
+
+        /// <summary>
         /// Job parameter used to instruct ExtractToolRunner to run AScore
         /// </summary>
         public const string JOB_PARAM_RUN_ASCORE = "RunAScore";
@@ -917,7 +922,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!success || datasetIDsByExperimentGroup.Count <= 1)
                 {
                     // Retrieve file Aggregation_psm.tsv
-                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
+                    filesToGet.Add(AGGREGATION_JOB_DATASET + PSM_FILE_SUFFIX);
                 }
                 else
                 {
@@ -927,19 +932,21 @@ namespace AnalysisManagerExtractionPlugin
                     filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
 
                     // Retrieve file Aggregation_psm.tsv
-                    filesToGet.Add(AGGREGATION_JOB_DATASET + "_psm.tsv");
+                    filesToGet.Add(AGGREGATION_JOB_DATASET + PSM_FILE_SUFFIX);
 
                     // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
                     foreach (var item in datasetIDsByExperimentGroup)
                     {
                         var experimentGroupName = item.Key;
-                        filesToGet.Add(experimentGroupName + "_psm.tsv");
+                        filesToGet.Add(experimentGroupName + PSM_FILE_SUFFIX);
                     }
                 }
             }
             else
             {
-                filesToGet.Add(DatasetName + "_psm.tsv");
+                // Normally the _psm.tsv file exists
+                // However, if Peptide Prophet was not used, instead retrieve the Dataset.tsv file
+                filesToGet.Add(DatasetName + PSM_FILE_SUFFIX);
             }
 
             var sourceDirPath = string.Empty;
@@ -990,7 +997,7 @@ namespace AnalysisManagerExtractionPlugin
                     continue;
                 }
 
-                if (fileName.Equals(AGGREGATION_JOB_DATASET + "_psm.tsv"))
+                if (fileName.Equals(AGGREGATION_JOB_DATASET + PSM_FILE_SUFFIX))
                 {
                     // Look for file Aggregation_psm.tsv
                     // If found, do not search for any additional files in filesToGet
@@ -1010,17 +1017,50 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                if (!FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent))
+                string sourceDirPathCurrent;
+                string fileNameRetrieved;
+
+                if (fileName.Equals(DatasetName + PSM_FILE_SUFFIX))
                 {
-                    // Errors were reported in method call, so just return
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out var sourceDirPathCurrent1, logFileNotFound: false))
+                    {
+                        sourceDirPathCurrent = sourceDirPathCurrent1;
+                        fileNameRetrieved = fileName;
+                    }
+                    else
+                    {
+                        // _psm.tsv file not found; look for the Dataset.tsv file instead
+                        var datasetTsvFile = DatasetName + ".tsv";
+                        if (FileSearchTool.FindAndRetrieveMiscFiles(datasetTsvFile, false, true, out var sourceDirPathCurrent2))
+                        {
+                            sourceDirPathCurrent = sourceDirPathCurrent2;
+                            fileNameRetrieved = datasetTsvFile;
+                        }
+                        else
+                        {
+                            // Errors were reported in method call, so just return
+                            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        }
+                    }
+                }
+                else
+                {
+                    if (FileSearchTool.FindAndRetrieveMiscFiles(fileName, false, true, out sourceDirPathCurrent))
+                    {
+                        fileNameRetrieved = fileName;
+                    }
+                    else
+                    {
+                        // Errors were reported in method call, so just return
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    }
                 }
 
                 if (string.IsNullOrWhiteSpace(sourceDirPath))
                     sourceDirPath = sourceDirPathCurrent;
 
-                mJobParams.AddResultFileToSkip(fileName);
-                retrievedFiles.Add(fileName);
+                mJobParams.AddResultFileToSkip(fileNameRetrieved);
+                retrievedFiles.Add(fileNameRetrieved);
             }
 
             // Now copy the individual Dataset.tsv file(s), which we'll treat as optional
