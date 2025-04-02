@@ -765,6 +765,12 @@ namespace AnalysisManagerFragPipePlugIn
         {
             const string RUN_DIANN_PARAMETER = "diann.run-dia-nn";
 
+            // ReSharper disable StringLiteralTypo
+
+            const string RUN_SPEC_LIB_GEN_PARAMETER = "speclibgen.run-speclibgen";
+
+            // ReSharper restore StringLiteralTypo
+
             try
             {
                 if (!workflowFile.Exists)
@@ -783,10 +789,12 @@ namespace AnalysisManagerFragPipePlugIn
                     return false;
                 }
 
+                // Keys in these dictionaries are parameter names, values are the value defined in the parameter file
                 var booleanParametersToValidate = new Dictionary<string, BooleanParameter>();
                 var parametersToValidate = new Dictionary<string, IntegerParameter>();
 
                 AddParameterToValidate(booleanParametersToValidate, RUN_DIANN_PARAMETER);
+                AddParameterToValidate(booleanParametersToValidate, RUN_SPEC_LIB_GEN_PARAMETER);
                 AddParameterToValidate(parametersToValidate, "msfragger.precursor_mass_units", 0, 1);
                 AddParameterToValidate(parametersToValidate, "msfragger.precursor_true_units", 0, 1);
                 AddParameterToValidate(parametersToValidate, "msfragger.fragment_mass_units", 0, 1);
@@ -887,8 +895,10 @@ namespace AnalysisManagerFragPipePlugIn
                 // Conversely, if a spectral library is defined, make sure that diann.run-dia-nn is true
 
                 var runDiannParam = booleanParametersToValidate[RUN_DIANN_PARAMETER];
+                var runSpecLibGenParam = booleanParametersToValidate[RUN_SPEC_LIB_GEN_PARAMETER];
 
                 var runDiann = runDiannParam.IsDefined && runDiannParam.ParameterValue;
+                var runSpecLibGen = runSpecLibGenParam.IsDefined && runSpecLibGenParam.ParameterValue;
 
                 var diannSpectralLibraryPath = mJobParams.GetJobParameter(
                     AnalysisResourcesFragPipe.DIANN_LIBRARY_SECTION,
@@ -899,6 +909,14 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     if (!runDiann)
                         return true;
+
+                    if (runSpecLibGen)
+                    {
+                        OnStatusEvent("The FragPipe workflow has {0}=true and {1}=true; the spectral library will be generated at run-time",
+                            RUN_DIANN_PARAMETER, RUN_SPEC_LIB_GEN_PARAMETER);
+
+                        return true;
+                    }
 
                     // The FragPipe workflow has diann.run-dia-nn=true but this job's settings file does not have a value defined for parameter DiannSpectralLibrary
                     OnErrorEvent("The FragPipe workflow has {0}=true but this job's settings file does not have a value defined for parameter {1}",
