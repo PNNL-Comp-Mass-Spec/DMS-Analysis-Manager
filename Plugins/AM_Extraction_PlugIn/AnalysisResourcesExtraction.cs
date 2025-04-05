@@ -986,9 +986,11 @@ namespace AnalysisManagerExtractionPlugin
                             mJobParams.AddResultFileToSkip(tsvFile.Key);
                             retrievedFiles.Add(tsvFile.Key);
                         }
+
+                        break;
                     }
 
-                    break;
+                    continue;
                 }
 
                 if (retrievedFiles.Contains(fileName))
