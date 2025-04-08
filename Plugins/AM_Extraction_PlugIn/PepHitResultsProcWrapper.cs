@@ -228,20 +228,43 @@ namespace AnalysisManagerExtractionPlugin
                 const int maxRuntimeSeconds = 720 * 60;
                 var success = cmdRunner.RunProgram(progLoc, arguments, "PHRP", true, maxRuntimeSeconds);
 
+                // Parse the console output file for any lines that contain "Error"
+                // Also look for "No results were found in file"
+                // Append them to mErrMsg
+
+                bool errorMessageFound;
+                string errorMessage;
+                bool emptyResultsFile;
+                CloseOutType returnCode;
+
+                if (success && cmdRunner.ExitCode == 0)
+                {
+                    errorMessageFound = false;
+                    errorMessage = string.Empty;
+                    emptyResultsFile = false;
+                    returnCode = CloseOutType.CLOSEOUT_SUCCESS;
+                }
+                else
+                {
+                    errorMessageFound = ReadErrorMessagesFromConsoleOutputFile(mPHRPConsoleOutputFilePath, out errorMessage, out emptyResultsFile);
+                    returnCode = emptyResultsFile ? CloseOutType.CLOSEOUT_NO_DATA : CloseOutType.CLOSEOUT_FAILED;
+                }
+
                 if (!success)
                 {
                     ReportError("Error running PHRP");
-                    return CloseOutType.CLOSEOUT_FAILED;
+
+                    if (emptyResultsFile)
+                    {
+                        mErrorMessage = Global.AppendToComment(mErrorMessage, errorMessage);
+                    }
+
+                    return returnCode;
                 }
 
                 if (cmdRunner.ExitCode != 0)
                 {
                     ReportError("PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode);
-
-                    // Parse the console output file for any lines that contain "Error"
-                    // Append them to mErrMsg
-
-                    var errorMessageFound = ReadErrorMessagesFromConsoleOutputFile(mPHRPConsoleOutputFilePath, out var errorMessage);
 
                     if (errorMessageFound)
                     {
@@ -253,7 +276,7 @@ namespace AnalysisManagerExtractionPlugin
                         OnWarningEvent("Unknown PHRP error message");
                     }
 
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return returnCode;
                 }
 
                 // Make sure the key PHRP result files were created
@@ -435,19 +458,21 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private bool ReadErrorMessagesFromConsoleOutputFile(string phrpConsoleOutputFilePath, out string errorMessage)
+        private bool ReadErrorMessagesFromConsoleOutputFile(string phrpConsoleOutputFilePath, out string errorMessage, out bool emptyResultsFile)
         {
             var consoleOutputFile = new FileInfo(phrpConsoleOutputFilePath);
 
             if (!consoleOutputFile.Exists)
             {
                 errorMessage = string.Empty;
+                emptyResultsFile = false;
                 return false;
             }
 
             using var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
             var errorMessageData = new StringBuilder();
+            emptyResultsFile = false;
 
             while (!reader.EndOfStream)
             {
@@ -456,7 +481,16 @@ namespace AnalysisManagerExtractionPlugin
                 if (string.IsNullOrWhiteSpace(lineIn))
                     continue;
 
-                if (lineIn.IndexOf("error", StringComparison.OrdinalIgnoreCase) < 0)
+                var noResults =
+                    lineIn.Trim().StartsWith("Warning", StringComparison.OrdinalIgnoreCase) &&
+                    lineIn.IndexOf("No results were found", StringComparison.OrdinalIgnoreCase) > 0;
+
+                if (noResults)
+                {
+                    emptyResultsFile = true;
+                }
+
+                if (!noResults && !lineIn.Trim().StartsWith("Error", StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 if (errorMessageData.Length > 0)

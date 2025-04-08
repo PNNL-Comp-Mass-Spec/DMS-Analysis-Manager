@@ -2335,6 +2335,14 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // Message has already been logged
                         synopsisFileNameFromPHRP = string.Empty;
+
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrorMessage))
+                        {
+                            // mMessage is likely "ProgRunner.ExitCode = -1 for Program = C:\DMS_Programs\PHRP\PeptideHitResultsProcRunner.exe; Error running PHRP"
+                            // Change it to "Error running PHRP; Warning: No results were found in file ..."
+                            mMessage = phrp.ErrorMessage;
+                        }
+
                         return result;
                     }
 
