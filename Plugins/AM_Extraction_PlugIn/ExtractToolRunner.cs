@@ -2440,6 +2440,15 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                if (!AnalysisResources.ValidateFileHasData(synopsisFilePath, string.Format("{0} synopsis file", resultType), out var emptyFileErrorMessage, 0, true))
+                {
+                    // Empty synopsis file (header row only)
+                    LogWarning(emptyFileErrorMessage);
+
+                    // Skip validating mass errors
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
                 if (!ValidatePHRPResultMassErrors(synopsisFilePath, resultType, parameterFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
