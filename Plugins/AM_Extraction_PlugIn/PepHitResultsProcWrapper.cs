@@ -276,7 +276,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Check for an empty first hits or synopsis file
-                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, filesToCheck[0], fileDescription);
+                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, filesToCheck[0], fileDescription, resultType);
 
                 if (validationResult != CloseOutType.CLOSEOUT_SUCCESS && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     return validationResult;
@@ -512,7 +512,11 @@ namespace AnalysisManagerExtractionPlugin
             OnErrorEvent(mErrorMessage);
         }
 
-        private CloseOutType ValidatePrimaryResultsFile(FileInfo psmResultsFile, string fileSuffix, string fileDescription)
+        private CloseOutType ValidatePrimaryResultsFile(
+            FileInfo psmResultsFile,
+            string fileSuffix,
+            string fileDescription,
+            PeptideHitResultTypes resultType)
         {
             if (psmResultsFile?.Directory == null)
             {
@@ -528,7 +532,39 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var synopsisFileHasData = AnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription, out var errorMessage);
+            bool synopsisFileHasData;
+            string errorMessage;
+
+            if (resultType == PeptideHitResultTypes.MSFragger && files.Count > 1)
+            {
+                // Return Success if any of the synopsis or first hits files has data
+                var firstErrorMessage = string.Empty;
+                synopsisFileHasData = false;
+
+                foreach (var file in files)
+                {
+                    var fileHasData = AnalysisResources.ValidateFileHasData(file.FullName, "PHRP " + fileDescription, out var errorMsg);
+
+                    if (fileHasData)
+                    {
+                        synopsisFileHasData = true;
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(firstErrorMessage))
+                    {
+                        firstErrorMessage = errorMsg;
+                    }
+                }
+
+                errorMessage = firstErrorMessage;
+            }
+            else
+            {
+                // Find the oldest synopsis file
+                var oldestFile = (from item in files orderby item.LastWriteTime select item).First();
+                synopsisFileHasData = AnalysisResources.ValidateFileHasData(oldestFile.FullName, "PHRP " + fileDescription, out errorMessage);
+            }
 
             if (!synopsisFileHasData)
             {
