@@ -5484,6 +5484,9 @@ namespace AnalysisManagerBase.AnalysisTool
                     return false;
                 }
 
+                // This counts the number of non-empty rows after the header line
+                var rowCountAfterHeader = 0;
+
                 // Open the file and confirm it has data rows
                 using (var reader = new StreamReader(new FileStream(dataFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -5501,6 +5504,8 @@ namespace AnalysisManagerBase.AnalysisTool
 
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
+
+                        rowCountAfterHeader++;
 
                         if (numericDataColIndex < 0)
                         {
@@ -5528,7 +5533,7 @@ namespace AnalysisManagerBase.AnalysisTool
                     //   MaxQuant msms.txt file is empty (no data)
                     //   MaxQuant msms.txt file is empty (no numeric data in column 2)
 
-                    var messageDetail = numericDataColIndex < 0
+                    var messageDetail = numericDataColIndex < 0 || rowCountAfterHeader == 0
                         ? "no data"
                         : string.Format("no numeric data in column {0}", numericDataColIndex + 1);
 
