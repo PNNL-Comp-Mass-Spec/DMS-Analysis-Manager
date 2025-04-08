@@ -92,7 +92,7 @@ namespace AnalysisManagerBase.JobConfig
         CLOSEOUT_SKIPPED_MZ_REFINERY = 18,
 
         /// <summary>
-        /// No data (no results)
+        /// No data (no results or no filter-passing results)
         /// </summary>
         CLOSEOUT_NO_DATA = 20,
 

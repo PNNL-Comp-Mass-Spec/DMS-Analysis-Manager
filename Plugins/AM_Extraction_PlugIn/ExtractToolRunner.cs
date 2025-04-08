@@ -301,7 +301,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    LogError("Error " + currentAction);
+                    // Example error message: Error running peptide hits result processor for FragPipe_DataPkg; result code: 1
+                    LogError("Error {0}; result code: {1}", currentAction, result);
                     processingSuccess = false;
                 }
                 else
@@ -1851,7 +1852,11 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    successOverall = result;
+                    if (result != CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        successOverall = result;
+                    }
+
                     continue;
                 }
 
