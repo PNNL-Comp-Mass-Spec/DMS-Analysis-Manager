@@ -54,9 +54,9 @@ namespace AnalysisManagerTest
             Console.WriteLine("Longest common string:");
             Console.WriteLine(longestCommonString);
 
-            Assert.AreEqual(expectedLongestCommonString, longestCommonString);
+            Assert.That(longestCommonString, Is.EqualTo(expectedLongestCommonString));
 
-            Assert.AreEqual(0, warnings.Count, "Warnings were reported");
+            Assert.That(warnings, Has.Count.EqualTo(0), "Warnings were reported");
         }
 
         [Test]
@@ -94,7 +94,7 @@ namespace AnalysisManagerTest
                 Console.WriteLine(item);
             }
 
-            Assert.AreEqual(expectedResult, result);
+            Assert.That(result, Is.EqualTo(expectedResult));
         }
     }
 }
