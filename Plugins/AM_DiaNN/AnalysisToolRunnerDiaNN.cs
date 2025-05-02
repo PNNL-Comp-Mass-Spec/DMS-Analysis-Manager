@@ -246,6 +246,11 @@ namespace AnalysisManagerDiaNNPlugIn
                 // Stop the job timer
                 mStopTime = DateTime.UtcNow;
 
+                if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    StorePPMErrorStatsInDB();
+                }
+
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
 
@@ -2026,6 +2031,51 @@ namespace AnalysisManagerDiaNNPlugIn
             mDiaNNVersionText = charIndex > 0 ? dataLine.Substring(0, charIndex).Trim() : dataLine;
 
             LogDebug(mDiaNNVersionText, mDebugLevel);
+        }
+
+        private bool StorePPMErrorStatsInDB()
+        {
+            // If this job applies to a single dataset, dataPackageID will be 0
+            var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
+            if (dataPackageID != 0)
+            {
+                // Do not store PPM error stats for data package searches
+                return true;
+            }
+
+            var massErrorExtractor = new DiaNNMassErrorStatsExtractor(mMgrParams, mDebugLevel);
+
+            var datasetID = mJobParams.GetJobParameter("DatasetID", 0);
+
+            var reportStatsFile = GetDiannResultsFilePath("report.stats.tsv");
+            var success = massErrorExtractor.ParseDiaNNReportStatsTsv(mDatasetName, datasetID, mJob, reportStatsFile);
+
+            if (success)
+            {
+                mEvalMessage = Global.AppendToComment(mEvalMessage,
+                    string.Format(
+                        "MS1 Median mass error corrected from {0:F2} ppm to {1:F2} ppm",
+                        massErrorExtractor.MassErrorStats.MassErrorPPM,
+                        massErrorExtractor.MassErrorStats.MassErrorPPMCorrected));
+
+                return true;
+            }
+
+            string errorMsg;
+
+            if (string.IsNullOrEmpty(massErrorExtractor.ErrorMessage))
+            {
+                errorMsg = "Error parsing DiaNN report.stats.tsv output to extract mass error stats";
+            }
+            else
+            {
+                errorMsg = massErrorExtractor.ErrorMessage;
+            }
+
+            LogErrorToDatabase(errorMsg + ", job " + mJob);
+            mMessage = errorMsg;
+            return false;
         }
 
         /// <summary>

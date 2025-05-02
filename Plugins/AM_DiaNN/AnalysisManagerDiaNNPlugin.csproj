@@ -44,7 +44,9 @@
   <ItemGroup>
     <Compile Include="AnalysisResourcesDiaNN.cs" />
     <Compile Include="AnalysisToolRunnerDiaNN.cs" />
+    <Compile Include="DiaNNMassErrorStatsExtractor.cs" />
     <Compile Include="DiaNNOptions.cs" />
+    <Compile Include="MassErrorInfo.cs" />
     <Compile Include="ModificationInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
