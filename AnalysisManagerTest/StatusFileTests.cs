@@ -17,7 +17,7 @@ namespace AnalysisManagerTest
         /// <summary>
         /// Constructor
         /// </summary>
-        private StatusFileTests()
+        public StatusFileTests()
         {
             mMgrSettings = new ManagerParameters();
         }
