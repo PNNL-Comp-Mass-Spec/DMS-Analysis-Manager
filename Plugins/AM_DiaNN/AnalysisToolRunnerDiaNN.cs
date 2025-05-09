@@ -239,16 +239,24 @@ namespace AnalysisManagerDiaNNPlugIn
                 // If mBuildingSpectralLibrary is true, create the spectral library file
                 // If mBuildingSpectralLibrary is false, process the mzML files using DIA-NN
 
-                var processingResult = StartDiaNN(fastaFile, spectralLibraryFile, out var completionCode);
+                var processingResultDiaNN = StartDiaNN(fastaFile, spectralLibraryFile, out var completionCode);
 
                 mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
                 // Stop the job timer
                 mStopTime = DateTime.UtcNow;
 
-                if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
+                CloseOutType processingResult;
+
+                if (processingResultDiaNN == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    StorePPMErrorStatsInDB();
+                    var successExtractingMassErrors = StorePPMErrorStatsInDB();
+
+                    processingResult = successExtractingMassErrors ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    processingResult = processingResultDiaNN;
                 }
 
                 // Add the current job data to the summary file
@@ -2066,7 +2074,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
             if (string.IsNullOrEmpty(massErrorExtractor.ErrorMessage))
             {
-                errorMsg = "Error parsing DiaNN report.stats.tsv output to extract mass error stats";
+                errorMsg = "Error parsing DIA-NN report.stats.tsv output to extract mass error stats";
             }
             else
             {
