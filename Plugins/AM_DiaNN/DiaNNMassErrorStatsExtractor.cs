@@ -166,6 +166,15 @@ namespace AnalysisManagerDiaNNPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Store mass error stats in the DMS database using procedure store_dta_ref_mass_error_stats
+        /// </summary>
+        /// <remarks>
+        /// Data is stored in columns psm_source_job, mass_error_ppm, and mass_error_ppm_refined in table t_dataset_qc
+        /// </remarks>
+        /// <param name="datasetID">Dataset ID</param>
+        /// <param name="xmlResults">Mass error stats, as XML</param>
+        /// <returns>True if successful, false if an error</returns>
         private bool PostMassErrorInfoToDB(int datasetID, string xmlResults)
         {
             try
@@ -173,8 +182,6 @@ namespace AnalysisManagerDiaNNPlugIn
                 var analysisTask = new AnalysisJob(mMgrParams, mDebugLevel);
                 var dbTools = analysisTask.DMSProcedureExecutor;
 
-                // Call procedure store_dta_ref_mass_error_stats in DMS5
-                // Data is stored in table T_Dataset_QC
                 var sqlCmd = dbTools.CreateCommand(STORE_MASS_ERROR_STATS_SP_NAME, CommandType.StoredProcedure);
 
                 // Define parameter for procedure's return value
