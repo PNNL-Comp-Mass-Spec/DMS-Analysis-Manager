@@ -17,7 +17,7 @@ namespace AnalysisManagerDiaNNPlugIn
     /// </summary>
     public class DiaNNMassErrorStatsExtractor
     {
-        // Ignore Spelling: PSM
+        // Ignore Spelling: Dia, PSM, Tsv
 
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "store_dta_ref_mass_error_stats";
         private readonly IMgrParams mMgrParams;

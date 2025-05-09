@@ -2,6 +2,8 @@
 {
     public class MassErrorInfo
     {
+        // Ignore Spelling: Dia
+
         /// <summary>
         /// Dataset name
         /// </summary>
