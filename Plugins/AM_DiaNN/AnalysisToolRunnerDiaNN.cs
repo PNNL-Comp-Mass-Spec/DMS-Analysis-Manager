@@ -2041,6 +2041,10 @@ namespace AnalysisManagerDiaNNPlugIn
             LogDebug(mDiaNNVersionText, mDebugLevel);
         }
 
+        /// <summary>
+        /// Parse the DIA-NN report.stats.tsv output file to extract the parent ion mass errors, then store them in table T_Dataset_QC in the DMS database
+        /// </summary>
+        /// <returns>True if successful, false if an error</returns>
         private bool StorePPMErrorStatsInDB()
         {
             // If this job applies to a single dataset, dataPackageID will be 0

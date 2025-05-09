@@ -341,7 +341,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// </summary>
         /// <remarks>
         /// Default values:
-        ///   DiaNN:           \\proto-9\DiaNN_Staging
+        ///   DIA-NN:          \\proto-9\DiaNN_Staging
         ///   MaxQuant:        \\protoapps\MaxQuant_Staging
         ///   FragPipe:        \\proto-9\MSFragger_Staging
         ///   MSFragger:       \\proto-9\MSFragger_Staging

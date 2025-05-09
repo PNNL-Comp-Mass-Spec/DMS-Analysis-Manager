@@ -12,7 +12,7 @@ using PRISMDatabaseUtils;
 namespace AnalysisManagerDiaNNPlugIn
 {
     /// <summary>
-    /// This class reads the report.stats.tsv from DiaNN's report output and extracts the parent ion mass error information
+    /// This class reads file report.stats.tsv created by DIA-NN, extracting the parent ion mass error information
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
     public class DiaNNMassErrorStatsExtractor
@@ -79,18 +79,20 @@ namespace AnalysisManagerDiaNNPlugIn
         }
 
         /// <summary>
-        /// Parse the DiaNN report.stats.tsv output file to extract the mass error reported in this table
+        /// Parse the DIA-NN report.stats.tsv output file to extract the parent ion mass errors (uncorrected and corrected)
         /// </summary>
         /// <param name="datasetName">Dataset name</param>
         /// <param name="datasetID">Dataset ID</param>
         /// <param name="psmJob">PSM job number</param>
-        /// <param name="reportStatsTsvFile">DiaNN report.stats.tsv output file path</param>
+        /// <param name="reportStatsTsvFile">DIA-NN report.stats.tsv output file path</param>
+        /// <returns>True if successful, false if an error</returns>
         public bool ParseDiaNNReportStatsTsv(string datasetName, int datasetID, int psmJob, FileInfo reportStatsTsvFile)
         {
-            // Example report.stats.tsv file content:
+            // The report.stats.tsv file should have a header row, followed by one row for each .mzML input file
+            // Since this method is only called for DIA-NN searches of individual datasets, there should only be one .mzML file listed
 
             // ... Median.Mass.Acc.MS1   Median.Mass.Acc.MS1.Corrected   Median.Mass.Acc.MS2   Median.Mass.Acc.MS2.Corrected ...
-            // ...             2.71901   0.313757                        3.09576               1.84858                       ...
+            // ... 4.16583               0.683939                        4.32735               1.81076                       ...
 
             const string MASS_ERROR_PPM = "Median.Mass.Acc.MS1";
             const string MASS_ERROR_PPM_CORRECTED = "Median.Mass.Acc.MS1.Corrected";
@@ -103,7 +105,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (!reportStatsTsvFile.Exists)
                 {
-                    ErrorMessage = "DiaNN report.stats.tsv file not found";
+                    ErrorMessage = "DIA-NN report.stats.tsv file not found";
                     return false;
                 }
 
@@ -121,15 +123,15 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 if (Math.Abs(MassErrorStats.MassErrorPPM - double.MinValue) < float.Epsilon)
                 {
-                    // Did not find 'Median.Mass.Acc.MS1' in the PPM Error Charter output
-                    ErrorMessage = "Did not find '" + MASS_ERROR_PPM + "' in the DiaNN report.stats.tsv";
+                    // Did not find 'Median.Mass.Acc.MS1' in the report.stats.tsv file
+                    ErrorMessage = string.Format("Did not find '{0}' in the DIA-NN report.stats.tsv", MASS_ERROR_PPM);
                     return false;
                 }
 
                 if (Math.Abs(MassErrorStats.MassErrorPPMCorrected - double.MinValue) < float.Epsilon)
                 {
-                    // Did not find 'Median.Mass.Acc.MS1.Corrected' with two values in the PPM Error Charter output
-                    ErrorMessage = "Did not find '" + MASS_ERROR_PPM_CORRECTED + "' in the DiaNN report.stats.tsv";
+                    // Did not find 'Median.Mass.Acc.MS1.Corrected' in the report.stats.tsv file
+                    ErrorMessage = string.Format("Did not find '{0}' in the DIA-NN report.stats.tsv", MASS_ERROR_PPM_CORRECTED);
                     return false;
                 }
 
@@ -149,7 +151,7 @@ namespace AnalysisManagerDiaNNPlugIn
                     {
                         if (string.IsNullOrEmpty(ErrorMessage))
                         {
-                            ErrorMessage = "Unknown error posting Mass Error results from DiaNN to the database";
+                            ErrorMessage = "Unknown error posting Mass Error results from DIA-NN to the database";
                         }
                         return false;
                     }
@@ -195,13 +197,13 @@ namespace AnalysisManagerDiaNNPlugIn
                 if (resCode != 0 && returnCode == 0)
                 {
                     ErrorMessage = string.Format(
-                        "ExecuteSP() reported result code {0} storing DiaNN Mass Error results in database using {1}",
+                        "ExecuteSP() reported result code {0} storing DIA-NN Mass Error results in database using {1}",
                         resCode, STORE_MASS_ERROR_STATS_SP_NAME);
                 }
                 else
                 {
                     ErrorMessage = string.Format(
-                        "Error storing DiaNN Mass Error results in database, {0} returned {1}",
+                        "Error storing DIA-NN Mass Error results in database, {0} returned {1}",
                         STORE_MASS_ERROR_STATS_SP_NAME, returnParam.Value.CastDBVal<string>());
                 }
 
@@ -209,7 +211,7 @@ namespace AnalysisManagerDiaNNPlugIn
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Exception storing DiaNN Mass Error Results in the database: " + ex.Message;
+                ErrorMessage = "Exception storing DIA-NN Mass Error Results in the database: " + ex.Message;
                 return false;
             }
         }

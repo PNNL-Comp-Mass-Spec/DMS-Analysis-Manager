@@ -8,7 +8,7 @@
         public string DatasetName;
 
         /// <summary>
-        /// Analysis Job number
+        /// Analysis job number
         /// </summary>
         public int PSMJob;
 
