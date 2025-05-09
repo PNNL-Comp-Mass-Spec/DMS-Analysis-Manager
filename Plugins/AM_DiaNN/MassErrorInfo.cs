@@ -7,22 +7,22 @@
         /// <summary>
         /// Dataset name
         /// </summary>
-        public string DatasetName;
+        public string DatasetName { get; set; }
 
         /// <summary>
         /// Analysis job number
         /// </summary>
-        public int PSMJob;
+        public int PSMJob { get; set; }
 
         /// <summary>
         /// Parent ion median mass error, before correction
         /// </summary>
-        public double MassErrorPPM;
+        public double MassErrorPPM { get; set; }
 
         /// <summary>
         /// Parent ion median mass error, after correction
         /// </summary>
-        public double MassErrorPPMCorrected;
+        public double MassErrorPPMCorrected { get; set; }
 
         /// <summary>
         /// Constructor
