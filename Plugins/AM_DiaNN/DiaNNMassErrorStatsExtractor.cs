@@ -135,6 +135,12 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 var xmlResults = ConstructXML();
 
+                if (string.IsNullOrWhiteSpace(xmlResults))
+                {
+                    ErrorMessage = "Method ConstructXML returned an empty string in class DiaNNMassErrorStatsExtractor";
+                    return false;
+                }
+
                 if (mPostResultsToDB)
                 {
                     var success = PostMassErrorInfoToDB(datasetID, xmlResults);
