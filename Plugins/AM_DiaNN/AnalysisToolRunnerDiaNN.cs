@@ -248,7 +248,7 @@ namespace AnalysisManagerDiaNNPlugIn
 
                 CloseOutType processingResult;
 
-                if (processingResultDiaNN == CloseOutType.CLOSEOUT_SUCCESS)
+                if (processingResultDiaNN == CloseOutType.CLOSEOUT_SUCCESS && !mBuildingSpectralLibrary)
                 {
                     var successExtractingMassErrors = StorePPMErrorStatsInDB();
 
