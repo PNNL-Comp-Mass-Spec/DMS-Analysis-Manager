@@ -985,6 +985,11 @@ namespace AnalysisManagerFragPipePlugIn
 
                     var targetSubdirectory = new DirectoryInfo(Path.Combine(targetDirectory.FullName, subdirectory.Name));
 
+                    if (!targetSubdirectory.Exists)
+                    {
+                        targetSubdirectory.Create();
+                    }
+
                     var filesMoved = MoveResultsIntoDirectory(subdirectory, targetSubdirectory, true);
 
                     if (!filesMoved)
