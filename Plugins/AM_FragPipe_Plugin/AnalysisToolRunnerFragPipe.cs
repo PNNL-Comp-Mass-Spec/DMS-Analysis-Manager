@@ -1110,95 +1110,105 @@ namespace AnalysisManagerFragPipePlugIn
             // Example Console output
             // ----------------------------------------------------
 
-            // System OS: Windows 11, Architecture: AMD64
+            // System OS: Windows 10, Architecture: AMD64
             // Java Info: 11.0.24, OpenJDK 64-Bit Server VM, Eclipse Adoptium
-            // .NET Core Info: 6.0.425
+            // .NET Core Info: N/A
             //
             // Version info:
-            // FragPipe version 22.0
-            // MSFragger version 4.1
-            // IonQuant version 1.10.27
-            // diaTracer version 1.1.5
+            // FragPipe version 23.0
+            // DIA-Umpire version 2.3.2
+            // diaTracer version 1.2.5
+            // MSFragger version 4.2
+            // Crystal-C version 1.5.8
+            // MSBooster version 1.3.9
+            // Percolator version 3.7.1
             // Philosopher version 5.1.1
+            // PTM-Shepherd version 3.0.1
+            // IonQuant version 1.11.9
+            // TMT-Integrator version 6.1.1
+            // EasyPQP version 0.1.52
+            // DIA-NN version 1.8.2 beta 8
+            // Skyline version N/A
+            // Pandas version 2.2.3
+            // Numpy version 1.26.4
             //
             // LCMS files:
             //   Experiment/Group: NYBB_30_P01_P
             //   (if "spectral library generation" is enabled, all files will be analyzed together)
-            //   - C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
-            //   - C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
-            //   - C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
             //   Experiment/Group: NYBB_30_P02_P
             //   (if "spectral library generation" is enabled, all files will be analyzed together)
-            //   - C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
-            //   - C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
-            //   - C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML   DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
+            //   - D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML	DDA
             //
-            // 68 commands to execute:
+            // 50 commands to execute:
             // CheckCentroid
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx9G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-22.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.33.4.jar com.dmtavt.fragpipe.util.CheckCentroid C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 15
-            // WorkspaceCleanInit [Work dir: C:\DMS_WorkDir]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
+            // WorkspaceCleanInit [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
             // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
             // ...
-            // MSFragger [Work dir: C:\DMS_WorkDir]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx9G C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.1\MSFragger-4.1.jar C:\DMS_WorkDir\fragger.params C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML C:\DMS_WorkDir\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
-            // MSFragger move pepxml
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-22.0.jar;/C:/DMS_Programs/FragPipe/FragPipe_v23.0/lib/commons-io-2.15.1.jar com.github.chhh.utils.FileMove --no-err C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pepXML C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pepXML
-            // MSFragger move tsv
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-22.0.jar;/C:/DMS_Programs/FragPipe/FragPipe_v23.0/lib/commons-io-2.15.1.jar com.github.chhh.utils.FileMove --no-err C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.tsv C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.tsv
-            // MSFragger move pin
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-22.0.jar;/C:/DMS_Programs/FragPipe/FragPipe_v23.0/lib/commons-io-2.15.1.jar com.github.chhh.utils.FileMove --no-err C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pin C:\DMS_WorkDir\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pin
-            // Percolator [Work dir: C:\DMS_WorkDir\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\percolator_3_6_5\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 15 --results-psms NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv --decoy-results-psms NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.pin
+            // MSFragger [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\MSFragger-4.2.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // Percolator [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
             // ...
-            // PTMProphet [Work dir: C:\DMS_WorkDir\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC EM=1 NIONS=b STY:79.966331,M:15.9949 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
+            // Percolator: Convert to pepxml [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // Percolator delete temp
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar org.nesvilab.utils.FileDelete D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv
             // ...
-            // ProteinProphet [Work dir: C:\DMS_WorkDir]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined C:\DMS_WorkDir\filelist_proteinprophet.txt
-            // PhilosopherDbAnnotate [Work dir: C:\DMS_WorkDir\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate C:\FragPipe_TestTMT_Phospho_Multi_TwoGroups\ID_008380_0E5568A3.fasta --prefix XXX_
-            // PhilosopherFilter [Work dir: C:\DMS_WorkDir\NYBB_30_P01_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml C:\DMS_WorkDir\NYBB_30_P01_P --protxml C:\DMS_WorkDir\combined.prot.xml --razor
-            // PhilosopherFilter [Work dir: C:\DMS_WorkDir\NYBB_30_P02_P]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml C:\DMS_WorkDir\NYBB_30_P02_P --dbbin C:\DMS_WorkDir\NYBB_30_P01_P --protxml C:\DMS_WorkDir\combined.prot.xml --probin C:\DMS_WorkDir\NYBB_30_P01_P --razor
-            // PhilosopherReport [Work dir: C:\DMS_WorkDir\NYBB_30_P01_P]
+            // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
+            // ...
+            // ProteinProphet [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
+            // PhilosopherDbAnnotate [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
+            // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
+            // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P02_P --dbbin D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --probin D:\DMS_WorkDir1\NYBB_30_P01_P --razor
+            // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
             // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe report
-            // PhilosopherReport [Work dir: C:\DMS_WorkDir\NYBB_30_P02_P]
+            // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
             // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe report
-            // WorkspaceClean [Work dir: C:\DMS_WorkDir]
+            // WorkspaceClean [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
             // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe workspace --clean --nocheck
-            // IonQuant [Work dir: C:\DMS_WorkDir]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx9G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.1\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.1\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.33.4.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.10.27.jar ionquant.IonQuant --threads 15 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist C:\DMS_WorkDir\filelist_ionquant.txt --modlist C:\DMS_WorkDir\modmasses_ionquant.txt
-            // IonQuant [Work dir: C:\DMS_WorkDir]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx9G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.1\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.1\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.33.4.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.10.27.jar ionquant.IonQuant --threads 15 --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-16 --ionmobility 0 --site-reports 0 --msstats 0 --annotation C:\DMS_WorkDir\NYBB_30_P01_P\psm.tsv=C:\DMS_WorkDir\NYBB_30_P01_P\annotation_01_annotation.txt --annotation C:\DMS_WorkDir\NYBB_30_P02_P\psm.tsv=C:\DMS_WorkDir\NYBB_30_P02_P\annotation_02_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist C:\DMS_WorkDir\filelist_ionquant.txt --modlist C:\DMS_WorkDir\modmasses_ionquant.txt
-            // TmtIntegrator [Work dir: C:\DMS_WorkDir]
-            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx9G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\tmt-integrator-5.0.9.jar tmtintegrator.TMTIntegrator C:\DMS_WorkDir\tmt-integrator-conf.yml C:\DMS_WorkDir\NYBB_30_P01_P\psm.tsv C:\DMS_WorkDir\NYBB_30_P02_P\psm.tsv
+            // ...
+            // IonQuant [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.9.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // IonQuant [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.9.jar ionquant.IonQuant --threads 23 --perform-ms1quant 0 --perform-isoquant 1 --isotol 20.0 --isolevel 2 --isotype TMT-16 --ionmobility 0 --site-reports 0 --msstats 0 --annotation D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_annotation.txt --annotation D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv=D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_annotation.txt --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // TmtIntegrator [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
             // Execution order:
             //
-            //     Cmd: [START], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [CheckCentroid], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [WorkspaceCleanInit], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [WorkspaceCleanInit], Work dir: [C:\DMS_WorkDir\NYBB_30_P01_P]
-            //     Cmd: [WorkspaceCleanInit], Work dir: [C:\DMS_WorkDir\NYBB_30_P02_P]
-            //     Cmd: [MSFragger], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [Percolator], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [PTMProphet], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [ProteinProphet], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [PhilosopherDbAnnotate], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [PhilosopherFilter], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [PhilosopherReport], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [WorkspaceClean], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [WorkspaceClean], Work dir: [C:\DMS_WorkDir\NYBB_30_P01_P]
-            //     Cmd: [WorkspaceClean], Work dir: [C:\DMS_WorkDir\NYBB_30_P02_P]
-            //     Cmd: [IonQuant], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [IonQuant], Work dir: [C:\DMS_WorkDir]
-            //     Cmd: [TmtIntegrator], Work dir: [C:\DMS_WorkDir]
+            //     Cmd: [START], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [CheckCentroid], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [WorkspaceCleanInit], Work dir: [D:\DMS_WorkDir1\NYBB_30_P02_P]
+            //     Cmd: [WorkspaceCleanInit], Work dir: [D:\DMS_WorkDir1\NYBB_30_P01_P]
+            //     Cmd: [WorkspaceCleanInit], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [MSFragger], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [Percolator], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [PTMProphet], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [ProteinProphet], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [PhilosopherDbAnnotate], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [PhilosopherFilter], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [PhilosopherReport], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [WorkspaceClean], Work dir: [D:\DMS_WorkDir1\NYBB_30_P02_P]
+            //     Cmd: [WorkspaceClean], Work dir: [D:\DMS_WorkDir1\NYBB_30_P01_P]
+            //     Cmd: [WorkspaceClean], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [IonQuant], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [IonQuant], Work dir: [D:\DMS_WorkDir1]
+            //     Cmd: [TmtIntegrator], Work dir: [D:\DMS_WorkDir1]
             //
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
-            // ~~~~~~Sample of C:\FragPipe_TestTMT_Phospho_Multi_TwoGroups\ID_008380_0E5568A3.fasta~~~~~~~
+            // ~~~~~~Sample of D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta~~~~~~~
             // >Contaminant_ALBU_BOVIN SERUM ALBUMIN PRECURSOR. (sp|P02769|ALBU_BOVIN, gi|113574)
             // >XXX_sp|O43741|AAKB2_HUMAN 5'-AMP-activated protein kinase subunit beta-2 OS=Homo sapiens OX=9606 GN=PRKAB2 PE=1 SV=1
             // >XXX_sp|P0DPD6|ECE2_HUMAN Endothelin-converting enzyme 2 OS=Homo sapiens OX=9606 GN=ECE2 PE=1 SV=1
@@ -1212,31 +1222,266 @@ namespace AnalysisManagerFragPipePlugIn
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
             // ~~~~~~annotation files~~~~~~~
-            // C:\DMS_WorkDir\NYBB_30_P01_P\annotation_01_annotation.txt:
-            // 126 sample-01
-            // 127N sample-02
-            // 127C sample-03
-            // 128N sample-04
-            // 128C sample-05
-            // 129N sample-06
-            // 129C sample-07
-            // 130N sample-08
-            // 130C sample-09
-            // 131N sample-10
-            // 131C sample-11
-            // 132N sample-12
-            // 132C sample-13
-            // 133N sample-14
-            // 133C sample-15
-            // 134N sample-16
-            // C:\DMS_WorkDir\NYBB_30_P02_P\annotation_02_annotation.txt:
-            // 126 sample-01
-            // 127N sample-02
+            // D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_annotation.txt:
+            // 126 NYBB_30_P01_sample-01
+            // 127N NYBB_30_P01_sample-02
+            // 127C NYBB_30_P01_sample-03
+            // 128N NYBB_30_P01_sample-04
+            // 128C NYBB_30_P01_sample-05
+            // 129N NYBB_30_P01_sample-06
+            // 129C NYBB_30_P01_sample-07
+            // 130N NYBB_30_P01_sample-08
+            // 130C NYBB_30_P01_sample-09
+            // 131N NYBB_30_P01_sample-10
+            // 131C NYBB_30_P01_sample-11
+            // 132N NYBB_30_P01_sample-12
+            // 132C NYBB_30_P01_sample-13
+            // 133N NYBB_30_P01_sample-14
+            // 133C NYBB_30_P01_sample-15
+            // 134N NYBB_30_P01_sample-16
+            // D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_annotation.txt:
+            // 126 NYBB_30_P02_sample-01
+            // 127N NYBB_30_P02_sample-02
             // ...
-            // 133C sample-15
-            // 134N sample-16
+            // 133C NYBB_30_P02_sample-15
+            // 134N NYBB_30_P02_sample-16
             // ~~~~~~~~~~~~~~~~~~~~~~
             //
+            // ~~~~~~~~~ fragpipe.config ~~~~~~~~~
+            // # FragPipe v23.0ui state cache
+            //
+            // ...
+            //
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // CheckCentroid
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib\fragpipe-23.0.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\batmass-io-1.35.1.jar org.nesvilab.fragpipe.util.CheckCentroid D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 23
+            // Done in 2.8 s.
+            // Process 'CheckCentroid' finished, exit code: 0
+            // ...
+            // MSFragger [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -jar -Dfile.encoding=UTF-8 -Xmx60G C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\MSFragger-4.2.jar D:\DMS_WorkDir1\fragger.params D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML D:\DMS_WorkDir1\NYBB_30_P02_P\NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // MSFragger version MSFragger-4.2
+            // Batmass-IO version 1.35.1
+            // timsdata library version timsdata-2-21-0-4
+            // (c) University of Michigan
+            // RawFileReader reading tool. Copyright (c) 2016 by Thermo Fisher Scientific, Inc. All rights reserved.
+            // timdTOF .d reading tool. Copyright (c) 2022 by Bruker Daltonics GmbH & Co. KG. All rights reserved.
+            // System OS: Windows 10, Architecture: AMD64
+            // Java Info: 17.0.10, OpenJDK 64-Bit Server VM, Eclipse Adoptium
+            // JVM started with 60 GB memory
+            // Checking database...
+            // Checking spectral files...
+            // NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 45846; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 45900; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 46689; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 46797; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 46862; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML: Scans = 49119; MS2 ITMS = false; MS2 FTMS = true; MS2 ASTMS = false; MS1 ITMS = false; Isolation sizes = [0.7]; Instrument = Orbitrap Fusion Lumos
+            // ***********************************FIRST SEARCH************************************
+            // Parameters:
+            // ...
+            // Number of unique peptides
+            // 	of length 7: 287673
+            // 	of length 8: 278840
+            // 	...
+            // 	of length 49: 2420
+            // 	of length 50: 1475
+            // In total 5004351 peptides.
+            // Generated 84825409 modified peptides.
+            // Number of peptides with more than 5000 modification patterns: 0
+            // Selected fragment index width 0.10 Da.
+            // 4755721800 fragments to be searched in 1 slices (44.29 GB total)
+            // Operating on slice 1 of 1:
+            // 	Fragment index slice generated in 37.04 s
+            // 	001. NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 2.5 s | deisotoping 1.6 s
+            // 		[progress: 45846/45846 (100%) - 7742 spectra/s] 5.9s
+            // 	002. NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML 1.7 s | deisotoping 0.2 s
+            // 		[progress: 45900/45900 (100%) - 26109 spectra/s] 1.8s
+            // 	003. NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML 1.7 s | deisotoping 0.2 s
+            // 		[progress: 46689/46689 (100%) - 21348 spectra/s] 2.2s
+            // 	004. NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 1.6 s | deisotoping 0.3 s
+            // 		[progress: 46797/46797 (100%) - 25187 spectra/s] 1.9s
+            // 	005. NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML 1.9 s | deisotoping 0.5 s
+            // 		[progress: 49119/49119 (100%) - 21393 spectra/s] 2.3s
+            // 	006. NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML 1.6 s | deisotoping 0.3 s
+            // 		[progress: 46862/46862 (100%) - 22551 spectra/s] 2.1s
+            // postprocessing NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 0.3 s
+            // postprocessing NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML 0.2 s
+            // postprocessing NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML 0.2 s
+            // postprocessing NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML 0.2 s
+            // postprocessing NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzML 0.4 s
+            // postprocessing NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzML 0.3 s
+            // ***************************FIRST SEARCH DONE IN 1.608 MIN**************************
+            //
+            // *********************MASS CALIBRATION AND PARAMETER OPTIMIZATION*******************
+            // -----|---------------|---------------|---------------|---------------
+            //      |  MS1   (Old)  |  MS1   (New)  |  MS2   (Old)  |  MS2   (New)
+            // -----|---------------|---------------|---------------|---------------
+            //  Run |  Median  MAD  |  Median  MAD  |  Median  MAD  |  Median  MAD
+            //  001 |   3.56   1.68 |   0.06   0.97 |   1.37   1.53 |  -0.12   1.09
+            //  002 |   3.53   1.46 |   0.07   1.00 |   1.63   1.48 |  -0.13   1.05
+            //  003 |   3.69   1.38 |  -0.05   0.90 |   1.56   1.49 |  -0.09   1.03
+            //  004 |   3.22   1.55 |   0.05   1.01 |   1.62   1.46 |  -0.11   1.04
+            //  005 |   2.75   1.59 |   0.14   1.01 |   2.06   1.51 |  -0.08   1.08
+            //  006 |   3.54   1.68 |   0.05   1.09 |   2.24   1.52 |  -0.06   1.05
+            // -----|---------------|---------------|---------------|---------------
+            // Finding the optimal parameters:
+            // -------|-------|-------|-------|-------|-------|-------
+            //   MS2  |    7  |   10  |   15  |   20  |   25  |   30
+            // -------|-------|-------|-------|-------|-------|-------
+            //  Count |   7034|   7017| skip rest
+            // -------|-------|-------|-------|-------|-------|-------
+            // -------|-------|-------|-------|-------
+            //  Peaks | 300_0 | 200_0 | 150_1 | 100_1
+            // -------|-------|-------|-------|-------
+            //  Count |   7682|   7560| skip rest
+            // -------|-------|-------|-------|-------
+            // -------|-------
+            //  Int.  |    1
+            // -------|-------
+            //  Count |   7483
+            // -------|-------
+            // -------|-------
+            //  Rm P. |    0
+            // -------|-------
+            //  Count |   7679
+            // -------|-------
+            // New fragment_mass_tolerance = 7.000000 PPM
+            // New use_topN_peaks = 300
+            // New minimum_ratio = 0.000000
+            // New intensity_transform = 0
+            // New remove_precursor_peak = 1
+            // ************MASS CALIBRATION AND PARAMETER OPTIMIZATION DONE IN 4.987 MIN*********
+            //
+            // ************************************MAIN SEARCH************************************
+            // Checking database...
+            // Parameters:
+            // num_threads = 23
+            // ...
+            // Number of unique peptides
+            // 	of length 7: 287673
+            // 	of length 8: 278840
+            // 	...
+            // 	of length 49: 2420
+            // 	of length 50: 1475
+            // In total 5004351 peptides.
+            // Generated 145075941 modified peptides.
+            // Number of peptides with more than 5000 modification patterns: 28
+            // Selected fragment index width 0.03 Da.
+            // 8734427126 fragments to be searched in 2 slices (81.35 GB total)
+            // Operating on slice 1 of 2:
+            // 	Fragment index slice generated in 36.15 s
+            // 	001. NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.5 s
+            // 		[progress: 45846/45846 (100%) - 15530 spectra/s] 3.0s
+            // 	002. NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.4 s
+            // 		[progress: 45900/45900 (100%) - 12718 spectra/s] 3.6s
+            // 	003. NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 46689/46689 (100%) - 13764 spectra/s] 3.4s
+            // 	004. NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 46797/46797 (100%) - 11563 spectra/s] 4.0s
+            // 	005. NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.4 s
+            // 		[progress: 49119/49119 (100%) - 8796 spectra/s] 5.6s
+            // 	006. NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 1.0 s
+            // 		[progress: 46862/46862 (100%) - 9958 spectra/s] 4.7s
+            // Operating on slice 2 of 2:
+            // 	Fragment index slice generated in 30.04 s
+            // 	001. NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 45846/45846 (100%) - 29945 spectra/s] 1.5s
+            // 	002. NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 45900/45900 (100%) - 29273 spectra/s] 1.6s
+            // 	003. NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 46689/46689 (100%) - 35478 spectra/s] 1.3s
+            // 	004. NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.3 s
+            // 		[progress: 46797/46797 (100%) - 23779 spectra/s] 2.0s
+            // 	005. NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.4 s
+            // 		[progress: 49119/49119 (100%) - 21393 spectra/s] 2.3s
+            // 	006. NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 0.4 s
+            // 		[progress: 46862/46862 (100%) - 25208 spectra/s] 1.9s
+            // postprocessing NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 4.5 s
+            // postprocessing NYBB_30_P01_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 4.4 s
+            // postprocessing NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 3.7 s
+            // postprocessing NYBB_30_P02_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 4.0 s
+            // postprocessing NYBB_30_P02_P_f08_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 4.7 s
+            // postprocessing NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mzBIN_calibrated 4.1 s
+            // ***************************MAIN SEARCH DONE IN 2.606 MIN***************************
+            //
+            // *******************************TOTAL TIME 9.200 MIN********************************
+            // Process 'MSFragger' finished, exit code: 0
+            // Percolator [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\percolator_3_7_1\windows\percolator.exe --only-psms --no-terminate --post-processing-tdc --num-threads 23 --results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv --decoy-results-psms NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv --protein-decoy-pattern XXX_ NYBB_30_P01_P_f09_20Jun23_Pippin_WBEH-23-05-19.pin
+            // Percolator version 3.07.1, Build Date Jun 20 2024 13:21:08
+            // ...
+            // Calculating q values.
+            // Final list yields 8454 target PSMs with q<0.01.
+            // Calculating posterior error probabilities (PEPs).
+            // Processing took 9.2150 cpu seconds or 9 seconds wall clock time.
+            // Process 'Percolator' finished, exit code: 0
+            // ...
+            // Percolator: Convert to pepxml [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\lib/* org.nesvilab.fragpipe.tools.percolator.PercolatorOutputToPepXML NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.pin NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_target_psms.tsv NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19_percolator_decoy_psms.tsv interact-NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19 DDA 0.5 D:\DMS_WorkDir1\NYBB_30_P01_P\NYBB_30_P01_P_f07_20Jun23_Pippin_WBEH-23-05-19.mzML
+            // ...
+            // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\PTMProphet\PTMProphetParser.exe NOSTACK KEEPOLD STATIC FRAGPPMTOL=10 EM=1 NIONS=b M:15.9949,n:42.010567,STY:79.96633 MINPROB=0.5 MAXTHREADS=1 interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.pep.xml interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml
+            // PTMProphet [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
+            // ...
+            // [INFO:] Writing file interact-NYBB_30_P02_P_f09_20Jun23_Pippin_WBEH-23-05-19.mod.pep.xml ...
+            // [INFO:] done ...
+            // Process 'PTMProphet' finished, exit code: 0
+            // [INFO:] Using statically set 10 PPM tolerance ...
+            // ...
+            // ProteinProphet [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe proteinprophet --maxppmdiff 2000000 --minprob 0.5 --output combined D:\DMS_WorkDir1\filelist_proteinprophet.txt
+            // time="20:54:27" level=info msg="Executing ProteinProphet  v5.1.1"
+            // ProteinProphet (C++) by Insilicos LLC and LabKey Software, after the original Perl by A. Keller (TPP v6.0.0-rc15 Noctilucent, Build 202105101442-exported (Windows_NT-x86_64))
+            //  (no FPKM) (no groups) (using degen pep info)
+            // ...
+            // Process 'ProteinProphet' finished, exit code: 0
+            // PhilosopherDbAnnotate [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe database --annotate D:\DMS_WorkDir1\ID_008380_0E5568A3.fasta --prefix XXX_
+            // time="20:54:37" level=info msg="Executing Database  v5.1.1"
+            // time="20:54:37" level=info msg="Annotating the database"
+            // time="20:54:38" level=info msg=Done
+            // Process 'PhilosopherDbAnnotate' finished, exit code: 0
+            // PhilosopherFilter [Work dir: D:\DMS_WorkDir1\NYBB_30_P01_P]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\Philosopher\philosopher-v5.1.1.exe filter --sequential --picked --prot 0.01 --tag XXX_ --pepxml D:\DMS_WorkDir1\NYBB_30_P01_P --protxml D:\DMS_WorkDir1\combined.prot.xml --razor
+            // ...
+            // Process 'PhilosopherFilter' finished, exit code: 0
+            // PhilosopherReport [Work dir: D:\DMS_WorkDir1\NYBB_30_P02_P]
+            // ...
+            // IonQuant [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Djava.awt.headless=true -Xmx60G -Dlibs.bruker.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\bruker -Dlibs.thermo.dir=C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\MSFragger-4.2\ext\thermo -cp C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\jfreechart-1.5.3.jar;C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\IonQuant-1.11.9.jar ionquant.IonQuant --threads 23 --perform-ms1quant 1 --perform-isoquant 0 --isotol 20.0 --isolevel 2 --isotype tmt10 --ionmobility 0 --site-reports 0 --msstats 0 --minexps 1 --mbr 0 --maxlfq 0 --requantify 0 --mztol 10 --imtol 0.05 --rttol 1 --normalization 0 --minisotopes 1 --minscans 1 --writeindex 0 --tp 0 --minfreq 0 --minions 1 --locprob 0 --uniqueness 0 --multidir . --filelist D:\DMS_WorkDir1\filelist_ionquant.txt --modlist D:\DMS_WorkDir1\modmasses_ionquant.txt
+            // IonQuant version IonQuant-1.11.9
+            // Batmass-IO version 1.35.1
+            // timsdata library version timsdata-2-21-0-4
+            // ...
+            // Process 'IonQuant' finished, exit code: 0
+            // TmtIntegrator [Work dir: D:\DMS_WorkDir1]
+            // C:\DMS_Programs\FragPipe\FragPipe_v23.0\jre\bin\java.exe -Xmx60G -jar C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\TMT-Integrator-6.1.1.jar D:\DMS_WorkDir1\tmt-integrator-conf.yml D:\DMS_WorkDir1\NYBB_30_P01_P\psm.tsv D:\DMS_WorkDir1\NYBB_30_P02_P\psm.tsv
+            // TMT Integrator 6.1.1
+            // ...
+            // Process 'TmtIntegrator' finished, exit code: 0
+            //
+            // Please cite:
+            // ...
+            //
+            // Task Runtimes:
+            //   CheckCentroid: 0.05 minutes
+            //   WorkspaceCleanInit: 0.03 minutes
+            //   MSFragger: 9.22 minutes
+            //   Percolator: 0.71 minutes
+            //   Percolator: Convert to pepxml: 0.23 minutes
+            //   Percolator delete temp: 0.05 minutes
+            //   PTMProphet: 5.47 minutes
+            //   ProteinProphet: 0.16 minutes
+            //   PhilosopherDbAnnotate: 0.01 minutes
+            //   PhilosopherFilter: 0.34 minutes
+            //   PhilosopherReport: 0.05 minutes
+            //   WorkspaceClean: 0.01 minutes
+            //   IonQuant: 1.01 minutes
+            //   TmtIntegrator: 0.08 minutes
+            //   Finalizer Task: 0.01 minutes
+            //
+            // =============================================================ALL JOBS DONE IN 17.5 MINUTES=============================================================
 
             // ReSharper restore CommentTypo
 
