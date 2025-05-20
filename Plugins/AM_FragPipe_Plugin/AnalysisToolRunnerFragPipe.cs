@@ -572,14 +572,15 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // Verify that Python.exe exists
-                // Python3ProgLoc will be something like this: "C:\Python3"
-                var pythonProgLoc = mMgrParams.GetParam("Python3ProgLoc");
+                // Prior to May 2025, used Python3ProgLoc, which is "C:\Python3"
+                // FragPipe v23 ships with Python 3.11.11, which is tracked by manager parameter FragPipePython3ProgLoc, with value C:\DMS_Programs\FragPipe\FragPipe_v23.0\python
+                var pythonProgLoc = mMgrParams.GetParam("FragPipePython3ProgLoc");
 
                 if (!Directory.Exists(pythonProgLoc))
                 {
                     if (pythonProgLoc.Length == 0)
                     {
-                        LogError("Parameter 'Python3ProgLoc' not defined for this manager", true);
+                        LogError("Parameter 'FragPipePython3ProgLoc' not defined for this manager", true);
                     }
                     else
                     {
