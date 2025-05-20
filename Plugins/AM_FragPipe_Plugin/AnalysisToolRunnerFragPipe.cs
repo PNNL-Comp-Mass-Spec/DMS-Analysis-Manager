@@ -42,7 +42,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         private const string FRAGPIPE_TOOLS_DIRECTORY_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools";
 
-        private const string FRAGPIPE_DIANN_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools\diann\1.8.2_beta_8\win\DiaNN.exe";
+        private const string FRAGPIPE_DIANN_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\tools\diann\1.8.2_beta_8\windows\DiaNN.exe";
 
         private const string FRAGPIPE_CONSOLE_OUTPUT = "FragPipe_ConsoleOutput.txt";
 

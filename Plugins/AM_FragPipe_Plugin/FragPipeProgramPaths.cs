@@ -10,7 +10,7 @@ namespace AnalysisManagerFragPipePlugin
         /// Path to DiaNN.exe
         /// </summary>
         /// <remarks>
-        /// C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\diann\1.8.2_beta_8\win\DiaNN.exe
+        /// C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\diann\1.8.2_beta_8\windows\DiaNN.exe
         /// </remarks>
         public FileInfo DiannExe { get; set; } = new("DiaNN.exe");
 
