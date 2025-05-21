@@ -895,6 +895,8 @@ namespace AnalysisManagerExtractionPlugin
         {
             var filesToGet = new List<string>();
 
+            int experimentGroupCount;
+
             // First copy the _psm.tsv file locally
             if (Global.IsMatch(DatasetName, AGGREGATION_JOB_DATASET) || IsDataPackageDataset(DatasetName))
             {
@@ -919,6 +921,8 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                experimentGroupCount = datasetIDsByExperimentGroup.Count;
+
                 if (!success || datasetIDsByExperimentGroup.Count <= 1)
                 {
                     // Retrieve file Aggregation_psm.tsv
@@ -931,7 +935,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     filesToGet.Add(ZIPPED_MSFRAGGER_PSM_TSV_FILES);
 
-                    // Retrieve file Aggregation_psm.tsv
+                    // Retrieve file Aggregation_psm.tsv (if it exists)
                     filesToGet.Add(AGGREGATION_JOB_DATASET + PSM_FILE_SUFFIX);
 
                     // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator
@@ -947,6 +951,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Normally the _psm.tsv file exists
                 // However, if Peptide Prophet was not used, instead retrieve the Dataset.tsv file
                 filesToGet.Add(DatasetName + PSM_FILE_SUFFIX);
+                experimentGroupCount = 0;
             }
 
             var sourceDirPath = string.Empty;
@@ -1016,6 +1021,12 @@ namespace AnalysisManagerExtractionPlugin
 
                         // Exit the for loop since file Aggregation_psm.tsv was copied locally
                         break;
+                    }
+
+                    if (experimentGroupCount > 1)
+                    {
+                        // File Aggregation_psm.tsv but there are experiment groups; move on to the next file in filesToGet
+                        continue;
                     }
                 }
 
