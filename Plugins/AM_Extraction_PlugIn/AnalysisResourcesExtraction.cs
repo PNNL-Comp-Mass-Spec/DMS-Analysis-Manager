@@ -1115,7 +1115,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            // Note that we'll obtain the MSFragger parameter file in RetrieveMiscFiles
+            // Note that we'll obtain the MSFragger or FragPipe parameter file in RetrieveMiscFiles
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

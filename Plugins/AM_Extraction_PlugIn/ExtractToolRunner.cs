@@ -197,7 +197,7 @@ namespace AnalysisManagerExtractionPlugin
                         break;
 
                     case AnalysisResources.RESULT_TYPE_MSFRAGGER:
-                        // Run PHRP
+                        // Run PHRP for MSFragger or FragPipe
                         var scriptName = mJobParams.GetParam("ToolName");
 
                         // Example values for currentAction:
@@ -1690,7 +1690,7 @@ namespace AnalysisManagerExtractionPlugin
             if (resultOverall != CloseOutType.CLOSEOUT_SUCCESS)
                 return resultOverall;
 
-            // Process combinedPsmTsvFilePath
+            // Process file Combined_Results_AllExperimentGroups_psm.tsv
             var combinedTsvResult = RunPhrpForMSFragger(
                 COMBINED_TSV_BASE_NAME,
                 Path.GetFileName(combinedPsmTsvFilePath),
@@ -1723,6 +1723,7 @@ namespace AnalysisManagerExtractionPlugin
                 psmResultsOverall.PercentPSMsMissingNTermReporterIon = combinedTsvPsmResults.PercentPSMsMissingNTermReporterIon;
                 psmResultsOverall.PercentPSMsMissingReporterIon = combinedTsvPsmResults.PercentPSMsMissingReporterIon;
 
+                // Since processing succeed, add Combined_Results_AllExperimentGroups_psm.tsv and the Combined_Results_AllExperimentGroups_msfragger_syn*.txt files to the result files to skip
                 mJobParams.AddResultFileToSkip(combinedPsmTsvFilePath);
 
                 var workDirInfo = new DirectoryInfo(mWorkDir);
