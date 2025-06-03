@@ -2275,6 +2275,14 @@ namespace AnalysisManagerFragPipePlugIn
                 var workflowFileName = mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE);
 
                 var sourceFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName));
+                var targetFile = new FileInfo(sourceFile.FullName + ".original");
+
+                if (targetFile.Exists)
+                {
+                    // The .original file already exists; we're likely debugging the code
+                    targetFile.Delete();
+                }
+
                 sourceFile.MoveTo(sourceFile.FullName + ".original");
                 mJobParams.AddResultFileToSkip(sourceFile.Name);
 
