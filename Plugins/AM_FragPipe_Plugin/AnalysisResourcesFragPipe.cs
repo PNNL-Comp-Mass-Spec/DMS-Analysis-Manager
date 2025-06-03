@@ -431,7 +431,14 @@ namespace AnalysisManagerFragPipePlugIn
                 return (int)(fragPipeMemorySizeMBJobParam / 1024.0);
             }
 
-            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier;
+            // Formula used prior to 2024-12-29:
+            //  recommendedMemorySizeMB = ((int)(fastaFileSizeMB * 0.5 + 10) * 1024 + (Math.Max(2, dynamicModCount) - 2) * 5000) * sizeMultiplier;
+
+            // Formula used prior to 2025-05-30:
+            //  recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.75 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 7500) * sizeMultiplier;
+
+            // Formula in use with FragPipe v23
+            var recommendedMemorySizeMB = ((int)Math.Round(fastaFileSizeMB * 0.35 + 10) * 1024 + (Math.Max(1, dynamicModCount) - 1) * 5000) * sizeMultiplier;
 
             var fragPipeMemorySizeGB = recommendedMemorySizeMB > fragPipeMemorySizeMBJobParam
                 ? recommendedMemorySizeMB / 1024.0
