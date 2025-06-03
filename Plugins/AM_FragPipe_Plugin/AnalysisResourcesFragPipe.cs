@@ -124,6 +124,7 @@ namespace AnalysisManagerFragPipePlugIn
                     }
                 }
 
+                currentTask = "Initialize the FragPipe options";
 
                 var options = new FragPipeOptions(mJobParams, datasetCount);
                 RegisterEvents(options);
@@ -156,11 +157,15 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                currentTask = "Copy the DiaNN spectral library file, if defined";
+
                 // Copy the DiaNN spectral library file, if defined
                 if (!GetDiannSpectralLibrary())
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                currentTask = "Load the FragPipe workflow file";
 
                 // Parse the FragPipe workflow file so that GetDynamicModResidueCount() will be able to consider the number of residues with a dynamic mod
                 options.LoadFragPipeOptions(workflowFile.FullName);
@@ -180,6 +185,7 @@ namespace AnalysisManagerFragPipePlugIn
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
 
+                currentTask = "Retrieve instrument files for job datasets";
 
                 var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
 
@@ -279,7 +285,7 @@ namespace AnalysisManagerFragPipePlugIn
                 }
             }
 
-            // Store the list of experiment in a packed job parameter
+            // Store the list of experiments in a packed job parameter
             StorePackedJobParameterList(experimentNames, JOB_PARAM_DICTIONARY_EXPERIMENTS_BY_DATASET_ID);
 
             return dataPackageDefined ? dataPackageDatasets.Count : 1;
