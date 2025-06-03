@@ -79,8 +79,6 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_RESET_JOB_STEP_INSUFFICIENT_MEMORY;
                 }
 
-                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
-
                 // Require that the input files be mzML files (since PeptideProphet prefers them and TmtIntegrator requires them)
                 // Furthermore, the .mzML files need to have centroided MS2 spectra
                 // In contrast, MaxQuant can work with either .raw files, .mzML files, or .mzXML files
@@ -107,11 +105,25 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var workflowFile = new FileInfo(Path.Combine(mWorkDir, workflowFileName));
 
-                currentTask = "Get DataPackageID";
+                currentTask = "Determine dataset count and cache experiment names";
 
                 // Check whether this job is associated with a data package; if it is, count the number of datasets
                 // Cache the experiment names in a packed job parameter
-                var datasetCount = GetDatasetCountAndCacheExperimentNames();
+                var datasetCount = GetDatasetCountAndCacheExperimentNames(out var dataPackageSharePath);
+
+                if (!string.IsNullOrWhiteSpace(dataPackageSharePath))
+                {
+                    currentTask = "Retrieve data package directory files";
+
+                    // If the data package has _annotation.txt files in the data package directory, copy them locally
+                    var dataPackageFilesRetrieved = GetDataPackageDirectoryFiles(dataPackageSharePath);
+
+                    if (!dataPackageFilesRetrieved)
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
 
                 var options = new FragPipeOptions(mJobParams, datasetCount);
                 RegisterEvents(options);
@@ -168,6 +180,9 @@ namespace AnalysisManagerFragPipePlugIn
                 var datasetFileRetriever = new DatasetFileRetriever(this);
                 RegisterEvents(datasetFileRetriever);
 
+
+                var dataPackageID = mJobParams.GetJobParameter("DataPackageID", 0);
+
                 var datasetCopyResult = datasetFileRetriever.RetrieveInstrumentFilesForJobDatasets(
                     dataPackageID,
                     retrieveMsXmlFiles,
@@ -203,10 +218,42 @@ namespace AnalysisManagerFragPipePlugIn
             }
         }
 
-        private int GetDatasetCountAndCacheExperimentNames()
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// If the data package has _annotation.txt files in the data package directory, copy them locally
+        /// </summary>
+        /// <param name="dataPackageSharePath">Output: data package share path, e.g. \\protoapps\DataPkgs\Public\2024\5998_CPTAC_CompRef_Acetyl</param>
+        /// <returns>True if successful, false if an error</returns>
+        private bool GetDataPackageDirectoryFiles(string dataPackageSharePath)
+        {
+            if (string.IsNullOrWhiteSpace(dataPackageSharePath))
+                return true;
+
+            var dataPackageShare = new DirectoryInfo(dataPackageSharePath);
+
+            foreach (var annotationFile in dataPackageShare.GetFiles("*" + AnalysisToolRunnerFragPipe.ANNOTATION_FILE_SUFFIX))
+            {
+                var localFilePath = Path.Combine(mWorkDir, annotationFile.Name);
+                annotationFile.CopyTo(localFilePath);
+            }
+
+            return true;
+        }
+
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Check whether this job is associated with a data package; if it is, count the number of datasets
+        /// Cache the experiment names in a packed job parameter
+        /// Also returns the data package share path (if the job is associated with a data package)
+        /// </summary>
+        /// <param name="dataPackageSharePath">Output: data package share path, e.g. \\protoapps\DataPkgs\Public\2024\5998_CPTAC_CompRef_Acetyl</param>
+        /// <returns>Dataset count (the value will be 1 if the job is not associated with a data package)</returns>
+        private int GetDatasetCountAndCacheExperimentNames(out string dataPackageSharePath)
         {
             // Output parameter errorMessage is ignored here because logErrors is true
-            var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets, out _, true);
+            var dataPackageDefined = LoadDataPackageDatasetInfo(out var dataPackageDatasets, out dataPackageSharePath, out _, true);
 
             // Populate a SortedSet with the experiments in the data package (or, if no data package, this job's experiment)
             var experimentNames = new SortedSet<string>();

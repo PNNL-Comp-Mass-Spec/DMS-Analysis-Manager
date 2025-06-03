@@ -111,6 +111,73 @@ namespace AnalysisManagerBase.JobConfig
             return datasetIDsByExperimentGroup;
         }
 
+        // ReSharper disable once CommentTypo
+
+        /// <summary>
+        /// Lookup the share path for the given data package
+        /// </summary>
+        /// <param name="callingClass">Analysis resources or analysis tools class</param>
+        /// <param name="dbTools">Instance of IDbTools</param>
+        /// <param name="dataPackageID">Data Package ID</param>
+        /// <param name="dataPackageSharePath">Output: data package share path, e.g. \\protoapps\DataPkgs\Public\2024\5998_CPTAC_CompRef_Acetyl</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <param name="logErrors">Log errors if true (default)</param>
+        /// <returns>True if a data package exists; false if an error or the data package does not exist</returns>
+        public static bool GetDataPackageSharePath(
+            AnalysisMgrBase callingClass,
+            IDBTools dbTools,
+            int dataPackageID,
+            out string dataPackageSharePath,
+            out string errorMessage,
+            bool logErrors)
+        {
+            var sqlStr = new StringBuilder();
+
+            // Query view sw.v_dms_data_packages                              (on SQL Server, view V_DMS_Data_Packages in the DMS_Pipeline database)
+            // That view references table dpkg.t_data_package and view dpkg.v_data_package_paths
+
+            var viewSchema = dbTools.DbServerType == DbServerTypes.PostgreSQL ? "sw." : string.Empty;
+
+            sqlStr.Append("SELECT id, share_path ");
+            sqlStr.AppendFormat("FROM {0}v_dms_data_packages ", viewSchema);
+            sqlStr.Append("WHERE id = " + dataPackageID);
+
+            var success = dbTools.GetQueryResultsDataTable(sqlStr.ToString(), out var resultSet);
+
+            if (!success)
+            {
+                errorMessage = "GetDataPackageSharePath: Excessive failures attempting to retrieve data package info from database";
+
+                if (logErrors)
+                {
+                    callingClass.LogError(errorMessage);
+                }
+
+                dataPackageSharePath = string.Empty;
+                return false;
+            }
+
+            // Verify at least one row returned
+            if (resultSet.Rows.Count < 1)
+            {
+                // No data was returned
+                errorMessage = string.Format("GetDataPackageSharePath: data package {0} does not exist", dataPackageID);
+
+                if (logErrors)
+                {
+                    callingClass.LogWarning(errorMessage);
+                }
+
+                dataPackageSharePath = string.Empty;
+                return false;
+            }
+
+            dataPackageSharePath = resultSet.Rows[0]["share_path"].CastDBVal<string>();
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>

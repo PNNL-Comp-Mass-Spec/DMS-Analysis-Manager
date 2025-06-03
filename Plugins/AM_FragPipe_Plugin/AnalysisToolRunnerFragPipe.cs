@@ -34,7 +34,7 @@ namespace AnalysisManagerFragPipePlugIn
     {
         // Ignore Spelling: dia, frag
 
-        private const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
+        public const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
 
         private const string FRAGPIPE_INSTANCE_DIRECTORY = "FragPipe_v23.0";
 
@@ -439,6 +439,14 @@ namespace AnalysisManagerFragPipePlugIn
 
                     var targetFile = new FileInfo(Path.Combine(experimentGroup.Value.FullName, experimentSpecificAliasFile.Name));
 
+                    var useExpGroupAnnotationFiles = mJobParams.GetJobParameter("UseExpGroupAnnotationFiles", false);
+
+                    if (useExpGroupAnnotationFiles && !experimentSpecificAliasFile.Exists)
+                    {
+                        LogError(string.Format("The settings file for this job has UseExpGroupAnnotationFiles=true, but file {0} was not found", experimentSpecificAliasFile.Name));
+                        return false;
+                    }
+
                     if (experimentSpecificAliasFile.Exists || genericAliasFile.Exists || genericAliasFile2.Exists)
                     {
                         FileInfo sourceAnnotationFile;
@@ -463,7 +471,8 @@ namespace AnalysisManagerFragPipePlugIn
                             throw new Exception("If statement logic error in CreateReporterIonAnnotationFiles when determining the source and target annotation.txt files");
                         }
 
-                        sourceAnnotationFile.CopyTo(targetFile.FullName);
+                        sourceAnnotationFile.CopyTo(targetFile.FullName, true);
+                        successCount++;
                         continue;
                     }
 

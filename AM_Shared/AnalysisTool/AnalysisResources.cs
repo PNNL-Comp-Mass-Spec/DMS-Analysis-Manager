@@ -3218,6 +3218,8 @@ namespace AnalysisManagerBase.AnalysisTool
             return dataPackageMatcher.IsMatch(datasetName);
         }
 
+        // ReSharper disable once CommentTypo
+
         /// <summary>
         /// Looks up dataset information for a data package
         /// </summary>
@@ -3225,11 +3227,13 @@ namespace AnalysisManagerBase.AnalysisTool
         /// The dataPackageDatasets dictionary will be empty if this job is not associated with a data package
         /// </remarks>
         /// <param name="dataPackageDatasets">Output: datasets associated with the given data package; keys are DatasetID</param>
+        /// <param name="dataPackageSharePath">Output: data package share path, e.g. \\protoapps\DataPkgs\Public\2024\5998_CPTAC_CompRef_Acetyl</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <param name="logErrors">Log errors if true (default)</param>
         /// <returns>True if a data package is defined and has datasets associated with it, otherwise false</returns>
         protected bool LoadDataPackageDatasetInfo(
             out Dictionary<int, DataPackageDatasetInfo> dataPackageDatasets,
+            out string dataPackageSharePath,
             out string errorMessage,
             bool logErrors)
         {
@@ -3242,6 +3246,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (dataPackageID <= 0)
             {
                 dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+                dataPackageSharePath = string.Empty;
                 errorMessage = string.Empty;
                 return false;
             }
@@ -3250,6 +3255,16 @@ namespace AnalysisManagerBase.AnalysisTool
 
             var dbTools = DbToolsFactory.GetDBTools(connectionStringToUse, debugMode: TraceMode);
             RegisterEvents(dbTools);
+
+            var success = DataPackageInfoLoader.GetDataPackageSharePath(this, dbTools, dataPackageID, out dataPackageSharePath, out var errorMessage1, logErrors);
+
+            // ReSharper disable once InvertIf
+            if (!success)
+            {
+                dataPackageDatasets = new Dictionary<int, DataPackageDatasetInfo>();
+                errorMessage = errorMessage1;
+                return false;
+            }
 
             return DataPackageInfoLoader.LoadDataPackageDatasetInfo(this, dbTools, dataPackageID, out dataPackageDatasets, out errorMessage, logErrors);
         }
