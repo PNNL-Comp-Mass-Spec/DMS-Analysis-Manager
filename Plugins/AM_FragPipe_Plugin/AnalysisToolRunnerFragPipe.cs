@@ -173,7 +173,11 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // Process the mzML files using FragPipe
-                var processingResult = StartFragPipe(fastaFile, dataPackageInfo, datasetIDsByExperimentGroup, out var diaSearchEnabled, out var databaseSplitCount);
+                var processingResult = StartFragPipe(
+                    fastaFile, dataPackageInfo, datasetIDsByExperimentGroup,
+                    out var diaSearchEnabled,
+                    out var databaseSplitCount,
+                    out var annotationFilesToSkip);
 
                 mProgress = (int)ProgressPercentValues.ProcessingComplete;
 
@@ -198,6 +202,18 @@ namespace AnalysisManagerFragPipePlugIn
                     // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveDirectory();
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                try
+                {
+                    foreach (var annotationFile in annotationFilesToSkip)
+                    {
+                        annotationFile.Delete();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogWarning("Error deleting duplicate annotation file defined in annotationFilesToSkip: {0}", ex.Message);
                 }
 
                 var subdirectoriesToSkip = new SortedSet<string>();
@@ -394,8 +410,11 @@ namespace AnalysisManagerFragPipePlugIn
         /// Create annotation.txt files that define alias names for reporter ions
         /// </summary>
         /// <param name="options">Processing options</param>
-        private bool CreateReporterIonAnnotationFiles(FragPipeOptions options)
+        /// <param name="annotationFilesToSkip">Output: list of annotation files to not copy to the transfer directory</param>
+        private bool CreateReporterIonAnnotationFiles(FragPipeOptions options, out List<FileInfo> annotationFilesToSkip)
         {
+            annotationFilesToSkip = new List<FileInfo>();
+
             try
             {
                 if (options.ReporterIonMode == ReporterIonInfo.ReporterIonModes.Disabled)
@@ -455,6 +474,7 @@ namespace AnalysisManagerFragPipePlugIn
                         {
                             // Copy the file into the experiment group working directory
                             sourceAnnotationFile = experimentSpecificAliasFile;
+                            annotationFilesToSkip.Add(experimentSpecificAliasFile);
                         }
                         else if (genericAliasFile.Exists)
                         {
@@ -1935,8 +1955,11 @@ namespace AnalysisManagerFragPipePlugIn
             DataPackageInfo dataPackageInfo,
             SortedDictionary<string, SortedSet<int>> datasetIDsByExperimentGroup,
             out bool diaSearchEnabled,
-            out int databaseSplitCount)
+            out int databaseSplitCount,
+            out List<FileInfo> annotationFilesToSkip)
         {
+            annotationFilesToSkip = new List<FileInfo>();
+
             try
             {
                 // Create the manifest file
@@ -1983,7 +2006,8 @@ namespace AnalysisManagerFragPipePlugIn
                 }
 
                 // If reporter ions are defined, create annotation.txt files
-                var annotationFileSuccess = CreateReporterIonAnnotationFiles(options);
+                var annotationFileSuccess = CreateReporterIonAnnotationFiles(options, out var filesToSkip);
+                annotationFilesToSkip.AddRange(filesToSkip);
 
                 if (!annotationFileSuccess)
                 {
