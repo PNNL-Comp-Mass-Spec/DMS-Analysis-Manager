@@ -2344,6 +2344,9 @@ namespace AnalysisManagerFragPipePlugIn
                 {
                     var lineNumber = 0;
 
+                    var fastaFileComment = string.Format("# {0}", FASTA_FILE_COMMENT);
+                    var outputFormatComment = string.Format("# {0}", FILE_FORMAT_COMMENT);
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -2356,6 +2359,13 @@ namespace AnalysisManagerFragPipePlugIn
                         }
 
                         var trimmedLine = dataLine.Trim();
+
+                        if (trimmedLine.Equals(fastaFileComment) || trimmedLine.Equals(outputFormatComment))
+                        {
+                            // Line contains either comment "# FASTA File (should include decoy proteins)" or comment "# File format of output files; Percolator uses .pin files"
+                            // Skip the line, since that same text will be auto added by this method
+                            continue;
+                        }
 
                         if (trimmedLine.StartsWith(DATABASE_PATH_PARAMETER))
                         {
