@@ -5,6 +5,7 @@ using System.Security.AccessControl;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
 using PRISMDatabaseUtils;
 
 namespace AnalysisManagerProg
@@ -247,14 +248,14 @@ namespace AnalysisManagerProg
             {
                 foreach (var fileToDelete in workDir.GetFiles())
                 {
-                    if (!fileTools.DeleteFileWithRetry(fileToDelete, DELETE_RETRY_COUNT, out var errorMessage))
+                    if (!FileTools.DeleteFileWithRetry(fileToDelete, DELETE_RETRY_COUNT, out var errorMessage))
                     {
                         LogError(errorMessage);
                         failedDeleteCount++;
                     }
                 }
 
-                // Delete the sub directories
+                // Delete the subdirectories
                 foreach (var subdirectory in workDir.GetDirectories())
                 {
                     if (DeleteFilesWithRetry(subdirectory))

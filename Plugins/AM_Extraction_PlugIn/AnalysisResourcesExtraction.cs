@@ -13,11 +13,11 @@ using System.Linq;
 using System.Xml;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
-using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
 using AnalysisManagerMSGFDBPlugIn;
 using PHRPReader;
+using PRISM;
 using PRISM.Logging;
 
 namespace AnalysisManagerExtractionPlugin

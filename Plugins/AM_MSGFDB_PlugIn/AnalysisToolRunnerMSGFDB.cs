@@ -12,6 +12,7 @@ using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
+using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -293,7 +294,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!mzidResultsFile.Exists && splitFastaMzidFile.Exists)
                 {
-                    var renamed = mFileTools.RenameFileWithRetry(splitFastaMzidFile, mzidResultsFile, out var errorMessageForRename);
+                    var renamed = FileTools.RenameFileWithRetry(splitFastaMzidFile, mzidResultsFile, out var errorMessageForRename);
 
                     if (!renamed)
                     {
@@ -1155,7 +1156,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // The file rename occasionally fails due to another process accessing the file
                 // Try up to 4 times
-                var success = mFileTools.RenameFileWithRetry(resultsFile, newFileInfo, out var errorMessageForRename, 4);
+                var success = FileTools.RenameFileWithRetry(resultsFile, newFileInfo, out var errorMessageForRename, 4);
 
                 if (!success)
                 {

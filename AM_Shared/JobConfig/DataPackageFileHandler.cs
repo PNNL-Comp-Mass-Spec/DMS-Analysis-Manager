@@ -8,7 +8,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using AnalysisManagerBase.AnalysisTool;
-using AnalysisManagerBase.FileAndDirectoryTools;
 using MyEMSLReader;
 using PHRPReader;
 using PRISM;
