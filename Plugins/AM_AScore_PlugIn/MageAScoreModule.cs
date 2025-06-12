@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase.AnalysisTool;
-using AnalysisManagerBase.FileAndDirectoryTools;
 using AScore_DLL.Managers.PSM_Managers;
 using AScore_DLL.Managers.SpectraManagers;
 using AScore_DLL.Managers;

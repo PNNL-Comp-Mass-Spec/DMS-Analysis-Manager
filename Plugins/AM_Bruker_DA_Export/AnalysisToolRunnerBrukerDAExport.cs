@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
+using PRISM;
 
 namespace AnalysisManagerBrukerDAExportPlugin
 {
@@ -178,10 +179,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             else
             {
-                var fileTools = new PRISM.FileTools();
-                RegisterEvents(fileTools);
-
-                datasetSizeMB = Global.BytesToMB(fileTools.GetDirectorySize(dataFolderPath));
+                datasetSizeMB = Global.BytesToMB(FileTools.GetDirectorySize(dataFolderPath));
             }
 
             var scanCountEstimate = (int)Math.Round(datasetSizeMB / MB_PER_SCAN, 0);

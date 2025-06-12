@@ -114,7 +114,6 @@
     <Compile Include="ExceptionClasses.cs" />
     <Compile Include="FileAndDirectoryTools\DirectorySearch.cs" />
     <Compile Include="FileAndDirectoryTools\DirectorySpaceTools.cs" />
-    <Compile Include="FileAndDirectoryTools\ZipFileTools.cs" />
     <Compile Include="FileAndDirectoryTools\FileCopyUtilities.cs" />
     <Compile Include="FileAndDirectoryTools\FileSearch.cs" />
     <Compile Include="FileAndDirectoryTools\FragPipeLibFinder.cs" />

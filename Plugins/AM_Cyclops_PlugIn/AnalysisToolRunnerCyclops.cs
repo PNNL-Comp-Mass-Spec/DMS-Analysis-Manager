@@ -5,6 +5,7 @@ using AnalysisManagerBase;
 using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.JobConfig;
 using Cyclops;
+using PRISM;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
@@ -232,7 +233,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (deleteFile)
                 {
-                    mFileTools.DeleteFileWithRetry(cyclopsLogFile, out _);
+                    FileTools.DeleteFileWithRetry(cyclopsLogFile, out _);
                 }
 
             }

@@ -9,6 +9,7 @@ using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.StatusReporting;
+using PRISM;
 
 namespace AnalysisManagerMaxQuantPlugIn
 {
