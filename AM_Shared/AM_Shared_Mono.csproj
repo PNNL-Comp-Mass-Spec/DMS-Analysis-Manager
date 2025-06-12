@@ -62,7 +62,6 @@
     <Reference Include="Mage">
       <HintPath>..\AM_Common\Mage.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Extensions.FileSystemGlobbing, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL" />
     <Reference Include="MSDataFileReader">
       <HintPath>..\AM_Common\MSDataFileReader.dll</HintPath>
     </Reference>
@@ -186,7 +185,7 @@
       <Version>1.5.8</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.6</Version>
+      <Version>2.9.11</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.1.22</Version>
