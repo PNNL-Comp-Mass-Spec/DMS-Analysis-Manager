@@ -123,12 +123,14 @@ namespace AnalysisManagerFragPipePlugIn
         /// <remarks>Peptide and protein static terminal modifications in staticModifications are indicated by Nterm_peptide, Cterm_peptide, add_Nterm_protein, and Cterm_protein</remarks>
         /// <param name="staticModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
         /// <param name="variableModifications">Keys in this dictionary are modification masses; values are a list of the affected residues</param>
-        /// <param name="reporterIonMode">Output: reporter ion mode enum</param>
+        /// <param name="tmtIntegratorReporterIonMode">TMT integrator reporter ion mode</param>
+        /// <param name="reporterIonMode">Output: reporter ion mode</param>
         /// <returns>True if success, false if an error</returns>
         // ReSharper restore CommentTypo
         private bool DetermineReporterIonMode(
             IReadOnlyDictionary<string, SortedSet<double>> staticModifications,
             IReadOnlyDictionary<string, SortedSet<double>> variableModifications,
+            ReporterIonInfo.ReporterIonModes tmtIntegratorReporterIonMode,
             out ReporterIonInfo.ReporterIonModes reporterIonMode)
         {
             reporterIonMode = ReporterIonInfo.ReporterIonModes.Disabled;
@@ -198,7 +200,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 if (matchedReporterIonModes.Count == 1)
                 {
-                    reporterIonMode = DetermineReporterIonMode(matchedReporterIonModes.First().Key);
+                    reporterIonMode = DetermineReporterIonMode(matchedReporterIonModes.First().Key, tmtIntegratorReporterIonMode);
                     return true;
                 }
 
@@ -226,7 +228,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// This method will return reporterIonMode if it is not Tmt11 or Tmt16, or if job parameter ReporterIonMode is undefined to "auto"
         /// </remarks>
         /// <param name="reporterIonMode">Reporter ion mode to use if job parameter "ReporterIonMode" is "auto"</param>
-        private ReporterIonInfo.ReporterIonModes DetermineReporterIonMode(ReporterIonInfo.ReporterIonModes reporterIonMode)
+        /// <param name="tmtIntegratorReporterIonMode">TMT integrator reporter ion mode</param>
+        private ReporterIonInfo.ReporterIonModes DetermineReporterIonMode(ReporterIonInfo.ReporterIonModes reporterIonMode, ReporterIonInfo.ReporterIonModes tmtIntegratorReporterIonMode)
         {
             if (reporterIonMode != ReporterIonInfo.ReporterIonModes.Tmt11 && reporterIonMode != ReporterIonInfo.ReporterIonModes.Tmt16)
                 return reporterIonMode;
@@ -234,14 +237,27 @@ namespace AnalysisManagerFragPipePlugIn
             // Look for a job parameter that specifies the reporter ion mode
             var reporterIonModeName = mJobParams.GetJobParameter("ReporterIonMode", string.Empty);
 
-            // The standard settings files have <item key="ReporterIonMode" value="auto">
-            // Check for this, and if found, simply return reporterIonMode
-            if (IsUndefinedOrAuto(reporterIonModeName))
+            // The settings files can define the reporter ion mode using <item key="ReporterIonMode" value="tmt10"> (or similar); check for this
+            if (!IsUndefinedOrAuto(reporterIonModeName))
+            {
+                return ReporterIonInfo.DetermineReporterIonMode(reporterIonModeName);
+            }
+
+            // The settings file likely has <item key="ReporterIonMode" value="auto">
+            // Possibly override reporterIonMode based on the value of tmtIntegratorReporterIonMode
+
+            if (tmtIntegratorReporterIonMode == ReporterIonInfo.ReporterIonModes.Disabled)
             {
                 return reporterIonMode;
             }
 
-            return ReporterIonInfo.DetermineReporterIonMode(reporterIonModeName);
+            if (reporterIonMode == ReporterIonInfo.ReporterIonModes.Tmt11 && tmtIntegratorReporterIonMode == ReporterIonInfo.ReporterIonModes.Tmt10 ||
+                reporterIonMode == ReporterIonInfo.ReporterIonModes.Tmt16 && tmtIntegratorReporterIonMode == ReporterIonInfo.ReporterIonModes.Tmt18)
+            {
+                return tmtIntegratorReporterIonMode;
+            }
+
+            return reporterIonMode;
         }
 
         /// <summary>
@@ -415,6 +431,28 @@ namespace AnalysisManagerFragPipePlugIn
             return ReporterIonInfo.ReporterIonModes.Disabled;
         }
 
+        private ReporterIonInfo.ReporterIonModes GetTmtIntegratorReporterIonMode(List<KeyValuePair<string, string>> workflowEntries)
+        {
+            var runTmtIntegrator = KeyValueParamFileReader.GetParameterValue(workflowEntries, "tmtintegrator.run-tmtintegrator", false);
+
+            if (!runTmtIntegrator)
+                return ReporterIonInfo.ReporterIonModes.Disabled;
+
+            var tmtIntegratorReporterIonMode = KeyValueParamFileReader.GetParameterValue(workflowEntries, "tmtintegrator.channel_num", "TMT-6").ToUpper();
+
+            return tmtIntegratorReporterIonMode switch
+            {
+                "TMT-6" => ReporterIonInfo.ReporterIonModes.Tmt6,
+                "TMT-10" => ReporterIonInfo.ReporterIonModes.Tmt10,
+                "TMT-11" => ReporterIonInfo.ReporterIonModes.Tmt11,
+                "TMT-16" => ReporterIonInfo.ReporterIonModes.Tmt16,
+                "TMT-18" => ReporterIonInfo.ReporterIonModes.Tmt18,
+                "ITRAQ-4" => ReporterIonInfo.ReporterIonModes.Itraq4,
+                "ITRAQ-8" => ReporterIonInfo.ReporterIonModes.Itraq8,
+                _ => ReporterIonInfo.ReporterIonModes.Disabled
+            };
+        }
+
         /// <summary>
         /// Return true if the value is an empty string or the word "auto"
         /// </summary>
@@ -451,6 +489,8 @@ namespace AnalysisManagerFragPipePlugIn
 
                 EnzymaticTerminiCount = KeyValueParamFileReader.GetParameterValue(workflowEntries, "msfragger.num_enzyme_termini", 2);
 
+                var tmtIntegratorReporterIonMode = GetTmtIntegratorReporterIonMode(workflowEntries);
+
                 var validMods = GetMSFraggerModifications(
                     workflowEntries,
                     out var staticModsByResidue,
@@ -469,7 +509,7 @@ namespace AnalysisManagerFragPipePlugIn
                     VariableModifications.Add(item.Key, item.Value);
                 }
 
-                var reporterIonModeSuccess = DetermineReporterIonMode(staticModsByResidue, variableModsByResidue, out var reporterIonMode);
+                var reporterIonModeSuccess = DetermineReporterIonMode(staticModsByResidue, variableModsByResidue, tmtIntegratorReporterIonMode, out var reporterIonMode);
 
                 if (!reporterIonModeSuccess)
                 {
