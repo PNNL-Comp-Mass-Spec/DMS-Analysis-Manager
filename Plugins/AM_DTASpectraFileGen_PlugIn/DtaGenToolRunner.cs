@@ -619,7 +619,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveDirectory()
+        public override void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.CDTA_ZIPPED_EXTENSION);
             mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.CDTA_EXTENSION);
@@ -627,7 +627,7 @@ namespace DTASpectraFileGen
             // Skip any .dta files
             mJobParams.AddResultFileExtensionToSkip(".dta");
 
-            base.CopyFailedResultsToArchiveDirectory();
+            base.CopyFailedResultsToArchiveDirectory(includeSubdirectories);
         }
 
         private string GetMSConvertAppPath()

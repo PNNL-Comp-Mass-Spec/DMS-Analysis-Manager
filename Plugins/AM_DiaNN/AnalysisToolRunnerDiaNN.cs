@@ -401,11 +401,11 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveDirectory()
+        public override void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
-            base.CopyFailedResultsToArchiveDirectory();
+            base.CopyFailedResultsToArchiveDirectory(includeSubdirectories);
         }
 
         private bool CopyResultsToTransferDirectory(

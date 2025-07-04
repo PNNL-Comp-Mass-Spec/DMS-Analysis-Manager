@@ -786,7 +786,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Copy failed results to the local archive folder
         /// </summary>
-        public override void CopyFailedResultsToArchiveDirectory()
+        public override void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             // Try to save whatever files are in the work directory (however, delete any spectral data files)
 
@@ -797,7 +797,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MZML_EXTENSION);
             mJobParams.AddResultFileToSkip(Dataset + AnalysisResources.DOT_MGF_EXTENSION);
 
-            base.CopyFailedResultsToArchiveDirectory();
+            base.CopyFailedResultsToArchiveDirectory(includeSubdirectories);
         }
 
         /// <summary>

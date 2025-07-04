@@ -84,7 +84,7 @@ namespace AnalysisManagerBase.AnalysisTool
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        void CopyFailedResultsToArchiveDirectory();
+        void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false);
 
         /// <summary>
         /// Perform any required post-processing after retrieving remote results
