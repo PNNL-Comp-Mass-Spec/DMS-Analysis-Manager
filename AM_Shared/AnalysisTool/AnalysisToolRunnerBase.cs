@@ -459,7 +459,8 @@ namespace AnalysisManagerBase.AnalysisTool
         /// Step tools may override this method if additional steps are required
         /// The override method should then call base.CopyFailedResultsToArchiveDirectory as the last step
         /// </remarks>
-        public virtual void CopyFailedResultsToArchiveDirectory()
+        /// <param name="includeSubdirectories">When true, also copy subdirectories</param>
+        public virtual void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             if (Global.OfflineMode)
             {
@@ -498,7 +499,7 @@ namespace AnalysisManagerBase.AnalysisTool
             if (success)
             {
                 // Move the result files into the results directory
-                var moveSucceed = MoveResultFiles();
+                var moveSucceed = MoveResultFiles(includeSubdirectories);
 
                 if (moveSucceed)
                 {
@@ -1224,6 +1225,10 @@ namespace AnalysisManagerBase.AnalysisTool
                 // Create a tab-delimited text file listing the files in the working directory and all subdirectories
                 var workingDirectory = new DirectoryInfo(mWorkDir);
                 var workingDirectoryPathLength = workingDirectory.FullName.Length;
+
+                // Example file names:
+                // _DMS_WorkDir_File_Info_.tsv
+                // _DMS_WorkDir_File_Info_Before_Post_Process.tsv
 
                 var fileInfoFilePath = Path.Combine(workingDirectory.FullName,
                     string.Format("_DMS_WorkDir_File_Info_{0}.tsv", fileSuffix ?? string.Empty));

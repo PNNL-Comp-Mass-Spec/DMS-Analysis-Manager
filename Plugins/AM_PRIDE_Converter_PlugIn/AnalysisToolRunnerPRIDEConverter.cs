@@ -1029,7 +1029,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Copy failed results to the archive folder
         /// </summary>
-        public override void CopyFailedResultsToArchiveDirectory()
+        public override void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             // Make sure the PRIDEConverter console output file is retained
             mJobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
@@ -1037,7 +1037,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Skip the .mgf files; no need to put them in the FailedResults folder
             mJobParams.AddResultFileExtensionToSkip(DOT_MGF);
 
-            base.CopyFailedResultsToArchiveDirectory();
+            base.CopyFailedResultsToArchiveDirectory(includeSubdirectories);
         }
 
         /// <summary>

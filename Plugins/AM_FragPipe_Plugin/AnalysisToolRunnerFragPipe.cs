@@ -200,7 +200,7 @@ namespace AnalysisManagerFragPipePlugIn
                     // Something went wrong
                     // In order to help diagnose things, move the output files into the results directory,
                     // archive it using CopyFailedResultsToArchiveDirectory, then return CloseOutType.CLOSEOUT_FAILED
-                    CopyFailedResultsToArchiveDirectory();
+                    CopyFailedResultsToArchiveDirectory(true);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -234,11 +234,11 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
         /// </summary>
-        public override void CopyFailedResultsToArchiveDirectory()
+        public override void CopyFailedResultsToArchiveDirectory(bool includeSubdirectories = false)
         {
             mJobParams.AddResultFileExtensionToSkip(AnalysisResources.DOT_MZML_EXTENSION);
 
-            base.CopyFailedResultsToArchiveDirectory();
+            base.CopyFailedResultsToArchiveDirectory(includeSubdirectories);
         }
 
         /// <summary>
