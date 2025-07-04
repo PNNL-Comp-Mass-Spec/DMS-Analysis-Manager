@@ -1072,8 +1072,6 @@ namespace AnalysisManagerFragPipePlugIn
                 experimentGroupNames.Add(item);
             }
 
-            var experimentGroupCount = experimentGroupNames.Count;
-
             // Populate a dictionary with experiment group names and corresponding working directories
             foreach (var experimentGroupName in experimentGroupNames)
             {
