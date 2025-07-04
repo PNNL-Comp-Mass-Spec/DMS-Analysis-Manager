@@ -325,12 +325,11 @@ namespace AnalysisManagerFragPipePlugIn
                     var experimentGroupName = experimentGroup.Key;
                     var experimentWorkingDirectory = mExperimentGroupWorkingDirectories[experimentGroupName];
 
-                    // If there is only one experiment group, leave the .mzML files in the working directory
-                    // If multiple experiment groups, method MoveDatasetsIntoSubdirectories will move the .mzML files into the experiment group subdirectory
+                    // Prior to July 2025, if there was only one experiment group, we left the .mzML files in the working directory (since method MoveDatasetsIntoSubdirectories was not called)
+                    // However, if isobaric quantitation using TMT Integrator and Philosopher is enabled, the .mzML files must be in the same directory as the _annotation.txt file
+                    // Thus, starting in July 2025, the .mzML files are always moved into the experiment group directory, even if there is only one experiment group directory
 
-                    var datasetFileDirectory = datasetIDsByExperimentGroup.Count == 1
-                        ? mWorkDir
-                        : experimentWorkingDirectory.FullName;
+                    var datasetFileDirectory = experimentWorkingDirectory.FullName;
 
                     foreach (var datasetID in experimentGroup.Value)
                     {
@@ -1092,10 +1091,9 @@ namespace AnalysisManagerFragPipePlugIn
                 }
             }
 
-            if (experimentGroupCount <= 1)
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
+            // Prior to July 2025, if there was only one experiment group, we left the .mzML files in the working directory
+            // However, if isobaric quantitation using TMT Integrator and Philosopher is enabled, the .mzML files must be in the same directory as the _annotation.txt file
+            // Thus, starting in July 2025, the .mzML files are always moved into the experiment group directory, even if there is only one experiment group directory
 
             // Since we have multiple experiment groups, move the .mzML files into subdirectories
             var moveSuccess = MoveDatasetsIntoSubdirectories(dataPackageInfo, datasetIDsByExperimentGroup);
