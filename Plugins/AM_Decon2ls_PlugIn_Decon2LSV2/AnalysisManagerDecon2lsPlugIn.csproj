@@ -66,10 +66,10 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.16</Version>
+      <Version>2.9.18</Version>
     </PackageReference>
     <PackageReference Include="ThermoRawFileReader">
-      <Version>4.2.48</Version>
+      <Version>4.2.56</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
       <Version>3.8.29</Version>
