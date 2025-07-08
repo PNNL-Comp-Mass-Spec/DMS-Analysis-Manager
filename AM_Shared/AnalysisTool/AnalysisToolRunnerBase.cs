@@ -12,6 +12,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using AnalysisManagerBase.FileAndDirectoryTools;
 using AnalysisManagerBase.JobConfig;
 using AnalysisManagerBase.OfflineJobs;
 using AnalysisManagerBase.StatusReporting;
@@ -3945,7 +3946,7 @@ namespace AnalysisManagerBase.AnalysisTool
             mZipTools.DebugLevel = mDebugLevel;
 
             // Note that mZipTools logs error messages using LogTools
-            return mZipTools.UnzipFile(zipFilePath, targetDirectory, fileFilter);
+            return mZipTools.UnzipFileGlob(zipFilePath, targetDirectory, fileFilter);
         }
 
         /// <summary>
