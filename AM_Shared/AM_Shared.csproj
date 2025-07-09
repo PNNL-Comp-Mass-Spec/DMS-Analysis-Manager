@@ -179,13 +179,13 @@
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.5.8</Version>
+      <Version>1.5.10</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.18</Version>
+      <Version>2.9.20</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.1.22</Version>
+      <Version>1.1.23</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>3.1.0</Version>
@@ -203,7 +203,7 @@
       <Version>1.0.118</Version>
     </PackageReference>
     <PackageReference Include="ThermoRawFileReader">
-      <Version>4.2.56</Version>
+      <Version>4.2.60</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
       <Version>3.8.29</Version>

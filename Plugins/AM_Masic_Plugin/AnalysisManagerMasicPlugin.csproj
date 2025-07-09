@@ -65,13 +65,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="PRISM-DatabaseUtils">
-      <Version>1.5.8</Version>
+      <Version>1.5.10</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.9.18</Version>
+      <Version>2.9.20</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.1.22</Version>
+      <Version>1.1.23</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
