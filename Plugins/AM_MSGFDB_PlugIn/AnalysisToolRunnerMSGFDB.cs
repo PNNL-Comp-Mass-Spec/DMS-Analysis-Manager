@@ -1127,6 +1127,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         /// <summary>
         /// Renames the results file created by a Parallel MS-GF+ instance to have _Part##.mzid as a suffix
+        /// Also used to rename .tsv files created by MzidToTsvConverter.exe to have _Part1.tsv, _Part2.tsv, etc. as a suffix
         /// </summary>
         /// <param name="resultsFileName">File to rename</param>
         /// <returns>The path to the new file if success, otherwise the original filename</returns>
