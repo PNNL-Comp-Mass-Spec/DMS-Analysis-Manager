@@ -80,7 +80,7 @@
       <Version>2.9.20</Version>
     </PackageReference>
     <PackageReference Include="PSI_Interface">
-      <Version>2.8.2</Version>
+      <Version>2.8.7</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.118</Version>
