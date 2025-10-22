@@ -36,7 +36,7 @@ namespace AnalysisManagerFragPipePlugIn
 
         public const string ANNOTATION_FILE_SUFFIX = "_annotation.txt";
 
-        private const string FRAGPIPE_INSTANCE_DIRECTORY = "FragPipe_v23.0";
+        private const string FRAGPIPE_INSTANCE_DIRECTORY = "FragPipe_v23.1";
 
         private const string FRAGPIPE_BATCH_FILE_PATH = FRAGPIPE_INSTANCE_DIRECTORY + @"\bin\fragpipe.bat";
 
@@ -86,7 +86,7 @@ namespace AnalysisManagerFragPipePlugIn
         private string mFragPipeVersion;
 
         /// <summary>
-        /// Path to fragpipe.bat, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.0\bin\fragpipe.bat
+        /// Path to fragpipe.bat, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\bin\fragpipe.bat
         /// </summary>
         private string mFragPipeProgLoc;
 
@@ -144,7 +144,7 @@ namespace AnalysisManagerFragPipePlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Determine the path to the FragPipe batch file, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.0\bin\fragpipe.bat
+                // Determine the path to the FragPipe batch file, e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\bin\fragpipe.bat
 
                 mFragPipeProgLoc = DetermineProgramLocation("FragPipeProgLoc", FRAGPIPE_BATCH_FILE_PATH);
 
@@ -531,7 +531,7 @@ namespace AnalysisManagerFragPipePlugIn
         /// <summary>
         /// Determine the path to the FragPipe tools directory
         /// </summary>
-        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY), e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools</param>
+        /// <param name="toolsDirectory">Output: path to the tools directory below the FragPipe instance directory (FRAGPIPE_INSTANCE_DIRECTORY), e.g. C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools</param>
         /// <param name="fragPipeProgLoc">Output: path to the FragPipe directory below DMS_Programs, e.g. C:\DMS_Programs\FragPipe</param>
         /// <returns>True if the directory was found, false if missing or an error</returns>
         private bool DetermineFragPipeToolLocations(out DirectoryInfo toolsDirectory, out string fragPipeProgLoc)
@@ -601,7 +601,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 // Verify that Python.exe exists
                 // Prior to May 2025, used Python3ProgLoc, which is "C:\Python3"
-                // FragPipe v23 ships with Python 3.11.11, which is tracked by manager parameter FragPipePython3ProgLoc, with value C:\DMS_Programs\FragPipe\FragPipe_v23.0\python
+                // FragPipe v23 ships with Python 3.11.11, which is tracked by manager parameter FragPipePython3ProgLoc, with value C:\DMS_Programs\FragPipe\FragPipe_v23.1\python
                 var pythonProgLoc = mMgrParams.GetParam("FragPipePython3ProgLoc");
 
                 if (!Directory.Exists(pythonProgLoc))
@@ -2195,7 +2195,7 @@ namespace AnalysisManagerFragPipePlugIn
             // ReSharper disable CommentTypo
 
             // Example command line:
-            // fragpipe.bat --headless --ram 0 --threads 15 --workflow C:\DMS_WorkDir\FragPipe_TMT16-phospho_2024-09-09.workflow --manifest C:\DMS_WorkDir\datasets.fp-manifest --workdir C:\DMS_WorkDir --config-tools-folder C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools --config-diann C:\DMS_Programs\FragPipe\FragPipe_v23.0\tools\diann\1.8.2_beta_8\win\DiaNN.exe --config-python C:\Python3\python.exe
+            // fragpipe.bat --headless --ram 0 --threads 15 --workflow C:\DMS_WorkDir\FragPipe_TMT16-phospho_2024-09-09.workflow --manifest C:\DMS_WorkDir\datasets.fp-manifest --workdir C:\DMS_WorkDir --config-tools-folder C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools --config-diann C:\DMS_Programs\FragPipe\FragPipe_v23.1\tools\diann\1.8.2_beta_8\win\DiaNN.exe --config-python C:\Python3\python.exe
 
             // ReSharper restore CommentTypo
 
