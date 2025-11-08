@@ -493,7 +493,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             if (Global.IsMatch(instrumentGroup, "QExactive") ||
                 Global.IsMatch(instrumentGroup, "QEHFX") ||
-                Global.IsMatch(instrumentGroup, "Exploris"))
+                Global.IsMatch(instrumentGroup, "Exploris") ||
+                Global.IsMatch(instrumentGroup, "EMSL_QExactive") ||
+                Global.IsMatch(instrumentGroup, "EMSL_QEHFX") ||
+                Global.IsMatch(instrumentGroup, "EMSL_Exploris"))
             {
                 // Thermo Q Exactive, Q Exactive HFX, or Exploris
                 instrumentIDNew = "3";
@@ -509,7 +512,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return true;
             }
 
-            if (Global.IsMatch(instrumentGroup, "IMS"))
+            if (Global.IsMatch(instrumentGroup, "IMS") ||
+                Global.IsMatch(instrumentGroup, "EMSL_IMS"))
             {
                 // Non-Thermo Instrument, high-res MS/MS
                 instrumentIDNew = "1";

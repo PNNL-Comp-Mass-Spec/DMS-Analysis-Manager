@@ -3211,6 +3211,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
 
                 case "Bruker_FTMS":
+                case "EMSL_Bruker_FTMS":
                 case "BrukerFT_BAF":
                     accession = "MS:1001548";
                     description = "Bruker Daltonics solarix series";
@@ -3227,6 +3228,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
 
                 case "TSQ":
+                case "EMSL_TSQ":
                 case "GC-TSQ":
                     if (instrumentName.Equals("TSQ_1") || instrumentName.Equals("TSQ_2"))
                     {
@@ -3273,9 +3275,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     description = "LTQ Orbitrap";
                     break;
 
-                case "QExactive":
-                case "GC-QExactive":
                 case "QEHFX":
+                case "QExactive":
+                case "EMSL_QEHFX":
+                case "EMSL_QExactive":
+                case "GC-QExactive":
                     if (instrumentName.StartsWith("QExactHF", StringComparison.OrdinalIgnoreCase))
                     {
                         accession = "MS:1002523";
@@ -3320,11 +3324,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     break;
 
                 case "Eclipse":
+                case "EMSL_Eclipse":
                     accession = "MS:1003029";
                     description = "Orbitrap Eclipse";
                     break;
 
                 case "Exploris":
+                case "EMSL_Exploris":
                     if (instrumentName.StartsWith("Exploris02", StringComparison.OrdinalIgnoreCase))
                     {
                         accession = "MS:1003094";
@@ -5383,6 +5389,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 case "VelosOrbi":
                 case "QExactive":
                 case "QEHFX":
+                case "EMSL_QExactive":
+                case "EMSL_QEHFX":
                     instrumentDetailsAutoDefined = true;
 
                     WriteXMLInstrumentInfoESI(writer, "positive");
