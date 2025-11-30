@@ -369,6 +369,8 @@ namespace AnalysisManagerFormularityPlugin
             }
         }
 
+        // ReSharper disable once ParameterTypeCanBeEnumerable.Local
+
         [Obsolete("Unused")]
         private CloseOutType CreateZipFileWithPlotsAndHTML(FileSystemInfo workDir, IReadOnlyCollection<FileInfo> pngFiles)
         {

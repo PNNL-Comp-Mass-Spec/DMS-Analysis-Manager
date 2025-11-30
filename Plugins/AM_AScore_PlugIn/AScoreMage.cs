@@ -380,10 +380,10 @@ namespace AnalysisManager_AScore_PlugIn
             if (extractionType == "MSGFDB First Hits")
                 extractionType = "MSGF+ First Hits";
 
-            if (!ResultType.TypeList.ContainsKey(extractionType))
+            if (!ResultType.TypeList.TryGetValue(extractionType, out var resultType))
                 throw new Exception("Invalid extractionType not supported by Mage: " + extractionType);
 
-            extractionParams.RType = ResultType.TypeList[extractionType];
+            extractionParams.RType = resultType;
             extractionParams.KeepAllResults = mJobParams.GetJobParam("KeepAllResults", "Yes");
             extractionParams.ResultFilterSetID = mJobParams.GetJobParam("ResultFilterSetID", "All Pass");
             extractionParams.MSGFCutoff = mJobParams.GetJobParam("MSGFCutoff", "All Pass");

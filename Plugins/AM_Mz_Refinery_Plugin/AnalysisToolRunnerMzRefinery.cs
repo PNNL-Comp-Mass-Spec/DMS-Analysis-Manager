@@ -831,7 +831,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // This will prevent this method from logging the above message every 30 seconds if the .abort command fails
                 mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
 
-                mCmdRunner.AbortProgramNow();
+                mCmdRunner?.AbortProgramNow();
             }
             else if (mProgRunnerMode == MzRefinerProgRunnerMode.MzRefiner)
             {
@@ -1669,7 +1669,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var toolFiles = new List<FileInfo>
             {
                 new(mMSGFPlusProgLoc),
-                new(mMSConvertProgLoc),
+                new(mMSConvertProgLoc ?? string.Empty),
                 new(mPpmErrorCharterProgLoc)
             };
 

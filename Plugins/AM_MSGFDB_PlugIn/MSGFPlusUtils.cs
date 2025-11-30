@@ -3046,6 +3046,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (countLowResMSn == 0 && countLowResHCD == 0 && countHighResHCD > 0)
             {
+                // ReSharper disable once GrammarMistakeInComment
                 // All of the spectra are HCD-HMSn
                 instrumentIDNew = "1";
                 autoSwitchReason = "since all of the spectra are high resolution HCD";
@@ -3737,8 +3738,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Set the date of the new file to the date of the old file, plus 5 minutes added on for each updated parameter
-                var newFileDate = sourceParamFile.LastWriteTimeUtc.AddMinutes(5 * updatedLineCount);
-                finalParamFile.LastWriteTimeUtc = newFileDate;
+                finalParamFile.LastWriteTimeUtc = sourceParamFile.LastWriteTimeUtc.AddMinutes(5 * updatedLineCount);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }

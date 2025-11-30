@@ -585,6 +585,8 @@ namespace AnalysisManagerMODPlusPlugin
                 return node;
             }
 
+            // ReSharper disable once GrammarMistakeInComment
+
             // Rejoin the remainder of the array as an xpath expression and recurse
             var rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
             return MakeXPath(doc, node, rest, attributes);
@@ -731,6 +733,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
+        // ReSharper disable once SuggestBaseTypeForParameter
         private void PushReader(SortedList<double, List<MODPlusResultsReader>> nextAvailableScan, MODPlusResultsReader reader)
         {
             if (nextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
@@ -959,6 +962,7 @@ namespace AnalysisManagerMODPlusPlugin
                             // Analysis completed (or failed)
                             stepsComplete++;
 
+                            // ReSharper disable once CanSimplifySetAddingWithSingleCall
                             if (!completedThreads.Contains(modPlusRunner.Key))
                             {
                                 completedThreads.Add(modPlusRunner.Key);
