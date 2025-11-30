@@ -120,7 +120,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Verify that program files exist
 
                 // Determine the path to MSConvert
-                // (as of March 10, 2015 the official release of ProteoWizard contains MSConvert.exe that supports the MzRefiner filter)
+                // (as of March 10, 2015, the official release of ProteoWizard contains MSConvert.exe that supports the MzRefiner filter)
                 mMSConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", ToolVersionUtilities.MSCONVERT_EXE_NAME.ToLower());
 
                 if (string.IsNullOrWhiteSpace(mMSConvertProgLoc))
@@ -818,7 +818,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return;
 
                 // MS-GF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
-                // If there is a large number results, we need to given MS-GF+ time to sort them prior to writing to disk
+                // If there is a large number results, we need to give MS-GF+ time to sort them prior to writing to disk
                 // However, it is also possible that Java frozen and thus the process should be aborted
 
                 var warningMessage = string.Format(
@@ -1411,7 +1411,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (mCmdRunner.CachedConsoleErrors.Trim().Equals("[MSData::stringToPair] Bad format:"))
                 {
-                    // Ignore this error if a _FIXED.mzML file was created and it is of comparable size to the input file
+                    // Ignore this error if a _FIXED.mzML file was created, and it is of comparable size to the input file
                     outputFile.Refresh();
 
                     if (outputFile.Exists && outputFile.Length >= originalMSXmlFile.Length * 0.95)

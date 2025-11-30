@@ -153,7 +153,7 @@ namespace AnalysisManagerBase.AnalysisTool
                 }
             }
 
-            // Copy all the sub-directories by recursively calling this same routine
+            // Copy each subdirectory by recursively calling this same method
             foreach (var subDir in sourceDirectory.GetDirectories())
             {
                 CopyDirectory(subDir.FullName, Path.Combine(targetDirectory.FullName, subDir.Name), overwrite, maxRetryCount, continueOnError);
