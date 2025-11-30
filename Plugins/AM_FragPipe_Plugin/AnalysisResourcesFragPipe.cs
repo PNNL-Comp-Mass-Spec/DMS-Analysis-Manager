@@ -172,7 +172,11 @@ namespace AnalysisManagerFragPipePlugIn
 
                 var dynamicModCount = options.GetDynamicModResidueCount();
 
-                // Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+                // Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file
+                //  2 means enzymatic (fully tryptic)
+                //  1 means semi enzymatic (partially tryptic)
+                //  0 means non-specific (non-tryptic)
+                //  3 means N-terminal semi enzymatic (partially tryptic but only at the N-terminus)
                 var enzymaticTerminiCount = options.EnzymaticTerminiCount;
 
                 // Possibly require additional system memory, based on the size of the FASTA file
@@ -358,7 +362,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
         /// <param name="dynamicModCount">Number of dynamic mods</param>
         /// <param name="enzymaticTerminiCount">
-        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file;
+        /// 2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic, 3 means N-terminal partially tryptic
         /// </param>
         /// <param name="fragPipeMemorySizeMBJobParam">FragPipeMemorySizeMB job parameter value (from the job's settings file)</param>
         /// <param name="fixedFragPipeMemorySizeJobParam">FixedFragPipeMemorySize job parameter value (from the job's settings file)</param>
@@ -373,7 +378,7 @@ namespace AnalysisManagerFragPipePlugIn
         {
             // This formula is based on FASTA file size and the number of dynamic mods
             // An additional 7500 MB of memory is reserved for each dynamic mod above 1 dynamic mod
-            // For partially tryptic searches (when enzymaticTerminiCount is 1), the memory is increased by 2x (meaning a split FASTA search will be required for larger FASTA files)
+            // For partially tryptic searches (when enzymaticTerminiCount is 1 or 3), the memory is increased by 2x (meaning a split FASTA search will be required for larger FASTA files)
             // For non-tryptic searches (when enzymaticTerminiCount is 0), the memory is increased by 4x
 
             // Example values:
@@ -413,6 +418,7 @@ namespace AnalysisManagerFragPipePlugIn
                     sizeMultiplier = 4;
                     break;
                 case 1:
+                case 3:
                     sizeMultiplier = 2;
                     break;
                 default:
@@ -457,7 +463,8 @@ namespace AnalysisManagerFragPipePlugIn
         /// <param name="fastaFileSizeMB">FASTA file size, in MB</param>
         /// <param name="dynamicModCount">Number of dynamic mods</param>
         /// <param name="enzymaticTerminiCount">
-        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file;
+        /// 2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic, 3 means N-terminal partially tryptic
         /// </param>
         /// <param name="databaseSplitCount">Dataset split count</param>
         private CloseOutType ValidateFragPipeMemorySize(

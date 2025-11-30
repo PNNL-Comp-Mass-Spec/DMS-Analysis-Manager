@@ -32,7 +32,7 @@ namespace AnalysisManagerFragPipePlugIn
         public int DatasetCount { get; }
 
         /// <summary>
-        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic)
+        /// Corresponds to msfragger.num_enzyme_termini in the FragPipe workflow file (2 means fully tryptic, 1 means partially tryptic, 0 means non-tryptic, 3 means N-terminal partially tryptic))
         /// </summary>
         public int EnzymaticTerminiCount { get; private set; } = 2;
 
@@ -853,7 +853,7 @@ namespace AnalysisManagerFragPipePlugIn
 
                 AddParameterToValidate(parametersToValidate, "msfragger.mass_diff_to_variable_mod", 0, 2);
                 AddParameterToValidate(booleanParametersToValidate, "msfragger.localize_delta_mass");
-                AddParameterToValidate(parametersToValidate, "msfragger.num_enzyme_termini", 0, 2);
+                AddParameterToValidate(parametersToValidate, "msfragger.num_enzyme_termini", 0, 3);
                 AddParameterToValidate(parametersToValidate, "msfragger.allowed_missed_cleavage_1", 1, 5);
                 AddParameterToValidate(parametersToValidate, "msfragger.allowed_missed_cleavage_2", 1, 5);
                 AddParameterToValidate(booleanParametersToValidate, "msfragger.clip_nTerm_M");
