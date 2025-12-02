@@ -177,7 +177,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Keeps track of the 25 most recent free memory MB values
         /// </summary>
-        public Queue MemoryUsageQueue { get; }
+        public Queue<float> MemoryUsageQueue { get; }
 
         /// <summary>
         /// Topic name for the manager status message queue

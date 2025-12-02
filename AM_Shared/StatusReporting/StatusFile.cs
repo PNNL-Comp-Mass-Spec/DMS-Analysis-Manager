@@ -166,7 +166,7 @@ namespace AnalysisManagerBase.StatusReporting
         /// <summary>
         /// Keeps track of the 25 most recent free memory MB values
         /// </summary>
-        public Queue MemoryUsageQueue { get; }
+        public Queue<float> MemoryUsageQueue { get; }
 
         /// <summary>
         /// Topic name for the manager status message queue
@@ -316,7 +316,7 @@ namespace AnalysisManagerBase.StatusReporting
 
             mLastFileWriteTime = DateTime.MinValue;
 
-            MemoryUsageQueue = new Queue();
+            MemoryUsageQueue = new Queue<float>();
 
             ClearCachedInfo();
         }
@@ -846,7 +846,7 @@ namespace AnalysisManagerBase.StatusReporting
             if (MemoryUsageQueue.Count == 0)
                 return -1;
 
-            var freeMemoryValues = MemoryUsageQueue.ToArray().Reverse().ToList();
+            var freeMemoryValues = MemoryUsageQueue.Reverse().ToList();
 
             if (countToAverage <= 1)
                 return (float)freeMemoryValues[0];
@@ -1033,10 +1033,14 @@ namespace AnalysisManagerBase.StatusReporting
                     // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
                     var midnightOrNoon = timeOfDay.Hour is 0 or 12 && timeOfDay.Minute is >= 0 and < 5;
 
+#pragma warning disable IDE0048
+
                     if (mDebugLevel >= 3 || mDebugLevel >= 1 && midnightOrNoon)
                     {
                         OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
                     }
+
+#pragma warning restore IDE0048
 
                     var logTimeInit = DateTime.UtcNow.AddMinutes(-MINIMUM_LOG_FAILURE_INTERVAL_MINUTES * 2);
                     mLastMessageQueueErrorTime = logTimeInit;
