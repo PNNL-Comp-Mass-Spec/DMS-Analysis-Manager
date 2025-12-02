@@ -603,8 +603,8 @@ namespace AnalysisManagerBase.StatusReporting
         /// Populate the status code to status description dictionaries
         /// </summary>
         /// <param name="mgrStatusMap">Dictionary of manager status code enums and descriptions</param>
-        /// <param name="taskStatusDetailMap">Dictionary of task status detail code enums and descriptions</param>
         /// <param name="taskStatusMap">Dictionary of task status code enums and descriptions</param>
+        /// <param name="taskStatusDetailMap">Dictionary of task status detail code enums and descriptions</param>
         public static void DefineEnumToStringMapping(
             IDictionary<MgrStatusCodes, string> mgrStatusMap,
             IDictionary<TaskStatusCodes, string> taskStatusMap,
@@ -849,7 +849,7 @@ namespace AnalysisManagerBase.StatusReporting
             var freeMemoryValues = MemoryUsageQueue.Reverse().ToList();
 
             if (countToAverage <= 1)
-                return (float)freeMemoryValues[0];
+                return freeMemoryValues[0];
 
             float sum = 0;
             var count = 0;
@@ -860,7 +860,7 @@ namespace AnalysisManagerBase.StatusReporting
                     break;
 
                 count++;
-                sum += (float)freeMemoryValues[i];
+                sum += freeMemoryValues[i];
             }
 
             return sum / count;
