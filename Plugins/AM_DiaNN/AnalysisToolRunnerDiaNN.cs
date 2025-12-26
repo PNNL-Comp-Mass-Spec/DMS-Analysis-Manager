@@ -513,18 +513,20 @@ namespace AnalysisManagerDiaNNPlugIn
                 {
                     // Find the _ScanStats.txt file in a subdirectory below the dataset directory (preferably using the one in the QC directory
 
-                    var scanStatsFiles = remoteDatasetDirectory.GetFiles("*_ScanStats.txt", SearchOption.AllDirectories);
+                    var scanStatsFiles = remoteDatasetDirectory.GetFiles("*_ScanStats.txt", SearchOption.AllDirectories).ToList();
 
-                    if (scanStatsFiles.Length == 0)
+                    if (scanStatsFiles.Count == 0)
                     {
                         LogWarning("Unable to create the _ScanInfo.txt file for the dataset since the dataset directory " +
-                                   "since the dataset directory does not have a subdirectory with a ScanStats.txt file ({0}); " +
+                                   "does not have a subdirectory with a ScanStats.txt file ({0}); " +
                                    "will generate a _ScanStats.txt file", datasetStoragePath);
 
                         if (!CreateScanStatsFileForDotD(datasetId, localDatasetDirectory, out scanStatsFile))
                         {
                             return false;
                         }
+
+                        scanStatsFiles.Add(scanStatsFile);
                     }
 
                     var qcScanStatsFile =
