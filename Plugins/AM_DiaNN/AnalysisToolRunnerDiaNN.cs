@@ -17,6 +17,7 @@ using AnalysisManagerBase.AnalysisTool;
 using AnalysisManagerBase.DataFileTools;
 using AnalysisManagerBase.JobConfig;
 using PRISM;
+using PRISM.Logging;
 using PRISMDatabaseUtils;
 using PSI_Interface.MSData;
 
@@ -1637,6 +1638,10 @@ namespace AnalysisManagerDiaNNPlugIn
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
+                // Use a custom event handler for error messages
+                UnregisterEventHandler(mCmdRunner, BaseLogger.LogLevels.ERROR);
+                mCmdRunner.ErrorEvent += DIANN_ErrorEvent;
+
                 LogMessage("Running DIA-NN");
                 mProgress = (int)ProgressPercentValues.StartingDiaNN;
 
@@ -2275,6 +2280,21 @@ namespace AnalysisManagerDiaNNPlugIn
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
             LogProgress("DIA-NN");
+        }
+
+        private void DIANN_ErrorEvent(string errorMessage, Exception ex)
+        {
+            if (errorMessage.Contains("OMP_NUM_THREADS") || errorMessage.Contains("OMP_PROC_BIND"))
+            {
+                // Error message is one of the following; ignore it. These first appeared with DIA-NN v2.3.1
+                //   OMP: Warning #80: OMP_NUM_THREADS="0": value too small.
+                //   OMP: Info #104: OMP_NUM_THREADS value "1" will be used.
+                //   OMP: Warning #182: OMP_PROC_BIND: ignored because KMP_AFFINITY has been defined
+                LogDebug(errorMessage);
+                return;
+            }
+
+            LogError(errorMessage, ex);
         }
     }
 }
