@@ -159,6 +159,14 @@ namespace AnalysisManagerDiaNNPlugIn
         public int FragmentIonMzMax { get; set; } = 1800;
 
         /// <summary>
+        /// Enable InfinDIA pre-search, which is useful when using a semi-specific cleavage specificity, but it also requires very well calibrated data
+        /// </summary>
+        /// <remarks>
+        /// If enabled, set MS2MassAccuracy to 25 ppm or smaller
+        /// </remarks>
+        public bool InfinDIAPreSearch { get; set; }
+
+        /// <summary>
         /// Enable protein N-terminus methionine excision as variable modification for the in-silico digestion
         /// </summary>
         public bool TrimNTerminalMethionine { get; set; } = true;
@@ -175,6 +183,11 @@ namespace AnalysisManagerDiaNNPlugIn
         /// <para>Glu-C:                         E*,D*</para>
         /// </remarks>
         public string CleavageSpecificity { get; set; } = "K*,R*";
+
+        /// <summary>
+        /// When enabled, a peptide will be matched to a protein also if it could be obtained with one specific and one non-specific cut (at either of the termini)
+        /// </summary>
+        public bool SemiSpecific { get; set; }
 
         /// <summary>
         /// Maximum number of allowed missed cleavages
@@ -273,6 +286,7 @@ namespace AnalysisManagerDiaNNPlugIn
         /// </summary>
         /// <remarks>
         /// If 0, let DIA-NN auto determine the mass accuracy to use
+        /// When using InfinDIA, this should be set to 25 ppm, or smaller
         /// </remarks>
         public float MS2MassAccuracy { get; set; }
 
@@ -722,9 +736,13 @@ namespace AnalysisManagerDiaNNPlugIn
                 FragmentIonMzMin = GetParameterValueOrDefault(paramFileSettings, "FragmentIonMzMin", FragmentIonMzMin);
                 FragmentIonMzMax = GetParameterValueOrDefault(paramFileSettings, "FragmentIonMzMax", FragmentIonMzMax);
 
+                InfinDIAPreSearch = GetParameterValueOrDefault(paramFileSettings, "InfinDIAPreSearch", InfinDIAPreSearch);
+
                 TrimNTerminalMethionine = GetParameterValueOrDefault(paramFileSettings, "TrimNTerminalMethionine", TrimNTerminalMethionine);
 
                 CleavageSpecificity = GetParameterValueOrDefault(paramFileSettings, "CleavageSpecificity", CleavageSpecificity);
+
+                SemiSpecific = GetParameterValueOrDefault(paramFileSettings, "SemiSpecific", SemiSpecific);
 
                 MissedCleavages = GetParameterValueOrDefault(paramFileSettings, "MissedCleavages", MissedCleavages);
 

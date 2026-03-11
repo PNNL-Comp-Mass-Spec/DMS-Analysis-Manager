@@ -1783,12 +1783,24 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.AppendFormat(" --min-fr-mz {0}", options.FragmentIonMzMin);
                 arguments.AppendFormat(" --max-fr-mz {0}", options.FragmentIonMzMax);
 
+                // This is likely not applicable when using --fasta-search to perform an in silico digest of the sequence database
+                // if (options.InfinDIAPreSearch)
+                // {
+                //     arguments.Append(" --pre-search");
+                // }
+
                 if (options.TrimNTerminalMethionine)
                 {
                     arguments.Append(" --met-excision");
                 }
 
                 arguments.AppendFormat(" --cut {0}", options.CleavageSpecificity);
+
+                if (options.SemiSpecific)
+                {
+                    arguments.AppendFormat(" --semi");
+                }
+
                 arguments.AppendFormat(" --missed-cleavages {0}", options.MissedCleavages);
                 arguments.AppendFormat(" --min-pep-len {0}", options.PeptideLengthMin);
                 arguments.AppendFormat(" --max-pep-len {0}", options.PeptideLengthMax);
@@ -1908,12 +1920,23 @@ namespace AnalysisManagerDiaNNPlugIn
                 arguments.Append(" --gen-spec-lib");
                 arguments.AppendFormat(" --fasta {0}", fastaFile.FullName);
 
+                if (options.InfinDIAPreSearch)
+                {
+                    arguments.Append(" --pre-search");
+                }
+
                 if (options.TrimNTerminalMethionine)
                 {
                     arguments.Append(" --met-excision");
                 }
 
                 arguments.AppendFormat(" --cut {0}", options.CleavageSpecificity);
+
+                if (options.SemiSpecific)
+                {
+                    arguments.AppendFormat(" --semi");
+                }
+
                 arguments.AppendFormat(" --var-mods {0}", options.MaxDynamicModsPerPeptide);
 
                 AppendModificationArguments(options, arguments);

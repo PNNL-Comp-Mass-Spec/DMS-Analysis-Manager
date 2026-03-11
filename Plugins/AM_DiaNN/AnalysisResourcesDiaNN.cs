@@ -585,6 +585,11 @@ namespace AnalysisManagerDiaNNPlugIn
                 dbTools.AddParameter(cmd, "@maxDynamicMods", SqlType.Int).Value = options.MaxDynamicModsPerPeptide;
                 dbTools.AddParameter(cmd, "@programVersion", SqlType.VarChar, 64).Value = diannNameAndVersion;
 
+                if (dbServerType == DbServerTypes.MSSQLServer)
+                    dbTools.AddParameter(cmd, "@semiSpecificCleavage", SqlType.Bit).Value = BoolToTinyInt(options.SemiSpecific);
+                else
+                    dbTools.AddParameter(cmd, "@semiSpecificCleavage", SqlType.Boolean).Value = options.SemiSpecific;
+
                 // Output parameters
                 var libraryIdParam = dbTools.AddParameter(cmd, "@libraryId", SqlType.Int, ParameterDirection.InputOutput);
                 var libraryStateIdParam = dbTools.AddParameter(cmd, "@libraryStateId", SqlType.Int, ParameterDirection.InputOutput);
