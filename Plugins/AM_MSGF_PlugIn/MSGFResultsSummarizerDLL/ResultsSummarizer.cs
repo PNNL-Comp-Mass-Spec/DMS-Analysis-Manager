@@ -1298,8 +1298,11 @@ namespace MSGFResultsSummarizer
 
                 // ReSharper restore CommentTypo
 
-                // This is used to avoid storing multiple PSMs for a given scan
-                // For MaxQuant and MSFragger results, we store DatasetNameOrId_ScanNumber
+                // SortedSet scansStored is used to avoid storing multiple PSMs for a given scan
+                // (starting in March 2026, this restriction no longer applies to MSFragger or DIA-NN
+                //  since those tools can identify peptides in DIA spectra, which can include more than one peptide)
+
+                // For MaxQuant, MSFragger, and DIA-NN results, we store DatasetNameOrId_ScanNumber
                 // For all other results, we simply store scan number (as a string)
                 var scansStored = new SortedSet<string>();
 
@@ -1352,13 +1355,17 @@ namespace MSGFResultsSummarizer
                             break;
                     }
 
-                    if (currentPSM.ScanNumber > 0 && scansStored.Contains(scanKey))
+                    if (currentPSM.ScanNumber > 0)
                     {
-                        // Skip this PSM since its scan key is already in scansStored
-                        continue;
-                    }
+                        if (scansStored.Contains(scanKey) &&
+                            ResultType is not (PeptideHitResultTypes.DiaNN or PeptideHitResultTypes.MSFragger))
+                        {
+                            // Skip this PSM since its scan key is already in scansStored
+                            continue;
+                        }
 
-                    scansStored.Add(scanKey);
+                        scansStored.Add(scanKey);
+                    }
 
                     if (!(DateTime.UtcNow.Subtract(lastStatusTime).TotalMilliseconds < 500))
                     {
