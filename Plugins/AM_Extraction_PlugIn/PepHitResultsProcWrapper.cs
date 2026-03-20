@@ -198,6 +198,8 @@ namespace AnalysisManagerExtractionPlugin
                     arguments += " /OutputFileBaseName:" + Global.ReplaceInvalidPathChars(outputFileBaseName);
                 }
 
+                arguments += " /AppName:" + mMgrParams.ManagerName;
+
                 // Starting in August 2024, the default connection string in PeptideHitResultsProcRunner.exe is "Host=prismdb2.emsl.pnl.gov;Port=5432;Database=dms"
                 // Only add connection string argument /DB if the DMS connection string is not prismdb2
                 var dmsConnectionString = mMgrParams.GetParam("ConnectionString");
