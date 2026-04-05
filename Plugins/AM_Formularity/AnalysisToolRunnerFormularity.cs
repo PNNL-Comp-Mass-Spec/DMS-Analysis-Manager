@@ -451,7 +451,7 @@ namespace AnalysisManagerFormularityPlugin
         /// Parse the Formularity console output file to track the search progress
         /// </summary>
         /// <remarks>Not used at present</remarks>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             ParseConsoleOutputFile(consoleOutputFilePath, out _, out _, out _);
@@ -461,7 +461,7 @@ namespace AnalysisManagerFormularityPlugin
         /// Parse the Formularity console output file to track the search progress
         /// </summary>
         /// <remarks>Not used at present</remarks>
-        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath">Console output file path</param>
         /// <param name="fileCountNoPeaks">Output: will be non-zero if Formularity reports "no data points found" for a given file</param>
         /// <param name="nothingToAlign">Output: set to true if Formularity reports "Nothing to align" (meaning none of the input files had peaks)</param>
         /// <param name="calibrationFailed">Output: set to true if calibration failed</param>
@@ -695,6 +695,146 @@ namespace AnalysisManagerFormularityPlugin
             }
         }
 
+        private bool ProcessScansWithFormularity(string progLoc, string datasetScansFilePath, out bool nothingToAlign)
+        {
+            nothingToAlign = false;
+
+            try
+            {
+                mConsoleOutputErrorMsg = string.Empty;
+
+                LogMessage("Processing data using Formularity");
+
+                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
+
+                if (!File.Exists(paramFilePath))
+                {
+                    LogError("Parameter file not found", "Parameter file not found: " + paramFilePath);
+                    return false;
+                }
+
+                var orgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
+                var ciaDbPath = Path.Combine(orgDbDirectory, mJobParams.GetParam("cia_db_name"));
+
+                if (!File.Exists(ciaDbPath))
+                {
+                    LogError("CIA database not found", "CIA database not found: " + ciaDbPath);
+                    return false;
+                }
+
+                var calibrationPeaksFileName = mJobParams.GetJobParameter(
+                    AnalysisJob.STEP_PARAMETERS_SECTION,
+                    AnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
+                    string.Empty);
+
+                string calibrationPeaksFilePath;
+
+                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                {
+                    calibrationPeaksFilePath = string.Empty;
+                }
+                else
+                {
+                    calibrationPeaksFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
+                }
+
+                if (!File.Exists(calibrationPeaksFilePath))
+                {
+                    LogError("Calibration file not found", "Calibration file not found: " + calibrationPeaksFilePath);
+                    return false;
+                }
+
+                bool success;
+
+                int scanCount;
+                int scanCountNoPeaks;
+
+                if (string.IsNullOrWhiteSpace(datasetScansFilePath))
+                {
+                    // Processing the .xml scans files in the working directory
+
+                    var workingDirectory = new DirectoryInfo(mWorkDir);
+                    var spectraFiles = GetXmlSpectraFiles(workingDirectory, out var wildcardMatchSpec);
+                    scanCount = spectraFiles.Count;
+
+                    if (scanCount == 0)
+                    {
+                        mMessage = "XML spectrum files not found matching " + wildcardMatchSpec;
+                        return false;
+                    }
+
+                    foreach (var spectrumFile in spectraFiles)
+                    {
+                        mJobParams.AddResultFileToSkip(spectrumFile.Name);
+                    }
+
+                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
+
+                    success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                               out scanCountNoPeaks, out nothingToAlign);
+                }
+                else
+                {
+                    // Either processing a ThermoPeakDataExporter .tsv file or a DeconTools _peaks.txt file
+                    // Call Formularity for the file
+
+                    scanCount = 1;
+
+                    mJobParams.AddResultFileToSkip(datasetScansFilePath);
+                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
+
+                    success = StartFormularity(progLoc, datasetScansFilePath, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                               out scanCountNoPeaks, out nothingToAlign);
+                }
+
+                if (!success)
+                    return false;
+
+                mProgress = PROGRESS_PCT_FINISHED_FORMULARITY;
+                mStatusTools.UpdateAndWrite(mProgress);
+
+                if (mDebugLevel >= 3)
+                {
+                    LogDebug("Formularity processing complete");
+                }
+
+                if (scanCountNoPeaks <= 0 && !nothingToAlign)
+                {
+                    return true;
+                }
+
+                if (nothingToAlign || scanCountNoPeaks >= scanCount)
+                {
+                    // None of the scans had peaks
+                    mMessage = "No peaks found";
+
+                    if (scanCount > 1)
+                        mEvalMessage = "None of the scans had peaks";
+                    else
+                        mEvalMessage = "Scan did not have peaks";
+
+                    if (!nothingToAlign)
+                        nothingToAlign = true;
+
+                    // Do not put the parameter file in the results directory
+                    mJobParams.AddResultFileToSkip(paramFilePath);
+                }
+                else
+                {
+                    // Some of the scans had no peaks
+                    mEvalMessage = scanCountNoPeaks + " / " + scanCount + " scans had no peaks";
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                mMessage = "Error processing data using Formularity";
+                LogError(mMessage, ex);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Rename the plot files, replacing suffix "_Report.PNG" with ".png"
         /// </summary>
@@ -836,146 +976,6 @@ namespace AnalysisManagerFormularityPlugin
             }
 
             return false;
-        }
-
-        private bool ProcessScansWithFormularity(string progLoc, string datasetScansFilePath, out bool nothingToAlign)
-        {
-            nothingToAlign = false;
-
-            try
-            {
-                mConsoleOutputErrorMsg = string.Empty;
-
-                LogMessage("Processing data using Formularity");
-
-                var paramFilePath = Path.Combine(mWorkDir, mJobParams.GetParam(AnalysisResources.JOB_PARAM_PARAMETER_FILE));
-
-                if (!File.Exists(paramFilePath))
-                {
-                    LogError("Parameter file not found", "Parameter file not found: " + paramFilePath);
-                    return false;
-                }
-
-                var orgDbDirectory = mMgrParams.GetParam(AnalysisResources.MGR_PARAM_ORG_DB_DIR);
-                var ciaDbPath = Path.Combine(orgDbDirectory, mJobParams.GetParam("cia_db_name"));
-
-                if (!File.Exists(ciaDbPath))
-                {
-                    LogError("CIA database not found", "CIA database not found: " + ciaDbPath);
-                    return false;
-                }
-
-                var calibrationPeaksFileName = mJobParams.GetJobParameter(
-                    AnalysisJob.STEP_PARAMETERS_SECTION,
-                    AnalysisResourcesFormularity.JOB_PARAM_FORMULARITY_CALIBRATION_PEAKS_FILE,
-                    string.Empty);
-
-                string calibrationPeaksFilePath;
-
-                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
-                {
-                    calibrationPeaksFilePath = string.Empty;
-                }
-                else
-                {
-                    calibrationPeaksFilePath = Path.Combine(mWorkDir, calibrationPeaksFileName);
-                }
-
-                if (!File.Exists(calibrationPeaksFilePath))
-                {
-                    LogError("Calibration file not found", "Calibration file not found: " + calibrationPeaksFilePath);
-                    return false;
-                }
-
-                bool success;
-
-                int scanCount;
-                int scanCountNoPeaks;
-
-                if (string.IsNullOrWhiteSpace(datasetScansFilePath))
-                {
-                    // Processing the .xml scans files in the working directory
-
-                    var workingDirectory = new DirectoryInfo(mWorkDir);
-                    var spectraFiles = GetXmlSpectraFiles(workingDirectory, out var wildcardMatchSpec);
-                    scanCount = spectraFiles.Count;
-
-                    if (scanCount == 0)
-                    {
-                        mMessage = "XML spectrum files not found matching " + wildcardMatchSpec;
-                        return false;
-                    }
-
-                    foreach (var spectrumFile in spectraFiles)
-                    {
-                        mJobParams.AddResultFileToSkip(spectrumFile.Name);
-                    }
-
-                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
-
-                    success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
-                                               out scanCountNoPeaks, out nothingToAlign);
-                }
-                else
-                {
-                    // Either processing a ThermoPeakDataExporter .tsv file or a DeconTools _peaks.txt file
-                    // Call Formularity for the file
-
-                    scanCount = 1;
-
-                    mJobParams.AddResultFileToSkip(datasetScansFilePath);
-                    mProgress = PROGRESS_PCT_STARTING_FORMULARITY;
-
-                    success = StartFormularity(progLoc, datasetScansFilePath, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
-                                               out scanCountNoPeaks, out nothingToAlign);
-                }
-
-                if (!success)
-                    return false;
-
-                mProgress = PROGRESS_PCT_FINISHED_FORMULARITY;
-                mStatusTools.UpdateAndWrite(mProgress);
-
-                if (mDebugLevel >= 3)
-                {
-                    LogDebug("Formularity processing complete");
-                }
-
-                if (scanCountNoPeaks <= 0 && !nothingToAlign)
-                {
-                    return true;
-                }
-
-                if (nothingToAlign || scanCountNoPeaks >= scanCount)
-                {
-                    // None of the scans had peaks
-                    mMessage = "No peaks found";
-
-                    if (scanCount > 1)
-                        mEvalMessage = "None of the scans had peaks";
-                    else
-                        mEvalMessage = "Scan did not have peaks";
-
-                    if (!nothingToAlign)
-                        nothingToAlign = true;
-
-                    // Do not put the parameter file in the results directory
-                    mJobParams.AddResultFileToSkip(paramFilePath);
-                }
-                else
-                {
-                    // Some of the scans had no peaks
-                    mEvalMessage = scanCountNoPeaks + " / " + scanCount + " scans had no peaks";
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                mMessage = "Processing data using Formularity";
-                LogError(mMessage, ex);
-                return false;
-            }
         }
 
         private void StoreConsoleErrorMessage(StreamReader reader, string dataLine)
