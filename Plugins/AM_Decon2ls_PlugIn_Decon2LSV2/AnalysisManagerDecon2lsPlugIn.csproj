@@ -61,7 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>3.8.118</Version>
+      <Version>3.9.50</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -72,7 +72,7 @@
       <Version>4.2.63</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>3.8.29</Version>
+      <Version>3.8.30</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
